@@ -1,0 +1,8 @@
+#import "cr.h"
+
+class CRSwitch(form1 : CRailForm*, form2 : CRRailForm*, tile : CEIPoint, var state : int = 0) extends CECtrl(form1 = form1)
+
+enum CRRailForm(length : CGFloat) {
+	crRailFormX(10),
+	crRailFormY(80)
+}
