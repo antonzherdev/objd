@@ -47,4 +47,5 @@ data Exp =
 	| Call {callInst :: Exp, callName :: String, callPars :: [(String, Exp)]}
 	| Ref String
 	| IntConst Int
+	| Eq Exp Exp | NotEq Exp Exp
 	

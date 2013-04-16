@@ -2,6 +2,7 @@ module ObjC.Text() where
 
 import Ex.String
 import ObjC.Struct
+import Data.Char
 
 ind = ("    " ++ )
 showStms = unlines . stms
@@ -41,7 +42,12 @@ instance Show ImplFun where
 		++ showStms exps
 		++ "}\n"
 instance Show Fun where
-	show (Fun tp ret name pars) = show tp ++ " (" ++ ret ++ ")" ++ name ++ strs' " " pars
+	show (Fun tp ret name pars) = 
+		show tp ++ " (" ++ ret ++ ")" ++ name ++ (cap $ strs' " " pars)
+		where
+			cap :: String -> String
+			cap "" = ""
+			cap (x:xs) = (toUpper x) : xs
 instance Show FunPar where
  	show (FunPar name tp var) = name ++ ":(" ++ tp ++ ")" ++ var 
 instance Show FunType where

@@ -4,7 +4,8 @@ module ObjD.Struct (
 	MutableType(..),
 	Extends(..),
 	Stm(..),
-	Exp(..)
+	Exp(..),
+	Par(..)
 ) where
 
 import qualified ObjC.Struct as C
@@ -20,6 +21,15 @@ data Statement =
 
 data Extends = ExtendsNone | Extends String 
 
-data Stm = DeclStm Decl | Fun
+data Stm = DeclStm Decl 
+	| Def {defName :: String, defPars :: [Par], defRetType :: String, defBody :: Exp}
+data Par = Par { parName :: String, parType :: String }
 
-data Exp = Nop | IntConst Int
+data Exp = Nop | IntConst Int | Braces [Exp]
+	| If Exp Exp Exp
+	| Self
+	| NotEq Exp Exp | Eq Exp Exp
+	| Dot Exp Exp
+	| Ref String
+	| Set Exp Exp
+	| Call String [(String, Exp)]

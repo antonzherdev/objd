@@ -8,6 +8,8 @@ module ObjD.ToObjC (
 import Data.Char
 import qualified ObjC.Struct as C
 import qualified ObjD.Struct as D
+import qualified ObjD.Text as D
+
 
 toObjC :: [D.Statement] -> ([C.Statement], [C.Statement])
 toObjC stms = (map(stmToInterface) stms, map(stmToImpl) stms)
@@ -22,6 +24,7 @@ stmToInterface (D.Class {D.className = name, D.classFields = fields, D.extends =
 		D.Extends e -> e,
 	C.properties = map (fieldToProperty) fields ++ bodyProps body,
 	C.funs = [createFun name fields, initFun fields]
+		++ (intefaceFuns body)
 }
 
 
@@ -57,6 +60,18 @@ bodyDecls = map toDecl . filter isDecl
 		toDecl (D.DeclStm d) = d
 bodyProps = map (fieldToProperty) . bodyDecls 
 
+isDef (D.Def _ _ _ _) = True
+isDef _ = False
+
+intefaceFuns :: [D.Stm] -> [C.Fun]
+intefaceFuns = map stm2Fun . filter isDef
+
+stm2Fun :: D.Stm -> C.Fun
+stm2Fun D.Def {D.defName = name, D.defPars = pars, D.defRetType = ret, D.defBody = body} = 
+	C.Fun {C.funType = C.InstanceFun, C.funReturnType = ret, C.funName = name, C.funPars = map par pars}
+	where
+		par (D.Par name tp) = C.FunPar name tp name
+
 {- Implementation -}
 
 stmToImpl :: D.Statement -> C.Statement
@@ -66,7 +81,8 @@ stmToImpl (D.Class {D.className = name, D.classFields = fields, D.classBody = bo
 	C.implSynthenyzes = map (synthenize) (fields ++ (bodyDecls body)),
 	C.implFuns = 
 		[implCreate name fields] ++
-		[implInit fields body]
+		[implInit fields body] ++
+		implFuns body
 }
 
 synthenize D.Decl{D.declName = x} = C.ImplSynthenyze x ("_" ++ x)
@@ -97,6 +113,26 @@ implCreate clsName decls = C.ImplFun (createFun clsName decls) [C.Return
 	where 
 		pars D.Decl{D.declName = name} = (name, C.Ref name)
 
+implFuns = map stm2ImplFun . filter isDef
+
+stm2ImplFun :: D.Stm -> C.ImplFun
+stm2ImplFun def@D.Def {D.defBody = body} = 
+	C.ImplFun (stm2Fun def) (tStm body)
 {- Exp -}
 tExp :: D.Exp -> C.Exp
 tExp (D.IntConst i) = C.IntConst i
+tExp (D.Eq l r) = C.Eq (tExp l) (tExp r)
+tExp (D.NotEq l r) = C.NotEq (tExp l) (tExp r)
+
+tExp x = error $ "No tExp for " ++ show x
+
+tStm :: D.Exp -> [C.Stm]
+tStm (D.Nop) = []
+
+tStm (D.Braces []) = []
+tStm (D.Braces [x]) = tStm x
+tStm (D.Braces xs) = concatMap tStm xs
+
+tStm (D.If cond t f) = [C.If (tExp cond) (tStm t) (tStm f)]
+
+tStm x = error $ "No tStm for " ++ show x

@@ -15,77 +15,90 @@ parseStatement input = parse pStatement "ObjD" input
 pStatement :: Parser Statement
 pStatement = pImport <|> pClass 
 
-stringSpaces :: Parser String
-stringSpaces = many (char ' ' <|> char '\t'  <|> char '\n')
-stringSpaces1 :: Parser String
-stringSpaces1 = many (char ' ' <|> char '\t'  <|> char '\n')
+sps :: Parser String
+sps = many (char ' ' <|> char '\t'  <|> char '\n') <?> ""
+sps1 :: Parser String
+sps1 = many (char ' ' <|> char '\t'  <|> char '\n') <?> ""
 ident :: Parser String
 ident = many1 (letter <|> digit <|> oneOf "_") 
-spaceChar :: Char -> Parser String
-spaceChar c = char c >> stringSpaces
+spsChar c = sps >> char c
+charSps :: Char -> Parser String
+charSps c = char c >> sps
 pDataType :: Parser String
 pDataType = do
 	name <- ident
-	stringSpaces
+	sps
 	s <- many $ char '*'
 	return $ name ++ s
-pat = between (spaceChar '{') (char '}') 
+braces = between (charSps '{') (spsChar '}') 
+brackets = between (charSps '(') (spsChar ')') 
+
+stringSps s = string s >> sps
 
 pClass :: Parser Statement
 pClass = do
 	string "class" 
-	stringSpaces
+	sps
 	name <- ident
-	stringSpaces
+	sps
 	fields <- pClassFields
-	stringSpaces
+	sps
 	extends <- pExtends
-	stringSpaces
+	sps
 	body <- pClassBody
 	return $ Class {className = name, classFields = fields, extends = extends, classBody = body}
 
 pExtends = option (ExtendsNone) (do
 		string "extends"
-		stringSpaces
+		sps
 		cls <- ident
 		return $ Extends cls
 	)
 
 pClassBody :: Parser [Stm]
-pClassBody = option ([]) $ pat $ many pStm
+pClassBody = option ([]) $ braces $ many (do
+	stm <- pStm 
+	sps
+	return stm)
 
 pClassFields :: Parser [Decl]
-pClassFields = option [] $ between (spaceChar '(') (char ')') $ pDecl `sepBy` (spaceChar ',')
+pClassFields = option [] $ brackets $ pDeclPar `sepBy` (charSps ',')
 
 
 pDecl :: Parser Decl
-pDecl = do
-	mut <- mutableType
-	name <- ident
-	stringSpaces
-	char ':'
-	stringSpaces
-	dataType <- pDataType
-	stringSpaces
-	def <- option Nop (do 
-		char '=' 
-		stringSpaces 
-		e <- pExp
-		return e)
-	stringSpaces
-	return $ Decl{declName = name, declDataType = dataType, declMutableType = mut, declDef = def}
-
-mutableType = option Val (do
-	v <- (var <|> val)
-	stringSpaces1
+pDeclPar = pDecl' $ option Val (do
+	v <- (try(var) <|> val)
+	sps1
 	return v
 	)
+pDecl = pDecl' $ (do
+	v <- (try(var) <|> val)
+	sps1
+	return v
+	)
+
+pDecl' mtf = do
+	mut <- mtf
+	name <- ident
+	sps
+	char ':'
+	sps
+	dataType <- pDataType
+	sps
+	def <- option Nop (do 
+		char '=' 
+		sps 
+		e <- pExp
+		return e)
+	sps
+	return $ Decl{declName = name, declDataType = dataType, declMutableType = mut, declDef = def}
+
 val = string "val" >> return Val
 var = string "var" >> return Var
 
 pImport = do 
 	string "#import"
-	stringSpaces
+	sps
 	(pImportLib <|> pImportUser)
 
 pImportLib = do 
@@ -101,13 +114,98 @@ pImportUser = do
 	return $ CStatement $ C.Import lib
 
 pStm :: Parser Stm
-pStm = pDeclStm
+pStm = pDeclStm <|> pDef <?> "Class statement"
 
 pDeclStm = do 
 	decl <- pDecl 
 	return $ DeclStm decl
 
+pDef :: Parser Stm
+pDef = do
+	string "def"
+	sps1
+	name <- ident
+	sps
+	pars <- option [] (brackets (option [] (pDefPar `sepBy` (charSps ','))))
+	sps
+	ret <- option "void" (do
+		char ':'
+		sps
+		tp <- ident
+		return tp)
+	sps
+	option ' ' (char '=')
+	sps
+	body <- pExp
+	return $ Def name pars ret body
+
+pDefPar :: Parser Par
+pDefPar = do
+	name <- ident
+	sps
+	char ':'
+	sps
+	tp <- ident
+	return $ Par name tp
+
 pExp :: Parser Exp
-pExp = pIntConst
+pExp = pOp1
+pOp1 = pOp2 `chainl1` pDot
+pOp2 = pOp3 `chainl1` pEqOp 
+pOp3 = pTerm `chainl1` pSetOp
+pTerm :: Parser Exp
+pTerm = do
+	e <- pTerm'
+	sps
+	return e
+pTerm' = pIntConst <|> pBraces <|> pIf <|> pSelf <|> pCall  <?> "Expression"
 
 pIntConst = (many1 digit) >>= return . IntConst . read
+pBraces = braces (many (do 
+	e <- pExp
+	sps
+	return e)) >>= return . Braces
+pIf = do
+	string "if"
+	sps
+	char '('
+	sps
+	cond <- pExp
+	sps
+	char ')' <?> "Closing if bracket"
+	sps
+	i <- pExp
+	e <- option Nop (string "else" >> sps >> pExp)
+	sps
+	return $ If cond i e
+pSelf = try(string "self") >> return Self
+
+pDot :: Parser (Exp -> Exp -> Exp)
+pDot = stringSps "." >> return Dot
+
+pEqOp :: Parser (Exp -> Exp -> Exp)
+pEqOp = ((stringSps "!=" >> return NotEq) <|> (stringSps "==" >> return Eq))
+
+pSetOp = try(do
+	char '=' 
+	notFollowedBy $ char '='
+	sps
+	return Set)
+
+pCall = do
+	name <- ident
+	sps 
+	(do 
+		charSps '(' 
+		pars <- (pCallPar `sepBy` (charSps ','))
+		charSps ')' <?> "Function call close bracket"
+		return $ Call name pars) <|> (return $ Ref name)
+
+pCallPar = do
+	name <- ident
+	sps
+	char '='
+	sps
+	e <- pExp
+	sps
+	return (name, e)
