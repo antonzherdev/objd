@@ -31,7 +31,7 @@ stmToInterface (D.Class {D.className = name, D.classFields = fields, D.extends =
 fieldToProperty :: D.Decl -> C.Property
 fieldToProperty (D.Decl {D.declName = name, D.declDataType = dataType, D.declMutableType = mut}) = C.Property {
 	C.propertyName = name,
-	C.propertyType = dataType,
+	C.propertyType = show dataType,
 	C.propertyModifiers = case mut of 
 		D.Val -> [C.ReadOnly, C.NonAtomic]
 		D.Var -> [C.NonAtomic]
@@ -40,7 +40,7 @@ fieldToProperty (D.Decl {D.declName = name, D.declDataType = dataType, D.declMut
 initFun :: [D.Decl] -> C.Fun
 initFun [] = C.Fun C.InstanceFun "id" "init" []
 initFun decls = C.Fun C.InstanceFun "id" "initWith" (map (funPar) decls)
-funPar D.Decl {D.declName = name, D.declDataType = dataType} = C.FunPar name dataType name
+funPar D.Decl {D.declName = name, D.declDataType = dataType} = C.FunPar name (show dataType) name
 
 createFun :: String -> [D.Decl] -> C.Fun
 createFun clsName [] = C.Fun C.ObjectFun "id" (createFunName clsName) []
@@ -68,7 +68,7 @@ intefaceFuns = map stm2Fun . filter isDef
 
 stm2Fun :: D.Stm -> C.Fun
 stm2Fun D.Def {D.defName = name, D.defPars = pars, D.defRetType = ret, D.defBody = body} = 
-	C.Fun {C.funType = C.InstanceFun, C.funReturnType = ret, C.funName = name, C.funPars = map par pars}
+	C.Fun {C.funType = C.InstanceFun, C.funReturnType = show ret, C.funName = name, C.funPars = map par pars}
 	where
 		par (D.Par name tp) = C.FunPar name tp name
 
@@ -88,7 +88,7 @@ stmToImpl (D.Class {D.className = name, D.classFields = fields, D.classBody = bo
 synthenize D.Decl{D.declName = x} = C.ImplSynthenyze x ("_" ++ x)
 
 implInit decls body = C.ImplFun (initFun decls) (
-	[C.Set "self" (C.Call C.Super "init" [])]
+	[C.Set C.Self (C.Call C.Super "init" [])]
 	++ implInitFields (decls ++ (bodyDecls body))
 	++ [C.Nop, C.Return C.Self]
 	)
@@ -96,8 +96,8 @@ implInit decls body = C.ImplFun (initFun decls) (
 implInitFields :: [D.Decl] -> [C.Stm]
 implInitFields [] = []
 implInitFields decls = [C.If C.Self (map (implInitField) decls) []]
-implInitField D.Decl {D.declName = name, D.declDef = D.Nop} = C.Set ("_" ++ name) (C.Ref name)
-implInitField D.Decl {D.declName = name, D.declDef = def} = C.Set ("_" ++ name) (tExp def)
+implInitField D.Decl {D.declName = name, D.declDef = D.Nop} = C.Set (C.Ref $ "_" ++ name) (C.Ref name)
+implInitField D.Decl {D.declName = name, D.declDef = def} = C.Set (C.Ref $ "_" ++ name) (tExp def)
 
 implCreate clsName decls = C.ImplFun (createFun clsName decls) [C.Return 
 		(C.Call
@@ -124,6 +124,12 @@ tExp (D.IntConst i) = C.IntConst i
 tExp (D.Eq l r) = C.Eq (tExp l) (tExp r)
 tExp (D.NotEq l r) = C.NotEq (tExp l) (tExp r)
 
+tExp (D.Dot l (D.Ref r _)) = C.Dot (tExp l) r
+tExp (D.Dot l (D.Call name pars)) = C.Call (tExp l) name (map (\(nm, e) -> (nm, tExp e)) pars)
+
+tExp (D.Self) = C.Self
+tExp (D.Ref r _) = C.Ref r
+
 tExp x = error $ "No tExp for " ++ show x
 
 tStm :: D.Exp -> [C.Stm]
@@ -135,4 +141,6 @@ tStm (D.Braces xs) = concatMap tStm xs
 
 tStm (D.If cond t f) = [C.If (tExp cond) (tStm t) (tStm f)]
 
-tStm x = error $ "No tStm for " ++ show x
+tStm (D.Set l r) = [C.Set (tExp l) (tExp r)]
+
+tStm x = [C.Stm $ tExp x]

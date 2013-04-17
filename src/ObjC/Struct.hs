@@ -37,7 +37,7 @@ data FunPar = FunPar {funParName :: String, funParDataType :: String, funParVar 
 
 data Stm = 
 	If Exp [Stm] [Stm]
-	| Set String Exp
+	| Set Exp Exp
 	| Stm Exp
 	| Return Exp
 	| Nop
@@ -48,4 +48,5 @@ data Exp =
 	| Ref String
 	| IntConst Int
 	| Eq Exp Exp | NotEq Exp Exp
+	| Dot Exp String
 	

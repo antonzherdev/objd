@@ -63,12 +63,17 @@ instance Show PropertyModifier where
 	show ReadOnly = "readonly"
 	show NonAtomic = "nonatomic"
 
+showOp l op r = show l ++ " " ++ op ++ " " ++ show r
+showOp' l op r = show l ++ op ++ show r
 instance Show Exp where
 	show Self = "self"
 	show Super = "super"
 	show (Call inst name pars) = "[" ++ show inst ++ " " ++ name ++ (strs " " . map (\(name, e) -> name ++ ":" ++ show e)) pars ++ "]"
 	show (Ref name) = name
 	show (IntConst i) = show i
+	show (Eq l r) = showOp l "==" r
+	show (NotEq l r) = showOp l "!=" r
+	show (Dot l r) = show l ++ "." ++ r
 	
 instance Show Stm where
 	show s = unlines $ stmLines s
@@ -80,7 +85,7 @@ stmLines (If cond t f) =
 	++ (case f of
 		[] -> []
 		ff -> ["else {"] ++ stms ff ++ ["}"])
-stmLines (Set name e) = [name ++ " = " ++ show e ++ ";"]
+stmLines (Set l r) = [show l ++ " = " ++ show r ++ ";"]
 stmLines (Stm e) = [show e ++ ";"]
 stmLines (Return e) = ["return " ++ show e ++ ";"]
 stmLines (Nop) = [""]

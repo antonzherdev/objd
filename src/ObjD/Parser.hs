@@ -24,12 +24,12 @@ ident = many1 (letter <|> digit <|> oneOf "_")
 spsChar c = sps >> char c
 charSps :: Char -> Parser String
 charSps c = char c >> sps
-pDataType :: Parser String
+pDataType :: Parser DataType
 pDataType = do
 	name <- ident
 	sps
-	s <- many $ char '*'
-	return $ name ++ s
+	r <- many $ charSps '*'
+	return $ foldl (\r _ -> DataTypeRef r) (DataType name) r
 braces = between (charSps '{') (spsChar '}') 
 brackets = between (charSps '(') (spsChar ')') 
 
@@ -128,10 +128,10 @@ pDef = do
 	sps
 	pars <- option [] (brackets (option [] (pDefPar `sepBy` (charSps ','))))
 	sps
-	ret <- option "void" (do
+	ret <- option (DataType "void") (do
 		char ':'
 		sps
-		tp <- ident
+		tp <- pDataType
 		return tp)
 	sps
 	option ' ' (char '=')
@@ -150,9 +150,9 @@ pDefPar = do
 
 pExp :: Parser Exp
 pExp = pOp1
-pOp1 = pOp2 `chainl1` pDot
-pOp2 = pOp3 `chainl1` pEqOp 
-pOp3 = pTerm `chainl1` pSetOp
+pOp1 = pOp2 `chainl1` pEqOp
+pOp2 = pOp3 `chainl1` pSetOp 
+pOp3 = pTerm `chainl1` pDot
 pTerm :: Parser Exp
 pTerm = do
 	e <- pTerm'
@@ -199,7 +199,7 @@ pCall = do
 		charSps '(' 
 		pars <- (pCallPar `sepBy` (charSps ','))
 		charSps ')' <?> "Function call close bracket"
-		return $ Call name pars) <|> (return $ Ref name)
+		return $ Call name pars) <|> (return $ Ref name Nothing)
 
 pCallPar = do
 	name <- ident

@@ -5,13 +5,14 @@ module ObjD.Struct (
 	Extends(..),
 	Stm(..),
 	Exp(..),
-	Par(..)
+	Par(..),
+	DataType(..)
 ) where
 
 import qualified ObjC.Struct as C
 
 
-data Decl = Decl {declMutableType :: MutableType, declName :: String, declDataType :: String, declDef :: Exp}
+data Decl = Decl {declMutableType :: MutableType, declName :: String, declDataType :: DataType, declDef :: Exp}
 
 data MutableType = Var | Val
 
@@ -22,7 +23,7 @@ data Statement =
 data Extends = ExtendsNone | Extends String 
 
 data Stm = DeclStm Decl 
-	| Def {defName :: String, defPars :: [Par], defRetType :: String, defBody :: Exp}
+	| Def {defName :: String, defPars :: [Par], defRetType :: DataType, defBody :: Exp}
 data Par = Par { parName :: String, parType :: String }
 
 data Exp = Nop | IntConst Int | Braces [Exp]
@@ -30,6 +31,10 @@ data Exp = Nop | IntConst Int | Braces [Exp]
 	| Self
 	| NotEq Exp Exp | Eq Exp Exp
 	| Dot Exp Exp
-	| Ref String
+	| Ref String (Maybe RefSource)
 	| Set Exp Exp
 	| Call String [(String, Exp)]
+
+data DataType = DataType String | DataTypeRef DataType
+
+data RefSource = RefSourcePar DataType
