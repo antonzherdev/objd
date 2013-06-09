@@ -12,27 +12,31 @@ import qualified ObjD.Text as D
 import qualified ObjD.Index as I
 
 
-toObjC :: I.Index -> [D.Statement] -> ([C.Statement], [C.Statement])
-toObjC idx stms = (map(stmToInterface) stms, map(stmToImpl) stms)
+toObjC :: I.File -> [D.Statement] -> ([C.Statement], [C.Statement])
+toObjC idx stms = (map(stmToInterface idx) stms, map(stmToImpl idx) stms)
 
 {- Interface -}
 
-stmToInterface :: D.Statement -> C.Statement
-stmToInterface (D.Class {D.className = name, D.classFields = fields, D.extends = extends, D.classBody = body}) = C.Interface {
-	C.interfaceName = name,
-	C.extends = case extends of 
-		D.ExtendsNone -> "NSObject"
-		D.Extends e -> e,
-	C.properties = map (fieldToProperty) fields ++ bodyProps body,
-	C.funs = [createFun name fields, initFun fields]
-		++ (intefaceFuns body)
-}
+stmToInterface :: I.File -> D.Statement -> C.Statement
+stmToInterface idx (D.Class {D.className = name, D.classFields = fields, D.extends = extends, D.classBody = body}) = 
+	let 
+		cls = I.getClass name idx
+	in do
+	C.Interface {
+		C.interfaceName = name,
+		C.extends = case extends of 
+			D.ExtendsNone -> "NSObject"
+			D.Extends e -> e,
+		C.properties = map (fieldToProperty cls) fields ++ bodyProps cls body,
+		C.funs = [createFun name fields, initFun fields]
+			++ (intefaceFuns cls body)
+	}
 
 
-fieldToProperty :: D.Decl -> C.Property
-fieldToProperty (D.Decl {D.declName = name, D.declDataType = dataType, D.declMutableType = mut}) = C.Property {
+fieldToProperty :: I.Class -> D.Decl -> C.Property
+fieldToProperty idx (D.Decl {D.declName = name, D.declDataType = dataType, D.declMutableType = mut}) = C.Property {
 	C.propertyName = name,
-	C.propertyType = show dataType,
+	C.propertyType = show (I.getFieldType name idx),
 	C.propertyModifiers = case mut of 
 		D.Val -> [C.ReadOnly, C.NonAtomic]
 		D.Var -> [C.NonAtomic]
@@ -59,32 +63,36 @@ bodyDecls = map toDecl . filter isDecl
 		isDecl (D.DeclStm _ ) = True
 		isDecl _ = False
 		toDecl (D.DeclStm d) = d
-bodyProps = map (fieldToProperty) . bodyDecls 
+bodyProps idx = map (fieldToProperty idx) . bodyDecls 
 
 isDef (D.Def _ _ _ _) = True
 isDef _ = False
 
-intefaceFuns :: [D.Stm] -> [C.Fun]
-intefaceFuns = map stm2Fun . filter isDef
+intefaceFuns :: I.Class -> [D.Stm] -> [C.Fun]
+intefaceFuns idx = map (stm2Fun idx) . filter isDef
 
-stm2Fun :: D.Stm -> C.Fun
-stm2Fun D.Def {D.defName = name, D.defPars = pars, D.defRetType = ret, D.defBody = body} = 
-	C.Fun {C.funType = C.InstanceFun, C.funReturnType = show ret, C.funName = name, C.funPars = map par pars}
+stm2Fun :: I.Class ->  D.Stm -> C.Fun
+stm2Fun idx def@D.Def{D.defName = name, D.defPars = pars, D.defBody = body} = 
+	C.Fun {C.funType = C.InstanceFun, C.funReturnType = show (I.getFieldType (D.stmName def) idx), C.funName = name, C.funPars = map par pars}
 	where
 		par (D.Par name tp) = C.FunPar name tp name
 
 {- Implementation -}
 
-stmToImpl :: D.Statement -> C.Statement
-stmToImpl (D.Class {D.className = name, D.classFields = fields, D.classBody = body}) = C.Implementation {
-	C.implName = name,
-	C.implFields = [],
-	C.implSynthenyzes = map (synthenize) (fields ++ (bodyDecls body)),
-	C.implFuns = 
-		[implCreate name fields] ++
-		[implInit fields body] ++
-		implFuns body
-}
+stmToImpl :: I.File -> D.Statement -> C.Statement
+stmToImpl idx (D.Class {D.className = name, D.classFields = fields, D.classBody = body}) = 
+	let
+		cls = I.getClass name idx
+	in do
+	C.Implementation {
+		C.implName = name,
+		C.implFields = [],
+		C.implSynthenyzes = map (synthenize) (fields ++ (bodyDecls body)),
+		C.implFuns = 
+			[implCreate name fields] ++
+			[implInit fields body] ++
+			implFuns cls body
+	}
 
 synthenize D.Decl{D.declName = x} = C.ImplSynthenyze x ("_" ++ x)
 
@@ -114,11 +122,11 @@ implCreate clsName decls = C.ImplFun (createFun clsName decls) [C.Return
 	where 
 		pars D.Decl{D.declName = name} = (name, C.Ref name)
 
-implFuns = map stm2ImplFun . filter isDef
+implFuns idx = map (stm2ImplFun idx) . filter isDef
 
-stm2ImplFun :: D.Stm -> C.ImplFun
-stm2ImplFun def@D.Def {D.defBody = body} = 
-	C.ImplFun (stm2Fun def) (tStm body)
+stm2ImplFun :: I.Class -> D.Stm -> C.ImplFun
+stm2ImplFun idx def@D.Def {D.defBody = body} = 
+	C.ImplFun (stm2Fun idx def) (tStm body)
 {- Exp -}
 tExp :: D.Exp -> C.Exp
 tExp (D.IntConst i) = C.IntConst i

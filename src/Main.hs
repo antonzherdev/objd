@@ -5,7 +5,7 @@ import ObjD.ToObjC
 import ObjC.Text
 import ObjD.Text
 import ObjD.Parser
-import qualified ObjD.Index as Index
+import qualified ObjD.Index as I
 
 
 {- main::IO()
@@ -30,8 +30,8 @@ main =
 		od <- (case parseFile txt  of
 			Left err -> error $ show err
 			Right val -> return val)
-		idx <- Index.build [("main", od)]
-		(int, impl) <- return $ toObjC idx od
+		idx <-  I.build [("main", od)]
+		(int, impl) <- return $ toObjC (I.getFile "main" idx) od
 		putStrLn $ unlines $ map (show) int
 		putStrLn $ unlines $ map (show) impl
 
