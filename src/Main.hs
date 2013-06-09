@@ -5,6 +5,7 @@ import ObjD.ToObjC
 import ObjC.Text
 import ObjD.Text
 import ObjD.Parser
+import qualified ObjD.Index as Index
 
 
 {- main::IO()
@@ -15,7 +16,7 @@ main =
 	let 
 		txt = 
 			"class CRSwitch(form1 : CRailForm*, form2 : CRRailForm*, tile : CEIPoint) extends CECtrl {\n\
-			\   var state : int = 0\n\
+			\   var state = 0\n\
 			\ \n\
 			\   def set(state : int) {\n\
 			\      if(self.state == state) {\n\
@@ -24,11 +25,13 @@ main =
 			\      }\n\
 			\   }\n\
 			\}"
-		(int, impl) = toObjC $ case parseFile txt  of
-			Left err -> error $ show err
-			Right val -> val
 	in do 
 		putStrLn txt
+		od <- (case parseFile txt  of
+			Left err -> error $ show err
+			Right val -> return val)
+		idx <- Index.build [("main", od)]
+		(int, impl) <- return $ toObjC idx od
 		putStrLn $ unlines $ map (show) int
 		putStrLn $ unlines $ map (show) impl
 

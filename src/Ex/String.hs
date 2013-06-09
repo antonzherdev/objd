@@ -1,5 +1,7 @@
 module Ex.String(mkString, strs, strs', MultiLineShow(..)) where
 
+import qualified Data.Map as Map 
+
 mkString :: (a -> String) -> String -> [a] -> String
 mkString _ _ [] = ""
 mkString f _ [x] = f x

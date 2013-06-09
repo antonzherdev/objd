@@ -17,5 +17,5 @@ cabal-version:       >=1.8
 executable ObjD
   main-is:             Main.hs
   hs-source-dirs:      src
-  other-modules:       ObjC.Struct, ObjC.Text, ObjD.Struct, ObjD.Text, ObjD.ToObjC, ObjD.Parser
-  build-depends:       base ==4.5.*, parsec
+  other-modules:       ObjC.Struct, ObjC.Text, ObjD.Struct, ObjD.Text, ObjD.ToObjC, ObjD.Parser, ObjD.Index
+  build-depends:       base ==4.5.*, parsec, containers

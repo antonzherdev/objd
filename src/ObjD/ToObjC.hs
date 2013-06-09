@@ -9,10 +9,11 @@ import Data.Char
 import qualified ObjC.Struct as C
 import qualified ObjD.Struct as D
 import qualified ObjD.Text as D
+import qualified ObjD.Index as I
 
 
-toObjC :: [D.Statement] -> ([C.Statement], [C.Statement])
-toObjC stms = (map(stmToInterface) stms, map(stmToImpl) stms)
+toObjC :: I.Index -> [D.Statement] -> ([C.Statement], [C.Statement])
+toObjC idx stms = (map(stmToInterface) stms, map(stmToImpl) stms)
 
 {- Interface -}
 
@@ -124,11 +125,11 @@ tExp (D.IntConst i) = C.IntConst i
 tExp (D.Eq l r) = C.Eq (tExp l) (tExp r)
 tExp (D.NotEq l r) = C.NotEq (tExp l) (tExp r)
 
-tExp (D.Dot l (D.Ref r _)) = C.Dot (tExp l) r
+tExp (D.Dot l (D.Ref r)) = C.Dot (tExp l) r
 tExp (D.Dot l (D.Call name pars)) = C.Call (tExp l) name (map (\(nm, e) -> (nm, tExp e)) pars)
 
 tExp (D.Self) = C.Self
-tExp (D.Ref r _) = C.Ref r
+tExp (D.Ref r) = C.Ref r
 
 tExp x = error $ "No tExp for " ++ show x
 

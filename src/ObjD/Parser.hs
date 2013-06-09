@@ -81,9 +81,11 @@ pDecl' mtf = do
 	mut <- mtf
 	name <- ident
 	sps
-	char ':'
-	sps
-	dataType <- pDataType
+	dataType <- optionMaybe (do
+		char ':'
+		sps
+		dt <- pDataType
+		return dt)
 	sps
 	def <- option Nop (do 
 		char '=' 
@@ -128,7 +130,7 @@ pDef = do
 	sps
 	pars <- option [] (brackets (option [] (pDefPar `sepBy` (charSps ','))))
 	sps
-	ret <- option (DataType "void") (do
+	ret <- optionMaybe (do
 		char ':'
 		sps
 		tp <- pDataType
@@ -199,7 +201,7 @@ pCall = do
 		charSps '(' 
 		pars <- (pCallPar `sepBy` (charSps ','))
 		charSps ')' <?> "Function call close bracket"
-		return $ Call name pars) <|> (return $ Ref name Nothing)
+		return $ Call name pars) <|> (return $ Ref name)
 
 pCallPar = do
 	name <- ident

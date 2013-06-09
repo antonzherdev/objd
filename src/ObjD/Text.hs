@@ -28,7 +28,7 @@ instance Show Exp where
 	show (NotEq l r) = showOp l "!=" r
 	show (Eq l r) = showOp l "==" r
 	show (Dot l r) = showOp' l "." r
-	show (Ref s _) = s
+	show (Ref s) = s
 	show (Set l r) = showOp l "=" r
 	show (Call n pars) = n ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
 		where
