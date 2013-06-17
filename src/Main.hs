@@ -28,7 +28,7 @@ main =
 		od <- (case parseFile txt  of
 			Left err -> error $ show err
 			Right val -> return val)
-		idx <-  I.build [("main", od)]
+		idx <-  I.build [File "main" od]
 		(int, impl) <- return $ toObjC (I.getFile "main" idx) od
 		putStrLn $ unlines $ map (show) int
 		putStrLn $ unlines $ map (show) impl

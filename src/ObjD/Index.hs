@@ -10,8 +10,6 @@ import qualified ObjD.Struct             as D
 
 type Map = Map.Map
 
-type Sources = [(String, [D.FileStm])]
-
 type Index = Map String File
 data File = File (Map String Class)
 data Class = Class ClassFieldsIndex
@@ -41,16 +39,17 @@ data BFile = BFile {bClass :: Map String BClass}
 type BClass = Map String BDesc
 data BDesc = BDesc D.ClassStm (MVar (Maybe Type))
 
-build :: Sources -> IO Index
+build :: D.Sources -> IO Index
 build src = do
 	index <- buildB src
 	bToIndex index
 toMap :: (Functor m, Ord k) => m [(k, a)] -> m (Map k a)
 toMap = fmap Map.fromList
 
-buildB :: Sources -> IO BIndex
-buildB src =  toMap $ mapM (idx fileIndex) src
+buildB :: D.Sources -> IO BIndex
+buildB src =  toMap $ mapM (idx fileIndex . tuple) src
 	where
+		tuple (D.File name stms) = (name, stms)
 		idx :: (a -> IO b) -> (String, a) -> IO (String, b)
 		idx f (k, v) = f v >>= (\b -> return (k, b))
 		fileIndex :: [D.FileStm] -> IO BFile

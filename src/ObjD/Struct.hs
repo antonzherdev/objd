@@ -7,12 +7,17 @@ module ObjD.Struct (
 	Exp(..),
 	Par(..),
 	DataType(..),
+	File(..),
+	Sources,
 	isClass,
 	stmName,
 	isDef
 ) where
 import           Ex.String
 
+type Sources = [File]
+
+data File = File {fileName :: String, fileStms :: [FileStm]}
 
 data Decl = Decl {declMutableType :: MutableType, declName :: String, declDataType :: Maybe DataType, declDef :: Exp}
 
