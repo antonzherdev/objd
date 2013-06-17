@@ -2,8 +2,6 @@ module Main where
 
 import ObjD.Struct
 import ObjD.ToObjC
-import ObjC.Text
-import ObjD.Text
 import ObjD.Parser
 import qualified ObjD.Index as I
 
