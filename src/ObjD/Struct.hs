@@ -1,9 +1,9 @@
 module ObjD.Struct (
 	Decl(..),
-	Statement(..),
+	FileStm(..),
 	MutableType(..),
 	Extends(..),
-	Stm(..),
+	ClassStm(..),
 	Exp(..),
 	Par(..),
 	DataType(..),
@@ -12,31 +12,30 @@ module ObjD.Struct (
 	isDef
 ) where
 import           Ex.String
-import qualified ObjC.Struct as C
 
 
 data Decl = Decl {declMutableType :: MutableType, declName :: String, declDataType :: Maybe DataType, declDef :: Exp}
 
 data MutableType = Var | Val
 
-data Statement =
-	CStatement C.Statement
-	| Class { className :: String, classFields :: [Decl], classExtends :: Extends, classBody :: [Stm] }
-isClass :: Statement -> Bool
+data FileStm =
+	Import String 
+	| Class { className :: String, classFields :: [Decl], classExtends :: Extends, classBody :: [ClassStm] }
+isClass :: FileStm -> Bool
 isClass (Class {}) = True
 isClass _ = False
 
 
 data Extends = ExtendsNone | Extends String
 
-data Stm = DeclStm Decl
+data ClassStm = DeclStm Decl
 	| Def {defName :: String, defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
-stmName :: Stm -> String
+stmName :: ClassStm -> String
 stmName (DeclStm d) = declName d
 stmName (Def name [] _ _) = name
 stmName (Def name pars _ _) = name ++ " " ++ unwords (map parName pars)
 
-isDef :: Stm -> Bool
+isDef :: ClassStm -> Bool
 isDef Def {} = True
 isDef _ = False
 
@@ -60,9 +59,8 @@ ind = ("    " ++ )
 instance Show Decl where
 	show (Decl{declName = name, declDataType = dataType}) = show dataType ++ " " ++ name
 
-instance Show Statement where
+instance Show FileStm where
 	show (Class{className = name, classFields = fields}) = "class " ++ name ++  "(" ++ strs' ", " fields ++ ")"
-	show (CStatement stm) = show stm
 
 instance Show DataType where
 	show (DataType s) = s

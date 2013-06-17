@@ -1,7 +1,7 @@
 module ObjC.Struct
 ( Property(..),
   PropertyModifier(..),
-  Statement(..),
+  FileStm(..),
   ImplSynthenyze(..),
   ImplFun(..),
   Fun(..),
@@ -18,7 +18,7 @@ import           Ex.String
 
 
 
-data Statement =
+data FileStm =
 	Import String | ImportLib String
 	| Interface { interfaceName :: String, interfaceExtends :: String, interfaceProperties :: [Property], interfaceFuns :: [Fun] }
 	| Implementation {implName :: String, implFields :: [ImplField], implSynthenyzes :: [ImplSynthenyze], implFuns :: [ImplFun]}
@@ -65,7 +65,7 @@ unlines' [] = ""
 unlines' a = unlines a ++ "\n"
 
 
-instance Show Statement where
+instance Show FileStm where
 	show (Import s) = "#import \"" ++ s ++ "\""
 	show (ImportLib s) = "#import <" ++ s ++ ">"
 	show (Interface name extends properties funs) =

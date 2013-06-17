@@ -10,7 +10,7 @@ import qualified ObjD.Struct             as D
 
 type Map = Map.Map
 
-type Sources = [(String, [D.Statement])]
+type Sources = [(String, [D.FileStm])]
 
 type Index = Map String File
 data File = File (Map String Class)
@@ -39,7 +39,7 @@ instance Show Type where
 type BIndex = Map String BFile
 data BFile = BFile {bClass :: Map String BClass}
 type BClass = Map String BDesc
-data BDesc = BDesc D.Stm (MVar (Maybe Type))
+data BDesc = BDesc D.ClassStm (MVar (Maybe Type))
 
 build :: Sources -> IO Index
 build src = do
@@ -53,9 +53,9 @@ buildB src =  toMap $ mapM (idx fileIndex) src
 	where
 		idx :: (a -> IO b) -> (String, a) -> IO (String, b)
 		idx f (k, v) = f v >>= (\b -> return (k, b))
-		fileIndex :: [D.Statement] -> IO BFile
+		fileIndex :: [D.FileStm] -> IO BFile
 		fileIndex stms = fmap BFile $ toMap $ mapM (idx classIndex . (\cls -> (D.className cls, cls))) $ filter D.isClass stms
-		classIndex :: D.Statement -> IO BClass
+		classIndex :: D.FileStm -> IO BClass
 		classIndex (D.Class _ fields _ body) = toMap $ mapM (\stm -> newMVar Nothing >>= (\v ->
 			return (D.stmName stm, BDesc stm v))) $ map D.DeclStm fields ++ body
 
@@ -83,7 +83,7 @@ calcFieldType idx (BDesc field dt) = withMVar dt (\ o -> case o of
 	Just x -> return x
 	Nothing -> calcStmType idx field)
 
-calcStmType :: BIndex -> D.Stm -> IO Type
+calcStmType :: BIndex -> D.ClassStm -> IO Type
 calcStmType idx (D.DeclStm (D.Decl {D.declDataType = (Just dt)})) = return $ toType idx dt
 calcStmType idx (D.DeclStm (D.Decl {D.declDef = e})) = getExpType idx e
 calcStmType idx (D.Def {D.defRetType = (Just dt)}) = return $ toType idx dt

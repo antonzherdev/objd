@@ -12,12 +12,12 @@ import qualified ObjD.Index    as I
 import qualified ObjD.Struct   as D
 
 
-toObjC :: I.File -> [D.Statement] -> ([C.Statement], [C.Statement])
+toObjC :: I.File -> [D.FileStm] -> ([C.FileStm], [C.FileStm])
 toObjC idx stms = (map(stmToInterface idx) stms, map(stmToImpl idx) stms)
 
 {- Interface -}
 
-stmToInterface :: I.File -> D.Statement -> C.Statement
+stmToInterface :: I.File -> D.FileStm -> C.FileStm
 stmToInterface idx (D.Class {D.className = name, D.classFields = fields, D.classExtends = extends, D.classBody = body}) =
 	C.Interface {
 		C.interfaceName = name,
@@ -61,7 +61,7 @@ createFunName (x1:x2:xs)
 	| otherwise = x1 : x2 : xs
 
 
-bodyDecls :: [D.Stm] -> [D.Decl]
+bodyDecls :: [D.ClassStm] -> [D.Decl]
 bodyDecls = map toDecl . filter isDecl
 	where
 		isDecl (D.DeclStm _ ) = True
@@ -69,10 +69,10 @@ bodyDecls = map toDecl . filter isDecl
 		toDecl (D.DeclStm d) = d
 
 
-intefaceFuns :: I.Class -> [D.Stm] -> [C.Fun]
+intefaceFuns :: I.Class -> [D.ClassStm] -> [C.Fun]
 intefaceFuns idx = map (stm2Fun idx) . filter D.isDef
 
-stm2Fun :: I.Class ->  D.Stm -> C.Fun
+stm2Fun :: I.Class ->  D.ClassStm -> C.Fun
 stm2Fun idx def@D.Def{D.defName = name, D.defPars = pars} =
 	C.Fun {C.funType = C.InstanceFun, C.funReturnType = show (I.getFieldType (D.stmName def) idx), C.funName = name, C.funPars = map par pars}
 	where
@@ -80,7 +80,7 @@ stm2Fun idx def@D.Def{D.defName = name, D.defPars = pars} =
 
 {- Implementation -}
 
-stmToImpl :: I.File -> D.Statement -> C.Statement
+stmToImpl :: I.File -> D.FileStm -> C.FileStm
 stmToImpl idx (D.Class {D.className = clsName, D.classFields = fields, D.classBody = body}) =
 	C.Implementation {
 		C.implName = clsName,

@@ -3,21 +3,20 @@ module ObjD.Parser(
 ) where
 
 import           Control.Monad
-import qualified ObjC.Struct                   as C
 import           ObjD.Struct
 import           Text.ParserCombinators.Parsec
 
 
-parseFile :: String -> Either ParseError [Statement]
+parseFile :: String -> Either ParseError [FileStm]
 parseFile = parse pFile "ObjD"
 
-pFile :: Parser [Statement]
+pFile :: Parser [FileStm]
 pFile = many pStatement
 
-parseStatement :: String -> Either ParseError Statement
+parseStatement :: String -> Either ParseError FileStm
 parseStatement = parse pStatement "ObjD"
 
-pStatement :: Parser Statement
+pStatement :: Parser FileStm
 pStatement = pImport <|> pClass
 
 sps :: Parser String
@@ -45,7 +44,7 @@ brackets = between (charSps '(') (spsChar ')')
 stringSps :: String -> Parser String
 stringSps s = string s >> sps
 
-pClass :: Parser Statement
+pClass :: Parser FileStm
 pClass = do
 	string "class"
 	sps
@@ -65,7 +64,7 @@ pClass = do
 			return $ Extends cls
 		)
 
-pClassBody :: Parser [Stm]
+pClassBody :: Parser [ClassStm]
 pClassBody = option [] $ braces $ many (do
 	stm <- pStm
 	sps
@@ -101,7 +100,7 @@ pDecl' mtf = do
 		val = string "val" >> return Val
 		var = string "var" >> return Var
 
-pImport :: Parser Statement
+pImport :: Parser FileStm
 pImport = do
 	string "#import"
 	sps
@@ -111,21 +110,21 @@ pImport = do
 		char '<'
 		lib <- ident
 		char '>'
-		return $ CStatement $ C.ImportLib lib
+		return $ Import lib
 	pImportUser = do
 		char '"'
 		lib <- ident
 		char '"'
-		return $ CStatement $ C.Import lib
+		return $ Import lib
 
-pStm :: Parser Stm
+pStm :: Parser ClassStm
 pStm = pDeclStm <|> pDef <?> "Class statement"
 	where
 	pDeclStm = do
 		decl <- pDecl
 		return $ DeclStm decl
 
-pDef :: Parser Stm
+pDef :: Parser ClassStm
 pDef = do
 	string "def"
 	sps1
