@@ -129,6 +129,18 @@ file fidx (D.File name stms) = fl
 type ClassIndex = M.Map String Class
 data Env = Env{envSelf :: Class, envIndex :: ClassIndex, envVals :: M.Map String EnvDecl}
 data EnvDecl = EnvDeclPar Par
+envAddVals :: [EnvDecl] -> Env -> Env 
+envAddVals decls Env {envSelf = self, envIndex = cidx, envVals = vals} = 
+	Env{envSelf = self, envIndex = cidx, envVals = vals `M.union` newVals}
+	where
+		newVals = M.fromList $ map (\ d -> (envDeclName d, d)) decls
+envClearVals :: Env -> Env
+envClearVals env
+	| M.null (envVals env) = env
+	| otherwise = Env{envSelf = envSelf env, envIndex = envIndex env, envVals = M.empty}
+
+envDeclName :: EnvDecl -> String
+envDeclName (EnvDeclPar Par{parName = name}) = name
 
 findTp :: String -> M.Map String a -> String -> a
 findTp tp mmm name =  M.findWithDefault (error $ "No " ++ tp ++ " found " ++ name) name mmm
@@ -163,10 +175,14 @@ field D.Decl {D.isDeclMutable = mut, D.declName = name, D.declDataType = tp, D.d
 def :: D.ClassStm -> State Env Def
 def D.Def{D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = do
 	env <- get
-	b <- expr body
-	return Def {defName = name,
-		defPars = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Par pnm (dataType (envIndex env) ttt) Nop) opars,
-		defType = getDataType env tp b, defBody = b}
+	let pars = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Par pnm (dataType (envIndex env) ttt) Nop) opars
+		in do 
+			modify $ envAddVals (map EnvDeclPar pars)
+			b <- expr body
+			put env
+			return Def {defName = name,
+				defPars = pars,
+				defType = getDataType env tp b, defBody = b} 
 
 getDataType :: Env -> Maybe D.DataType -> Exp -> DataType
 getDataType env tp e = maybe (exprDataType e) (dataType (envIndex env)) tp
@@ -198,7 +214,10 @@ expr (D.NotEq a b) = do
 	return $ NotEq aa bb
 expr (D.Dot a b) = do
 	aa <- expr a
+	env <- get
+	modify envClearVals
 	bb <- expr b
+	put env
 	return $ Dot aa bb
 expr (D.Set a b) = do
 	aa <- expr a

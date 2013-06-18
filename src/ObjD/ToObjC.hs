@@ -112,11 +112,13 @@ tExp (D.IntConst i) = C.IntConst i
 tExp (D.Eq l r) = C.Eq (tExp l) (tExp r)
 tExp (D.NotEq l r) = C.NotEq (tExp l) (tExp r)
 
+tExp (D.Dot D.Self (D.FieldRef D.Field {D.fieldName = r} )) = C.Ref $ '_' : r
 tExp (D.Dot l (D.FieldRef D.Field {D.fieldName = r} )) = C.Dot (tExp l) r
 tExp (D.Dot l (D.Call D.Def{D.defName = name} pars)) = C.Call (tExp l) name (map (first D.parName . second tExp) pars)
 
 tExp (D.Self) = C.Self
-tExp (D.FieldRef D.Field {D.fieldName = r}) = C.Ref r
+tExp (D.FieldRef D.Field {D.fieldName = r}) = C.Ref $ '_' : r
+tExp (D.ParRef D.Par {D.parName = r}) = C.Ref $ r
 
 tExp x = error $ "No tExp for " ++ show x
 
