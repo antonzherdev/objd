@@ -11,13 +11,16 @@ parseFile :: String -> Either ParseError [FileStm]
 parseFile = parse pFile "ObjD"
 
 pFile :: Parser [FileStm]
-pFile = many pStatement
+pFile = do
+	res <- many pStatement
+	eof
+	return res
 
 parseStatement :: String -> Either ParseError FileStm
 parseStatement = parse pStatement "ObjD"
 
 pStatement :: Parser FileStm
-pStatement = pImport <|> pClass
+pStatement = pImport <|> pClass <|> pStub
 
 sps :: Parser String
 sps = many (char ' ' <|> char '\t'  <|> char '\n') <?> ""
@@ -44,6 +47,18 @@ brackets = between (charSps '(') (spsChar ')')
 stringSps :: String -> Parser String
 stringSps s = string s >> sps
 
+pStub :: Parser FileStm
+pStub = do
+	string "stub"
+	sps
+	name <- ident
+	sps
+	extends <- pExtends
+	sps
+	body <- pClassBody
+	sps
+	return Stub {className = name, classExtends = extends, classBody = body}
+
 pClass :: Parser FileStm
 pClass = do
 	string "class"
@@ -55,14 +70,15 @@ pClass = do
 	extends <- pExtends
 	sps
 	body <- pClassBody
+	sps
 	return Class {className = name, classFields = fields, classExtends = extends, classBody = body}
-	where
-	pExtends = option ExtendsNone (do
-			string "extends"
-			sps
-			cls <- ident
-			return $ Extends cls
-		)
+
+pExtends :: Parser Extends
+pExtends = optionMaybe (do
+		string "extends"
+		sps
+		ident
+	)
 
 pClassBody :: Parser [ClassStm]
 pClassBody = option [] $ braces $ many (do
@@ -75,11 +91,11 @@ pClassFields = option [] $ brackets $ pDeclPar `sepBy` charSps ','
 
 
 pDeclPar :: Parser Decl
-pDeclPar = pDecl' (option Val)
+pDeclPar = pDecl' (option False)
 pDecl :: Parser Decl
 pDecl = pDecl' id
 
-pDecl' :: (Parser MutableType->Parser MutableType) -> Parser Decl
+pDecl' :: (Parser Bool->Parser Bool) -> Parser Decl
 pDecl' mtf = do
 		mut <- mtf mutableType
 		name <- ident
@@ -91,14 +107,14 @@ pDecl' mtf = do
 			sps
 			pExp)
 		sps
-		return Decl{declName = name, declDataType = dataType, declMutableType = mut, declDef = def}
+		return Decl{declName = name, declDataType = dataType, isDeclMutable = mut, declDef = def}
 	where
 		mutableType = do
 			v <- try var <|> val
 			sps1
 			return v
-		val = string "val" >> return Val
-		var = string "var" >> return Var
+		val = string "val" >> return False
+		var = string "var" >> return True
 
 pImport :: Parser FileStm
 pImport = do
@@ -136,16 +152,14 @@ pDef = do
 	sps
 	option ' ' (char '=')
 	sps
-	body <- pExp
+	body <- option Nop pExp
 	return $ Def name pars ret body
 
 pDefPar :: Parser Par
 pDefPar = do
 	name <- ident
 	sps
-	char ':'
-	sps
-	tp <- ident
+	tp <- pDataType
 	return $ Par name tp
 
 pExp :: Parser Exp

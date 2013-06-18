@@ -1,4 +1,4 @@
-module Ex.String(mkString, strs, strs', MultiLineShow(..)) where
+module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp') where
 
 mkString :: (a -> String) -> String -> [a] -> String
 mkString _ _ [] = ""
@@ -13,3 +13,12 @@ strs' = mkString show
 
 class (Show a) => MultiLineShow a where
 	multiLineShow :: a -> [String]
+
+showOp :: (Show a, Show b) => a -> String -> b -> String
+showOp l op r = show l ++ " " ++ op ++ " " ++ show r
+showOp' :: (Show a, Show b) => a -> String -> b -> String
+showOp' l op r = show l ++ op ++ show r
+
+ind :: String -> String
+ind = ("    " ++ )
+

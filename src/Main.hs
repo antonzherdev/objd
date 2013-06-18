@@ -1,9 +1,9 @@
 module Main where
 
-import ObjD.Struct
 import ObjD.ToObjC
 import ObjD.Parser
-import qualified ObjD.Index as I
+import ObjD.Link
+import ObjD.Struct as D
 
 
 {- main::IO()
@@ -13,7 +13,13 @@ main::IO()
 main = 
 	let 
 		txt = 
-			"class CRSwitch(form1 : CRailForm*, form2 : CRRailForm*, tile : CEIPoint) extends CECtrl {\n\
+			"stub CECtrl {\n\
+			\   def update\n\
+			\}\n\
+			\stub CRRailForm\n\
+			\stub CEIPoint\n\
+			\\n\
+			\class CRSwitch(form1 : CRRailForm, form2 : CRRailForm, tile : CEIPoint) extends CECtrl {\n\
 			\   var state = 0\n\
 			\ \n\
 			\   def set(state : int) {\n\
@@ -25,11 +31,21 @@ main =
 			\}"
 	in do 
 		putStrLn txt
+		putStrLn "=== Parsing ==="
 		od <- (case parseFile txt  of
 			Left err -> error $ show err
 			Right val -> return val)
-		idx <-  I.build [File "main" od]
-		(int, impl) <- return $ toObjC (I.getFile "main" idx) od
-		putStrLn $ unlines $ map (show) int
-		putStrLn $ unlines $ map (show) impl
+		putStrLn $ unlines $ map (show) od 
+		(let 
+				lnk = link [D.File "main" od]
+			in do 
+				putStrLn "=== Linking ==="
+				putStrLn $ unlines $ map (show) lnk 
+				putStrLn "=== Compiling ==="
+				(int, impl) <- return $ toObjC $ head $ lnk
+				putStrLn "=== h ==="
+				putStrLn $ unlines $ map (show) int
+				putStrLn "=== m ==="
+				putStrLn $ unlines $ map (show) impl)
 
+			

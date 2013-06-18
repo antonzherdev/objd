@@ -54,8 +54,6 @@ data Exp =
 	| Eq Exp Exp | NotEq Exp Exp
 	| Dot Exp String
 
-ind :: String -> String
-ind = ("    " ++ )
 showStms :: [Stm] -> String
 showStms = unlines . stms
 stms :: [Stm] -> [String]
@@ -117,8 +115,6 @@ instance Show PropertyModifier where
 	show ReadOnly = "readonly"
 	show NonAtomic = "nonatomic"
 
-showOp :: (Show a, Show b) => a -> String -> b -> String
-showOp l op r = show l ++ " " ++ op ++ " " ++ show r
 instance Show Exp where
 	show Self = "self"
 	show Super = "super"

@@ -1,17 +1,16 @@
 module ObjD.Struct (
 	Decl(..),
 	FileStm(..),
-	MutableType(..),
-	Extends(..),
+	Extends,
 	ClassStm(..),
 	Exp(..),
 	Par(..),
 	DataType(..),
 	File(..),
 	Sources,
-	isClass,
+	isClass, isImport,
 	stmName,
-	isDef
+	isDef, isDecl
 ) where
 import           Ex.String
 
@@ -19,21 +18,24 @@ type Sources = [File]
 
 data File = File {fileName :: String, fileStms :: [FileStm]}
 
-data Decl = Decl {declMutableType :: MutableType, declName :: String, declDataType :: Maybe DataType, declDef :: Exp}
+data Decl = Decl {declName :: String, isDeclMutable :: Bool, declDataType :: Maybe DataType, declDef :: Exp}
 
-data MutableType = Var | Val
 
 data FileStm =
-	Import String 
+	Import {impString :: String }
 	| Class { className :: String, classFields :: [Decl], classExtends :: Extends, classBody :: [ClassStm] }
+	| Stub {className :: String, classExtends :: Extends, classBody :: [ClassStm]}
 isClass :: FileStm -> Bool
 isClass (Class {}) = True
 isClass _ = False
+isImport :: FileStm -> Bool
+isImport (Import _) = True
+isImport _ = False
 
 
-data Extends = ExtendsNone | Extends String
+type Extends = Maybe String
 
-data ClassStm = DeclStm Decl
+data ClassStm = DeclStm {stmDecl :: Decl}
 	| Def {defName :: String, defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
 stmName :: ClassStm -> String
 stmName (DeclStm d) = declName d
@@ -44,8 +46,12 @@ isDef :: ClassStm -> Bool
 isDef Def {} = True
 isDef _ = False
 
+isDecl :: ClassStm -> Bool
+isDecl DeclStm {} = True
+isDecl _ = False
 
-data Par = Par { parName :: String, parType :: String }
+
+data Par = Par { parName :: String, parType :: DataType }
 
 data Exp = Nop | IntConst Int | Braces [Exp]
 	| If Exp Exp Exp
@@ -58,23 +64,17 @@ data Exp = Nop | IntConst Int | Braces [Exp]
 
 data DataType = DataType String | DataTypeRef DataType
 
-ind :: String -> String
-ind = ("    " ++ )
-
 instance Show Decl where
 	show (Decl{declName = name, declDataType = dataType}) = show dataType ++ " " ++ name
 
 instance Show FileStm where
 	show (Class{className = name, classFields = fields}) = "class " ++ name ++  "(" ++ strs' ", " fields ++ ")"
+	show (Stub{className = name}) = "stub " ++ name
 
 instance Show DataType where
 	show (DataType s) = s
 	show (DataTypeRef r) = show r ++ "*"
 
-showOp :: (Show a, Show b) => a -> String -> b -> String
-showOp l op r = show l ++ " " ++ op ++ " " ++ show r
-showOp' :: (Show a, Show b) => a -> String -> b -> String
-showOp' l op r = show l ++ op ++ show r
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
 	show (If cond t Nop) = "if(" ++ show cond ++ ") " ++ show t
@@ -89,6 +89,7 @@ instance Show Exp where
 	show (Call n pars) = n ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
 		where
 			showPar (name, e) = name ++ " = " ++ show e
+	show (IntConst i) = show i
 
 
 
