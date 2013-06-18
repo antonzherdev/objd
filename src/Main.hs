@@ -25,7 +25,7 @@ main =
 			\   def set(state : int) {\n\
 			\      if(self.state == state) {\n\
 			\         self.state = state\n\
-			\         self.update()\n\
+			\         self.update\n\
 			\      }\n\
 			\   }\n\
 			\}"

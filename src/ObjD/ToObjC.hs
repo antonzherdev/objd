@@ -20,32 +20,30 @@ toObjC D.File{D.fileClasses = classes} =
 {- Interface -}
 
 stmToInterface :: D.Class -> C.FileStm
-stmToInterface (D.Class {D.className = name, D.classFields = fields, D.classExtends = extends, D.classDefs = defs, D.classConstructor = constr}) =
+stmToInterface (D.Class {D.className = name, D.classExtends = extends, D.classDefs = defs, D.classConstructor = constr}) =
 	C.Interface {
 		C.interfaceName = name,
 		C.interfaceExtends = maybe "NSObject" D.className extends,
-		C.interfaceProperties = map fieldToProperty fields,
+		C.interfaceProperties = (map fieldToProperty . filter D.isField) defs,
 		C.interfaceFuns = [createFun name constr, initFun constr]
 			++ intefaceFuns defs
 	}
 
 
 
-fieldToProperty :: D.Field -> C.Property
-fieldToProperty (D.Field {D.fieldName = name, D.isFieldMutable = mut, D.fieldType = tp}) = C.Property {
+fieldToProperty :: D.Def -> C.Property
+fieldToProperty (D.Field {D.defName = name, D.isFieldMutable = mut, D.defType = tp}) = C.Property {
 	C.propertyName = name,
 	C.propertyType = show tp,
-	C.propertyModifiers = case mut of
-		False -> [C.ReadOnly, C.NonAtomic]
-		True -> [C.NonAtomic]
+	C.propertyModifiers = if mut then [C.NonAtomic] else [C.ReadOnly, C.NonAtomic]
 }
 
 initFun :: D.Constructor -> C.Fun
 initFun [] = C.Fun C.InstanceFun "id" "init" []
 initFun decls = C.Fun C.InstanceFun "id" "initWith" (map (funPar . fst) decls)
 
-funPar :: D.Field -> C.FunPar
-funPar D.Field {D.fieldName = name, D.fieldType = dataType} = C.FunPar name (show dataType) name
+funPar :: D.Def -> C.FunPar
+funPar D.Field {D.defName = name, D.defType = dataType} = C.FunPar name (show dataType) name
 
 createFun :: String -> D.Constructor -> C.Fun
 createFun clsName [] = C.Fun C.ObjectFun "id" (createFunName clsName) []
@@ -59,38 +57,39 @@ createFunName (x1:x2:xs)
 
 
 intefaceFuns :: [D.Def] -> [C.Fun]
-intefaceFuns = map stm2Fun 
+intefaceFuns = map stm2Fun . filter D.isDef
 
 stm2Fun :: D.Def -> C.Fun
 stm2Fun D.Def{D.defName = name, D.defPars = pars, D.defType = tp} =
 	C.Fun {C.funType = C.InstanceFun, C.funReturnType = show tp, C.funName = name, C.funPars = map par pars}
 	where
-		par (D.Par nm tp _) = C.FunPar nm (show tp) nm
+		par (D.Par nm ttp _) = C.FunPar nm (show ttp) nm
 
 {- Implementation -}
 
 stmToImpl :: D.Class -> C.FileStm
-stmToImpl (D.Class {D.className = clsName, D.classFields = fields, D.classDefs = defs, D.classConstructor = constr}) =
+stmToImpl (D.Class {D.className = clsName, D.classDefs = defs, D.classConstructor = constr}) =
 	C.Implementation {
 		C.implName = clsName,
 		C.implFields = [],
-		C.implSynthenyzes = map synthenize fields,
+		C.implSynthenyzes = (map synthenize . filter D.isField) defs,
 		C.implFuns = [implCreate] ++ [implInit] ++ implFuns defs
 	}
 	where
-		synthenize D.Field{D.fieldName = x} = C.ImplSynthenyze x ('_' : x)
+		synthenize D.Field{D.defName = x} = C.ImplSynthenyze x ('_' : x)
 		implInit = C.ImplFun (initFun constr) (
 			[C.Set C.Self (C.Call C.Super "init" [])]
-			++ implInitFields constr (filter hasInit fields)
+			++ implInitFields constr (filter hasInit defs)
 			++ [C.Nop, C.Return C.Self]
 			)
-		hasInit D.Field{D.fieldInit = D.Nop} = False
-		hasInit _ = True
+		hasInit D.Field{D.defBody = D.Nop} = False
+		hasInit D.Field{} = True
+		hasInit _ = False
 
 		implInitFields [] [] = []
 		implInitFields co fields = [C.If C.Self (map (implConstrField . fst) co ++ map implInitField fields) []]
-		implConstrField D.Field {D.fieldName = name} = C.Set (C.Ref $ '_' : name) (C.Ref name)
-		implInitField D.Field {D.fieldName = name, D.fieldInit = def} = C.Set (C.Ref $ '_' : name) (tExp def)
+		implConstrField D.Field {D.defName = name} = C.Set (C.Ref $ '_' : name) (C.Ref name)
+		implInitField D.Field {D.defName = name, D.defBody = def} = C.Set (C.Ref $ '_' : name) (tExp def)
 
 		implCreate = C.ImplFun (createFun clsName constr) [C.Return
 				(C.Call
@@ -103,8 +102,8 @@ stmToImpl (D.Class {D.className = clsName, D.classFields = fields, D.classDefs =
 					[]
 				)
 			]
-		pars D.Field{D.fieldName = name} = (name, C.Ref name)
-		implFuns = map stm2ImplFun
+		pars D.Field{D.defName = name} = (name, C.Ref name)
+		implFuns = map stm2ImplFun . filter D.isDef
 		stm2ImplFun def@D.Def {D.defBody = db} = C.ImplFun (stm2Fun def) (tStm db)
 {- Exp -}
 tExp :: D.Exp -> C.Exp
@@ -112,13 +111,13 @@ tExp (D.IntConst i) = C.IntConst i
 tExp (D.Eq l r) = C.Eq (tExp l) (tExp r)
 tExp (D.NotEq l r) = C.NotEq (tExp l) (tExp r)
 
-tExp (D.Dot D.Self (D.FieldRef D.Field {D.fieldName = r} )) = C.Ref $ '_' : r
-tExp (D.Dot l (D.FieldRef D.Field {D.fieldName = r} )) = C.Dot (tExp l) r
+tExp (D.Dot D.Self (D.Call D.Field {D.defName = r} [])) = C.Ref $ '_' : r
+tExp (D.Dot l (D.Call D.Field {D.defName = r} [])) = C.Dot (tExp l) r
 tExp (D.Dot l (D.Call D.Def{D.defName = name} pars)) = C.Call (tExp l) name (map (first D.parName . second tExp) pars)
 
 tExp (D.Self) = C.Self
-tExp (D.FieldRef D.Field {D.fieldName = r}) = C.Ref $ '_' : r
-tExp (D.ParRef D.Par {D.parName = r}) = C.Ref $ r
+tExp (D.Call D.Field {D.defName = r} []) = C.Ref $ '_' : r
+tExp (D.ParRef D.Par {D.parName = r}) = C.Ref r
 
 tExp x = error $ "No tExp for " ++ show x
 

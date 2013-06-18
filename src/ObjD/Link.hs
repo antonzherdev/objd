@@ -1,6 +1,6 @@
 module ObjD.Link (
-	Sources, File(..), Class(..), Extends, Field(..), Def(..), Par(..), Constructor, DataType(..), Exp(..),
-	link, isClass
+	Sources, File(..), Class(..), Extends, Def(..), Par(..), Constructor, DataType(..), Exp(..),
+	link, isClass, isDef, isField
 )where
 
 import           Control.Arrow
@@ -16,21 +16,24 @@ type Sources = [File]
 data File = File {fileName :: String, fileImports :: [File], fileClasses :: [Class]}
 
 data Class = Class { className :: String
-	, classExtends :: Extends, classFields :: [Field]
-	, classDefs :: [Def], classConstructor :: Constructor }
+	, classExtends :: Extends, classDefs :: [Def], classConstructor :: Constructor }
 	| Stub { className :: String, classExtends :: Extends, classDefs :: [Def]}
 isClass :: Class -> Bool
 isClass (Class {}) = True
 isClass _ = False
-getField :: String -> Class -> Field
-getField name с = fromMaybe (error $ "No field found " ++ name ++ " in " ++ className с) $
-	find (\ f -> fieldName f == name) $ classFields с
 
 type Extends = Maybe Class
-data Field = Field {fieldName :: String, isFieldMutable :: Bool, fieldType :: DataType, fieldInit :: Exp}
 data Def = Def {defName :: String, defPars :: [Par], defType :: DataType, defBody :: Exp}
+	|  Field {defName :: String, isFieldMutable :: Bool, defType :: DataType, defBody :: Exp}
+isDef :: Def -> Bool
+isDef Def{} = True
+isDef _ = False
+isField :: Def -> Bool
+isField Field{} = True
+isField _ = False
+
 data Par = Par {parName :: String, parType :: DataType, parDef :: Exp}
-type Constructor = [(Field, Exp)]
+type Constructor = [(Def, Exp)]
 
 data DataType = TPInt | TPVoid | TPClassRef Class
 instance Show DataType where
@@ -43,7 +46,6 @@ data Exp = Nop | IntConst Int | Braces [Exp]
 	| Self
 	| NotEq Exp Exp | Eq Exp Exp
 	| Dot Exp Exp
-	| FieldRef Field
 	| ParRef Par
 	| Set Exp Exp
 	| Call Def [(Par, Exp)]
@@ -55,15 +57,13 @@ instance Show File where
 		strs' "\n\n" classes
 
 instance Show Class where
-	show Class {className = name, classExtends = extends, classFields = fields , classDefs = defs, classConstructor = constr} =
+	show Class {className = name, classExtends = extends, classDefs = defs, classConstructor = constr} =
 		"class " ++ name ++ " (" ++ (strs ", " . map constrFld) constr ++ ") " ++ maybe "" className extends ++ " {\n" ++
-			(strs "\n\n" . filter (not.null))
-				[(unlines . map (ind . show)) fields,
-				(unlines . map ind . concatMap (lines . show)) defs]  ++
+			(unlines . map ind . concatMap (lines . show)) defs  ++
 		"}"
 		where
-			constrFld (f, Nop) = fieldName f
-			constrFld (f, e) = fieldName f ++ " = " ++ show e
+			constrFld (f, Nop) = defName f
+			constrFld (f, e) = defName f ++ " = " ++ show e
 	show Stub {className = name, classExtends = extends, classDefs = defs} = "stub " ++ name  ++ maybe "" className extends ++ " {\n" ++
 		(unlines . map ind . concatMap (lines . show)) defs ++ "}"
 instance Show Def where
@@ -71,6 +71,9 @@ instance Show Def where
 		name ++ " : " ++ show tp ++ " = " ++ show e
 	show Def {defName = name , defPars = pars, defType = tp, defBody = e} =
 		name ++ "(" ++ strs' ", " pars ++ ")"++ " : " ++ show tp ++ " = " ++ show e
+	show Field {defName = nm, isFieldMutable = mut, defType = tp, defBody = e } =
+		(if mut then "var" else "val") ++ " " ++ nm ++ " : " ++ show tp ++ show e
+
 instance Show Par where
 	show Par {parName = name, parType = tp, parDef = Nop} = name ++ " : " ++ show tp
 	show Par {parName = name, parType = tp, parDef = dd} = name ++ " : " ++ show tp ++ " = " ++ show dd
@@ -84,18 +87,14 @@ instance Show Exp where
 	show (NotEq l r) = showOp l "!=" r
 	show (Eq l r) = showOp l "==" r
 	show (Dot l r) = showOp' l "." r
-	show (FieldRef s) = show s
 	show (ParRef s) = show s
 	show (Set l r) = showOp l "=" r
+	show (Call f []) = defName f
 	show (Call (Def {defName = n}) pars) = n ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
 		where
 			showPar (Par {parName = name}, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
-
-instance Show Field where
-	show Field {fieldName = nm, isFieldMutable = mut, fieldType = tp, fieldInit = e } =
-		(if mut then "var" else "val") ++ " " ++ nm ++ " : " ++ show tp ++ show e
-
+	
 getDef :: String -> [(String, Exp)] -> Class -> Def
 getDef name pars c = fromMaybe (fromMaybe (error $ "No def for call " ++ callStr ++ " in class " ++ className c) findInParent) $
 	find fit $ filter (\d -> defName d == name) (classDefs c) 
@@ -149,11 +148,10 @@ cls :: ClassIndex -> D.FileStm -> Class
 cls cidx cl@D.Class{} = self
 	where
 		env = Env self cidx M.empty
-		self = Class {className = D.className cl, classExtends = extends, classFields = fields, classDefs = defs, classConstructor = constr}
+		self = Class {className = D.className cl, classExtends = extends, classDefs = fields ++ defs, classConstructor = constr}
 		extends = fmap (findTp "class" cidx) (D.classExtends cl)
-		fields :: [Field]
 		fields =  mapM (evalState . field) decls env
-		fieldsMap = M.fromList $ map (idx fieldName) fields
+		fieldsMap = M.fromList $ map (idx defName) fields
 		decls = D.classFields cl ++ (map D.stmDecl . filter D.isDecl $ D.classBody cl)
 		defs = evalState (mapM def . filter D.isDef $ D.classBody cl) env
 		constr = map (\f -> (findTp "field" fieldsMap (D.declName f), evalState (expr (D.declDef f)) env) ) $ D.classFields cl
@@ -165,11 +163,11 @@ cls cidx D.Stub{D.className = name, D.classExtends = extends, D.classBody = ddef
 			Def{defName = n, defPars = map par opars, defBody = Nop, defType = maybe TPVoid (dataType cidx) tp}
 		par D.Par {D.parName = n, D.parType = tp} = Par{parName = n, parType = dataType cidx tp, parDef = Nop}
 
-field :: D.Decl -> State Env Field
+field :: D.Decl -> State Env Def
 field D.Decl {D.isDeclMutable = mut, D.declName = name, D.declDataType = tp, D.declDef = e} = do
 	i <- expr e
 	env <- get
-	return Field {fieldName = name, isFieldMutable = mut, fieldType = getDataType env tp i, fieldInit = i}
+	return Field {defName = name, isFieldMutable = mut, defType = getDataType env tp i, defBody = i}
 
 
 def :: D.ClassStm -> State Env Def
@@ -226,7 +224,7 @@ expr (D.Set a b) = do
 expr D.Self = return Self
 expr (D.Ref n) = do
 	env <- get
-	return $ maybe (FieldRef $ getField n (envSelf env)) toRef (M.lookup n (envVals env))
+	maybe (expr $ D.Call n []) (return . toRef) $ M.lookup n (envVals env)
 	where
 		toRef (EnvDeclPar p) = ParRef p
 expr (D.Call name pars) = do
