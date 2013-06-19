@@ -11,25 +11,10 @@ main = putStr "dsa" -}
 
 main::IO()
 main = 
-	let 
-		txt = 
-			"stub CECtrl {\n\
-			\   def update\n\
-			\}\n\
-			\stub CRRailForm\n\
-			\stub CEIPoint\n\
-			\\n\
-			\class CRSwitch(form1 : CRRailForm, form2 : CRRailForm, tile : CEIPoint) extends CECtrl {\n\
-			\   var state = 0\n\
-			\ \n\
-			\   def set(state : int) {\n\
-			\      if(self.state == state) {\n\
-			\         self.state = state\n\
-			\         self.update\n\
-			\      }\n\
-			\   }\n\
-			\}"
+	let
+		path = "/Users/antonzherdev/dev/Trains3D/Trains/Trains/TRLevel"
 	in do 
+		txt <- readFile $ path ++ ".od"
 		putStrLn txt
 		putStrLn "=== Parsing ==="
 		od <- (case parseFile txt  of
@@ -37,7 +22,7 @@ main =
 			Right val -> return val)
 		putStrLn $ unlines $ map (show) od 
 		(let 
-				lnk = link [D.File "main" od]
+				lnk = link [D.File "TRLevel" od]
 			in do 
 				putStrLn "=== Linking ==="
 				putStrLn $ unlines $ map (show) lnk 
@@ -46,6 +31,7 @@ main =
 				putStrLn "=== h ==="
 				putStrLn $ unlines $ map (show) int
 				putStrLn "=== m ==="
-				putStrLn $ unlines $ map (show) impl)
-
-			
+				putStrLn $ unlines $ map (show) impl
+				writeFile (path ++ ".h") (unlines $ map (show) int)
+				writeFile (path ++ ".m") (unlines $ map (show) impl)
+				)

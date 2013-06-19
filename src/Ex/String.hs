@@ -1,4 +1,7 @@
-module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp') where
+module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp', cap) where
+
+import           Data.Char
+
 
 mkString :: (a -> String) -> String -> [a] -> String
 mkString _ _ [] = ""
@@ -22,3 +25,6 @@ showOp' l op r = show l ++ op ++ show r
 ind :: String -> String
 ind = ("    " ++ )
 
+cap :: String -> String
+cap "" = ""
+cap (x:xs) = toUpper x : xs

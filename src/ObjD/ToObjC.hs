@@ -12,9 +12,10 @@ import qualified ObjD.Link   as D
 
 
 toObjC :: D.File -> ([C.FileStm], [C.FileStm])
-toObjC D.File{D.fileClasses = classes} = 
+toObjC D.File{D.fileName = name, D.fileClasses = classes} = 
 	let cls = filter D.isClass classes
-	in (map stmToInterface cls, map stmToImpl cls)
+	in ( [C.ImportLib "Foundation/Foundation.h", C.EmptyLine] ++ map stmToInterface cls, 
+		[C.Import (name ++ ".h") , C.EmptyLine] ++ map stmToImpl cls)
 
 
 {- Interface -}
@@ -34,16 +35,20 @@ stmToInterface (D.Class {D.className = name, D.classExtends = extends, D.classDe
 fieldToProperty :: D.Def -> C.Property
 fieldToProperty (D.Field {D.defName = name, D.isFieldMutable = mut, D.defType = tp}) = C.Property {
 	C.propertyName = name,
-	C.propertyType = show tp,
-	C.propertyModifiers = if mut then [C.NonAtomic] else [C.ReadOnly, C.NonAtomic]
+	C.propertyType = showDataType tp,
+	C.propertyModifiers = if mut then [C.NonAtomic] ++ (mutModes tp) else [C.ReadOnly, C.NonAtomic]
 }
+	where
+		mutModes D.TPArr{} = [C.ReadOnly]
+		mutModes D.TPClassRef{} = [C.Retain]
+		mutModes _ = []
 
 initFun :: D.Constructor -> C.Fun
 initFun [] = C.Fun C.InstanceFun "id" "init" []
 initFun decls = C.Fun C.InstanceFun "id" "initWith" (map (funPar . fst) decls)
 
 funPar :: D.Def -> C.FunPar
-funPar D.Field {D.defName = name, D.defType = dataType} = C.FunPar name (show dataType) name
+funPar D.Field {D.defName = name, D.defType = dataType} = C.FunPar name (showDataType dataType) name
 
 createFun :: String -> D.Constructor -> C.Fun
 createFun clsName [] = C.Fun C.ObjectFun "id" (createFunName clsName) []
@@ -61,9 +66,9 @@ intefaceFuns = map stm2Fun . filter D.isDef
 
 stm2Fun :: D.Def -> C.Fun
 stm2Fun D.Def{D.defName = name, D.defPars = pars, D.defType = tp} =
-	C.Fun {C.funType = C.InstanceFun, C.funReturnType = show tp, C.funName = name, C.funPars = map par pars}
+	C.Fun {C.funType = C.InstanceFun, C.funReturnType = showDataType tp, C.funName = name, C.funPars = map par pars}
 	where
-		par (D.Par nm ttp _) = C.FunPar nm (show ttp) nm
+		par (D.Par nm ttp _) = C.FunPar nm (showDataType ttp) nm
 
 {- Implementation -}
 
@@ -71,12 +76,13 @@ stmToImpl :: D.Class -> C.FileStm
 stmToImpl (D.Class {D.className = clsName, D.classDefs = defs, D.classConstructor = constr}) =
 	C.Implementation {
 		C.implName = clsName,
-		C.implFields = [],
-		C.implSynthenyzes = (map synthenize . filter D.isField) defs,
+		C.implFields = (map implField . filter D.isField) defs,
+		C.implSynthesizes = (map synthesize . filter D.isField) defs,
 		C.implFuns = [implCreate] ++ [implInit] ++ implFuns defs
 	}
 	where
-		synthenize D.Field{D.defName = x} = C.ImplSynthenyze x ('_' : x)
+		synthesize D.Field{D.defName = x} = C.ImplSynthesize x ('_' : x)
+		implField D.Field{D.defName = x, D.defType = tp} = C.ImplField ('_' : x) (showDataType tp)
 		implInit = C.ImplFun (initFun constr) (
 			[C.Set C.Self (C.Call C.Super "init" [])]
 			++ implInitFields constr (filter hasInit defs)
@@ -105,6 +111,14 @@ stmToImpl (D.Class {D.className = clsName, D.classDefs = defs, D.classConstructo
 		pars D.Field{D.defName = name} = (name, C.Ref name)
 		implFuns = map stm2ImplFun . filter D.isDef
 		stm2ImplFun def@D.Def {D.defBody = db} = C.ImplFun (stm2Fun def) (tStm db)
+
+{- DataType -}
+showDataType :: D.DataType -> String
+showDataType D.TPArr{} = "NSArray*"
+showDataType D.TPInt = "NSInteger"
+showDataType D.TPFloat = "CGFloat"
+showDataType tp = show tp
+
 {- Exp -}
 tExp :: D.Exp -> C.Exp
 tExp (D.IntConst i) = C.IntConst i

@@ -35,10 +35,19 @@ charSps c = char c >> sps
 pDataType :: Parser DataType
 pDataType = do
 	charSps ':'
-	name <- ident
+	t <- tp
 	sps
-	r <- many $ charSps '*'
-	return $ foldl (\rr _ -> DataTypeRef rr) (DataType name) r
+	return t
+	where 
+		tp = arr <|> simple
+		arr = do
+			charSps '['
+			t <- tp
+			sps
+			char ']'
+			return $ DataTypeArr t
+		simple = ident >>= \v -> return $ DataType v
+
 braces :: Parser a -> Parser a
 braces = between (charSps '{') (spsChar '}')
 brackets :: Parser a -> Parser a

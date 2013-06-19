@@ -2,7 +2,7 @@ module ObjC.Struct
 ( Property(..),
   PropertyModifier(..),
   FileStm(..),
-  ImplSynthenyze(..),
+  ImplSynthesize(..),
   ImplFun(..),
   Fun(..),
   FunType(..),
@@ -12,24 +12,23 @@ module ObjC.Struct
   ImplField(..)
 ) where
 
-import           Data.Char
 import           Ex.String
 
 
 
 
 data FileStm =
-	Import String | ImportLib String
+	Import String | ImportLib String | EmptyLine 
 	| Interface { interfaceName :: String, interfaceExtends :: String, interfaceProperties :: [Property], interfaceFuns :: [Fun] }
-	| Implementation {implName :: String, implFields :: [ImplField], implSynthenyzes :: [ImplSynthenyze], implFuns :: [ImplFun]}
+	| Implementation {implName :: String, implFields :: [ImplField], implSynthesizes :: [ImplSynthesize], implFuns :: [ImplFun]}
 
 data Property = Property {propertyName :: String, propertyType :: String, propertyModifiers :: [PropertyModifier]}
 
-data PropertyModifier = ReadOnly | NonAtomic deriving(Eq)
+data PropertyModifier = ReadOnly | NonAtomic | Retain deriving(Eq)
 
 data ImplField = ImplField {implFieldName :: String, implFieldType :: String}
 
-data ImplSynthenyze = ImplSynthenyze String String
+data ImplSynthesize = ImplSynthesize String String
 
 data ImplFun = ImplFun {implFunType :: Fun, implExps :: [Stm]}
 
@@ -66,17 +65,18 @@ unlines' a = unlines a ++ "\n"
 instance Show FileStm where
 	show (Import s) = "#import \"" ++ s ++ "\""
 	show (ImportLib s) = "#import <" ++ s ++ ">"
+	show (EmptyLine) = ""
 	show (Interface name extends properties funs) =
 		"@interface " ++ name ++ " : " ++ extends ++ "\n"
 		 ++ (unlines' . map show) properties
 		 ++ (unlines  . map (( ++ ";") . show)) funs
-		 ++ "@end"
-	show Implementation{implName = iName, implFields = fields, implSynthenyzes = synzs, implFuns = funs} =
+		 ++ "@end\n\n"
+	show Implementation{implName = iName, implFields = fields, implSynthesizes = synzs, implFuns = funs} =
 		"@implementation " ++ iName
 		++ showImplFields fields
 		++ showSynthenizes synzs
 		++ showImplFuns funs
-		++ "@end"
+		++ "@end\n\n"
 		where
 		showImplFields [] = "\n"
 		showImplFields a = "{\n"
@@ -84,8 +84,8 @@ instance Show FileStm where
 			++ "}\n"
 		showImplField (ImplField name tp) = tp ++ " " ++ name ++ ";"
 		showSynthenizes = unlines . map showSynthenize
-		showSynthenize (ImplSynthenyze name "") = "@synthenize " ++ name ++ ";"
-		showSynthenize (ImplSynthenyze name var) = "@synthenize " ++ name ++ " = " ++ var ++ ";"
+		showSynthenize (ImplSynthesize name "") = "@synthesize " ++ name ++ ";"
+		showSynthenize (ImplSynthesize name var) = "@synthesize " ++ name ++ " = " ++ var ++ ";"
 		showImplFuns = unlines . map (("\n" ++ ) . show)
 
 instance Show ImplFun where
@@ -96,10 +96,6 @@ instance Show ImplFun where
 instance Show Fun where
 	show (Fun tp ret name pars) =
 		show tp ++ " (" ++ ret ++ ")" ++ name ++ cap  (strs' " " pars)
-		where
-			cap :: String -> String
-			cap "" = ""
-			cap (x:xs) = toUpper x : xs
 instance Show FunPar where
  	show (FunPar name tp var) = name ++ ":(" ++ tp ++ ")" ++ var
 instance Show FunType where
@@ -114,11 +110,12 @@ instance Show Property where
 instance Show PropertyModifier where
 	show ReadOnly = "readonly"
 	show NonAtomic = "nonatomic"
+	show Retain = "retain"
 
 instance Show Exp where
 	show Self = "self"
 	show Super = "super"
-	show (Call inst name pars) = "[" ++ show inst ++ " " ++ name ++ (strs " " . map (\(nm, e) -> nm ++ ":" ++ show e)) pars ++ "]"
+	show (Call inst name pars) = "[" ++ show inst ++ " " ++ name ++ (cap . strs " " . map (\(nm, e) -> nm ++ ":" ++ show e)) pars ++ "]"
 	show (Ref name) = name
 	show (IntConst i) = show i
 	show (Eq l r) = showOp l "==" r

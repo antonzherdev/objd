@@ -35,11 +35,13 @@ isField _ = False
 data Par = Par {parName :: String, parType :: DataType, parDef :: Exp}
 type Constructor = [(Def, Exp)]
 
-data DataType = TPInt | TPVoid | TPClassRef Class
+data DataType = TPInt | TPFloat | TPVoid | TPClassRef Class | TPArr DataType
 instance Show DataType where
 	show TPInt = "int"
+	show TPFloat = "float"
 	show TPVoid = "void"
 	show (TPClassRef c) = className c ++ "*"
+	show (TPArr t) = "[" ++ show t ++ "]"
 
 data Exp = Nop | IntConst Int | Braces [Exp]
 	| If Exp Exp Exp
@@ -188,7 +190,9 @@ getDataType env tp e = maybe (exprDataType e) (dataType (envIndex env)) tp
 dataType :: ClassIndex -> D.DataType -> DataType
 dataType cidx (D.DataType name) = case name of
 	"int" -> TPInt
+	"float" -> TPFloat
 	_ -> TPClassRef $ findTp "class" cidx name
+dataType cidx (D.DataTypeArr tp) = TPArr $ dataType cidx tp
 
 exprDataType :: Exp -> DataType
 exprDataType _ = TPInt

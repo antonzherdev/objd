@@ -62,7 +62,7 @@ data Exp = Nop | IntConst Int | Braces [Exp]
 	| Set Exp Exp
 	| Call String [(String, Exp)]
 
-data DataType = DataType String | DataTypeRef DataType
+data DataType = DataType String | DataTypeArr DataType
 
 instance Show Decl where
 	show (Decl{declName = name, declDataType = dataType}) = show dataType ++ " " ++ name
@@ -73,7 +73,7 @@ instance Show FileStm where
 
 instance Show DataType where
 	show (DataType s) = s
-	show (DataTypeRef r) = show r ++ "*"
+	show (DataTypeArr r) = "[" ++ show r ++ "]"
 
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
