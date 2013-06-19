@@ -150,5 +150,5 @@ tStm (D.Braces xs) = concatMap tStm xs
 tStm (D.If cond t f) = [C.If (tExp cond) (tStm t) (tStm f)]
 
 tStm (D.Set l r) = [C.Set (tExp l) (tExp r)]
-
+tStm (D.Return e) = [C.Return $ tExp e]
 tStm x = [C.Stm $ tExp x]

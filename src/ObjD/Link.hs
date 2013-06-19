@@ -180,7 +180,7 @@ cls (cidx, glidx) cl@D.Class{} = self
 		fieldsMap = M.fromList $ map (idx defName) fields
 		decls = D.classFields cl ++ (map D.stmDecl . filter D.isDecl $ D.classBody cl)
 		defs = evalState (mapM def . filter D.isDef $ D.classBody cl) env
-		constr = map (\f -> (findTp "field" fieldsMap (D.declName f), evalState (expr (D.declDef f)) env) ) $ D.classFields cl
+		constr = map (\f -> (findTp "field" fieldsMap (D.declName f), evalState (expr False (D.declDef f)) env) ) $ D.classFields cl
 cls (cidx, _) D.Stub{D.isStruct = str, D.className = name, D.classExtends = extends, D.classBody = ddefs} = 
 	Stub{isStruct = str, className = name, classExtends = fmap (findTp "class" cidx) extends, classDefs = defs}
 	where
@@ -191,7 +191,7 @@ cls (cidx, _) D.Stub{D.isStruct = str, D.className = name, D.classExtends = exte
 
 field :: D.Decl -> State Env Def
 field D.Decl {D.isDeclMutable = mut, D.declName = name, D.declDataType = tp, D.declDef = e} = do
-	i <- expr e
+	i <- expr False e
 	env <- get
 	return Field {defName = name, isFieldMutable = mut, defType = getDataType env tp i, defBody = i}
 
@@ -202,7 +202,7 @@ def D.Def{D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = bo
 	let pars = linkDefPars (envIndex env) opars
 		in do 
 			modify $ envAddVals (map EnvDeclPar pars)
-			b <- expr body
+			b <- expr True body
 			put env
 			return Def {defName = name,
 				defPars = pars,
@@ -224,43 +224,45 @@ dataType cidx (D.DataTypeArr tp) = TPArr $ dataType cidx tp
 exprDataType :: Exp -> DataType
 exprDataType _ = TPInt
 
-expr :: D.Exp -> State Env Exp
-expr D.Nop = return Nop
-expr (D.IntConst i) = return $ IntConst i
-expr (D.Braces es) = mapM expr es >>= \v -> return $ Braces v
-expr (D.If cond t f) = do
-	c <- expr cond
-	tt <- expr t
-	ff <- expr f
+expr :: Bool -> D.Exp -> State Env Exp
+expr r (D.If cond t f) = do
+	c <- expr False cond
+	tt <- expr r t
+	ff <- expr r f
 	return $ If c tt ff
-expr (D.Eq a b) = do
-	aa <- expr a
-	bb <- expr b
+expr r (D.Braces es) = mapM (expr r) es >>= \v -> return $ Braces v
+expr True D.Nop = error "Return NOP"
+expr True e = expr False e >>= \ee -> return $ Return ee
+expr _ D.Nop = return Nop
+expr _ (D.IntConst i) = return $ IntConst i
+expr _ (D.Eq a b) = do
+	aa <- expr False a
+	bb <- expr False b
 	return $ Eq aa bb
-expr (D.NotEq a b) = do
-	aa <- expr a
-	bb <- expr b
+expr _ (D.NotEq a b) = do
+	aa <- expr False a
+	bb <- expr False b
 	return $ NotEq aa bb
-expr (D.Dot a b) = do
-	aa <- expr a
+expr _ (D.Dot a b) = do
+	aa <- expr False a
 	env <- get
 	modify envClearVals
-	bb <- expr b
+	bb <- expr False b
 	put env
 	return $ Dot aa bb
-expr (D.Set a b) = do
-	aa <- expr a
-	bb <- expr b
+expr _ (D.Set a b) = do
+	aa <- expr False a
+	bb <- expr False b
 	return $ Set aa bb
-expr D.Self = return Self
-expr (D.Ref n) = do
+expr _ D.Self = return Self
+expr _ (D.Ref n) = do
 	env <- get
-	maybe (expr $ D.Call n []) (return . toRef) $ M.lookup n (envVals env)
+	maybe (expr False $ D.Call n []) (return . toRef) $ M.lookup n (envVals env)
 	where
 		toRef (EnvDeclPar p) = ParRef p
-expr (D.Call name pars) = do
+expr _ (D.Call name pars) = do
 	env <- get
-	rp <- mapM (\ (n, e) -> expr e >>= (\ ee -> return (n, ee))) pars
+	rp <- mapM (\ (n, e) -> expr False e >>= (\ ee -> return (n, ee))) pars
 	return $
 		let
 			allDefs = allDefsInClass (envSelf env) ++ envGlobalDefIndex env

@@ -53,7 +53,7 @@ data Exp =
 	| IntConst Int
 	| Eq Exp Exp | NotEq Exp Exp
 	| Dot Exp String
-
+	
 showStms :: [Stm] -> String
 showStms = unlines . stms
 stms :: [Stm] -> [String]
