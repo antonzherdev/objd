@@ -20,7 +20,7 @@ parseStatement :: String -> Either ParseError FileStm
 parseStatement = parse pStatement "ObjD"
 
 pStatement :: Parser FileStm
-pStatement = pImport <|> pClass <|> pStub
+pStatement = pImport <|> pStub <|> pClass 
 
 sps :: Parser String
 sps = many (char ' ' <|> char '\t'  <|> char '\n') <?> ""
@@ -67,11 +67,13 @@ pStub = do
 			sps
 			name <- ident
 			sps
+			fields <- pClassFields >>= \fs -> return $ map DeclStm fs
+			sps
 			extends <- pExtends
 			sps
 			body <- pClassBody
 			sps
-			return Stub {isStruct = struct, className = name, classExtends = extends, classBody = body}
+			return Stub {isStruct = struct, className = name, classExtends = extends, classBody = fields ++ body}
 		pStubDef = do
 			string "def"
 			sps
@@ -86,11 +88,9 @@ pStub = do
 
 pClass :: Parser FileStm
 pClass = do
-	string "class"
+	struct <- (string "class" >> return False) <|> (string "struct" >> return True)
 	sps
 	name <- ident
-	sps
-	struct <- option False (string "struct" >> return True)
 	sps
 	fields <- pClassFields
 	sps
