@@ -217,8 +217,8 @@ dataType :: ClassIndex -> D.DataType -> DataType
 dataType cidx (D.DataType name) = case name of
 	"int" -> TPInt
 	"float" -> TPFloat
-	_ -> let cls = findTp "class" cidx name
-		in if isStruct cls then TPStruct cls else TPClass cls
+	_ -> let c = findTp "class" cidx name
+		in if isStruct c then TPStruct c else TPClass c
 dataType cidx (D.DataTypeArr tp) = TPArr $ dataType cidx tp
 
 exprDataType :: Exp -> DataType

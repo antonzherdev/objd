@@ -7,6 +7,7 @@ module ObjD.ToObjC (
 
 import           Control.Arrow
 import           Data.Char
+import           Data.Maybe
 import qualified ObjC.Struct   as C
 import qualified ObjD.Link   as D
 
@@ -82,7 +83,7 @@ stmToImpl (D.Class {D.className = clsName, D.classDefs = defs, D.classConstructo
 		C.implName = clsName,
 		C.implFields = (map implField . filter D.isField) defs,
 		C.implSynthesizes = (map synthesize . filter D.isField) defs,
-		C.implFuns = [implCreate] ++ [implInit] ++ implFuns defs
+		C.implFuns = [implCreate, implInit, dealoc] ++ implFuns defs
 	}
 	where
 		synthesize D.Field{D.defName = x} = C.ImplSynthesize x ('_' : x)
@@ -118,6 +119,9 @@ stmToImpl (D.Class {D.className = clsName, D.classDefs = defs, D.classConstructo
 		pars D.Field{D.defName = name} = (name, C.Ref name)
 		implFuns = map stm2ImplFun . filter D.isDef
 		stm2ImplFun def@D.Def {D.defBody = db} = C.ImplFun (stm2Fun def) (tStm db)
+		dealoc = C.ImplFun (C.Fun C.InstanceFun "void" "dealloc" []) $ mapMaybe releaseField defs ++ [C.Stm $C.Call C.Super "dealloc" []]
+		releaseField D.Field {D.defName = name, D.defType = D.TPClass{}} = Just $ C.Stm $ C.Call (C.Ref $ '_' : name) "release" []
+		releaseField _ = Nothing
 
 {- DataType -}
 showDataType :: D.DataType -> String
