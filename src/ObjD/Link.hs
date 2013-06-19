@@ -173,7 +173,7 @@ cls :: (ClassIndex, DefIndex) -> D.FileStm -> Class
 cls (cidx, glidx) cl@D.Class{} = self
 	where
 		env = Env self cidx glidx M.empty
-		self = Class {isStruct = False, className = D.className cl, classExtends = extends, classDefs = fields ++ defs, classConstructor = constr}
+		self = Class {isStruct = D.isStruct cl, className = D.className cl, classExtends = extends, classDefs = fields ++ defs, classConstructor = constr}
 		extends = fmap (findTp "class" cidx) (D.classExtends cl)
 		fields =  mapM (evalState . field) decls env
 		fieldsMap = M.fromList $ map (idx defName) fields

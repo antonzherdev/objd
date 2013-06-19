@@ -77,7 +77,7 @@ instance Show Decl where
 	show (Decl{declName = name, declDataType = dataType}) = show dataType ++ " " ++ name
 
 instance Show FileStm where
-	show (Class{className = name, classFields = fields}) = "class " ++ name ++  "(" ++ strs' ", " fields ++ ")"
+	show (Class{className = name, classFields = fields, isStruct = s}) = (if s then "struct" else "class ") ++ name ++  "(" ++ strs' ", " fields ++ ")"
 	show (Stub{className = name}) = "stub " ++ name
 	show (StubDef{stubDefName = name}) = "stub def " ++ name
 	show (Import name ImportTypeD) = "import " ++ name

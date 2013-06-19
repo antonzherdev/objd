@@ -9,7 +9,7 @@ module ObjC.Struct
   FunPar(..),
   Stm(..),
   Exp(..),
-  ImplField(..)
+  ImplField(..), StructField(..), CFunPar(..)
 ) where
 
 import           Ex.String
@@ -21,6 +21,11 @@ data FileStm =
 	Import String | ImportLib String | EmptyLine 
 	| Interface { interfaceName :: String, interfaceExtends :: String, interfaceProperties :: [Property], interfaceFuns :: [Fun] }
 	| Implementation {implName :: String, implFields :: [ImplField], implSynthesizes :: [ImplSynthesize], implFuns :: [ImplFun]}
+	| Struct {structName :: String, structFields :: [StructField]}
+	| TypeDefStruct {oldName :: String, newName :: String}
+	| CFun {cfunReturnType :: String, cfunName :: String, cfunPars :: [CFunPar], cfunExps :: [Stm]}
+
+data StructField = StructField{structFieldType :: String, structFieldName :: String}
 
 data Property = Property {propertyName :: String, propertyType :: String, propertyModifiers :: [PropertyModifier]}
 
@@ -36,6 +41,8 @@ data Fun = Fun {funType :: FunType, funReturnType :: String, funName :: String, 
 data FunType = ObjectFun | InstanceFun
 data FunPar = FunPar {funParName :: String, funParDataType :: String, funParVar :: String}
 
+data CFunPar = CFunPar {cfunParDataType :: String, cfunParName :: String}
+
 {- EXPRESSIONS -}
 
 data Stm =
@@ -43,7 +50,7 @@ data Stm =
 	| Set Exp Exp
 	| Stm Exp
 	| Return Exp
-	| Nop
+	| Var{varType :: String, varName :: String, varExp :: Exp}
 
 data Exp =
 	Self | Super
@@ -53,6 +60,7 @@ data Exp =
 	| IntConst Int
 	| Eq Exp Exp | NotEq Exp Exp
 	| Dot Exp String
+	| Nop
 	
 showStms :: [Stm] -> String
 showStms = unlines . stms
@@ -67,6 +75,13 @@ instance Show FileStm where
 	show (Import s) = "#import \"" ++ s ++ "\""
 	show (ImportLib s) = "#import <" ++ s ++ ">"
 	show (EmptyLine) = ""
+	show (TypeDefStruct o n) = "typedef struct " ++ o ++ " " ++ n ++ ";"
+	show (Struct name fields) = "struct " ++ name ++ " {\n" ++
+		(unlines . map (ind . show)) fields ++
+		"};"
+	show (CFun ret name pars exps) = ret ++ " " ++ name ++ "(" ++ (strs ", " . map (show)) pars ++ ") {\n" ++
+			showStms exps ++
+		"}"
 	show (Interface name extends properties funs) =
 		"@interface " ++ name ++ " : " ++ extends ++ "\n"
 		 ++ (unlines' . map show) properties
@@ -88,6 +103,11 @@ instance Show FileStm where
 		showSynthenize (ImplSynthesize name "") = "@synthesize " ++ name ++ ";"
 		showSynthenize (ImplSynthesize name var) = "@synthesize " ++ name ++ " = " ++ var ++ ";"
 		showImplFuns = unlines . map (("\n" ++ ) . show)
+
+instance Show StructField where
+	show (StructField t n) = t ++ " " ++ n ++ ";"
+instance Show CFunPar where
+	show (CFunPar t n) = t ++ " " ++ n
 
 instance Show ImplFun where
 	show (ImplFun fun exps) =
@@ -134,7 +154,9 @@ stmLines (If cond t f) =
 		[] -> []
 		ff -> ["else {"] ++ stms ff ++ ["}"])
 stmLines (Set l r) = [show l ++ " = " ++ show r ++ ";"]
+stmLines (Stm Nop) = [""]
 stmLines (Stm e) = [show e ++ ";"]
 stmLines (Return e) = ["return " ++ show e ++ ";"]
-stmLines (Nop) = [""]
+stmLines (Var tp name Nop) = [tp ++ " " ++ name ++ ";"]
+stmLines (Var tp name e) = [tp ++ " " ++ name ++ " = " ++ show e ++ ";"]
 

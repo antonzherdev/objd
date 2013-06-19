@@ -15,11 +15,12 @@ import qualified ObjD.Link   as D
 toObjC :: D.File -> ([C.FileStm], [C.FileStm])
 toObjC D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cImports} = 
 	let 
-		cls = filter D.isClass classes
+		cls = filter (\c -> D.isClass c && (not $ D.isStruct c)) classes
+		structs = filter (\c -> D.isClass c && (D.isStruct c)) classes
 		imps = map toImport cImports
 		toImport (D.CImportLib n) = C.ImportLib n
 		toImport (D.CImportUser n) = C.Import n
-	in ( [C.ImportLib "Foundation/Foundation.h"] ++ imps ++ [C.EmptyLine] ++ map stmToInterface cls, 
+	in ( [C.ImportLib "Foundation/Foundation.h"] ++ imps ++ [C.EmptyLine] ++ concatMap genStruct structs ++ map stmToInterface cls, 
 		[C.Import (name ++ ".h") , C.EmptyLine] ++ map stmToImpl cls)
 
 
@@ -91,7 +92,7 @@ stmToImpl (D.Class {D.className = clsName, D.classDefs = defs, D.classConstructo
 		implInit = C.ImplFun (initFun constr) (
 			[C.Set C.Self (C.Call C.Super "init" [])]
 			++ implInitFields constr (filter hasInit defs)
-			++ [C.Nop, C.Return C.Self]
+			++ [C.Stm C.Nop, C.Return C.Self]
 			)
 		hasInit D.Field{D.defBody = D.Nop} = False
 		hasInit D.Field{} = True
@@ -122,6 +123,20 @@ stmToImpl (D.Class {D.className = clsName, D.classDefs = defs, D.classConstructo
 		dealoc = C.ImplFun (C.Fun C.InstanceFun "void" "dealloc" []) $ mapMaybe releaseField defs ++ [C.Stm $C.Call C.Super "dealloc" []]
 		releaseField D.Field {D.defName = name, D.defType = D.TPClass{}} = Just $ C.Stm $ C.Call (C.Ref $ '_' : name) "release" []
 		releaseField _ = Nothing
+
+{- Struct -}
+genStruct :: D.Class -> [C.FileStm]
+genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fields, C.TypeDefStruct name name, con, C.EmptyLine]
+	where
+		fields = map toField defs
+		toField D.Field{D.defName = n, D.defType = tp} = C.StructField (showDataType tp) n
+		con = C.CFun{C.cfunReturnType = name, C.cfunName = name ++ "Make", C.cfunPars = map toPar defs, C.cfunExps = 
+			[C.Var name "ret" C.Nop] ++
+			map toSet defs ++
+			[C.Return $ C.Ref "ret"]
+		}
+		toPar D.Field{D.defName = n, D.defType = tp} = C.CFunPar (showDataType tp) n
+		toSet D.Field{D.defName = n} = C.Set (C.Dot (C.Ref "ret") n) (C.Ref n)
 
 {- DataType -}
 showDataType :: D.DataType -> String

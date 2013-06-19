@@ -58,7 +58,7 @@ stringSps s = string s >> sps
 
 pStub :: Parser FileStm
 pStub = do
-	string "stub"
+	try (string "stub")
 	sps
 	pStubDef <|> pStubClass
 	where
