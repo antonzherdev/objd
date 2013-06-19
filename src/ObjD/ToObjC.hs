@@ -44,7 +44,7 @@ fieldToProperty (D.Field {D.defName = name, D.isFieldMutable = mut, D.defType = 
 }
 	where
 		mutModes D.TPArr{} = [C.ReadOnly]
-		mutModes D.TPClassRef{} = [C.Retain]
+		mutModes D.TPClass{} = [C.Retain]
 		mutModes _ = []
 
 initFun :: D.Constructor -> C.Fun
@@ -98,7 +98,10 @@ stmToImpl (D.Class {D.className = clsName, D.classDefs = defs, D.classConstructo
 
 		implInitFields [] [] = []
 		implInitFields co fields = [C.If C.Self (map (implConstrField . fst) co ++ map implInitField fields) []]
-		implConstrField D.Field {D.defName = name} = C.Set (C.Ref $ '_' : name) (C.Ref name)
+		implConstrField D.Field {D.defName = name, D.defType = tp} = C.Set (C.Ref $ '_' : name) (implRight tp) 
+			where
+				implRight D.TPClass{} = C.Call (C.Ref name) "retain" []
+				implRight _ = (C.Ref name)
 		implInitField D.Field {D.defName = name, D.defBody = def} = C.Set (C.Ref $ '_' : name) (tExp def)
 
 		implCreate = C.ImplFun (createFun clsName constr) [C.Return

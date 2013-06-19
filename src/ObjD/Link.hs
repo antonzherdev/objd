@@ -36,14 +36,13 @@ isField _ = False
 data Par = Par {parName :: String, parType :: DataType, parDef :: Exp}
 type Constructor = [(Def, Exp)]
 
-data DataType = TPInt | TPFloat | TPVoid | TPClassRef Class | TPArr DataType
+data DataType = TPInt | TPFloat | TPVoid | TPClass Class | TPStruct Class | TPArr DataType
 instance Show DataType where
 	show TPInt = "int"
 	show TPFloat = "float"
 	show TPVoid = "void"
-	show (TPClassRef c)
-		| isStruct c = className c
-	 	| otherwise  = className c ++ "*"
+	show (TPClass c) = className c ++ "*"
+	show (TPStruct c) = className c
 	show (TPArr t) = "[" ++ show t ++ "]"
 
 data Exp = Nop | IntConst Int | Braces [Exp]
@@ -218,7 +217,8 @@ dataType :: ClassIndex -> D.DataType -> DataType
 dataType cidx (D.DataType name) = case name of
 	"int" -> TPInt
 	"float" -> TPFloat
-	_ -> TPClassRef $ findTp "class" cidx name
+	_ -> let cls = findTp "class" cidx name
+		in if isStruct cls then TPStruct cls else TPClass cls
 dataType cidx (D.DataTypeArr tp) = TPArr $ dataType cidx tp
 
 exprDataType :: Exp -> DataType
