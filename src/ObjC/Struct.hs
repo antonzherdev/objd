@@ -48,6 +48,7 @@ data Stm =
 data Exp =
 	Self | Super
 	| Call {callInst :: Exp, callName :: String, callPars :: [(String, Exp)]}
+	| CCall {callName :: String, ccallPars :: [Exp]}
 	| Ref String
 	| IntConst Int
 	| Eq Exp Exp | NotEq Exp Exp
@@ -116,6 +117,7 @@ instance Show Exp where
 	show Self = "self"
 	show Super = "super"
 	show (Call inst name pars) = "[" ++ show inst ++ " " ++ name ++ (cap . strs " " . map (\(nm, e) -> nm ++ ":" ++ show e)) pars ++ "]"
+	show (CCall name pars) = name ++ "(" ++ strs' ", " pars ++ ")"
 	show (Ref name) = name
 	show (IntConst i) = show i
 	show (Eq l r) = showOp l "==" r

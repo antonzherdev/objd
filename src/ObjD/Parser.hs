@@ -60,13 +60,29 @@ pStub :: Parser FileStm
 pStub = do
 	string "stub"
 	sps
-	name <- ident
-	sps
-	extends <- pExtends
-	sps
-	body <- pClassBody
-	sps
-	return Stub {className = name, classExtends = extends, classBody = body}
+	pStubDef <|> pStubClass
+	where
+		pStubClass = do
+			struct <- option False (string "struct" >> return True)
+			sps
+			name <- ident
+			sps
+			extends <- pExtends
+			sps
+			body <- pClassBody
+			sps
+			return Stub {isStruct = struct, className = name, classExtends = extends, classBody = body}
+		pStubDef = do
+			string "def"
+			sps
+			name <- ident
+			sps
+			pars <- pDefPars
+			sps
+			ret <- option (DataType "void") pDataType
+			sps
+			return StubDef {stubDefName = name, stubDefPars = pars, stubDefRetType = ret}
+
 
 pClass :: Parser FileStm
 pClass = do
@@ -74,13 +90,15 @@ pClass = do
 	sps
 	name <- ident
 	sps
+	struct <- option False (string "struct" >> return True)
+	sps
 	fields <- pClassFields
 	sps
 	extends <- pExtends
 	sps
 	body <- pClassBody
 	sps
-	return Class {className = name, classFields = fields, classExtends = extends, classBody = body}
+	return Class {isStruct = struct, className = name, classFields = fields, classExtends = extends, classBody = body}
 
 pExtends :: Parser Extends
 pExtends = optionMaybe (do
@@ -127,20 +145,24 @@ pDecl' mtf = do
 
 pImport :: Parser FileStm
 pImport = do
-	string "#import"
+	string "import"
 	sps
-	pImportLib <|> pImportUser
+	ret <- pImportLib <|> pImportUser <|> pImportD
+	sps
+	return ret
 	where
 	pImportLib = do
 		char '<'
-		lib <- ident
+		lib <- impIdent
 		char '>'
-		return $ Import lib
+		return $ Import lib ImportTypeCLib
 	pImportUser = do
 		char '"'
-		lib <- ident
+		lib <- impIdent
 		char '"'
-		return $ Import lib
+		return $ Import lib ImportTypeCUser
+	pImportD = impIdent >>= \lib -> return $ Import lib ImportTypeD
+	impIdent = many1 (letter <|> digit <|> oneOf "_/.")
 
 pStm :: Parser ClassStm
 pStm = pDeclStm <|> pDef <?> "Class statement"
@@ -155,7 +177,7 @@ pDef = do
 	sps1
 	name <- ident
 	sps
-	pars <- option [] (brackets (option [] (pDefPar `sepBy` charSps ',')))
+	pars <- pDefPars
 	sps
 	ret <- optionMaybe pDataType
 	sps
@@ -163,6 +185,9 @@ pDef = do
 	sps
 	body <- option Nop pExp
 	return $ Def name pars ret body
+
+pDefPars :: Parser [Par]
+pDefPars = option [] (brackets (option [] (pDefPar `sepBy` charSps ',')))
 
 pDefPar :: Parser Par
 pDefPar = do

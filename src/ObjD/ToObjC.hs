@@ -12,9 +12,13 @@ import qualified ObjD.Link   as D
 
 
 toObjC :: D.File -> ([C.FileStm], [C.FileStm])
-toObjC D.File{D.fileName = name, D.fileClasses = classes} = 
-	let cls = filter D.isClass classes
-	in ( [C.ImportLib "Foundation/Foundation.h", C.EmptyLine] ++ map stmToInterface cls, 
+toObjC D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cImports} = 
+	let 
+		cls = filter D.isClass classes
+		imps = map toImport cImports
+		toImport (D.CImportLib n) = C.ImportLib n
+		toImport (D.CImportUser n) = C.Import n
+	in ( [C.ImportLib "Foundation/Foundation.h"] ++ imps ++ [C.EmptyLine] ++ map stmToInterface cls, 
 		[C.Import (name ++ ".h") , C.EmptyLine] ++ map stmToImpl cls)
 
 
@@ -131,6 +135,7 @@ tExp (D.Dot l (D.Call D.Def{D.defName = name} pars)) = C.Call (tExp l) name (map
 
 tExp (D.Self) = C.Self
 tExp (D.Call D.Field {D.defName = r} []) = C.Ref $ '_' : r
+tExp (D.Call D.DefStub{D.defName = name} pars) = C.CCall name (map (tExp . snd) pars)
 tExp (D.ParRef D.Par {D.parName = r}) = C.Ref r
 
 tExp x = error $ "No tExp for " ++ show x
