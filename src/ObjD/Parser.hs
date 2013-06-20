@@ -20,7 +20,7 @@ parseStatement :: String -> Either ParseError FileStm
 parseStatement = parse pStatement "ObjD"
 
 pStatement :: Parser FileStm
-pStatement = pImport <|> pStub <|> pClass 
+pStatement = pImport <|> pStub <|> pClass <|> pEnum
 
 sps :: Parser String
 sps = many (char ' ' <|> char '\t'  <|> char '\n') <?> ""
@@ -49,7 +49,10 @@ pDataType = do
 		simple = ident >>= \v -> return $ DataType v
 
 braces :: Parser a -> Parser a
-braces = between (charSps '{') (spsChar '}')
+braces p = do 
+	r <- between (charSps '{') (spsChar '}') p 
+	sps
+	return r
 brackets :: Parser a -> Parser a
 brackets = between (charSps '(') (spsChar ')')
 
@@ -100,18 +103,38 @@ pClass = do
 	sps
 	return Class {isStruct = struct, className = name, classFields = fields, classExtends = extends, classBody = body}
 
+pEnum :: Parser FileStm
+pEnum = do
+	string "enum"
+	sps 
+	name <- ident
+	sps
+	fields <- pClassFields
+	sps
+	extends <- pExtends
+	sps
+	braces $ let
+			enumItem = try $ do
+				itemName <- ident
+				sps
+				pars <- brackets $ pCallPar `sepBy` charSps ','
+				sps 
+				return $ EnumItem itemName pars
+		in do
+			items <- many enumItem
+			body <- many pStm
+			return Enum { className = name, classFields = fields, classExtends = extends, enumItems = items, classBody = body}
+
+
 pExtends :: Parser Extends
 pExtends = optionMaybe (do
-		string "extends"
+		try $ string "extends"
 		sps
 		ident
 	)
 
 pClassBody :: Parser [ClassStm]
-pClassBody = option [] $ braces $ many (do
-	stm <- pStm
-	sps
-	return stm)
+pClassBody = option [] $ braces $ many pStm
 
 pClassFields :: Parser [Decl]
 pClassFields = option [] $ brackets $ pDeclPar `sepBy` charSps ','
@@ -165,7 +188,10 @@ pImport = do
 	impIdent = many1 (letter <|> digit <|> oneOf "_/.")
 
 pStm :: Parser ClassStm
-pStm = pDeclStm <|> pDef <?> "Class statement"
+pStm = do
+	stm <- (pDeclStm <|> pDef <?> "Class statement")
+	sps
+	return stm
 	where
 	pDeclStm = do
 		decl <- pDecl
@@ -214,8 +240,13 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pIntConst <|> pBraces <|> pIf <|> pSelf <|> pCall  <?> "Expression"
-		pIntConst = liftM (IntConst . read) (many1 digit)
+		pTerm' = pNumConst <|> pBraces <|> pIf <|> pSelf <|> pCall  <?> "Expression"
+		pNumConst = do
+			i <- liftM (read) (many1 digit)
+			d <- optionMaybe $ do
+				char '.'
+				liftM (read) (many1 digit)
+			return $ maybe (IntConst i) (FloatConst i) d
 		pBraces = liftM Braces $ braces (many (do
 			e <- pExp
 			sps
@@ -243,16 +274,17 @@ pTerm = do
 				charSps ')' <?> "Function call close bracket"
 				return $ Call name pars) <|> return (Ref name)
 
-		pCallPar = do
-			name <- optionMaybe $ try $ do 
-				r <- ident
-				sps
-				char '='
-				sps
-				return r
-			e <- pExp
-			sps
-			return (name, e)
+pCallPar :: Parser CallPar
+pCallPar = do
+	name <- optionMaybe $ try $ do 
+		r <- ident
+		sps
+		char '='
+		sps
+		return r
+	e <- pExp
+	sps
+	return (name, e)
 
 pDot :: Parser (Exp -> Exp -> Exp)
 pDot = stringSps "." >> return Dot

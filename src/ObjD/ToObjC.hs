@@ -8,6 +8,7 @@ module ObjD.ToObjC (
 import           Control.Arrow
 import           Data.Char
 import           Data.Maybe
+import           Data.List
 import qualified ObjC.Struct   as C
 import qualified ObjD.Link   as D
 
@@ -15,13 +16,16 @@ import qualified ObjD.Link   as D
 toObjC :: D.File -> ([C.FileStm], [C.FileStm])
 toObjC D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cImports} = 
 	let 
-		cls = filter (\c -> D.isClass c && (not $ D.isStruct c)) classes
-		structs = filter (\c -> D.isClass c && (D.isStruct c)) classes
+		cls = filter (\c -> D.isClass c && not (D.isStruct c)) classes
+		structs = filter (\c -> D.isClass c && D.isStruct c) classes
+		enums = filter D.isEnum classes
 		imps = map toImport cImports
 		toImport (D.CImportLib n) = C.ImportLib n
 		toImport (D.CImportUser n) = C.Import n
-	in ( [C.ImportLib "Foundation/Foundation.h"] ++ imps ++ [C.EmptyLine] ++ concatMap genStruct structs ++ map stmToInterface cls, 
-		[C.Import (name ++ ".h") , C.EmptyLine] ++ map stmToImpl cls)
+	in ( [C.ImportLib "Foundation/Foundation.h"] ++ imps ++ [C.EmptyLine] ++ concatMap genStruct structs 
+		++ concatMap genEnumInterface enums 
+		++ map stmToInterface cls, 
+		[C.Import (name ++ ".h") , C.EmptyLine] ++ concatMap genEnumImpl enums ++ map stmToImpl cls)
 
 
 {- Interface -}
@@ -42,7 +46,7 @@ fieldToProperty :: D.Def -> C.Property
 fieldToProperty (D.Field {D.defName = name, D.isFieldMutable = mut, D.defType = tp}) = C.Property {
 	C.propertyName = name,
 	C.propertyType = showDataType tp,
-	C.propertyModifiers = if mut then [C.NonAtomic] ++ (mutModes tp) else [C.ReadOnly, C.NonAtomic]
+	C.propertyModifiers = if mut then C.NonAtomic : mutModes tp else [C.ReadOnly, C.NonAtomic]
 }
 	where
 		mutModes D.TPArr{} = [C.ReadOnly]
@@ -79,21 +83,51 @@ stm2Fun D.Def{D.defName = name, D.defPars = pars, D.defType = tp} =
 {- Implementation -}
 
 stmToImpl :: D.Class -> C.FileStm
-stmToImpl (D.Class {D.className = clsName, D.classDefs = defs, D.classConstructor = constr}) =
+stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs, D.classConstructor = constr} =
 	C.Implementation {
 		C.implName = clsName,
 		C.implFields = (map implField . filter D.isField) defs,
 		C.implSynthesizes = (map synthesize . filter D.isField) defs,
-		C.implFuns = [implCreate, implInit, dealoc] ++ implFuns defs
+		C.implFuns = [implCreate cl constr, implInit cl constr, dealoc cl] ++ implFuns defs,
+		C.implStaticFields = []
 	}
-	where
-		synthesize D.Field{D.defName = x} = C.ImplSynthesize x ('_' : x)
-		implField D.Field{D.defName = x, D.defType = tp} = C.ImplField ('_' : x) (showDataType tp)
-		implInit = C.ImplFun (initFun constr) (
+	
+
+synthesize :: D.Def -> C.ImplSynthesize
+synthesize D.Field{D.defName = x} = C.ImplSynthesize x ('_' : x)
+implField :: D.Def -> C.ImplField
+implField D.Field{D.defName = x, D.defType = tp} = C.ImplField ('_' : x) (showDataType tp)
+
+implCreate :: D.Class -> D.Constructor -> C.ImplFun
+implCreate cl constr = let 
+		clsName = D.className cl
+		pars D.Field{D.defName = name} = (name, C.Ref name)
+	in C.ImplFun (createFun clsName constr) [C.Return
+		(C.Call
+			(C.Call
+				(C.Call (C.Ref clsName) "alloc" [])
+				(if null constr then "init" else "initWith")
+				(map (pars . fst) constr)
+			)
+			"autorelease"
+			[]
+		)
+	] 
+dealoc :: D.Class -> C.ImplFun
+dealoc cl = C.ImplFun (C.Fun C.InstanceFun "void" "dealloc" []) $ mapMaybe releaseField (D.classDefs cl) ++ [C.Stm $C.Call C.Super "dealloc" []]
+	where 
+		releaseField D.Field {D.defName = name, D.defType = D.TPClass{}} = Just $ C.Stm $ C.Call (C.Ref $ '_' : name) "release" []
+		releaseField _ = Nothing
+		
+		
+
+implInit :: D.Class -> D.Constructor -> C.ImplFun
+implInit cl constr  = C.ImplFun (initFun constr) (
 			[C.Set C.Self (C.Call C.Super "init" [])]
-			++ implInitFields constr (filter hasInit defs)
+			++ implInitFields constr (filter hasInit (D.classDefs cl))
 			++ [C.Stm C.Nop, C.Return C.Self]
 			)
+	where
 		hasInit D.Field{D.defBody = D.Nop} = False
 		hasInit D.Field{} = True
 		hasInit _ = False
@@ -103,27 +137,14 @@ stmToImpl (D.Class {D.className = clsName, D.classDefs = defs, D.classConstructo
 		implConstrField D.Field {D.defName = name, D.defType = tp} = C.Set (C.Ref $ '_' : name) (implRight tp) 
 			where
 				implRight D.TPClass{} = C.Call (C.Ref name) "retain" []
-				implRight _ = (C.Ref name)
+				implRight _ = C.Ref name
 		implInitField D.Field {D.defName = name, D.defBody = def} = C.Set (C.Ref $ '_' : name) (tExp def)
-
-		implCreate = C.ImplFun (createFun clsName constr) [C.Return
-				(C.Call
-					(C.Call
-						(C.Call (C.Ref clsName) "alloc" [])
-						(if null constr then "init" else "initWith")
-						(map (pars . fst) constr)
-					)
-					"autorelease"
-					[]
-				)
-			]
-		pars D.Field{D.defName = name} = (name, C.Ref name)
-		implFuns = map stm2ImplFun . filter D.isDef
+		
+implFuns :: [D.Def] -> [C.ImplFun]
+implFuns = map stm2ImplFun . filter D.isDef
+	where
 		stm2ImplFun def@D.Def {D.defBody = db} = C.ImplFun (stm2Fun def) (tStm db)
-		dealoc = C.ImplFun (C.Fun C.InstanceFun "void" "dealloc" []) $ mapMaybe releaseField defs ++ [C.Stm $C.Call C.Super "dealloc" []]
-		releaseField D.Field {D.defName = name, D.defType = D.TPClass{}} = Just $ C.Stm $ C.Call (C.Ref $ '_' : name) "release" []
-		releaseField _ = Nothing
-
+		
 {- Struct -}
 genStruct :: D.Class -> [C.FileStm]
 genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fields, C.TypeDefStruct name name, con, C.EmptyLine]
@@ -137,17 +158,65 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 		}
 		toPar D.Field{D.defName = n, D.defType = tp} = C.CFunPar (showDataType tp) n
 		toSet D.Field{D.defName = n} = C.Set (C.Dot (C.Ref "ret") n) (C.Ref n)
+{- Enum -}
+
+enumAdditionalDefs :: [D.Def]
+enumAdditionalDefs = [D.Field "ordinal" False D.TPInt D.Nop, D.Field "name" False D.TPString D.Nop]
+
+enumConst :: D.Constructor -> D.Constructor
+enumConst cst = map (\f -> (f, D.Nop)) enumAdditionalDefs ++ cst
+
+genEnumInterface :: D.Class -> [C.FileStm]
+genEnumInterface D.Enum {D.className = name, D.classExtends = extends, D.classDefs = defs, D.enumItems = items } = [
+	C.Interface {
+		C.interfaceName = name,
+		C.interfaceExtends = maybe "NSObject" D.className extends,
+		C.interfaceProperties = [C.Property "name" "NSString*" [C.NonAtomic, C.ReadOnly],
+			C.Property "ordinal" "NSInteger" [C.NonAtomic, C.ReadOnly]
+			] ++ (map fieldToProperty . filter D.isField) defs,
+		C.interfaceFuns = intefaceFuns (enumAdditionalDefs ++ defs) ++ map (enumItemGetterFun name) items
+	}]
+	
+enumItemGetterFun :: String -> D.EnumItem -> C.Fun
+enumItemGetterFun name (D.EnumItem itemName _) = C.Fun C.ObjectFun (name ++ "*") itemName []
+
+genEnumImpl :: D.Class -> [C.FileStm]
+genEnumImpl cl@D.Enum {D.className = clsName, D.enumItems = items} = [
+	C.Implementation {
+		C.implName = clsName,
+		C.implFields = (map implField . filter D.isField) defs,
+		C.implSynthesizes = (map synthesize . filter D.isField) defs,
+		C.implFuns = [implCreate cl constr, implInit cl constr, dealoc cl, initialize] ++ implFuns defs ++ map itemGetter items,
+		C.implStaticFields = map stField items
+	}]
+	where
+		defs = enumAdditionalDefs ++ D.classDefs cl
+		constr = enumConst (D.classConstructor cl)
+		stField (D.EnumItem itemName _) = C.ImplField (clsName ++ "*") itemName
+		itemGetter e@(D.EnumItem itemName _) = C.ImplFun (enumItemGetterFun clsName e) [C.Return $ C.Ref itemName]
+		initialize = C.ImplFun (C.Fun C.ObjectFun "void" "initialize" []) (
+			(C.Stm $ C.Call C.Super "initialize" []) : snd ( mapAccumL initItem 0 items))
+		initItem :: Int -> D.EnumItem -> (Int, C.Stm)
+		initItem n (D.EnumItem itemName pars) = (n + 1, C.Set (C.Ref itemName) $ retain $ C.Call (C.Ref clsName) (createFunName clsName ++ "With") ([
+			("ordinal", C.IntConst n),
+			("name", C.StringConst itemName)] ++ map initPar pars) )
+		retain f = C.Call f "retain" []
+		initPar (D.Field{D.defName = fname}, e) = (fname, tExp e)
+			
+
 
 {- DataType -}
 showDataType :: D.DataType -> String
 showDataType D.TPArr{} = "NSArray*"
 showDataType D.TPInt = "NSInteger"
 showDataType D.TPFloat = "CGFloat"
+showDataType D.TPString = "NSString*"
 showDataType tp = show tp
 
 {- Exp -}
 tExp :: D.Exp -> C.Exp
 tExp (D.IntConst i) = C.IntConst i
+tExp (D.FloatConst a b) = C.FloatConst a b
 tExp (D.Eq l r) = C.Eq (tExp l) (tExp r)
 tExp (D.NotEq l r) = C.NotEq (tExp l) (tExp r)
 

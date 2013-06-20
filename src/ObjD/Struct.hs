@@ -1,18 +1,6 @@
 module ObjD.Struct (
-	Decl(..),
-	FileStm(..),
-	Extends,
-	ClassStm(..),
-	Exp(..),
-	Par(..),
-	DataType(..),
-	File(..),
-	Sources,
-	ImportType(..),
-	isStubDef,
-	isClass, isImport,
-	stmName,
-	isDef, isDecl, isStub
+	Decl(..), FileStm(..), Extends, ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar,
+	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
 ) where
 import           Ex.String
 
@@ -28,9 +16,13 @@ data FileStm =
 	| Class {isStruct :: Bool, className :: String, classFields :: [Decl], classExtends :: Extends, classBody :: [ClassStm] }
 	| Stub {isStruct :: Bool, className :: String, classExtends :: Extends, classBody :: [ClassStm]}
 	| StubDef {stubDefName :: String, stubDefPars :: [Par], stubDefRetType :: DataType}
+	| Enum {className :: String, classFields :: [Decl], classExtends :: Extends, enumItems :: [EnumItem], classBody :: [ClassStm]}
 isClass :: FileStm -> Bool
 isClass (Class {}) = True
 isClass _ = False
+isEnum :: FileStm -> Bool
+isEnum (Enum {}) = True
+isEnum _ = False
 isStub :: FileStm -> Bool
 isStub (Stub {}) = True
 isStub _ = False
@@ -59,10 +51,14 @@ isDecl :: ClassStm -> Bool
 isDecl DeclStm {} = True
 isDecl _ = False
 
+data EnumItem = EnumItem{enumItemName :: String, enumItemPars :: [CallPar]}
 
 data Par = Par { parName :: String, parType :: DataType }
 
-data Exp = Nop | IntConst Int | Braces [Exp]
+data Exp = Nop 
+	| IntConst Int 
+	| FloatConst Int Int
+	| Braces [Exp]
 	| If Exp Exp Exp
 	| Self
 	| NotEq Exp Exp | Eq Exp Exp
@@ -79,6 +75,7 @@ instance Show Decl where
 
 instance Show FileStm where
 	show (Class{className = name, classFields = fields, isStruct = s}) = (if s then "struct" else "class ") ++ name ++  "(" ++ strs' ", " fields ++ ")"
+	show (Enum{className = name, classFields = fields}) = "enum " ++ name ++  "(" ++ strs' ", " fields ++ ")"
 	show (Stub{className = name}) = "stub " ++ name
 	show (StubDef{stubDefName = name}) = "stub def " ++ name
 	show (Import name ImportTypeD) = "import " ++ name
@@ -105,6 +102,7 @@ instance Show Exp where
 			showPar (Nothing, e) = show e
 			showPar (Just name, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
+	show (FloatConst a b) = show a ++ "." ++ show b
 
 
 

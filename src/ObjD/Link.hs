@@ -1,11 +1,9 @@
 module ObjD.Link (
-	Sources, File(..), Class(..), Extends, Def(..), Par(..), Constructor, DataType(..), Exp(..), CImport(..),
-	link, isClass, isDef, isField
+	Sources, File(..), Class(..), Extends, Def(..), Par(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..),
+	link, isClass, isDef, isField, isEnum
 )where
 
-import           Control.Arrow
 import           Control.Monad.State
-import           Data.List
 import qualified Data.Map            as M
 import           Data.Maybe
 import           Ex.String
@@ -15,12 +13,15 @@ import qualified ObjD.Struct         as D
 type Sources = [File]
 data File = File {fileName :: String, fileImports :: [File], fileCImports :: [CImport], fileClasses :: [Class], globalDefs :: [Def]}
 
-data Class = Class { isStruct :: Bool, className :: String
-	, classExtends :: Extends, classDefs :: [Def], classConstructor :: Constructor }
+data Class = Class { isStruct :: Bool, className :: String , classExtends :: Extends, classDefs :: [Def], classConstructor :: Constructor }
 	| Stub { isStruct :: Bool, className :: String, classExtends :: Extends, classDefs :: [Def]}
+	| Enum { className :: String, classExtends :: Extends, classDefs :: [Def], classConstructor :: Constructor, enumItems :: [EnumItem] }
 isClass :: Class -> Bool
 isClass (Class {}) = True
 isClass _ = False
+isEnum :: Class -> Bool
+isEnum (Enum {}) = True
+isEnum _ = False
 
 type Extends = Maybe Class
 data Def = Def {defName :: String, defPars :: [Par], defType :: DataType, defBody :: Exp}
@@ -33,19 +34,26 @@ isField :: Def -> Bool
 isField Field{} = True
 isField _ = False
 
+data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
+
 data Par = Par {parName :: String, parType :: DataType, parDef :: Exp}
 type Constructor = [(Def, Exp)]
 
-data DataType = TPInt | TPFloat | TPVoid | TPClass Class | TPStruct Class | TPArr DataType
+data DataType = TPInt | TPFloat | TPString | TPVoid | TPClass Class | TPStruct Class | TPEnum Class | TPArr DataType
 instance Show DataType where
 	show TPInt = "int"
 	show TPFloat = "float"
 	show TPVoid = "void"
+	show TPString = "string"
 	show (TPClass c) = className c ++ "*"
+	show (TPEnum c) = className c ++ "*"
 	show (TPStruct c) = className c
 	show (TPArr t) = "[" ++ show t ++ "]"
 
-data Exp = Nop | IntConst Int | Braces [Exp]
+data Exp = Nop 
+	| IntConst Int 
+	| FloatConst Int Int
+	| Braces [Exp]
 	| If Exp Exp Exp
 	| Self
 	| NotEq Exp Exp | Eq Exp Exp
@@ -69,15 +77,21 @@ instance Show CImport where
 	show (CImportUser l) = "import \"" ++ l ++ "\""
 
 instance Show Class where
-	show Class {className = name, classExtends = extends, classDefs = defs, classConstructor = constr} =
-		"class " ++ name ++ " (" ++ (strs ", " . map constrFld) constr ++ ") " ++ maybe "" className extends ++ " {\n" ++
-			(unlines . map ind . concatMap (lines . show)) defs  ++
+	show cl =
+		tp cl ++ " " ++ className cl ++ sConstr cl ++ maybe "" className (classExtends cl) ++ " {\n" ++
+			(unlines . map ind . concatMap (lines . show)) (classDefs cl)  ++
 		"}"
 		where
+			tp Class{} = "class"
+			tp Stub{} = "stub"
+			tp Enum{} = "enum"
+			sConstr ccc = maybe "" (\cc -> " (" ++ (strs ", " . map constrFld) cc ++ ") ") (constr ccc)
+			constr Class{classConstructor = c} = Just c
+			constr Enum{classConstructor = c} = Just c
+			constr _ = Nothing
+
 			constrFld (f, Nop) = defName f
 			constrFld (f, e) = defName f ++ " = " ++ show e
-	show Stub {className = name, classExtends = extends, classDefs = defs} = "stub " ++ name  ++ maybe "" className extends ++ " {\n" ++
-		(unlines . map ind . concatMap (lines . show)) defs ++ "}"
 instance Show Def where
 	show Def {defName = name , defPars = [], defType = tp, defBody = e} =
 		"def " ++ name ++ " : " ++ show tp ++ " = " ++ show e
@@ -111,6 +125,7 @@ instance Show Exp where
 		where
 			showPar (Par {parName = name}, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
+	show (FloatConst a b) = show a ++ "." ++ show b
 	
 findCall :: String -> [(Maybe String, Exp)] -> [Def] -> Maybe Exp
 findCall name pars fdefs = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
@@ -136,7 +151,7 @@ file fidx (D.File name stms) = fl
 		fl = File {fileName = name, fileImports = files, fileCImports = cImports, 
 			fileClasses =(map (cls (cidx, glidx)) . filter isCls) stms, globalDefs = gldefs}
 		files = visibleFiles stms
-		isCls s = D.isClass s || D.isStub s
+		isCls s = D.isClass s || D.isStub s || D.isEnum s
 		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . visibleFiles) stms
 		glidx = concatMap globalDefs (fl : files)
 		visibleFiles :: [D.FileStm] -> [File]
@@ -172,23 +187,38 @@ findTp :: String -> M.Map String a -> String -> a
 findTp tp mmm name =  M.findWithDefault (error $ "No " ++ tp ++ " found " ++ name) name mmm
 
 cls :: (ClassIndex, DefIndex) -> D.FileStm -> Class
-cls (cidx, glidx) cl@D.Class{} = self
+cls (cidx, glidx) cl = self
 	where
 		env = Env self cidx glidx M.empty
-		self = Class {isStruct = D.isStruct cl, className = D.className cl, classExtends = extends, classDefs = fields ++ defs, classConstructor = constr}
+		self = case cl of
+			D.Class{} -> Class {
+				isStruct = D.isStruct cl, 
+				className = D.className cl, 
+				classExtends = extends, 
+				classDefs = fields ++ defs, 
+				classConstructor = constr
+			}
+			D.Stub{} -> Stub{
+				isStruct =  D.isStruct cl, 
+				className = D.className cl, 
+				classExtends = extends, 
+				classDefs = defs}
+			D.Enum{} -> Enum {
+				className = D.className cl, 
+				classExtends = extends, 
+				classDefs = fields ++ defs, 
+				classConstructor = constr,
+				enumItems = map enumItem (D.enumItems cl)
+			}
 		extends = fmap (findTp "class" cidx) (D.classExtends cl)
 		fields =  mapM (evalState . field) decls env
 		fieldsMap = M.fromList $ map (idx defName) fields
 		decls = D.classFields cl ++ (map D.stmDecl . filter D.isDecl $ D.classBody cl)
 		defs = evalState (mapM def . filter D.isDef $ D.classBody cl) env
 		constr = map (\f -> (findTp "field" fieldsMap (D.declName f), evalState (expr False (D.declDef f)) env) ) $ D.classFields cl
-cls (cidx, _) D.Stub{D.isStruct = str, D.className = name, D.classExtends = extends, D.classBody = ddefs} = 
-	Stub{isStruct = str, className = name, classExtends = fmap (findTp "class" cidx) extends, classDefs = defs}
-	where
-		defs = (map toDef . filter D.isDef) ddefs
-		toDef D.Def{D.defName = n, D.defPars = opars, D.defRetType = tp} = 
-			Def{defName = n, defPars = map par opars, defBody = Nop, defType = maybe TPVoid (dataType cidx) tp}
-		par D.Par {D.parName = n, D.parType = tp} = Par{parName = n, parType = dataType cidx tp, parDef = Nop}
+		enumItem (D.EnumItem name pars) = EnumItem name enumItemPars
+			where
+				enumItemPars = zip (map fst constr) (map ((\e -> evalState (expr False e) env) . snd) pars)
 
 field :: D.Decl -> State Env Def
 field D.Decl {D.isDeclMutable = mut, D.declName = name, D.declDataType = tp, D.declDef = e} = do
@@ -219,8 +249,12 @@ dataType :: ClassIndex -> D.DataType -> DataType
 dataType cidx (D.DataType name) = case name of
 	"int" -> TPInt
 	"float" -> TPFloat
+	"void" -> TPVoid
+	"string" -> TPString
 	_ -> let c = findTp "class" cidx name
-		in if isStruct c then TPStruct c else TPClass c
+		in case c of 
+			Enum{} -> TPEnum c
+			_ -> if isStruct c then TPStruct c else TPClass c
 dataType cidx (D.DataTypeArr tp) = TPArr $ dataType cidx tp
 
 exprDataType :: Exp -> DataType
@@ -237,6 +271,7 @@ expr True D.Nop = error "Return NOP"
 expr True e = expr False e >>= \ee -> return $ Return ee
 expr _ D.Nop = return Nop
 expr _ (D.IntConst i) = return $ IntConst i
+expr _ (D.FloatConst a b) = return $ FloatConst a b
 expr _ (D.Eq a b) = do
 	aa <- expr False a
 	bb <- expr False b
@@ -268,8 +303,7 @@ expr _ (D.Call name pars) = do
 	return $
 		let
 			allDefs = allDefsInClass (envSelf env) ++ envGlobalDefIndex env
-			allDefsInClass Class{classDefs = defs, classExtends = Nothing} = defs
-			allDefsInClass Class{classDefs = defs, classExtends = Just extends} = defs ++ allDefsInClass extends
+			allDefsInClass cl = (classDefs cl) ++ maybe [] (\ee -> allDefsInClass ee) (classExtends cl)
 			dd = fromMaybe (error $ "Could find reference for call " ++ callStr) $ findCall name rp allDefs
 			callStr = name ++ case pars of
 				[] -> ""

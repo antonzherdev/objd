@@ -20,7 +20,11 @@ import           Ex.String
 data FileStm =
 	Import String | ImportLib String | EmptyLine 
 	| Interface { interfaceName :: String, interfaceExtends :: String, interfaceProperties :: [Property], interfaceFuns :: [Fun] }
-	| Implementation {implName :: String, implFields :: [ImplField], implSynthesizes :: [ImplSynthesize], implFuns :: [ImplFun]}
+	| Implementation {implName :: String
+		, implFields :: [ImplField]
+		, implSynthesizes :: [ImplSynthesize]
+		, implFuns :: [ImplFun]
+		, implStaticFields :: [ImplField]}
 	| Struct {structName :: String, structFields :: [StructField]}
 	| TypeDefStruct {oldName :: String, newName :: String}
 	| CFun {cfunReturnType :: String, cfunName :: String, cfunPars :: [CFunPar], cfunExps :: [Stm]}
@@ -58,6 +62,8 @@ data Exp =
 	| CCall {callName :: String, ccallPars :: [Exp]}
 	| Ref String
 	| IntConst Int
+	| FloatConst Int Int
+	| StringConst String
 	| Eq Exp Exp | NotEq Exp Exp
 	| Dot Exp String
 	| Nop
@@ -87,10 +93,11 @@ instance Show FileStm where
 		 ++ (unlines' . map show) properties
 		 ++ (unlines  . map (( ++ ";") . show)) funs
 		 ++ "@end\n\n"
-	show Implementation{implName = iName, implFields = fields, implSynthesizes = synzs, implFuns = funs} =
+	show Implementation{implName = iName, implFields = fields, implSynthesizes = synzs, implFuns = funs, implStaticFields = stFields} =
 		"@implementation " ++ iName
 		++ showImplFields fields
-		++ showSynthenizes synzs
+		++ showStFields stFields
+		++ showSynthenizes synzs ++ "\n"
 		++ showImplFuns funs
 		++ "@end\n\n"
 		where
@@ -100,9 +107,11 @@ instance Show FileStm where
 			++ "}\n"
 		showImplField (ImplField name tp) = tp ++ " " ++ name ++ ";"
 		showSynthenizes = unlines . map showSynthenize
+		showStFields = unlines . map showStField
 		showSynthenize (ImplSynthesize name "") = "@synthesize " ++ name ++ ";"
 		showSynthenize (ImplSynthesize name var) = "@synthesize " ++ name ++ " = " ++ var ++ ";"
-		showImplFuns = unlines . map (("\n" ++ ) . show)
+		showImplFuns = unlines . map show
+		showStField (ImplField nm tp) = "static " ++ nm ++ " " ++ tp ++ ";"
 
 instance Show StructField where
 	show (StructField t n) = t ++ " " ++ n ++ ";"
@@ -140,6 +149,8 @@ instance Show Exp where
 	show (CCall name pars) = name ++ "(" ++ strs' ", " pars ++ ")"
 	show (Ref name) = name
 	show (IntConst i) = show i
+	show (FloatConst a b) = show a ++ "." ++ show b
+	show (StringConst s) = "@" ++ show s
 	show (Eq l r) = showOp l "==" r
 	show (NotEq l r) = showOp l "!=" r
 	show (Dot l r) = show l ++ "." ++ r
