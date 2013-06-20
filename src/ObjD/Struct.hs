@@ -1,5 +1,5 @@
 module ObjD.Struct (
-	Decl(..), FileStm(..), Extends, ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar,
+	Decl(..), FileStm(..), Extends, ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, 
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
 ) where
 import           Ex.String
@@ -37,11 +37,11 @@ data ImportType = ImportTypeCUser | ImportTypeCLib | ImportTypeD
 type Extends = Maybe String
 
 data ClassStm = DeclStm {stmDecl :: Decl}
-	| Def {defName :: String, defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
+	| Def {isDefStatic :: Bool, defName :: String, defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
 stmName :: ClassStm -> String
 stmName (DeclStm d) = declName d
-stmName (Def name [] _ _) = name
-stmName (Def name pars _ _) = name ++ " " ++ unwords (map parName pars)
+stmName (Def _ name [] _ _) = name
+stmName (Def _ name pars _ _) = name ++ " " ++ unwords (map parName pars)
 
 isDef :: ClassStm -> Bool
 isDef Def {} = True

@@ -12,6 +12,7 @@ parseFile = parse pFile "ObjD"
 
 pFile :: Parser [FileStm]
 pFile = do
+	sps
 	res <- many pStatement
 	eof
 	return res
@@ -201,6 +202,10 @@ pDef :: Parser ClassStm
 pDef = do
 	string "def"
 	sps1
+	static <- option False $ do 
+		try (string "static")
+		sps1
+		return True
 	name <- ident
 	sps
 	pars <- pDefPars
@@ -210,7 +215,7 @@ pDef = do
 	option ' ' (char '=')
 	sps
 	body <- option Nop pExp
-	return $ Def name pars ret body
+	return $ Def static name pars ret body
 
 pDefPars :: Parser [Par]
 pDefPars = option [] (brackets (option [] (pDefPar `sepBy` charSps ',')))

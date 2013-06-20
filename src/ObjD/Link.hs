@@ -1,5 +1,5 @@
 module ObjD.Link (
-	Sources, File(..), Class(..), Extends, Def(..), Par(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..),
+	Sources, File(..), Class(..), Extends, Def(..), Par(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..), DefMod(..),
 	link, isClass, isDef, isField, isEnum
 )where
 
@@ -24,15 +24,17 @@ isEnum (Enum {}) = True
 isEnum _ = False
 
 type Extends = Maybe Class
-data Def = Def {defName :: String, defPars :: [Par], defType :: DataType, defBody :: Exp}
-	| Field {defName :: String, isFieldMutable :: Bool, defType :: DataType, defBody :: Exp}
-	| DefStub {defName :: String, defPars :: [Par], defType :: DataType}
+data Def = Def {defName :: String, defPars :: [Par], defType :: DataType, defBody :: Exp, defMods :: [DefMod]}
+	| Field { defName :: String, defType :: DataType, defBody :: Exp, defMods :: [DefMod]}
+	| DefStub {defName :: String, defPars :: [Par], defType :: DataType, defMods :: [DefMod]}
 isDef :: Def -> Bool
 isDef Def{} = True
 isDef _ = False
 isField :: Def -> Bool
 isField Field{} = True
 isField _ = False
+
+data DefMod = DefModStatic | DefModMutable deriving (Eq, Ord)
 
 data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
 
@@ -101,8 +103,8 @@ instance Show Def where
 		"def stub " ++ name ++ " : " ++ show tp 
 	show DefStub {defName = name , defPars = pars, defType = tp} =
 		"def stub " ++ name ++ "(" ++ strs' ", " pars ++ ")"++ " : " ++ show tp
-	show Field {defName = nm, isFieldMutable = mut, defType = tp, defBody = e } =
-		(if mut then "var" else "val") ++ " " ++ nm ++ " : " ++ show tp ++ show e
+	show Field {defName = nm, defMods = mods, defType = tp, defBody = e } =
+		(if DefModMutable `elem` mods then "var" else "val") ++ " " ++ nm ++ " : " ++ show tp ++ show e
 
 instance Show Par where
 	show Par {parName = name, parType = tp, parDef = Nop} = name ++ " : " ++ show tp
@@ -164,7 +166,7 @@ file fidx (D.File name stms) = fl
 		getFile f = M.lookup f fidx
 		gldefs = (map gldef . filter D.isStubDef) stms
 		gldef D.StubDef{D.stubDefName = sn, D.stubDefPars = pars, D.stubDefRetType = tp} = 
-			DefStub {defName = sn, defPars = linkDefPars cidx pars, defType = dataType cidx tp}
+			DefStub {defName = sn, defPars = linkDefPars cidx pars, defType = dataType cidx tp, defMods = []}
 
 type ClassIndex = M.Map String Class
 type DefIndex = [Def]
@@ -224,18 +226,18 @@ field :: D.Decl -> State Env Def
 field D.Decl {D.isDeclMutable = mut, D.declName = name, D.declDataType = tp, D.declDef = e} = do
 	i <- expr False e
 	env <- get
-	return Field {defName = name, isFieldMutable = mut, defType = getDataType env tp i, defBody = i}
+	return Field {defMods = if mut then [DefModMutable] else [], defName = name, defType = getDataType env tp i, defBody = i}
 
 
 def :: D.ClassStm -> State Env Def
-def D.Def{D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = do
+def D.Def{D.isDefStatic = st, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = do
 	env <- get
 	let pars = linkDefPars (envIndex env) opars
 		in do 
 			modify $ envAddVals (map EnvDeclPar pars)
 			b <- expr True body
 			put env
-			return Def {defName = name,
+			return Def {defMods = if st then [DefModStatic] else [], defName = name,
 				defPars = pars,
 				defType = getDataType env tp b, defBody = b} 
 

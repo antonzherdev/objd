@@ -1,21 +1,8 @@
-module ObjC.Struct
-( Property(..),
-  PropertyModifier(..),
-  FileStm(..),
-  ImplSynthesize(..),
-  ImplFun(..),
-  Fun(..),
-  FunType(..),
-  FunPar(..),
-  Stm(..),
-  Exp(..),
-  ImplField(..), StructField(..), CFunPar(..)
+module ObjC.Struct ( Property(..), PropertyModifier(..),FileStm(..), ImplSynthesize(..), ImplFun(..), Fun(..), FunType(..), FunPar(..),
+  Stm(..), Exp(..), ImplField(..), StructField(..), CFunPar(..), CFunMod(..)
 ) where
 
 import           Ex.String
-
-
-
 
 data FileStm =
 	Import String | ImportLib String | EmptyLine 
@@ -27,7 +14,7 @@ data FileStm =
 		, implStaticFields :: [ImplField]}
 	| Struct {structName :: String, structFields :: [StructField]}
 	| TypeDefStruct {oldName :: String, newName :: String}
-	| CFun {cfunReturnType :: String, cfunName :: String, cfunPars :: [CFunPar], cfunExps :: [Stm]}
+	| CFun {cfunMods :: [CFunMod], cfunReturnType :: String, cfunName :: String, cfunPars :: [CFunPar], cfunExps :: [Stm]}
 
 data StructField = StructField{structFieldType :: String, structFieldName :: String}
 
@@ -46,7 +33,7 @@ data FunType = ObjectFun | InstanceFun
 data FunPar = FunPar {funParName :: String, funParDataType :: String, funParVar :: String}
 
 data CFunPar = CFunPar {cfunParDataType :: String, cfunParName :: String}
-
+data CFunMod = CFunStatic | CFunInline
 {- EXPRESSIONS -}
 
 data Stm =
@@ -85,7 +72,7 @@ instance Show FileStm where
 	show (Struct name fields) = "struct " ++ name ++ " {\n" ++
 		(unlines . map (ind . show)) fields ++
 		"};"
-	show (CFun ret name pars exps) = ret ++ " " ++ name ++ "(" ++ (strs ", " . map (show)) pars ++ ") {\n" ++
+	show (CFun mods ret name pars exps) = strs " " (map show mods ++ [ret]) ++ " " ++ name ++ "(" ++ (strs ", " . map show) pars ++ ") {\n" ++
 			showStms exps ++
 		"}"
 	show (Interface name extends properties funs) =
@@ -113,6 +100,9 @@ instance Show FileStm where
 		showImplFuns = unlines . map show
 		showStField (ImplField nm tp) = "static " ++ nm ++ " " ++ tp ++ ";"
 
+instance Show CFunMod where
+	show CFunStatic = "static"
+	show CFunInline = "inline"
 instance Show StructField where
 	show (StructField t n) = t ++ " " ++ n ++ ";"
 instance Show CFunPar where
@@ -150,7 +140,7 @@ instance Show Exp where
 	show (Ref name) = name
 	show (IntConst i) = show i
 	show (FloatConst a b) = show a ++ "." ++ show b
-	show (StringConst s) = "@" ++ show s
+	show (StringConst s) = '@' : show s
 	show (Eq l r) = showOp l "==" r
 	show (NotEq l r) = showOp l "!=" r
 	show (Dot l r) = show l ++ "." ++ r

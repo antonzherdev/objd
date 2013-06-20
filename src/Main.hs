@@ -12,7 +12,7 @@ main = putStr "dsa" -}
 main::IO()
 main = 
 	let
-		path = "/Users/antonzherdev/dev/Trains3D/Trains/Trains/TRLevel"
+		path = "/Users/antonzherdev/dev/Trains3D/Trains3D/Engine/EGTexture"
 	in do 
 		txt <- readFile $ path ++ ".od"
 		putStrLn txt
@@ -22,7 +22,7 @@ main =
 			Right val -> return val)
 		putStrLn $ unlines $ map (show) od 
 		(let 
-				lnk = link [D.File "TRLevel" od]
+				lnk = link [D.File "EGTexture" od]
 			in do 
 				putStrLn "=== Linking ==="
 				putStrLn $ unlines $ map (show) lnk 

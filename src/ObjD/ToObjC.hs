@@ -12,6 +12,8 @@ import           Data.List
 import qualified ObjC.Struct   as C
 import qualified ObjD.Link   as D
 
+arc :: Bool
+arc = False
 
 toObjC :: D.File -> ([C.FileStm], [C.FileStm])
 toObjC D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cImports} = 
@@ -43,10 +45,10 @@ stmToInterface (D.Class {D.className = name, D.classExtends = extends, D.classDe
 
 
 fieldToProperty :: D.Def -> C.Property
-fieldToProperty (D.Field {D.defName = name, D.isFieldMutable = mut, D.defType = tp}) = C.Property {
+fieldToProperty (D.Field {D.defName = name, D.defMods = mods, D.defType = tp}) = C.Property {
 	C.propertyName = name,
 	C.propertyType = showDataType tp,
-	C.propertyModifiers = if mut then C.NonAtomic : mutModes tp else [C.ReadOnly, C.NonAtomic]
+	C.propertyModifiers = if D.DefModMutable `elem` mods then C.NonAtomic : mutModes tp else [C.ReadOnly, C.NonAtomic]
 }
 	where
 		mutModes D.TPArr{} = [C.ReadOnly]
@@ -75,8 +77,12 @@ intefaceFuns :: [D.Def] -> [C.Fun]
 intefaceFuns = map stm2Fun . filter D.isDef
 
 stm2Fun :: D.Def -> C.Fun
-stm2Fun D.Def{D.defName = name, D.defPars = pars, D.defType = tp} =
-	C.Fun {C.funType = C.InstanceFun, C.funReturnType = showDataType tp, C.funName = name, C.funPars = map par pars}
+stm2Fun D.Def{D.defName = name, D.defPars = pars, D.defType = tp, D.defMods = mods} =
+	C.Fun {
+		C.funType = if D.DefModStatic `elem` mods then C.ObjectFun else C.InstanceFun, 
+		C.funReturnType = showDataType tp, 
+		C.funName = name, 
+		C.funPars = map par pars}
 	where
 		par (D.Par nm ttp _) = C.FunPar nm (showDataType ttp) nm
 
@@ -88,7 +94,7 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs, D.classConstruc
 		C.implName = clsName,
 		C.implFields = (map implField . filter D.isField) defs,
 		C.implSynthesizes = (map synthesize . filter D.isField) defs,
-		C.implFuns = [implCreate cl constr, implInit cl constr, dealoc cl] ++ implFuns defs,
+		C.implFuns = [implCreate cl constr, implInit cl constr] ++ dealoc cl ++ implFuns defs,
 		C.implStaticFields = []
 	}
 	
@@ -102,19 +108,18 @@ implCreate :: D.Class -> D.Constructor -> C.ImplFun
 implCreate cl constr = let 
 		clsName = D.className cl
 		pars D.Field{D.defName = name} = (name, C.Ref name)
-	in C.ImplFun (createFun clsName constr) [C.Return
-		(C.Call
-			(C.Call
-				(C.Call (C.Ref clsName) "alloc" [])
-				(if null constr then "init" else "initWith")
-				(map (pars . fst) constr)
-			)
-			"autorelease"
-			[]
-		)
+	in C.ImplFun (createFun clsName constr) [C.Return $
+		autorelease $ C.Call (C.Call (C.Ref clsName) "alloc" []) (if null constr then "init" else "initWith") (map (pars . fst) constr)
 	] 
-dealoc :: D.Class -> C.ImplFun
-dealoc cl = C.ImplFun (C.Fun C.InstanceFun "void" "dealloc" []) $ mapMaybe releaseField (D.classDefs cl) ++ [C.Stm $C.Call C.Super "dealloc" []]
+autorelease :: C.Exp -> C.Exp
+autorelease e 
+	| arc = C.Call e "autorelease" []
+	| otherwise = e
+
+dealoc :: D.Class -> [C.ImplFun]
+dealoc cl 
+	| arc = [C.ImplFun (C.Fun C.InstanceFun "void" "dealloc" []) $ mapMaybe releaseField (D.classDefs cl) ++ [C.Stm $C.Call C.Super "dealloc" []]]
+	| otherwise = []
 	where 
 		releaseField D.Field {D.defName = name, D.defType = D.TPClass{}} = Just $ C.Stm $ C.Call (C.Ref $ '_' : name) "release" []
 		releaseField _ = Nothing
@@ -151,7 +156,7 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 	where
 		fields = map toField defs
 		toField D.Field{D.defName = n, D.defType = tp} = C.StructField (showDataType tp) n
-		con = C.CFun{C.cfunReturnType = name, C.cfunName = name ++ "Make", C.cfunPars = map toPar defs, C.cfunExps = 
+		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = name, C.cfunName = name ++ "Make", C.cfunPars = map toPar defs, C.cfunExps = 
 			[C.Var name "ret" C.Nop] ++
 			map toSet defs ++
 			[C.Return $ C.Ref "ret"]
@@ -161,7 +166,7 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 {- Enum -}
 
 enumAdditionalDefs :: [D.Def]
-enumAdditionalDefs = [D.Field "ordinal" False D.TPInt D.Nop, D.Field "name" False D.TPString D.Nop]
+enumAdditionalDefs = [D.Field "ordinal" D.TPInt D.Nop [], D.Field "name" D.TPString D.Nop []]
 
 enumConst :: D.Constructor -> D.Constructor
 enumConst cst = map (\f -> (f, D.Nop)) enumAdditionalDefs ++ cst
@@ -186,7 +191,7 @@ genEnumImpl cl@D.Enum {D.className = clsName, D.enumItems = items} = [
 		C.implName = clsName,
 		C.implFields = (map implField . filter D.isField) defs,
 		C.implSynthesizes = (map synthesize . filter D.isField) defs,
-		C.implFuns = [implCreate cl constr, implInit cl constr, dealoc cl, initialize] ++ implFuns defs ++ map itemGetter items,
+		C.implFuns = [implCreate cl constr, implInit cl constr, initialize] ++ dealoc cl ++ implFuns defs ++ map itemGetter items,
 		C.implStaticFields = map stField items
 	}]
 	where
@@ -200,7 +205,9 @@ genEnumImpl cl@D.Enum {D.className = clsName, D.enumItems = items} = [
 		initItem n (D.EnumItem itemName pars) = (n + 1, C.Set (C.Ref itemName) $ retain $ C.Call (C.Ref clsName) (createFunName clsName ++ "With") ([
 			("ordinal", C.IntConst n),
 			("name", C.StringConst itemName)] ++ map initPar pars) )
-		retain f = C.Call f "retain" []
+		retain f 
+			| arc = C.Call f "retain" []
+			| otherwise = f
 		initPar (D.Field{D.defName = fname}, e) = (fname, tExp e)
 			
 
