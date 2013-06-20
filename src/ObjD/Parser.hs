@@ -244,10 +244,12 @@ pTerm = do
 				return $ Call name pars) <|> return (Ref name)
 
 		pCallPar = do
-			name <- ident
-			sps
-			char '='
-			sps
+			name <- optionMaybe $ try $ do 
+				r <- ident
+				sps
+				char '='
+				sps
+				return r
 			e <- pExp
 			sps
 			return (name, e)

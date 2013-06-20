@@ -112,10 +112,12 @@ instance Show Exp where
 			showPar (Par {parName = name}, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
 	
-findDef :: String -> [(String, Exp)] -> [Def] -> Maybe Def
-findDef name _ fdefs = find fit $ filter (\d -> defName d == name) fdefs
+findCall :: String -> [(Maybe String, Exp)] -> [Def] -> Maybe Exp
+findCall name pars fdefs = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
 	where
-		fit _ = True {- TODO: Finish it -}
+		fit :: Def -> Maybe Exp
+		fit d = Just $ Call d $ zipWith (\dp (_, e) -> (dp, e) ) (defPars d) pars
+		 {- TODO: Finish it -}
 		
 
 idx :: (a -> k) -> a -> (k, a)
@@ -268,13 +270,11 @@ expr _ (D.Call name pars) = do
 			allDefs = allDefsInClass (envSelf env) ++ envGlobalDefIndex env
 			allDefsInClass Class{classDefs = defs, classExtends = Nothing} = defs
 			allDefsInClass Class{classDefs = defs, classExtends = Just extends} = defs ++ allDefsInClass extends
-			dd = fromMaybe (error $ "Could find reference for call " ++ callStr) $ findDef name rp allDefs
-			pp = map (first getPP) rp
-			getPP n = fromMaybe (error $ "Could not find parameter " ++ n ++ " in def " ++ show dd) $ find (\ p -> parName p == n) $ defPars dd
+			dd = fromMaybe (error $ "Could find reference for call " ++ callStr) $ findCall name rp allDefs
 			callStr = name ++ case pars of
 				[] -> ""
-				_  -> "(" ++ strs ", " (map ((++ ":") . fst) pars) ++ ")"
-		in Call dd pp
+				_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")"
+		in dd
 
 {- expr x = error $ "No expr for " ++ show x -}
 

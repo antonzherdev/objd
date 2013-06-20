@@ -69,7 +69,8 @@ data Exp = Nop | IntConst Int | Braces [Exp]
 	| Dot Exp Exp
 	| Ref String
 	| Set Exp Exp
-	| Call String [(String, Exp)]
+	| Call String [CallPar]
+type CallPar = (Maybe String, Exp)
 
 data DataType = DataType String | DataTypeArr DataType
 
@@ -101,7 +102,8 @@ instance Show Exp where
 	show (Set l r) = showOp l "=" r
 	show (Call n pars) = n ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
 		where
-			showPar (name, e) = name ++ " = " ++ show e
+			showPar (Nothing, e) = show e
+			showPar (Just name, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
 
 
