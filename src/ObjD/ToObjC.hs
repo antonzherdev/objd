@@ -229,11 +229,11 @@ tExp (D.FloatConst a b) = C.FloatConst a b
 tExp (D.Eq l r) = C.Eq (tExp l) (tExp r)
 tExp (D.NotEq l r) = C.NotEq (tExp l) (tExp r)
 
-tExp (D.Dot D.Self (D.Call D.Field {D.defName = r} [])) = C.Ref $ '_' : r
+tExp (D.Dot (D.Self _) (D.Call D.Field {D.defName = r} [])) = C.Ref $ '_' : r
 tExp (D.Dot l (D.Call D.Field {D.defName = r} [])) = C.Dot (tExp l) r
 tExp (D.Dot l (D.Call D.Def{D.defName = name} pars)) = C.Call (tExp l) name (map (first D.parName . second tExp) pars)
 
-tExp (D.Self) = C.Self
+tExp (D.Self _) = C.Self
 tExp (D.Call D.Field {D.defName = r} []) = C.Ref $ '_' : r
 tExp (D.Call D.DefStub{D.defName = name} pars) = C.CCall name (map (tExp . snd) pars)
 tExp (D.ParRef D.Par {D.parName = r}) = C.Ref r

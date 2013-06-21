@@ -41,12 +41,13 @@ data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
 data Par = Par {parName :: String, parType :: DataType, parDef :: Exp}
 type Constructor = [(Def, Exp)]
 
-data DataType = TPInt | TPFloat | TPString | TPVoid | TPClass Class | TPStruct Class | TPEnum Class | TPArr DataType
+data DataType = TPInt | TPFloat | TPString | TPVoid | TPClass Class | TPStruct Class | TPEnum Class | TPArr DataType | TPBool
 instance Show DataType where
 	show TPInt = "int"
 	show TPFloat = "float"
 	show TPVoid = "void"
 	show TPString = "string"
+	show TPBool = "bool"
 	show (TPClass c) = className c ++ "*"
 	show (TPEnum c) = className c ++ "*"
 	show (TPStruct c) = className c
@@ -57,8 +58,9 @@ data Exp = Nop
 	| FloatConst Int Int
 	| Braces [Exp]
 	| If Exp Exp Exp
-	| Self
-	| NotEq Exp Exp | Eq Exp Exp
+	| Self Class
+	| NotEq Exp Exp 
+	| Eq Exp Exp
 	| Dot Exp Exp
 	| ParRef Par
 	| Set Exp Exp
@@ -115,7 +117,7 @@ instance Show Exp where
 	show (If cond t Nop) = "if(" ++ show cond ++ ") " ++ show t
 	show (If cond t f) = "if(" ++ show cond ++ ") " ++ show t ++ "\nelse " ++ show f
 	show Nop = ""
-	show Self = "self"
+	show (Self _) = "self"
 	show (Return e) = "return " ++ show e
 	show (NotEq l r) = showOp l "!=" r
 	show (Eq l r) = showOp l "==" r
@@ -267,7 +269,26 @@ dataType cidx (D.DataType name) = case name of
 dataType cidx (D.DataTypeArr tp) = TPArr $ dataType cidx tp
 
 exprDataType :: Exp -> DataType
-exprDataType _ = TPInt
+exprDataType (If _ t _) = exprDataType t
+exprDataType (Braces []) = TPVoid
+exprDataType (Braces es) = exprDataType $ last es
+exprDataType (Nop) = TPVoid
+exprDataType (IntConst _ ) = TPInt
+exprDataType (FloatConst _ _) = TPFloat
+exprDataType (Eq _ _) = TPBool
+exprDataType (NotEq _ _) = TPBool
+exprDataType (Dot _ b) = exprDataType b
+exprDataType (Set a _) = exprDataType a
+exprDataType (Self cls) = refDataType cls
+exprDataType (ParRef Par{parType = tp}) = tp
+exprDataType (Call d _) = defType d
+exprDataType (Return e) = exprDataType e
+
+refDataType :: Class -> DataType
+refDataType e@Enum{} = TPEnum e
+refDataType cl 
+	| isStruct cl = TPStruct cl
+	| otherwise = TPClass cl
 
 expr :: Bool -> D.Exp -> State Env Exp
 expr r (D.If cond t f) = do
@@ -300,7 +321,9 @@ expr _ (D.Set a b) = do
 	aa <- expr False a
 	bb <- expr False b
 	return $ Set aa bb
-expr _ D.Self = return Self
+expr _ D.Self = do
+	env <- get
+	return $ Self $ envSelf env
 expr _ (D.Ref n) = do
 	env <- get
 	maybe (expr False $ D.Call n []) (return . toRef) $ M.lookup n (envVals env)
