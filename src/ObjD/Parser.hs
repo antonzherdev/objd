@@ -212,10 +212,14 @@ pDef = do
 	sps
 	ret <- optionMaybe pDataType
 	sps
-	option ' ' (char '=')
-	sps
-	body <- option Nop pExp
-	return $ Def static name pars ret body
+	( (do 
+		char '='
+		sps
+		body <- option Nop pExp 
+		return $ Def static name pars ret body) <|> (do
+		body <- option Nop pBraces
+		return $ Def static name pars ret body
+		))
 
 pDefPars :: Parser [Par]
 pDefPars = option [] (brackets (option [] (pDefPar `sepBy` charSps ',')))
@@ -252,10 +256,6 @@ pTerm = do
 				char '.'
 				liftM (read) (many1 digit)
 			return $ maybe (IntConst i) (FloatConst i) d
-		pBraces = liftM Braces $ braces (many (do
-			e <- pExp
-			sps
-			return e))
 		pIf = do
 			string "if"
 			sps
@@ -278,6 +278,12 @@ pTerm = do
 				pars <- pCallPar `sepBy` charSps ','
 				charSps ')' <?> "Function call close bracket"
 				return $ Call name pars) <|> return (Ref name)
+
+pBraces :: Parser Exp
+pBraces = liftM Braces $ braces (many (do
+			e <- pExp
+			sps
+			return e))
 
 pCallPar :: Parser CallPar
 pCallPar = do

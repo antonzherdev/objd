@@ -34,7 +34,7 @@ isField :: Def -> Bool
 isField Field{} = True
 isField _ = False
 
-data DefMod = DefModStatic | DefModMutable deriving (Eq, Ord)
+data DefMod = DefModStatic | DefModMutable | DefModAbstract deriving (Eq, Ord)
 
 data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
 
@@ -232,14 +232,21 @@ field D.Decl {D.isDeclMutable = mut, D.declName = name, D.declDataType = tp, D.d
 def :: D.ClassStm -> State Env Def
 def D.Def{D.isDefStatic = st, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = do
 	env <- get
-	let pars = linkDefPars (envIndex env) opars
-		in do 
-			modify $ envAddVals (map EnvDeclPar pars)
-			b <- expr True body
-			put env
-			return Def {defMods = if st then [DefModStatic] else [], defName = name,
-				defPars = pars,
-				defType = getDataType env tp b, defBody = b} 
+	let 
+		 pars = linkDefPars (envIndex env) opars
+		 mods = if st then [DefModStatic] else [] 
+		 in 
+		(case body of
+			D.Nop -> return Def {defMods = DefModAbstract : mods , defName = name,
+					defPars = pars,
+					defType = dataType (envIndex env) (fromMaybe (D.DataType "void") tp), defBody = Nop} 
+			_   -> do 
+				modify $ envAddVals (map EnvDeclPar pars)
+				b <- expr True body
+				put env
+				return Def {defMods = mods, defName = name,
+					defPars = pars,
+					defType = getDataType env tp b, defBody = b})
 
 linkDefPars :: ClassIndex -> [D.Par] -> [Par]
 linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Par pnm (dataType cidx ttt) Nop)

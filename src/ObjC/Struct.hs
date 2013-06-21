@@ -41,6 +41,7 @@ data Stm =
 	| Set Exp Exp
 	| Stm Exp
 	| Return Exp
+	| Throw Exp
 	| Var{varType :: String, varName :: String, varExp :: Exp}
 
 data Exp =
@@ -158,6 +159,7 @@ stmLines (Set l r) = [show l ++ " = " ++ show r ++ ";"]
 stmLines (Stm Nop) = [""]
 stmLines (Stm e) = [show e ++ ";"]
 stmLines (Return e) = ["return " ++ show e ++ ";"]
+stmLines (Throw e) = ["@throw " ++ show e ++ ";"]
 stmLines (Var tp name Nop) = [tp ++ " " ++ name ++ ";"]
 stmLines (Var tp name e) = [tp ++ " " ++ name ++ " = " ++ show e ++ ";"]
 

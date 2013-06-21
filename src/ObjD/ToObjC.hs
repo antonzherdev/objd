@@ -148,7 +148,9 @@ implInit cl constr  = C.ImplFun (initFun constr) (
 implFuns :: [D.Def] -> [C.ImplFun]
 implFuns = map stm2ImplFun . filter D.isDef
 	where
-		stm2ImplFun def@D.Def {D.defBody = db} = C.ImplFun (stm2Fun def) (tStm db)
+		stm2ImplFun def@D.Def {D.defBody = db, D.defMods = mods} 
+			| D.DefModAbstract `elem` mods = C.ImplFun (stm2Fun def) [C.Throw $ C.StringConst $ "Method " ++ D.defName def ++ " is abstact"]
+			| otherwise = C.ImplFun (stm2Fun def) (tStm db)
 		
 {- Struct -}
 genStruct :: D.Class -> [C.FileStm]
