@@ -135,6 +135,9 @@ findCall :: String -> [(Maybe String, Exp)] -> [Def] -> Maybe Exp
 findCall name pars fdefs = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
 	where
 		fit :: Def -> Maybe Exp
+		fit d@Field{}
+			| null pars = Just $ Call d []
+			| otherwise = Nothing 
 		fit d = Just $ Call d $ zipWith (\dp (_, e) -> (dp, e) ) (defPars d) pars
 		 {- TODO: Finish it -}
 		
@@ -183,6 +186,9 @@ envClearVals :: Env -> Env
 envClearVals env
 	| M.null (envVals env) = env
 	| otherwise = Env{envSelf = envSelf env, envIndex = envIndex env, envGlobalDefIndex = envGlobalDefIndex env, envVals = M.empty}
+envSetSelf :: Class -> Env -> Env
+envSetSelf self Env {envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals} = 
+	Env{envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals}
 
 envDeclName :: EnvDecl -> String
 envDeclName (EnvDeclPar Par{parName = name}) = name
@@ -228,7 +234,7 @@ field :: D.Decl -> State Env Def
 field D.Decl {D.isDeclMutable = mut, D.declName = name, D.declDataType = tp, D.declDef = e} = do
 	i <- expr False e
 	env <- get
-	return Field {defMods = if mut then [DefModMutable] else [], defName = name, defType = getDataType env tp i, defBody = i}
+	return Field {defMods = [DefModMutable | mut], defName = name, defType = getDataType env tp i, defBody = i}
 
 
 def :: D.ClassStm -> State Env Def
@@ -236,7 +242,7 @@ def D.Def{D.isDefStatic = st, D.defName = name, D.defPars = opars, D.defRetType 
 	env <- get
 	let 
 		 pars = linkDefPars (envIndex env) opars
-		 mods = if st then [DefModStatic] else [] 
+		 mods = [DefModStatic | st]
 		 in 
 		(case body of
 			D.Nop -> return Def {defMods = DefModAbstract : mods , defName = name,
@@ -279,7 +285,7 @@ exprDataType (Eq _ _) = TPBool
 exprDataType (NotEq _ _) = TPBool
 exprDataType (Dot _ b) = exprDataType b
 exprDataType (Set a _) = exprDataType a
-exprDataType (Self cls) = refDataType cls
+exprDataType (Self s) = refDataType s
 exprDataType (ParRef Par{parType = tp}) = tp
 exprDataType (Call d _) = defType d
 exprDataType (Return e) = exprDataType e
@@ -289,6 +295,11 @@ refDataType e@Enum{} = TPEnum e
 refDataType cl 
 	| isStruct cl = TPStruct cl
 	| otherwise = TPClass cl
+
+dataTypeClass :: DataType -> Class
+dataTypeClass (TPClass c) = c
+dataTypeClass (TPStruct c) = c
+dataTypeClass (TPEnum c) = c
 
 expr :: Bool -> D.Exp -> State Env Exp
 expr r (D.If cond t f) = do
@@ -313,8 +324,7 @@ expr _ (D.NotEq a b) = do
 expr _ (D.Dot a b) = do
 	aa <- expr False a
 	env <- get
-	modify envClearVals
-	bb <- expr False b
+	bb <- exprCall (Just $ (dataTypeClass .exprDataType) aa)  b
 	put env
 	return $ Dot aa bb
 expr _ (D.Set a b) = do
@@ -324,19 +334,27 @@ expr _ (D.Set a b) = do
 expr _ D.Self = do
 	env <- get
 	return $ Self $ envSelf env
-expr _ (D.Ref n) = do
+expr _ r@(D.Ref _) = exprCall Nothing r
+expr _ r@(D.Call _ _) = exprCall Nothing r
+
+exprCall :: Maybe Class -> D.Exp -> State Env Exp
+exprCall c (D.Ref n) = do
 	env <- get
-	maybe (expr False $ D.Call n []) (return . toRef) $ M.lookup n (envVals env)
+	put $ maybe env (\ v -> envClearVals $ envSetSelf v env) c
+	r <- maybe (expr False $ D.Call n []) (return . toRef) $ M.lookup n (envVals env)
+	put env
+	return r
 	where
 		toRef (EnvDeclPar p) = ParRef p
-expr _ (D.Call name pars) = do
+exprCall c (D.Call name pars) = do
 	env <- get
 	rp <- mapM (\ (n, e) -> expr False e >>= (\ ee -> return (n, ee))) pars
 	return $
 		let
-			allDefs = allDefsInClass (envSelf env) ++ envGlobalDefIndex env
-			allDefsInClass cl = (classDefs cl) ++ maybe [] (\ee -> allDefsInClass ee) (classExtends cl)
-			dd = fromMaybe (error $ "Could find reference for call " ++ callStr) $ findCall name rp allDefs
+			allDefs Nothing = allDefsInClass (envSelf env) ++ envGlobalDefIndex env
+			allDefs (Just self) = allDefsInClass self
+			allDefsInClass cl = classDefs cl ++ maybe [] allDefsInClass (classExtends cl)
+			dd = fromMaybe (error $ "Could find reference for call " ++ callStr) $ findCall name rp (allDefs c)
 			callStr = name ++ case pars of
 				[] -> ""
 				_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")"

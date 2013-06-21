@@ -71,16 +71,24 @@ type CallPar = (Maybe String, Exp)
 data DataType = DataType String | DataTypeArr DataType
 
 instance Show Decl where
-	show (Decl{declName = name, declDataType = dataType}) = show dataType ++ " " ++ name
-
+	show (Decl{declName = name, declDataType = Just dataType}) = name ++ " : " ++ show dataType
+	show (Decl{declName = name, declDataType = Nothing}) = name
+ 
 instance Show FileStm where
-	show (Class{className = name, classFields = fields, isStruct = s}) = (if s then "struct" else "class ") ++ name ++  "(" ++ strs' ", " fields ++ ")"
-	show (Enum{className = name, classFields = fields}) = "enum " ++ name ++  "(" ++ strs' ", " fields ++ ")"
-	show (Stub{className = name}) = "stub " ++ name
+	show (Class{className = name, classFields = fields, isStruct = s, classBody = body}) = (if s then "struct" else "class ") ++ name ++  "(" ++ strs' ", " fields ++ ")" ++ showClassBody body
+	show (Enum{className = name, classFields = fields, classBody = body}) = "enum " ++ name ++  "(" ++ strs' ", " fields ++ ")" ++ showClassBody body
+	show (Stub{className = name, classBody = body}) = "stub " ++ name ++ showClassBody body
 	show (StubDef{stubDefName = name}) = "stub def " ++ name
 	show (Import name ImportTypeD) = "import " ++ name
 	show (Import name ImportTypeCLib) = "import <" ++ name ++ ">"
 	show (Import name ImportTypeCUser) = "import \"" ++ name ++ "\""
+
+showClassBody :: [ClassStm] -> String
+showClassBody stms = " {\n" ++ (unlines . map ( ind . show )) stms ++ "\n}"
+
+instance Show ClassStm where
+	show (DeclStm stm) = show stm
+	show (Def {defName = name }) = "def " ++ name
 
 instance Show DataType where
 	show (DataType s) = s

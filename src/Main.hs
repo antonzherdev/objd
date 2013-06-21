@@ -12,7 +12,7 @@ main = putStr "dsa" -}
 main::IO()
 main = 
 	let
-		fileName = "EGCamera"
+		fileName = "EGDirector"
 		path = "/Users/antonzherdev/dev/Trains3D/Trains3D/Engine/" ++ fileName
 	in do 
 		txt <- readFile $ path ++ ".od"
