@@ -1,6 +1,6 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends, Def(..), Par(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..), DefMod(..),
-	link, isClass, isDef, isField, isEnum
+	link, isClass, isDef, isField, isEnum, isVoid
 )where
 
 import           Control.Monad.State
@@ -42,6 +42,10 @@ data Par = Par {parName :: String, parType :: DataType, parDef :: Exp}
 type Constructor = [(Def, Exp)]
 
 data DataType = TPInt | TPFloat | TPString | TPVoid | TPClass Class | TPStruct Class | TPEnum Class | TPArr DataType | TPBool
+isVoid :: DataType -> Bool
+isVoid TPVoid = True
+isVoid _ = False
+
 instance Show DataType where
 	show TPInt = "int"
 	show TPFloat = "float"

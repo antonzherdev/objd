@@ -148,9 +148,9 @@ implInit cl constr  = C.ImplFun (initFun constr) (
 implFuns :: [D.Def] -> [C.ImplFun]
 implFuns = map stm2ImplFun . filter D.isDef
 	where
-		stm2ImplFun def@D.Def {D.defBody = db, D.defMods = mods} 
+		stm2ImplFun def@D.Def {D.defBody = db, D.defMods = mods, D.defType = tp} 
 			| D.DefModAbstract `elem` mods = C.ImplFun (stm2Fun def) [C.Throw $ C.StringConst $ "Method " ++ D.defName def ++ " is abstact"]
-			| otherwise = C.ImplFun (stm2Fun def) (tStm db)
+			| otherwise = C.ImplFun (stm2Fun def) (tStm (D.isVoid tp) db)
 		
 {- Struct -}
 genStruct :: D.Class -> [C.FileStm]
@@ -240,15 +240,16 @@ tExp (D.ParRef D.Par {D.parName = r}) = C.Ref r
 
 tExp x = error $ "No tExp for " ++ show x
 
-tStm :: D.Exp -> [C.Stm]
-tStm (D.Nop) = []
+tStm :: Bool -> D.Exp -> [C.Stm]
+tStm _ (D.Nop) = []
 
-tStm (D.Braces []) = []
-tStm (D.Braces [x]) = tStm x
-tStm (D.Braces xs) = concatMap tStm xs
+tStm _ (D.Braces []) = []
+tStm v (D.Braces [x]) = tStm v x
+tStm v (D.Braces xs) = concatMap (tStm v) xs
 
-tStm (D.If cond t f) = [C.If (tExp cond) (tStm t) (tStm f)]
+tStm v (D.If cond t f) = [C.If (tExp cond) (tStm v t) (tStm v f)]
 
-tStm (D.Set l r) = [C.Set (tExp l) (tExp r)]
-tStm (D.Return e) = [C.Return $ tExp e]
-tStm x = [C.Stm $ tExp x]
+tStm _ (D.Set l r) = [C.Set (tExp l) (tExp r)]
+tStm False (D.Return e) = [C.Return $ tExp e]
+tStm _ (D.Return e) = [C.Stm $ tExp e]
+tStm _ x = [C.Stm $ tExp x]
