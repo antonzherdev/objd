@@ -220,11 +220,13 @@ showDataType D.TPArr{} = "NSArray*"
 showDataType D.TPInt = "NSInteger"
 showDataType D.TPFloat = "CGFloat"
 showDataType D.TPString = "NSString*"
+showDataType D.TPBool = "BOOL"
 showDataType tp = show tp
 
 {- Exp -}
 tExp :: D.Exp -> C.Exp
 tExp (D.IntConst i) = C.IntConst i
+tExp (D.BoolConst i) = C.BoolConst i
 tExp (D.FloatConst a b) = C.FloatConst a b
 tExp (D.Eq l r) = C.Eq (tExp l) (tExp r)
 tExp (D.NotEq l r) = C.NotEq (tExp l) (tExp r)

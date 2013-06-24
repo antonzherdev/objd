@@ -50,6 +50,7 @@ data Exp =
 	| CCall {callName :: String, ccallPars :: [Exp]}
 	| Ref String
 	| IntConst Int
+	| BoolConst Bool
 	| FloatConst Int Int
 	| StringConst String
 	| Eq Exp Exp | NotEq Exp Exp
@@ -140,6 +141,8 @@ instance Show Exp where
 	show (CCall name pars) = name ++ "(" ++ strs' ", " pars ++ ")"
 	show (Ref name) = name
 	show (IntConst i) = show i
+	show (BoolConst True) = "YES"
+	show (BoolConst False) = "NO"
 	show (FloatConst a b) = show a ++ "." ++ show b
 	show (StringConst s) = '@' : show s
 	show (Eq l r) = showOp l "==" r

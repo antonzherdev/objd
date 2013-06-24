@@ -57,6 +57,7 @@ data Par = Par { parName :: String, parType :: DataType }
 
 data Exp = Nop 
 	| IntConst Int 
+	| BoolConst Bool
 	| FloatConst Int Int
 	| Braces [Exp]
 	| If Exp Exp Exp
@@ -110,6 +111,7 @@ instance Show Exp where
 			showPar (Nothing, e) = show e
 			showPar (Just name, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
+	show (BoolConst i) = show i
 	show (FloatConst a b) = show a ++ "." ++ show b
 
 

@@ -190,7 +190,7 @@ pImport = do
 
 pStm :: Parser ClassStm
 pStm = do
-	stm <- (pDeclStm <|> pDef <?> "Class statement")
+	stm <- pDeclStm <|> pDef <?> "Class statement"
 	sps
 	return stm
 	where
@@ -212,14 +212,15 @@ pDef = do
 	sps
 	ret <- optionMaybe pDataType
 	sps
-	( (do 
-		char '='
-		sps
-		body <- option Nop pExp 
-		return $ Def static name pars ret body) <|> (do
-		body <- option Nop pBraces
-		return $ Def static name pars ret body
-		))
+	(do 
+			char '='
+			sps
+			body <- option Nop pExp 
+			return $ Def static name pars ret body
+		) <|> (do
+			body <- option Nop pBraces
+			return $ Def static name pars (Just $ DataType "void") body
+		)
 
 pDefPars :: Parser [Par]
 pDefPars = option [] (brackets (option [] (pDefPar `sepBy` charSps ',')))
@@ -249,13 +250,14 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pNumConst <|> pBraces <|> pIf <|> pSelf <|> pCall  <?> "Expression"
+		pTerm' = pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pCall  <?> "Expression"
 		pNumConst = do
-			i <- liftM (read) (many1 digit)
+			i <- liftM read (many1 digit)
 			d <- optionMaybe $ do
 				char '.'
-				liftM (read) (many1 digit)
+				liftM read (many1 digit)
 			return $ maybe (IntConst i) (FloatConst i) d
+		pBoolConst = (try(string "true") >> return (BoolConst True)) <|> (try(string "false") >> return (BoolConst False))
 		pIf = do
 			string "if"
 			sps

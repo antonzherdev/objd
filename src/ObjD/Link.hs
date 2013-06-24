@@ -59,6 +59,7 @@ instance Show DataType where
 
 data Exp = Nop 
 	| IntConst Int 
+	| BoolConst Bool 
 	| FloatConst Int Int
 	| Braces [Exp]
 	| If Exp Exp Exp
@@ -133,6 +134,7 @@ instance Show Exp where
 		where
 			showPar (Par {parName = name}, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
+	show (BoolConst i) = show i
 	show (FloatConst a b) = show a ++ "." ++ show b
 	
 findCall :: String -> [(Maybe String, Exp)] -> [Def] -> Maybe Exp
@@ -247,6 +249,8 @@ def D.Def{D.isDefStatic = st, D.defName = name, D.defPars = opars, D.defRetType 
 	let 
 		 pars = linkDefPars (envIndex env) opars
 		 mods = [DefModStatic | st]
+		 needReturn (Just (D.DataType "void")) = False
+		 needReturn _ = True
 		 in 
 		(case body of
 			D.Nop -> return Def {defMods = DefModAbstract : mods , defName = name,
@@ -254,7 +258,7 @@ def D.Def{D.isDefStatic = st, D.defName = name, D.defPars = opars, D.defRetType 
 					defType = dataType (envIndex env) (fromMaybe (D.DataType "void") tp), defBody = Nop} 
 			_   -> do 
 				modify $ envAddVals (map EnvDeclPar pars)
-				b <- expr True body
+				b <- expr (needReturn tp) body
 				put env
 				return Def {defMods = mods, defName = name,
 					defPars = pars,
@@ -284,6 +288,7 @@ exprDataType (Braces []) = TPVoid
 exprDataType (Braces es) = exprDataType $ last es
 exprDataType (Nop) = TPVoid
 exprDataType (IntConst _ ) = TPInt
+exprDataType (BoolConst _ ) = TPBool
 exprDataType (FloatConst _ _) = TPFloat
 exprDataType (Eq _ _) = TPBool
 exprDataType (NotEq _ _) = TPBool
@@ -316,6 +321,7 @@ expr True D.Nop = error "Return NOP"
 expr True e = expr False e >>= \ee -> return $ Return ee
 expr _ D.Nop = return Nop
 expr _ (D.IntConst i) = return $ IntConst i
+expr _ (D.BoolConst i) = return $ BoolConst i
 expr _ (D.FloatConst a b) = return $ FloatConst a b
 expr _ (D.Eq a b) = do
 	aa <- expr False a
