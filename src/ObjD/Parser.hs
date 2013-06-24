@@ -62,37 +62,25 @@ stringSps s = string s >> sps
 
 pStub :: Parser FileStm
 pStub = do
-	try (string "stub")
+	try (do
+		string "stub"
+		sps
+		string "def"
+		sps)
+	name <- ident
 	sps
-	pStubDef <|> pStubClass
-	where
-		pStubClass = do
-			struct <- option False (string "struct" >> return True)
-			sps
-			name <- ident
-			sps
-			fields <- pClassFields
-			sps
-			extends <- pExtends
-			sps
-			body <- pClassBody
-			sps
-			return Stub {isStruct = struct, className = name, classExtends = extends, classBody = fields ++ body}
-		pStubDef = do
-			string "def"
-			sps
-			name <- ident
-			sps
-			pars <- pDefPars
-			sps
-			ret <- option (DataType "void") pDataType
-			sps
-			return StubDef {stubDefName = name, stubDefPars = pars, stubDefRetType = ret}
+	pars <- pDefPars
+	sps
+	ret <- option (DataType "void") pDataType
+	sps
+	return StubDef {stubDefName = name, stubDefPars = pars, stubDefRetType = ret}
 
 
 pClass :: Parser FileStm
 pClass = do
-	struct <- (string "class" >> return False) <|> (string "struct" >> return True)
+	stub <- option [] $ (try (string "stub")) >> return [ClassModStub]
+	sps
+	struct <- (string "class" >> return []) <|> (string "struct" >> return [ClassModStruct])
 	sps
 	name <- ident
 	sps
@@ -102,7 +90,7 @@ pClass = do
 	sps
 	body <- pClassBody
 	sps
-	return Class {isStruct = struct, className = name, classFields = fields, classExtends = extends, classBody = body}
+	return Class {classMods = stub ++ struct, className = name, classFields = fields, classExtends = extends, classBody = body}
 
 pEnum :: Parser FileStm
 pEnum = do

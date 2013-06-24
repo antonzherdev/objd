@@ -1,6 +1,6 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends, Def(..), Par(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..), DefMod(..),
-	link, isClass, isDef, isField, isEnum, isVoid
+	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass
 )where
 
 import           Control.Monad.State
@@ -13,15 +13,26 @@ import qualified ObjD.Struct         as D
 type Sources = [File]
 data File = File {fileName :: String, fileImports :: [File], fileCImports :: [CImport], fileClasses :: [Class], globalDefs :: [Def]}
 
-data Class = Class { isStruct :: Bool, className :: String , classExtends :: Extends, classDefs :: [Def], classConstructor :: Constructor }
-	| Stub { isStruct :: Bool, className :: String, classExtends :: Extends, classDefs :: [Def]}
+data Class = Class { classMods :: [ClassMod], className :: String , classExtends :: Extends, classDefs :: [Def], classConstructor :: Constructor }
 	| Enum { className :: String, classExtends :: Extends, classDefs :: [Def], classConstructor :: Constructor, enumItems :: [EnumItem] }
 isClass :: Class -> Bool
 isClass (Class {}) = True
 isClass _ = False
+isStruct :: Class -> Bool
+isStruct (Class {classMods = mods}) = ClassModStruct `elem` mods
+isStruct _ = False
+isStub :: Class -> Bool
+isStub (Class {classMods = mods}) = ClassModStub `elem` mods
+isStub _ = False
+isRealClass :: Class -> Bool
+isRealClass (Class {classMods = mods}) = ClassModStub `notElem` mods
+isRealClass _ = False
+
 isEnum :: Class -> Bool
 isEnum (Enum {}) = True
 isEnum _ = False
+
+data ClassMod = ClassModStub | ClassModStruct deriving (Eq)
 
 type Extends = Maybe Class
 data Def = Def {defName :: String, defPars :: [Par], defType :: DataType, defBody :: Exp, defMods :: [DefMod]}
@@ -34,7 +45,7 @@ isField :: Def -> Bool
 isField Field{} = True
 isField _ = False
 
-data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModPrivateWrite deriving (Eq, Ord)
+data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModPrivateWrite | DefModConstructor deriving (Eq, Ord)
 
 data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
 
@@ -91,14 +102,11 @@ instance Show Class where
 			(unlines . map ind . concatMap (lines . show)) (classDefs cl)  ++
 		"}"
 		where
-			tp Class{} = "class"
-			tp Stub{} = "stub"
+			tp c@Class{}
+				| isStub c = "stub"
+				| otherwise = "class"
 			tp Enum{} = "enum"
-			sConstr ccc = maybe "" (\cc -> " (" ++ (strs ", " . map constrFld) cc ++ ") ") (constr ccc)
-			constr Class{classConstructor = c} = Just c
-			constr Enum{classConstructor = c} = Just c
-			constr _ = Nothing
-
+			sConstr ccc = maybe "" (\cc -> " (" ++ (strs ", " . map constrFld) cc ++ ") ") (Just $ classConstructor ccc)
 			constrFld (f, Nop) = defName f
 			constrFld (f, e) = defName f ++ " = " ++ show e
 instance Show Def where
@@ -208,17 +216,12 @@ cls (cidx, glidx) cl = self
 		env = Env self cidx glidx M.empty
 		self = case cl of
 			D.Class{} -> Class {
-				isStruct = D.isStruct cl, 
+				classMods = map clsMod (D.classMods cl), 
 				className = D.className cl, 
 				classExtends = extends, 
 				classDefs = fields ++ defs, 
 				classConstructor = constr
 			}
-			D.Stub{} -> Stub{
-				isStruct =  D.isStruct cl, 
-				className = D.className cl, 
-				classExtends = extends, 
-				classDefs = defs}
 			D.Enum{} -> Enum {
 				className = D.className cl, 
 				classExtends = extends, 
@@ -226,6 +229,8 @@ cls (cidx, glidx) cl = self
 				classConstructor = constr,
 				enumItems = map enumItem (D.enumItems cl)
 			}
+		clsMod D.ClassModStruct = ClassModStruct
+		clsMod D.ClassModStub = ClassModStub
 		extends = fmap (findTp "class" cidx) (D.classExtends cl)
 		fields =  mapM (evalState . field) decls env
 		fieldsMap = M.fromList $ map (idx defName) fields
@@ -368,10 +373,19 @@ exprCall c (D.Call name pars) = do
 	rp <- mapM (\ (n, e) -> expr False e >>= (\ ee -> return (n, ee))) pars
 	return $
 		let
-			allDefs Nothing = allDefsInClass (envSelf env) ++ envGlobalDefIndex env
+			allDefs Nothing = allDefsInClass (envSelf env) ++ envGlobalDefIndex env ++ classConstructors
 			allDefs (Just self) = allDefsInClass self
 			allDefsInClass cl = classDefs cl ++ maybe [] allDefsInClass (classExtends cl)
-			dd = fromMaybe (error $ "Could find reference for call " ++ callStr) $ findCall name rp (allDefs c)
+			classConstructors = (map (constructorToDef . snd) . M.toList) (envIndex env)
+			constructorToDef cl@Class{className = n, classConstructor = constr} = 
+				Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl, defBody = Nop, 
+				defMods = [DefModStatic, DefModConstructor]}
+			constructorParToPar (d, e) = Par (defName d) (defType d) e
+			dd = fromMaybe (error err) $ findCall name rp (allDefs c)
+			err = "Could find reference for call " ++ callStr ++ "\n" ++
+				maybe "" (\cl -> "strict in class " ++ className cl ++ "\n") c ++
+				"in defs:\n" ++
+				(strs "\n" . map (ind . show)) (allDefs c)
 			callStr = name ++ case pars of
 				[] -> ""
 				_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")"

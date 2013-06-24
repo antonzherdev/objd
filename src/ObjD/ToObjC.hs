@@ -18,8 +18,8 @@ arc = False
 toObjC :: D.File -> ([C.FileStm], [C.FileStm])
 toObjC D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cImports} = 
 	let 
-		cls = filter (\c -> D.isClass c && not (D.isStruct c)) classes
-		structs = filter (\c -> D.isClass c && D.isStruct c) classes
+		cls = filter (\c -> D.isRealClass c && not (D.isStruct c)) classes
+		structs = filter (\c -> D.isRealClass c && D.isStruct c) classes
 		enums = filter D.isEnum classes
 		imps = map toImport cImports
 		toImport (D.CImportLib n) = C.ImportLib n
@@ -228,6 +228,9 @@ showDataType D.TPBool = "BOOL"
 showDataType tp = show tp
 
 {- Exp -}
+tPars :: [(D.Par, D.Exp)] -> [(String, C.Exp)]
+tPars = map (first D.parName . second tExp)
+
 tExp :: D.Exp -> C.Exp
 tExp (D.IntConst i) = C.IntConst i
 tExp (D.BoolConst i) = C.BoolConst i
@@ -237,12 +240,18 @@ tExp (D.NotEq l r) = C.NotEq (tExp l) (tExp r)
 
 tExp (D.Dot (D.Self _) (D.Call D.Field {D.defName = r} [])) = C.Ref $ '_' : r
 tExp (D.Dot l (D.Call D.Field {D.defName = r} [])) = C.Dot (tExp l) r
-tExp (D.Dot l (D.Call D.Def{D.defName = name} pars)) = C.Call (tExp l) name (map (first D.parName . second tExp) pars)
+tExp (D.Dot l (D.Call D.Def{D.defName = name} pars)) = C.Call (tExp l) name (tPars pars)
 
 tExp (D.Self _) = C.Self
 tExp (D.Call D.Field {D.defName = r} []) = C.Ref $ '_' : r
 tExp (D.Call D.DefStub{D.defName = name} pars) = C.CCall name (map (tExp . snd) pars)
 tExp (D.ParRef D.Par {D.parName = r}) = C.Ref r
+tExp call@(D.Call d@D.Def{} pars)
+	| D.DefModConstructor `elem` D.defMods d = C.Call 
+		(C.Ref $ D.defName d) 
+		(createFunName $ D.defName d ++ if null pars then "" else "With") 
+		(tPars pars)
+	| otherwise = error $ "Strange call " ++ show call
 
 tExp x = error $ "No tExp for " ++ show x
 

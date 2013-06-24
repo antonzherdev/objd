@@ -1,5 +1,5 @@
 module ObjD.Struct (
-	FileStm(..), Extends, ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..),
+	FileStm(..), Extends, ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), ClassMod(..),
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
 ) where
 import           Ex.String
@@ -10,8 +10,7 @@ data File = File {fileName :: String, fileStms :: [FileStm]}
 
 data FileStm =
 	Import {impString :: String, impType :: ImportType }
-	| Class {isStruct :: Bool, className :: String, classFields :: [ClassStm], classExtends :: Extends, classBody :: [ClassStm] }
-	| Stub {isStruct :: Bool, className :: String, classExtends :: Extends, classBody :: [ClassStm]}
+	| Class {classMods :: [ClassMod], className :: String, classFields :: [ClassStm], classExtends :: Extends, classBody :: [ClassStm] }
 	| StubDef {stubDefName :: String, stubDefPars :: [Par], stubDefRetType :: DataType}
 	| Enum {className :: String, classFields :: [ClassStm], classExtends :: Extends, enumItems :: [EnumItem], classBody :: [ClassStm]}
 isClass :: FileStm -> Bool
@@ -21,7 +20,7 @@ isEnum :: FileStm -> Bool
 isEnum (Enum {}) = True
 isEnum _ = False
 isStub :: FileStm -> Bool
-isStub (Stub {}) = True
+isStub (Class {classMods = mods}) = ClassModStub `elem` mods
 isStub _ = False
 isImport :: FileStm -> Bool
 isImport Import{} = True
@@ -30,6 +29,8 @@ isStubDef :: FileStm -> Bool
 isStubDef (StubDef {}) = True
 isStubDef _ = False
 data ImportType = ImportTypeCUser | ImportTypeCLib | ImportTypeD
+
+data ClassMod = ClassModStruct | ClassModStub deriving (Eq)
 
 type Extends = Maybe String
 
@@ -40,7 +41,7 @@ stmName (Decl _ name _ _) = name
 stmName (Def _ name [] _ _) = name
 stmName (Def _ name pars _ _) = name ++ " " ++ unwords (map parName pars)
 
-data DefMod = DefModPrivate | DefModPrivateWrite | DefModMutable | DefModStatic
+data DefMod = DefModPrivate | DefModPrivateWrite | DefModMutable | DefModStatic  deriving (Eq)
 
 isDef :: ClassStm -> Bool
 isDef Def {} = True
@@ -72,9 +73,11 @@ data DataType = DataType String | DataTypeArr DataType
 
 	
 instance Show FileStm where
-	show (Class{className = name, classFields = fields, isStruct = s, classBody = body}) = (if s then "struct" else "class ") ++ name ++  "(" ++ strs' ", " fields ++ ")" ++ showClassBody body
+	show (Class{className = name, classFields = fields, classMods = mods, classBody = body}) = 
+		tp ++ " " ++ name ++  "(" ++ strs' ", " fields ++ ")" ++ showClassBody body
+		where 
+			tp = (if ClassModStub `elem` mods then "stub " else "") ++ (if ClassModStruct `elem` mods then "struct" else "class")
 	show (Enum{className = name, classFields = fields, classBody = body}) = "enum " ++ name ++  "(" ++ strs' ", " fields ++ ")" ++ showClassBody body
-	show (Stub{className = name, classBody = body}) = "stub " ++ name ++ showClassBody body
 	show (StubDef{stubDefName = name}) = "stub def " ++ name
 	show (Import name ImportTypeD) = "import " ++ name
 	show (Import name ImportTypeCLib) = "import <" ++ name ++ ">"
