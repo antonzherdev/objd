@@ -1,6 +1,6 @@
 module ObjD.Struct (
 	FileStm(..), Extends, ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), 
-	ClassMod(..), DeclAcc(..), DeclAccMod(..),
+	ClassMod(..), DeclAcc(..), DeclAccMod(..), MathTp(..), BoolTp(..),
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
 ) where
 import           Ex.String
@@ -65,16 +65,18 @@ data Exp = Nop
 	| If Exp Exp Exp
 	| Self
 	| Nil
-	| NotEq Exp Exp | Eq Exp Exp
+	| BoolOp BoolTp Exp Exp
 	| Dot Exp Exp
 	| Ref String
-	| Set Exp Exp
+	| Set (Maybe MathTp) Exp Exp
+	| MathOp MathTp Exp Exp
+	| PlusPlus Exp
+	| MinusMinus Exp
 	| Call String [CallPar]
 type CallPar = (Maybe String, Exp)
 
 data DataType = DataType String | DataTypeArr DataType
 
-	
 instance Show FileStm where
 	show (Class{className = name, classFields = fields, classMods = mods, classBody = body}) = 
 		tp ++ " " ++ name ++  "(" ++ strs' ", " fields ++ ")" ++ showClassBody body
@@ -104,11 +106,14 @@ instance Show Exp where
 	show (If cond t f) = "if(" ++ show cond ++ ") " ++ show t ++ "\nelse " ++ show f
 	show Nop = ""
 	show Self = "self"
-	show (NotEq l r) = showOp l "!=" r
-	show (Eq l r) = showOp l "==" r
 	show (Dot l r) = showOp' l "." r
 	show (Ref s) = s
-	show (Set l r) = showOp l "=" r
+	show (Set Nothing l r) = showOp l "=" r
+	show (Set (Just t) l r) = showOp l (show t ++ "=") r
+	show (BoolOp t l r) = showOp l (show t) r
+	show (MathOp t l r) = showOp l (show t) r
+	show (PlusPlus e) = show e ++ "++"
+	show (MinusMinus e) = show e ++ "--"
 	show (Call n pars) = n ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
 		where
 			showPar (Nothing, e) = show e

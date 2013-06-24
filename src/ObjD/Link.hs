@@ -1,6 +1,6 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends, Def(..), Par(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..), 
-	DefMod(..), FieldAcc(..), FieldAccMod(..),
+	DefMod(..), FieldAcc(..), FieldAccMod(..), MathTp(..),
 	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass
 )where
 
@@ -80,11 +80,13 @@ data Exp = Nop
 	| If Exp Exp Exp
 	| Self Class
 	| Nil
-	| NotEq Exp Exp 
-	| Eq Exp Exp
+	| BoolOp BoolTp Exp Exp
+	| MathOp MathTp Exp Exp
+	| PlusPlus Exp
+	| MinusMinus Exp
 	| Dot Exp Exp
 	| ParRef Par
-	| Set Exp Exp
+	| Set (Maybe MathTp) Exp Exp
 	| Call Def [(Par, Exp)]
 	| Return Exp
 
@@ -137,11 +139,14 @@ instance Show Exp where
 	show Nop = ""
 	show (Self _) = "self"
 	show (Return e) = "return " ++ show e
-	show (NotEq l r) = showOp l "!=" r
-	show (Eq l r) = showOp l "==" r
+	show (Set Nothing l r) = showOp l "=" r
+	show (Set (Just t) l r) = showOp l (show t ++ "=") r
+	show (BoolOp t l r) = showOp l (show t) r
+	show (MathOp t l r) = showOp l (show t) r
+	show (PlusPlus e) = show e ++ "++"
+	show (MinusMinus e) = show e ++ "--"
 	show (Dot l r) = showOp' l "." r
 	show (ParRef s) = show s
-	show (Set l r) = showOp l "=" r
 	show (Call f []) = defName f
 	show (Call dd pars) = defName dd ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
 		where
@@ -324,10 +329,12 @@ exprDataType (IntConst _ ) = TPInt
 exprDataType Nil = TPVoid
 exprDataType (BoolConst _ ) = TPBool
 exprDataType (FloatConst _ _) = TPFloat
-exprDataType (Eq _ _) = TPBool
-exprDataType (NotEq _ _) = TPBool
+exprDataType (BoolOp _ _ _) = TPBool
+exprDataType (MathOp _ l _) = exprDataType l
+exprDataType (PlusPlus e) = exprDataType e
+exprDataType (MinusMinus e) = exprDataType e
 exprDataType (Dot _ b) = exprDataType b
-exprDataType (Set a _) = exprDataType a
+exprDataType (Set _ a _) = exprDataType a
 exprDataType (Self s) = refDataType s
 exprDataType (ParRef Par{parType = tp}) = tp
 exprDataType (Call d _) = defType d
@@ -358,24 +365,30 @@ expr _ (D.IntConst i) = return $ IntConst i
 expr _ D.Nil = return Nil
 expr _ (D.BoolConst i) = return $ BoolConst i
 expr _ (D.FloatConst a b) = return $ FloatConst a b
-expr _ (D.Eq a b) = do
+expr _ (D.BoolOp tp a b) = do
 	aa <- expr False a
 	bb <- expr False b
-	return $ Eq aa bb
-expr _ (D.NotEq a b) = do
+	return $ BoolOp tp aa bb
+expr _ (D.MathOp tp a b) = do
 	aa <- expr False a
 	bb <- expr False b
-	return $ NotEq aa bb
+	return $ MathOp tp aa bb
 expr _ (D.Dot a b) = do
 	aa <- expr False a
 	env <- get
 	bb <- exprCall (Just $ (dataTypeClass .exprDataType) aa)  b
 	put env
 	return $ Dot aa bb
-expr _ (D.Set a b) = do
+expr _ (D.Set tp a b) = do
 	aa <- expr False a
 	bb <- expr False b
-	return $ Set aa bb
+	return $ Set tp aa bb
+expr _ (D.PlusPlus e) = do
+	aa <- expr False e
+	return $ PlusPlus aa
+expr _ (D.MinusMinus e) = do
+	aa <- expr False e
+	return $ MinusMinus aa
 expr _ D.Self = do
 	env <- get
 	return $ Self $ envSelf env

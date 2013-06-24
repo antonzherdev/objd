@@ -38,7 +38,7 @@ data CFunMod = CFunStatic | CFunInline
 
 data Stm =
 	If Exp [Stm] [Stm]
-	| Set Exp Exp
+	| Set (Maybe MathTp) Exp Exp
 	| Stm Exp
 	| Return Exp
 	| Throw Exp
@@ -53,8 +53,11 @@ data Exp =
 	| BoolConst Bool
 	| FloatConst Int Int
 	| StringConst String
-	| Eq Exp Exp | NotEq Exp Exp
+	| BoolOp BoolTp Exp Exp 
+	| MathOp MathTp Exp Exp 
 	| Dot Exp String
+	| PlusPlus Exp
+	| MinusMinus Exp
 	| Nop
 	| Nil
 	| InlineIf Exp Exp Exp
@@ -148,9 +151,11 @@ instance Show Exp where
 	show (BoolConst False) = "NO"
 	show (FloatConst a b) = show a ++ "." ++ show b
 	show (StringConst s) = '@' : show s
-	show (Eq l r) = showOp l "==" r
-	show (NotEq l r) = showOp l "!=" r
+	show (BoolOp t l r) = showOp l (show t) r
+	show (MathOp t l r) = showOp l  (show t) r
 	show (Dot l r) = show l ++ "." ++ r
+	show (PlusPlus e) = show e ++ "++"
+	show (MinusMinus e) = show e ++ "--"
 	show (InlineIf c t f) = show c ++ " ? " ++ show t ++ " : " ++ show f
 
 instance Show Stm where
@@ -162,7 +167,8 @@ stmLines (If cond t f) =
 	++ (case f of
 		[] -> []
 		ff -> ["else {"] ++ stms ff ++ ["}"])
-stmLines (Set l r) = [show l ++ " = " ++ show r ++ ";"]
+stmLines (Set Nothing l r) = [show l ++ " = " ++ show r ++ ";"]
+stmLines (Set (Just tp) l r) = [show l ++ " " ++ show tp ++ "= " ++ show r ++ ";"]
 stmLines (Stm Nop) = [""]
 stmLines (Stm e) = [show e ++ ";"]
 stmLines (Return e) = ["return " ++ show e ++ ";"]

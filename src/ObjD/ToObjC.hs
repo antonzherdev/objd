@@ -37,13 +37,13 @@ stmToInterface (D.Class {D.className = name, D.classExtends = extends, D.classDe
 	C.Interface {
 		C.interfaceName = name,
 		C.interfaceExtends = maybe "NSObject" D.className extends,
-		C.interfaceProperties = (map fieldToProperty . filter needDef) defs,
+		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs,
 		C.interfaceFuns = [createFun name constr, initFun constr]
 			++ intefaceFuns defs
 	}
-	where
-		needDef v = D.DefModPrivate `notElem` D.defMods v && D.isField v
-
+		
+needProperty :: D.Def -> Bool
+needProperty v = D.DefModPrivate `notElem` D.defMods v && D.isField v
 
 
 fieldToProperty :: D.Def -> C.Property
@@ -100,7 +100,7 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs, D.classConstruc
 	C.Implementation {
 		C.implName = clsName,
 		C.implFields = map implField implFields,
-		C.implSynthesizes = map synthesize implFields,
+		C.implSynthesizes = (map synthesize . filter needProperty) implFields,
 		C.implFuns = [implCreate cl constr, implInit cl constr] ++ dealoc cl ++ implFuns defs,
 		C.implStaticFields = []
 	}
@@ -142,7 +142,7 @@ dealoc cl
 
 implInit :: D.Class -> D.Constructor -> C.ImplFun
 implInit cl constr  = C.ImplFun (initFun constr) (
-			[C.Set C.Self (C.Call C.Super "init" [])]
+			[C.Set Nothing C.Self (C.Call C.Super "init" [])]
 			++ implInitFields constr (filter hasInit (D.classDefs cl))
 			++ [C.Stm C.Nop, C.Return C.Self]
 			)
@@ -153,11 +153,11 @@ implInit cl constr  = C.ImplFun (initFun constr) (
 
 		implInitFields [] [] = []
 		implInitFields co fields = [C.If C.Self (map (implConstrField . fst) co ++ map implInitField fields) []]
-		implConstrField D.Field {D.defName = name, D.defType = tp} = C.Set (C.Ref $ '_' : name) (implRight tp) 
+		implConstrField D.Field {D.defName = name, D.defType = tp} = C.Set Nothing (C.Ref $ '_' : name) (implRight tp) 
 			where
 				implRight D.TPClass{} = C.Call (C.Ref name) "retain" []
 				implRight _ = C.Ref name
-		implInitField D.Field {D.defName = name, D.defBody = def} = C.Set (C.Ref $ '_' : name) (tExp def)
+		implInitField D.Field {D.defName = name, D.defBody = def} = C.Set Nothing (C.Ref $ '_' : name) (tExp def)
 		
 implFuns :: [D.Def] -> [C.ImplFun]
 implFuns defs = (map stm2ImplFun . filter D.isDef) defs ++ (concatMap accs' . filter D.isField) defs
@@ -189,7 +189,7 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 			[C.Return $ C.Ref "ret"]
 		}
 		toPar D.Field{D.defName = n, D.defType = tp} = C.CFunPar (showDataType tp) n
-		toSet D.Field{D.defName = n} = C.Set (C.Dot (C.Ref "ret") n) (C.Ref n)
+		toSet D.Field{D.defName = n} = C.Set Nothing (C.Dot (C.Ref "ret") n) (C.Ref n)
 {- Enum -}
 
 enumAdditionalDefs :: [D.Def]
@@ -229,7 +229,7 @@ genEnumImpl cl@D.Enum {D.className = clsName, D.enumItems = items} = [
 		initialize = C.ImplFun (C.Fun C.ObjectFun "void" "initialize" []) (
 			(C.Stm $ C.Call C.Super "initialize" []) : snd ( mapAccumL initItem 0 items))
 		initItem :: Int -> D.EnumItem -> (Int, C.Stm)
-		initItem n (D.EnumItem itemName pars) = (n + 1, C.Set (C.Ref itemName) $ retain $ C.Call (C.Ref clsName) (createFunName clsName ++ "With") ([
+		initItem n (D.EnumItem itemName pars) = (n + 1, C.Set Nothing (C.Ref itemName) $ retain $ C.Call (C.Ref clsName) (createFunName clsName ++ "With") ([
 			("ordinal", C.IntConst n),
 			("name", C.StringConst itemName)] ++ map initPar pars) )
 		retain f 
@@ -257,8 +257,11 @@ tExp (D.IntConst i) = C.IntConst i
 tExp (D.Nil) = C.Nil
 tExp (D.BoolConst i) = C.BoolConst i
 tExp (D.FloatConst a b) = C.FloatConst a b
-tExp (D.Eq l r) = C.Eq (tExp l) (tExp r)
-tExp (D.NotEq l r) = C.NotEq (tExp l) (tExp r)
+tExp (D.BoolOp t l r) = C.BoolOp t (tExp l) (tExp r)
+tExp (D.MathOp t l r) = C.MathOp t (tExp l) (tExp r)
+tExp (D.PlusPlus e) = C.PlusPlus (tExp e)
+tExp (D.MinusMinus e) = C.MinusMinus (tExp e)
+
 
 tExp (D.Dot (D.Self _) (D.Call D.Field {D.defName = r} [])) = C.Ref $ '_' : r
 tExp (D.Dot l (D.Call D.Field {D.defName = r} [])) = C.Dot (tExp l) r
@@ -287,7 +290,7 @@ tStm v (D.Braces xs) = concatMap (tStm v) xs
 
 tStm v (D.If cond t f) = [C.If (tExp cond) (tStm v t) (tStm v f)]
 
-tStm _ (D.Set l r) = [C.Set (tExp l) (tExp r)]
+tStm _ (D.Set tp l r) = [C.Set tp (tExp l) (tExp r)]
 tStm False (D.Return e) = [C.Return $ tExp e]
 tStm _ (D.Return e) = [C.Stm $ tExp e]
 tStm _ x = [C.Stm $ tExp x]

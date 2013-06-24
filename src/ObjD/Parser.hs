@@ -240,16 +240,39 @@ pDefPar = do
 	return $ Par name tp
 
 pExp :: Parser Exp
-pExp = pOp1
+pExp = do
+	o <- pOp1
+	sps
+	postFix o
 	where
-		pOp1 = pOp2 `chainl1` pEqOp
+		postFix o = try(do
+			string "++"
+			sps
+			return $ PlusPlus o) <|>
+			try(do
+			string "--"
+			sps
+			return $ MinusMinus o) <|> (return o)
+		pOp1 = pOp2 `chainl1` pBoolOp
 		pOp2 = pOp3 `chainl1` pSetOp
-		pOp3 = pTerm `chainl1` pDot
+		pOp3 = pOp4 `chainl1` (mathOp '+' Plus <|> mathOp '-' Minus)
+		pOp4 = pOp5 `chainl1` (mathOp '*' Mul <|> mathOp '/' Div)
+		pOp5 = pTerm `chainl1` pDot
 		pSetOp = try(do
 			char '='
 			notFollowedBy $ char '='
 			sps
-			return Set)
+			return $ Set Nothing) <|> pSetOpMath '+' Plus <|> pSetOpMath '-' Minus  <|> pSetOpMath '/' Div  <|> pSetOpMath '*' Mul
+		pSetOpMath s t = try(do
+			char s
+			char '='
+			sps
+			return $ Set (Just t))
+		mathOp s t = try(do 
+			char s
+			notFollowedBy $ (char '=' <|> char s)
+			sps
+			return $ MathOp t)
 
 pTerm :: Parser Exp
 pTerm = do
@@ -310,7 +333,11 @@ pCallPar = do
 pDot :: Parser (Exp -> Exp -> Exp)
 pDot = stringSps "." >> return Dot
 
-pEqOp :: Parser (Exp -> Exp -> Exp)
-pEqOp = (stringSps "!=" >> return NotEq) <|> (stringSps "==" >> return Eq)
+pBoolOp :: Parser (Exp -> Exp -> Exp)
+pBoolOp =  op "==" Eq <|> op "!=" NotEq <|> op ">=" MoreEq <|> op ">" More  <|> op "<=" LessEq <|> op "<" Less
+	where
+		op s t = do 
+			try(stringSps s)
+			return $ BoolOp t
 
 

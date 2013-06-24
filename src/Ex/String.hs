@@ -1,4 +1,4 @@
-module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp', cap) where
+module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp', cap, MathTp(..), BoolTp(..)) where
 
 import           Data.Char
 
@@ -28,3 +28,19 @@ ind = ("    " ++ )
 cap :: String -> String
 cap "" = ""
 cap (x:xs) = toUpper x : xs
+
+
+data MathTp = Plus | Minus | Mul | Div
+data BoolTp = Eq | NotEq | More | MoreEq | Less | LessEq	
+instance Show MathTp where
+	show Plus = "+"
+	show Minus = "-"
+	show Mul = "*"
+	show Div = "/"
+instance Show BoolTp where
+	show Eq = "=="
+	show NotEq = "!="
+	show More = ">"
+	show MoreEq = ">="
+	show Less = "<"
+	show LessEq = "<="
