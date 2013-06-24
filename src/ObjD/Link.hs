@@ -1,5 +1,6 @@
 module ObjD.Link (
-	Sources, File(..), Class(..), Extends, Def(..), Par(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..), DefMod(..),
+	Sources, File(..), Class(..), Extends, Def(..), Par(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..), 
+	DefMod(..), FieldAcc(..), FieldAccMod(..),
 	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass
 )where
 
@@ -36,7 +37,7 @@ data ClassMod = ClassModStub | ClassModStruct deriving (Eq)
 
 type Extends = Maybe Class
 data Def = Def {defName :: String, defPars :: [Par], defType :: DataType, defBody :: Exp, defMods :: [DefMod]}
-	| Field { defName :: String, defType :: DataType, defBody :: Exp, defMods :: [DefMod]}
+	| Field { defName :: String, defType :: DataType, defBody :: Exp, defMods :: [DefMod], fieldAccs :: [FieldAcc]}
 	| DefStub {defName :: String, defPars :: [Par], defType :: DataType, defMods :: [DefMod]}
 isDef :: Def -> Bool
 isDef Def{} = True
@@ -45,7 +46,10 @@ isField :: Def -> Bool
 isField Field{} = True
 isField _ = False
 
-data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModPrivateWrite | DefModConstructor deriving (Eq, Ord)
+data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModConstructor deriving (Eq, Ord)
+
+data FieldAcc = FieldAccRead [FieldAccMod] Exp | FieldAccWrite [FieldAccMod] Exp
+data FieldAccMod = FieldAccModPrivate deriving (Eq)
 
 data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
 
@@ -75,6 +79,7 @@ data Exp = Nop
 	| Braces [Exp]
 	| If Exp Exp Exp
 	| Self Class
+	| Nil
 	| NotEq Exp Exp 
 	| Eq Exp Exp
 	| Dot Exp Exp
@@ -142,6 +147,7 @@ instance Show Exp where
 		where
 			showPar (Par {parName = name}, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
+	show Nil = "nil"
 	show (BoolConst i) = show i
 	show (FloatConst a b) = show a ++ "." ++ show b
 	
@@ -242,10 +248,25 @@ cls (cidx, glidx) cl = self
 				enumItemPars = zip (map fst constr) (map ((\e -> evalState (expr False e) env) . snd) pars)
 
 field :: D.ClassStm -> State Env Def
-field D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
+field D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e, D.declAccs = accs} = do
 	i <- expr False e
 	env <- get
-	return Field {defMods = translateMods mods, defName = name, defType = getDataType env tp i, defBody = i}
+	let 
+		tp' = getDataType env tp i
+		acc' (D.DeclAccRead accMods ex) = expr True ex >>= (\v -> return $ FieldAccRead (accMods' accMods) v)
+		acc' (D.DeclAccWrite accMods ex) = do
+			env' <- get
+			modify $ envAddVals [EnvDeclPar $ Par name tp' Nop]
+			v <- expr False ex 
+			put env'
+			return $ FieldAccWrite (accMods' accMods) v
+		accMods' = map accMod'
+		accMod' D.DeclAccModPrivate = FieldAccModPrivate 
+		in do
+			accs' <- mapM acc' accs
+			return Field {defMods = translateMods mods, defName = name, defType = tp', defBody = i, fieldAccs = accs'}
+
+		
 
 translateMods :: [D.DefMod] -> [DefMod]
 translateMods = map m
@@ -253,8 +274,7 @@ translateMods = map m
 		m D.DefModStatic = DefModStatic
 		m D.DefModMutable = DefModMutable
 		m D.DefModPrivate = DefModPrivate
-		m D.DefModPrivateWrite = DefModPrivateWrite
-
+		
 def :: D.ClassStm -> State Env Def
 def D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = do
 	env <- get
@@ -288,6 +308,7 @@ dataType cidx (D.DataType name) = case name of
 	"float" -> TPFloat
 	"void" -> TPVoid
 	"string" -> TPString
+	"bool" -> TPBool
 	_ -> let c = findTp "class" cidx name
 		in case c of 
 			Enum{} -> TPEnum c
@@ -300,6 +321,7 @@ exprDataType (Braces []) = TPVoid
 exprDataType (Braces es) = exprDataType $ last es
 exprDataType (Nop) = TPVoid
 exprDataType (IntConst _ ) = TPInt
+exprDataType Nil = TPVoid
 exprDataType (BoolConst _ ) = TPBool
 exprDataType (FloatConst _ _) = TPFloat
 exprDataType (Eq _ _) = TPBool
@@ -333,6 +355,7 @@ expr True D.Nop = error "Return NOP"
 expr True e = expr False e >>= \ee -> return $ Return ee
 expr _ D.Nop = return Nop
 expr _ (D.IntConst i) = return $ IntConst i
+expr _ D.Nil = return Nil
 expr _ (D.BoolConst i) = return $ BoolConst i
 expr _ (D.FloatConst a b) = return $ FloatConst a b
 expr _ (D.Eq a b) = do

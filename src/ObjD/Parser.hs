@@ -142,12 +142,13 @@ pDecl' mtf = do
 		sps
 		dataType <- optionMaybe pDataType
 		sps
-		def <- option Nop (do
-			char '='
-			sps
-			pExp)
+		def <- oExp
 		sps
-		return Decl{defName = name, defRetType = dataType, defMods = [DefModMutable| mut] ++ mods, defBody = def}
+		accs <- option [] (do
+			char '|'
+			sps
+			many acc)
+		return Decl{defName = name, defRetType = dataType, defMods = [DefModMutable| mut] ++ mods, defBody = def, declAccs = accs}
 	where
 		mutableType = do
 			v <- try var <|> val
@@ -155,10 +156,24 @@ pDecl' mtf = do
 			return v
 		val = string "val" >> return False
 		var = string "var" >> return True
+		oExp = option Nop (do
+			char '='
+			sps
+			pExp)
+		acc = try(acct "get" DeclAccRead) <|> try(acct "set" DeclAccWrite)
+		acct rvn mdf = do
+			m <- many accMod
+			sps
+			string rvn
+			sps
+			e <- oExp 
+			sps
+			return $ mdf m e
+		accMod = try (string "private") >> return DeclAccModPrivate
 	
 pMod :: Parser DefMod	
 pMod = do
-	v <- (try(string "privatewrite") >> (return DefModPrivateWrite)) <|> (try(string "private") >> (return DefModPrivate))
+	v <- try(string "private") >> (return DefModPrivate)
 	sps
 	return v
 
@@ -242,7 +257,7 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pCall  <?> "Expression"
+		pTerm' = pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pCall  <?> "Expression"
 		pNumConst = do
 			i <- liftM read (many1 digit)
 			d <- optionMaybe $ do
@@ -264,6 +279,7 @@ pTerm = do
 			sps
 			return $ If cond i e
 		pSelf = try(string "self") >> return Self
+		pNil = try(string "nil") >> return Nil
 		pCall = do
 			name <- ident
 			sps

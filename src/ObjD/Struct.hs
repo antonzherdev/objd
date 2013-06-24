@@ -1,5 +1,6 @@
 module ObjD.Struct (
-	FileStm(..), Extends, ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), ClassMod(..),
+	FileStm(..), Extends, ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), 
+	ClassMod(..), DeclAcc(..), DeclAccMod(..),
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
 ) where
 import           Ex.String
@@ -34,15 +35,16 @@ data ClassMod = ClassModStruct | ClassModStub deriving (Eq)
 
 type Extends = Maybe String
 
-data ClassStm = Decl {defMods :: [DefMod], defName :: String, defRetType :: Maybe DataType, defBody :: Exp}
+data ClassStm = Decl {defMods :: [DefMod], defName :: String, defRetType :: Maybe DataType, defBody :: Exp, declAccs :: [DeclAcc]}
 	| Def {defMods :: [DefMod],  defName :: String, defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
 stmName :: ClassStm -> String
-stmName (Decl _ name _ _) = name
+stmName (Decl _ name _ _ _) = name
 stmName (Def _ name [] _ _) = name
 stmName (Def _ name pars _ _) = name ++ " " ++ unwords (map parName pars)
 
-data DefMod = DefModPrivate | DefModPrivateWrite | DefModMutable | DefModStatic  deriving (Eq)
-
+data DefMod = DefModPrivate | DefModMutable | DefModStatic  deriving (Eq)
+data DeclAcc = DeclAccRead [DeclAccMod] Exp | DeclAccWrite [DeclAccMod] Exp 
+data DeclAccMod = DeclAccModPrivate
 isDef :: ClassStm -> Bool
 isDef Def {} = True
 isDef _ = False
@@ -62,6 +64,7 @@ data Exp = Nop
 	| Braces [Exp]
 	| If Exp Exp Exp
 	| Self
+	| Nil
 	| NotEq Exp Exp | Eq Exp Exp
 	| Dot Exp Exp
 	| Ref String

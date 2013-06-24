@@ -42,15 +42,15 @@ stmToInterface (D.Class {D.className = name, D.classExtends = extends, D.classDe
 			++ intefaceFuns defs
 	}
 	where
-		needDef v = D.DefModPrivate `notElem` (D.defMods v) && D.isField v
+		needDef v = D.DefModPrivate `notElem` D.defMods v && D.isField v
 
 
 
 fieldToProperty :: D.Def -> C.Property
-fieldToProperty (D.Field {D.defName = name, D.defMods = mods, D.defType = tp}) = C.Property {
+fieldToProperty (D.Field {D.defName = name, D.defMods = mods, D.defType = tp, D.fieldAccs = accs}) = C.Property {
 	C.propertyName = name,
 	C.propertyType = showDataType tp,
-	C.propertyModifiers = if D.DefModMutable `elem` mods && D.DefModPrivateWrite `notElem` mods 
+	C.propertyModifiers = if D.DefModMutable `elem` mods && not isPrivateWrite
 		then C.NonAtomic : mutModes tp 
 		else [C.NonAtomic, C.ReadOnly]
 }
@@ -58,6 +58,9 @@ fieldToProperty (D.Field {D.defName = name, D.defMods = mods, D.defType = tp}) =
 		mutModes D.TPArr{} = [C.ReadOnly]
 		mutModes D.TPClass{} = [C.Retain]
 		mutModes _ = []
+		isPrivateWrite = (any (\(D.FieldAccWrite mmm _) -> D.FieldAccModPrivate `elem` mmm). filter isWriteAcc) accs
+		isWriteAcc D.FieldAccWrite{} = True
+		isWriteAcc _ = False
 
 initFun :: D.Constructor -> C.Fun
 initFun [] = C.Fun C.InstanceFun "id" "init" []
@@ -96,11 +99,18 @@ stmToImpl :: D.Class -> C.FileStm
 stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs, D.classConstructor = constr} =
 	C.Implementation {
 		C.implName = clsName,
-		C.implFields = (map implField . filter D.isField) defs,
-		C.implSynthesizes = (map synthesize . filter D.isField) defs,
+		C.implFields = map implField implFields,
+		C.implSynthesizes = map synthesize implFields,
 		C.implFuns = [implCreate cl constr, implInit cl constr] ++ dealoc cl ++ implFuns defs,
 		C.implStaticFields = []
 	}
+	where
+		implFields = filter needField defs
+		needField D.Field{D.fieldAccs = accs} = not $ any realReadAcc accs
+		needField _ = False
+		realReadAcc (D.FieldAccRead _ D.Nop) = False
+		realReadAcc (D.FieldAccRead _ _) = True
+		realReadAcc _ = False
 	
 
 synthesize :: D.Def -> C.ImplSynthesize
@@ -150,11 +160,22 @@ implInit cl constr  = C.ImplFun (initFun constr) (
 		implInitField D.Field {D.defName = name, D.defBody = def} = C.Set (C.Ref $ '_' : name) (tExp def)
 		
 implFuns :: [D.Def] -> [C.ImplFun]
-implFuns = map stm2ImplFun . filter D.isDef
+implFuns defs = (map stm2ImplFun . filter D.isDef) defs ++ (concatMap accs' . filter D.isField) defs
 	where
 		stm2ImplFun def@D.Def {D.defBody = db, D.defMods = mods, D.defType = tp} 
 			| D.DefModAbstract `elem` mods = C.ImplFun (stm2Fun def) [C.Throw $ C.StringConst $ "Method " ++ D.defName def ++ " is abstact"]
 			| otherwise = C.ImplFun (stm2Fun def) (tStm (D.isVoid tp) db)
+		accs' :: D.Def -> [C.ImplFun]
+		accs' D.Field{D.defName = name, D.defType = tp, D.fieldAccs = accs} = mapMaybe (acc' name tp) accs
+		acc' _ _ (D.FieldAccRead _ D.Nop) = Nothing
+		acc' _ _ (D.FieldAccWrite _ D.Nop) = Nothing
+		acc' name tp (D.FieldAccRead _ e) = Just $ C.ImplFun 
+			(C.Fun C.InstanceFun (showDataType tp) name [])
+			(tStm False e)
+		acc' name tp (D.FieldAccWrite _ e) = Just $ C.ImplFun 
+			(C.Fun C.InstanceFun "void" "set" [C.FunPar name (showDataType tp) name])
+			(tStm True e)
+
 		
 {- Struct -}
 genStruct :: D.Class -> [C.FileStm]
@@ -172,7 +193,7 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 {- Enum -}
 
 enumAdditionalDefs :: [D.Def]
-enumAdditionalDefs = [D.Field "ordinal" D.TPInt D.Nop [], D.Field "name" D.TPString D.Nop []]
+enumAdditionalDefs = [D.Field "ordinal" D.TPInt D.Nop [] [], D.Field "name" D.TPString D.Nop [] []]
 
 enumConst :: D.Constructor -> D.Constructor
 enumConst cst = map (\f -> (f, D.Nop)) enumAdditionalDefs ++ cst
@@ -233,6 +254,7 @@ tPars = map (first D.parName . second tExp)
 
 tExp :: D.Exp -> C.Exp
 tExp (D.IntConst i) = C.IntConst i
+tExp (D.Nil) = C.Nil
 tExp (D.BoolConst i) = C.BoolConst i
 tExp (D.FloatConst a b) = C.FloatConst a b
 tExp (D.Eq l r) = C.Eq (tExp l) (tExp r)
@@ -252,6 +274,7 @@ tExp call@(D.Call d@D.Def{} pars)
 		(createFunName $ D.defName d ++ if null pars then "" else "With") 
 		(tPars pars)
 	| otherwise = error $ "Strange call " ++ show call
+tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
 
 tExp x = error $ "No tExp for " ++ show x
 

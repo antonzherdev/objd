@@ -56,6 +56,8 @@ data Exp =
 	| Eq Exp Exp | NotEq Exp Exp
 	| Dot Exp String
 	| Nop
+	| Nil
+	| InlineIf Exp Exp Exp
 	
 showStms :: [Stm] -> String
 showStms = unlines . stms
@@ -141,6 +143,7 @@ instance Show Exp where
 	show (CCall name pars) = name ++ "(" ++ strs' ", " pars ++ ")"
 	show (Ref name) = name
 	show (IntConst i) = show i
+	show Nil = "nil"
 	show (BoolConst True) = "YES"
 	show (BoolConst False) = "NO"
 	show (FloatConst a b) = show a ++ "." ++ show b
@@ -148,6 +151,7 @@ instance Show Exp where
 	show (Eq l r) = showOp l "==" r
 	show (NotEq l r) = showOp l "!=" r
 	show (Dot l r) = show l ++ "." ++ r
+	show (InlineIf c t f) = show c ++ " ? " ++ show t ++ " : " ++ show f
 
 instance Show Stm where
 	show s = unlines $ stmLines s
