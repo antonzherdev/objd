@@ -37,10 +37,12 @@ stmToInterface (D.Class {D.className = name, D.classExtends = extends, D.classDe
 	C.Interface {
 		C.interfaceName = name,
 		C.interfaceExtends = maybe "NSObject" D.className extends,
-		C.interfaceProperties = (map fieldToProperty . filter D.isField) defs,
+		C.interfaceProperties = (map fieldToProperty . filter needDef) defs,
 		C.interfaceFuns = [createFun name constr, initFun constr]
 			++ intefaceFuns defs
 	}
+	where
+		needDef v = D.DefModPrivate `notElem` (D.defMods v) && D.isField v
 
 
 
@@ -48,7 +50,9 @@ fieldToProperty :: D.Def -> C.Property
 fieldToProperty (D.Field {D.defName = name, D.defMods = mods, D.defType = tp}) = C.Property {
 	C.propertyName = name,
 	C.propertyType = showDataType tp,
-	C.propertyModifiers = if D.DefModMutable `elem` mods then C.NonAtomic : mutModes tp else [C.ReadOnly, C.NonAtomic]
+	C.propertyModifiers = if D.DefModMutable `elem` mods && D.DefModPrivateWrite `notElem` mods 
+		then C.NonAtomic : mutModes tp 
+		else [C.NonAtomic, C.ReadOnly]
 }
 	where
 		mutModes D.TPArr{} = [C.ReadOnly]

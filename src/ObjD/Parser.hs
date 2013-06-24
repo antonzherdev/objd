@@ -71,7 +71,7 @@ pStub = do
 			sps
 			name <- ident
 			sps
-			fields <- pClassFields >>= \fs -> return $ map DeclStm fs
+			fields <- pClassFields
 			sps
 			extends <- pExtends
 			sps
@@ -137,17 +137,18 @@ pExtends = optionMaybe (do
 pClassBody :: Parser [ClassStm]
 pClassBody = option [] $ braces $ many pStm
 
-pClassFields :: Parser [Decl]
+pClassFields :: Parser [ClassStm]
 pClassFields = option [] $ brackets $ pDeclPar `sepBy` charSps ','
 
 
-pDeclPar :: Parser Decl
+pDeclPar :: Parser ClassStm
 pDeclPar = pDecl' (option False)
-pDecl :: Parser Decl
+pDecl :: Parser ClassStm
 pDecl = pDecl' id
 
-pDecl' :: (Parser Bool->Parser Bool) -> Parser Decl
+pDecl' :: (Parser Bool->Parser Bool) -> Parser ClassStm
 pDecl' mtf = do
+		mods <- many pMod
 		mut <- mtf mutableType
 		name <- ident
 		sps
@@ -158,7 +159,7 @@ pDecl' mtf = do
 			sps
 			pExp)
 		sps
-		return Decl{declName = name, declDataType = dataType, isDeclMutable = mut, declDef = def}
+		return Decl{defName = name, defRetType = dataType, defMods = [DefModMutable| mut] ++ mods, defBody = def}
 	where
 		mutableType = do
 			v <- try var <|> val
@@ -166,6 +167,12 @@ pDecl' mtf = do
 			return v
 		val = string "val" >> return False
 		var = string "var" >> return True
+	
+pMod :: Parser DefMod	
+pMod = do
+	v <- (try(string "privatewrite") >> (return DefModPrivateWrite)) <|> (try(string "private") >> (return DefModPrivate))
+	sps
+	return v
 
 pImport :: Parser FileStm
 pImport = do
@@ -189,23 +196,18 @@ pImport = do
 	impIdent = many1 (letter <|> digit <|> oneOf "_/.")
 
 pStm :: Parser ClassStm
-pStm = do
-	stm <- pDeclStm <|> pDef <?> "Class statement"
-	sps
-	return stm
-	where
-	pDeclStm = do
-		decl <- pDecl
-		return $ DeclStm decl
-
+pStm = pDecl <|> pDef <?> "Class statement"
+	
 pDef :: Parser ClassStm
 pDef = do
+	mods <- many pMod 
+	sps
 	string "def"
 	sps1
-	static <- option False $ do 
+	static <- option [] $ do 
 		try (string "static")
 		sps1
-		return True
+		return [DefModStatic]
 	name <- ident
 	sps
 	pars <- pDefPars
@@ -216,10 +218,12 @@ pDef = do
 			char '='
 			sps
 			body <- option Nop pExp 
-			return $ Def static name pars ret body
+			sps
+			return $ Def (mods ++ static) name pars ret body
 		) <|> (do
 			body <- option Nop pBraces
-			return $ Def static name pars (Just $ DataType "void") body
+			sps
+			return $ Def (mods ++ static) name pars (Just $ DataType "void") body
 		)
 
 pDefPars :: Parser [Par]

@@ -1,5 +1,5 @@
 module ObjD.Struct (
-	Decl(..), FileStm(..), Extends, ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, 
+	FileStm(..), Extends, ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..),
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
 ) where
 import           Ex.String
@@ -8,15 +8,12 @@ type Sources = [File]
 
 data File = File {fileName :: String, fileStms :: [FileStm]}
 
-data Decl = Decl {declName :: String, isDeclMutable :: Bool, declDataType :: Maybe DataType, declDef :: Exp}
-
-
 data FileStm =
 	Import {impString :: String, impType :: ImportType }
-	| Class {isStruct :: Bool, className :: String, classFields :: [Decl], classExtends :: Extends, classBody :: [ClassStm] }
+	| Class {isStruct :: Bool, className :: String, classFields :: [ClassStm], classExtends :: Extends, classBody :: [ClassStm] }
 	| Stub {isStruct :: Bool, className :: String, classExtends :: Extends, classBody :: [ClassStm]}
 	| StubDef {stubDefName :: String, stubDefPars :: [Par], stubDefRetType :: DataType}
-	| Enum {className :: String, classFields :: [Decl], classExtends :: Extends, enumItems :: [EnumItem], classBody :: [ClassStm]}
+	| Enum {className :: String, classFields :: [ClassStm], classExtends :: Extends, enumItems :: [EnumItem], classBody :: [ClassStm]}
 isClass :: FileStm -> Bool
 isClass (Class {}) = True
 isClass _ = False
@@ -36,19 +33,21 @@ data ImportType = ImportTypeCUser | ImportTypeCLib | ImportTypeD
 
 type Extends = Maybe String
 
-data ClassStm = DeclStm {stmDecl :: Decl}
-	| Def {isDefStatic :: Bool, defName :: String, defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
+data ClassStm = Decl {defMods :: [DefMod], defName :: String, defRetType :: Maybe DataType, defBody :: Exp}
+	| Def {defMods :: [DefMod],  defName :: String, defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
 stmName :: ClassStm -> String
-stmName (DeclStm d) = declName d
+stmName (Decl _ name _ _) = name
 stmName (Def _ name [] _ _) = name
 stmName (Def _ name pars _ _) = name ++ " " ++ unwords (map parName pars)
+
+data DefMod = DefModPrivate | DefModPrivateWrite | DefModMutable | DefModStatic
 
 isDef :: ClassStm -> Bool
 isDef Def {} = True
 isDef _ = False
 
 isDecl :: ClassStm -> Bool
-isDecl DeclStm {} = True
+isDecl Decl {} = True
 isDecl _ = False
 
 data EnumItem = EnumItem{enumItemName :: String, enumItemPars :: [CallPar]}
@@ -71,10 +70,7 @@ type CallPar = (Maybe String, Exp)
 
 data DataType = DataType String | DataTypeArr DataType
 
-instance Show Decl where
-	show (Decl{declName = name, declDataType = Just dataType}) = name ++ " : " ++ show dataType
-	show (Decl{declName = name, declDataType = Nothing}) = name
- 
+	
 instance Show FileStm where
 	show (Class{className = name, classFields = fields, isStruct = s, classBody = body}) = (if s then "struct" else "class ") ++ name ++  "(" ++ strs' ", " fields ++ ")" ++ showClassBody body
 	show (Enum{className = name, classFields = fields, classBody = body}) = "enum " ++ name ++  "(" ++ strs' ", " fields ++ ")" ++ showClassBody body
@@ -88,8 +84,9 @@ showClassBody :: [ClassStm] -> String
 showClassBody stms = " {\n" ++ (unlines . map ( ind . show )) stms ++ "\n}"
 
 instance Show ClassStm where
-	show (DeclStm stm) = show stm
-	show (Def {defName = name }) = "def " ++ name
+	show (Decl{defName = name, defRetType = Just dataType}) = name ++ " : " ++ show dataType
+	show (Decl{defName = name, defRetType = Nothing}) = name
+ 	show (Def {defName = name }) = "def " ++ name
 
 instance Show DataType where
 	show (DataType s) = s

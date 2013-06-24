@@ -34,7 +34,7 @@ isField :: Def -> Bool
 isField Field{} = True
 isField _ = False
 
-data DefMod = DefModStatic | DefModMutable | DefModAbstract deriving (Eq, Ord)
+data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModPrivateWrite deriving (Eq, Ord)
 
 data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
 
@@ -229,38 +229,45 @@ cls (cidx, glidx) cl = self
 		extends = fmap (findTp "class" cidx) (D.classExtends cl)
 		fields =  mapM (evalState . field) decls env
 		fieldsMap = M.fromList $ map (idx defName) fields
-		decls = D.classFields cl ++ (map D.stmDecl . filter D.isDecl $ D.classBody cl)
+		decls = D.classFields cl ++ (filter D.isDecl $ D.classBody cl)
 		defs = evalState (mapM def . filter D.isDef $ D.classBody cl) env
-		constr = map (\f -> (findTp "field" fieldsMap (D.declName f), evalState (expr False (D.declDef f)) env) ) $ D.classFields cl
+		constr = map (\f -> (findTp "field" fieldsMap (D.defName f), evalState (expr False (D.defBody f)) env) ) $ D.classFields cl
 		enumItem (D.EnumItem name pars) = EnumItem name enumItemPars
 			where
 				enumItemPars = zip (map fst constr) (map ((\e -> evalState (expr False e) env) . snd) pars)
 
-field :: D.Decl -> State Env Def
-field D.Decl {D.isDeclMutable = mut, D.declName = name, D.declDataType = tp, D.declDef = e} = do
+field :: D.ClassStm -> State Env Def
+field D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
 	i <- expr False e
 	env <- get
-	return Field {defMods = [DefModMutable | mut], defName = name, defType = getDataType env tp i, defBody = i}
+	return Field {defMods = translateMods mods, defName = name, defType = getDataType env tp i, defBody = i}
 
+translateMods :: [D.DefMod] -> [DefMod]
+translateMods = map m
+	where 
+		m D.DefModStatic = DefModStatic
+		m D.DefModMutable = DefModMutable
+		m D.DefModPrivate = DefModPrivate
+		m D.DefModPrivateWrite = DefModPrivateWrite
 
 def :: D.ClassStm -> State Env Def
-def D.Def{D.isDefStatic = st, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = do
+def D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = do
 	env <- get
 	let 
 		 pars = linkDefPars (envIndex env) opars
-		 mods = [DefModStatic | st]
+		 mods' = translateMods mods
 		 needReturn (Just (D.DataType "void")) = False
 		 needReturn _ = True
 		 in 
 		(case body of
-			D.Nop -> return Def {defMods = DefModAbstract : mods , defName = name,
+			D.Nop -> return Def {defMods = DefModAbstract : mods' , defName = name,
 					defPars = pars,
 					defType = dataType (envIndex env) (fromMaybe (D.DataType "void") tp), defBody = Nop} 
 			_   -> do 
 				modify $ envAddVals (map EnvDeclPar pars)
 				b <- expr (needReturn tp) body
 				put env
-				return Def {defMods = mods, defName = name,
+				return Def {defMods = mods', defName = name,
 					defPars = pars,
 					defType = getDataType env tp b, defBody = b})
 
