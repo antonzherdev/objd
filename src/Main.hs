@@ -12,8 +12,8 @@ main = putStr "dsa" -}
 main::IO()
 main = 
 	let
-		fileName = "EGStat"
-		path = "/Users/antonzherdev/dev/Trains3D/Trains3D/Engine/Time/" ++ fileName
+		fileName = "EGScene"
+		path = "/Users/antonzherdev/dev/Trains3D/Trains3D/Engine/" ++ fileName
 	in do 
 		txt <- readFile $ path ++ ".od"
 		putStrLn txt

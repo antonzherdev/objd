@@ -137,7 +137,7 @@ instance Show Exp where
 	show (If cond t Nop) = "if(" ++ show cond ++ ") " ++ show t
 	show (If cond t f) = "if(" ++ show cond ++ ") " ++ show t ++ "\nelse " ++ show f
 	show Nop = ""
-	show (Self _) = "self"
+	show (Self c) = "<" ++ className c ++ ">self"
 	show (Return e) = "return " ++ show e
 	show (Set Nothing l r) = showOp l "=" r
 	show (Set (Just t) l r) = showOp l (show t ++ "=") r
@@ -146,15 +146,20 @@ instance Show Exp where
 	show (PlusPlus e) = show e ++ "++"
 	show (MinusMinus e) = show e ++ "--"
 	show (Dot l r) = showOp' l "." r
-	show (ParRef s) = show s
-	show (Call f []) = defName f
-	show (Call dd pars) = defName dd ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
+	show (ParRef s) = "<P>" ++ show s
+	show (Call f []) = defRefPrep f ++ defName f
+	show (Call dd pars) = defRefPrep dd ++ defName dd ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
 		where
 			showPar (Par {parName = name}, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
 	show Nil = "nil"
 	show (BoolConst i) = show i
 	show (FloatConst a b) = show a ++ "." ++ show b
+
+defRefPrep :: Def -> String
+defRefPrep Field{} = "<F>"
+defRefPrep Def{} = "<D>"
+defRefPrep DefStub{} = "<S>"
 	
 findCall :: String -> [(Maybe String, Exp)] -> [Def] -> Maybe Exp
 findCall name pars fdefs = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
@@ -397,13 +402,16 @@ expr _ r@(D.Call _ _) = exprCall Nothing r
 
 exprCall :: Maybe Class -> D.Exp -> State Env Exp
 exprCall c (D.Ref n) = do
-	env <- get
-	put $ maybe env (\ v -> envClearVals $ envSetSelf v env) c
-	r <- maybe (expr False $ D.Call n []) (return . toRef) $ M.lookup n (envVals env)
-	put env
-	return r
-	where
+	get >>= (\env -> let
+		env' = maybe env (\ v -> envClearVals $ envSetSelf v env) c
 		toRef (EnvDeclPar p) = ParRef p
+		in do
+			put env'
+			r <- maybe (expr False $ D.Call n []) (return . toRef) $ M.lookup n (envVals env')
+			put env
+			return r
+		)
+		
 exprCall c (D.Call name pars) = do
 	env <- get
 	rp <- mapM (\ (n, e) -> expr False e >>= (\ ee -> return (n, ee))) pars
