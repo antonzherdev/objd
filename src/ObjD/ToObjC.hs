@@ -26,7 +26,14 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 		cImport' (D.CImportUser n) = C.Import n
 		dImports' = procImports f
 
-		h = [C.ImportLib "Foundation/Foundation.h"] ++ cImports' ++ fst dImports' ++ [C.EmptyLine] ++ concatMap genStruct structs 
+		traits = filter (\c -> D.isRealClass c && D.isTrait c) classes
+
+		h = [C.ImportLib "Foundation/Foundation.h"] 
+			++ cImports'
+			++ fst dImports' 
+			++ [C.EmptyLine] 
+			++ concatMap genStruct structs 
+			++ map genProtocol traits
 			++ concatMap genEnumInterface enums 
 			++ map stmToInterface cls
 
@@ -99,6 +106,14 @@ stm2Fun D.Def{D.defName = name, D.defPars = pars, D.defType = tp, D.defMods = mo
 		C.funPars = map par pars}
 	where
 		par (D.Par nm ttp _) = C.FunPar nm (showDataType ttp) nm
+
+genProtocol :: D.Class -> C.FileStm
+genProtocol (D.Class {D.className = name, D.classDefs = defs}) =
+	C.Protocol {
+		C.interfaceName = name,
+		C.interfaceFuns = intefaceFuns defs
+	}
+
 
 {- Implementation -}
 
