@@ -381,7 +381,7 @@ expr _ (D.MathOp tp a b) = do
 expr _ (D.Dot a b) = do
 	aa <- expr False a
 	env <- get
-	bb <- exprCall (Just $ (dataTypeClass .exprDataType) aa)  b
+	bb <- exprCall (Just $ (dataTypeClass . exprDataType) aa)  b
 	put env
 	return $ Dot aa bb
 expr _ (D.Set tp a b) = do
@@ -401,16 +401,13 @@ expr _ r@(D.Ref _) = exprCall Nothing r
 expr _ r@(D.Call _ _) = exprCall Nothing r
 
 exprCall :: Maybe Class -> D.Exp -> State Env Exp
-exprCall c (D.Ref n) = do
+exprCall Nothing (D.Ref n) = do
 	get >>= (\env -> let
-		env' = maybe env (\ v -> envClearVals $ envSetSelf v env) c
 		toRef (EnvDeclPar p) = ParRef p
-		in do
-			put env'
-			r <- maybe (expr False $ D.Call n []) (return . toRef) $ M.lookup n (envVals env')
-			put env
-			return r
+		in 
+			maybe (exprCall Nothing $ D.Call n []) (return . toRef) $ M.lookup n (envVals env)
 		)
+exprCall c@(Just _) (D.Ref n) = exprCall c $ D.Call n []
 		
 exprCall c (D.Call name pars) = do
 	env <- get
@@ -425,7 +422,11 @@ exprCall c (D.Call name pars) = do
 				Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl, defBody = Nop, 
 				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor]}
 			constructorParToPar (d, e) = Par (defName d) (defType d) e
-			dd = fromMaybe (error err) $ findCall name rp (allDefs c)
+			dd = resolveDef c $ fromMaybe (error err) $ findCall name rp (allDefs c)
+			resolveDef Nothing call@(Call d _)
+				| DefModStatic `elem` (defMods d) = call
+				| otherwise = Dot (Self (envSelf env)) call
+			resolveDef _ call = call
 			err = "Could find reference for call " ++ callStr ++ "\n" ++
 				maybe "" (\cl -> "strict in class " ++ className cl ++ "\n") c ++
 				"in defs:\n" ++
