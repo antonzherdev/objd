@@ -46,7 +46,7 @@ isField :: Def -> Bool
 isField Field{} = True
 isField _ = False
 
-data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModConstructor deriving (Eq, Ord)
+data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModConstructor | DefModStructConstructor deriving (Eq, Ord)
 
 data FieldAcc = FieldAccRead [FieldAccMod] Exp | FieldAccWrite [FieldAccMod] Exp
 data FieldAccMod = FieldAccModPrivate deriving (Eq)
@@ -423,7 +423,7 @@ exprCall c (D.Call name pars) = do
 			classConstructors = (map (constructorToDef . snd) . M.toList) (envIndex env)
 			constructorToDef cl@Class{className = n, classConstructor = constr} = 
 				Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl, defBody = Nop, 
-				defMods = [DefModStatic, DefModConstructor]}
+				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor]}
 			constructorParToPar (d, e) = Par (defName d) (defType d) e
 			dd = fromMaybe (error err) $ findCall name rp (allDefs c)
 			err = "Could find reference for call " ++ callStr ++ "\n" ++

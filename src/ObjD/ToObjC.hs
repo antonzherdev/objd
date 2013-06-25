@@ -288,6 +288,9 @@ tExp call@(D.Call d@D.Def{} pars)
 		(C.Ref $ D.defName d) 
 		(createFunName $ D.defName d ++ if null pars then "" else "With") 
 		(tPars pars)
+	| D.DefModStructConstructor `elem` D.defMods d = C.CCall 
+		(D.defName d ++ "Make")
+		(map (tExp . snd) pars)
 	| otherwise = error $ "Strange call " ++ show call
 tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
 
