@@ -2,8 +2,13 @@ module Main where
 
 import ObjD.ToObjC
 import ObjD.Parser
-import ObjD.Link
+import ObjD.Link as L
 import ObjD.Struct as D
+import ObjC.Struct as C
+import Control.Monad
+import Control.Arrow
+import System.Directory (doesDirectoryExist, getDirectoryContents)
+import System.FilePath
 
 
 {- main::IO()
@@ -12,27 +17,61 @@ main = putStr "dsa" -}
 main::IO()
 main = 
 	let
-		fileName = "EGScene"
-		path = "/Users/antonzherdev/dev/Trains3D/Trains3D/Engine/" ++ fileName
+		root = "/Users/antonzherdev/dev/Trains3D/Trains3D/"
 	in do 
-		txt <- readFile $ path ++ ".od"
-		putStrLn txt
-		putStrLn "=== Parsing ==="
-		od <- (case parseFile txt  of
-			Left err -> error $ show err
-			Right val -> return val)
-		putStrLn $ unlines $ map (show) od 
-		(let 
-				lnk = link [D.File fileName od]
-			in do 
-				putStrLn "=== Linking ==="
-				putStrLn $ unlines $ map (show) lnk 
-				putStrLn "=== Compiling ==="
-				(int, impl) <- return $ toObjC $ head $ lnk
-				putStrLn "=== h ==="
-				putStrLn $ unlines $ map (show) int
-				putStrLn "=== m ==="
-				putStrLn $ unlines $ map (show) impl
-				writeFile (path ++ ".h") (unlines $ map (show) int)
-				writeFile (path ++ ".m") (unlines $ map (show) impl)
-				)
+		putStrLn $ "Root: " ++ root
+		t <- odFiles root
+		putStrLn $ show t
+		files <- readOdFiles root 
+		putStrLn $ "Found " ++ show (length files) ++ " files"
+		let 
+			parsedFiles = parseFiles files
+			linkedFiles :: [(FilePath, L.File)]
+			linkedFiles = (uncurry zip . second L.link. unzip) parsedFiles
+			compiledFiles :: [(FilePath, ([C.FileStm], [C.FileStm]))]
+			compiledFiles = (map (second toObjC) . filter (containsRealStatement . snd)) linkedFiles
+			containsRealStatement :: L.File -> Bool
+			containsRealStatement L.File{L.fileClasses = clss} = any (not . L.isStub) clss
+			textFiles :: [(FilePath, (String, String))]
+			textFiles = map (second (toText *** toText)) compiledFiles
+			toText :: [C.FileStm] -> String
+			toText = unlines . map show
+			write :: String -> String -> String -> IO ()
+			write _ _ [] = return ()
+			write ext path txt = writeFile (replaceExtension path ext) txt 
+			in  
+				forM_ textFiles (\(path, (h, m)) -> do
+					putStrLn ("File: " ++ path)
+					write ".h" path h
+					write ".m" path m)
+				
+
+parseFiles :: [(FilePath, String)] -> [(FilePath, D.File)]
+parseFiles = map parse
+	where
+		fn = dropExtension . takeFileName
+		parse (path, txt) = case parseFile txt of
+			Left err -> error $ "Error in parse " ++ path ++ ":\n" ++ txt ++ "\n\nError:" ++ show err
+			Right val -> (path, D.File (fn path) val)
+
+readOdFiles :: FilePath -> IO [(FilePath, String)]
+readOdFiles root = join $ liftM (mapM readOdFile) (odFiles root)
+	where
+		readOdFile :: FilePath -> IO (FilePath, String)
+		readOdFile p = liftM (\content -> (p, content)) (readFile p)
+
+odFiles :: FilePath -> IO [FilePath]
+odFiles p = liftM (filter((".od" == ). takeExtension)) (getRecursiveContents p)
+
+getRecursiveContents :: FilePath -> IO [FilePath]
+getRecursiveContents topdir = do
+  names <- getDirectoryContents topdir
+  let properNames = filter (`notElem` [".", ".."]) names
+  paths <- forM properNames $ \name -> do
+    let path = topdir </> name
+    isDirectory <- doesDirectoryExist path
+    if isDirectory
+      then getRecursiveContents path
+      else return [path]
+  return (concat paths)
+

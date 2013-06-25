@@ -176,7 +176,7 @@ idx :: (a -> k) -> a -> (k, a)
 idx f a = (f a, a)
 
 link :: D.Sources -> Sources
-link src = (map snd . M.toList) fidx
+link src = map (\D.File{D.fileName = name} ->  fromMaybe (error $ "Could not find linked file " ++ name) $ M.lookup name fidx) src
 	where
 		fidx :: M.Map String File
 		fidx = M.fromList $ map (idx fileName . file fidx) src

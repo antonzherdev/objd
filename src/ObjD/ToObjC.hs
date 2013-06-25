@@ -16,18 +16,25 @@ arc :: Bool
 arc = False
 
 toObjC :: D.File -> ([C.FileStm], [C.FileStm])
-toObjC D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cImports} = 
+toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cImports} = 
 	let 
 		cls = filter (\c -> D.isRealClass c && not (D.isStruct c)) classes
 		structs = filter (\c -> D.isRealClass c && D.isStruct c) classes
 		enums = filter D.isEnum classes
-		imps = map toImport cImports
-		toImport (D.CImportLib n) = C.ImportLib n
-		toImport (D.CImportUser n) = C.Import n
-	in ( [C.ImportLib "Foundation/Foundation.h"] ++ imps ++ [C.EmptyLine] ++ concatMap genStruct structs 
-		++ concatMap genEnumInterface enums 
-		++ map stmToInterface cls, 
-		[C.Import (name ++ ".h") , C.EmptyLine] ++ concatMap genEnumImpl enums ++ map stmToImpl cls)
+		cImports' = map cImport' cImports
+		cImport' (D.CImportLib n) = C.ImportLib n
+		cImport' (D.CImportUser n) = C.Import n
+		dImports' = procImports f
+
+		h = [C.ImportLib "Foundation/Foundation.h"] ++ cImports' ++ fst dImports' ++ [C.EmptyLine] ++ concatMap genStruct structs 
+			++ concatMap genEnumInterface enums 
+			++ map stmToInterface cls
+
+		enumsImpl = concatMap genEnumImpl enums
+		stmsImpl = map stmToImpl cls
+		m = if null enumsImpl && null stmsImpl then []
+			else [C.Import (name ++ ".h") , C.EmptyLine] ++ snd dImports' ++ enumsImpl ++ stmsImpl
+	in (h, m)
 
 
 {- Interface -}
@@ -238,6 +245,11 @@ genEnumImpl cl@D.Enum {D.className = clsName, D.enumItems = items} = [
 		initPar (D.Field{D.defName = fname}, e) = (fname, tExp e)
 			
 
+{- Imports -}
+procImports :: D.File -> ([C.FileStm], [C.FileStm])
+procImports D.File{D.fileImports = imps} = (map to imps, [])
+	where 
+		to D.File{D.fileName = fn} = C.Import (fn ++ ".h")
 
 {- DataType -}
 showDataType :: D.DataType -> String
@@ -250,7 +262,7 @@ showDataType tp = show tp
 
 {- Exp -}
 tPars :: [(D.Par, D.Exp)] -> [(String, C.Exp)]
-tPars = map (first D.parName . second tExp)
+tPars = map (D.parName *** tExp)
 
 tExp :: D.Exp -> C.Exp
 tExp (D.IntConst i) = C.IntConst i
