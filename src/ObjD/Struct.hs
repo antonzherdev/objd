@@ -31,7 +31,7 @@ isStubDef (StubDef {}) = True
 isStubDef _ = False
 data ImportType = ImportTypeCUser | ImportTypeCLib | ImportTypeD
 
-data ClassMod = ClassModStruct | ClassModStub deriving (Eq)
+data ClassMod = ClassModStruct | ClassModStub | ClassModTrait deriving (Eq)
 
 type Extends = Maybe String
 

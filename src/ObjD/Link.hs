@@ -1,7 +1,7 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends, Def(..), Par(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..), 
 	DefMod(..), FieldAcc(..), FieldAccMod(..), MathTp(..),
-	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass
+	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait
 )where
 
 import           Control.Monad.State
@@ -22,6 +22,9 @@ isClass _ = False
 isStruct :: Class -> Bool
 isStruct (Class {classMods = mods}) = ClassModStruct `elem` mods
 isStruct _ = False
+isTrait :: Class -> Bool
+isTrait (Class {classMods = mods}) = ClassModTrait `elem` mods
+isTrait _ = False
 isStub :: Class -> Bool
 isStub (Class {classMods = mods}) = ClassModStub `elem` mods
 isStub _ = False
@@ -33,7 +36,7 @@ isEnum :: Class -> Bool
 isEnum (Enum {}) = True
 isEnum _ = False
 
-data ClassMod = ClassModStub | ClassModStruct deriving (Eq)
+data ClassMod = ClassModStub | ClassModStruct | ClassModTrait deriving (Eq)
 
 type Extends = Maybe Class
 data Def = Def {defName :: String, defPars :: [Par], defType :: DataType, defBody :: Exp, defMods :: [DefMod]}
@@ -56,7 +59,7 @@ data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
 data Par = Par {parName :: String, parType :: DataType, parDef :: Exp}
 type Constructor = [(Def, Exp)]
 
-data DataType = TPInt | TPFloat | TPString | TPVoid | TPClass Class | TPStruct Class | TPEnum Class | TPArr DataType | TPBool
+data DataType = TPInt | TPFloat | TPString | TPVoid | TPClass Class | TPStruct Class | TPEnum Class | TPTrait Class | TPArr DataType | TPBool
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
 isVoid _ = False
@@ -68,6 +71,7 @@ instance Show DataType where
 	show TPString = "string"
 	show TPBool = "bool"
 	show (TPClass c) = className c ++ "*"
+	show (TPTrait c) = className c ++ "*"
 	show (TPEnum c) = className c ++ "*"
 	show (TPStruct c) = className c
 	show (TPArr t) = "[" ++ show t ++ "]"
@@ -247,6 +251,7 @@ cls (cidx, glidx) cl = self
 			}
 		clsMod D.ClassModStruct = ClassModStruct
 		clsMod D.ClassModStub = ClassModStub
+		clsMod D.ClassModTrait = ClassModTrait
 		extends = fmap (findTp "class" cidx) (D.classExtends cl)
 		fields =  mapM (evalState . field) decls env
 		fieldsMap = M.fromList $ map (idx defName) fields
@@ -319,10 +324,8 @@ dataType cidx (D.DataType name) = case name of
 	"void" -> TPVoid
 	"string" -> TPString
 	"bool" -> TPBool
-	_ -> let c = findTp "class" cidx name
-		in case c of 
-			Enum{} -> TPEnum c
-			_ -> if isStruct c then TPStruct c else TPClass c
+	_ -> refDataType $ findTp "class" cidx name
+		
 dataType cidx (D.DataTypeArr tp) = TPArr $ dataType cidx tp
 
 exprDataType :: Exp -> DataType
@@ -349,12 +352,14 @@ refDataType :: Class -> DataType
 refDataType e@Enum{} = TPEnum e
 refDataType cl 
 	| isStruct cl = TPStruct cl
+	| isTrait cl = TPTrait cl
 	| otherwise = TPClass cl
 
 dataTypeClass :: DataType -> Class
 dataTypeClass (TPClass c) = c
 dataTypeClass (TPStruct c) = c
 dataTypeClass (TPEnum c) = c
+dataTypeClass (TPTrait c) = c
 
 expr :: Bool -> D.Exp -> State Env Exp
 expr r (D.If cond t f) = do

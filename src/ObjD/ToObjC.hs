@@ -18,7 +18,7 @@ arc = False
 toObjC :: D.File -> ([C.FileStm], [C.FileStm])
 toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cImports} = 
 	let 
-		cls = filter (\c -> D.isRealClass c && not (D.isStruct c)) classes
+		cls = filter (\c -> D.isRealClass c && not (D.isStruct c) && not (D.isTrait c)) classes
 		structs = filter (\c -> D.isRealClass c && D.isStruct c) classes
 		enums = filter D.isEnum classes
 		cImports' = map cImport' cImports
@@ -258,6 +258,7 @@ showDataType D.TPInt = "NSInteger"
 showDataType D.TPFloat = "CGFloat"
 showDataType D.TPString = "NSString*"
 showDataType D.TPBool = "BOOL"
+showDataType (D.TPTrait _) = "id"
 showDataType tp = show tp
 
 {- Exp -}
