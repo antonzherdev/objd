@@ -8,7 +8,18 @@ import           Text.ParserCombinators.Parsec
 
 
 parseFile :: String -> Either ParseError [FileStm]
-parseFile = parse pFile "ObjD"
+parseFile = parse pFile "ObjD" . removeComments
+	where
+		removeComments [] = []
+		removeComments ('/' : '/' : xs) = waitLine xs
+		removeComments ('/' : '*' : xs) = waitMultiLine xs
+		removeComments (x : xs) = x : removeComments xs
+		waitLine [] = []
+		waitLine ('\n' : xs) = removeComments xs
+		waitLine (_  : xs) = waitLine xs
+		waitMultiLine [] = []
+		waitMultiLine ('*' : '/' : xs) = removeComments xs
+		waitMultiLine (_ : xs) = waitMultiLine xs
 
 pFile :: Parser [FileStm]
 pFile = do
@@ -47,8 +58,14 @@ pDataType = do
 			sps
 			char ']'
 			return $ DataTypeArr t
-		simple = ident >>= \v -> return $ DataType v
-
+		simple = do
+			v <- ident
+			gens <- option [] $ between (charSps '<') (charSps '>') $ generic `sepBy` charSps ','
+			return $ DataType v gens
+		generic = do
+			s <- ident
+			sps 
+			return s
 braces :: Parser a -> Parser a
 braces p = do 
 	r <- between (charSps '{') (spsChar '}') p 
@@ -71,7 +88,7 @@ pStub = do
 	sps
 	pars <- pDefPars
 	sps
-	ret <- option (DataType "void") pDataType
+	ret <- option (DataType "void" []) pDataType
 	sps
 	return StubDef {stubDefName = name, stubDefPars = pars, stubDefRetType = ret}
 
@@ -84,19 +101,23 @@ pClass = do
 	sps
 	name <- ident
 	sps
+	generics <- pClassGenerics
+	sps
 	fields <- pClassFields
 	sps
 	extends <- pExtends
 	sps
 	body <- pClassBody
 	sps
-	return Class {classMods = stub ++ struct, className = name, classFields = fields, classExtends = extends, classBody = body}
+	return Class {classMods = stub ++ struct, className = name, classFields = fields, classExtends = extends, classBody = body, classGenerics = generics}
 
 pEnum :: Parser FileStm
 pEnum = do
 	string "enum"
 	sps 
 	name <- ident
+	sps
+	generics <- pClassGenerics
 	sps
 	fields <- pClassFields
 	sps
@@ -112,8 +133,16 @@ pEnum = do
 		in do
 			items <- many enumItem
 			body <- many pStm
-			return Enum { className = name, classFields = fields, classExtends = extends, enumItems = items, classBody = body}
+			return Enum { className = name, classFields = fields, classExtends = extends, enumItems = items, classBody = body, classGenerics = generics}
 
+
+pClassGenerics :: Parser [ClassGeneric]
+pClassGenerics = option [] $ between (charSps '<') (charSps '>') (pClassGeneric `sepBy` char ',')
+	where
+		pClassGeneric = do
+			name <- ident
+			sps
+			return $ ClassGeneric name
 
 pExtends :: Parser Extends
 pExtends = optionMaybe (do
@@ -226,7 +255,7 @@ pDef = do
 		) <|> (do
 			body <- option Nop pBraces
 			sps
-			return $ Def (mods ++ static) name pars (Just $ DataType "void") body
+			return $ Def (mods ++ static) name pars (Just $ DataType "void" []) body
 		)
 
 pDefPars :: Parser [Par]

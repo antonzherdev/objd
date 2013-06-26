@@ -274,6 +274,7 @@ showDataType D.TPFloat = "CGFloat"
 showDataType D.TPString = "NSString*"
 showDataType D.TPBool = "BOOL"
 showDataType (D.TPTrait _) = "id"
+showDataType (D.TPGeneric _) = "id"
 showDataType tp = show tp
 
 {- Exp -}

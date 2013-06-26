@@ -1,6 +1,6 @@
 module ObjD.Struct (
 	FileStm(..), Extends, ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), 
-	ClassMod(..), DeclAcc(..), DeclAccMod(..), MathTp(..), BoolTp(..),
+	ClassMod(..), DeclAcc(..), DeclAccMod(..), MathTp(..), BoolTp(..), ClassGeneric(..),
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
 ) where
 import           Ex.String
@@ -11,9 +11,11 @@ data File = File {fileName :: String, fileStms :: [FileStm]}
 
 data FileStm =
 	Import {impString :: String, impType :: ImportType }
-	| Class {classMods :: [ClassMod], className :: String, classFields :: [ClassStm], classExtends :: Extends, classBody :: [ClassStm] }
+	| Class {classMods :: [ClassMod], className :: String, classFields :: [ClassStm], classExtends :: Extends, classBody :: [ClassStm]
+		, classGenerics :: [ClassGeneric] }
 	| StubDef {stubDefName :: String, stubDefPars :: [Par], stubDefRetType :: DataType}
-	| Enum {className :: String, classFields :: [ClassStm], classExtends :: Extends, enumItems :: [EnumItem], classBody :: [ClassStm]}
+	| Enum {className :: String, classFields :: [ClassStm], classExtends :: Extends, enumItems :: [EnumItem], classBody :: [ClassStm]
+		, classGenerics :: [ClassGeneric] }
 isClass :: FileStm -> Bool
 isClass (Class {}) = True
 isClass _ = False
@@ -32,6 +34,8 @@ isStubDef _ = False
 data ImportType = ImportTypeCUser | ImportTypeCLib | ImportTypeD
 
 data ClassMod = ClassModStruct | ClassModStub | ClassModTrait deriving (Eq)
+
+data ClassGeneric = ClassGeneric String
 
 type Extends = Maybe String
 
@@ -75,7 +79,7 @@ data Exp = Nop
 	| Call String [CallPar]
 type CallPar = (Maybe String, Exp)
 
-data DataType = DataType String | DataTypeArr DataType
+data DataType = DataType String [String] | DataTypeArr DataType
 
 instance Show FileStm where
 	show (Class{className = name, classFields = fields, classMods = mods, classBody = body}) = 
@@ -97,7 +101,8 @@ instance Show ClassStm where
  	show (Def {defName = name }) = "def " ++ name
 
 instance Show DataType where
-	show (DataType s) = s
+	show (DataType s []) = s
+	show (DataType s pars) = s ++ "<" ++ strs ", " pars ++ ">"
 	show (DataTypeArr r) = "[" ++ show r ++ "]"
 
 instance Show Exp where

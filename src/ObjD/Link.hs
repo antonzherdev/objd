@@ -14,11 +14,17 @@ import qualified ObjD.Struct         as D
 type Sources = [File]
 data File = File {fileName :: String, fileImports :: [File], fileCImports :: [CImport], fileClasses :: [Class], globalDefs :: [Def]}
 
-data Class = Class { classMods :: [ClassMod], className :: String , classExtends :: Extends, classDefs :: [Def], classConstructor :: Constructor }
-	| Enum { className :: String, classExtends :: Extends, classDefs :: [Def], classConstructor :: Constructor, enumItems :: [EnumItem] }
+data Class = Class { classMods :: [ClassMod], className :: String , classExtends :: Extends, classDefs :: [Def], classConstructor :: Constructor
+		,classGenetrics :: [Class] }
+	| Enum { className :: String, classExtends :: Extends, classDefs :: [Def], classConstructor :: Constructor, enumItems :: [EnumItem]
+		,classGenetrics :: [Class] }
+	| Generic {className :: String}
 isClass :: Class -> Bool
 isClass (Class {}) = True
 isClass _ = False
+isGeneric :: Class -> Bool
+isGeneric (Generic {}) = True
+isGeneric _ = False
 isStruct :: Class -> Bool
 isStruct (Class {classMods = mods}) = ClassModStruct `elem` mods
 isStruct _ = False
@@ -59,7 +65,7 @@ data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
 data Par = Par {parName :: String, parType :: DataType, parDef :: Exp}
 type Constructor = [(Def, Exp)]
 
-data DataType = TPInt | TPFloat | TPString | TPVoid | TPClass Class | TPStruct Class | TPEnum Class | TPTrait Class | TPArr DataType | TPBool
+data DataType = TPInt | TPFloat | TPString | TPVoid | TPClass Class | TPStruct Class | TPEnum Class | TPTrait Class | TPGeneric Class | TPArr DataType | TPBool
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
 isVoid _ = False
@@ -73,6 +79,7 @@ instance Show DataType where
 	show (TPClass c) = className c ++ "*"
 	show (TPTrait c) = className c ++ "*"
 	show (TPEnum c) = className c ++ "*"
+	show (TPGeneric c) = className c ++ "*"
 	show (TPStruct c) = className c
 	show (TPArr t) = "[" ++ show t ++ "]"
 
@@ -216,13 +223,6 @@ envAddVals decls Env {envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx
 	Env{envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals `M.union` newVals}
 	where
 		newVals = M.fromList $ map (\ d -> (envDeclName d, d)) decls
-envClearVals :: Env -> Env
-envClearVals env
-	| M.null (envVals env) = env
-	| otherwise = Env{envSelf = envSelf env, envIndex = envIndex env, envGlobalDefIndex = envGlobalDefIndex env, envVals = M.empty}
-envSetSelf :: Class -> Env -> Env
-envSetSelf self Env {envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals} = 
-	Env{envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals}
 
 envDeclName :: EnvDecl -> String
 envDeclName (EnvDeclPar Par{parName = name}) = name
@@ -231,8 +231,9 @@ findTp :: String -> M.Map String a -> String -> a
 findTp tp mmm name =  M.findWithDefault (error $ "No " ++ tp ++ " found " ++ name) name mmm
 
 cls :: (ClassIndex, DefIndex) -> D.FileStm -> Class
-cls (cidx, glidx) cl = self
+cls (ocidx, glidx) cl = self
 	where
+		cidx = ocidx `M.union` (M.fromList $ map (\g -> (className g, g)) generics)
 		env = Env self cidx glidx M.empty
 		self = case cl of
 			D.Class{} -> Class {
@@ -240,14 +241,16 @@ cls (cidx, glidx) cl = self
 				className = D.className cl, 
 				classExtends = extends, 
 				classDefs = fields ++ defs, 
-				classConstructor = constr
+				classConstructor = constr,
+				classGenetrics = generics
 			}
 			D.Enum{} -> Enum {
 				className = D.className cl, 
 				classExtends = extends, 
 				classDefs = fields ++ defs, 
 				classConstructor = constr,
-				enumItems = map enumItem (D.enumItems cl)
+				enumItems = map enumItem (D.enumItems cl), 
+				classGenetrics = generics
 			}
 		clsMod D.ClassModStruct = ClassModStruct
 		clsMod D.ClassModStub = ClassModStub
@@ -258,6 +261,8 @@ cls (cidx, glidx) cl = self
 		decls = D.classFields cl ++ (filter D.isDecl $ D.classBody cl)
 		defs = evalState (mapM def . filter D.isDef $ D.classBody cl) env
 		constr = map (\f -> (findTp "field" fieldsMap (D.defName f), evalState (expr False (D.defBody f)) env) ) $ D.classFields cl
+		generics = map generic (D.classGenerics cl)
+		generic (D.ClassGeneric name) = Generic name
 		enumItem (D.EnumItem name pars) = EnumItem name enumItemPars
 			where
 				enumItemPars = zip (map fst constr) (map ((\e -> evalState (expr False e) env) . snd) pars)
@@ -296,13 +301,13 @@ def D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = 
 	let 
 		 pars = linkDefPars (envIndex env) opars
 		 mods' = translateMods mods
-		 needReturn (Just (D.DataType "void")) = False
+		 needReturn (Just (D.DataType "void" _)) = False
 		 needReturn _ = True
 		 in 
 		(case body of
 			D.Nop -> return Def {defMods = DefModAbstract : mods' , defName = name,
 					defPars = pars,
-					defType = dataType (envIndex env) (fromMaybe (D.DataType "void") tp), defBody = Nop} 
+					defType = dataType (envIndex env) (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
 			_   -> do 
 				modify $ envAddVals (map EnvDeclPar pars)
 				b <- expr (needReturn tp) body
@@ -318,7 +323,7 @@ getDataType :: Env -> Maybe D.DataType -> Exp -> DataType
 getDataType env tp e = maybe (exprDataType e) (dataType (envIndex env)) tp
 
 dataType :: ClassIndex -> D.DataType -> DataType
-dataType cidx (D.DataType name) = case name of
+dataType cidx (D.DataType name _) = case name of
 	"int" -> TPInt
 	"float" -> TPFloat
 	"void" -> TPVoid
@@ -353,6 +358,7 @@ refDataType e@Enum{} = TPEnum e
 refDataType cl 
 	| isStruct cl = TPStruct cl
 	| isTrait cl = TPTrait cl
+	| isGeneric cl = TPGeneric cl
 	| otherwise = TPClass cl
 
 dataTypeClass :: DataType -> Class
@@ -360,6 +366,7 @@ dataTypeClass (TPClass c) = c
 dataTypeClass (TPStruct c) = c
 dataTypeClass (TPEnum c) = c
 dataTypeClass (TPTrait c) = c
+dataTypeClass (TPGeneric c) = c
 
 expr :: Bool -> D.Exp -> State Env Exp
 expr r (D.If cond t f) = do
