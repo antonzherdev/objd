@@ -278,6 +278,7 @@ showDataType D.TPString = "NSString*"
 showDataType D.TPBool = "BOOL"
 showDataType (D.TPTrait _) = "id"
 showDataType (D.TPGeneric _) = "id"
+showDataType (D.TPSelf) = "id"
 showDataType (D.TPFun s d) = showDataType d ++ "(^)" ++ "(" ++ showDataType s ++ ")"
 showDataType tp = show tp
 
@@ -296,13 +297,13 @@ tExp (D.PlusPlus e) = C.PlusPlus (tExp e)
 tExp (D.MinusMinus e) = C.MinusMinus (tExp e)
 
 
-tExp (D.Dot (D.Self _) (D.Call D.Field {D.defName = r} [])) = C.Ref $ '_' : r
-tExp (D.Dot l (D.Call D.Field {D.defName = r} [])) = C.Dot (tExp l) r
-tExp (D.Dot l (D.Call D.Def{D.defName = name} pars)) = C.Call (tExp l) name (tPars pars)
+tExp (D.Dot (D.Self _) (D.Call D.Field {D.defName = r} _ [])) = C.Ref $ '_' : r
+tExp (D.Dot l (D.Call D.Field {D.defName = r} _ [])) = C.Dot (tExp l) r
+tExp (D.Dot l (D.Call D.Def{D.defName = name} _ pars)) = C.Call (tExp l) name (tPars pars)
 
 tExp (D.Self _) = C.Self
-tExp (D.Call D.Field {D.defName = r} []) = C.Ref $ '_' : r
-tExp (D.Call D.Def{D.defName = name, D.defMods = mods} pars)
+tExp (D.Call D.Field {D.defName = r} _ []) = C.Ref $ '_' : r
+tExp (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)
 	| D.DefModLocal `elem` mods && null pars = C.Ref name
 	| D.DefModConstructor `elem` mods = C.Call 
 		(C.Ref $ name) 

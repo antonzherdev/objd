@@ -65,7 +65,7 @@ data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
 type Constructor = [(Def, Exp)]
 
 data DataType = TPInt | TPFloat | TPString | TPVoid | TPClass Class | TPStruct Class | TPEnum Class | TPTrait Class 
-	| TPGeneric Class | TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType]
+	| TPGeneric Class | TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
 isVoid _ = False
@@ -76,6 +76,7 @@ instance Show DataType where
 	show TPVoid = "void"
 	show TPString = "string"
 	show TPBool = "bool"
+	show TPSelf = "self"
 	show (TPClass c) = className c ++ "*"
 	show (TPTrait c) = className c ++ "*"
 	show (TPEnum c) = className c ++ "*"
@@ -99,7 +100,7 @@ data Exp = Nop
 	| MinusMinus Exp
 	| Dot Exp Exp
 	| Set (Maybe MathTp) Exp Exp
-	| Call Def [(Def, Exp)]
+	| Call Def DataType [(Def, Exp)]
 	| Return Exp
 
 data CImport = CImportLib String | CImportUser String
@@ -153,8 +154,8 @@ instance Show Exp where
 	show (PlusPlus e) = show e ++ "++"
 	show (MinusMinus e) = show e ++ "--"
 	show (Dot l r) = showOp' l "." r
-	show (Call f []) = defRefPrep f ++ defName f
-	show (Call dd pars) = defRefPrep dd ++ defName dd ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
+	show (Call f _ []) = defRefPrep f ++ defName f 
+	show (Call dd _ pars) = defRefPrep dd ++ defName dd ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
 		where
 			showPar (Def {defName = name}, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
@@ -180,14 +181,17 @@ dataTypePars (TPFun (TPTuple pars) _) = map (\t -> Def "" [] t Nop [DefModLocal]
 dataTypePars (TPFun t _) = [Def "" [] t Nop [DefModLocal]]
 dataTypePars _ = []
 
-findCall :: String -> [(Maybe String, Exp)] -> [Def] -> Maybe Exp
-findCall name pars fdefs = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
+findCall :: String -> [(Maybe String, Exp)] -> Class -> [Def] -> Maybe Exp
+findCall name pars self fdefs = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
 	where
 		fit :: Def -> Maybe Exp
 		fit d@Field{}
-			| null pars = Just $ Call d []
+			| null pars = Just $ Call d (resolveTp (defType d) self) [] 
 			| otherwise = Nothing 
-		fit d = Just $ Call d $ zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
+		fit d = Just $ Call d (resolveTp (defType d) self) $ zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
+		resolveTp tp s = case tp of
+			TPSelf -> TPClass s
+			_ -> tp
 		 {- TODO: Finish it -}
 		
 
@@ -332,6 +336,7 @@ dataType cidx (D.DataType name _) = case name of
 	"void" -> TPVoid
 	"string" -> TPString
 	"bool" -> TPBool
+	"self" -> TPSelf
 	_ -> refDataType $ findTp "class" cidx name
 dataType cidx (D.DataTypeArr tp) = TPArr $ dataType cidx tp
 dataType cidx (D.DataTypeFun s d) = TPFun (dataType cidx s) (dataType cidx d)
@@ -353,7 +358,7 @@ exprDataType (MinusMinus e) = exprDataType e
 exprDataType (Dot _ b) = exprDataType b
 exprDataType (Set _ a _) = exprDataType a
 exprDataType (Self s) = refDataType s
-exprDataType (Call d _) = defType d
+exprDataType (Call d t _) = t
 exprDataType (Return e) = exprDataType e
 
 refDataType :: Class -> DataType
@@ -425,15 +430,16 @@ exprCall c (D.Call name pars) = do
 		let
 			allDefs :: Maybe Class -> [Def]
 			allDefs Nothing = envVals env ++ allDefsInClass (envSelf env) ++ envGlobalDefIndex env ++ classConstructors
-			allDefs (Just self) = allDefsInClass self
+			allDefs (Just ss) = allDefsInClass ss
 			allDefsInClass cl = classDefs cl  ++ maybe [] allDefsInClass (classExtends cl) 
 			classConstructors = (map (constructorToDef . snd) . filter (isClass . snd) . M.toList) (envIndex env)
 			constructorToDef cl@Class{className = n, classConstructor = constr} = 
 				Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl, defBody = Nop, 
 				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor]}
 			constructorParToPar (d, e) = Def (defName d) [] (defType d) e [DefModLocal]
-			dd = resolveDef c $ fromMaybe (error err) $ findCall name rp (allDefs c)
-			resolveDef Nothing call@(Call d _)
+			self = fromMaybe (envSelf env) c
+			dd = resolveDef c $ fromMaybe (error err) $ findCall name rp self (allDefs c)
+			resolveDef Nothing call@(Call d _ _)
 				| DefModStatic `elem` (defMods d) = call 
 				| DefModLocal `elem` (defMods d) = call
 				| DefModStub `elem` (defMods d) = call
