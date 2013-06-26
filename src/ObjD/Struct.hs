@@ -79,7 +79,7 @@ data Exp = Nop
 	| Call String [CallPar]
 type CallPar = (Maybe String, Exp)
 
-data DataType = DataType String [String] | DataTypeArr DataType
+data DataType = DataType String [String] | DataTypeArr DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType]
 
 instance Show FileStm where
 	show (Class{className = name, classFields = fields, classMods = mods, classBody = body}) = 

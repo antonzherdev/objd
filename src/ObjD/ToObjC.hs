@@ -152,7 +152,7 @@ retain :: C.Exp -> C.Exp
 retain f 
 	| arc = f
 	| otherwise = C.Call f "retain" []			
-	
+
 autorelease :: C.Exp -> C.Exp
 autorelease e 
 	| arc = e
@@ -278,6 +278,7 @@ showDataType D.TPString = "NSString*"
 showDataType D.TPBool = "BOOL"
 showDataType (D.TPTrait _) = "id"
 showDataType (D.TPGeneric _) = "id"
+showDataType (D.TPFun s d) = showDataType d ++ "(^)" ++ "(" ++ showDataType s ++ ")"
 showDataType tp = show tp
 
 {- Exp -}

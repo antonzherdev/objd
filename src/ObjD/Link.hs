@@ -65,7 +65,8 @@ data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
 data Par = Par {parName :: String, parType :: DataType, parDef :: Exp}
 type Constructor = [(Def, Exp)]
 
-data DataType = TPInt | TPFloat | TPString | TPVoid | TPClass Class | TPStruct Class | TPEnum Class | TPTrait Class | TPGeneric Class | TPArr DataType | TPBool
+data DataType = TPInt | TPFloat | TPString | TPVoid | TPClass Class | TPStruct Class | TPEnum Class | TPTrait Class 
+	| TPGeneric Class | TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType]
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
 isVoid _ = False
@@ -82,6 +83,8 @@ instance Show DataType where
 	show (TPGeneric c) = className c ++ "*"
 	show (TPStruct c) = className c
 	show (TPArr t) = "[" ++ show t ++ "]"
+	show (TPFun s d) = show s ++ " -> " ++ show d
+	show (TPTuple tps) = "(" ++ strs' ", " tps ++ ")"
 
 data Exp = Nop 
 	| IntConst Int 
@@ -330,8 +333,9 @@ dataType cidx (D.DataType name _) = case name of
 	"string" -> TPString
 	"bool" -> TPBool
 	_ -> refDataType $ findTp "class" cidx name
-		
 dataType cidx (D.DataTypeArr tp) = TPArr $ dataType cidx tp
+dataType cidx (D.DataTypeFun s d) = TPFun (dataType cidx s) (dataType cidx d)
+dataType cidx (D.DataTypeTuple tps) = TPTuple $ map (dataType cidx) tps
 
 exprDataType :: Exp -> DataType
 exprDataType (If _ t _) = exprDataType t
@@ -429,7 +433,7 @@ exprCall c (D.Call name pars) = do
 			allDefs Nothing = allDefsInClass (envSelf env) ++ envGlobalDefIndex env ++ classConstructors
 			allDefs (Just self) = allDefsInClass self
 			allDefsInClass cl = classDefs cl ++ maybe [] allDefsInClass (classExtends cl)
-			classConstructors = (map (constructorToDef . snd) . M.toList) (envIndex env)
+			classConstructors = (map (constructorToDef . snd) . filter (isClass . snd) . M.toList) (envIndex env)
 			constructorToDef cl@Class{className = n, classConstructor = constr} = 
 				Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl, defBody = Nop, 
 				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor]}

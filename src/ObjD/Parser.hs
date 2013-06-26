@@ -54,15 +54,28 @@ pDataType = do
 	charSps ':'
 	t <- tp
 	sps
-	return t
+	r <- optionMaybe $do
+		string "->"
+		sps
+		tp
+	sps
+	return $ maybe t (\rr -> DataTypeFun t rr) r
 	where 
-		tp = arr <|> simple
+		tp = arr <|> tuple <|> simple
 		arr = do
 			charSps '['
 			t <- tp
 			sps
 			char ']'
+			sps
 			return $ DataTypeArr t
+		tuple = do
+			charSps '('
+			t <- tp `sepBy` charSps ','
+			sps
+			char ')'
+			sps
+			return $ DataTypeTuple t
 		simple = do
 			v <- ident
 			gens <- option [] $ between (charSps '<') (charSps '>') $ generic `sepBy` charSps ','
