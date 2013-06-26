@@ -28,7 +28,7 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 
 		traits = filter (\c -> D.isRealClass c && D.isTrait c) classes
 
-		h = [C.ImportLib "Foundation/Foundation.h"] 
+		h = [C.Import "objd.h"] 
 			++ cImports'
 			++ fst dImports' 
 			++ [C.EmptyLine] 
