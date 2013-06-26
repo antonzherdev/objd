@@ -108,9 +108,9 @@ data CImport = CImportLib String | CImportUser String
 
 instance Show File where
 	show (File name imps cimps classes gldefs) =
-		"// " ++ name ++ ".od\n\n" ++
-		strs' "\n" cimps ++ "\n\n" ++
-		strs' "\n" imps ++ "\n\n" ++
+		"// " ++ name ++ ".od\n" ++
+		(sapp "\n\n" . strs' "\n") cimps ++
+		(sapp "\n\n" . strs' "\n") imps ++ 
 		strs' "\n" gldefs ++
 		strs' "\n\n" classes
 instance Show CImport where
@@ -131,16 +131,19 @@ instance Show Class where
 			constrFld (f, Nop) = defName f
 			constrFld (f, e) = defName f ++ " = " ++ show e
 instance Show Def where
-	show Def {defName = name , defPars = [], defType = tp, defBody = e} =
-		"def " ++ name ++ " : " ++ show tp ++ " = " ++ show e
-	show Def {defName = name , defPars = pars, defType = tp, defBody = e} =
-		"def " ++ name ++ "(" ++ strs' ", " pars ++ ")"++ " : " ++ show tp ++ " = " ++ show e
-	show DefStub {defName = name , defPars = [], defType = tp} =
-		"def stub " ++ name ++ " : " ++ show tp 
-	show DefStub {defName = name , defPars = pars, defType = tp} =
-		"def stub " ++ name ++ "(" ++ strs' ", " pars ++ ")"++ " : " ++ show tp
-	show Field {defName = nm, defMods = mods, defType = tp, defBody = e } =
-		(if DefModMutable `elem` mods then "var" else "val") ++ " " ++ nm ++ " : " ++ show tp ++ show e
+	show d = showDef True d
+
+showDef :: Bool -> Def -> String
+showDef f Def {defName = name , defPars = [], defType = tp, defBody = e} =
+		"def " ++ name ++ if f then (" : " ++ show tp ++ " = " ++ show e) else ""
+showDef f Def {defName = name , defPars = pars, defType = tp, defBody = e} =
+	"def " ++ name ++ "(" ++ strs' ", " pars ++ ")" ++ if f then  (" : " ++ show tp ++ " = " ++ show e) else ""
+showDef _ DefStub {defName = name , defPars = [], defType = tp} =
+	"def stub " ++ name ++ " : " ++ show tp 
+showDef _ DefStub {defName = name , defPars = pars, defType = tp} =
+	"def stub " ++ name ++ "(" ++ strs' ", " pars ++ ")"++ " : " ++ show tp
+showDef f Field {defName = nm, defMods = mods, defType = tp, defBody = e } =
+	(if DefModMutable `elem` mods then "var" else "val") ++ " " ++ nm ++ if f then (" : " ++ show tp ++ show e) else ""
 
 instance Show Par where
 	show Par {parName = name, parType = tp, parDef = Nop} = name ++ " : " ++ show tp
@@ -236,7 +239,7 @@ findTp tp mmm name =  M.findWithDefault (error $ "No " ++ tp ++ " found " ++ nam
 cls :: (ClassIndex, DefIndex) -> D.FileStm -> Class
 cls (ocidx, glidx) cl = self
 	where
-		cidx = ocidx `M.union` (M.fromList $ map (\g -> (className g, g)) generics)
+		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
 		env = Env self cidx glidx M.empty
 		self = case cl of
 			D.Class{} -> Class {
@@ -261,8 +264,8 @@ cls (ocidx, glidx) cl = self
 		extends = fmap (findTp "class" cidx) (D.classExtends cl)
 		fields =  mapM (evalState . field) decls env
 		fieldsMap = M.fromList $ map (idx defName) fields
-		decls = D.classFields cl ++ (filter D.isDecl $ D.classBody cl)
-		defs = evalState (mapM def . filter D.isDef $ D.classBody cl) env
+		decls = D.classFields cl ++ filter D.isDecl (D.classBody cl)
+		defs = map (def env) . filter D.isDef $ D.classBody cl
 		constr = map (\f -> (findTp "field" fieldsMap (D.defName f), evalState (expr False (D.defBody f)) env) ) $ D.classFields cl
 		generics = map generic (D.classGenerics cl)
 		generic (D.ClassGeneric name) = Generic name
@@ -276,7 +279,7 @@ field D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody =
 	env <- get
 	let 
 		tp' = getDataType env tp i
-		acc' (D.DeclAccRead accMods ex) = expr True ex >>= (\v -> return $ FieldAccRead (accMods' accMods) v)
+		acc' (D.DeclAccRead accMods ex) = liftM (FieldAccRead (accMods' accMods)) (expr True ex)
 		acc' (D.DeclAccWrite accMods ex) = do
 			env' <- get
 			modify $ envAddVals [EnvDeclPar $ Par name tp' Nop]
@@ -298,26 +301,28 @@ translateMods = map m
 		m D.DefModMutable = DefModMutable
 		m D.DefModPrivate = DefModPrivate
 		
-def :: D.ClassStm -> State Env Def
-def D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = do
-	env <- get
-	let 
-		 pars = linkDefPars (envIndex env) opars
-		 mods' = translateMods mods
-		 needReturn (Just (D.DataType "void" _)) = False
-		 needReturn _ = True
-		 in 
-		(case body of
-			D.Nop -> return Def {defMods = DefModAbstract : mods' , defName = name,
-					defPars = pars,
-					defType = dataType (envIndex env) (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
-			_   -> do 
-				modify $ envAddVals (map EnvDeclPar pars)
-				b <- expr (needReturn tp) body
-				put env
-				return Def {defMods = mods', defName = name,
-					defPars = pars,
-					defType = getDataType env tp b, defBody = b})
+def :: Env -> D.ClassStm -> Def
+def env ccc = evalState (stateDef ccc) env
+	where 
+		stateDef:: D.ClassStm -> State Env Def
+		stateDef D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = 
+			let 
+				 pars = linkDefPars (envIndex env) opars
+				 mods' = translateMods mods
+				 needReturn (Just (D.DataType "void" _)) = False
+				 needReturn _ = True
+				 in 
+				(case body of
+					D.Nop -> return Def {defMods = DefModAbstract : mods' , defName = name,
+							defPars = pars,
+							defType = dataType (envIndex env) (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
+					_   -> do 
+						modify $ envAddVals (map EnvDeclPar pars)
+						b <- expr (needReturn tp) body
+						put env
+						return Def {defMods = mods', defName = name,
+							defPars = pars,
+							defType = getDataType env tp b, defBody = b})
 
 linkDefPars :: ClassIndex -> [D.Par] -> [Par]
 linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Par pnm (dataType cidx ttt) Nop)
@@ -430,9 +435,10 @@ exprCall c (D.Call name pars) = do
 	rp <- mapM (\ (n, e) -> expr False e >>= (\ ee -> return (n, ee))) pars
 	return $
 		let
+			allDefs :: Maybe Class -> [Def]
 			allDefs Nothing = allDefsInClass (envSelf env) ++ envGlobalDefIndex env ++ classConstructors
 			allDefs (Just self) = allDefsInClass self
-			allDefsInClass cl = classDefs cl ++ maybe [] allDefsInClass (classExtends cl)
+			allDefsInClass cl = classDefs cl  ++ maybe [] allDefsInClass (classExtends cl) 
 			classConstructors = (map (constructorToDef . snd) . filter (isClass . snd) . M.toList) (envIndex env)
 			constructorToDef cl@Class{className = n, classConstructor = constr} = 
 				Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl, defBody = Nop, 
@@ -446,7 +452,7 @@ exprCall c (D.Call name pars) = do
 			err = "Could find reference for call " ++ callStr ++ "\n" ++
 				maybe "" (\cl -> "strict in class " ++ className cl ++ "\n") c ++
 				"in defs:\n" ++
-				(strs "\n" . map (ind . show)) (allDefs c)
+				(strs "\n" . map (ind . (showDef False))) (allDefs c)
 			callStr = name ++ case pars of
 				[] -> ""
 				_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")"
