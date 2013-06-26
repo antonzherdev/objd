@@ -13,7 +13,7 @@ import qualified ObjC.Struct   as C
 import qualified ObjD.Link   as D
 
 arc :: Bool
-arc = False
+arc = True
 
 toObjC :: D.File -> ([C.FileStm], [C.FileStm])
 toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cImports} = 
@@ -147,15 +147,21 @@ implCreate cl constr = let
 	in C.ImplFun (createFun clsName constr) [C.Return $
 		autorelease $ C.Call (C.Call (C.Ref clsName) "alloc" []) (if null constr then "init" else "initWith") (map (pars . fst) constr)
 	] 
+
+retain :: C.Exp -> C.Exp
+retain f 
+	| arc = f
+	| otherwise = C.Call f "retain" []			
+	
 autorelease :: C.Exp -> C.Exp
 autorelease e 
-	| arc = C.Call e "autorelease" []
-	| otherwise = e
+	| arc = e
+	| otherwise = C.Call e "autorelease" []
 
 dealoc :: D.Class -> [C.ImplFun]
 dealoc cl 
-	| arc = [C.ImplFun (C.Fun C.InstanceFun "void" "dealloc" []) $ mapMaybe releaseField (D.classDefs cl) ++ [C.Stm $C.Call C.Super "dealloc" []]]
-	| otherwise = []
+	| arc = []
+	| otherwise = [C.ImplFun (C.Fun C.InstanceFun "void" "dealloc" []) $ mapMaybe releaseField (D.classDefs cl) ++ [C.Stm $C.Call C.Super "dealloc" []]]
 	where 
 		releaseField D.Field {D.defName = name, D.defType = D.TPClass{}} = Just $ C.Stm $ C.Call (C.Ref $ '_' : name) "release" []
 		releaseField _ = Nothing
@@ -177,7 +183,7 @@ implInit cl constr  = C.ImplFun (initFun constr) (
 		implInitFields co fields = [C.If C.Self (map (implConstrField . fst) co ++ map implInitField fields) []]
 		implConstrField D.Field {D.defName = name, D.defType = tp} = C.Set Nothing (C.Ref $ '_' : name) (implRight tp) 
 			where
-				implRight D.TPClass{} = C.Call (C.Ref name) "retain" []
+				implRight D.TPClass{} = retain $ C.Ref name
 				implRight _ = C.Ref name
 		implInitField D.Field {D.defName = name, D.defBody = def} = C.Set Nothing (C.Ref $ '_' : name) (tExp def)
 		
@@ -254,11 +260,8 @@ genEnumImpl cl@D.Enum {D.className = clsName, D.enumItems = items} = [
 		initItem n (D.EnumItem itemName pars) = (n + 1, C.Set Nothing (C.Ref itemName) $ retain $ C.Call (C.Ref clsName) (createFunName clsName ++ "With") ([
 			("ordinal", C.IntConst n),
 			("name", C.StringConst itemName)] ++ map initPar pars) )
-		retain f 
-			| arc = C.Call f "retain" []
-			| otherwise = f
 		initPar (D.Field{D.defName = fname}, e) = (fname, tExp e)
-			
+
 
 {- Imports -}
 procImports :: D.File -> ([C.FileStm], [C.FileStm])

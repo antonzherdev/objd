@@ -1,25 +1,30 @@
 module ObjD.Parser(
-	parseFile, parseStatement
+	parseFile, parseStatement, removeComments
 ) where
 
 import           Control.Monad
+import           Data.Maybe
 import           ObjD.Struct
 import           Text.ParserCombinators.Parsec
 
 
 parseFile :: String -> Either ParseError [FileStm]
 parseFile = parse pFile "ObjD" . removeComments
+
+
+removeComments :: String -> String
+removeComments [] = []
+removeComments ('/' : '/' : xs) = waitLine xs
 	where
-		removeComments [] = []
-		removeComments ('/' : '/' : xs) = waitLine xs
-		removeComments ('/' : '*' : xs) = waitMultiLine xs
-		removeComments (x : xs) = x : removeComments xs
 		waitLine [] = []
-		waitLine ('\n' : xs) = removeComments xs
-		waitLine (_  : xs) = waitLine xs
+		waitLine ('\n' : xxs) = removeComments xxs
+		waitLine (_  : xxs) = waitLine xxs
+removeComments ('/' : '*' : xs) = waitMultiLine xs
+	where
 		waitMultiLine [] = []
-		waitMultiLine ('*' : '/' : xs) = removeComments xs
-		waitMultiLine (_ : xs) = waitMultiLine xs
+		waitMultiLine ('*' : '/' : xxs) = removeComments xxs
+		waitMultiLine (_ : xxs) = waitMultiLine xxs
+removeComments (x : xs) = x : removeComments xs
 
 pFile :: Parser [FileStm]
 pFile = do
@@ -202,7 +207,7 @@ pDecl' mtf = do
 	
 pMod :: Parser DefMod	
 pMod = do
-	v <- try(string "private") >> (return DefModPrivate)
+	v <- try(string "private") >> return DefModPrivate
 	sps
 	return v
 
@@ -253,10 +258,18 @@ pDef = do
 			sps
 			return $ Def (mods ++ static) name pars ret body
 		) <|> (do
-			body <- option Nop pBraces
+			body <- optionMaybe pBraces
 			sps
-			return $ Def (mods ++ static) name pars (Just $ DataType "void" []) body
+			return $ Def (mods ++ static) name pars 
+				(Just $ calcTp ret body)
+				(fromMaybe Nop body)
 		)
+		where
+			calcTp :: Maybe DataType -> Maybe Exp -> DataType
+			calcTp Nothing Nothing = DataType "void" []
+			calcTp (Just tp) Nothing = tp
+			calcTp Nothing _ = DataType "void" []
+
 
 pDefPars :: Parser [Par]
 pDefPars = option [] (brackets (option [] (pDefPar `sepBy` charSps ',')))
@@ -318,9 +331,10 @@ pTerm = do
 			return $ maybe (IntConst i) (FloatConst i) d
 		pBoolConst = (try(string "true") >> return (BoolConst True)) <|> (try(string "false") >> return (BoolConst False))
 		pIf = do
-			string "if"
-			sps
-			char '('
+			try $ do 
+				string "if"
+				sps
+				char '('
 			sps
 			cond <- pExp
 			sps

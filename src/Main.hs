@@ -51,7 +51,7 @@ parseFiles = map parse
 	where
 		fn = dropExtension . takeFileName
 		parse (path, txt) = case parseFile txt of
-			Left err -> error $ "Error in parse " ++ path ++ ":\n" ++ txt ++ "\n\nError:" ++ show err
+			Left err -> error $ "Error in parse " ++ path ++ ":\n" ++ removeComments txt ++ "\n\nError:" ++ show err
 			Right val -> (path, D.File (fn path) val)
 
 readOdFiles :: FilePath -> IO [(FilePath, String)]
