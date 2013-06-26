@@ -105,7 +105,7 @@ stm2Fun D.Def{D.defName = name, D.defPars = pars, D.defType = tp, D.defMods = mo
 		C.funName = name, 
 		C.funPars = map par pars}
 	where
-		par (D.Par nm ttp _) = C.FunPar nm (showDataType ttp) nm
+		par (D.Local nm ttp _ _) = C.FunPar nm (showDataType ttp) nm
 
 genProtocol :: D.Class -> C.FileStm
 genProtocol (D.Class {D.className = name, D.classDefs = defs}) =
@@ -282,8 +282,8 @@ showDataType (D.TPFun s d) = showDataType d ++ "(^)" ++ "(" ++ showDataType s ++
 showDataType tp = show tp
 
 {- Exp -}
-tPars :: [(D.Par, D.Exp)] -> [(String, C.Exp)]
-tPars = map (D.parName *** tExp)
+tPars :: [(D.Def, D.Exp)] -> [(String, C.Exp)]
+tPars = map (D.defName *** tExp)
 
 tExp :: D.Exp -> C.Exp
 tExp (D.IntConst i) = C.IntConst i
@@ -303,7 +303,7 @@ tExp (D.Dot l (D.Call D.Def{D.defName = name} pars)) = C.Call (tExp l) name (tPa
 tExp (D.Self _) = C.Self
 tExp (D.Call D.Field {D.defName = r} []) = C.Ref $ '_' : r
 tExp (D.Call D.DefStub{D.defName = name} pars) = C.CCall name (map (tExp . snd) pars)
-tExp (D.ParRef D.Par {D.parName = r}) = C.Ref r
+tExp (D.Call D.Local {D.defName = r} _) = C.Ref r
 tExp call@(D.Call d@D.Def{} pars)
 	| D.DefModConstructor `elem` D.defMods d = C.Call 
 		(C.Ref $ D.defName d) 
