@@ -47,8 +47,6 @@ data ClassMod = ClassModStub | ClassModStruct | ClassModTrait deriving (Eq)
 type Extends = Maybe Class
 data Def = Def {defName :: String, defPars :: [Def], defType :: DataType, defBody :: Exp, defMods :: [DefMod]}
 	| Field { defName :: String, defType :: DataType, defBody :: Exp, defMods :: [DefMod], fieldAccs :: [FieldAcc]}
-	| DefStub {defName :: String, defPars :: [Def], defType :: DataType, defMods :: [DefMod]}
-	| Local {defName :: String, defType :: DataType, defBody :: Exp, defMods :: [DefMod]}
 isDef :: Def -> Bool
 isDef Def{} = True
 isDef _ = False
@@ -56,7 +54,8 @@ isField :: Def -> Bool
 isField Field{} = True
 isField _ = False
 
-data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModConstructor | DefModStructConstructor deriving (Eq, Ord)
+data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate 
+	| DefModConstructor | DefModStructConstructor | DefModStub | DefModLocal deriving (Eq, Ord)
 
 data FieldAcc = FieldAccRead [FieldAccMod] Exp | FieldAccWrite [FieldAccMod] Exp
 data FieldAccMod = FieldAccModPrivate deriving (Eq)
@@ -137,10 +136,6 @@ showDef f Def {defName = name , defPars = [], defType = tp, defBody = e} =
 		"def " ++ name ++ if f then (" : " ++ show tp ++ " = " ++ show e) else ""
 showDef f Def {defName = name , defPars = pars, defType = tp, defBody = e} =
 	"def " ++ name ++ "(" ++ strs' ", " pars ++ ")" ++ if f then  (" : " ++ show tp ++ " = " ++ show e) else ""
-showDef _ DefStub {defName = name , defPars = [], defType = tp} =
-	"def stub " ++ name ++ " : " ++ show tp 
-showDef _ DefStub {defName = name , defPars = pars, defType = tp} =
-	"def stub " ++ name ++ "(" ++ strs' ", " pars ++ ")"++ " : " ++ show tp
 showDef f Field {defName = nm, defMods = mods, defType = tp, defBody = e } =
 	(if DefModMutable `elem` mods then "var" else "val") ++ " " ++ nm ++ if f then (" : " ++ show tp ++ show e) else ""
 
@@ -161,7 +156,7 @@ instance Show Exp where
 	show (Call f []) = defRefPrep f ++ defName f
 	show (Call dd pars) = defRefPrep dd ++ defName dd ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
 		where
-			showPar (Local {defName = name}, e) = name ++ " = " ++ show e
+			showPar (Def {defName = name}, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
 	show Nil = "nil"
 	show (BoolConst i) = show i
@@ -169,10 +164,22 @@ instance Show Exp where
 
 defRefPrep :: Def -> String
 defRefPrep Field{} = "<F>"
-defRefPrep Def{} = "<D>"
-defRefPrep DefStub{} = "<S>"
-defRefPrep Local{} = "<L>"
+defRefPrep Def{defMods = mods}
+	| DefModStub `elem` mods = "<S>"
+	| DefModLocal `elem` mods = "<L>"
+	| otherwise = "<D>"
 	
+defPars' :: Def -> [Def]
+defPars' Def{defType = t, defPars = []} = dataTypePars t
+defPars' Def{defPars = r} = r
+defPars' Field{defType = t} = dataTypePars t
+
+
+dataTypePars :: DataType -> [Def]
+dataTypePars (TPFun (TPTuple pars) _) = map (\t -> Def "" [] t Nop [DefModLocal]) pars
+dataTypePars (TPFun t _) = [Def "" [] t Nop [DefModLocal]]
+dataTypePars _ = []
+
 findCall :: String -> [(Maybe String, Exp)] -> [Def] -> Maybe Exp
 findCall name pars fdefs = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
 	where
@@ -180,7 +187,7 @@ findCall name pars fdefs = listToMaybe $ (mapMaybe fit . filter (\d -> defName d
 		fit d@Field{}
 			| null pars = Just $ Call d []
 			| otherwise = Nothing 
-		fit d = Just $ Call d $ zipWith (\dp (_, e) -> (dp, e) ) (defPars d) pars
+		fit d = Just $ Call d $ zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
 		 {- TODO: Finish it -}
 		
 
@@ -213,17 +220,14 @@ file fidx (D.File name stms) = fl
 		getFile f = M.lookup f fidx
 		gldefs = (map gldef . filter D.isStubDef) stms
 		gldef D.StubDef{D.stubDefName = sn, D.stubDefPars = pars, D.stubDefRetType = tp} = 
-			DefStub {defName = sn, defPars = linkDefPars cidx pars, defType = dataType cidx tp, defMods = []}
+			Def {defName = sn, defPars = linkDefPars cidx pars, defType = dataType cidx tp, defMods = [DefModStub], defBody = Nop}
 
 type ClassIndex = M.Map String Class
 type DefIndex = [Def]
-data Env = Env{envSelf :: Class, envIndex :: ClassIndex, envGlobalDefIndex :: DefIndex, envVals :: M.Map String Def}
+data Env = Env{envSelf :: Class, envIndex :: ClassIndex, envGlobalDefIndex :: DefIndex, envVals :: [Def]}
 envAddVals :: [Def] -> Env -> Env 
-envAddVals decls Env {envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals} = 
-	Env{envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals `M.union` newVals}
-	where
-		newVals = M.fromList $ map (\ d -> (defName d, d)) decls
-
+envAddVals newVals Env {envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals} = 
+	Env{envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals ++ newVals}
 findTp :: String -> M.Map String a -> String -> a
 findTp tp mmm name =  M.findWithDefault (error $ "No " ++ tp ++ " found " ++ name) name mmm
 
@@ -231,7 +235,7 @@ cls :: (ClassIndex, DefIndex) -> D.FileStm -> Class
 cls (ocidx, glidx) cl = self
 	where
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
-		env = Env self cidx glidx M.empty
+		env = Env self cidx glidx []
 		self = case cl of
 			D.Class{} -> Class {
 				classMods = map clsMod (D.classMods cl), 
@@ -273,7 +277,7 @@ field D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody =
 		acc' (D.DeclAccRead accMods ex) = liftM (FieldAccRead (accMods' accMods)) (expr True ex)
 		acc' (D.DeclAccWrite accMods ex) = do
 			env' <- get
-			modify $ envAddVals [Local name tp' Nop []]
+			modify $ envAddVals [Def name [] tp' Nop [DefModLocal]]
 			v <- expr False ex 
 			put env'
 			return $ FieldAccWrite (accMods' accMods) v
@@ -316,7 +320,7 @@ def env ccc = evalState (stateDef ccc) env
 							defType = getDataType env tp b, defBody = b})
 
 linkDefPars :: ClassIndex -> [D.Par] -> [Def]
-linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Local pnm (dataType cidx ttt) Nop [])
+linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Def pnm [] (dataType cidx ttt) Nop [DefModLocal])
 
 getDataType :: Env -> Maybe D.DataType -> Exp -> DataType
 getDataType env tp e = maybe (exprDataType e) (dataType (envIndex env)) tp
@@ -412,13 +416,7 @@ expr _ r@(D.Ref _) = exprCall Nothing r
 expr _ r@(D.Call _ _) = exprCall Nothing r
 
 exprCall :: Maybe Class -> D.Exp -> State Env Exp
-exprCall Nothing (D.Ref n) = do
-	get >>= (\env -> let
-			toRef p = Call p []
-		in 
-			maybe (exprCall Nothing $ D.Call n []) (return . toRef) $ M.lookup n (envVals env)
-		)
-exprCall c@(Just _) (D.Ref n) = exprCall c $ D.Call n []
+exprCall c (D.Ref n) = exprCall c $ D.Call n []
 		
 exprCall c (D.Call name pars) = do
 	env <- get
@@ -426,17 +424,19 @@ exprCall c (D.Call name pars) = do
 	return $
 		let
 			allDefs :: Maybe Class -> [Def]
-			allDefs Nothing = allDefsInClass (envSelf env) ++ envGlobalDefIndex env ++ classConstructors
+			allDefs Nothing = envVals env ++ allDefsInClass (envSelf env) ++ envGlobalDefIndex env ++ classConstructors
 			allDefs (Just self) = allDefsInClass self
 			allDefsInClass cl = classDefs cl  ++ maybe [] allDefsInClass (classExtends cl) 
 			classConstructors = (map (constructorToDef . snd) . filter (isClass . snd) . M.toList) (envIndex env)
 			constructorToDef cl@Class{className = n, classConstructor = constr} = 
 				Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl, defBody = Nop, 
 				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor]}
-			constructorParToPar (d, e) = Local (defName d) (defType d) e []
+			constructorParToPar (d, e) = Def (defName d) [] (defType d) e [DefModLocal]
 			dd = resolveDef c $ fromMaybe (error err) $ findCall name rp (allDefs c)
 			resolveDef Nothing call@(Call d _)
-				| DefModStatic `elem` (defMods d) = call
+				| DefModStatic `elem` (defMods d) = call 
+				| DefModLocal `elem` (defMods d) = call
+				| DefModStub `elem` (defMods d) = call
 				| otherwise = Dot (Self (envSelf env)) call
 			resolveDef _ call = call
 			err = "Could find reference for call " ++ callStr ++ "\n" ++

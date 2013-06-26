@@ -105,7 +105,7 @@ stm2Fun D.Def{D.defName = name, D.defPars = pars, D.defType = tp, D.defMods = mo
 		C.funName = name, 
 		C.funPars = map par pars}
 	where
-		par (D.Local nm ttp _ _) = C.FunPar nm (showDataType ttp) nm
+		par (D.Def nm _ ttp _ _) = C.FunPar nm (showDataType ttp) nm
 
 genProtocol :: D.Class -> C.FileStm
 genProtocol (D.Class {D.className = name, D.classDefs = defs}) =
@@ -302,17 +302,16 @@ tExp (D.Dot l (D.Call D.Def{D.defName = name} pars)) = C.Call (tExp l) name (tPa
 
 tExp (D.Self _) = C.Self
 tExp (D.Call D.Field {D.defName = r} []) = C.Ref $ '_' : r
-tExp (D.Call D.DefStub{D.defName = name} pars) = C.CCall name (map (tExp . snd) pars)
-tExp (D.Call D.Local {D.defName = r} _) = C.Ref r
-tExp call@(D.Call d@D.Def{} pars)
-	| D.DefModConstructor `elem` D.defMods d = C.Call 
-		(C.Ref $ D.defName d) 
-		(createFunName $ D.defName d ++ if null pars then "" else "With") 
+tExp (D.Call D.Def{D.defName = name, D.defMods = mods} pars)
+	| D.DefModLocal `elem` mods && null pars = C.Ref name
+	| D.DefModConstructor `elem` mods = C.Call 
+		(C.Ref $ name) 
+		(createFunName $ name ++ if null pars then "" else "With") 
 		(tPars pars)
-	| D.DefModStructConstructor `elem` D.defMods d = C.CCall 
-		(D.defName d ++ "Make")
+	| D.DefModStructConstructor `elem` mods = C.CCall 
+		(name++ "Make")
 		(map (tExp . snd) pars)
-	| otherwise = error $ "Strange call " ++ show call
+	| otherwise = C.CCall name (map (tExp . snd) pars)
 tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
 
 tExp x = error $ "No tExp for " ++ show x
