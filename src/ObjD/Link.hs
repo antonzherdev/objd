@@ -1,7 +1,7 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends, Def(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..), 
 	DefMod(..), FieldAcc(..), FieldAccMod(..), MathTp(..),
-	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait
+	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType
 )where
 
 import 			 Control.Arrow
@@ -196,11 +196,11 @@ findCall name pars self fdefs = listToMaybe $ (mapMaybe fit . filter (\d -> defN
 		fit d@Field{}
 			| null pars = Just $ Call d (resolveTp (defType d) self) [] 
 			| otherwise = Nothing 
-		fit d = Just $ Call d (resolveTp (defType d) self) $ zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
+		fit d = Just $ Call d (resolveTp (defType d) self) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
 		resolveTp tp s = case tp of
 			TPSelf -> TPClass s
 			_ -> tp
-		 {- TODO: Finish it -}
+		 
 		
 
 idx :: (a -> k) -> a -> (k, a)
@@ -471,7 +471,7 @@ exprCall c (D.Call name pars) = do
 			constructorToDef _ = Nothing
 			constructorParToPar (d, e) = Def (defName d) [] (defType d) e [DefModLocal]
 			self = fromMaybe (envSelf env) c
-			dd = resolveDef c $ fromMaybe (error err) $ findCall name rp self (allDefs c)
+			dd = resolveDef c $ correctCall $ fromMaybe (error err) $ findCall name rp self (allDefs c)
 			resolveDef Nothing call@(Call d _ _)
 				| DefModStatic `elem` defMods d = call 
 				| DefModLocal `elem` defMods d = call
@@ -485,6 +485,11 @@ exprCall c (D.Call name pars) = do
 			callStr = name ++ case pars of
 				[] -> ""
 				_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")"
+			correctCall :: Exp -> Exp
+			correctCall (Call d tp cpars) = Call d tp (map correctExpression cpars)
+			correctExpression :: (Def, Exp) -> (Def, Exp)
+			correctExpression(d@Def{defType = (TPFun _ dtp)}, (Lambda lpars e _)) = (d, Lambda lpars e dtp)
+			correctExpression e = e
 		in dd
 
 {- expr x = error $ "No expr for " ++ show x -}

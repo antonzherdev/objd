@@ -192,17 +192,17 @@ implFuns defs = (map stm2ImplFun . filter D.isDef) defs ++ (concatMap accs' . fi
 	where
 		stm2ImplFun def@D.Def {D.defBody = db, D.defMods = mods, D.defType = tp} 
 			| D.DefModAbstract `elem` mods = C.ImplFun (stm2Fun def) [C.Throw $ C.StringConst $ "Method " ++ D.defName def ++ " is abstact"]
-			| otherwise = C.ImplFun (stm2Fun def) (tStm (D.isVoid tp) db)
+			| otherwise = C.ImplFun (stm2Fun def) (tStm tp db)
 		accs' :: D.Def -> [C.ImplFun]
 		accs' D.Field{D.defName = name, D.defType = tp, D.fieldAccs = accs} = mapMaybe (acc' name tp) accs
 		acc' _ _ (D.FieldAccRead _ D.Nop) = Nothing
 		acc' _ _ (D.FieldAccWrite _ D.Nop) = Nothing
 		acc' name tp (D.FieldAccRead _ e) = Just $ C.ImplFun 
 			(C.Fun C.InstanceFun (showDataType tp) name [])
-			(tStm False e)
+			(tStm tp e)
 		acc' name tp (D.FieldAccWrite _ e) = Just $ C.ImplFun 
 			(C.Fun C.InstanceFun "void" "set" [C.FunPar name (showDataType tp) name])
-			(tStm True e)
+			(tStm D.TPVoid e)
 
 		
 {- Struct -}
@@ -323,11 +323,11 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)
 	| otherwise = C.CCall name (map (tExp . snd) pars)
 tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
 tExp (D.Index e i) = C.Index (tExp e) (tExp i)
-tExp (D.Lambda pars e rtp) = C.Lambda (map (second showDataType) pars) (tStm (D.isVoid rtp) e) (showDataType rtp)
+tExp (D.Lambda pars e rtp) = C.Lambda (map (second showDataType) pars) (tStm rtp e) (showDataType rtp)
 
 tExp x = error $ "No tExp for " ++ show x
 
-tStm :: Bool -> D.Exp -> [C.Stm]
+tStm :: D.DataType -> D.Exp -> [C.Stm]
 tStm _ (D.Nop) = []
 
 tStm _ (D.Braces []) = []
@@ -337,6 +337,8 @@ tStm v (D.Braces xs) = concatMap (tStm v) xs
 tStm v (D.If cond t f) = [C.If (tExp cond) (tStm v t) (tStm v f)]
 
 tStm _ (D.Set tp l r) = [C.Set tp (tExp l) (tExp r)]
-tStm False (D.Return e) = [C.Return $ tExp e]
-tStm _ (D.Return e) = [C.Stm $ tExp e]
+tStm D.TPVoid (D.Return e) = [C.Stm $ tExp e]
+tStm tp (D.Return e) = [C.Return $ case (tp, D.exprDataType e) of
+		(D.TPGeneric _, D.TPStruct _) -> C.CCall "val" [tExp e]
+		_ -> tExp e]
 tStm _ x = [C.Stm $ tExp x]
