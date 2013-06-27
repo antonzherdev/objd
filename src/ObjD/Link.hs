@@ -4,6 +4,7 @@ module ObjD.Link (
 	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait
 )where
 
+import 			 Control.Arrow
 import           Control.Monad.State
 import qualified Data.Map            as M
 import           Data.Maybe
@@ -47,6 +48,8 @@ data ClassMod = ClassModStub | ClassModStruct | ClassModTrait deriving (Eq)
 type Extends = Maybe Class
 data Def = Def {defName :: String, defPars :: [Def], defType :: DataType, defBody :: Exp, defMods :: [DefMod]}
 	| Field { defName :: String, defType :: DataType, defBody :: Exp, defMods :: [DefMod], fieldAccs :: [FieldAcc]}
+localVal :: String -> DataType -> Def
+localVal name tp = Def name [] tp Nop [DefModLocal]
 isDef :: Def -> Bool
 isDef Def{} = True
 isDef _ = False
@@ -104,6 +107,7 @@ data Exp = Nop
 	| Call Def DataType [(Def, Exp)]
 	| Return Exp
 	| Index Exp Exp
+	| Lambda [(String, DataType)] Exp DataType
 
 data CImport = CImportLib String | CImportUser String
 
@@ -165,6 +169,7 @@ instance Show Exp where
 	show (BoolConst i) = show i
 	show (FloatConst a b) = show a ++ "." ++ show b
 	show (Index e i) = show e ++ "[" ++ show i ++ "]"
+	show (Lambda pars e tp) = strs' ", " (map (\(n, t) -> n ++ " : " ++ show t) pars) ++ " -> " ++ show tp ++ " = " ++ show e
 
 defRefPrep :: Def -> String
 defRefPrep Field{} = "<F>"
@@ -435,6 +440,14 @@ expr _ (D.Index e i) = do
 	e' <- expr False e
 	i' <- expr False i
 	return $ Index e' i'
+expr _ (D.Lambda pars e) = do
+	env <- get
+	let pars' = map (second (dataType (envIndex env) . fromJust)) pars
+	modify $ envAddVals (map (uncurry localVal) pars')
+	e' <- expr True e
+	put env
+	let tp = exprDataType e'
+	return $ Lambda pars' e' tp
 
 exprCall :: Maybe Class -> D.Exp -> State Env Exp
 exprCall c (D.Ref n) = exprCall c $ D.Call n []

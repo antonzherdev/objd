@@ -49,33 +49,36 @@ spsChar :: Char -> Parser Char
 spsChar c = sps >> char c
 charSps :: Char -> Parser String
 charSps c = char c >> sps
-pDataType :: Parser DataType
-pDataType = do
-	charSps ':'
-	t <- tp
-	sps
-	r <- optionMaybe $do
-		string "->"
-		sps
-		tp
-	sps
-	return $ maybe t (\rr -> DataTypeFun t rr) r
+pDataType ::Bool -> Parser DataType
+pDataType lambda = charSps ':' >> tp lambda
 	where 
-		tp = arr <|> tuple <|> simple
+		tp lm = do 
+			t <- arr <|> tuple <|> simple
+			sps
+			r <- if lm then return Nothing else optionMaybe $ do
+				string "->"
+				sps
+				tp True
+			return $ maybe t (\rr -> DataTypeFun t rr) r
 		arr = do
 			charSps '['
-			t <- tp
+			t <- tp False
 			sps
 			char ']'
 			sps
 			return $ DataTypeArr t
 		tuple = do
 			charSps '('
-			t <- tp `sepBy` charSps ','
+			t <- tp False `sepBy` charSps ','
 			sps
 			char ')'
 			sps
-			return $ DataTypeTuple t
+			return $ makeTuple t
+		makeTuple :: [DataType] -> DataType
+		makeTuple [] = DataType "void" []
+		makeTuple [v] = v
+		makeTuple t = DataTypeTuple t
+
 		simple = do
 			v <- ident
 			sps
@@ -109,7 +112,7 @@ pStub = do
 	sps
 	pars <- pDefPars
 	sps
-	ret <- option (DataType "void" []) pDataType
+	ret <- option (DataType "void" []) (pDataType False)
 	sps
 	return StubDef {stubDefName = name, stubDefPars = pars, stubDefRetType = ret}
 
@@ -190,7 +193,7 @@ pDecl' mtf = do
 		mut <- mtf mutableType
 		name <- ident
 		sps
-		dataType <- optionMaybe pDataType
+		dataType <- optionMaybe $ pDataType False
 		sps
 		def <- oExp
 		sps
@@ -267,7 +270,7 @@ pDef = do
 	sps
 	pars <- pDefPars
 	sps
-	ret <- optionMaybe pDataType
+	ret <- optionMaybe $ pDataType False
 	sps
 	(do 
 			char '='
@@ -296,7 +299,7 @@ pDefPar :: Parser Par
 pDefPar = do
 	name <- option "" ident
 	sps
-	tp <- pDataType
+	tp <- pDataType False
 	return $ Par name tp
 
 pExp :: Parser Exp
@@ -330,7 +333,7 @@ pExp = do
 			return $ Set (Just t))
 		mathOp s t = try(do 
 			char s
-			notFollowedBy $ (char '=' <|> char s)
+			notFollowedBy $ (char '=' <|> char s <|> char '>')
 			sps
 			return $ MathOp t)
 
@@ -340,7 +343,7 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pCall  <?> "Expression"
+		pTerm' = pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pLambda <|> pCall  <?> "Expression"
 		pNumConst = do
 			i <- liftM read (many1 digit)
 			d <- optionMaybe $ do
@@ -377,6 +380,23 @@ pTerm = do
 				sps
 				charSps ']' <?> "Array index close bracket"
 				return $ Index (Ref name) e) <|> return (Ref name)
+
+pLambda :: Parser Exp 
+pLambda =  do
+	pars <- try $ do 
+		r <- lambdaPars `sepBy` charSps ','
+		sps
+		string "->"
+		sps
+		return r
+	e <- pExp
+	return $ Lambda pars e
+	where
+		lambdaPars = do
+			name <- ident
+			sps
+			tp <- optionMaybe $ pDataType True
+			return (name, tp)
 
 pBraces :: Parser Exp
 pBraces = liftM Braces $ braces (many (do

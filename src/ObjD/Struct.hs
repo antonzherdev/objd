@@ -4,7 +4,7 @@ module ObjD.Struct (
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
 ) where
 import           Ex.String
-
+import 			 Control.Arrow
 type Sources = [File]
 
 data File = File {fileName :: String, fileStms :: [FileStm]}
@@ -78,6 +78,7 @@ data Exp = Nop
 	| MinusMinus Exp
 	| Call String [CallPar]
 	| Index Exp Exp
+	| Lambda [(String, Maybe DataType)] Exp
 type CallPar = (Maybe String, Exp)
 
 data DataType = DataType String [String] | DataTypeArr DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType]
@@ -128,6 +129,7 @@ instance Show Exp where
 	show (BoolConst i) = show i
 	show (FloatConst a b) = show a ++ "." ++ show b
 	show (Index v i) = show v ++ "[" ++ show i ++ "]"
+	show (Lambda pars e) = strs' ", " (map (\(n, t) -> n ++ maybe "" (\tt -> " : " ++ show tt) t) pars) ++ " -> " ++ show e
 
 
 

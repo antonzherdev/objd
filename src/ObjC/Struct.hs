@@ -64,6 +64,7 @@ data Exp =
 	| InlineIf Exp Exp Exp
 	| Index Exp Exp
 	| Arr [Exp]
+	| Lambda [(String, String)] [Stm] String
 	
 showStms :: [Stm] -> String
 showStms = unlines . stms
@@ -166,6 +167,9 @@ instance Show Exp where
 	show (InlineIf c t f) = show c ++ " ? " ++ show t ++ " : " ++ show f
 	show (Index e i) = show e ++ "[" ++ show i ++ "]"
 	show (Arr e) = "@[" ++ strs' ", " e ++ "]"
+	show (Lambda pars e rtp) = unlines $ ["^" ++ rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]
+		where showPar(name, tp) = tp ++ " " ++ name
+
 
 instance Show Stm where
 	show s = unlines $ stmLines s
@@ -184,4 +188,3 @@ stmLines (Return e) = ["return " ++ show e ++ ";"]
 stmLines (Throw e) = ["@throw " ++ show e ++ ";"]
 stmLines (Var tp name Nop) = [tp ++ " " ++ name ++ ";"]
 stmLines (Var tp name e) = [tp ++ " " ++ name ++ " = " ++ show e ++ ";"]
-
