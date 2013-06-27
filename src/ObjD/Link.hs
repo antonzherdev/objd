@@ -376,6 +376,15 @@ exprDataType (Set _ a _) = exprDataType a
 exprDataType (Self s) = refDataType s
 exprDataType (Call _ t _) = t
 exprDataType (Return e) = exprDataType e
+exprDataType (Index e _) = case exprDataType e of
+	TPArr t -> t
+	t -> error $ show t ++ " is not array"
+exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
+	where 
+		parsTp :: [(String, DataType)] -> DataType
+		parsTp [(_, tp)] = tp
+		parsTp ps = TPTuple $ map snd ps
+
 
 refDataType :: Class -> DataType
 refDataType e@Enum{} = TPEnum e

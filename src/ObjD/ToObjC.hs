@@ -291,7 +291,7 @@ showDataType tp = show tp
 
 {- Exp -}
 tPars :: [(D.Def, D.Exp)] -> [(String, C.Exp)]
-tPars = map (D.defName *** tExp)
+tPars = map (\(d, e) -> (D.defName d, maybeVal (D.exprDataType e, D.defType d) $ tExp e))
 
 tExp :: D.Exp -> C.Exp
 tExp (D.IntConst i) = C.IntConst i
@@ -338,7 +338,10 @@ tStm v (D.If cond t f) = [C.If (tExp cond) (tStm v t) (tStm v f)]
 
 tStm _ (D.Set tp l r) = [C.Set tp (tExp l) (tExp r)]
 tStm D.TPVoid (D.Return e) = [C.Stm $ tExp e]
-tStm tp (D.Return e) = [C.Return $ case (tp, D.exprDataType e) of
-		(D.TPGeneric _, D.TPStruct _) -> C.CCall "val" [tExp e]
-		_ -> tExp e]
+tStm tp (D.Return e) = [C.Return $ maybeVal (D.exprDataType e, tp) (tExp e)]
 tStm _ x = [C.Stm $ tExp x]
+
+maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp
+maybeVal (D.TPStruct _m, D.TPGeneric _) e = C.CCall "val" [e]
+maybeVal (D.TPGeneric _m, D.TPStruct s) e = C.CCall "uval" [C.Ref (D.className s), e]
+maybeVal _ e = e
