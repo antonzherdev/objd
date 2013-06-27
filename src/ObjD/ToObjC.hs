@@ -313,13 +313,13 @@ tExp (D.Call D.Field {D.defName = r} _ []) = C.Ref $ '_' : r
 tExp (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)
 	| D.DefModLocal `elem` mods && null pars = C.Ref name
 	| D.DefModConstructor `elem` mods = C.Call 
-		(C.Ref $ name) 
+		(C.Ref name) 
 		(createFunName $ name ++ if null pars then "" else "With") 
 		(tPars pars)
 	| D.DefModStructConstructor `elem` mods = C.CCall 
 		(name++ "Make")
 		(map (tExp . snd) pars)
-	| D.DefModEnumList `elem` mods = C.Call (C.Ref $ name) "values" []
+	| D.DefModEnumList `elem` mods = C.Call (C.Ref name) "values" []
 	| otherwise = C.CCall name (map (tExp . snd) pars)
 tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
 tExp (D.Index e i) = C.Index (tExp e) (tExp i)
@@ -336,10 +336,19 @@ tStm v (D.Braces xs) = concatMap (tStm v) xs
 
 tStm v (D.If cond t f) = [C.If (tExp cond) (tStm v t) (tStm v f)]
 
+tStm _ (D.Set (Just t) l r) = let 
+		l' = tExp l
+		r' = tExp r
+	in case D.exprDataType l of
+		D.TPArr _ -> [C.Set Nothing l' (addObjectToArray l' r')]
+		_ -> [C.Set (Just t) l' r']
 tStm _ (D.Set tp l r) = [C.Set tp (tExp l) (tExp r)]
 tStm D.TPVoid (D.Return e) = [C.Stm $ tExp e]
 tStm tp (D.Return e) = [C.Return $ maybeVal (D.exprDataType e, tp) (tExp e)]
 tStm _ x = [C.Stm $ tExp x]
+
+addObjectToArray :: C.Exp -> C.Exp -> C.Exp
+addObjectToArray a obj = C.Call a "arrayByAdding" [("object", obj)]
 
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp
 maybeVal (D.TPStruct _m, D.TPGeneric _) e = C.CCall "val" [e]
