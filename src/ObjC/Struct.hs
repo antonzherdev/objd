@@ -148,31 +148,31 @@ instance Show PropertyModifier where
 	show Retain = "retain"
 
 instance Show Exp where
-	show Self = "self"
-	show Super = "super"
-	show (Call inst name pars) = "[" ++ show inst ++ " " ++ name ++ (cap . strs " " . map (\(nm, e) -> nm ++ ":" ++ show e)) pars ++ "]"
-	show (CCall name pars) = name ++ "(" ++ strs' ", " pars ++ ")"
-	show (Ref name) = name
-	show (IntConst i) = show i
-	show Nil = "nil"
-	show (BoolConst True) = "YES"
-	show (BoolConst False) = "NO"
-	show (FloatConst a b) = show a ++ "." ++ show b
-	show (StringConst s) = '@' : show s
-	show (BoolOp t l r) = showOp l (show t) r
-	show (MathOp t l r) = showOp l  (show t) r
-	show (Dot l r) = show l ++ "." ++ r
-	show (PlusPlus e) = show e ++ "++"
-	show (MinusMinus e) = show e ++ "--"
-	show (InlineIf c t f) = show c ++ " ? " ++ show t ++ " : " ++ show f
-	show (Index e i) = show e ++ "[" ++ show i ++ "]"
-	show (Arr e) = "@[" ++ strs' ", " e ++ "]"
-	show (Lambda pars e rtp) = unlines $ ["^" ++ rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]
-		where showPar(name, tp) = tp ++ " " ++ name
-
+	show s = strs "\n" $ expLines s
 
 instance Show Stm where
 	show s = unlines $ stmLines s
+
+mapFirst :: (a -> a) -> [a] -> [a]
+mapFirst _ [] = []
+mapFirst f a = f (head a) : tail a
+mapLast :: (a -> a) -> [a] -> [a]
+mapLast _ [] = []
+mapLast f a = init a ++ [f $ last a]
+appendLast :: String -> [String] -> [String]
+appendLast s [] = [s]
+appendLast s r = mapLast (++ s) r
+app :: [String] -> String -> [String]
+a `app` b = appendLast b a
+glue :: [String] -> [String] -> [String]
+[] `glue` [] = []
+[] `glue` b = b
+a `glue` [] = a
+a `glue` b = init a ++ [last a ++ head b] ++ tail b
+glueAll :: String -> [[String]] -> [String]
+glueAll _ [] = []
+glueAll _ [x] = x
+glueAll s (a:b:xs) = glueAll s $ ((a `app` s) `glue` b):xs
 
 stmLines :: Stm -> [String]
 stmLines (If cond t f) =
@@ -183,8 +183,33 @@ stmLines (If cond t f) =
 stmLines (Set Nothing l r) = [show l ++ " = " ++ show r ++ ";"]
 stmLines (Set (Just tp) l r) = [show l ++ " " ++ show tp ++ "= " ++ show r ++ ";"]
 stmLines (Stm Nop) = [""]
-stmLines (Stm e) = [show e ++ ";"]
+stmLines (Stm e) = appendLast ";" $ expLines e
 stmLines (Return e) = ["return " ++ show e ++ ";"]
 stmLines (Throw e) = ["@throw " ++ show e ++ ";"]
 stmLines (Var tp name Nop) = [tp ++ " " ++ name ++ ";"]
 stmLines (Var tp name e) = [tp ++ " " ++ name ++ " = " ++ show e ++ ";"]
+
+expLines :: Exp -> [String]
+expLines Self = ["self"]
+expLines Super = ["super"]
+expLines (Call inst name pars) = ["[" ++ show inst ++ " " ++ name] `glue` (pars' `app` "]")
+	where pars' = (mapFirst cap . glueAll " " . map (\(nm, e) -> [nm ++ ":"] `glue` expLines e)) pars
+expLines (CCall name pars) = [name ++ "("] `glue` (pars' `app` ")")
+	where pars' = (glueAll ", " . map expLines) pars
+expLines (Ref name) = [name]
+expLines (IntConst i) = [show i]
+expLines Nil = ["nil"]
+expLines (BoolConst True) = ["YES"]
+expLines (BoolConst False) = ["NO"]
+expLines (FloatConst a b) = [show a ++ "." ++ show b]
+expLines (StringConst s) = ['@' : show s]
+expLines (BoolOp t l r) = [showOp l (show t) r]
+expLines (MathOp t l r) = [showOp l  (show t) r]
+expLines (Dot l r) = [show l ++ "." ++ r]
+expLines (PlusPlus e) = appendLast "++" (expLines e)
+expLines (MinusMinus e) = appendLast "--" (expLines e)
+expLines (InlineIf c t f) = (expLines c `app` " ? ") `glue` (expLines t `app` " : ") `glue` (expLines f) 
+expLines (Index e i) = (expLines e `app` "[") `glue` (expLines i `app` "]")
+expLines (Arr e) = ["@[" ++ strs' ", " e ++ "]"]
+expLines (Lambda pars e rtp) = ["^" ++ rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]
+	where showPar(name, tp) = tp ++ " " ++ name
