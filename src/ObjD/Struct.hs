@@ -81,7 +81,7 @@ data Exp = Nop
 	| Lambda [(String, Maybe DataType)] Exp
 type CallPar = (Maybe String, Exp)
 
-data DataType = DataType String [String] | DataTypeArr DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType]
+data DataType = DataType String [DataType] | DataTypeArr DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType]
 
 instance Show FileStm where
 	show (Class{className = name, classFields = fields, classMods = mods, classBody = body}) = 
@@ -104,7 +104,7 @@ instance Show ClassStm where
 
 instance Show DataType where
 	show (DataType s []) = s
-	show (DataType s pars) = s ++ "<" ++ strs ", " pars ++ ">"
+	show (DataType s pars) = s ++ "<" ++ strs' ", " pars ++ ">"
 	show (DataTypeArr r) = "[" ++ show r ++ "]"
 
 instance Show Exp where

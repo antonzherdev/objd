@@ -84,11 +84,7 @@ pDataType lambda = charSps ':' >> tp lambda
 			sps
 			gens <- generics
 			return $ DataType v gens
-		generics = option [] $ between (charSps '<') (charSps '>') $ generic `sepBy` charSps ','
-		generic = do
-			s <- ident
-			sps 
-			return s
+		generics = option [] $ between (charSps '<') (charSps '>') $ (tp False) `sepBy` charSps ','
 		
 braces :: Parser a -> Parser a
 braces p = do 
