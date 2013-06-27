@@ -192,7 +192,7 @@ stmLines (Var tp name e) = [tp ++ " " ++ name ++ " = " ++ show e ++ ";"]
 expLines :: Exp -> [String]
 expLines Self = ["self"]
 expLines Super = ["super"]
-expLines (Call inst name pars) = ["[" ++ show inst ++ " " ++ name] `glue` (pars' `app` "]")
+expLines (Call inst name pars) = ["["] `glue` (expLines inst `app` (" " ++ name)) `glue` (pars' `app` "]")
 	where pars' = (mapFirst cap . glueAll " " . map (\(nm, e) -> [nm ++ ":"] `glue` expLines e)) pars
 expLines (CCall name pars) = [name ++ "("] `glue` (pars' `app` ")")
 	where pars' = (glueAll ", " . map expLines) pars
