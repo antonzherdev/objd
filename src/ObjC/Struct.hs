@@ -180,14 +180,14 @@ stmLines (If cond t f) =
 	++ (case f of
 		[] -> []
 		ff -> ["else {"] ++ stms ff ++ ["}"])
-stmLines (Set Nothing l r) = [show l ++ " = " ++ show r ++ ";"]
-stmLines (Set (Just tp) l r) = [show l ++ " " ++ show tp ++ "= " ++ show r ++ ";"]
+stmLines (Set Nothing l r) = (expLines l `app` " = ") `glue` (expLines r `app` ";")
+stmLines (Set (Just tp) l r) = (expLines l `app` (" " ++ show tp ++ "= ")) `glue` (expLines r `app` ";")
 stmLines (Stm Nop) = [""]
 stmLines (Stm e) = appendLast ";" $ expLines e
-stmLines (Return e) = ["return " ++ show e ++ ";"]
-stmLines (Throw e) = ["@throw " ++ show e ++ ";"]
+stmLines (Return e) = ["return "] `glue` (expLines e `app` ";")
+stmLines (Throw e) = ["@throw "] `glue` (expLines e `app` ";")
 stmLines (Var tp name Nop) = [tp ++ " " ++ name ++ ";"]
-stmLines (Var tp name e) = [tp ++ " " ++ name ++ " = " ++ show e ++ ";"]
+stmLines (Var tp name e) = [tp ++ " " ++ name ++ " = "] `glue` (expLines e `app` ";")
 
 expLines :: Exp -> [String]
 expLines Self = ["self"]
