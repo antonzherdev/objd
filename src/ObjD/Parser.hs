@@ -371,7 +371,12 @@ pTerm = do
 				charSps '('
 				pars <- pCallPar `sepBy` charSps ','
 				charSps ')' <?> "Function call close bracket"
-				return $ Call name pars) <|> return (Ref name)
+				return $ Call name pars) <|> (do
+				charSps '['
+				e <- pExp
+				sps
+				charSps ']' <?> "Array index close bracket"
+				return $ Index (Ref name) e) <|> return (Ref name)
 
 pBraces :: Parser Exp
 pBraces = liftM Braces $ braces (many (do

@@ -226,6 +226,9 @@ enumAdditionalDefs = [D.Field "ordinal" D.TPInt D.Nop [] [], D.Field "name" D.TP
 enumConst :: D.Constructor -> D.Constructor
 enumConst cst = map (\f -> (f, D.Nop)) enumAdditionalDefs ++ cst
 
+enumValuesFun :: C.Fun
+enumValuesFun = C.Fun C.ObjectFun "NSArray*" "values" []
+
 genEnumInterface :: D.Class -> [C.FileStm]
 genEnumInterface D.Enum {D.className = name, D.classExtends = extends, D.classDefs = defs, D.enumItems = items } = [
 	C.Interface {
@@ -234,7 +237,7 @@ genEnumInterface D.Enum {D.className = name, D.classExtends = extends, D.classDe
 		C.interfaceProperties = [C.Property "name" "NSString*" [C.NonAtomic, C.ReadOnly],
 			C.Property "ordinal" "NSInteger" [C.NonAtomic, C.ReadOnly]
 			] ++ (map fieldToProperty . filter D.isField) defs,
-		C.interfaceFuns = intefaceFuns (enumAdditionalDefs ++ defs) ++ map (enumItemGetterFun name) items
+		C.interfaceFuns = intefaceFuns (enumAdditionalDefs ++ defs) ++ map (enumItemGetterFun name) items ++ [enumValuesFun]
 	}]
 	
 enumItemGetterFun :: String -> D.EnumItem -> C.Fun
@@ -246,8 +249,8 @@ genEnumImpl cl@D.Enum {D.className = clsName, D.enumItems = items} = [
 		C.implName = clsName,
 		C.implFields = (map implField . filter D.isField) defs,
 		C.implSynthesizes = (map synthesize . filter D.isField) defs,
-		C.implFuns = [implCreate cl constr, implInit cl constr, initialize] ++ dealoc cl ++ implFuns defs ++ map itemGetter items,
-		C.implStaticFields = map stField items
+		C.implFuns = [implCreate cl constr, implInit cl constr, initialize] ++ dealoc cl ++ implFuns defs ++ map itemGetter items ++ [valuesFun],
+		C.implStaticFields = map stField items ++ [C.ImplField "NSArray*" "values"]
 	}]
 	where
 		defs = enumAdditionalDefs ++ D.classDefs cl
@@ -255,12 +258,15 @@ genEnumImpl cl@D.Enum {D.className = clsName, D.enumItems = items} = [
 		stField (D.EnumItem itemName _) = C.ImplField (clsName ++ "*") itemName
 		itemGetter e@(D.EnumItem itemName _) = C.ImplFun (enumItemGetterFun clsName e) [C.Return $ C.Ref itemName]
 		initialize = C.ImplFun (C.Fun C.ObjectFun "void" "initialize" []) (
-			(C.Stm $ C.Call C.Super "initialize" []) : snd ( mapAccumL initItem 0 items))
+			((C.Stm $ C.Call C.Super "initialize" []) : snd ( mapAccumL initItem 0 items)) ++ [setValues])
 		initItem :: Int -> D.EnumItem -> (Int, C.Stm)
 		initItem n (D.EnumItem itemName pars) = (n + 1, C.Set Nothing (C.Ref itemName) $ retain $ C.Call (C.Ref clsName) (createFunName clsName ++ "With") ([
 			("ordinal", C.IntConst n),
 			("name", C.StringConst itemName)] ++ map initPar pars) )
 		initPar (D.Field{D.defName = fname}, e) = (fname, tExp e)
+		valuesFun = C.ImplFun enumValuesFun [C.Return $ C.Ref "values"]
+		setValues :: C.Stm
+		setValues = C.Set Nothing (C.Ref "values") (C.Arr $ map (C.Ref . D.enumFieldName) items)
 
 
 {- Imports -}
@@ -313,8 +319,10 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)
 	| D.DefModStructConstructor `elem` mods = C.CCall 
 		(name++ "Make")
 		(map (tExp . snd) pars)
+	| D.DefModEnumList `elem` mods = C.Call (C.Ref $ name) "values" []
 	| otherwise = C.CCall name (map (tExp . snd) pars)
 tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
+tExp (D.Index e i) = C.Index (tExp e) (tExp i)
 
 tExp x = error $ "No tExp for " ++ show x
 

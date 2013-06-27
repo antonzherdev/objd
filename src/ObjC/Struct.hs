@@ -62,6 +62,8 @@ data Exp =
 	| Nop
 	| Nil
 	| InlineIf Exp Exp Exp
+	| Index Exp Exp
+	| Arr [Exp]
 	
 showStms :: [Stm] -> String
 showStms = unlines . stms
@@ -162,6 +164,8 @@ instance Show Exp where
 	show (PlusPlus e) = show e ++ "++"
 	show (MinusMinus e) = show e ++ "--"
 	show (InlineIf c t f) = show c ++ " ? " ++ show t ++ " : " ++ show f
+	show (Index e i) = show e ++ "[" ++ show i ++ "]"
+	show (Arr e) = "@[" ++ strs' ", " e ++ "]"
 
 instance Show Stm where
 	show s = unlines $ stmLines s

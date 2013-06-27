@@ -55,7 +55,7 @@ isField Field{} = True
 isField _ = False
 
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate 
-	| DefModConstructor | DefModStructConstructor | DefModStub | DefModLocal deriving (Eq, Ord)
+	| DefModConstructor | DefModStructConstructor | DefModStub | DefModLocal | DefModEnumList deriving (Eq, Ord)
 
 data FieldAcc = FieldAccRead [FieldAccMod] Exp | FieldAccWrite [FieldAccMod] Exp
 data FieldAccMod = FieldAccModPrivate deriving (Eq)
@@ -103,6 +103,7 @@ data Exp = Nop
 	| Set (Maybe MathTp) Exp Exp
 	| Call Def DataType [(Def, Exp)]
 	| Return Exp
+	| Index Exp Exp
 
 data CImport = CImportLib String | CImportUser String
 
@@ -163,6 +164,7 @@ instance Show Exp where
 	show Nil = "nil"
 	show (BoolConst i) = show i
 	show (FloatConst a b) = show a ++ "." ++ show b
+	show (Index e i) = show e ++ "[" ++ show i ++ "]"
 
 defRefPrep :: Def -> String
 defRefPrep Field{} = "<F>"
@@ -429,6 +431,10 @@ expr _ D.Self = do
 	return $ Self $ envSelf env
 expr _ r@(D.Ref _) = exprCall Nothing r
 expr _ r@(D.Call _ _) = exprCall Nothing r
+expr _ (D.Index e i) = do
+	e' <- expr False e
+	i' <- expr False i
+	return $ Index e' i'
 
 exprCall :: Maybe Class -> D.Exp -> State Env Exp
 exprCall c (D.Ref n) = exprCall c $ D.Call n []
@@ -442,10 +448,14 @@ exprCall c (D.Call name pars) = do
 			allDefs Nothing = envVals env ++ allDefsInClass (envSelf env) ++ envGlobalDefIndex env ++ classConstructors
 			allDefs (Just ss) = allDefsInClass ss
 			allDefsInClass cl = classDefs cl  ++ maybe [] allDefsInClass (classExtends cl) 
-			classConstructors = (map (constructorToDef . snd) . filter (isClass . snd) . M.toList) (envIndex env)
+			classConstructors = (mapMaybe (constructorToDef . snd) . M.toList) (envIndex env)
 			constructorToDef cl@Class{className = n, classConstructor = constr} = 
-				Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl, defBody = Nop, 
-				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor]}
+				Just Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl, defBody = Nop, 
+					defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor]}
+			constructorToDef cl@Enum{className = n} =
+				Just Def {defName = n, defPars = [], defType = TPArr $ refDataType cl, defBody = Nop, 
+					defMods = [DefModStatic, DefModEnumList]}
+			constructorToDef _ = Nothing
 			constructorParToPar (d, e) = Def (defName d) [] (defType d) e [DefModLocal]
 			self = fromMaybe (envSelf env) c
 			dd = resolveDef c $ fromMaybe (error err) $ findCall name rp self (allDefs c)

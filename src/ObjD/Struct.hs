@@ -77,6 +77,7 @@ data Exp = Nop
 	| PlusPlus Exp
 	| MinusMinus Exp
 	| Call String [CallPar]
+	| Index Exp Exp
 type CallPar = (Maybe String, Exp)
 
 data DataType = DataType String [String] | DataTypeArr DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType]
@@ -126,6 +127,7 @@ instance Show Exp where
 	show (IntConst i) = show i
 	show (BoolConst i) = show i
 	show (FloatConst a b) = show a ++ "." ++ show b
+	show (Index v i) = show v ++ "[" ++ show i ++ "]"
 
 
 
