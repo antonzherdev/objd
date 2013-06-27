@@ -294,7 +294,7 @@ pDefPars = option [] (brackets (option [] (pDefPar `sepBy` charSps ',')))
 
 pDefPar :: Parser Par
 pDefPar = do
-	name <- ident
+	name <- option "" ident
 	sps
 	tp <- pDataType
 	return $ Par name tp
