@@ -78,12 +78,15 @@ pDataType = do
 			return $ DataTypeTuple t
 		simple = do
 			v <- ident
-			gens <- option [] $ between (charSps '<') (charSps '>') $ generic `sepBy` charSps ','
+			sps
+			gens <- generics
 			return $ DataType v gens
+		generics = option [] $ between (charSps '<') (charSps '>') $ generic `sepBy` charSps ','
 		generic = do
 			s <- ident
 			sps 
 			return s
+		
 braces :: Parser a -> Parser a
 braces p = do 
 	r <- between (charSps '{') (spsChar '}') p 
@@ -119,7 +122,7 @@ pClass = do
 	sps
 	name <- ident
 	sps
-	generics <- pClassGenerics
+	generics <- pGenerics
 	sps
 	fields <- pClassFields
 	sps
@@ -135,7 +138,7 @@ pEnum = do
 	sps 
 	name <- ident
 	sps
-	generics <- pClassGenerics
+	generics <- pGenerics
 	sps
 	fields <- pClassFields
 	sps
@@ -154,13 +157,13 @@ pEnum = do
 			return Enum { className = name, classFields = fields, classExtends = extends, enumItems = items, classBody = body, classGenerics = generics}
 
 
-pClassGenerics :: Parser [ClassGeneric]
-pClassGenerics = option [] $ between (charSps '<') (charSps '>') (pClassGeneric `sepBy` char ',')
+pGenerics :: Parser [Generic]
+pGenerics = option [] $ between (charSps '<') (charSps '>') (pClassGeneric `sepBy` char ',')
 	where
 		pClassGeneric = do
 			name <- ident
 			sps
-			return $ ClassGeneric name
+			return $ Generic name
 
 pExtends :: Parser Extends
 pExtends = optionMaybe (do
@@ -260,6 +263,8 @@ pDef = do
 		return [DefModStatic]
 	name <- ident
 	sps
+	gens <- pGenerics
+	sps
 	pars <- pDefPars
 	sps
 	ret <- optionMaybe pDataType
@@ -269,11 +274,11 @@ pDef = do
 			sps
 			body <- option Nop pExp 
 			sps
-			return $ Def (mods ++ static) name pars ret body
+			return $ Def (mods ++ static) name gens pars ret body
 		) <|> (do
 			body <- optionMaybe pBraces
 			sps
-			return $ Def (mods ++ static) name pars 
+			return $ Def (mods ++ static) name gens pars 
 				(Just $ calcTp ret body)
 				(fromMaybe Nop body)
 		)

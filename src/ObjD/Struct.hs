@@ -1,6 +1,6 @@
 module ObjD.Struct (
 	FileStm(..), Extends, ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), 
-	ClassMod(..), DeclAcc(..), DeclAccMod(..), MathTp(..), BoolTp(..), ClassGeneric(..),
+	ClassMod(..), DeclAcc(..), DeclAccMod(..), MathTp(..), BoolTp(..), Generic(..),
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
 ) where
 import           Ex.String
@@ -12,10 +12,10 @@ data File = File {fileName :: String, fileStms :: [FileStm]}
 data FileStm =
 	Import {impString :: String, impType :: ImportType }
 	| Class {classMods :: [ClassMod], className :: String, classFields :: [ClassStm], classExtends :: Extends, classBody :: [ClassStm]
-		, classGenerics :: [ClassGeneric] }
+		, classGenerics :: [Generic] }
 	| StubDef {stubDefName :: String, stubDefPars :: [Par], stubDefRetType :: DataType}
 	| Enum {className :: String, classFields :: [ClassStm], classExtends :: Extends, enumItems :: [EnumItem], classBody :: [ClassStm]
-		, classGenerics :: [ClassGeneric] }
+		, classGenerics :: [Generic] }
 isClass :: FileStm -> Bool
 isClass (Class {}) = True
 isClass _ = False
@@ -35,16 +35,16 @@ data ImportType = ImportTypeCUser | ImportTypeCLib | ImportTypeD
 
 data ClassMod = ClassModStruct | ClassModStub | ClassModTrait deriving (Eq)
 
-data ClassGeneric = ClassGeneric String
+data Generic = Generic String
 
 type Extends = Maybe String
 
 data ClassStm = Decl {defMods :: [DefMod], defName :: String, defRetType :: Maybe DataType, defBody :: Exp, declAccs :: [DeclAcc]}
-	| Def {defMods :: [DefMod],  defName :: String, defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
+	| Def {defMods :: [DefMod],  defName :: String, defGenerics :: [Generic], defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
 stmName :: ClassStm -> String
 stmName (Decl _ name _ _ _) = name
-stmName (Def _ name [] _ _) = name
-stmName (Def _ name pars _ _) = name ++ " " ++ unwords (map parName pars)
+stmName (Def _ name _ [] _ _) = name
+stmName (Def _ name _ pars _ _) = name ++ " " ++ unwords (map parName pars)
 
 data DefMod = DefModPrivate | DefModMutable | DefModStatic  deriving (Eq)
 data DeclAcc = DeclAccRead [DeclAccMod] Exp | DeclAccWrite [DeclAccMod] Exp 

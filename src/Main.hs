@@ -24,7 +24,7 @@ main =
 	in do 
 		putStrLn $ "Root: " ++ root
 		t <- odFiles root
-		putStrLn $ show t
+		print t
 		files <- readOdFiles root 
 		putStrLn $ "Found " ++ show (length files) ++ " files"
 		let 
@@ -33,10 +33,10 @@ main =
 			linkedFiles :: IO [(FilePath, L.File)]
 			linkedFiles = do
 				fs <- parsedFiles
-				linked <- return $ (uncurry zip . second (L.link). unzip) fs
-				when(debug) $ forM_ linked (\(path, f) -> do
+				let linked = (uncurry zip . second L.link. unzip) fs
+				when debug $ forM_ linked (\(path, f) -> do
 					putStrLn $ "= Linked " ++ path
-					putStrLn $ show f)
+					print f)
 				return linked
 			compiledFiles :: IO [(FilePath, ([C.FileStm], [C.FileStm]))]
 			compiledFiles = liftM (map (second toObjC) . filter (containsRealStatement . snd)) linkedFiles
@@ -64,7 +64,7 @@ parseFiles = mapM parse
 		parse (path, txt) = case parseFile txt of
 			Left err -> error $ "Error in parse " ++ path ++ ":\n" ++ removeComments txt ++ "\n\nError:" ++ show err
 			Right val -> do
-				when(debug) (do
+				when debug (do
 					putStrLn $ "= Parsed " ++ path ++ ":"
 					putStrLn $ strs' "\n" val)
 				return (path, D.File (fn path) val)

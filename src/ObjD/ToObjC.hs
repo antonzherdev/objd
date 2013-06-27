@@ -273,6 +273,7 @@ procImports D.File{D.fileImports = imps} = (map to imps, [])
 showDataType :: D.DataType -> String
 showDataType D.TPArr{} = "NSArray*"
 showDataType D.TPInt = "NSInteger"
+showDataType D.TPUInt = "NSUInteger"
 showDataType D.TPFloat = "CGFloat"
 showDataType D.TPString = "NSString*"
 showDataType D.TPBool = "BOOL"

@@ -64,7 +64,7 @@ data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
 
 type Constructor = [(Def, Exp)]
 
-data DataType = TPInt | TPFloat | TPString | TPVoid | TPClass Class | TPStruct Class | TPEnum Class | TPTrait Class 
+data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid | TPClass Class | TPStruct Class | TPEnum Class | TPTrait Class 
 	| TPGeneric Class | TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
@@ -72,6 +72,7 @@ isVoid _ = False
 
 instance Show DataType where
 	show TPInt = "int"
+	show TPUInt = "uint"
 	show TPFloat = "float"
 	show TPVoid = "void"
 	show TPString = "string"
@@ -130,15 +131,15 @@ instance Show Class where
 			constrFld (f, Nop) = defName f
 			constrFld (f, e) = defName f ++ " = " ++ show e
 instance Show Def where
-	show d = showDef True d
+	show = showDef True
 
 showDef :: Bool -> Def -> String
 showDef f Def {defName = name , defPars = [], defType = tp, defBody = e} =
-		"def " ++ name ++ if f then (" : " ++ show tp ++ " = " ++ show e) else ""
+		"def " ++ name ++ if f then " : " ++ show tp ++ " = " ++ show e else ""
 showDef f Def {defName = name , defPars = pars, defType = tp, defBody = e} =
-	"def " ++ name ++ "(" ++ strs' ", " pars ++ ")" ++ if f then  (" : " ++ show tp ++ " = " ++ show e) else ""
+	"def " ++ name ++ "(" ++ strs' ", " pars ++ ")" ++ if f then  " : " ++ show tp ++ " = " ++ show e else ""
 showDef f Field {defName = nm, defMods = mods, defType = tp, defBody = e } =
-	(if DefModMutable `elem` mods then "var" else "val") ++ " " ++ nm ++ if f then (" : " ++ show tp ++ show e) else ""
+	(if DefModMutable `elem` mods then "var" else "val") ++ " " ++ nm ++ if f then " : " ++ show tp ++ show e else ""
 
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
@@ -212,10 +213,12 @@ file fidx (D.File name stms) = fl
 			fileClasses =(map (cls (cidx, glidx)) . filter isCls) stms, globalDefs = gldefs}
 		files = visibleFiles stms
 		isCls s = D.isClass s || D.isStub s || D.isEnum s
-		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . visibleFiles) stms
+		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . (++ kernelFiles) . visibleFiles) stms
 		glidx = concatMap globalDefs (fl : files)
 		visibleFiles :: [D.FileStm] -> [File]
 		visibleFiles = mapMaybe (getFile . D.impString) . filter D.isImport
+		kernelFiles :: [File]
+		kernelFiles = map (findTp "file" fidx) ["ODArray"]
 		cImports = mapMaybe toCImport stms
 		toCImport (D.Import s D.ImportTypeCUser) = Just $ CImportUser s
 		toCImport (D.Import s D.ImportTypeCLib) = Just $ CImportLib s
@@ -232,6 +235,9 @@ data Env = Env{envSelf :: Class, envIndex :: ClassIndex, envGlobalDefIndex :: De
 envAddVals :: [Def] -> Env -> Env 
 envAddVals newVals Env {envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals} = 
 	Env{envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals ++ newVals}
+envAddClasses :: [Class] -> Env -> Env 
+envAddClasses newClasses Env {envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals} = 
+	Env{envSelf = self, envIndex = cidx `M.union` M.fromList (map (\cc -> (className cc, cc)) newClasses), envGlobalDefIndex = glidx, envVals = vals}
 findTp :: String -> M.Map String a -> String -> a
 findTp tp mmm name =  M.findWithDefault (error $ "No " ++ tp ++ " found " ++ name) name mmm
 
@@ -267,7 +273,7 @@ cls (ocidx, glidx) cl = self
 		defs = map (def env) . filter D.isDef $ D.classBody cl
 		constr = map (\f -> (findTp "field" fieldsMap (D.defName f), evalState (expr False (D.defBody f)) env) ) $ D.classFields cl
 		generics = map generic (D.classGenerics cl)
-		generic (D.ClassGeneric name) = Generic name
+		generic (D.Generic name) = Generic name
 		enumItem (D.EnumItem name pars) = EnumItem name enumItemPars
 			where
 				enumItemPars = zip (map fst constr) (map ((\e -> evalState (expr False e) env) . snd) pars)
@@ -301,12 +307,14 @@ translateMods = map m
 		m D.DefModPrivate = DefModPrivate
 		
 def :: Env -> D.ClassStm -> Def
-def env ccc = evalState (stateDef ccc) env
+def env ccc = evalState (stateDef ccc) env'
 	where 
+		env' = envAddClasses (map genericClass (D.defGenerics ccc)) env
+		genericClass (D.Generic genericName) = Generic genericName
 		stateDef:: D.ClassStm -> State Env Def
 		stateDef D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = 
 			let 
-				 pars = linkDefPars (envIndex env) opars
+				 pars = linkDefPars (envIndex env') opars
 				 mods' = translateMods mods
 				 needReturn (Just (D.DataType "void" _)) = False
 				 needReturn _ = True
@@ -314,14 +322,14 @@ def env ccc = evalState (stateDef ccc) env
 				(case body of
 					D.Nop -> return Def {defMods = DefModAbstract : mods' , defName = name,
 							defPars = pars,
-							defType = dataType (envIndex env) (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
+							defType = dataType (envIndex env') (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
 					_   -> do 
 						modify $ envAddVals pars
 						b <- expr (needReturn tp) body
-						put env
+						put env'
 						return Def {defMods = mods', defName = name,
 							defPars = pars,
-							defType = getDataType env tp b, defBody = b})
+							defType = getDataType env' tp b, defBody = b})
 
 linkDefPars :: ClassIndex -> [D.Par] -> [Def]
 linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Def pnm [] (dataType cidx ttt) Nop [DefModLocal])
@@ -332,6 +340,7 @@ getDataType env tp e = maybe (exprDataType e) (dataType (envIndex env)) tp
 dataType :: ClassIndex -> D.DataType -> DataType
 dataType cidx (D.DataType name _) = case name of
 	"int" -> TPInt
+	"uint" -> TPUInt
 	"float" -> TPFloat
 	"void" -> TPVoid
 	"string" -> TPString
@@ -351,14 +360,14 @@ exprDataType (IntConst _ ) = TPInt
 exprDataType Nil = TPVoid
 exprDataType (BoolConst _ ) = TPBool
 exprDataType (FloatConst _ _) = TPFloat
-exprDataType (BoolOp _ _ _) = TPBool
+exprDataType (BoolOp {}) = TPBool
 exprDataType (MathOp _ l _) = exprDataType l
 exprDataType (PlusPlus e) = exprDataType e
 exprDataType (MinusMinus e) = exprDataType e
 exprDataType (Dot _ b) = exprDataType b
 exprDataType (Set _ a _) = exprDataType a
 exprDataType (Self s) = refDataType s
-exprDataType (Call d t _) = t
+exprDataType (Call _ t _) = t
 exprDataType (Return e) = exprDataType e
 
 refDataType :: Class -> DataType
@@ -369,12 +378,13 @@ refDataType cl
 	| isGeneric cl = TPGeneric cl
 	| otherwise = TPClass cl
 
-dataTypeClass :: DataType -> Class
-dataTypeClass (TPClass c) = c
-dataTypeClass (TPStruct c) = c
-dataTypeClass (TPEnum c) = c
-dataTypeClass (TPTrait c) = c
-dataTypeClass (TPGeneric c) = c
+dataTypeClass :: Env -> DataType -> Class
+dataTypeClass _ (TPClass c) = c
+dataTypeClass _ (TPStruct c) = c
+dataTypeClass _ (TPEnum c) = c
+dataTypeClass _ (TPTrait c) = c
+dataTypeClass _ (TPGeneric c) = c
+dataTypeClass env (TPArr _) = findTp "array class" (envIndex env) "ODArray"
 
 expr :: Bool -> D.Exp -> State Env Exp
 expr r (D.If cond t f) = do
@@ -401,7 +411,7 @@ expr _ (D.MathOp tp a b) = do
 expr _ (D.Dot a b) = do
 	aa <- expr False a
 	env <- get
-	bb <- exprCall (Just $ (dataTypeClass . exprDataType) aa)  b
+	bb <- exprCall (Just $ (dataTypeClass env . exprDataType) aa)  b
 	put env
 	return $ Dot aa bb
 expr _ (D.Set tp a b) = do
@@ -440,15 +450,15 @@ exprCall c (D.Call name pars) = do
 			self = fromMaybe (envSelf env) c
 			dd = resolveDef c $ fromMaybe (error err) $ findCall name rp self (allDefs c)
 			resolveDef Nothing call@(Call d _ _)
-				| DefModStatic `elem` (defMods d) = call 
-				| DefModLocal `elem` (defMods d) = call
-				| DefModStub `elem` (defMods d) = call
+				| DefModStatic `elem` defMods d = call 
+				| DefModLocal `elem` defMods d = call
+				| DefModStub `elem` defMods d = call
 				| otherwise = Dot (Self (envSelf env)) call
 			resolveDef _ call = call
 			err = "Could find reference for call " ++ callStr ++ "\n" ++
 				maybe "" (\cl -> "strict in class " ++ className cl ++ "\n") c ++
 				"in defs:\n" ++
-				(strs "\n" . map (ind . (showDef False))) (allDefs c)
+				(strs "\n" . map (ind . showDef False)) (allDefs c)
 			callStr = name ++ case pars of
 				[] -> ""
 				_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")"
