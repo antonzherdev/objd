@@ -1,10 +1,9 @@
 module ObjD.Struct (
 	FileStm(..), Extends, ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), 
-	ClassMod(..), DeclAcc(..), DeclAccMod(..), MathTp(..), BoolTp(..), Generic(..),
+	ClassMod(..), DeclAcc(..), DeclAccMod(..), MathTp(..), BoolTp(..), Generic(..), 
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
 ) where
 import           Ex.String
-import 			 Control.Arrow
 type Sources = [File]
 
 data File = File {fileName :: String, fileStms :: [FileStm]}
@@ -71,12 +70,11 @@ data Exp = Nop
 	| Nil
 	| BoolOp BoolTp Exp Exp
 	| Dot Exp Exp
-	| Ref String
 	| Set (Maybe MathTp) Exp Exp
 	| MathOp MathTp Exp Exp
 	| PlusPlus Exp
 	| MinusMinus Exp
-	| Call String [CallPar]
+	| Call String [CallPar] [DataType]
 	| Index Exp Exp
 	| Lambda [(String, Maybe DataType)] Exp
 	| Val{valName :: String, valDataType :: Maybe DataType, valBody :: Exp, valMods :: [DefMod]}
@@ -108,6 +106,10 @@ instance Show DataType where
 	show (DataType s pars) = s ++ "<" ++ strs' ", " pars ++ ">"
 	show (DataTypeArr r) = "[" ++ show r ++ "]"
 
+showGens :: [DataType] -> String
+showGens [] = ""
+showGens a = "<" ++ strs' ", " a  ++ ">"
+
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
 	show (If cond t Nop) = "if(" ++ show cond ++ ") " ++ show t
@@ -115,14 +117,13 @@ instance Show Exp where
 	show Nop = ""
 	show Self = "self"
 	show (Dot l r) = showOp' l "." r
-	show (Ref s) = s
 	show (Set Nothing l r) = showOp l "=" r
 	show (Set (Just t) l r) = showOp l (show t ++ "=") r
 	show (BoolOp t l r) = showOp l (show t) r
 	show (MathOp t l r) = showOp l (show t) r
 	show (PlusPlus e) = show e ++ "++"
 	show (MinusMinus e) = show e ++ "--"
-	show (Call n pars) = n ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
+	show (Call n pars gens) = n ++ showGens gens ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
 		where
 			showPar (Nothing, e) = show e
 			showPar (Just name, e) = name ++ " = " ++ show e
@@ -133,6 +134,5 @@ instance Show Exp where
 	show (Lambda pars e) = strs' ", " (map (\(n, t) -> n ++ maybe "" (\tt -> " : " ++ show tt) t) pars) ++ " -> " ++ show e
 	show (Val name tp body mods) = valVar ++ " " ++ name ++ maybe "" ((" : " ++) . show) tp ++ " = " ++ show body
 		where valVar = if DefModMutable `elem` mods then "var" else "val"
-
 
 

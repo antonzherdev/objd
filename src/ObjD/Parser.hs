@@ -50,8 +50,10 @@ spsChar c = sps >> char c
 charSps :: Char -> Parser String
 charSps c = char c >> sps
 pDataType ::Bool -> Parser DataType
-pDataType lambda = charSps ':' >> tp lambda
-	where 
+pDataType lambda = charSps ':' >> pType lambda
+pType :: Bool -> Parser  DataType
+pType = tp
+	where
 		tp lm = do 
 			t <- arr <|> tuple <|> simple
 			sps
@@ -379,16 +381,23 @@ pTerm = do
 		pCall = do
 			name <- ident
 			sps
+			gens <- pGensRef
+			sps
 			(do
 				charSps '('
 				pars <- pCallPar `sepBy` charSps ','
 				charSps ')' <?> "Function call close bracket"
-				return $ Call name pars) <|> (do
+				return $ Call name pars gens) <|> (do
 				charSps '['
 				e <- pExp
 				sps
 				charSps ']' <?> "Array index close bracket"
-				return $ Index (Ref name) e) <|> return (Ref name)
+				return $ Index (Call name [] gens) e) <|> return (Call name [] gens)
+		pGensRef = option [] $ do
+			charSps '<'
+			r <- pType False `sepBy` charSps ','
+			charSps '>'
+			return r
 
 pLambda :: Parser Exp 
 pLambda =  do

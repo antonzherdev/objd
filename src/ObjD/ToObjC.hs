@@ -105,7 +105,7 @@ stm2Fun D.Def{D.defName = name, D.defPars = pars, D.defType = tp, D.defMods = mo
 		C.funName = name, 
 		C.funPars = map par pars}
 	where
-		par (D.Def nm _ ttp _ _) = C.FunPar nm (showDataType ttp) nm
+		par (D.Def{D.defName = nm, D.defType = ttp}) = C.FunPar nm (showDataType ttp) nm
 
 genProtocol :: D.Class -> C.FileStm
 genProtocol (D.Class {D.className = name, D.classDefs = defs}) =
@@ -340,19 +340,24 @@ tStm v (D.If cond t f) = [C.If (tExp cond) (tStm v t) (tStm v f)]
 tStm _ (D.Set (Just t) l r) = let 
 		l' = tExp l
 		r' = tExp r
-	in case D.exprDataType l of
+		ltp = D.exprDataType l
+		rtp = D.exprDataType r
+	in case ltp of
 		D.TPArr _ -> [C.Set Nothing l' (addObjectToArray l' r')]
-		_ -> [C.Set (Just t) l' r']
+		_ -> [C.Set (Just t) l' (maybeVal (ltp, rtp) r')]
 tStm _ (D.Set tp l r) = [C.Set tp (tExp l) (tExp r)]
 tStm D.TPVoid (D.Return e) = [C.Stm $ tExp e]
 tStm tp (D.Return e) = [C.Return $ maybeVal (D.exprDataType e, tp) (tExp e)]
-tStm _ (D.Val D.Def{D.defName = name, D.defType = tp, D.defBody = e}) = [C.Var (showDataType tp) name (tExp e)]
+tStm _ (D.Val D.Def{D.defName = name, D.defType = tp, D.defBody = e}) = [C.Var (showDataType tp) name 
+	(maybeVal (tp, D.exprDataType e) (tExp e))]
 tStm _ x = [C.Stm $ tExp x]
 
 addObjectToArray :: C.Exp -> C.Exp -> C.Exp
 addObjectToArray a obj = C.Call a "arrayByAdding" [("object", obj)]
 
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp
-maybeVal (D.TPStruct _m, D.TPGeneric _) e = C.CCall "val" [e]
-maybeVal (D.TPGeneric _m, D.TPStruct s) e = C.CCall "uval" [C.Ref (D.className s), e]
+maybeVal (D.TPStruct _ False, D.TPGeneric _) e = C.CCall "val" [e]
+maybeVal (D.TPGeneric _, D.TPStruct s False) e = C.CCall "uval" [C.Ref (D.className s), e]
+maybeVal (D.TPStruct _ False, D.TPStruct s True) e = C.CCall "uval" [C.Ref (D.className s), e]
+maybeVal (D.TPStruct _ True, D.TPStruct _ False) e = C.CCall "val" [e]
 maybeVal _ e = e

@@ -49,10 +49,10 @@ isEnum _ = False
 data ClassMod = ClassModStub | ClassModStruct | ClassModTrait deriving (Eq)
 
 type Extends = Maybe Class
-data Def = Def {defName :: String, defPars :: [Def], defType :: DataType, defBody :: Exp, defMods :: [DefMod]}
+data Def = Def {defName :: String, defPars :: [Def], defType :: DataType, defBody :: Exp, defMods :: [DefMod], defGenerics :: [Class]}
 	| Field { defName :: String, defType :: DataType, defBody :: Exp, defMods :: [DefMod], fieldAccs :: [FieldAcc]}
 localVal :: String -> DataType -> Def
-localVal name tp = Def name [] tp Nop [DefModLocal]
+localVal name tp = Def name [] tp Nop [DefModLocal] []
 isDef :: Def -> Bool
 isDef Def{} = True
 isDef _ = False
@@ -70,7 +70,7 @@ data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
 
 type Constructor = [(Def, Exp)]
 
-data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid | TPClass Class [DataType] | TPStruct Class | TPEnum Class | TPTrait Class 
+data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid | TPClass Class [DataType] | TPStruct Class Bool | TPEnum Class | TPTrait Class 
 	| TPGeneric Class | TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
@@ -79,14 +79,14 @@ isVoid _ = False
 refDataType :: Class -> [DataType] -> DataType
 refDataType e@Enum{} _ = TPEnum e
 refDataType cl gens
-	| isStruct cl = TPStruct cl
+	| isStruct cl = TPStruct cl False
 	| isTrait cl = TPTrait cl
 	| isGeneric cl = TPGeneric cl
 	| otherwise = TPClass cl gens
 
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass c _) = c
-dataTypeClass _ (TPStruct c) = c
+dataTypeClass _ (TPStruct c _) = c
 dataTypeClass _ (TPEnum c) = c
 dataTypeClass _ (TPTrait c) = c
 dataTypeClass _ (TPGeneric c) = c
@@ -95,6 +95,11 @@ dataTypeClass env (TPArr _) = findTp "array class" (envIndex env) "ODArray"
 dataTypeGenerics :: Env -> DataType -> [DataType]
 dataTypeGenerics _ (TPClass _ g) = g
 dataTypeGenerics _ (TPArr g) = [g]
+dataTypeGenerics _ _ = []
+
+setStrictGenericFlag :: Bool -> DataType -> DataType
+setStrictGenericFlag b (TPStruct c _) = TPStruct c b
+setStrictGenericFlag _ t = t
 
 dataType :: ClassIndex -> D.DataType -> DataType
 dataType cidx (D.DataType name gens) = case name of
@@ -125,7 +130,7 @@ instance Show DataType where
 	show (TPTrait c) = className c ++ "*"
 	show (TPEnum c) = className c ++ "*"
 	show (TPGeneric c) = className c ++ "*"
-	show (TPStruct c) = className c
+	show (TPStruct c s) = className c ++ if s then "^" else ""
 	show (TPArr t) = "[" ++ show t ++ "]"
 	show (TPFun s d) = show s ++ " -> " ++ show d
 	show (TPTuple tps) = "(" ++ strs' ", " tps ++ ")"
@@ -202,8 +207,8 @@ instance Show Exp where
 	show (PlusPlus e) = show e ++ "++"
 	show (MinusMinus e) = show e ++ "--"
 	show (Dot l r) = showOp' l "." r
-	show (Call f _ []) = defRefPrep f ++ defName f 
-	show (Call dd _ pars) = defRefPrep dd ++ defName dd ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
+	show (Call f tp []) = defRefPrep f ++ defName f ++ "<" ++ show tp ++ ">"
+	show (Call dd tp pars) = defRefPrep dd ++ defName dd ++ "<" ++ show tp ++ ">" ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
 		where
 			showPar (Def {defName = name}, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
@@ -228,8 +233,8 @@ defPars' Field{defType = t} = dataTypePars t
 
 
 dataTypePars :: DataType -> [Def]
-dataTypePars (TPFun (TPTuple pars) _) = map (\t -> Def "" [] t Nop [DefModLocal]) pars
-dataTypePars (TPFun t _) = [Def "" [] t Nop [DefModLocal]]
+dataTypePars (TPFun (TPTuple pars) _) = map (\t -> Def "" [] t Nop [DefModLocal] []) pars
+dataTypePars (TPFun t _) = [Def "" [] t Nop [DefModLocal] []]
 dataTypePars _ = []		 
 		
 
@@ -264,7 +269,7 @@ file fidx (D.File name stms) = fl
 		getFile f = M.lookup f fidx
 		gldefs = (map gldef . filter D.isStubDef) stms
 		gldef D.StubDef{D.stubDefName = sn, D.stubDefPars = pars, D.stubDefRetType = tp} = 
-			Def {defName = sn, defPars = linkDefPars cidx pars, defType = dataType cidx tp, defMods = [DefModStub], defBody = Nop}
+			Def {defName = sn, defPars = linkDefPars cidx pars, defType = dataType cidx tp, defMods = [DefModStub], defBody = Nop, defGenerics = []}
 
 type ClassIndex = M.Map String Class
 type DefIndex = [Def]
@@ -327,7 +332,7 @@ field D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody =
 		acc' (D.DeclAccRead accMods ex) = liftM (FieldAccRead (accMods' accMods)) (expr True ex)
 		acc' (D.DeclAccWrite accMods ex) = do
 			env' <- get
-			modify $ envAddVals [Def name [] tp' Nop [DefModLocal]]
+			modify $ envAddVals [Def name [] tp' Nop [DefModLocal] []]
 			v <- expr False ex 
 			put env'
 			return $ FieldAccWrite (accMods' accMods) v
@@ -349,8 +354,9 @@ translateMods = map m
 def :: Env -> D.ClassStm -> Def
 def env ccc = evalState (stateDef ccc) env'
 	where 
-		env' = envAddClasses (map genericClass (D.defGenerics ccc)) env
+		env' = envAddClasses generics' env
 		genericClass (D.Generic genericName) = Generic genericName
+		generics' = map genericClass (D.defGenerics ccc)
 		stateDef:: D.ClassStm -> State Env Def
 		stateDef D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = 
 			let 
@@ -360,19 +366,19 @@ def env ccc = evalState (stateDef ccc) env'
 				 needReturn _ = True
 				 in 
 				(case body of
-					D.Nop -> return Def {defMods = DefModAbstract : mods' , defName = name,
+					D.Nop -> return Def {defMods = DefModAbstract : mods' , defName = name, defGenerics = generics',
 							defPars = pars,
 							defType = dataType (envIndex env') (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
 					_   -> do 
 						modify $ envAddVals pars
 						b <- expr (needReturn tp) body
 						put env'
-						return Def {defMods = mods', defName = name,
+						return Def {defMods = mods', defName = name, defGenerics = generics',
 							defPars = pars,
 							defType = getDataType env' tp b, defBody = b})
 
 linkDefPars :: ClassIndex -> [D.Par] -> [Def]
-linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Def pnm [] (dataType cidx ttt) Nop [DefModLocal])
+linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Def pnm [] (dataType cidx ttt) Nop [DefModLocal] [])
 
 getDataType :: Env -> Maybe D.DataType -> Exp -> DataType
 getDataType env tp e = maybe (exprDataType e) (dataType (envIndex env)) tp
@@ -451,8 +457,7 @@ expr _ (D.MinusMinus e) = do
 expr _ D.Self = do
 	env <- get
 	return $ Self $ envSelf env
-expr _ r@(D.Ref _) = exprCall Nothing r
-expr _ r@(D.Call _ _) = exprCall Nothing r
+expr _ r@D.Call{} = exprCall Nothing r
 expr _ (D.Index e i) = do
 	e' <- expr False e
 	i' <- expr False i
@@ -470,24 +475,22 @@ expr _ l@(D.Lambda pars e) = if any (isJust.snd) pars then (do
 expr _ (D.Val name tp body mods) = do
 	env <- get 
 	body' <- expr False body
-	let tp' = maybe (exprDataType body') (dataType $ envIndex env) tp
-	let mods' = DefModLocal : if D.DefModMutable `elem` mods then [DefModMutable] else []
-	let def' = Def{defName = name, defType = tp', defMods = mods', defPars = [], defBody = body'}
+	let tp' = setStrictGenericFlag False $ maybe (exprDataType body') (dataType $ envIndex env) tp
+	let mods' = DefModLocal : [DefModMutable | D.DefModMutable `elem` mods]
+	let def' = Def{defName = name, defType = tp', defMods = mods', defPars = [], defBody = body', defGenerics = []}
 	modify $ envAddVals [def']
 	return $ Val def'
 
 {- expr x = error $ "No expr for " ++ show x -}
 
-exprCall :: Maybe DataType -> D.Exp -> State Env Exp
-exprCall c (D.Ref n) = exprCall c $ D.Call n []
-		
-exprCall strictClass call@(D.Call name pars) = do
+exprCall :: Maybe DataType -> D.Exp -> State Env Exp		
+exprCall strictClass call@(D.Call name pars gens) = do
 	env <- get
 	rp <- mapM (\ (n, e) -> expr False e >>= (\ ee -> return (n, ee))) pars
 	return $
 		let
 			call' :: Exp
-			call' = maybe (Error errorString call) (resolveDef strictClass . correctCall) $ findCall (name, rp) (env, self, (allDefs env strictClass))
+			call' = maybe (Error errorString call) (resolveDef strictClass . correctCall) $ findCall (name, rp) (env, self, allDefs env strictClass)
 				where
 					self = fromMaybe (envSelf env) strictClass
 					resolveDef Nothing c@(Call d _ _)
@@ -508,10 +511,10 @@ exprCall strictClass call@(D.Call name pars) = do
 					_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")"
 
 			correctCall :: Exp -> Exp
-			correctCall (Call d tp cpars) = Call d tp (map correctExpression cpars)
+			correctCall (Call d tp cpars) = Call d (correctType d tp) (map correctExpression cpars)
 			correctExpression :: (Def, Exp) -> (Def, Exp)
-			correctExpression(d@Def{defType = (TPFun _ dtp)}, (Lambda lpars e _)) = (d, Lambda lpars e dtp)
-			correctExpression(d@Def{defType = (TPFun stp dtp)}, (Error _ (D.Lambda lambdaPars lambdaExpr))) = (d, Lambda pars' expr' dtp)
+			correctExpression(d@Def{defType = (TPFun _ dtp)}, Lambda lpars e _) = (d, Lambda lpars e dtp)
+			correctExpression(d@Def{defType = (TPFun stp dtp)}, Error _ (D.Lambda lambdaPars lambdaExpr)) = (d, Lambda pars' expr' dtp)
 				where
 					pars' = zip (map fst lambdaPars) (stps stp)
 					stps (TPTuple tps) = tps
@@ -519,6 +522,11 @@ exprCall strictClass call@(D.Call name pars) = do
 					env' = envAddVals (map (uncurry localVal) pars') env
 					expr' = evalState (expr True lambdaExpr) env'
 			correctExpression e = e
+			correctType :: Def -> DataType -> DataType
+			correctType _ tp = let tpGens = dataTypeGenerics env tp
+				in case tpGens of
+					[] -> tp
+					_ -> refDataType (dataTypeClass env tp) (map (setStrictGenericFlag True . dataType (envIndex env)) gens)
 		in call'
 
 
@@ -529,12 +537,12 @@ allDefs env Nothing = envVals env ++ allDefsInClass (envSelfClass env) ++ envGlo
 		classConstructors = (mapMaybe (constructorToDef . snd) . M.toList) (envIndex env)
 		constructorToDef cl@Class{className = n, classConstructor = constr} = 
 			Just Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl [], defBody = Nop, 
-				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor]}
+				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor], defGenerics = []}
 		constructorToDef cl@Enum{className = n} =
 			Just Def {defName = n, defPars = [], defType = TPArr $ refDataType cl [], defBody = Nop, 
-				defMods = [DefModStatic, DefModEnumList]}
+				defMods = [DefModStatic, DefModEnumList], defGenerics = []}
 		constructorToDef _ = Nothing
-		constructorParToPar (d, e) = Def (defName d) [] (defType d) e [DefModLocal]
+		constructorParToPar (d, e) = Def (defName d) [] (defType d) e [DefModLocal] []
 
 
 allDefsInClass :: Class -> [Def]
@@ -551,9 +559,9 @@ findCall (name,pars) (env, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filt
 		fit d = Just $ Call d (resolveTp (defType d)) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
 		resolveTp tp = case tp of
 			TPSelf -> selfType
-			TPGeneric g -> dataTypeGenerics env selfType !! genericIndex g
+			TPGeneric g -> dataTypeGenerics env selfType !! getGenericIndex g
 			_ -> tp
-		genericIndex :: Class -> Int
-		genericIndex g = fromMaybe (error $ "Could not find generic " ++ className g ++ " in " ++ show selfType ) $ elemIndex g generics
+		getGenericIndex :: Class -> Int
+		getGenericIndex g = fromMaybe (error $ "Could not find generic " ++ className g ++ " in " ++ show selfType ) $ elemIndex g generics
 		generics = classGenerics $ dataTypeClass env selfType
 
