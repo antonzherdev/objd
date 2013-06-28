@@ -489,17 +489,39 @@ exprCall strictClass call@(D.Call name pars gens) = do
 	rp <- mapM (\ (n, e) -> expr False e >>= (\ ee -> return (n, ee))) pars
 	return $
 		let
+			self = fromMaybe (envSelf env) strictClass
 			call' :: Exp
-			call' = maybe (Error errorString call) (resolveDef strictClass . correctCall) $ findCall (name, rp) (env, self, allDefs env strictClass)
+			call' = fromMaybe (Error errorString call) $ findCall (name, rp) (env, self, allDefs env strictClass)
+			call'' :: Exp
+			call'' = case call' of
+				Call{} -> (resolveDef strictClass . correctCall) call'
+				_ -> call'
 				where
-					self = fromMaybe (envSelf env) strictClass
 					resolveDef Nothing c@(Call d _ _)
 						| DefModStatic `elem` defMods d = c 
 						| DefModLocal `elem` defMods d = c
 						| DefModStub `elem` defMods d = c
 						| otherwise = Dot (Self (envSelf env)) c
 					resolveDef _ c = c
+			
+			extendList :: Int -> [a] -> [Maybe a]
+			extendList l a
+				| length a == l = map Just a
+				| length a < l = (map Just . take l) a
+				| otherwise = map Just a ++ replicate l Nothing 
 
+			gens' :: M.Map String DataType
+			gens' = case call' of
+				(Call Def{defGenerics = defGens} _ _) -> M.fromList $ (map determineGenericType . zip defGens . extendList (length defGens)) gens
+			determineGenericType :: (Class, Maybe D.DataType) -> (String, DataType)
+			determineGenericType (g, Just tp) = (className g, (setStrictGenericFlag True . dataType (envIndex env)) tp)
+			determineGenericType (g, _) = (className g, case call' of
+				(Call _ _ pars') -> fromMaybe (error $ "Could not determine generic type for " ++ show g ++ " in " ++ show call) $ 
+					(listToMaybe . mapMaybe tryDetermine) pars'
+				)
+				where 
+					tryDetermine :: (Def, Exp) -> Maybe DataType
+					tryDetermine _ = Nothing
 			
 			errorString :: String
 			errorString = "Could find reference for call " ++ callStr ++ "\n" ++
@@ -511,7 +533,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 					_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")"
 
 			correctCall :: Exp -> Exp
-			correctCall (Call d tp cpars) = Call d (correctType d tp) (map correctExpression cpars)
+			correctCall (Call d tp cpars) = Call d (correctType tp) (map correctExpression cpars)
 			correctExpression :: (Def, Exp) -> (Def, Exp)
 			correctExpression(d@Def{defType = (TPFun _ dtp)}, Lambda lpars e _) = (d, Lambda lpars e dtp)
 			correctExpression(d@Def{defType = (TPFun stp dtp)}, Error _ (D.Lambda lambdaPars lambdaExpr)) = (d, Lambda pars' expr' dtp)
@@ -522,12 +544,11 @@ exprCall strictClass call@(D.Call name pars gens) = do
 					env' = envAddVals (map (uncurry localVal) pars') env
 					expr' = evalState (expr True lambdaExpr) env'
 			correctExpression e = e
-			correctType :: Def -> DataType -> DataType
-			correctType _ tp = let tpGens = dataTypeGenerics env tp
-				in case tpGens of
-					[] -> tp
-					_ -> refDataType (dataTypeClass env tp) (map (setStrictGenericFlag True . dataType (envIndex env)) gens)
-		in call'
+			
+			correctType :: DataType -> DataType
+			correctType gg@(TPGeneric (Generic g)) = fromMaybe gg $ M.lookup g gens'
+			correctType t = t
+		in call''
 
 
 allDefs :: Env -> Maybe DataType -> [Def]
@@ -554,14 +575,10 @@ findCall (name,pars) (env, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filt
 	where
 		fit :: Def -> Maybe Exp
 		fit d@Field{}
-			| null pars = Just $ Call d (resolveTp (defType d)) [] 
+			| null pars = Just $ Call d (resolveTp d) [] 
 			| otherwise = Nothing 
-		fit d = Just $ Call d (resolveTp (defType d)) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
-		resolveTp tp = case tp of
+		fit d = Just $ Call d (resolveTp d) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
+		resolveTp d = case defType d of
 			TPSelf -> selfType
-			TPGeneric g -> dataTypeGenerics env selfType !! getGenericIndex g
-			_ -> tp
-		getGenericIndex :: Class -> Int
-		getGenericIndex g = fromMaybe (error $ "Could not find generic " ++ className g ++ " in " ++ show selfType ) $ elemIndex g generics
-		generics = classGenerics $ dataTypeClass env selfType
-
+			tp -> tp
+			
