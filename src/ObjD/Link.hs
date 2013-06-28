@@ -512,7 +512,19 @@ exprCall strictClass call@(D.Call name pars gens) = do
 
 			gens' :: M.Map String DataType
 			gens' = case call' of
-				(Call Def{defGenerics = defGens} _ _) -> M.fromList $ (map determineGenericType . zip defGens . extendList (length defGens)) gens
+				(Call Def{defGenerics = defGens} _ _) -> 
+					M.fromList $  ddefGenerics ++ dclassGenerics
+					where
+						ddefGenerics :: [(String, DataType)]
+						ddefGenerics = (map determineGenericType . zip defGens . extendList (length defGens)) gens
+						srcClassGenerics = classGenerics $ dataTypeClass env self
+						dclassGenerics :: [(String, DataType)]
+						dclassGenerics = (map extractGen . zip srcClassGenerics . extendList (length srcClassGenerics)) (dataTypeGenerics env self) 
+						where 
+							extractGen :: (Class, Maybe DataType) -> (String, DataType)
+							extractGen(g, Just t) = (className g, t)
+							extractGen(g, Nothing) = error $ "Could not find generic type for " ++ show g ++ " in self " ++ show self
+						
 			determineGenericType :: (Class, Maybe D.DataType) -> (String, DataType)
 			determineGenericType (g, Just tp) = (className g, (setStrictGenericFlag True . dataType (envIndex env)) tp)
 			determineGenericType (g, _) = (className g, case call' of
@@ -547,6 +559,8 @@ exprCall strictClass call@(D.Call name pars gens) = do
 			
 			correctType :: DataType -> DataType
 			correctType gg@(TPGeneric (Generic g)) = fromMaybe gg $ M.lookup g gens'
+			correctType (TPClass cl gens) = TPClass cl (map correctType gens)
+			correctType (TPArr c) = TPArr (correctType c)
 			correctType t = t
 		in call''
 
