@@ -287,6 +287,7 @@ showDataType (D.TPTrait _) = "id"
 showDataType (D.TPGeneric _) = "id"
 showDataType (D.TPSelf) = "id"
 showDataType (D.TPFun s d) = showDataType d ++ "(^)" ++ "(" ++ showDataType s ++ ")"
+showDataType (D.TPClass c _) = D.className c ++ "*"
 showDataType tp = show tp
 
 {- Exp -}
