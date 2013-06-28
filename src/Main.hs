@@ -15,7 +15,7 @@ import System.FilePath
 {- main::IO()
 main = putStr "dsa" -}
 debug :: Bool
-debug = True
+debug = False
 
 main::IO()
 main = 

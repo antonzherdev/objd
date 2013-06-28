@@ -6,7 +6,6 @@ module ObjD.Link (
 
 import 			 Control.Arrow
 import           Control.Monad.State
-import 			 Data.List
 import qualified Data.Map            as M
 import           Data.Maybe
 import           Ex.String
@@ -71,7 +70,7 @@ data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
 type Constructor = [(Def, Exp)]
 
 data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid | TPClass Class [DataType] | TPStruct Class Bool | TPEnum Class | TPTrait Class 
-	| TPGeneric Class | TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf
+	| TPGeneric Class | TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
 isVoid _ = False
@@ -125,6 +124,7 @@ instance Show DataType where
 	show TPString = "string"
 	show TPBool = "bool"
 	show TPSelf = "self"
+	show TPUnknown = "???"
 	show (TPClass c []) = className c
 	show (TPClass c gens) = className c ++ "<" ++ strs' ", " gens ++ ">"
 	show (TPTrait c) = className c ++ "*"
@@ -414,7 +414,7 @@ exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 		parsTp :: [(String, DataType)] -> DataType
 		parsTp [(_, tp)] = tp
 		parsTp ps = TPTuple $ map snd ps
-exprDataType (Error e m) = TPVoid
+exprDataType (Error _ _) = TPUnknown
 
 expr :: Bool -> D.Exp -> State Env Exp
 expr r (D.If cond t f) = do
@@ -442,12 +442,15 @@ expr _ (D.MathOp tp a b) = do
 	aa <- expr False a
 	bb <- expr False b
 	return $ MathOp tp aa bb
-expr _ (D.Dot a b) = do
+expr _ d@(D.Dot a b) = do
 	aa <- expr False a
-	env <- get
-	bb <- exprCall (Just $ exprDataType aa)  b
-	put env
-	return $ Dot aa bb
+	case aa of
+		Error s _ -> return $ Error s d
+		_ -> do
+			env <- get
+			bb <- exprCall (Just $ exprDataType aa)  b
+			put env
+			return $ Dot aa bb
 expr _ (D.Set tp a b) = do
 	aa <- expr False a
 	bb <- expr False b
@@ -514,10 +517,10 @@ exprCall strictClass call@(D.Call name pars gens) = do
 			pars'' = (map correctExpression pars')
 			
 			gens' :: M.Map String DataType
-			gens' = resolveGenerics pars'
+			gens' = resolveGenerics False pars'
 
 			gens'' :: M.Map String DataType
-			gens'' = resolveGenerics pars''
+			gens'' = resolveGenerics True pars''
 
 			extendList :: Int -> [a] -> [Maybe a]
 			extendList l a
@@ -525,8 +528,8 @@ exprCall strictClass call@(D.Call name pars gens) = do
 				| length a > l = (map Just . take l) a
 				| otherwise = map Just a ++ replicate (l - length a) Nothing 
 
-			resolveGenerics :: [(Def, Exp)] -> M.Map String DataType
-			resolveGenerics rpars = case call' of
+			resolveGenerics :: Bool -> [(Def, Exp)] -> M.Map String DataType
+			resolveGenerics strict rpars = case call' of
 				(Call Def{defGenerics = defGens} _ _) -> 
 					M.fromList $  checkedDefGenerics ++ dclassGenerics
 					where
@@ -547,7 +550,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 						determineGenericType :: (Class, Maybe D.DataType) -> (String, DataType)
 						determineGenericType (g, Just tp) = (className g, (setStructGenericFlag True . dataType (envIndex env)) tp)
 						determineGenericType (g, _) = (className g, 
-								fromMaybe (error $ "Could not determine generic type for " ++ show g ++ " in " ++ show call) $ 
+								fromMaybe (if strict then error $ "Could not determine generic type for " ++ show g ++ " in " ++ show call else TPUnknown) $ 
 								(listToMaybe . mapMaybe ( (defType *** exprDataType)>>> tryDetermine g) ) rpars
 							)
 							where 
@@ -581,6 +584,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 					env' = envAddVals (map (uncurry localVal) lpars') env
 					expr' = evalState (expr True lambdaExpr) env'
 					tp' = setStructGenericFlag True $ exprDataType expr'
+			correctExpression(d@Def{defType = (TPFun _ _)}, Error es e) = correctExpression (d, Error es $ D.Lambda [("_", Nothing)] e)
 			correctExpression e = e
 			
 			correctType :: M.Map String DataType -> DataType -> DataType
