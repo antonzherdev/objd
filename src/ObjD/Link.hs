@@ -110,9 +110,9 @@ dataType cidx (D.DataType name gens) = case name of
 	"bool" -> TPBool
 	"self" -> TPSelf
 	_ -> refDataType (findTp "class" cidx name) (map (dataType cidx) gens)
-dataType cidx (D.DataTypeArr tp) = TPArr $ dataType cidx tp
+dataType cidx (D.DataTypeArr tp) = TPArr $ setStructGenericFlag True $ dataType cidx tp
 dataType cidx (D.DataTypeFun s d) = TPFun (dataType cidx s) (dataType cidx d)
-dataType cidx (D.DataTypeTuple tps) = TPTuple $ map (dataType cidx) tps
+dataType cidx (D.DataTypeTuple tps) = TPTuple $ map (setStructGenericFlag True . dataType cidx) tps
 
 
 
