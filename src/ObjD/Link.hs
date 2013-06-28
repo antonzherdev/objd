@@ -97,9 +97,9 @@ dataTypeGenerics _ (TPClass _ g) = g
 dataTypeGenerics _ (TPArr g) = [g]
 dataTypeGenerics _ _ = []
 
-setStrictGenericFlag :: Bool -> DataType -> DataType
-setStrictGenericFlag b (TPStruct c _) = TPStruct c b
-setStrictGenericFlag _ t = t
+setStructGenericFlag :: Bool -> DataType -> DataType
+setStructGenericFlag b (TPStruct c _) = TPStruct c b
+setStructGenericFlag _ t = t
 
 dataType :: ClassIndex -> D.DataType -> DataType
 dataType cidx (D.DataType name gens) = case name of
@@ -130,7 +130,7 @@ instance Show DataType where
 	show (TPTrait c) = className c ++ "*"
 	show (TPEnum c) = className c ++ "*"
 	show (TPGeneric c) = className c ++ "*"
-	show (TPStruct c s) = className c ++ if s then "^" else ""
+	show (TPStruct c s) = className c ++ if s then "^" else "%"
 	show (TPArr t) = "[" ++ show t ++ "]"
 	show (TPFun s d) = show s ++ " -> " ++ show d
 	show (TPTuple tps) = "(" ++ strs' ", " tps ++ ")"
@@ -170,6 +170,7 @@ instance Show CImport where
 	show (CImportUser l) = "import \"" ++ l ++ "\""
 
 instance Show Class where
+	show cl@Generic{} = "generic " ++ className cl
 	show cl =
 		tp cl ++ " " ++ className cl ++ sConstr cl ++ maybe "" className (classExtends cl) ++ " {\n" ++
 			(unlines . map ind . concatMap (lines . show)) (classDefs cl)  ++
@@ -179,6 +180,8 @@ instance Show Class where
 				| isStub c = "stub"
 				| otherwise = "class"
 			tp Enum{} = "enum"
+			tp Generic{} = "generic"
+			sConstr Generic{} = ""
 			sConstr ccc = maybe "" (\cc -> " (" ++ (strs ", " . map constrFld) cc ++ ") ") (Just $ classConstructor ccc)
 			constrFld (f, Nop) = defName f
 			constrFld (f, e) = defName f ++ " = " ++ show e
@@ -475,7 +478,7 @@ expr _ l@(D.Lambda pars e) = if any (isJust.snd) pars then (do
 expr _ (D.Val name tp body mods) = do
 	env <- get 
 	body' <- expr False body
-	let tp' = setStrictGenericFlag False $ maybe (exprDataType body') (dataType $ envIndex env) tp
+	let tp' = setStructGenericFlag False $ maybe (exprDataType body') (dataType $ envIndex env) tp
 	let mods' = DefModLocal : [DefModMutable | D.DefModMutable `elem` mods]
 	let def' = Def{defName = name, defType = tp', defMods = mods', defPars = [], defBody = body', defGenerics = []}
 	modify $ envAddVals [def']
@@ -507,14 +510,16 @@ exprCall strictClass call@(D.Call name pars gens) = do
 			extendList :: Int -> [a] -> [Maybe a]
 			extendList l a
 				| length a == l = map Just a
-				| length a < l = (map Just . take l) a
-				| otherwise = map Just a ++ replicate l Nothing 
+				| length a > l = (map Just . take l) a
+				| otherwise = map Just a ++ replicate (l - length a) Nothing 
 
 			gens' :: M.Map String DataType
 			gens' = case call' of
 				(Call Def{defGenerics = defGens} _ _) -> 
-					M.fromList $  ddefGenerics ++ dclassGenerics
+					M.fromList $  checkedDefGenerics ++ dclassGenerics
 					where
+						checkedDefGenerics :: [(String, DataType)]
+						checkedDefGenerics = if length ddefGenerics /= length defGens then (error $ show ddefGenerics  ++ " != " ++ show defGens) else ddefGenerics
 						ddefGenerics :: [(String, DataType)]
 						ddefGenerics = (map determineGenericType . zip defGens . extendList (length defGens)) gens
 						srcClassGenerics = classGenerics $ dataTypeClass env self
@@ -526,14 +531,17 @@ exprCall strictClass call@(D.Call name pars gens) = do
 							extractGen(g, Nothing) = error $ "Could not find generic type for " ++ show g ++ " in self " ++ show self
 						
 			determineGenericType :: (Class, Maybe D.DataType) -> (String, DataType)
-			determineGenericType (g, Just tp) = (className g, (setStrictGenericFlag True . dataType (envIndex env)) tp)
+			determineGenericType (g, Just tp) = (className g, (setStructGenericFlag True . dataType (envIndex env)) tp)
 			determineGenericType (g, _) = (className g, case call' of
 				(Call _ _ pars') -> fromMaybe (error $ "Could not determine generic type for " ++ show g ++ " in " ++ show call) $ 
-					(listToMaybe . mapMaybe tryDetermine) pars'
+					(listToMaybe . mapMaybe ( (defType *** exprDataType)>>> tryDetermine g) ) pars'
 				)
 				where 
-					tryDetermine :: (Def, Exp) -> Maybe DataType
-					tryDetermine _ = Nothing
+					tryDetermine :: Class -> (DataType, DataType) -> Maybe DataType
+					tryDetermine c (TPGeneric gg, tp) = if c == gg then Just (setStructGenericFlag True tp) else Nothing
+					tryDetermine c (TPArr a, TPArr a') = tryDetermine c (a, a')
+					tryDetermine c (TPFun a b, TPFun a' b') = listToMaybe $ catMaybes [tryDetermine c (a, a'), tryDetermine c (b, b')]
+					tryDetermine _ _ = Nothing
 			
 			errorString :: String
 			errorString = "Could find reference for call " ++ callStr ++ "\n" ++
@@ -559,7 +567,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 			
 			correctType :: DataType -> DataType
 			correctType gg@(TPGeneric (Generic g)) = fromMaybe gg $ M.lookup g gens'
-			correctType (TPClass cl gens) = TPClass cl (map correctType gens)
+			correctType (TPClass c g) = TPClass c (map correctType g)
 			correctType (TPArr c) = TPArr (correctType c)
 			correctType t = t
 		in call''
