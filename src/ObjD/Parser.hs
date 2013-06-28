@@ -250,14 +250,16 @@ pImport = do
 	impIdent = many1 (letter <|> digit <|> oneOf "_/.")
 
 pStm :: Parser ClassStm
-pStm = pDecl <|> pDef <?> "Class statement"
+pStm = pDef <|> pDecl <?> "Class statement"
 	
 pDef :: Parser ClassStm
 pDef = do
-	mods <- many pMod 
-	sps
-	string "def"
-	sps1
+	mods <- try $ do 
+		mds <- many pMod 
+		sps
+		string "def"
+		sps1
+		return mds
 	static <- option [] $ do 
 		try (string "static")
 		sps1
@@ -341,7 +343,13 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pLambda <|> pCall  <?> "Expression"
+		pTerm' = pArr <|> pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pLambda <|> pCall  <?> "Expression"
+		pArr = do
+			charSps '['
+			exps <- pExp `sepBy` charSps ','
+			sps
+			charSps ']'
+			return $ Arr exps
 		pVal = do
 			mods <- try $ do
 				m <- (string "val" >> return [] ) <|> (string "var" >> return [DefModMutable])

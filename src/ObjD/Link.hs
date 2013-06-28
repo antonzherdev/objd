@@ -155,6 +155,7 @@ data Exp = Nop
 	| Lambda [(String, DataType)] Exp DataType
 	| Val Def
 	| Error String D.Exp 
+	| Arr [Exp]
 
 data CImport = CImportLib String | CImportUser String
 
@@ -222,6 +223,7 @@ instance Show Exp where
 	show (Lambda pars e tp) = strs' ", " (map (\(n, t) -> n ++ " : " ++ show t) pars) ++ " -> " ++ show tp ++ " = " ++ show e
 	show (Val d) = show d
 	show (Error s e) = s ++ " in " ++ show e
+	show (Arr exps) = "["  ++ strs' ", " exps ++ "]"
 
 defRefPrep :: Def -> String
 defRefPrep Field{} = "<F>"
@@ -415,6 +417,10 @@ exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 		parsTp [(_, tp)] = tp
 		parsTp ps = TPTuple $ map snd ps
 exprDataType (Error _ _) = TPUnknown
+exprDataType (Arr []) = TPUnknown
+exprDataType (Arr exps) = exprDataType $ head exps
+exprDataType (Val Def{defType = tp}) = tp
+exprDataType x = error $ "No exprDataType for " ++ show x
 
 expr :: Bool -> D.Exp -> State Env Exp
 expr r (D.If cond t f) = do
@@ -422,11 +428,14 @@ expr r (D.If cond t f) = do
 	tt <- expr r t
 	ff <- expr r f
 	return $ If c tt ff
+expr True (D.Braces []) = error "Return empty braces"
+expr _ (D.Braces []) = return Nop
 expr r (D.Braces es) = do
 	env <- get
-	v <- mapM (expr r) es 
+	f <- mapM (expr False) (init es)
+	l <- expr r (last es)
 	put env
-	return $ Braces v
+	return $ Braces $ f ++ [l]
 expr True D.Nop = error "Return NOP"
 expr True e = expr False e >>= \ee -> return $ Return ee
 expr _ D.Nop = return Nop
@@ -487,6 +496,9 @@ expr _ (D.Val name tp body mods) = do
 	let def' = Def{defName = name, defType = tp', defMods = mods', defPars = [], defBody = body', defGenerics = []}
 	modify $ envAddVals [def']
 	return $ Val def'
+expr _ (D.Arr items) = do
+	items' <- mapM (expr False) items
+	return $ Arr items'
 
 {- expr x = error $ "No expr for " ++ show x -}
 

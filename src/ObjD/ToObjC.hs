@@ -327,6 +327,7 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)
 tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
 tExp (D.Index e i) = C.Index (tExp e) (tExp i)
 tExp (D.Lambda pars e rtp) = C.Lambda (map (second showDataType) pars) (tStm rtp e) (showDataType rtp)
+tExp (D.Arr exps) = C.Arr $ map tExp exps
 
 tExp e@(D.Error _ _) = error$ show e
 tExp x = error $ "No tExp for " ++ show x

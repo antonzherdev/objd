@@ -64,6 +64,7 @@ data Exp = Nop
 	| IntConst Int 
 	| BoolConst Bool
 	| FloatConst Int Int
+	| Arr [Exp]
 	| Braces [Exp]
 	| If Exp Exp Exp
 	| Self
@@ -112,6 +113,7 @@ showGens a = "<" ++ strs' ", " a  ++ ">"
 
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
+	show (Arr exps) = "["  ++ strs' ", " exps ++ "]"
 	show (If cond t Nop) = "if(" ++ show cond ++ ") " ++ show t
 	show (If cond t f) = "if(" ++ show cond ++ ") " ++ show t ++ "\nelse " ++ show f
 	show Nop = ""
