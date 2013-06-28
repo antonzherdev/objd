@@ -109,6 +109,7 @@ data Exp = Nop
 	| Index Exp Exp
 	| Lambda [(String, DataType)] Exp DataType
 	| Val Def
+	| Error String D.Exp 
 
 data CImport = CImportLib String | CImportUser String
 
@@ -189,20 +190,7 @@ defPars' Field{defType = t} = dataTypePars t
 dataTypePars :: DataType -> [Def]
 dataTypePars (TPFun (TPTuple pars) _) = map (\t -> Def "" [] t Nop [DefModLocal]) pars
 dataTypePars (TPFun t _) = [Def "" [] t Nop [DefModLocal]]
-dataTypePars _ = []
-
-findCall :: String -> [(Maybe String, Exp)] -> Class -> [Def] -> Maybe Exp
-findCall name pars self fdefs = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
-	where
-		fit :: Def -> Maybe Exp
-		fit d@Field{}
-			| null pars = Just $ Call d (resolveTp (defType d) self) [] 
-			| otherwise = Nothing 
-		fit d = Just $ Call d (resolveTp (defType d) self) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
-		resolveTp tp s = case tp of
-			TPSelf -> TPClass s
-			_ -> tp
-		 
+dataTypePars _ = []		 
 		
 
 idx :: (a -> k) -> a -> (k, a)
@@ -386,7 +374,7 @@ exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 		parsTp :: [(String, DataType)] -> DataType
 		parsTp [(_, tp)] = tp
 		parsTp ps = TPTuple $ map snd ps
-
+exprDataType (Error e m) = error $ e ++ " in " ++ show m
 
 refDataType :: Class -> DataType
 refDataType e@Enum{} = TPEnum e
@@ -455,14 +443,16 @@ expr _ (D.Index e i) = do
 	e' <- expr False e
 	i' <- expr False i
 	return $ Index e' i'
-expr _ (D.Lambda pars e) = do
+expr _ l@(D.Lambda pars e) = if any (isJust.snd) pars then (do
 	env <- get
 	let pars' = map (second (dataType (envIndex env) . fromJust)) pars
 	modify $ envAddVals (map (uncurry localVal) pars')
 	e' <- expr True e
 	put env
 	let tp = exprDataType e'
-	return $ Lambda pars' e' tp
+	return $ Lambda pars' e' tp)
+	else return $ Error "Not all types are defined in lambda" l
+
 expr _ (D.Val name tp body mods) = do
 	env <- get 
 	body' <- expr False body
@@ -472,48 +462,73 @@ expr _ (D.Val name tp body mods) = do
 	modify $ envAddVals [def']
 	return $ Val def'
 
+{- expr x = error $ "No expr for " ++ show x -}
+
 exprCall :: Maybe Class -> D.Exp -> State Env Exp
 exprCall c (D.Ref n) = exprCall c $ D.Call n []
 		
-exprCall c (D.Call name pars) = do
+exprCall strictClass call@(D.Call name pars) = do
 	env <- get
 	rp <- mapM (\ (n, e) -> expr False e >>= (\ ee -> return (n, ee))) pars
 	return $
 		let
-			allDefs :: Maybe Class -> [Def]
-			allDefs Nothing = envVals env ++ allDefsInClass (envSelf env) ++ envGlobalDefIndex env ++ classConstructors
-			allDefs (Just ss) = allDefsInClass ss
-			allDefsInClass cl = classDefs cl  ++ maybe [] allDefsInClass (classExtends cl) 
-			classConstructors = (mapMaybe (constructorToDef . snd) . M.toList) (envIndex env)
-			constructorToDef cl@Class{className = n, classConstructor = constr} = 
-				Just Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl, defBody = Nop, 
-					defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor]}
-			constructorToDef cl@Enum{className = n} =
-				Just Def {defName = n, defPars = [], defType = TPArr $ refDataType cl, defBody = Nop, 
-					defMods = [DefModStatic, DefModEnumList]}
-			constructorToDef _ = Nothing
-			constructorParToPar (d, e) = Def (defName d) [] (defType d) e [DefModLocal]
-			self = fromMaybe (envSelf env) c
-			dd = resolveDef c $ correctCall $ fromMaybe (error err) $ findCall name rp self (allDefs c)
-			resolveDef Nothing call@(Call d _ _)
-				| DefModStatic `elem` defMods d = call 
-				| DefModLocal `elem` defMods d = call
-				| DefModStub `elem` defMods d = call
-				| otherwise = Dot (Self (envSelf env)) call
-			resolveDef _ call = call
-			err = "Could find reference for call " ++ callStr ++ "\n" ++
-				maybe "" (\cl -> "strict in class " ++ className cl ++ "\n") c ++
+			call' :: Exp
+			call' = maybe (Error errorString call) (resolveDef strictClass . correctCall) $ findCall name rp self (allDefs env strictClass)
+				where
+					self = fromMaybe (envSelf env) strictClass
+					resolveDef Nothing c@(Call d _ _)
+						| DefModStatic `elem` defMods d = c 
+						| DefModLocal `elem` defMods d = c
+						| DefModStub `elem` defMods d = c
+						| otherwise = Dot (Self (envSelf env)) c
+					resolveDef _ c = c
+
+			
+			errorString :: String
+			errorString = "Could find reference for call " ++ callStr ++ "\n" ++
+				maybe "" (\cl -> "strict in class " ++ className cl ++ "\n") strictClass ++
 				"in defs:\n" ++
-				(strs "\n" . map (ind . showDef False)) (allDefs c)
-			callStr = name ++ case pars of
-				[] -> ""
-				_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")"
+				(strs "\n" . map (ind . showDef False)) (allDefs env strictClass)
+				where callStr = name ++ case pars of
+					[] -> ""
+					_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")"
+
 			correctCall :: Exp -> Exp
 			correctCall (Call d tp cpars) = Call d tp (map correctExpression cpars)
 			correctExpression :: (Def, Exp) -> (Def, Exp)
 			correctExpression(d@Def{defType = (TPFun _ dtp)}, (Lambda lpars e _)) = (d, Lambda lpars e dtp)
 			correctExpression e = e
-		in dd
+		in call'
 
-{- expr x = error $ "No expr for " ++ show x -}
+
+allDefs :: Env -> Maybe Class -> [Def]
+allDefs _ (Just ss) = allDefsInClass ss
+allDefs env Nothing = envVals env ++ allDefsInClass (envSelf env) ++ envGlobalDefIndex env ++ classConstructors
+	where
+		classConstructors = (mapMaybe (constructorToDef . snd) . M.toList) (envIndex env)
+		constructorToDef cl@Class{className = n, classConstructor = constr} = 
+			Just Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl, defBody = Nop, 
+				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor]}
+		constructorToDef cl@Enum{className = n} =
+			Just Def {defName = n, defPars = [], defType = TPArr $ refDataType cl, defBody = Nop, 
+				defMods = [DefModStatic, DefModEnumList]}
+		constructorToDef _ = Nothing
+		constructorParToPar (d, e) = Def (defName d) [] (defType d) e [DefModLocal]
+
+
+allDefsInClass :: Class -> [Def]
+allDefsInClass cl = classDefs cl  ++ maybe [] allDefsInClass (classExtends cl) 
+	
+findCall :: String -> [(Maybe String, Exp)] -> Class -> [Def] -> Maybe Exp
+findCall name pars self fdefs = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
+	where
+		fit :: Def -> Maybe Exp
+		fit d@Field{}
+			| null pars = Just $ Call d (resolveTp (defType d) self) [] 
+			| otherwise = Nothing 
+		fit d = Just $ Call d (resolveTp (defType d) self) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
+		resolveTp tp s = case tp of
+			TPSelf -> TPClass s
+			_ -> tp
+
 
