@@ -95,7 +95,7 @@ createFunName (x1:x2:xs)
 
 
 intefaceFuns :: [D.Def] -> [C.Fun]
-intefaceFuns = map stm2Fun . filter D.isDef
+intefaceFuns = map stm2Fun . filter (\v -> D.DefModPrivate `notElem` D.defMods v && D.isDef v)
 
 stm2Fun :: D.Def -> C.Fun
 stm2Fun D.Def{D.defName = name, D.defPars = pars, D.defType = tp, D.defMods = mods} =
