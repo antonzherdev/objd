@@ -108,6 +108,7 @@ data Exp = Nop
 	| Return Exp
 	| Index Exp Exp
 	| Lambda [(String, DataType)] Exp DataType
+	| Val Def
 
 data CImport = CImportLib String | CImportUser String
 
@@ -170,6 +171,7 @@ instance Show Exp where
 	show (FloatConst a b) = show a ++ "." ++ show b
 	show (Index e i) = show e ++ "[" ++ show i ++ "]"
 	show (Lambda pars e tp) = strs' ", " (map (\(n, t) -> n ++ " : " ++ show t) pars) ++ " -> " ++ show tp ++ " = " ++ show e
+	show (Val d) = show d
 
 defRefPrep :: Def -> String
 defRefPrep Field{} = "<F>"
@@ -408,7 +410,11 @@ expr r (D.If cond t f) = do
 	tt <- expr r t
 	ff <- expr r f
 	return $ If c tt ff
-expr r (D.Braces es) = mapM (expr r) es >>= \v -> return $ Braces v
+expr r (D.Braces es) = do
+	env <- get
+	v <- mapM (expr r) es 
+	put env
+	return $ Braces v
 expr True D.Nop = error "Return NOP"
 expr True e = expr False e >>= \ee -> return $ Return ee
 expr _ D.Nop = return Nop
@@ -457,6 +463,14 @@ expr _ (D.Lambda pars e) = do
 	put env
 	let tp = exprDataType e'
 	return $ Lambda pars' e' tp
+expr _ (D.Val name tp body mods) = do
+	env <- get 
+	body' <- expr False body
+	let tp' = maybe (exprDataType body') (dataType $ envIndex env) tp
+	let mods' = DefModLocal : if D.DefModMutable `elem` mods then [DefModMutable] else []
+	let def' = Def{defName = name, defType = tp', defMods = mods', defPars = [], defBody = body'}
+	modify $ envAddVals [def']
+	return $ Val def'
 
 exprCall :: Maybe Class -> D.Exp -> State Env Exp
 exprCall c (D.Ref n) = exprCall c $ D.Call n []

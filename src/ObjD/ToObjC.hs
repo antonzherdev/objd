@@ -345,6 +345,7 @@ tStm _ (D.Set (Just t) l r) = let
 tStm _ (D.Set tp l r) = [C.Set tp (tExp l) (tExp r)]
 tStm D.TPVoid (D.Return e) = [C.Stm $ tExp e]
 tStm tp (D.Return e) = [C.Return $ maybeVal (D.exprDataType e, tp) (tExp e)]
+tStm _ (D.Val D.Def{D.defName = name, D.defType = tp, D.defBody = e}) = [C.Var (showDataType tp) name (tExp e)]
 tStm _ x = [C.Stm $ tExp x]
 
 addObjectToArray :: C.Exp -> C.Exp -> C.Exp

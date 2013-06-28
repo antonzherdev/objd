@@ -79,6 +79,7 @@ data Exp = Nop
 	| Call String [CallPar]
 	| Index Exp Exp
 	| Lambda [(String, Maybe DataType)] Exp
+	| Val{valName :: String, valDataType :: Maybe DataType, valBody :: Exp, valMods :: [DefMod]}
 type CallPar = (Maybe String, Exp)
 
 data DataType = DataType String [DataType] | DataTypeArr DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType]
@@ -130,6 +131,8 @@ instance Show Exp where
 	show (FloatConst a b) = show a ++ "." ++ show b
 	show (Index v i) = show v ++ "[" ++ show i ++ "]"
 	show (Lambda pars e) = strs' ", " (map (\(n, t) -> n ++ maybe "" (\tt -> " : " ++ show tt) t) pars) ++ " -> " ++ show e
+	show (Val name tp body mods) = valVar ++ " " ++ name ++ maybe "" ((" : " ++) . show) tp ++ " = " ++ show body
+		where valVar = if DefModMutable `elem` mods then "var" else "val"
 
 
 

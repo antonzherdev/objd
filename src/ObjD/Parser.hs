@@ -339,7 +339,20 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pLambda <|> pCall  <?> "Expression"
+		pTerm' = pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pLambda <|> pCall  <?> "Expression"
+		pVal = do
+			mods <- try $ do
+				m <- (string "val" >> return [] ) <|> (string "var" >> return [DefModMutable])
+				sps1
+				return m
+			name <- ident
+			sps
+			tp <- optionMaybe (pDataType False)
+			sps
+			e <- option Nop (charSps '=' >> pExp)
+			sps
+			return $ Val name tp e mods
+
 		pNumConst = do
 			i <- liftM read (many1 digit)
 			d <- optionMaybe $ do

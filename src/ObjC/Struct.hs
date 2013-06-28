@@ -213,3 +213,4 @@ expLines (Index e i) = (expLines e `app` "[") `glue` (expLines i `app` "]")
 expLines (Arr e) = ["@[" ++ strs' ", " e ++ "]"]
 expLines (Lambda pars e rtp) = ["^" ++ rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]
 	where showPar(name, tp) = tp ++ " " ++ name
+
