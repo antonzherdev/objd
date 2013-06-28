@@ -221,6 +221,7 @@ instance Show Exp where
 	show (Index e i) = show e ++ "[" ++ show i ++ "]"
 	show (Lambda pars e tp) = strs' ", " (map (\(n, t) -> n ++ " : " ++ show t) pars) ++ " -> " ++ show tp ++ " = " ++ show e
 	show (Val d) = show d
+	show (Error s e) = s ++ " in " ++ show e
 
 defRefPrep :: Def -> String
 defRefPrep Field{} = "<F>"
@@ -413,7 +414,7 @@ exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 		parsTp :: [(String, DataType)] -> DataType
 		parsTp [(_, tp)] = tp
 		parsTp ps = TPTuple $ map snd ps
-exprDataType (Error e m) = error $ e ++ " in " ++ show m
+exprDataType (Error e m) = TPVoid
 
 expr :: Bool -> D.Exp -> State Env Exp
 expr r (D.If cond t f) = do
@@ -506,6 +507,8 @@ exprCall strictClass call@(D.Call name pars gens) = do
 						| DefModStub `elem` defMods d = c
 						| otherwise = Dot (Self (envSelf env)) c
 					resolveDef _ c = c
+			pars' = case call' of
+				(Call _ _ cpars) -> (map correctExpression cpars)
 			
 			extendList :: Int -> [a] -> [Maybe a]
 			extendList l a
@@ -532,8 +535,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 						
 			determineGenericType :: (Class, Maybe D.DataType) -> (String, DataType)
 			determineGenericType (g, Just tp) = (className g, (setStructGenericFlag True . dataType (envIndex env)) tp)
-			determineGenericType (g, _) = (className g, case call' of
-				(Call _ _ pars') -> fromMaybe (error $ "Could not determine generic type for " ++ show g ++ " in " ++ show call) $ 
+			determineGenericType (g, _) = (className g, fromMaybe (error $ "Could not determine generic type for " ++ show g ++ " in " ++ show call) $ 
 					(listToMaybe . mapMaybe ( (defType *** exprDataType)>>> tryDetermine g) ) pars'
 				)
 				where 
@@ -553,15 +555,16 @@ exprCall strictClass call@(D.Call name pars gens) = do
 					_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")"
 
 			correctCall :: Exp -> Exp
-			correctCall (Call d tp cpars) = Call d (correctType tp) (map correctExpression cpars)
+			correctCall (Call d tp _) = Call d (correctType tp) pars'
+
 			correctExpression :: (Def, Exp) -> (Def, Exp)
-			correctExpression(d@Def{defType = (TPFun _ dtp)}, Lambda lpars e _) = (d, Lambda lpars e dtp)
-			correctExpression(d@Def{defType = (TPFun stp dtp)}, Error _ (D.Lambda lambdaPars lambdaExpr)) = (d, Lambda pars' expr' dtp)
+			correctExpression(d@Def{defType = (TPFun _ TPGeneric{})}, Lambda lpars e dtp) = (d, Lambda lpars e (setStructGenericFlag True dtp))
+			correctExpression(d@Def{defType = (TPFun stp dtp)}, Error _ (D.Lambda lambdaPars lambdaExpr)) = (d, Lambda lpars' expr' dtp)
 				where
-					pars' = zip (map fst lambdaPars) (stps stp)
+					lpars' = zip (map fst lambdaPars) (stps stp)
 					stps (TPTuple tps) = tps
 					stps tp = [tp]
-					env' = envAddVals (map (uncurry localVal) pars') env
+					env' = envAddVals (map (uncurry localVal) lpars') env
 					expr' = evalState (expr True lambdaExpr) env'
 			correctExpression e = e
 			
@@ -593,7 +596,7 @@ allDefsInClass Generic{} = []
 allDefsInClass cl = classDefs cl  ++ maybe [] allDefsInClass (classExtends cl) 
 	
 findCall :: (String, [(Maybe String, Exp)]) -> (Env, DataType, [Def]) -> Maybe Exp
-findCall (name,pars) (env, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
+findCall (name,pars) (_, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
 	where
 		fit :: Def -> Maybe Exp
 		fit d@Field{}

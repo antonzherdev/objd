@@ -288,7 +288,8 @@ showDataType (D.TPGeneric _) = "id"
 showDataType (D.TPSelf) = "id"
 showDataType (D.TPFun s d) = showDataType d ++ "(^)" ++ "(" ++ showDataType s ++ ")"
 showDataType (D.TPClass c _) = D.className c ++ "*"
-showDataType (D.TPStruct c _) = D.className c
+showDataType (D.TPStruct _ True) = "id"
+showDataType (D.TPStruct c False) = D.className c
 showDataType tp = show tp
 
 {- Exp -}
@@ -327,6 +328,7 @@ tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
 tExp (D.Index e i) = C.Index (tExp e) (tExp i)
 tExp (D.Lambda pars e rtp) = C.Lambda (map (second showDataType) pars) (tStm rtp e) (showDataType rtp)
 
+tExp e@(D.Error _ _) = error$ show e
 tExp x = error $ "No tExp for " ++ show x
 
 tStm :: D.DataType -> D.Exp -> [C.Stm]
@@ -345,12 +347,12 @@ tStm _ (D.Set (Just t) l r) = let
 		rtp = D.exprDataType r
 	in case ltp of
 		D.TPArr _ -> [C.Set Nothing l' (addObjectToArray l' r')]
-		_ -> [C.Set (Just t) l' (maybeVal (ltp, rtp) r')]
-tStm _ (D.Set tp l r) = [C.Set tp (tExp l) (tExp r)]
+		_ -> [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
+tStm _ (D.Set tp l r) = [C.Set tp (tExp l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp r))]
 tStm D.TPVoid (D.Return e) = [C.Stm $ tExp e]
 tStm tp (D.Return e) = [C.Return $ maybeVal (D.exprDataType e, tp) (tExp e)]
 tStm _ (D.Val D.Def{D.defName = name, D.defType = tp, D.defBody = e}) = [C.Var (showDataType tp) name 
-	(maybeVal (tp, D.exprDataType e) (tExp e))]
+	(maybeVal (D.exprDataType e, tp) (tExp e))]
 tStm _ x = [C.Stm $ tExp x]
 
 addObjectToArray :: C.Exp -> C.Exp -> C.Exp
@@ -359,6 +361,6 @@ addObjectToArray a obj = C.Call a "arrayByAdding" [("object", obj)]
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp
 maybeVal (D.TPStruct _ False, D.TPGeneric _) e = C.CCall "val" [e]
 maybeVal (D.TPGeneric _, D.TPStruct s False) e = C.CCall "uval" [C.Ref (D.className s), e]
-maybeVal (D.TPStruct _ False, D.TPStruct s True) e = C.CCall "uval" [C.Ref (D.className s), e]
-maybeVal (D.TPStruct _ True, D.TPStruct _ False) e = C.CCall "val" [e]
+maybeVal (D.TPStruct _ True, D.TPStruct s False) e = C.CCall "uval" [C.Ref (D.className s), e]
+maybeVal (D.TPStruct _ False, D.TPStruct _ True) e = C.CCall "val" [e]
 maybeVal _ e = e
