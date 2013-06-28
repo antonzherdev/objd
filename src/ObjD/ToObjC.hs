@@ -298,6 +298,7 @@ tPars = map (\(d, e) -> (D.defName d, maybeVal (D.exprDataType e, D.defType d) $
 
 tExp :: D.Exp -> C.Exp
 tExp (D.IntConst i) = C.IntConst i
+tExp (D.StringConst i) = C.StringConst i
 tExp (D.Nil) = C.Nil
 tExp (D.BoolConst i) = C.BoolConst i
 tExp (D.FloatConst a b) = C.FloatConst a b

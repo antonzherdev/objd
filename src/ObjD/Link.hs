@@ -137,6 +137,7 @@ instance Show DataType where
 
 data Exp = Nop 
 	| IntConst Int 
+	| StringConst String 
 	| BoolConst Bool 
 	| FloatConst Int Int
 	| Braces [Exp]
@@ -216,6 +217,7 @@ instance Show Exp where
 		where
 			showPar (Def {defName = name}, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
+	show (StringConst i) = show i
 	show Nil = "nil"
 	show (BoolConst i) = show i
 	show (FloatConst a b) = show a ++ "." ++ show b
@@ -396,6 +398,7 @@ exprDataType (Braces []) = TPVoid
 exprDataType (Braces es) = exprDataType $ last es
 exprDataType (Nop) = TPVoid
 exprDataType (IntConst _ ) = TPInt
+exprDataType (StringConst _ ) = TPString
 exprDataType Nil = TPVoid
 exprDataType (BoolConst _ ) = TPBool
 exprDataType (FloatConst _ _) = TPFloat
@@ -440,6 +443,7 @@ expr True D.Nop = error "Return NOP"
 expr True e = expr False e >>= \ee -> return $ Return ee
 expr _ D.Nop = return Nop
 expr _ (D.IntConst i) = return $ IntConst i
+expr _ (D.StringConst i) = return $ StringConst i
 expr _ D.Nil = return Nil
 expr _ (D.BoolConst i) = return $ BoolConst i
 expr _ (D.FloatConst a b) = return $ FloatConst a b

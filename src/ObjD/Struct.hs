@@ -63,6 +63,7 @@ data Par = Par { parName :: String, parType :: DataType }
 data Exp = Nop 
 	| IntConst Int 
 	| BoolConst Bool
+	| StringConst String
 	| FloatConst Int Int
 	| Arr [Exp]
 	| Braces [Exp]
@@ -130,6 +131,7 @@ instance Show Exp where
 			showPar (Nothing, e) = show e
 			showPar (Just name, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
+	show (StringConst i) = show i
 	show (BoolConst i) = show i
 	show (FloatConst a b) = show a ++ "." ++ show b
 	show (Index v i) = show v ++ "[" ++ show i ++ "]"

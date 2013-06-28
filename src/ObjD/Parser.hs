@@ -343,13 +343,17 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pArr <|> pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pLambda <|> pCall  <?> "Expression"
+		pTerm' = pString <|> pArr <|> pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pLambda <|> pCall  <?> "Expression"
 		pArr = do
 			charSps '['
 			exps <- pExp `sepBy` charSps ','
 			sps
 			charSps ']'
 			return $ Arr exps
+		pString = do
+			char '"'
+			s <- manyTill anyChar (char '"')
+			return $ StringConst s
 		pVal = do
 			mods <- try $ do
 				m <- (string "val" >> return [] ) <|> (string "var" >> return [DefModMutable])
