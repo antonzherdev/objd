@@ -302,7 +302,14 @@ tExp (D.Nil) = C.Nil
 tExp (D.BoolConst i) = C.BoolConst i
 tExp (D.FloatConst a b) = C.FloatConst a b
 tExp (D.BoolOp t l r) = C.BoolOp t (tExp l) (tExp r)
-tExp (D.MathOp t l r) = C.MathOp t (tExp l) (tExp r)
+tExp (D.MathOp t l r) = let 
+		l' = tExp l
+		r' = tExp r
+		ltp = D.exprDataType l
+		{-rtp = D.exprDataType r-}
+	in case ltp of
+		D.TPArr _ -> addObjectToArray l' r'
+		_ -> C.MathOp t (tExp l) (tExp r)
 tExp (D.PlusPlus e) = C.PlusPlus (tExp e)
 tExp (D.MinusMinus e) = C.MinusMinus (tExp e)
 
