@@ -311,6 +311,7 @@ tExp (D.MathOp t l r) = let
 		{-rtp = D.exprDataType r-}
 	in case ltp of
 		D.TPArr _ -> addObjectToArray l' r'
+		D.TPMap _ _ -> addKVToMap l' r
 		_ -> C.MathOp t (tExp l) (tExp r)
 tExp (D.PlusPlus e) = C.PlusPlus (tExp e)
 tExp (D.MinusMinus e) = C.MinusMinus (tExp e)
@@ -359,6 +360,7 @@ tStm _ (D.Set (Just t) l r) = let
 		rtp = D.exprDataType r
 	in case ltp of
 		D.TPArr _ -> [C.Set Nothing l' (addObjectToArray l' r')]
+		D.TPMap _ _ -> [C.Set Nothing l' (addKVToMap l' r)]
 		_ -> [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
 tStm _ (D.Set tp l r) = [C.Set tp (tExp l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp r))]
 tStm D.TPVoid (D.Return e) = [C.Stm $ tExp e]
@@ -369,6 +371,10 @@ tStm _ x = [C.Stm $ tExp x]
 
 addObjectToArray :: C.Exp -> C.Exp -> C.Exp
 addObjectToArray a obj = C.Call a "arrayByAdding" [("object", obj)]
+
+addKVToMap :: C.Exp -> D.Exp -> C.Exp
+addKVToMap a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tExp v), ("forKey", tExp k)]
+
 
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp
 maybeVal (D.TPStruct _ False, D.TPGeneric _) e = C.CCall "val" [e]
