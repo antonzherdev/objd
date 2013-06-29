@@ -454,8 +454,11 @@ exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 		parsTp [(_, tp)] = tp
 		parsTp ps = TPTuple $ map snd ps
 exprDataType (Error _ _) = TPUnknown
-exprDataType (Arr []) = TPUnknown
+exprDataType (Arr []) = TPArr TPUnknown
+exprDataType (Map []) = TPMap TPUnknown TPUnknown
 exprDataType (Arr exps) = TPArr $ exprDataType $ head exps
+exprDataType (Map exps) = let (k, v) = (exprDataType *** exprDataType) $ head exps 
+	in TPMap k v
 exprDataType (Tuple exps) = TPTuple $ map exprDataType exps
 exprDataType (Val Def{defType = tp}) = tp
 exprDataType x = error $ "No exprDataType for " ++ show x

@@ -287,6 +287,7 @@ showDataType D.TPBool = "BOOL"
 showDataType (D.TPTrait _) = "id"
 showDataType (D.TPGeneric _) = "id"
 showDataType (D.TPSelf) = "id"
+showDataType (D.TPFun D.TPVoid d) = showDataType d ++ "(^)" ++ "()"
 showDataType (D.TPFun s d) = showDataType d ++ "(^)" ++ "(" ++ showDataType s ++ ")"
 showDataType (D.TPClass c _) = D.className c ++ "*"
 showDataType (D.TPStruct _ True) = "id"
@@ -335,7 +336,9 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)
 	| D.DefModEnumList `elem` mods = C.Call (C.Ref name) "values" []
 	| otherwise = C.CCall name (map (tExp . snd) pars)
 tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
-tExp (D.Index e i) = C.Index (tExp e) (tExp i)
+tExp (D.Index e i) = case D.exprDataType e of
+	D.TPMap _ _ -> C.Call (tExp e) "optionObjectFor" [("key", tExp i)]
+	_ -> C.Index (tExp e) (tExp i)
 tExp (D.Lambda pars e rtp) = C.Lambda (map (second showDataType) pars) (tStm rtp e) (showDataType rtp)
 tExp (D.Arr exps) = C.Arr $ map tExp exps
 tExp (D.Map exps) = C.Map $ map (tExp *** tExp) exps
