@@ -207,24 +207,24 @@ cls (ocidx, glidx) cl = self
 		fieldsMap = M.fromList $ map (idx defName) fields
 		decls = D.classFields cl ++ filter D.isDecl (D.classBody cl)
 		defs = map (def env) . filter D.isDef $ D.classBody cl
-		constr = map (\f -> (findTp "field" fieldsMap (D.defName f), evalState (expr False (D.defBody f)) env) ) $ D.classFields cl
+		constr = map (\f -> (findTp "field" fieldsMap (D.defName f), evalState (expr (D.defBody f)) env) ) $ D.classFields cl
 		generics = map generic (D.classGenerics cl)
 		generic (D.Generic name) = Generic name
 		enumItem (D.EnumItem name pars) = EnumItem name enumItemPars
 			where
-				enumItemPars = zip (map fst constr) (map ((\e -> evalState (expr False e) env) . snd) pars)
+				enumItemPars = zip (map fst constr) (map ((\e -> evalState (expr e) env) . snd) pars)
 
 field :: D.ClassStm -> State Env Def
 field D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e, D.declAccs = accs} = do
-	i <- expr False e
+	i <- expr e
 	env <- get
 	let 
 		tp' = getDataType env tp i
-		acc' (D.DeclAccRead accMods ex) = liftM (FieldAccRead (accMods' accMods)) (expr True ex)
+		acc' (D.DeclAccRead accMods ex) = liftM (FieldAccRead (accMods' accMods) . addReturn) (expr ex)
 		acc' (D.DeclAccWrite accMods ex) = do
 			env' <- get
 			modify $ envAddVals [Def name [] tp' Nop [DefModLocal] []]
-			v <- expr False ex 
+			v <- expr ex 
 			put env'
 			return $ FieldAccWrite (accMods' accMods) v
 		accMods' = map accMod'
@@ -253,8 +253,6 @@ def env ccc = evalState (stateDef ccc) env'
 			let 
 				 pars = linkDefPars (envIndex env') opars
 				 mods' = translateMods mods
-				 needReturn (Just (D.DataType "void" _)) = False
-				 needReturn _ = True
 				 in 
 				(case body of
 					D.Nop -> return Def {defMods = DefModAbstract : mods' , defName = name, defGenerics = generics',
@@ -262,11 +260,12 @@ def env ccc = evalState (stateDef ccc) env'
 							defType = dataType (envIndex env') (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
 					_   -> do 
 						modify $ envAddVals pars
-						b <- expr (needReturn tp) body
+						b <- expr body
 						put env'
+						let tp' = getDataType env' tp b
 						return Def {defMods = mods', defName = name, defGenerics = generics',
 							defPars = pars,
-							defType = getDataType env' tp b, defBody = b})
+							defType = tp', defBody = maybeAddReturn tp' b})
 
 linkDefPars :: ClassIndex -> [D.Par] -> [Def]
 linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Def pnm [] (dataType cidx ttt) Nop [DefModLocal] [])
@@ -414,6 +413,17 @@ instance Show Exp where
 	show (Map exps) = "["  ++ strs' ", " exps ++ "]"
 	show (Tuple exps) = "("  ++ strs' ", " exps ++ ")"
 
+maybeAddReturn :: DataType -> Exp -> Exp
+maybeAddReturn TPVoid e = e
+maybeAddReturn _ e = addReturn e
+
+addReturn :: Exp -> Exp
+addReturn (If cond t f) = If cond (addReturn t) (addReturn f)
+addReturn (Braces []) = error "Return empty braces"
+addReturn (Braces es) = Braces $ init es ++ [addReturn (last es)]
+addReturn Nop = error "Return NOP"
+addReturn e = Return e
+
 
 exprDataType :: Exp -> DataType
 exprDataType (If _ t _) = exprDataType t
@@ -450,38 +460,34 @@ exprDataType (Tuple exps) = TPTuple $ map exprDataType exps
 exprDataType (Val Def{defType = tp}) = tp
 exprDataType x = error $ "No exprDataType for " ++ show x
 
-expr :: Bool -> D.Exp -> State Env Exp
-expr r (D.If cond t f) = do
-	c <- expr False cond
-	tt <- expr r t
-	ff <- expr r f
+expr :: D.Exp -> State Env Exp
+expr (D.If cond t f) = do
+	c <- expr cond
+	tt <- expr t
+	ff <- expr f
 	return $ If c tt ff
-expr True (D.Braces []) = error "Return empty braces"
-expr _ (D.Braces []) = return Nop
-expr r (D.Braces es) = do
+expr (D.Braces []) = return Nop
+expr (D.Braces es) = do
 	env <- get
-	f <- mapM (expr False) (init es)
-	l <- expr r (last es)
+	f <- mapM expr es
 	put env
-	return $ Braces $ f ++ [l]
-expr True D.Nop = error "Return NOP"
-expr True e = expr False e >>= \ee -> return $ Return ee
-expr _ D.Nop = return Nop
-expr _ (D.IntConst i) = return $ IntConst i
-expr _ (D.StringConst i) = return $ StringConst i
-expr _ D.Nil = return Nil
-expr _ (D.BoolConst i) = return $ BoolConst i
-expr _ (D.FloatConst a b) = return $ FloatConst a b
-expr _ (D.BoolOp tp a b) = do
-	aa <- expr False a
-	bb <- expr False b
+	return $ Braces f
+expr D.Nop = return Nop
+expr (D.IntConst i) = return $ IntConst i
+expr (D.StringConst i) = return $ StringConst i
+expr D.Nil = return Nil
+expr (D.BoolConst i) = return $ BoolConst i
+expr (D.FloatConst a b) = return $ FloatConst a b
+expr (D.BoolOp tp a b) = do
+	aa <- expr a
+	bb <- expr b
 	return $ BoolOp tp aa bb
-expr _ (D.MathOp tp a b) = do
-	aa <- expr False a
-	bb <- expr False b
+expr (D.MathOp tp a b) = do
+	aa <- expr a
+	bb <- expr b
 	return $ MathOp tp aa bb
-expr _ d@(D.Dot a b) = do
-	aa <- expr False a
+expr d@(D.Dot a b) = do
+	aa <- expr a
 	case aa of
 		Error s _ -> return $ Error s d
 		_ -> do
@@ -489,47 +495,47 @@ expr _ d@(D.Dot a b) = do
 			bb <- exprCall (Just $ exprDataType aa)  b
 			put env
 			return $ Dot aa bb
-expr _ (D.Set tp a b) = do
-	aa <- expr False a
-	bb <- expr False b
+expr (D.Set tp a b) = do
+	aa <- expr a
+	bb <- expr b
 	return $ Set tp aa (implicitConvertsion (exprDataType aa) bb)
-expr _ (D.PlusPlus e) = do
-	aa <- expr False e
+expr (D.PlusPlus e) = do
+	aa <- expr e
 	return $ PlusPlus aa
-expr _ (D.MinusMinus e) = do
-	aa <- expr False e
+expr (D.MinusMinus e) = do
+	aa <- expr e
 	return $ MinusMinus aa
-expr _ D.Self = do
+expr D.Self = do
 	env <- get
 	return $ Self $ envSelf env
-expr _ r@D.Call{} = exprCall Nothing r
-expr _ (D.Index e i) = do
-	e' <- expr False e
-	i' <- expr False i
+expr r@D.Call{} = exprCall Nothing r
+expr (D.Index e i) = do
+	e' <- expr e
+	i' <- expr i
 	return $ Index e' i'
-expr _ l@(D.Lambda pars e) = if any (isJust.snd) pars then (do
+expr l@(D.Lambda pars e) = if any (isJust.snd) pars then (do
 	env <- get
 	let pars' = map (second (dataType (envIndex env) . fromJust)) pars
 	modify $ envAddVals (map (uncurry localVal) pars')
-	e' <- expr True e
+	e' <- expr e
 	put env
 	let tp = exprDataType e'
 	return $ Lambda pars' e' tp)
 	else return $ Error "Not all types are defined in lambda" l
 
-expr _ (D.Val name tp body mods) = do
+expr (D.Val name tp body mods) = do
 	env <- get 
-	body' <- expr False body
+	body' <- expr body
 	let tp' = setStructGenericFlag False $ maybe (exprDataType body') (dataType $ envIndex env) tp
 	let mods' = DefModLocal : [DefModMutable | D.DefModMutable `elem` mods]
 	let def' = Def{defName = name, defType = tp', defMods = mods', defPars = [], defBody = body', defGenerics = []}
 	modify $ envAddVals [def']
 	return $ Val def'
-expr _ (D.Arr items) = do
-	items' <- mapM (expr False) items
+expr (D.Arr items) = do
+	items' <- mapM expr items
 	return $ Arr items'
-expr _ (D.Tuple items) = do
-	items' <- mapM (expr False) items
+expr (D.Tuple items) = do
+	items' <- mapM expr items
 	return $ Tuple items'
 
 {- expr x = error $ "No expr for " ++ show x -}
@@ -541,7 +547,7 @@ expr _ (D.Tuple items) = do
 exprCall :: Maybe DataType -> D.Exp -> State Env Exp		
 exprCall strictClass call@(D.Call name pars gens) = do
 	env <- get
-	rp <- mapM (\ (n, e) -> expr False e >>= (\ ee -> return (n, ee))) pars
+	rp <- mapM (\ (n, e) -> expr e >>= (\ ee -> return (n, ee))) pars
 	return $
 		let
 			self = fromMaybe (envSelf env) strictClass
@@ -632,7 +638,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 					stps (TPTuple tps) = tps
 					stps tp = [tp]
 					env' = envAddVals (map (uncurry localVal) lpars') env
-					expr' = evalState (expr True lambdaExpr) env'
+					expr' = addReturn $ evalState (expr lambdaExpr) env'
 					tp' = setStructGenericFlag True $ exprDataType expr'
 			correctExpression(d@Def{defType = (TPFun _ _)}, Error es e) = correctExpression (d, Error es $ D.Lambda [("_", Nothing)] e)
 			correctExpression e = e
@@ -682,9 +688,9 @@ implicitConvertsion TPMap{} (Arr []) = Map []
 implicitConvertsion dtp e = let stp = exprDataType e
 	in case (stp, dtp) of
 		(TPFun{}, TPFun{}) -> e
-		(_, TPFun TPVoid fdtp) -> Lambda [] e fdtp
-		(_, TPFun (TPTuple stps) fdtp) -> Lambda ((map(\(tp, i) -> ("_" ++ show i, tp)) . zipWithIndex) stps) e fdtp
-		(_, TPFun fstp fdtp) -> Lambda [("_", fstp)] e fdtp
+		(_, TPFun TPVoid fdtp) -> Lambda [] (maybeAddReturn fdtp e) fdtp
+		(_, TPFun (TPTuple stps) fdtp) -> Lambda ((map(\(tp, i) -> ("_" ++ show i, tp)) . zipWithIndex) stps) (maybeAddReturn fdtp e) fdtp
+		(_, TPFun fstp fdtp) -> Lambda [("_", fstp)] (maybeAddReturn fdtp e) fdtp
 		_ -> e
 
 
