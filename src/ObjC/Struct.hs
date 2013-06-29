@@ -64,6 +64,7 @@ data Exp =
 	| InlineIf Exp Exp Exp
 	| Index Exp Exp
 	| Arr [Exp]
+	| Map [(Exp, Exp)]
 	| Lambda [(String, String)] [Stm] String
 	
 showStms :: [Stm] -> String
@@ -211,6 +212,7 @@ expLines (MinusMinus e) = appendLast "--" (expLines e)
 expLines (InlineIf c t f) = (expLines c `app` " ? ") `glue` (expLines t `app` " : ") `glue` (expLines f) 
 expLines (Index e i) = (expLines e `app` "[") `glue` (expLines i `app` "]")
 expLines (Arr e) = ["@[" ++ strs' ", " e ++ "]"]
+expLines (Map e) = ["@{" ++ (strs ", " . map(\(k, v) -> show k ++ " : " ++ show v) ) e ++ "}"]
 expLines (Lambda pars e rtp) = ["^" ++ rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]
 	where showPar(name, tp) = tp ++ " " ++ name
 

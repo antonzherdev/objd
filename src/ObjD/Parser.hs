@@ -61,14 +61,18 @@ pType = tp
 				string "->"
 				sps
 				tp True
-			return $ maybe t (\rr -> DataTypeFun t rr) r
+			sps
+			opt <- option False $ charSps '?' >> return True
+			let rtp = maybe t (\rr -> DataTypeFun t rr) r
+			return $ if opt then DataTypeOption rtp else rtp
 		arr = do
 			charSps '['
-			t <- tp False
+			k <- tp False
 			sps
+			v <- optionMaybe $ charSps ':' >> tp False
 			char ']'
 			sps
-			return $ DataTypeArr t
+			return $ maybe (DataTypeArr k) (DataTypeMap k) v
 		tuple = do
 			charSps '('
 			t <- tp False `sepBy` charSps ','
@@ -159,7 +163,7 @@ pEnum = do
 
 
 pGenerics :: Parser [Generic]
-pGenerics = option [] $ between (charSps '<') (charSps '>') (pClassGeneric `sepBy` char ',')
+pGenerics = option [] $ between (charSps '<') (charSps '>') (pClassGeneric `sepBy` charSps ',')
 	where
 		pClassGeneric = do
 			name <- ident
@@ -343,13 +347,21 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pString <|> pArr <|> pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pLambda <|> pCall  <?> "Expression"
+		pTerm' = pTuple <|> pString <|> pArr <|> pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pLambda <|> pCall  <?> "Expression"
 		pArr = do
 			charSps '['
 			exps <- pExp `sepBy` charSps ','
 			sps
 			charSps ']'
 			return $ Arr exps
+		pTuple = do
+			charSps '('
+			exps <- pExp `sepBy1` charSps ','
+			sps
+			charSps ')'
+			return $ case exps of
+				[e] -> e
+				_ -> Tuple exps
 		pString = do
 			char '"'
 			s <- manyTill anyChar (char '"')

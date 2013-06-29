@@ -69,95 +69,6 @@ data EnumItem = EnumItem {enumFieldName :: String, enumFieldPars:: [(Def, Exp)]}
 
 type Constructor = [(Def, Exp)]
 
-data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid | TPClass Class [DataType] | TPStruct Class Bool | TPEnum Class | TPTrait Class 
-	| TPGeneric Class | TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown
-isVoid :: DataType -> Bool
-isVoid TPVoid = True
-isVoid _ = False
-
-refDataType :: Class -> [DataType] -> DataType
-refDataType e@Enum{} _ = TPEnum e
-refDataType cl gens
-	| isStruct cl = TPStruct cl False
-	| isTrait cl = TPTrait cl
-	| isGeneric cl = TPGeneric cl
-	| otherwise = TPClass cl gens
-
-dataTypeClass :: Env -> DataType -> Class
-dataTypeClass _ (TPClass c _) = c
-dataTypeClass _ (TPStruct c _) = c
-dataTypeClass _ (TPEnum c) = c
-dataTypeClass _ (TPTrait c) = c
-dataTypeClass _ (TPGeneric c) = c
-dataTypeClass env (TPArr _) = findTp "array class" (envIndex env) "ODArray"
-
-dataTypeGenerics :: Env -> DataType -> [DataType]
-dataTypeGenerics _ (TPClass _ g) = g
-dataTypeGenerics _ (TPArr g) = [g]
-dataTypeGenerics _ _ = []
-
-setStructGenericFlag :: Bool -> DataType -> DataType
-setStructGenericFlag b (TPStruct c _) = TPStruct c b
-setStructGenericFlag _ t = t
-
-dataType :: ClassIndex -> D.DataType -> DataType
-dataType cidx (D.DataType name gens) = case name of
-	"int" -> TPInt
-	"uint" -> TPUInt
-	"float" -> TPFloat
-	"void" -> TPVoid
-	"string" -> TPString
-	"bool" -> TPBool
-	"self" -> TPSelf
-	_ -> refDataType (findTp "class" cidx name) (map (dataType cidx) gens)
-dataType cidx (D.DataTypeArr tp) = TPArr $ setStructGenericFlag True $ dataType cidx tp
-dataType cidx (D.DataTypeFun s d) = TPFun (dataType cidx s) (dataType cidx d)
-dataType cidx (D.DataTypeTuple tps) = TPTuple $ map (setStructGenericFlag True . dataType cidx) tps
-
-
-
-instance Show DataType where
-	show TPInt = "int"
-	show TPUInt = "uint"
-	show TPFloat = "float"
-	show TPVoid = "void"
-	show TPString = "string"
-	show TPBool = "bool"
-	show TPSelf = "self"
-	show TPUnknown = "???"
-	show (TPClass c []) = className c
-	show (TPClass c gens) = className c ++ "<" ++ strs' ", " gens ++ ">"
-	show (TPTrait c) = className c ++ "*"
-	show (TPEnum c) = className c ++ "*"
-	show (TPGeneric c) = className c ++ "*"
-	show (TPStruct c s) = className c ++ if s then "^" else "%"
-	show (TPArr t) = "[" ++ show t ++ "]"
-	show (TPFun s d) = show s ++ " -> " ++ show d
-	show (TPTuple tps) = "(" ++ strs' ", " tps ++ ")"
-
-data Exp = Nop 
-	| IntConst Int 
-	| StringConst String 
-	| BoolConst Bool 
-	| FloatConst Int Int
-	| Braces [Exp]
-	| If Exp Exp Exp
-	| Self DataType
-	| Nil
-	| BoolOp BoolTp Exp Exp
-	| MathOp MathTp Exp Exp
-	| PlusPlus Exp
-	| MinusMinus Exp
-	| Dot Exp Exp
-	| Set (Maybe MathTp) Exp Exp
-	| Call Def DataType [(Def, Exp)]
-	| Return Exp
-	| Index Exp Exp
-	| Lambda [(String, DataType)] Exp DataType
-	| Val Def
-	| Error String D.Exp 
-	| Arr [Exp]
-
 data CImport = CImportLib String | CImportUser String
 
 instance Show File where
@@ -198,34 +109,6 @@ showDef f Def {defName = name , defPars = pars, defType = tp, defBody = e} =
 showDef f Field {defName = nm, defMods = mods, defType = tp, defBody = e } =
 	(if DefModMutable `elem` mods then "var" else "val") ++ " " ++ nm ++ if f then " : " ++ show tp ++ show e else ""
 
-instance Show Exp where
-	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
-	show (If cond t Nop) = "if(" ++ show cond ++ ") " ++ show t
-	show (If cond t f) = "if(" ++ show cond ++ ") " ++ show t ++ "\nelse " ++ show f
-	show Nop = ""
-	show (Self c) = "<" ++ show c ++ ">self"
-	show (Return e) = "return " ++ show e
-	show (Set Nothing l r) = showOp l "=" r
-	show (Set (Just t) l r) = showOp l (show t ++ "=") r
-	show (BoolOp t l r) = showOp l (show t) r
-	show (MathOp t l r) = showOp l (show t) r
-	show (PlusPlus e) = show e ++ "++"
-	show (MinusMinus e) = show e ++ "--"
-	show (Dot l r) = showOp' l "." r
-	show (Call f tp []) = defRefPrep f ++ defName f ++ "<" ++ show tp ++ ">"
-	show (Call dd tp pars) = defRefPrep dd ++ defName dd ++ "<" ++ show tp ++ ">" ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
-		where
-			showPar (Def {defName = name}, e) = name ++ " = " ++ show e
-	show (IntConst i) = show i
-	show (StringConst i) = show i
-	show Nil = "nil"
-	show (BoolConst i) = show i
-	show (FloatConst a b) = show a ++ "." ++ show b
-	show (Index e i) = show e ++ "[" ++ show i ++ "]"
-	show (Lambda pars e tp) = strs' ", " (map (\(n, t) -> n ++ " : " ++ show t) pars) ++ " -> " ++ show tp ++ " = " ++ show e
-	show (Val d) = show d
-	show (Error s e) = s ++ " in " ++ show e
-	show (Arr exps) = "["  ++ strs' ", " exps ++ "]"
 
 defRefPrep :: Def -> String
 defRefPrep Field{} = "<F>"
@@ -268,7 +151,7 @@ file fidx (D.File name stms) = fl
 		visibleFiles :: [D.FileStm] -> [File]
 		visibleFiles = mapMaybe (getFile . D.impString) . filter D.isImport
 		kernelFiles :: [File]
-		kernelFiles = map (findTp "file" fidx) ["ODArray"]
+		kernelFiles = map (findTp "file" fidx) ["ODArray", "ODOption", "ODMap"]
 		cImports = mapMaybe toCImport stms
 		toCImport (D.Import s D.ImportTypeCUser) = Just $ CImportUser s
 		toCImport (D.Import s D.ImportTypeCLib) = Just $ CImportLib s
@@ -348,7 +231,7 @@ field D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody =
 		accMod' D.DeclAccModPrivate = FieldAccModPrivate 
 		in do
 			accs' <- mapM acc' accs
-			return Field {defMods = translateMods mods, defName = name, defType = tp', defBody = i, fieldAccs = accs'}
+			return Field {defMods = translateMods mods, defName = name, defType = tp', defBody = implicitConvertsion tp' i, fieldAccs = accs'}
 
 		
 
@@ -388,8 +271,148 @@ def env ccc = evalState (stateDef ccc) env'
 linkDefPars :: ClassIndex -> [D.Par] -> [Def]
 linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Def pnm [] (dataType cidx ttt) Nop [DefModLocal] [])
 
+{------------------------------------------------------------------------------------------------------------------------------ 
+ - DataType 
+ ------------------------------------------------------------------------------------------------------------------------------}
+
+data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid | TPClass Class [DataType] | TPStruct Class Bool | TPEnum Class | TPTrait Class 
+	| TPGeneric Class | TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown | TPMap DataType DataType
+	| TPOption DataType
+isVoid :: DataType -> Bool
+isVoid TPVoid = True
+isVoid _ = False
+
+refDataType :: Class -> [DataType] -> DataType
+refDataType e@Enum{} _ = TPEnum e
+refDataType cl gens
+	| isStruct cl = TPStruct cl False
+	| isTrait cl = TPTrait cl
+	| isGeneric cl = TPGeneric cl
+	| otherwise = TPClass cl gens
+
+dataTypeClass :: Env -> DataType -> Class
+dataTypeClass _ (TPClass c _) = c
+dataTypeClass _ (TPStruct c _) = c
+dataTypeClass _ (TPEnum c) = c
+dataTypeClass _ (TPTrait c) = c
+dataTypeClass _ (TPGeneric c) = c
+dataTypeClass env (TPArr _) = findTp "array class" (envIndex env) "ODArray"
+dataTypeClass env (TPOption _) = findTp "option class" (envIndex env) "ODOption"
+dataTypeClass env (TPMap _ _) = findTp "map class" (envIndex env) "ODMap"
+
+dataTypeGenerics :: Env -> DataType -> [DataType]
+dataTypeGenerics _ (TPClass _ g) = g
+dataTypeGenerics _ (TPArr g) = [g]
+dataTypeGenerics _ (TPMap k v) = [k, v]
+dataTypeGenerics _ (TPOption v) = [v]
+dataTypeGenerics _ _ = []
+
+setStructGenericFlag :: Bool -> DataType -> DataType
+setStructGenericFlag b (TPStruct c _) = TPStruct c b
+setStructGenericFlag _ t = t
+
+dataType :: ClassIndex -> D.DataType -> DataType
+dataType cidx (D.DataType name gens) = case name of
+	"int" -> TPInt
+	"uint" -> TPUInt
+	"float" -> TPFloat
+	"void" -> TPVoid
+	"string" -> TPString
+	"bool" -> TPBool
+	"self" -> TPSelf
+	_ -> refDataType (findTp "class" cidx name) (map (dataType cidx) gens)
+dataType cidx (D.DataTypeArr tp) = TPArr $ setStructGenericFlag True $ dataType cidx tp
+dataType cidx (D.DataTypeMap k v) = TPMap (setStructGenericFlag True $ dataType cidx k) (setStructGenericFlag True $ dataType cidx v)
+dataType cidx (D.DataTypeFun s d) = TPFun (dataType cidx s) (dataType cidx d)
+dataType cidx (D.DataTypeTuple tps) = TPTuple $ map (setStructGenericFlag True . dataType cidx) tps
+dataType cidx (D.DataTypeOption t) = TPOption $ (setStructGenericFlag True . dataType cidx) t
+
+
+instance Show DataType where
+	show TPInt = "int"
+	show TPUInt = "uint"
+	show TPFloat = "float"
+	show TPVoid = "void"
+	show TPString = "string"
+	show TPBool = "bool"
+	show TPSelf = "self"
+	show TPUnknown = "???"
+	show (TPClass c []) = className c
+	show (TPClass c gens) = className c ++ "<" ++ strs' ", " gens ++ ">"
+	show (TPTrait c) = className c ++ "*"
+	show (TPEnum c) = className c ++ "*"
+	show (TPGeneric c) = className c ++ "*"
+	show (TPStruct c s) = className c ++ if s then "^" else "%"
+	show (TPArr t) = "[" ++ show t ++ "]"
+	show (TPMap k v) = "[" ++ show k ++ " : " ++ show v ++ "]"
+	show (TPFun s d) = show s ++ " -> " ++ show d
+	show (TPTuple tps) = "(" ++ strs' ", " tps ++ ")"
+	show (TPOption t) = show t ++ "?"
+
+
 getDataType :: Env -> Maybe D.DataType -> Exp -> DataType
 getDataType env tp e = maybe (exprDataType e) (dataType (envIndex env)) tp
+
+
+
+{------------------------------------------------------------------------------------------------------------------------------ 
+ - Expression 
+ ------------------------------------------------------------------------------------------------------------------------------}
+data Exp = Nop 
+	| IntConst Int 
+	| StringConst String 
+	| BoolConst Bool 
+	| FloatConst Int Int
+	| Braces [Exp]
+	| If Exp Exp Exp
+	| Self DataType
+	| Nil
+	| BoolOp BoolTp Exp Exp
+	| MathOp MathTp Exp Exp
+	| PlusPlus Exp
+	| MinusMinus Exp
+	| Dot Exp Exp
+	| Set (Maybe MathTp) Exp Exp
+	| Call Def DataType [(Def, Exp)]
+	| Return Exp
+	| Index Exp Exp
+	| Lambda [(String, DataType)] Exp DataType
+	| Val Def
+	| Error String D.Exp 
+	| Arr [Exp]
+	| Map [(Exp, Exp)]
+	| Tuple [Exp]
+
+instance Show Exp where
+	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
+	show (If cond t Nop) = "if(" ++ show cond ++ ") " ++ show t
+	show (If cond t f) = "if(" ++ show cond ++ ") " ++ show t ++ "\nelse " ++ show f
+	show Nop = ""
+	show (Self c) = "<" ++ show c ++ ">self"
+	show (Return e) = "return " ++ show e
+	show (Set Nothing l r) = showOp l "=" r
+	show (Set (Just t) l r) = showOp l (show t ++ "=") r
+	show (BoolOp t l r) = showOp l (show t) r
+	show (MathOp t l r) = showOp l (show t) r
+	show (PlusPlus e) = show e ++ "++"
+	show (MinusMinus e) = show e ++ "--"
+	show (Dot l r) = showOp' l "." r
+	show (Call f tp []) = defRefPrep f ++ defName f ++ "<" ++ show tp ++ ">"
+	show (Call dd tp pars) = defRefPrep dd ++ defName dd ++ "<" ++ show tp ++ ">" ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
+		where
+			showPar (Def {defName = name}, e) = name ++ " = " ++ show e
+	show (IntConst i) = show i
+	show (StringConst i) = show i
+	show Nil = "nil"
+	show (BoolConst i) = show i
+	show (FloatConst a b) = show a ++ "." ++ show b
+	show (Index e i) = show e ++ "[" ++ show i ++ "]"
+	show (Lambda pars e tp) = strs' ", " (map (\(n, t) -> n ++ " : " ++ show t) pars) ++ " -> " ++ show tp ++ " = " ++ show e
+	show (Val d) = show d
+	show (Error s e) = s ++ " in " ++ show e
+	show (Arr exps) = "["  ++ strs' ", " exps ++ "]"
+	show (Map exps) = "["  ++ strs' ", " exps ++ "]"
+	show (Tuple exps) = "("  ++ strs' ", " exps ++ ")"
 
 
 exprDataType :: Exp -> DataType
@@ -413,6 +436,7 @@ exprDataType (Call _ t _) = t
 exprDataType (Return e) = exprDataType e
 exprDataType (Index e _) = case exprDataType e of
 	TPArr t -> t
+	TPMap _ v -> TPOption v
 	t -> error $ show t ++ " is not array"
 exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 	where 
@@ -421,7 +445,8 @@ exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 		parsTp ps = TPTuple $ map snd ps
 exprDataType (Error _ _) = TPUnknown
 exprDataType (Arr []) = TPUnknown
-exprDataType (Arr exps) = exprDataType $ head exps
+exprDataType (Arr exps) = TPArr $ exprDataType $ head exps
+exprDataType (Tuple exps) = TPTuple $ map exprDataType exps
 exprDataType (Val Def{defType = tp}) = tp
 exprDataType x = error $ "No exprDataType for " ++ show x
 
@@ -503,8 +528,15 @@ expr _ (D.Val name tp body mods) = do
 expr _ (D.Arr items) = do
 	items' <- mapM (expr False) items
 	return $ Arr items'
+expr _ (D.Tuple items) = do
+	items' <- mapM (expr False) items
+	return $ Tuple items'
 
 {- expr x = error $ "No expr for " ++ show x -}
+
+{------------------------------------------------------------------------------------------------------------------------------ 
+ - Calling 
+ ------------------------------------------------------------------------------------------------------------------------------}
 
 exprCall :: Maybe DataType -> D.Exp -> State Env Exp		
 exprCall strictClass call@(D.Call name pars gens) = do
@@ -588,7 +620,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 			correctCall :: Exp -> Exp
 			correctCall (Call d tp _) = Call d (correctType gens'' tp) (map doImplicitConversation pars'')
 				where
-					doImplicitConversation (d, e) = (d, implicitConvertsion (defType d) e)
+					doImplicitConversation (dd, e) = (dd, implicitConvertsion (defType dd) e)
 
 			correctExpression :: (Def, Exp) -> (Def, Exp)
 			correctExpression(d@Def{defType = (TPFun _ TPGeneric{})}, Lambda lpars e dtp) = (d, Lambda lpars e (setStructGenericFlag True dtp))
@@ -646,6 +678,7 @@ findCall (name,pars) (_, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter
 			
 {- Implicit conversion -}
 implicitConvertsion :: DataType -> Exp -> Exp
+implicitConvertsion TPMap{} (Arr []) = Map []
 implicitConvertsion dtp e = let stp = exprDataType e
 	in case (stp, dtp) of
 		(TPFun{}, TPFun{}) -> e

@@ -278,6 +278,7 @@ procImports D.File{D.fileImports = imps} = (map to imps, [])
 {- DataType -}
 showDataType :: D.DataType -> String
 showDataType D.TPArr{} = "NSArray*"
+showDataType D.TPMap{} = "NSDictionary*"
 showDataType D.TPInt = "NSInteger"
 showDataType D.TPUInt = "NSUInteger"
 showDataType D.TPFloat = "CGFloat"
@@ -336,6 +337,8 @@ tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
 tExp (D.Index e i) = C.Index (tExp e) (tExp i)
 tExp (D.Lambda pars e rtp) = C.Lambda (map (second showDataType) pars) (tStm rtp e) (showDataType rtp)
 tExp (D.Arr exps) = C.Arr $ map tExp exps
+tExp (D.Map exps) = C.Map $ map (tExp *** tExp) exps
+tExp (D.Tuple exps) = C.CCall "tuple" $ map tExp exps
 
 tExp e@(D.Error _ _) = error$ show e
 tExp x = error $ "No tExp for " ++ show x

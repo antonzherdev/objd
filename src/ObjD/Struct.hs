@@ -65,6 +65,7 @@ data Exp = Nop
 	| BoolConst Bool
 	| StringConst String
 	| FloatConst Int Int
+	| Tuple [Exp]
 	| Arr [Exp]
 	| Braces [Exp]
 	| If Exp Exp Exp
@@ -82,7 +83,8 @@ data Exp = Nop
 	| Val{valName :: String, valDataType :: Maybe DataType, valBody :: Exp, valMods :: [DefMod]}
 type CallPar = (Maybe String, Exp)
 
-data DataType = DataType String [DataType] | DataTypeArr DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType]
+data DataType = DataType String [DataType] | DataTypeArr DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType] | DataTypeMap DataType DataType 
+	| DataTypeOption DataType
 
 instance Show FileStm where
 	show (Class{className = name, classFields = fields, classMods = mods, classBody = body}) = 
@@ -107,6 +109,7 @@ instance Show DataType where
 	show (DataType s []) = s
 	show (DataType s pars) = s ++ "<" ++ strs' ", " pars ++ ">"
 	show (DataTypeArr r) = "[" ++ show r ++ "]"
+	show (DataTypeMap k v) = "[" ++ show k ++ " : " ++ show v ++ "]"
 
 showGens :: [DataType] -> String
 showGens [] = ""
@@ -115,6 +118,7 @@ showGens a = "<" ++ strs' ", " a  ++ ">"
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
 	show (Arr exps) = "["  ++ strs' ", " exps ++ "]"
+	show (Tuple exps) = "("  ++ strs' ", " exps ++ ")"
 	show (If cond t Nop) = "if(" ++ show cond ++ ") " ++ show t
 	show (If cond t f) = "if(" ++ show cond ++ ") " ++ show t ++ "\nelse " ++ show f
 	show Nop = ""
