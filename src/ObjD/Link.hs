@@ -467,7 +467,7 @@ expr _ d@(D.Dot a b) = do
 expr _ (D.Set tp a b) = do
 	aa <- expr False a
 	bb <- expr False b
-	return $ Set tp aa bb
+	return $ Set tp aa (implicitConvertsion (exprDataType aa) bb)
 expr _ (D.PlusPlus e) = do
 	aa <- expr False e
 	return $ PlusPlus aa
@@ -586,7 +586,9 @@ exprCall strictClass call@(D.Call name pars gens) = do
 					_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")"
 
 			correctCall :: Exp -> Exp
-			correctCall (Call d tp _) = Call d (correctType gens'' tp) pars''
+			correctCall (Call d tp _) = Call d (correctType gens'' tp) (map doImplicitConversation pars'')
+				where
+					doImplicitConversation (d, e) = (d, implicitConvertsion (defType d) e)
 
 			correctExpression :: (Def, Exp) -> (Def, Exp)
 			correctExpression(d@Def{defType = (TPFun _ TPGeneric{})}, Lambda lpars e dtp) = (d, Lambda lpars e (setStructGenericFlag True dtp))
@@ -642,3 +644,14 @@ findCall (name,pars) (_, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter
 			TPSelf -> selfType
 			tp -> tp
 			
+{- Implicit conversion -}
+implicitConvertsion :: DataType -> Exp -> Exp
+implicitConvertsion dtp e = let stp = exprDataType e
+	in case (stp, dtp) of
+		(TPFun{}, TPFun{}) -> e
+		(_, TPFun TPVoid fdtp) -> Lambda [] e fdtp
+		(_, TPFun (TPTuple stps) fdtp) -> Lambda ((map(\(tp, i) -> ("_" ++ show i, tp)) . zipWithIndex) stps) e fdtp
+		(_, TPFun fstp fdtp) -> Lambda [("_", fstp)] e fdtp
+		_ -> e
+
+

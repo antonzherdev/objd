@@ -1,7 +1,13 @@
-module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp', cap, MathTp(..), BoolTp(..), sapp) where
+module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp', cap, MathTp(..), BoolTp(..), sapp, zipWithIndex) where
 
 import           Data.Char
 
+zipWithIndex :: [a] -> [(a, Int)]
+zipWithIndex = doZip 0
+	where
+		doZip :: Int -> [a] -> [(a, Int)]
+		doZip _ [] = []
+		doZip i (x:xs) = (x, i) : doZip (i + 1) xs
 
 mkString :: (a -> String) -> String -> [a] -> String
 mkString _ _ [] = ""
