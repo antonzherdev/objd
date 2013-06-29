@@ -42,7 +42,7 @@ pStatement = pImport <|> pStub <|> pClass <|> pEnum
 sps :: Parser String
 sps = many (char ' ' <|> char '\t'  <|> char '\n') <?> ""
 sps1 :: Parser String
-sps1 = many (char ' ' <|> char '\t'  <|> char '\n') <?> ""
+sps1 = many1 (char ' ' <|> char '\t'  <|> char '\n') <?> ""
 ident :: Parser String
 ident = many1 (letter <|> digit <|> oneOf "_")
 spsChar :: Char -> Parser Char
