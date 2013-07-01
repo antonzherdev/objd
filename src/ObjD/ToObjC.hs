@@ -143,8 +143,7 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs, D.classConstruc
 		realReadAcc _ = False
 		staticFields = filter isStaticField defs
 		staticGetters = (map staticGetter . filter((D.DefModPrivate `notElem`) . D.defMods)) staticFields
-		staticGetter f@D.Field{D.defName = name, D.defType = tp} = C.ImplFun (staticGetterFun f) [
-			C.Return $ C.Ref $ '_' : name]
+		staticGetter f@D.Field{D.defName = name} = C.ImplFun (staticGetterFun f) [C.Return $ C.Ref $ '_' : name]
 
 synthesize :: D.Def -> C.ImplSynthesize
 synthesize D.Field{D.defName = x} = C.ImplSynthesize x ('_' : x)
@@ -352,12 +351,17 @@ tExp (D.Index e i) = case D.exprDataType e of
 	D.TPMap _ _ -> C.Call (tExp e) "optionObjectFor" [("key", tExp i)]
 	_ -> C.Index (tExp e) (tExp i)
 tExp (D.Lambda pars e rtp) = C.Lambda (map (second showDataType) pars) (tStm rtp e) (showDataType rtp)
-tExp (D.Arr exps) = C.Arr $ map tExp exps
-tExp (D.Map exps) = C.Map $ map (tExp *** tExp) exps
-tExp (D.Tuple exps) = C.CCall "tuple" $ map tExp exps
+tExp (D.Arr exps) = C.Arr $ map (tExpToType tpGeneric) exps
+tExp (D.Map exps) = C.Map $ map (tExpToType tpGeneric *** tExpToType tpGeneric) exps
+tExp (D.Tuple exps) = C.CCall "tuple" $ map (tExpToType tpGeneric) exps
 
 tExp e@(D.Error _ _) = error$ show e
 tExp x = error $ "No tExp for " ++ show x
+
+tpGeneric :: D.DataType
+tpGeneric = D.TPGeneric (D.Generic "?")
+tExpToType :: D.DataType -> D.Exp -> C.Exp
+tExpToType tp e = maybeVal (D.exprDataType e, tp) (tExp e)
 
 tStm :: D.DataType -> D.Exp -> [C.Stm]
 tStm _ (D.Nop) = []
@@ -379,9 +383,8 @@ tStm _ (D.Set (Just t) l r) = let
 		_ -> [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
 tStm _ (D.Set tp l r) = [C.Set tp (tExp l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp r))]
 tStm D.TPVoid (D.Return e) = [C.Stm $ tExp e]
-tStm tp (D.Return e) = [C.Return $ maybeVal (D.exprDataType e, tp) (tExp e)]
-tStm _ (D.Val D.Def{D.defName = name, D.defType = tp, D.defBody = e}) = [C.Var (showDataType tp) name 
-	(maybeVal (D.exprDataType e, tp) (tExp e))]
+tStm tp (D.Return e) = [C.Return $ (tExpToType tp e)]
+tStm _ (D.Val D.Def{D.defName = name, D.defType = tp, D.defBody = e}) = [C.Var (showDataType tp) name (tExpToType tp e)]
 tStm _ x = [C.Stm $ tExp x]
 
 addObjectToArray :: C.Exp -> C.Exp -> C.Exp
@@ -392,8 +395,23 @@ addKVToMap a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tExp v)
 
 
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp
-maybeVal (D.TPStruct _ False, D.TPGeneric _) e = C.CCall "val" [e]
-maybeVal (D.TPGeneric _, D.TPStruct s False) e = C.CCall "uval" [C.Ref (D.className s), e]
-maybeVal (D.TPStruct _ True, D.TPStruct s False) e = C.CCall "uval" [C.Ref (D.className s), e]
-maybeVal (D.TPStruct _ False, D.TPStruct _ True) e = C.CCall "val" [e]
+maybeVal (D.TPStruct _ False, D.TPGeneric _) e = callVal e
+maybeVal (D.TPGeneric _, D.TPStruct s False) e = callUval (D.className s) e
+maybeVal (D.TPStruct _ True, D.TPStruct s False) e = callUval (D.className s) e
+maybeVal (D.TPStruct _ False, D.TPStruct _ True) e = callVal e
+maybeVal (D.TPInt, D.TPGeneric _) e@C.IntConst{} = C.ObjCConst e
+maybeVal (D.TPInt, D.TPGeneric _) e = callVal e
+maybeVal (D.TPUInt, D.TPGeneric _) e@C.IntConst{} = C.ObjCConst e
+maybeVal (D.TPUInt, D.TPGeneric _) e = callVal e
+maybeVal (D.TPFloat, D.TPGeneric _) e@C.FloatConst{} = C.ObjCConst e
+maybeVal (D.TPFloat, D.TPGeneric _) e = callVal e
+maybeVal (D.TPGeneric _, D.TPInt) e = callUval "NSInteger" e
+maybeVal (D.TPGeneric _, D.TPUInt) e = callUval "NSUInteger" e
+maybeVal (D.TPGeneric _, D.TPFloat) e = callUval "CGFloat" e
 maybeVal _ e = e
+
+
+callVal :: C.Exp -> C.Exp
+callVal e = C.CCall "val" [e]
+callUval :: String -> C.Exp -> C.Exp
+callUval s e = C.CCall "uval" [C.Ref s, e]

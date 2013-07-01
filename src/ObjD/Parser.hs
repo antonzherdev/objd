@@ -309,7 +309,7 @@ pDefPar = do
 
 pExp :: Parser Exp
 pExp = do
-	o <- pOp1
+	o <- pOp0
 	sps
 	postFix o
 	where
@@ -321,7 +321,8 @@ pExp = do
 			string "--"
 			sps
 			return $ MinusMinus o) <|> (return o)
-		pOp1 = pOp2 `chainl1` pBoolOp
+		pOp0 = pOp1 `chainl1` pAndOrOp
+		pOp1 = pOp2 `chainl1` pCompareOp
 		pOp2 = pOp3 `chainl1` pSetOp
 		pOp3 = pOp4 `chainl1` (mathOp '+' Plus <|> mathOp '-' Minus)
 		pOp4 = pOp5 `chainl1` (mathOp '*' Mul <|> mathOp '/' Div)
@@ -468,11 +469,15 @@ pCallPar = do
 pDot :: Parser (Exp -> Exp -> Exp)
 pDot = stringSps "." >> return Dot
 
-pBoolOp :: Parser (Exp -> Exp -> Exp)
-pBoolOp =  op "==" Eq <|> op "!=" NotEq <|> op ">=" MoreEq <|> op ">" More  <|> op "<=" LessEq <|> op "<" Less
-	where
-		op s t = do 
-			try(stringSps s)
-			return $ BoolOp t
+pCompareOp :: Parser (Exp -> Exp -> Exp)
+pCompareOp =  pBoolOp "==" Eq <|> pBoolOp "!=" NotEq <|> pBoolOp ">=" MoreEq <|> pBoolOp ">" More  <|> pBoolOp "<=" LessEq <|> pBoolOp "<" Less
+
+pAndOrOp :: Parser (Exp -> Exp -> Exp)
+pAndOrOp =  pBoolOp "&&" Eq <|> pBoolOp "||" NotEq
+
+pBoolOp :: String -> BoolTp -> Parser (Exp -> Exp -> Exp)
+pBoolOp s t = do 
+	try(stringSps s)
+	return $ BoolOp t
 
 

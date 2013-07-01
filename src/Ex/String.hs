@@ -41,7 +41,7 @@ sapp a b = b ++ a
 
 
 data MathTp = Plus | Minus | Mul | Div
-data BoolTp = Eq | NotEq | More | MoreEq | Less | LessEq	
+data BoolTp = Eq | NotEq | More | MoreEq | Less | LessEq | And | Or
 instance Show MathTp where
 	show Plus = "+"
 	show Minus = "-"
@@ -54,3 +54,5 @@ instance Show BoolTp where
 	show MoreEq = ">="
 	show Less = "<"
 	show LessEq = "<="
+	show And = "&&"
+	show Or = "||"

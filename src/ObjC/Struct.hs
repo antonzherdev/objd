@@ -55,6 +55,7 @@ data Exp =
 	| BoolConst Bool
 	| FloatConst Decimal
 	| StringConst String
+	| ObjCConst Exp
 	| BoolOp BoolTp Exp Exp 
 	| MathOp MathTp Exp Exp 
 	| Dot Exp String
@@ -214,6 +215,7 @@ expLines (InlineIf c t f) = (expLines c `app` " ? ") `glue` (expLines t `app` " 
 expLines (Index e i) = (expLines e `app` "[") `glue` (expLines i `app` "]")
 expLines (Arr e) = ["@[" ++ strs' ", " e ++ "]"]
 expLines (Map e) = ["@{" ++ (strs ", " . map(\(k, v) -> show k ++ " : " ++ show v) ) e ++ "}"]
+expLines (ObjCConst e) = ["@" ++ show e]
 expLines (Lambda pars e rtp) = ["^" ++ rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]
 	where showPar(name, tp) = tp ++ " " ++ name
 
