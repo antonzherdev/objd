@@ -354,7 +354,24 @@ tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
 tExp (D.Index e i) = case D.exprDataType e of
 	D.TPMap _ _ -> C.Call (tExp e) "optionObjectFor" [("key", tExp i)]
 	_ -> C.Index (tExp e) (tExp i)
-tExp (D.Lambda pars e rtp) = C.Lambda (map (second showDataType) pars) (tStm rtp e) (showDataType rtp)
+tExp (D.Lambda pars e rtp) = 
+	let 
+		isNeedUnwrap :: D.DataType -> Bool
+		isNeedUnwrap (D.TPGenericWrap (D.TPStruct _)) = True
+		isNeedUnwrap (D.TPGenericWrap D.TPInt) = True
+		isNeedUnwrap (D.TPGenericWrap D.TPBool) = True
+		isNeedUnwrap (D.TPGenericWrap D.TPFloat) = True
+		isNeedUnwrap (D.TPGenericWrap D.TPUInt) = True
+		isNeedUnwrap _ = False
+		par' (name, tp) 
+			| isNeedUnwrap tp = (name ++ "_", "id")
+			| otherwise = (name, showDataType tp)
+		unwrapPars :: [C.Stm]
+		unwrapPars = (map unwrapPar. filter (isNeedUnwrap . snd)) pars
+		unwrapPar ::(String, D.DataType) -> C.Stm
+		unwrapPar (name, D.TPGenericWrap tp) = C.Var (showDataType tp) name (maybeVal (D.TPGenericWrap tp, tp) $ C.Ref $ name ++ "_")
+	in
+	C.Lambda (map (par') pars) (unwrapPars ++ tStm rtp e) (showDataType rtp)
 tExp (D.Arr exps) = C.Arr $ map (tExpToType tpGeneric) exps
 tExp (D.Map exps) = C.Map $ map (tExpToType tpGeneric *** tExpToType tpGeneric) exps
 tExp (D.Tuple exps) = C.CCall "tuple" $ map (tExpToType tpGeneric) exps

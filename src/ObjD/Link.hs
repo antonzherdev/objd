@@ -241,7 +241,7 @@ linkField D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBo
 	i <- expr e
 	env <- get
 	let 
-		tp' = getDataType env tp i
+		tp' = unwrapGeneric $ getDataType env tp i
 		acc' (D.DeclAccRead accMods ex) = liftM (FieldAccRead (accMods' accMods) . addReturn) (expr ex)
 		acc' (D.DeclAccWrite accMods ex) = do
 			env' <- get
@@ -284,7 +284,7 @@ linkDef env ccc = evalState (stateDef ccc) env'
 						modify $ envAddVals pars
 						b <- expr body
 						put env'
-						let tp' = getDataType env' tp b
+						let tp' = unwrapGeneric $ getDataType env' tp b
 						return Def {defMods = mods', defName = name, defGenerics = generics',
 							defPars = pars,
 							defType = tp', defBody = maybeAddReturn tp' b})
@@ -490,10 +490,10 @@ exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 exprDataType (Error _ _) = TPUnknown
 exprDataType (Arr []) = TPArr TPUnknown
 exprDataType (Map []) = TPMap TPUnknown TPUnknown
-exprDataType (Arr exps) = TPArr $ exprDataType $ head exps
-exprDataType (Map exps) = let (k, v) = (exprDataType *** exprDataType) $ head exps 
+exprDataType (Arr exps) = TPArr $ wrapGeneric $ exprDataType $ head exps
+exprDataType (Map exps) = let (k, v) = ((exprDataType >>> wrapGeneric) *** (exprDataType >>> wrapGeneric)) $ head exps 
 	in TPMap k v
-exprDataType (Tuple exps) = TPTuple $ map exprDataType exps
+exprDataType (Tuple exps) = TPTuple $ map (wrapGeneric .exprDataType) exps
 exprDataType (Val Def{defType = tp}) = tp
 exprDataType x = error $ "No exprDataType for " ++ show x
 
@@ -667,7 +667,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 			correctExpression(d@Def{defType = (TPFun stp _)}, Error _ (D.Lambda lambdaPars lambdaExpr)) = (d, Lambda lpars' expr' tp')
 				where
 					lpars' :: [(String, DataType)]
-					lpars' = map (second (correctType gens')) $ zip (map fst lambdaPars) (stps stp)
+					lpars' = map (second (wrapGeneric . correctType gens')) $ zip (map fst lambdaPars) (stps stp)
 					stps :: DataType -> [DataType]
 					stps (TPTuple tps) = tps
 					stps tp = [tp]
