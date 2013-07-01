@@ -296,9 +296,14 @@ linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Def pnm 
  - DataType 
  ------------------------------------------------------------------------------------------------------------------------------}
 
-data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid | TPClass Class [DataType] | TPStruct Class Bool | TPEnum Class | TPTrait Class 
-	| TPGeneric Class | TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown | TPMap DataType DataType
-	| TPOption DataType
+data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid 
+	| TPClass {tpClass :: Class, tpGenerics :: [DataType] }
+	| TPStruct {tpClass :: Class} 
+	| TPEnum {tpClass :: Class} 
+	| TPTrait {tpClass :: Class} 
+	| TPGeneric {tpClass :: Class} 
+	| TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown | TPMap DataType DataType
+	| TPOption DataType | TPGenericWrap DataType
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
 isVoid _ = False
@@ -306,17 +311,18 @@ isVoid _ = False
 refDataType :: Class -> [DataType] -> DataType
 refDataType e@Enum{} _ = TPEnum e
 refDataType cl gens
-	| isStruct cl = TPStruct cl False
+	| isStruct cl = TPStruct cl
 	| isTrait cl = TPTrait cl
 	| isGeneric cl = TPGeneric cl
 	| otherwise = TPClass cl gens
 
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass c _) = c
-dataTypeClass _ (TPStruct c _) = c
+dataTypeClass _ (TPStruct c) = c
 dataTypeClass _ (TPEnum c) = c
 dataTypeClass _ (TPTrait c) = c
 dataTypeClass _ (TPGeneric c) = c
+dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
 dataTypeClass env (TPArr _) = findTp "array class" (envIndex env) "ODArray"
 dataTypeClass env (TPOption _) = findTp "option class" (envIndex env) "ODOption"
 dataTypeClass env (TPMap _ _) = findTp "map class" (envIndex env) "ODMap"
@@ -328,9 +334,14 @@ dataTypeGenerics _ (TPMap k v) = [k, v]
 dataTypeGenerics _ (TPOption v) = [v]
 dataTypeGenerics _ _ = []
 
-setStructGenericFlag :: Bool -> DataType -> DataType
-setStructGenericFlag b (TPStruct c _) = TPStruct c b
-setStructGenericFlag _ t = t
+wrapGeneric :: DataType -> DataType
+wrapGeneric TPVoid = TPVoid
+wrapGeneric g@TPGeneric{} = g
+wrapGeneric g@TPGenericWrap{} = g
+wrapGeneric g = TPGenericWrap g
+unwrapGeneric :: DataType -> DataType
+unwrapGeneric (TPGenericWrap g)= g
+unwrapGeneric g = g
 
 dataType :: ClassIndex -> D.DataType -> DataType
 dataType cidx (D.DataType name gens) = case name of
@@ -341,12 +352,12 @@ dataType cidx (D.DataType name gens) = case name of
 	"string" -> TPString
 	"bool" -> TPBool
 	"self" -> TPSelf
-	_ -> refDataType (findTp "class" cidx name) (map (dataType cidx) gens)
-dataType cidx (D.DataTypeArr tp) = TPArr $ setStructGenericFlag True $ dataType cidx tp
-dataType cidx (D.DataTypeMap k v) = TPMap (setStructGenericFlag True $ dataType cidx k) (setStructGenericFlag True $ dataType cidx v)
+	_ -> refDataType (findTp "class" cidx name) (map (wrapGeneric . dataType cidx) gens)
+dataType cidx (D.DataTypeArr tp) = TPArr $ wrapGeneric $ dataType cidx tp
+dataType cidx (D.DataTypeMap k v) = TPMap (wrapGeneric $ dataType cidx k) (wrapGeneric $ dataType cidx v)
 dataType cidx (D.DataTypeFun s d) = TPFun (dataType cidx s) (dataType cidx d)
-dataType cidx (D.DataTypeTuple tps) = TPTuple $ map (setStructGenericFlag True . dataType cidx) tps
-dataType cidx (D.DataTypeOption t) = TPOption $ (setStructGenericFlag True . dataType cidx) t
+dataType cidx (D.DataTypeTuple tps) = TPTuple $ map (wrapGeneric . dataType cidx) tps
+dataType cidx (D.DataTypeOption t) = TPOption $ (wrapGeneric . dataType cidx) t
 
 
 instance Show DataType where
@@ -363,7 +374,8 @@ instance Show DataType where
 	show (TPTrait c) = className c ++ "*"
 	show (TPEnum c) = className c ++ "*"
 	show (TPGeneric c) = className c ++ "*"
-	show (TPStruct c s) = className c ++ if s then "^" else "%"
+	show (TPStruct c) = className c ++ "%"
+	show (TPGenericWrap c) = "^" ++ show c
 	show (TPArr t) = "[" ++ show t ++ "]"
 	show (TPMap k v) = "[" ++ show k ++ " : " ++ show v ++ "]"
 	show (TPFun s d) = show s ++ " -> " ++ show d
@@ -418,8 +430,8 @@ instance Show Exp where
 	show (PlusPlus e) = show e ++ "++"
 	show (MinusMinus e) = show e ++ "--"
 	show (Dot l r) = showOp' l "." r
-	show (Call f tp []) = defRefPrep f ++ defName f ++ "<" ++ show tp ++ ">"
-	show (Call dd tp pars) = defRefPrep dd ++ defName dd ++ "<" ++ show tp ++ ">" ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
+	show (Call f tp []) = defRefPrep f ++ defName f ++ "\\" ++ show tp ++ "\\"
+	show (Call dd tp pars) = defRefPrep dd ++ defName dd ++ "(" ++ strs ", " (map showPar pars) ++ ")" ++ "\\" ++ show tp ++ "\\" 
 		where
 			showPar (Def {defName = name}, e) = name ++ " = " ++ show e
 	show (IntConst i) = show i
@@ -551,7 +563,7 @@ expr l@(D.Lambda pars e) = if any (isJust.snd) pars then (do
 expr (D.Val name tp body mods) = do
 	env <- get 
 	body' <- expr body
-	let tp' = setStructGenericFlag False $ maybe (exprDataType body') (dataType $ envIndex env) tp
+	let tp' = unwrapGeneric $ maybe (exprDataType body') (dataType $ envIndex env) tp
 	let mods' = DefModLocal : [DefModMutable | D.DefModMutable `elem` mods]
 	let def' = Def{defName = name, defType = tp', defMods = mods', defPars = [], defBody = body', defGenerics = []}
 	modify $ envAddVals [def']
@@ -617,17 +629,17 @@ exprCall strictClass call@(D.Call name pars gens) = do
 					where 
 						extractGen :: (Class, Maybe DataType) -> (String, DataType)
 						extractGen(g, Just t) = (className g, t)
-						extractGen(g, Nothing) = error $ "Could not find generic type for " ++ show g ++ " in self " ++ show self ++ " for call " ++ show call
+						extractGen(g, Nothing) = error $ "Could not find generic type for " ++ show g ++ " in self " ++ show self ++ " for call " ++ show call'
 					
 				determineGenericType :: (Class, Maybe D.DataType) -> (String, DataType)
-				determineGenericType (g, Just tp) = (className g, (setStructGenericFlag True . dataType (envIndex env)) tp)
+				determineGenericType (g, Just tp) = (className g, (wrapGeneric . dataType (envIndex env)) tp)
 				determineGenericType (g, _) = (className g, 
 						fromMaybe (if strict then error $ "Could not determine generic type for " ++ show g ++ " in " ++ show call else TPUnknown) $ 
-						(listToMaybe . mapMaybe ( (defType *** exprDataType)>>> tryDetermine g) ) rpars
+						(listToMaybe . mapMaybe ( (defType *** (exprDataType >>> unwrapGeneric))>>> tryDetermine g) ) rpars
 					)
 					where 
 						tryDetermine :: Class -> (DataType, DataType) -> Maybe DataType
-						tryDetermine c (TPGeneric gg, tp) = if c == gg then Just (setStructGenericFlag True tp) else Nothing
+						tryDetermine c (TPGeneric gg, tp) = if c == gg then Just (wrapGeneric tp) else Nothing
 						tryDetermine c (TPArr a, TPArr a') = tryDetermine c (a, a')
 						tryDetermine c (TPFun a b, TPFun a' b') = listToMaybe $ catMaybes [tryDetermine c (a, a'), tryDetermine c (b, b')]
 						tryDetermine _ _ = Nothing
@@ -651,7 +663,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 					doImplicitConversation (dd, e) = (dd, implicitConvertsion (defType dd) e)
 
 			correctExpression :: (Def, Exp) -> (Def, Exp)
-			correctExpression(d@Def{defType = (TPFun _ TPGeneric{})}, Lambda lpars e dtp) = (d, Lambda lpars e (setStructGenericFlag True dtp))
+			correctExpression(d@Def{defType = (TPFun _ TPGeneric{})}, Lambda lpars e dtp) = (d, Lambda lpars e (wrapGeneric dtp))
 			correctExpression(d@Def{defType = (TPFun stp _)}, Error _ (D.Lambda lambdaPars lambdaExpr)) = (d, Lambda lpars' expr' tp')
 				where
 					lpars' :: [(String, DataType)]
@@ -661,12 +673,13 @@ exprCall strictClass call@(D.Call name pars gens) = do
 					stps tp = [tp]
 					env' = envAddVals (map (uncurry localVal) lpars') env
 					expr' = addReturn $ evalState (expr lambdaExpr) env'
-					tp' = setStructGenericFlag True $ exprDataType expr'
+					tp' = wrapGeneric $ exprDataType expr'
 			correctExpression(d@Def{defType = (TPFun _ _)}, Error es e) = correctExpression (d, Error es $ D.Lambda [("_", Nothing)] e)
 			correctExpression e = e
 			
 			correctType :: M.Map String DataType -> DataType -> DataType
-			correctType gns gg@(TPGeneric (Generic g)) = fromMaybe gg $ M.lookup g gns
+			correctType gns (TPGenericWrap g) = TPGenericWrap $ correctType gns g
+			correctType gns gg@(TPGeneric (Generic g)) =  fromMaybe gg $ M.lookup g gns
 			correctType gns (TPClass c g) = TPClass c (map (correctType gns) g)
 			correctType gns (TPArr c) = TPArr (correctType gns c)
 			correctType _ t = t

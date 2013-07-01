@@ -473,7 +473,7 @@ pCompareOp :: Parser (Exp -> Exp -> Exp)
 pCompareOp =  pBoolOp "==" Eq <|> pBoolOp "!=" NotEq <|> pBoolOp ">=" MoreEq <|> pBoolOp ">" More  <|> pBoolOp "<=" LessEq <|> pBoolOp "<" Less
 
 pAndOrOp :: Parser (Exp -> Exp -> Exp)
-pAndOrOp =  pBoolOp "&&" Eq <|> pBoolOp "||" NotEq
+pAndOrOp =  pBoolOp "&&" And <|> pBoolOp "||" Or
 
 pBoolOp :: String -> BoolTp -> Parser (Exp -> Exp -> Exp)
 pBoolOp s t = do 

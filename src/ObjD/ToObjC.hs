@@ -300,8 +300,12 @@ showDataType (D.TPSelf) = "id"
 showDataType (D.TPFun D.TPVoid d) = showDataType d ++ "(^)" ++ "()"
 showDataType (D.TPFun s d) = showDataType d ++ "(^)" ++ "(" ++ showDataType s ++ ")"
 showDataType (D.TPClass c _) = D.className c ++ "*"
-showDataType (D.TPStruct _ True) = "id"
-showDataType (D.TPStruct c False) = D.className c
+showDataType (D.TPGenericWrap D.TPStruct{}) = "id"
+showDataType (D.TPGenericWrap D.TPInt) = "id"
+showDataType (D.TPGenericWrap D.TPUInt) = "id"
+showDataType (D.TPGenericWrap D.TPFloat) = "id"
+showDataType (D.TPGenericWrap c) = showDataType c
+showDataType (D.TPStruct c) = D.className c
 showDataType tp = show tp
 
 {- Exp -}
@@ -394,24 +398,22 @@ addKVToMap :: C.Exp -> D.Exp -> C.Exp
 addKVToMap a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tExp v), ("forKey", tExp k)]
 
 
+data MaybeValTP = TPGen | TPNum | TPStruct | TPNoMatter
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp
-maybeVal (D.TPStruct _ False, D.TPGeneric _) e = callVal e
-maybeVal (D.TPGeneric _, D.TPStruct s False) e = callUval (D.className s) e
-maybeVal (D.TPStruct _ True, D.TPStruct s False) e = callUval (D.className s) e
-maybeVal (D.TPStruct _ False, D.TPStruct _ True) e = callVal e
-maybeVal (D.TPInt, D.TPGeneric _) e@C.IntConst{} = C.ObjCConst e
-maybeVal (D.TPInt, D.TPGeneric _) e = callVal e
-maybeVal (D.TPUInt, D.TPGeneric _) e@C.IntConst{} = C.ObjCConst e
-maybeVal (D.TPUInt, D.TPGeneric _) e = callVal e
-maybeVal (D.TPFloat, D.TPGeneric _) e@C.FloatConst{} = C.ObjCConst e
-maybeVal (D.TPFloat, D.TPGeneric _) e = callVal e
-maybeVal (D.TPGeneric _, D.TPInt) e = callUval "NSInteger" e
-maybeVal (D.TPGeneric _, D.TPUInt) e = callUval "NSUInteger" e
-maybeVal (D.TPGeneric _, D.TPFloat) e = callUval "CGFloat" e
-maybeVal _ e = e
-
-
-callVal :: C.Exp -> C.Exp
-callVal e = C.CCall "val" [e]
-callUval :: String -> C.Exp -> C.Exp
-callUval s e = C.CCall "uval" [C.Ref s, e]
+maybeVal (stp, dtp) e = let 
+	tp D.TPGenericWrap{} = TPGen
+	tp D.TPGeneric{} = TPGen
+	tp D.TPStruct{} = TPStruct
+	tp D.TPInt{} = TPNum
+	tp D.TPUInt{} = TPNum
+	tp D.TPFloat{} = TPNum
+	tp _ = TPNoMatter
+	in case (tp stp, tp dtp) of
+		(TPStruct, TPGen) -> C.CCall "val" [e]
+		(TPGen, TPStruct) -> C.CCall "uval" [C.Ref $ D.className $ D.tpClass dtp, e]
+		(TPNum, TPGen) -> case e of
+			C.IntConst _ -> C.ObjCConst e
+			C.FloatConst _ -> C.ObjCConst e
+			_ -> C.CCall "numi" [e]
+		(TPGen, TPNum) -> C.CCall "unumi" [e]
+		_ -> e
