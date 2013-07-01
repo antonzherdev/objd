@@ -589,37 +589,34 @@ exprCall strictClass call@(D.Call name pars gens) = do
 				| otherwise = map Just a ++ replicate (l - length a) Nothing 
 
 			resolveGenerics :: Bool -> [(Def, Exp)] -> M.Map String DataType
-			resolveGenerics strict rpars = case call' of
-				(Call Def{defGenerics = defGens} _ _) -> 
-					M.fromList $  checkedDefGenerics ++ dclassGenerics
-					where
-						checkedDefGenerics :: [(String, DataType)]
-						checkedDefGenerics = if length ddefGenerics /= length defGens 
-							then (error $ show ddefGenerics  ++ " != " ++ show defGens) 
-							else ddefGenerics
-						ddefGenerics :: [(String, DataType)]
-						ddefGenerics = (map determineGenericType . zip defGens . extendList (length defGens)) gens
-						srcClassGenerics = classGenerics $ dataTypeClass env self
-						dclassGenerics :: [(String, DataType)]
-						dclassGenerics = (map extractGen . zip srcClassGenerics . extendList (length srcClassGenerics)) (dataTypeGenerics env self) 
-							where 
-								extractGen :: (Class, Maybe DataType) -> (String, DataType)
-								extractGen(g, Just t) = (className g, t)
-								extractGen(g, Nothing) = error $ "Could not find generic type for " ++ show g ++ " in self " ++ show self
-							
-						determineGenericType :: (Class, Maybe D.DataType) -> (String, DataType)
-						determineGenericType (g, Just tp) = (className g, (setStructGenericFlag True . dataType (envIndex env)) tp)
-						determineGenericType (g, _) = (className g, 
-								fromMaybe (if strict then error $ "Could not determine generic type for " ++ show g ++ " in " ++ show call else TPUnknown) $ 
-								(listToMaybe . mapMaybe ( (defType *** exprDataType)>>> tryDetermine g) ) rpars
-							)
-							where 
-								tryDetermine :: Class -> (DataType, DataType) -> Maybe DataType
-								tryDetermine c (TPGeneric gg, tp) = if c == gg then Just (setStructGenericFlag True tp) else Nothing
-								tryDetermine c (TPArr a, TPArr a') = tryDetermine c (a, a')
-								tryDetermine c (TPFun a b, TPFun a' b') = listToMaybe $ catMaybes [tryDetermine c (a, a'), tryDetermine c (b, b')]
-								tryDetermine _ _ = Nothing
-			
+			resolveGenerics strict rpars = let
+				ddefGenerics :: [Class] -> [(String, DataType)]
+				ddefGenerics defGens = (map determineGenericType . zip defGens . extendList (length defGens)) gens
+				srcClassGenerics = classGenerics $ dataTypeClass env self
+				dclassGenerics :: [(String, DataType)]
+				dclassGenerics = (map extractGen . zip srcClassGenerics . extendList (length srcClassGenerics)) (dataTypeGenerics env self) 
+					where 
+						extractGen :: (Class, Maybe DataType) -> (String, DataType)
+						extractGen(g, Just t) = (className g, t)
+						extractGen(g, Nothing) = error $ "Could not find generic type for " ++ show g ++ " in self " ++ show self ++ " for call " ++ show call
+					
+				determineGenericType :: (Class, Maybe D.DataType) -> (String, DataType)
+				determineGenericType (g, Just tp) = (className g, (setStructGenericFlag True . dataType (envIndex env)) tp)
+				determineGenericType (g, _) = (className g, 
+						fromMaybe (if strict then error $ "Could not determine generic type for " ++ show g ++ " in " ++ show call else TPUnknown) $ 
+						(listToMaybe . mapMaybe ( (defType *** exprDataType)>>> tryDetermine g) ) rpars
+					)
+					where 
+						tryDetermine :: Class -> (DataType, DataType) -> Maybe DataType
+						tryDetermine c (TPGeneric gg, tp) = if c == gg then Just (setStructGenericFlag True tp) else Nothing
+						tryDetermine c (TPArr a, TPArr a') = tryDetermine c (a, a')
+						tryDetermine c (TPFun a b, TPFun a' b') = listToMaybe $ catMaybes [tryDetermine c (a, a'), tryDetermine c (b, b')]
+						tryDetermine _ _ = Nothing
+				in case call' of
+					(Call Def{defGenerics = defGens} _ _) -> 
+						M.fromList $ ddefGenerics defGens ++ dclassGenerics
+					_ -> M.fromList $ dclassGenerics 
+									
 			errorString :: String
 			errorString = "Could find reference for call " ++ callStr ++ "\n" ++
 				maybe "" (\cl -> "strict in class " ++ show cl ++ "\n") strictClass ++

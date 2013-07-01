@@ -130,7 +130,8 @@ instance Show Exp where
 	show (MathOp t l r) = showOp l (show t) r
 	show (PlusPlus e) = show e ++ "++"
 	show (MinusMinus e) = show e ++ "--"
-	show (Call n pars gens) = n ++ showGens gens ++ "(" ++ strs' ", " (map showPar pars) ++ ")"
+	show (Call n [] gens) = n ++ showGens gens
+	show (Call n pars gens) = n ++ showGens gens ++ "(" ++ strs ", " (map showPar pars) ++ ")"
 		where
 			showPar (Nothing, e) = show e
 			showPar (Just name, e) = name ++ " = " ++ show e

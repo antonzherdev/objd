@@ -371,7 +371,7 @@ pTerm = do
 			return $ StringConst s
 		pVal = do
 			mods <- try $ do
-				m <- (string "val" >> return [] ) <|> (string "var" >> return [DefModMutable])
+				m <- (try (string "val") >> return [] ) <|> (string "var" >> return [DefModMutable])
 				sps1
 				return m
 			name <- ident
