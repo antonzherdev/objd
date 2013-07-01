@@ -5,6 +5,7 @@ module ObjD.Parser(
 import           Control.Monad
 import           Data.Maybe
 import           ObjD.Struct
+import           Data.Decimal
 import           Text.ParserCombinators.Parsec
 
 
@@ -384,8 +385,11 @@ pTerm = do
 			i <- liftM read (many1 digit)
 			d <- optionMaybe $ do
 				char '.'
-				liftM read (many1 digit)
-			return $ maybe (IntConst $ sign*i) (FloatConst (sign == 1) i) d
+				many1 digit
+			return $ maybe (IntConst $ sign*i) (FloatConst . (toFloat sign i) ) d
+			where
+				toFloat :: Int -> Int -> String -> Decimal
+				toFloat s a b = read $ (if s == 1 then "" else "-") ++ show a ++ "." ++ b
 		pBoolConst = (try(string "true") >> return (BoolConst True)) <|> (try(string "false") >> return (BoolConst False))
 		pIf = do
 			try $ do 

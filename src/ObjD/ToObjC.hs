@@ -9,6 +9,7 @@ import           Control.Arrow
 import           Data.Char
 import           Data.Maybe
 import           Data.List
+import           Data.Decimal
 import qualified ObjC.Struct   as C
 import qualified ObjD.Link   as D
 
@@ -313,7 +314,7 @@ tExp (D.IntConst i) = C.IntConst i
 tExp (D.StringConst i) = C.StringConst i
 tExp (D.Nil) = C.Nil
 tExp (D.BoolConst i) = C.BoolConst i
-tExp (D.FloatConst s a b) = C.FloatConst s a b
+tExp (D.FloatConst i) = C.FloatConst i
 tExp (D.BoolOp t l r) = C.BoolOp t (tExp l) (tExp r)
 tExp (D.MathOp t l r) = let 
 		l' = tExp l

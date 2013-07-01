@@ -3,6 +3,7 @@ module ObjC.Struct ( Property(..), PropertyModifier(..),FileStm(..), ImplSynthes
 ) where
 
 import           Ex.String
+import 			 Data.Decimal
 
 data FileStm =
 	Import String | ImportLib String | EmptyLine 
@@ -52,7 +53,7 @@ data Exp =
 	| Ref String
 	| IntConst Int
 	| BoolConst Bool
-	| FloatConst Bool Int Int
+	| FloatConst Decimal
 	| StringConst String
 	| BoolOp BoolTp Exp Exp 
 	| MathOp MathTp Exp Exp 
@@ -202,7 +203,7 @@ expLines (IntConst i) = [show i]
 expLines Nil = ["nil"]
 expLines (BoolConst True) = ["YES"]
 expLines (BoolConst False) = ["NO"]
-expLines (FloatConst s a b) = [(if s then "" else "-") ++ show a ++ "." ++ show b]
+expLines (FloatConst i) = [show i]
 expLines (StringConst s) = ['@' : show s]
 expLines (BoolOp t l r) = [showOp l (show t) r]
 expLines (MathOp t l r) = [showOp l  (show t) r]

@@ -8,6 +8,7 @@ import 			 Control.Arrow
 import           Control.Monad.State
 import qualified Data.Map            as M
 import           Data.Maybe
+import           Data.Decimal
 import           Ex.String
 import qualified ObjD.Struct         as D
 
@@ -382,7 +383,7 @@ data Exp = Nop
 	| IntConst Int 
 	| StringConst String 
 	| BoolConst Bool 
-	| FloatConst Bool Int Int
+	| FloatConst Decimal
 	| Braces [Exp]
 	| If Exp Exp Exp
 	| Self DataType
@@ -425,7 +426,7 @@ instance Show Exp where
 	show (StringConst i) = show i
 	show Nil = "nil"
 	show (BoolConst i) = show i
-	show (FloatConst s a b) = (if s then "" else "-") ++ show a ++ "." ++ show b
+	show (FloatConst i) = show i
 	show (Index e i) = show e ++ "[" ++ show i ++ "]"
 	show (Lambda pars e tp) = strs' ", " (map (\(n, t) -> n ++ " : " ++ show t) pars) ++ " -> " ++ show tp ++ " = " ++ show e
 	show (Val d) = show d
@@ -455,7 +456,7 @@ exprDataType (IntConst _ ) = TPInt
 exprDataType (StringConst _ ) = TPString
 exprDataType Nil = TPVoid
 exprDataType (BoolConst _ ) = TPBool
-exprDataType (FloatConst _ _ _) = TPFloat
+exprDataType (FloatConst _) = TPFloat
 exprDataType (BoolOp {}) = TPBool
 exprDataType (MathOp _ l _) = exprDataType l
 exprDataType (PlusPlus e) = exprDataType e
@@ -501,7 +502,7 @@ expr (D.IntConst i) = return $ IntConst i
 expr (D.StringConst i) = return $ StringConst i
 expr D.Nil = return Nil
 expr (D.BoolConst i) = return $ BoolConst i
-expr (D.FloatConst s a b) = return $ FloatConst s a b
+expr (D.FloatConst s) = return $ FloatConst s
 expr (D.BoolOp tp a b) = do
 	aa <- expr a
 	bb <- expr b

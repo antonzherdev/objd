@@ -4,6 +4,7 @@ module ObjD.Struct (
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
 ) where
 import           Ex.String
+import 			 Data.Decimal
 type Sources = [File]
 
 data File = File {fileName :: String, fileStms :: [FileStm]}
@@ -66,7 +67,7 @@ data Exp = Nop
 	| IntConst Int 
 	| BoolConst Bool
 	| StringConst String
-	| FloatConst Bool Int Int
+	| FloatConst Decimal
 	| Tuple [Exp]
 	| Arr [Exp]
 	| Braces [Exp]
@@ -140,7 +141,7 @@ instance Show Exp where
 	show (IntConst i) = show i
 	show (StringConst i) = show i
 	show (BoolConst i) = show i
-	show (FloatConst s a b) = (if s then "" else "-") ++ show a ++ "." ++ show b
+	show (FloatConst i) = show i
 	show (Index v i) = show v ++ "[" ++ show i ++ "]"
 	show (Lambda pars e) = strs' ", " (map (\(n, t) -> n ++ maybe "" (\tt -> " : " ++ show tt) t) pars) ++ " -> " ++ show e
 	show (Val name tp body mods) = valVar ++ " " ++ name ++ maybe "" ((" : " ++) . show) tp ++ " = " ++ show body
