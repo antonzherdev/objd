@@ -344,6 +344,7 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)
 		(name++ "Make")
 		(map (tExp . snd) pars)
 	| D.DefModEnumList `elem` mods = C.Call (C.Ref name) "values" []
+	| D.DefModVal `elem` mods = C.Ref name
 	| otherwise = C.CCall name (map (tExp . snd) pars)
 tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
 tExp (D.Index e i) = case D.exprDataType e of

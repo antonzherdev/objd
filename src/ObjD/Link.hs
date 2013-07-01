@@ -62,7 +62,7 @@ isStatic :: Def -> Bool
 isStatic = (DefModStatic `elem` ). defMods
 
 
-data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate 
+data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate  | DefModVal
 	| DefModConstructor | DefModStructConstructor | DefModStub | DefModLocal | DefModEnumList deriving (Eq, Ord)
 
 data FieldAcc = FieldAccRead [FieldAccMod] Exp | FieldAccWrite [FieldAccMod] Exp
@@ -123,6 +123,7 @@ instance Show DefMod where
 	show DefModConstructor = "constructor"
 	show DefModStructConstructor = "sConstructor"
 	show DefModStub = "stub"
+	show DefModVal = "val"
 	show DefModLocal = "local"
 	show DefModEnumList = "enumList"
 
@@ -176,8 +177,11 @@ linkFile fidx (D.File name stms) = fl
 
 		getFile f = M.lookup f fidx
 		gldefs = (map gldef . filter D.isStubDef) stms
-		gldef D.StubDef{D.stubDefName = sn, D.stubDefPars = pars, D.stubDefRetType = tp} = 
-			Def {defName = sn, defPars = linkDefPars cidx pars, defType = dataType cidx tp, defMods = [DefModStub], defBody = Nop, defGenerics = []}
+		gldef D.StubDef{D.stubDefName = sn, D.stubDefPars = pars, D.stubDefRetType = tp, D.stubDefMods = mods} = 
+			Def {defName = sn, defPars = linkDefPars cidx pars, defType = dataType cidx tp, defMods = [DefModStub] ++ map md' mods , 
+				defBody = Nop, defGenerics = []}
+			where
+				md' D.StubDefModVal = DefModVal
 
 type ClassIndex = M.Map String Class
 type DefIndex = [Def]

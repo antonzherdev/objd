@@ -1,6 +1,6 @@
 module ObjD.Struct (
 	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), 
-	ClassMod(..), DeclAcc(..), DeclAccMod(..), MathTp(..), BoolTp(..), Generic(..), 
+	ClassMod(..), DeclAcc(..), DeclAccMod(..), MathTp(..), BoolTp(..), Generic(..), StubDefMod(..),
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
 ) where
 import           Ex.String
@@ -12,7 +12,7 @@ data FileStm =
 	Import {impString :: String, impType :: ImportType }
 	| Class {classMods :: [ClassMod], className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, classBody :: [ClassStm]
 		, classGenerics :: [Generic] }
-	| StubDef {stubDefName :: String, stubDefPars :: [Par], stubDefRetType :: DataType}
+	| StubDef {stubDefName :: String, stubDefPars :: [Par], stubDefRetType :: DataType, stubDefMods :: [StubDefMod]}
 	| Enum {className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, enumItems :: [EnumItem], classBody :: [ClassStm]
 		, classGenerics :: [Generic] }
 isClass :: FileStm -> Bool
@@ -33,6 +33,8 @@ isStubDef _ = False
 data ImportType = ImportTypeCUser | ImportTypeCLib | ImportTypeD
 
 data ClassMod = ClassModStruct | ClassModStub | ClassModTrait deriving (Eq)
+
+data StubDefMod = StubDefModVal
 
 data Generic = Generic String
 
