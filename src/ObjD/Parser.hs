@@ -380,11 +380,12 @@ pTerm = do
 			return $ Val name tp e mods
 
 		pNumConst = do
+			sign <- option 1 (charSps '-' >> return (-1))
 			i <- liftM read (many1 digit)
 			d <- optionMaybe $ do
 				char '.'
 				liftM read (many1 digit)
-			return $ maybe (IntConst i) (FloatConst i) d
+			return $ maybe (IntConst $ sign*i) (FloatConst $ sign*i) d
 		pBoolConst = (try(string "true") >> return (BoolConst True)) <|> (try(string "false") >> return (BoolConst False))
 		pIf = do
 			try $ do 
