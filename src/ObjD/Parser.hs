@@ -385,7 +385,7 @@ pTerm = do
 			d <- optionMaybe $ do
 				char '.'
 				liftM read (many1 digit)
-			return $ maybe (IntConst $ sign*i) (FloatConst $ sign*i) d
+			return $ maybe (IntConst $ sign*i) (FloatConst (sign == 1) i) d
 		pBoolConst = (try(string "true") >> return (BoolConst True)) <|> (try(string "false") >> return (BoolConst False))
 		pIf = do
 			try $ do 

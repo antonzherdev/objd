@@ -52,7 +52,7 @@ data Exp =
 	| Ref String
 	| IntConst Int
 	| BoolConst Bool
-	| FloatConst Int Int
+	| FloatConst Bool Int Int
 	| StringConst String
 	| BoolOp BoolTp Exp Exp 
 	| MathOp MathTp Exp Exp 
@@ -202,7 +202,7 @@ expLines (IntConst i) = [show i]
 expLines Nil = ["nil"]
 expLines (BoolConst True) = ["YES"]
 expLines (BoolConst False) = ["NO"]
-expLines (FloatConst a b) = [show a ++ "." ++ show b]
+expLines (FloatConst s a b) = [(if s then "" else "-") ++ show a ++ "." ++ show b]
 expLines (StringConst s) = ['@' : show s]
 expLines (BoolOp t l r) = [showOp l (show t) r]
 expLines (MathOp t l r) = [showOp l  (show t) r]

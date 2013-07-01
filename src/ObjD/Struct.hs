@@ -66,7 +66,7 @@ data Exp = Nop
 	| IntConst Int 
 	| BoolConst Bool
 	| StringConst String
-	| FloatConst Int Int
+	| FloatConst Bool Int Int
 	| Tuple [Exp]
 	| Arr [Exp]
 	| Braces [Exp]
@@ -140,7 +140,7 @@ instance Show Exp where
 	show (IntConst i) = show i
 	show (StringConst i) = show i
 	show (BoolConst i) = show i
-	show (FloatConst a b) = show a ++ "." ++ show b
+	show (FloatConst s a b) = (if s then "" else "-") ++ show a ++ "." ++ show b
 	show (Index v i) = show v ++ "[" ++ show i ++ "]"
 	show (Lambda pars e) = strs' ", " (map (\(n, t) -> n ++ maybe "" (\tt -> " : " ++ show tt) t) pars) ++ " -> " ++ show e
 	show (Val name tp body mods) = valVar ++ " " ++ name ++ maybe "" ((" : " ++) . show) tp ++ " = " ++ show body
