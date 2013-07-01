@@ -1,5 +1,5 @@
 module ObjD.Link (
-	Sources, File(..), Class(..), Extends, Def(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..), 
+	Sources, File(..), Class(..), Extends(..), Def(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..), 
 	DefMod(..), FieldAcc(..), FieldAccMod(..), MathTp(..),
 	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType
 )where
@@ -15,9 +15,9 @@ import qualified ObjD.Struct         as D
 type Sources = [File]
 data File = File {fileName :: String, fileImports :: [File], fileCImports :: [CImport], fileClasses :: [Class], globalDefs :: [Def]}
 
-data Class = Class { classMods :: [ClassMod], className :: String , classExtends :: Extends, classDefs :: [Def], classConstructor :: Constructor
+data Class = Class { classMods :: [ClassMod], className :: String , classExtends :: Maybe Extends, classDefs :: [Def], classConstructor :: Constructor
 		,classGenerics :: [Class] }
-	| Enum { className :: String, classExtends :: Extends, classDefs :: [Def], classConstructor :: Constructor, enumItems :: [EnumItem]
+	| Enum { className :: String, classExtends :: Maybe Extends, classDefs :: [Def], classConstructor :: Constructor, enumItems :: [EnumItem]
 		,classGenerics :: [Class] }
 	| Generic {className :: String}
 instance Eq Class where
@@ -47,7 +47,7 @@ isEnum _ = False
 
 data ClassMod = ClassModStub | ClassModStruct | ClassModTrait deriving (Eq)
 
-type Extends = Maybe Class
+data Extends = Extends {extendsClass :: Class, extendsGenerics :: [DataType]}
 data Def = Def {defName :: String, defPars :: [Def], defType :: DataType, defBody :: Exp, defMods :: [DefMod], defGenerics :: [Class]}
 	| Field { defName :: String, defType :: DataType, defBody :: Exp, defMods :: [DefMod], fieldAccs :: [FieldAcc]}
 localVal :: String -> DataType -> Def
@@ -85,7 +85,7 @@ instance Show CImport where
 instance Show Class where
 	show cl@Generic{} = "generic " ++ className cl
 	show cl =
-		tp cl ++ " " ++ className cl ++ sConstr cl ++ maybe "" className (classExtends cl) ++ " {\n" ++
+		tp cl ++ " " ++ className cl ++ sConstr cl ++ maybe "" (( ++ " "). show) (classExtends cl) ++ " {\n" ++
 			(unlines . map ind . concatMap (lines . show)) (classDefs cl)  ++
 		"}"
 		where
@@ -98,6 +98,9 @@ instance Show Class where
 			sConstr ccc = maybe "" (\cc -> " (" ++ (strs ", " . map constrFld) cc ++ ") ") (Just $ classConstructor ccc)
 			constrFld (f, Nop) = defName f
 			constrFld (f, e) = defName f ++ " = " ++ show e
+instance Show Extends where
+	show (Extends cls []) = "extends " ++ className cls
+	show (Extends cls generics) = "extends " ++ className cls ++ "<" ++ strs' ", " generics ++ ">"
 instance Show Def where
 	show = showDef True
 
@@ -151,7 +154,7 @@ file fidx (D.File name stms) = fl
 		visibleFiles :: [D.FileStm] -> [File]
 		visibleFiles = mapMaybe (getFile . D.impString) . filter D.isImport
 		kernelFiles :: [File]
-		kernelFiles = map (findTp "file" fidx) ["ODArray", "ODOption", "ODMap"]
+		kernelFiles = map (findTp "file" fidx) ["ODArray", "ODOption", "ODMap", "ODNS"]
 		cImports = mapMaybe toCImport stms
 		toCImport (D.Import s D.ImportTypeCUser) = Just $ CImportUser s
 		toCImport (D.Import s D.ImportTypeCLib) = Just $ CImportLib s
@@ -202,7 +205,7 @@ cls (ocidx, glidx) cl = self
 		clsMod D.ClassModStruct = ClassModStruct
 		clsMod D.ClassModStub = ClassModStub
 		clsMod D.ClassModTrait = ClassModTrait
-		extends = fmap (findTp "class" cidx) (D.classExtends cl)
+		extends = fmap (\(D.Extends cls gens) -> Extends (findTp "class" cidx cls) (map (dataType cidx) gens) ) (D.classExtends cl)
 		fields =  mapM (evalState . field) decls env
 		fieldsMap = M.fromList $ map (idx defName) fields
 		decls = D.classFields cl ++ filter D.isDecl (D.classBody cl)
@@ -671,7 +674,7 @@ allDefs env Nothing = envVals env ++ allDefsInClass (envSelfClass env) ++ envGlo
 
 allDefsInClass :: Class -> [Def]
 allDefsInClass Generic{} = []
-allDefsInClass cl = classDefs cl  ++ maybe [] allDefsInClass (classExtends cl) 
+allDefsInClass cl = classDefs cl  ++ maybe [] (allDefsInClass . extendsClass) (classExtends cl) 
 	
 findCall :: (String, [(Maybe String, Exp)]) -> (Env, DataType, [Def]) -> Maybe Exp
 findCall (name,pars) (_, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs

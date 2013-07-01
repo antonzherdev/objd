@@ -170,11 +170,14 @@ pGenerics = option [] $ between (charSps '<') (charSps '>') (pClassGeneric `sepB
 			sps
 			return $ Generic name
 
-pExtends :: Parser Extends
+pExtends :: Parser (Maybe Extends)
 pExtends = optionMaybe (do
-		try $ string "extends"
+		try $ string "extends" >> sps1
+		cls <- ident
 		sps
-		ident
+		gens <- pGensRef
+		sps
+		return $ Extends cls gens
 	)
 
 pClassBody :: Parser [ClassStm]
@@ -417,11 +420,13 @@ pTerm = do
 				sps
 				charSps ']' <?> "Array index close bracket"
 				return $ Index (Call name [] gens) e) <|> return (Call name [] gens)
-		pGensRef = option [] $ do
-			charSps '<'
-			r <- pType False `sepBy` charSps ','
-			charSps '>'
-			return r
+
+pGensRef :: Parser [DataType]
+pGensRef = option [] $ do
+	charSps '<'
+	r <- pType False `sepBy` charSps ','
+	charSps '>'
+	return r
 
 pLambda :: Parser Exp 
 pLambda =  do

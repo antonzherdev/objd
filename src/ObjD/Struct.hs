@@ -1,5 +1,5 @@
 module ObjD.Struct (
-	FileStm(..), Extends, ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), 
+	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), 
 	ClassMod(..), DeclAcc(..), DeclAccMod(..), MathTp(..), BoolTp(..), Generic(..), 
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
 ) where
@@ -10,10 +10,10 @@ data File = File {fileName :: String, fileStms :: [FileStm]}
 
 data FileStm =
 	Import {impString :: String, impType :: ImportType }
-	| Class {classMods :: [ClassMod], className :: String, classFields :: [ClassStm], classExtends :: Extends, classBody :: [ClassStm]
+	| Class {classMods :: [ClassMod], className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, classBody :: [ClassStm]
 		, classGenerics :: [Generic] }
 	| StubDef {stubDefName :: String, stubDefPars :: [Par], stubDefRetType :: DataType}
-	| Enum {className :: String, classFields :: [ClassStm], classExtends :: Extends, enumItems :: [EnumItem], classBody :: [ClassStm]
+	| Enum {className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, enumItems :: [EnumItem], classBody :: [ClassStm]
 		, classGenerics :: [Generic] }
 isClass :: FileStm -> Bool
 isClass (Class {}) = True
@@ -36,7 +36,7 @@ data ClassMod = ClassModStruct | ClassModStub | ClassModTrait deriving (Eq)
 
 data Generic = Generic String
 
-type Extends = Maybe String
+data Extends = Extends String [DataType]
 
 data ClassStm = Decl {defMods :: [DefMod], defName :: String, defRetType :: Maybe DataType, defBody :: Exp, declAccs :: [DeclAcc]}
 	| Def {defMods :: [DefMod],  defName :: String, defGenerics :: [Generic], defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}

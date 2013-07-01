@@ -50,7 +50,7 @@ stmToInterface :: D.Class -> C.FileStm
 stmToInterface (D.Class {D.className = name, D.classExtends = extends, D.classDefs = defs, D.classConstructor = constr}) =
 	C.Interface {
 		C.interfaceName = name,
-		C.interfaceExtends = maybe "NSObject" D.className extends,
+		C.interfaceExtends = maybe "NSObject" (D.className . D.extendsClass) extends,
 		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs,
 		C.interfaceFuns = [createFun name constr, initFun constr]
 			++ intefaceFuns defs
@@ -233,7 +233,7 @@ genEnumInterface :: D.Class -> [C.FileStm]
 genEnumInterface D.Enum {D.className = name, D.classExtends = extends, D.classDefs = defs, D.enumItems = items } = [
 	C.Interface {
 		C.interfaceName = name,
-		C.interfaceExtends = maybe "NSObject" D.className extends,
+		C.interfaceExtends = maybe "NSObject" (D.className . D.extendsClass) extends,
 		C.interfaceProperties = [C.Property "name" "NSString*" [C.NonAtomic, C.ReadOnly],
 			C.Property "ordinal" "NSInteger" [C.NonAtomic, C.ReadOnly]
 			] ++ (map fieldToProperty . filter D.isField) defs,
