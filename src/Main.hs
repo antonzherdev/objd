@@ -14,8 +14,8 @@ import System.FilePath
 
 {- main::IO()
 main = putStr "dsa" -}
-debug :: Bool
-debug = False
+debug :: [String]
+debug = []
 
 main::IO()
 main = 
@@ -34,7 +34,7 @@ main =
 			linkedFiles = do
 				fs <- parsedFiles
 				let linked = (uncurry zip . second L.link. unzip) fs
-				when debug $ forM_ linked (\(path, f) -> do
+				forM_ (filter ((`elem` debug). L.fileName . snd) linked) (\(path, f) -> do
 					putStrLn $ "= Linked " ++ path
 					print f)
 				return linked
@@ -64,7 +64,7 @@ parseFiles = mapM parse
 		parse (path, txt) = case parseFile txt of
 			Left err -> error $ "Error in parse " ++ path ++ ":\n" ++ removeComments txt ++ "\n\nError:" ++ show err
 			Right val -> do
-				when debug (do
+				when (fn path `elem` debug) (do
 					putStrLn $ "= Parsed " ++ path ++ ":"
 					putStrLn $ strs' "\n" val)
 				return (path, D.File (fn path) val)

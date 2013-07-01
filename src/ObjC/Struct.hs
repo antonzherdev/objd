@@ -114,7 +114,7 @@ instance Show FileStm where
 		showSynthenize (ImplSynthesize name "") = "@synthesize " ++ name ++ ";"
 		showSynthenize (ImplSynthesize name var) = "@synthesize " ++ name ++ " = " ++ var ++ ";"
 		showImplFuns = unlines . map show
-		showStField (ImplField nm tp) = "static " ++ nm ++ " " ++ tp ++ ";"
+		showStField (ImplField nm tp) = "static " ++ tp ++ " " ++ nm ++ ";"
 
 instance Show CFunMod where
 	show CFunStatic = "static"

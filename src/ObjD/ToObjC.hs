@@ -53,11 +53,17 @@ stmToInterface (D.Class {D.className = name, D.classExtends = extends, D.classDe
 		C.interfaceExtends = maybe "NSObject" (D.className . D.extendsClass) extends,
 		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs,
 		C.interfaceFuns = [createFun name constr, initFun constr]
-			++ intefaceFuns defs
+			++ intefaceFuns defs ++ staticGetters
 	}
+	where 
+		staticGetters = (map staticGetterFun .filter (\f -> D.isField f && D.isStatic f)) defs
+
+staticGetterFun :: D.Def -> C.Fun
+staticGetterFun D.Field{D.defName = name, D.defType = tp} = C.Fun C.ObjectFun (showDataType tp) name []
+
 		
 needProperty :: D.Def -> Bool
-needProperty v = D.DefModPrivate `notElem` D.defMods v && D.isField v
+needProperty v = D.DefModPrivate `notElem` D.defMods v && D.isField v && not (D.isStatic v)
 
 
 fieldToProperty :: D.Def -> C.Property
@@ -123,17 +129,21 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs, D.classConstruc
 		C.implName = clsName,
 		C.implFields = map implField implFields,
 		C.implSynthesizes = (map synthesize . filter needProperty) implFields,
-		C.implFuns = [implCreate cl constr, implInit cl constr] ++ dealoc cl ++ implFuns defs,
-		C.implStaticFields = []
+		C.implFuns = [implCreate cl constr, implInit cl constr] ++ dealoc cl ++ implFuns defs ++ staticGetters,
+		C.implStaticFields = map implField staticFields
 	}
 	where
 		implFields = filter needField defs
-		needField D.Field{D.fieldAccs = accs} = not $ any realReadAcc accs
+		needField f@D.Field{D.fieldAccs = accs} = (not $ any realReadAcc accs) && not (isStaticField f)
 		needField _ = False
+		isStaticField f = D.isStatic f && D.isField f
 		realReadAcc (D.FieldAccRead _ D.Nop) = False
 		realReadAcc (D.FieldAccRead _ _) = True
 		realReadAcc _ = False
-	
+		staticFields = filter isStaticField defs
+		staticGetters = (map staticGetter . filter((D.DefModPrivate `notElem`) . D.defMods)) staticFields
+		staticGetter f@D.Field{D.defName = name, D.defType = tp} = C.ImplFun (staticGetterFun f) [
+			C.Return $ C.Ref $ '_' : name]
 
 synthesize :: D.Def -> C.ImplSynthesize
 synthesize D.Field{D.defName = x} = C.ImplSynthesize x ('_' : x)
@@ -250,12 +260,12 @@ genEnumImpl cl@D.Enum {D.className = clsName, D.enumItems = items} = [
 		C.implFields = (map implField . filter D.isField) defs,
 		C.implSynthesizes = (map synthesize . filter D.isField) defs,
 		C.implFuns = [implCreate cl constr, implInit cl constr, initialize] ++ dealoc cl ++ implFuns defs ++ map itemGetter items ++ [valuesFun],
-		C.implStaticFields = map stField items ++ [C.ImplField "NSArray*" "values"]
+		C.implStaticFields = map stField items ++ [C.ImplField "values" "NSArray*"]
 	}]
 	where
 		defs = enumAdditionalDefs ++ D.classDefs cl
 		constr = enumConst (D.classConstructor cl)
-		stField (D.EnumItem itemName _) = C.ImplField (clsName ++ "*") itemName
+		stField (D.EnumItem itemName _) = C.ImplField itemName (clsName ++ "*")
 		itemGetter e@(D.EnumItem itemName _) = C.ImplFun (enumItemGetterFun clsName e) [C.Return $ C.Ref itemName]
 		initialize = C.ImplFun (C.Fun C.ObjectFun "void" "initialize" []) (
 			((C.Stm $ C.Call C.Super "initialize" []) : snd ( mapAccumL initItem 0 items)) ++ [setValues])

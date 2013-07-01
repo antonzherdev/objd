@@ -231,8 +231,8 @@ pDecl' mtf = do
 	
 pMod :: Parser DefMod	
 pMod = do
-	v <- try(string "private") >> return DefModPrivate
-	sps
+	v <- (try(string "private") >> return DefModPrivate) <|> (try(string "static") >> return DefModStatic)
+	sps1
 	return v
 
 pImport :: Parser FileStm
@@ -267,10 +267,6 @@ pDef = do
 		string "def"
 		sps1
 		return mds
-	static <- option [] $ do 
-		try (string "static")
-		sps1
-		return [DefModStatic]
 	name <- ident
 	sps
 	gens <- pGenerics
@@ -284,11 +280,11 @@ pDef = do
 			sps
 			body <- option Nop pExp 
 			sps
-			return $ Def (mods ++ static) name gens pars ret body
+			return $ Def mods name gens pars ret body
 		) <|> (do
 			body <- optionMaybe pBraces
 			sps
-			return $ Def (mods ++ static) name gens pars 
+			return $ Def mods name gens pars 
 				(Just $ calcTp ret body)
 				(fromMaybe Nop body)
 		)

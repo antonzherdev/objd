@@ -1,7 +1,7 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..), 
 	DefMod(..), FieldAcc(..), FieldAccMod(..), MathTp(..),
-	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType
+	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic
 )where
 
 import 			 Control.Arrow
@@ -58,6 +58,9 @@ isDef _ = False
 isField :: Def -> Bool
 isField Field{} = True
 isField _ = False
+isStatic :: Def -> Bool
+isStatic = (DefModStatic `elem` ). defMods
+
 
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate 
 	| DefModConstructor | DefModStructConstructor | DefModStub | DefModLocal | DefModEnumList deriving (Eq, Ord)
@@ -105,12 +108,23 @@ instance Show Def where
 	show = showDef True
 
 showDef :: Bool -> Def -> String
-showDef f Def {defName = name , defPars = [], defType = tp, defBody = e} =
-		"def " ++ name ++ if f then " : " ++ show tp ++ " = " ++ show e else ""
-showDef f Def {defName = name , defPars = pars, defType = tp, defBody = e} =
-	"def " ++ name ++ "(" ++ strs' ", " pars ++ ")" ++ if f then  " : " ++ show tp ++ " = " ++ show e else ""
-showDef f Field {defName = nm, defMods = mods, defType = tp, defBody = e } =
-	(if DefModMutable `elem` mods then "var" else "val") ++ " " ++ nm ++ if f then " : " ++ show tp ++ show e else ""
+showDef f Def {defName = name , defPars = [], defType = tp, defBody = e, defMods = mods} =
+	strs' " " mods ++ " def " ++ name ++ if f then " : " ++ show tp ++ " = " ++ show e else ""
+showDef f Def {defName = name , defPars = pars, defType = tp, defBody = e, defMods = mods} =
+	strs' " " mods ++ " def " ++ name ++ "(" ++ strs' ", " pars ++ ")" ++ if f then  " : " ++ show tp ++ " = " ++ show e else ""
+showDef f Field {defName = nm, defMods = mods, defType = tp, defBody = e} =
+	strs' " " mods ++ (if DefModMutable `elem` mods then "" else "val" ) ++ " " ++ nm ++ if f then " : " ++ show tp ++ show e else ""
+
+instance Show DefMod where
+	show DefModStatic = "static"
+	show DefModMutable = "var"
+	show DefModAbstract = "abstract" 
+	show DefModPrivate = "private"
+	show DefModConstructor = "constructor"
+	show DefModStructConstructor = "sConstructor"
+	show DefModStub = "stub"
+	show DefModLocal = "local"
+	show DefModEnumList = "enumList"
 
 
 defRefPrep :: Def -> String
@@ -139,14 +153,14 @@ link :: D.Sources -> Sources
 link src = map (\D.File{D.fileName = name} ->  fromMaybe (error $ "Could not find linked file " ++ name) $ M.lookup name fidx) src
 	where
 		fidx :: M.Map String File
-		fidx = M.fromList $ map (idx fileName . file fidx) src
+		fidx = M.fromList $ map (idx fileName . linkFile fidx) src
 
-file :: M.Map String File -> D.File -> File
-file fidx (D.File name stms) = fl
+linkFile :: M.Map String File -> D.File -> File
+linkFile fidx (D.File name stms) = fl
 	where
 		fl :: File
 		fl = File {fileName = name, fileImports = files, fileCImports = cImports, 
-			fileClasses =(map (cls (cidx, glidx)) . filter isCls) stms, globalDefs = gldefs}
+			fileClasses =(map (linkClass (cidx, glidx)) . filter isCls) stms, globalDefs = gldefs}
 		files = visibleFiles stms
 		isCls s = D.isClass s || D.isStub s || D.isEnum s
 		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . (++ kernelFiles) . visibleFiles) stms
@@ -179,8 +193,8 @@ findTp tp mmm name =  M.findWithDefault (error $ "No " ++ tp ++ " found " ++ nam
 envSelfClass :: Env -> Class 
 envSelfClass env = dataTypeClass env $ envSelf env
 
-cls :: (ClassIndex, DefIndex) -> D.FileStm -> Class
-cls (ocidx, glidx) cl = self
+linkClass :: (ClassIndex, DefIndex) -> D.FileStm -> Class
+linkClass (ocidx, glidx) cl = self
 	where
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
 		env = Env selfType cidx glidx []
@@ -205,11 +219,11 @@ cls (ocidx, glidx) cl = self
 		clsMod D.ClassModStruct = ClassModStruct
 		clsMod D.ClassModStub = ClassModStub
 		clsMod D.ClassModTrait = ClassModTrait
-		extends = fmap (\(D.Extends cls gens) -> Extends (findTp "class" cidx cls) (map (dataType cidx) gens) ) (D.classExtends cl)
-		fields =  mapM (evalState . field) decls env
+		extends = fmap (\(D.Extends ecls gens) -> Extends (findTp "class" cidx ecls) (map (dataType cidx) gens) ) (D.classExtends cl)
+		fields =  mapM (evalState . linkField) decls env
 		fieldsMap = M.fromList $ map (idx defName) fields
 		decls = D.classFields cl ++ filter D.isDecl (D.classBody cl)
-		defs = map (def env) . filter D.isDef $ D.classBody cl
+		defs = map (linkDef env) . filter D.isDef $ D.classBody cl
 		constr = map (\f -> (findTp "field" fieldsMap (D.defName f), evalState (expr (D.defBody f)) env) ) $ D.classFields cl
 		generics = map generic (D.classGenerics cl)
 		generic (D.Generic name) = Generic name
@@ -217,8 +231,8 @@ cls (ocidx, glidx) cl = self
 			where
 				enumItemPars = zip (map fst constr) (map ((\e -> evalState (expr e) env) . snd) pars)
 
-field :: D.ClassStm -> State Env Def
-field D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e, D.declAccs = accs} = do
+linkField :: D.ClassStm -> State Env Def
+linkField D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e, D.declAccs = accs} = do
 	i <- expr e
 	env <- get
 	let 
@@ -245,8 +259,8 @@ translateMods = map m
 		m D.DefModMutable = DefModMutable
 		m D.DefModPrivate = DefModPrivate
 		
-def :: Env -> D.ClassStm -> Def
-def env ccc = evalState (stateDef ccc) env'
+linkDef :: Env -> D.ClassStm -> Def
+linkDef env ccc = evalState (stateDef ccc) env'
 	where 
 		env' = envAddClasses generics' env
 		genericClass (D.Generic genericName) = Generic genericName
