@@ -659,9 +659,9 @@ allDefs env (Just ss) = allDefsInClass $ dataTypeClass env ss
 allDefs env Nothing = envVals env ++ allDefsInClass (envSelfClass env) ++ envGlobalDefIndex env ++ classConstructors
 	where
 		classConstructors = (mapMaybe (constructorToDef . snd) . M.toList) (envIndex env)
-		constructorToDef cl@Class{className = n, classConstructor = constr} = 
-			Just Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl [], defBody = Nop, 
-				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor], defGenerics = []}
+		constructorToDef cl@Class{className = n, classConstructor = constr, classGenerics = gens} = 
+			Just Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl (map TPGeneric gens), defBody = Nop, 
+				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor], defGenerics = gens}
 		constructorToDef cl@Enum{className = n} =
 			Just Def {defName = n, defPars = [], defType = TPArr $ refDataType cl [], defBody = Nop, 
 				defMods = [DefModStatic, DefModEnumList], defGenerics = []}
