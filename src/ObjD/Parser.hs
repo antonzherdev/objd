@@ -425,7 +425,7 @@ pTerm = do
 				return $ Index (Call name [] gens) e) <|> return (Call name [] gens)
 
 pGensRef :: Parser [DataType]
-pGensRef = option [] $ do
+pGensRef = option [] $ try $ do
 	charSps '<'
 	r <- pType False `sepBy` charSps ','
 	charSps '>'
