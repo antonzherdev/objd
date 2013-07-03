@@ -92,9 +92,9 @@ data CImport = CImportLib String | CImportUser String
 instance Show File where
 	show (File name imps cimps classes gldefs) =
 		"// " ++ name ++ ".od\n" ++
-		((`tryCon` "\n\n" ). strs' "\n") cimps ++
+		{-((`tryCon` "\n\n" ). strs' "\n") cimps ++
 		((`tryCon` "\n\n") . strs' "\n") imps ++ 
-		strs' "\n" gldefs ++
+		{trs' "\n" gldefs ++-}
 		strs' "\n\n" classes
 instance Show CImport where
 	show (CImportLib l) = "import <" ++ l ++ ">"
@@ -301,7 +301,7 @@ linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Def pnm 
 
 data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid 
 	| TPClass {tpMod :: DataTypeMod, tpGenerics :: [DataType], tpClass :: Class}
-	| TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown | TPMap DataType DataType
+	| TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown String | TPMap DataType DataType
 	| TPOption DataType | TPGenericWrap DataType | TPNil
 data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric
 isVoid :: DataType -> Bool
@@ -322,6 +322,7 @@ dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
 dataTypeClass env (TPArr _) = findTp "array class" (envIndex env) "ODArray"
 dataTypeClass env (TPOption _) = findTp "option class" (envIndex env) "ODOption"
 dataTypeClass env (TPMap _ _) = findTp "map class" (envIndex env) "ODMap"
+dataTypeClass _ x = error $ "No dataTypeClass for " ++ show x
 
 dataTypeGenerics :: Env -> DataType -> [DataType]
 dataTypeGenerics _ (TPClass _ g _) = g
@@ -365,7 +366,7 @@ instance Show DataType where
 	show TPBool = "bool"
 	show TPSelf = "self"
 	show TPNil = "nil"
-	show TPUnknown = "???"
+	show (TPUnknown s) = "???: " ++ s
 	show (TPClass _ [] c) = className c
 	show (TPClass _ gens c) = className c ++ "<" ++ strs' ", " gens ++ ">"
 	show (TPGenericWrap c) = "^" ++ show c
@@ -444,6 +445,7 @@ instance Show Exp where
 	show (Tuple exps) = "("  ++ strs' ", " exps ++ ")"
 	show (Opt e) = "opt(" ++ show e ++ ")"
 	show (None tp) = "none<" ++ show tp ++ ">" 
+	show (FirstTry _ e) = "First try: " ++ show e
 
 maybeAddReturn :: DataType -> Exp -> Exp
 maybeAddReturn TPVoid e = e
@@ -486,9 +488,9 @@ exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 		parsTp :: [(String, DataType)] -> DataType
 		parsTp [(_, tp)] = tp
 		parsTp ps = TPTuple $ map snd ps
-exprDataType (Error _ _) = TPUnknown
-exprDataType (Arr []) = TPArr TPUnknown
-exprDataType (Map []) = TPMap TPUnknown TPUnknown
+exprDataType (Error e ee) = TPUnknown $ e ++ " in " ++ show ee
+exprDataType (Arr []) = TPArr $ TPUnknown "Empty array"
+exprDataType (Map []) = TPMap (TPUnknown "Empty map key") (TPUnknown "Empty map value")
 exprDataType (Arr exps) = TPArr $ wrapGeneric $ exprDataType $ head exps
 exprDataType (Map exps) = let (k, v) = ((exprDataType >>> wrapGeneric) *** (exprDataType >>> wrapGeneric)) $ head exps 
 	in TPMap k v
@@ -496,6 +498,7 @@ exprDataType (Tuple exps) = TPTuple $ map (wrapGeneric .exprDataType) exps
 exprDataType (Val Def{defType = tp}) = tp
 exprDataType (Opt v) = TPOption (exprDataType v)
 exprDataType (None tp) = tp
+exprDataType (FirstTry _ e) = exprDataType e
 exprDataType x = error $ "No exprDataType for " ++ show x
 
 expr :: D.Exp -> State Env Exp
@@ -551,7 +554,7 @@ expr (D.Index e i) = do
 	e' <- expr e
 	i' <- expr i
 	return $ Index e' i'
-expr l@(D.Lambda pars e) = if any (isJust.snd) pars then (do
+expr l@(D.Lambda pars e) = if all (isJust.snd) pars then (do
 	env <- get
 	let pars' = map (second (dataType (envIndex env) . fromJust)) pars
 	modify $ envAddVals (map (uncurry localVal) pars')
@@ -635,10 +638,11 @@ exprCall strictClass call@(D.Call name pars gens) = do
 				determineGenericType :: (Class, Maybe D.DataType) -> (String, DataType)
 				determineGenericType (g, Just tp) = (className g, (wrapGeneric . dataType (envIndex env)) tp)
 				determineGenericType (g, _) = (className g, 
-						fromMaybe (if strict then error $ "Could not determine generic type for " ++ show g ++ " in " ++ show call else TPUnknown) $ 
+						fromMaybe (if strict then error errorText else TPUnknown errorText) $ 
 						(listToMaybe . mapMaybe ( (defType *** (exprDataType >>> unwrapGeneric))>>> tryDetermine g) ) rpars
 					)
 					where 
+						errorText = "Could not determine generic type for " ++ show g ++ " in " ++ show call
 						tryDetermine :: Class -> (DataType, DataType) -> Maybe DataType
 						tryDetermine c (TPClass TPMGeneric _ gg, tp) = if c == gg then Just (wrapGeneric tp) else Nothing
 						tryDetermine c (TPArr a, TPArr a') = tryDetermine c (a, a')
@@ -725,6 +729,7 @@ findCall (name,pars) (_, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter
 {- Implicit conversion -}
 implicitConvertsion :: DataType -> Exp -> Exp
 implicitConvertsion TPMap{} (Arr []) = Map []
+implicitConvertsion _ Nop = Nop
 implicitConvertsion dtp e = let stp = exprDataType e
 	in case (stp, dtp) of
 		(TPFun{}, TPFun{}) -> e

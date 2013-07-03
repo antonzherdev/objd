@@ -349,7 +349,7 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pTuple <|> pString <|> pArr <|> pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pLambda <|> pCall  <?> "Expression"
+		pTerm' = pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pCall  <?> "Expression"
 		pArr = do
 			charSps '['
 			exps <- pExp `sepBy` charSps ','
@@ -434,8 +434,10 @@ pGensRef = option [] $ try $ do
 pLambda :: Parser Exp 
 pLambda =  do
 	pars <- try $ do 
+		optionMaybe $ charSps '('
 		r <- lambdaPars `sepBy` charSps ','
 		sps
+		optionMaybe $ charSps ')'
 		string "->"
 		sps
 		return r

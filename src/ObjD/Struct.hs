@@ -113,6 +113,7 @@ instance Show DataType where
 	show (DataType s pars) = s ++ "<" ++ strs' ", " pars ++ ">"
 	show (DataTypeArr r) = "[" ++ show r ++ "]"
 	show (DataTypeMap k v) = "[" ++ show k ++ " : " ++ show v ++ "]"
+	show (DataTypeOption s) = show s ++ "?"
 
 showGens :: [DataType] -> String
 showGens [] = ""
