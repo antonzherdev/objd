@@ -33,6 +33,8 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 			++ cImports'
 			++ fst dImports' 
 			++ [C.EmptyLine] 
+			++ map classDecl cls
+			++ [C.EmptyLine] 
 			++ concatMap genStruct structs 
 			++ map genProtocol traits
 			++ concatMap genEnumInterface enums 
@@ -40,6 +42,7 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 
 		enumsImpl = concatMap genEnumImpl enums
 		stmsImpl = map stmToImpl cls
+		classDecl c = C.ClassDecl $ D.className c
 		m = if null enumsImpl && null stmsImpl then []
 			else [C.Import (name ++ ".h") , C.EmptyLine] ++ snd dImports' ++ enumsImpl ++ stmsImpl
 	in (h, m)

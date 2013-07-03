@@ -458,6 +458,7 @@ addReturn e = Return e
 
 
 exprDataType :: Exp -> DataType
+exprDataType (If _ _ Nop) = TPVoid
 exprDataType (If _ t _) = exprDataType t
 exprDataType (Braces []) = TPVoid
 exprDataType (Braces es) = exprDataType $ last es

@@ -17,6 +17,7 @@ data FileStm =
 	| Struct {structName :: String, structFields :: [StructField]}
 	| TypeDefStruct {oldName :: String, newName :: String}
 	| CFun {cfunMods :: [CFunMod], cfunReturnType :: String, cfunName :: String, cfunPars :: [CFunPar], cfunExps :: [Stm]}
+	| ClassDecl String
 
 data StructField = StructField{structFieldType :: String, structFieldName :: String}
 
@@ -118,7 +119,7 @@ instance Show FileStm where
 		showSynthenize (ImplSynthesize name var) = "@synthesize " ++ name ++ " = " ++ var ++ ";"
 		showImplFuns = unlines . map show
 		showStField (ImplField nm tp mods) = "static " ++  (strs " " mods) `tryCon` " " ++ tp ++ " " ++ nm ++ ";"
-
+	show (ClassDecl name) = "@class " ++ name ++ ";"
 instance Show CFunMod where
 	show CFunStatic = "static"
 	show CFunInline = "inline"
