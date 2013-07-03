@@ -299,7 +299,7 @@ linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Def pnm 
 data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid 
 	| TPClass {tpMod :: DataTypeMod, tpGenerics :: [DataType], tpClass :: Class}
 	| TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown | TPMap DataType DataType
-	| TPOption DataType | TPGenericWrap DataType
+	| TPOption DataType | TPGenericWrap DataType | TPNil
 data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
@@ -361,6 +361,7 @@ instance Show DataType where
 	show TPString = "string"
 	show TPBool = "bool"
 	show TPSelf = "self"
+	show TPNil = "nil"
 	show TPUnknown = "???"
 	show (TPClass _ [] c) = className c
 	show (TPClass _ gens c) = className c ++ "<" ++ strs' ", " gens ++ ">"
@@ -405,6 +406,8 @@ data Exp = Nop
 	| Arr [Exp]
 	| Map [(Exp, Exp)]
 	| Tuple [Exp]
+	| Opt Exp
+	| None DataType
 
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
@@ -436,6 +439,8 @@ instance Show Exp where
 	show (Arr exps) = "["  ++ strs' ", " exps ++ "]"
 	show (Map exps) = "["  ++ strs' ", " exps ++ "]"
 	show (Tuple exps) = "("  ++ strs' ", " exps ++ ")"
+	show (Opt e) = "opt(" ++ show e ++ ")"
+	show (None tp) = "none<" ++ show tp ++ ">" 
 
 maybeAddReturn :: DataType -> Exp -> Exp
 maybeAddReturn TPVoid e = e
@@ -456,7 +461,7 @@ exprDataType (Braces es) = exprDataType $ last es
 exprDataType (Nop) = TPVoid
 exprDataType (IntConst _ ) = TPInt
 exprDataType (StringConst _ ) = TPString
-exprDataType Nil = TPVoid
+exprDataType Nil = TPNil
 exprDataType (BoolConst _ ) = TPBool
 exprDataType (FloatConst _) = TPFloat
 exprDataType (BoolOp {}) = TPBool
@@ -485,6 +490,8 @@ exprDataType (Map exps) = let (k, v) = ((exprDataType >>> wrapGeneric) *** (expr
 	in TPMap k v
 exprDataType (Tuple exps) = TPTuple $ map (wrapGeneric .exprDataType) exps
 exprDataType (Val Def{defType = tp}) = tp
+exprDataType (Opt v) = TPOption (exprDataType v)
+exprDataType (None tp) = tp
 exprDataType x = error $ "No exprDataType for " ++ show x
 
 expr :: D.Exp -> State Env Exp
@@ -718,6 +725,9 @@ implicitConvertsion dtp e = let stp = exprDataType e
 	in case (stp, dtp) of
 		(TPFun{}, TPFun{}) -> e
 		(_, f@(TPFun _ fdtp) ) -> Lambda (lambdaImplicitParameters f) (maybeAddReturn fdtp e) fdtp
+		(TPOption{}, TPOption{}) -> e
+		(TPNil, TPOption tp) -> None tp
+		(_, TPOption _) -> Opt e
 		_ -> e
 
 lambdaImplicitParameters :: DataType -> [(String, DataType)]

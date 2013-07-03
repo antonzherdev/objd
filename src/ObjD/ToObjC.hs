@@ -307,6 +307,7 @@ showDataType (D.TPClass D.TPMClass _ c) = D.className c ++ "*"
 showDataType (D.TPClass D.TPMEnum _ c) = D.className c ++ "*"
 showDataType (D.TPClass _ _ _) = "id"
 showDataType (D.TPSelf) = "id"
+showDataType (D.TPOption c) = showDataType c
 showDataType (D.TPFun D.TPVoid d) = showDataType d ++ "(^)" ++ "()"
 showDataType (D.TPFun s d) = showDataType d ++ "(^)" ++ "(" ++ showDataType s ++ ")"
 showDataType (D.TPGenericWrap (D.TPClass D.TPMStruct _ _)) = "id"
@@ -314,7 +315,6 @@ showDataType (D.TPGenericWrap D.TPInt) = "id"
 showDataType (D.TPGenericWrap D.TPUInt) = "id"
 showDataType (D.TPGenericWrap D.TPFloat) = "id"
 showDataType (D.TPGenericWrap c) = showDataType c
-
 showDataType tp = show tp
 
 {- Exp -}
@@ -386,6 +386,9 @@ tExp (D.Lambda pars e rtp) =
 tExp (D.Arr exps) = C.Arr $ map (tExpToType tpGeneric) exps
 tExp (D.Map exps) = C.Map $ map (tExpToType tpGeneric *** tExpToType tpGeneric) exps
 tExp (D.Tuple exps) = C.CCall "tuple" $ map (tExpToType tpGeneric) exps
+tExp (D.Opt e) = C.Call (C.Ref "CNOption") "opt" [("", tExp e)]
+tExp (D.None _) = C.Call (C.Ref "CNOption") "none" []
+
 
 tExp e@(D.Error _ _) = error$ show e
 tExp x = error $ "No tExp for " ++ show x
