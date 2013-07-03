@@ -412,6 +412,7 @@ data Exp = Nop
 	| Lambda [(String, DataType)] Exp DataType
 	| Val Def
 	| Error String D.Exp 
+	| FirstTry D.Exp Exp 
 	| Arr [Exp]
 	| Map [(Exp, Exp)]
 	| Tuple [Exp]
@@ -584,12 +585,12 @@ expr (D.Tuple items) = do
 exprCall :: Maybe DataType -> D.Exp -> State Env Exp		
 exprCall strictClass call@(D.Call name pars gens) = do
 	env <- get
-	rp <- mapM (\ (n, e) -> expr e >>= (\ ee -> return (n, ee))) pars
+	pars' <- mapM (\ (n, e) ->  expr e >>= (\ ee -> return (n, FirstTry e ee))) pars
 	return $
 		let
 			self = fromMaybe (envSelf env) strictClass
 			call' :: Exp
-			call' = fromMaybe (Error errorString call) $ findCall (name, rp) (env, self, allDefs env strictClass)
+			call' = fromMaybe (Error errorString call) $ findCall (name, pars') (env, self, allDefs env strictClass)
 			call'' :: Exp
 			call'' = case call' of
 				Call{} -> (resolveDef strictClass . correctCall) call'
@@ -601,17 +602,17 @@ exprCall strictClass call@(D.Call name pars gens) = do
 						| DefModStub `elem` defMods d = c
 						| otherwise = Dot (Self (envSelf env)) c
 					resolveDef _ c = c
-			pars' :: [(Def, Exp)]
-			pars' = case call' of
-				(Call _ _ cpars) -> cpars
 			pars'' :: [(Def, Exp)]
-			pars'' = (map correctExpression pars')
+			pars'' = case call' of
+				Call _ _ r -> r
+			pars''' :: [(Def, Exp)]
+			pars''' = (map correctExpression pars'')
 			
 			gens' :: M.Map String DataType
-			gens' = resolveGenerics False pars'
+			gens' = resolveGenerics False pars''
 
 			gens'' :: M.Map String DataType
-			gens'' = resolveGenerics True pars''
+			gens'' = resolveGenerics True pars'''
 
 			extendList :: Int -> [a] -> [Maybe a]
 			extendList l a
@@ -658,11 +659,16 @@ exprCall strictClass call@(D.Call name pars gens) = do
 					_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")"
 
 			correctCall :: Exp -> Exp
-			correctCall (Call d tp _) = Call d (correctType gens'' tp) (map doImplicitConversation pars'')
+			correctCall (Call d tp _) = Call d (correctType gens'' tp) (map doImplicitConversation pars''')
 				where
 					doImplicitConversation (dd, e) = (dd, implicitConvertsion (defType dd) e)
 
 			correctExpression :: (Def, Exp) -> (Def, Exp)
+			correctExpression(d@Def{defType = (TPFun _ _)}, FirstTry _ e'@Lambda{}) = correctExpression (d, e')
+			correctExpression(d@Def{defType = (TPFun _ _)}, FirstTry D.Lambda{} e') = correctExpression (d, e')
+			correctExpression(d@Def{defType = tp@(TPFun _ _)}, FirstTry e _) = correctExpression (d, Error "" $ 
+				D.Lambda (map (\(n, _) -> (n, Nothing)) $ lambdaImplicitParameters tp) e)
+			correctExpression(d, FirstTry _ e) = correctExpression (d, e)
 			correctExpression(d@Def{defType = (TPFun _ TPGeneric{})}, Lambda lpars e dtp) = (d, Lambda lpars e (wrapGeneric dtp))
 			correctExpression(d@Def{defType = (TPFun stp _)}, Error _ (D.Lambda lambdaPars lambdaExpr)) = (d, Lambda lpars' expr' tp')
 				where
@@ -674,7 +680,6 @@ exprCall strictClass call@(D.Call name pars gens) = do
 					env' = envAddVals (map (uncurry localVal) lpars') env
 					expr' = addReturn $ evalState (expr lambdaExpr) env'
 					tp' = wrapGeneric $ exprDataType expr'
-			correctExpression(d@Def{defType = (TPFun _ _)}, Error es e) = correctExpression (d, Error es $ D.Lambda [("_", Nothing)] e)
 			correctExpression e = e
 			
 			correctType :: M.Map String DataType -> DataType -> DataType
@@ -723,9 +728,10 @@ implicitConvertsion TPMap{} (Arr []) = Map []
 implicitConvertsion dtp e = let stp = exprDataType e
 	in case (stp, dtp) of
 		(TPFun{}, TPFun{}) -> e
-		(_, TPFun TPVoid fdtp) -> Lambda [] (maybeAddReturn fdtp e) fdtp
-		(_, TPFun (TPTuple stps) fdtp) -> Lambda ((map(\(tp, i) -> ("_" ++ show i, tp)) . zipWithIndex) stps) (maybeAddReturn fdtp e) fdtp
-		(_, TPFun fstp fdtp) -> Lambda [("_", fstp)] (maybeAddReturn fdtp e) fdtp
+		(_, f@(TPFun _ fdtp) ) -> Lambda (lambdaImplicitParameters f) (maybeAddReturn fdtp e) fdtp
 		_ -> e
 
-
+lambdaImplicitParameters :: DataType -> [(String, DataType)]
+lambdaImplicitParameters (TPFun TPVoid _) = []
+lambdaImplicitParameters (TPFun (TPTuple stps) _) = ((map(\(tp, i) -> ("_" ++ show i, tp)) . zipWithIndex) stps)
+lambdaImplicitParameters (TPFun fstp _) = [("_", fstp)]
