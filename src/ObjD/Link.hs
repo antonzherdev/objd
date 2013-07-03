@@ -673,8 +673,8 @@ exprCall strictClass call@(D.Call name pars gens) = do
 			correctExpression(d@Def{defType = tp@(TPFun _ _)}, FirstTry e _) = correctExpression (d, Error "" $ 
 				D.Lambda (map (\(n, _) -> (n, Nothing)) $ lambdaImplicitParameters tp) e)
 			correctExpression(d, FirstTry _ e) = correctExpression (d, e)
-			correctExpression(d@Def{defType = (TPFun _ (TPClass TPMGeneric _ _) )}, Lambda lpars e dtp) = (d, Lambda lpars e (wrapGeneric dtp))
-			correctExpression(d@Def{defType = (TPFun stp _)}, Error _ (D.Lambda lambdaPars lambdaExpr)) = (d, Lambda lpars' expr' tp')
+			correctExpression(d@Def{defType = (TPFun _ (TPClass TPMGeneric _ _) )}, Lambda lpars e dtp) = (d, Lambda lpars e dtp)
+			correctExpression(d@Def{defType = (TPFun stp dtp)}, Error _ (D.Lambda lambdaPars lambdaExpr)) = (d, Lambda lpars' expr' tp')
 				where
 					lpars' :: [(String, DataType)]
 					lpars' = map (second (wrapGeneric . correctType gens')) $ zip (map fst lambdaPars) (stps stp)
@@ -683,7 +683,9 @@ exprCall strictClass call@(D.Call name pars gens) = do
 					stps tp = [tp]
 					env' = envAddVals (map (uncurry localVal) lpars') env
 					expr' = addReturn $ evalState (expr lambdaExpr) env'
-					tp' = wrapGeneric $ exprDataType expr'
+					tp' = case dtp of
+						(TPClass TPMGeneric _ _) -> wrapGeneric $ exprDataType expr'
+						_ -> dtp
 			correctExpression e = e
 			
 			correctType :: M.Map String DataType -> DataType -> DataType
