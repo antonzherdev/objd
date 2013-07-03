@@ -5,11 +5,11 @@ module ObjD.ToObjC (
 	toObjC
 ) where
 
+import 		     Ex.String
 import           Control.Arrow
 import           Data.Char
 import           Data.Maybe
 import           Data.List
-import           Data.Decimal
 import qualified ObjC.Struct   as C
 import qualified ObjD.Link   as D
 
@@ -217,7 +217,7 @@ implFuns defs = (map stm2ImplFun . filter D.isDef) defs ++ (concatMap accs' . fi
 		
 {- Struct -}
 genStruct :: D.Class -> [C.FileStm]
-genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fields, C.TypeDefStruct name name, con, C.EmptyLine]
+genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fields, C.TypeDefStruct name name, con, eq, C.EmptyLine]
 	where
 		fields = map toField defs
 		toField D.Field{D.defName = n, D.defType = tp} = C.StructField (showDataType tp) n
@@ -226,8 +226,16 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 			map toSet defs ++
 			[C.Return $ C.Ref "ret"]
 		}
+		eq = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = "BOOL", C.cfunName = name ++ "Eq", C.cfunPars = [C.CFunPar name "s1", C.CFunPar name "s2"], C.cfunExps = 
+			[C.Return $ foldl foldEq C.Nop defs]
+		}
 		toPar D.Field{D.defName = n, D.defType = tp} = C.CFunPar (showDataType tp) n
 		toSet D.Field{D.defName = n} = C.Set Nothing (C.Dot (C.Ref "ret") n) (C.Ref n)
+		foldEq :: C.Exp -> D.Def -> C.Exp
+		foldEq C.Nop d = eqd d
+		foldEq p d = C.BoolOp And p (eqd d)
+		eqd :: D.Def -> C.Exp
+		eqd D.Field{D.defName = n, D.defType = tp} = equals True (tp, C.Dot (C.Ref "s1") n) (tp, C.Dot (C.Ref "s2") n)
 {- Enum -}
 
 enumAdditionalDefs :: [D.Def]
@@ -294,18 +302,19 @@ showDataType D.TPUInt = "NSUInteger"
 showDataType D.TPFloat = "CGFloat"
 showDataType D.TPString = "NSString*"
 showDataType D.TPBool = "BOOL"
-showDataType (D.TPTrait _) = "id"
-showDataType (D.TPGeneric _) = "id"
+showDataType (D.TPClass D.TPMStruct _ c) = D.className c
+showDataType (D.TPClass D.TPMClass _ c) = D.className c ++ "*"
+showDataType (D.TPClass D.TPMEnum _ c) = D.className c ++ "*"
+showDataType (D.TPClass _ _ _) = "id"
 showDataType (D.TPSelf) = "id"
 showDataType (D.TPFun D.TPVoid d) = showDataType d ++ "(^)" ++ "()"
 showDataType (D.TPFun s d) = showDataType d ++ "(^)" ++ "(" ++ showDataType s ++ ")"
-showDataType (D.TPClass c _) = D.className c ++ "*"
-showDataType (D.TPGenericWrap D.TPStruct{}) = "id"
+showDataType (D.TPGenericWrap (D.TPClass D.TPMStruct _ _)) = "id"
 showDataType (D.TPGenericWrap D.TPInt) = "id"
 showDataType (D.TPGenericWrap D.TPUInt) = "id"
 showDataType (D.TPGenericWrap D.TPFloat) = "id"
 showDataType (D.TPGenericWrap c) = showDataType c
-showDataType (D.TPStruct c) = D.className c
+
 showDataType tp = show tp
 
 {- Exp -}
@@ -318,6 +327,8 @@ tExp (D.StringConst i) = C.StringConst i
 tExp (D.Nil) = C.Nil
 tExp (D.BoolConst i) = C.BoolConst i
 tExp (D.FloatConst i) = C.FloatConst i
+tExp (D.BoolOp Eq l r) = equals True (D.exprDataType l, tExp l) (D.exprDataType r, tExp r) 
+tExp (D.BoolOp NotEq l r) = equals False (D.exprDataType l, tExp l) (D.exprDataType r, tExp r) 
 tExp (D.BoolOp t l r) = C.BoolOp t (tExp l) (tExp r)
 tExp (D.MathOp t l r) = let 
 		l' = tExp l
@@ -357,7 +368,7 @@ tExp (D.Index e i) = case D.exprDataType e of
 tExp (D.Lambda pars e rtp) = 
 	let 
 		isNeedUnwrap :: D.DataType -> Bool
-		isNeedUnwrap (D.TPGenericWrap (D.TPStruct _)) = True
+		isNeedUnwrap (D.TPGenericWrap (D.TPClass D.TPMStruct _ _)) = True
 		isNeedUnwrap (D.TPGenericWrap D.TPInt) = True
 		isNeedUnwrap (D.TPGenericWrap D.TPBool) = True
 		isNeedUnwrap (D.TPGenericWrap D.TPFloat) = True
@@ -380,7 +391,7 @@ tExp e@(D.Error _ _) = error$ show e
 tExp x = error $ "No tExp for " ++ show x
 
 tpGeneric :: D.DataType
-tpGeneric = D.TPGeneric (D.Generic "?")
+tpGeneric = D.TPClass D.TPMGeneric [] (D.Generic "?")
 tExpToType :: D.DataType -> D.Exp -> C.Exp
 tExpToType tp e = maybeVal (D.exprDataType e, tp) (tExp e)
 
@@ -408,6 +419,13 @@ tStm tp (D.Return e) = [C.Return $ (tExpToType tp e)]
 tStm _ (D.Val D.Def{D.defName = name, D.defType = tp, D.defBody = e}) = [C.Var (showDataType tp) name (tExpToType tp e)]
 tStm _ x = [C.Stm $ tExp x]
 
+equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp
+equals False s1@(D.TPClass{}, _) s2@(D.TPClass{}, _) = C.Not $ equals True s1 s2
+equals True (D.TPClass D.TPMStruct _ c, e1) (_, e2) = C.CCall (D.className c ++ "Eq") [e1, e2]
+equals True (D.TPClass _ _ _, e1) (D.TPClass _ _ _, e2) = C.Call e1 "isEqual" [("", e2)]
+equals True (_, e1) (_, e2) = C.BoolOp Eq e1 e2
+equals False (_, e1) (_, e2) = C.BoolOp NotEq e1 e2
+
 addObjectToArray :: C.Exp -> C.Exp -> C.Exp
 addObjectToArray a obj = C.Call a "arrayByAdding" [("object", obj)]
 
@@ -419,8 +437,8 @@ data MaybeValTP = TPGen | TPNum | TPStruct | TPNoMatter
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp
 maybeVal (stp, dtp) e = let 
 	tp D.TPGenericWrap{} = TPGen
-	tp D.TPGeneric{} = TPGen
-	tp D.TPStruct{} = TPStruct
+	tp (D.TPClass D.TPMGeneric _ _) = TPGen
+	tp (D.TPClass D.TPMStruct _ _) = TPStruct
 	tp D.TPInt{} = TPNum
 	tp D.TPUInt{} = TPNum
 	tp D.TPFloat{} = TPNum

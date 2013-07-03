@@ -1,6 +1,6 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..), 
-	DefMod(..), FieldAcc(..), FieldAccMod(..), MathTp(..),
+	DefMod(..), FieldAcc(..), FieldAccMod(..), MathTp(..), DataTypeMod(..),
 	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic
 )where
 
@@ -220,7 +220,7 @@ linkClass (ocidx, glidx) cl = self
 				enumItems = map enumItem (D.enumItems cl), 
 				classGenerics = generics
 			}
-		selfType = refDataType self (map TPGeneric generics)
+		selfType = refDataType self (map (TPClass TPMGeneric []) generics)
 		clsMod D.ClassModStruct = ClassModStruct
 		clsMod D.ClassModStub = ClassModStub
 		clsMod D.ClassModTrait = ClassModTrait
@@ -297,38 +297,31 @@ linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Def pnm 
  ------------------------------------------------------------------------------------------------------------------------------}
 
 data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid 
-	| TPClass {tpClass :: Class, tpGenerics :: [DataType] }
-	| TPStruct {tpClass :: Class} 
-	| TPEnum {tpClass :: Class} 
-	| TPTrait {tpClass :: Class} 
-	| TPGeneric {tpClass :: Class} 
+	| TPClass {tpMod :: DataTypeMod, tpGenerics :: [DataType], tpClass :: Class}
 	| TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown | TPMap DataType DataType
 	| TPOption DataType | TPGenericWrap DataType
+data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
 isVoid _ = False
 
 refDataType :: Class -> [DataType] -> DataType
-refDataType e@Enum{} _ = TPEnum e
+refDataType e@Enum{} _ = TPClass TPMEnum [] e 
 refDataType cl gens
-	| isStruct cl = TPStruct cl
-	| isTrait cl = TPTrait cl
-	| isGeneric cl = TPGeneric cl
-	| otherwise = TPClass cl gens
+	| isStruct cl = TPClass TPMStruct [] cl
+	| isTrait cl = TPClass TPMTrait [] cl 
+	| isGeneric cl = TPClass TPMGeneric [] cl 
+	| otherwise = TPClass TPMClass gens cl 
 
 dataTypeClass :: Env -> DataType -> Class
-dataTypeClass _ (TPClass c _) = c
-dataTypeClass _ (TPStruct c) = c
-dataTypeClass _ (TPEnum c) = c
-dataTypeClass _ (TPTrait c) = c
-dataTypeClass _ (TPGeneric c) = c
+dataTypeClass _ (TPClass _ _ c ) = c
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
 dataTypeClass env (TPArr _) = findTp "array class" (envIndex env) "ODArray"
 dataTypeClass env (TPOption _) = findTp "option class" (envIndex env) "ODOption"
 dataTypeClass env (TPMap _ _) = findTp "map class" (envIndex env) "ODMap"
 
 dataTypeGenerics :: Env -> DataType -> [DataType]
-dataTypeGenerics _ (TPClass _ g) = g
+dataTypeGenerics _ (TPClass _ g _) = g
 dataTypeGenerics _ (TPArr g) = [g]
 dataTypeGenerics _ (TPMap k v) = [k, v]
 dataTypeGenerics _ (TPOption v) = [v]
@@ -336,7 +329,7 @@ dataTypeGenerics _ _ = []
 
 wrapGeneric :: DataType -> DataType
 wrapGeneric TPVoid = TPVoid
-wrapGeneric g@TPGeneric{} = g
+wrapGeneric g@(TPClass TPMGeneric _ _) = g
 wrapGeneric g@TPGenericWrap{} = g
 wrapGeneric g = TPGenericWrap g
 unwrapGeneric :: DataType -> DataType
@@ -369,12 +362,8 @@ instance Show DataType where
 	show TPBool = "bool"
 	show TPSelf = "self"
 	show TPUnknown = "???"
-	show (TPClass c []) = className c
-	show (TPClass c gens) = className c ++ "<" ++ strs' ", " gens ++ ">"
-	show (TPTrait c) = className c ++ "*"
-	show (TPEnum c) = className c ++ "*"
-	show (TPGeneric c) = className c ++ "*"
-	show (TPStruct c) = className c ++ "%"
+	show (TPClass _ [] c) = className c
+	show (TPClass _ gens c) = className c ++ "<" ++ strs' ", " gens ++ ">"
 	show (TPGenericWrap c) = "^" ++ show c
 	show (TPArr t) = "[" ++ show t ++ "]"
 	show (TPMap k v) = "[" ++ show k ++ " : " ++ show v ++ "]"
@@ -640,7 +629,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 					)
 					where 
 						tryDetermine :: Class -> (DataType, DataType) -> Maybe DataType
-						tryDetermine c (TPGeneric gg, tp) = if c == gg then Just (wrapGeneric tp) else Nothing
+						tryDetermine c (TPClass TPMGeneric _ gg, tp) = if c == gg then Just (wrapGeneric tp) else Nothing
 						tryDetermine c (TPArr a, TPArr a') = tryDetermine c (a, a')
 						tryDetermine c (TPFun a b, TPFun a' b') = listToMaybe $ catMaybes [tryDetermine c (a, a'), tryDetermine c (b, b')]
 						tryDetermine _ _ = Nothing
@@ -669,7 +658,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 			correctExpression(d@Def{defType = tp@(TPFun _ _)}, FirstTry e _) = correctExpression (d, Error "" $ 
 				D.Lambda (map (\(n, _) -> (n, Nothing)) $ lambdaImplicitParameters tp) e)
 			correctExpression(d, FirstTry _ e) = correctExpression (d, e)
-			correctExpression(d@Def{defType = (TPFun _ TPGeneric{})}, Lambda lpars e dtp) = (d, Lambda lpars e (wrapGeneric dtp))
+			correctExpression(d@Def{defType = (TPFun _ (TPClass TPMGeneric _ _) )}, Lambda lpars e dtp) = (d, Lambda lpars e (wrapGeneric dtp))
 			correctExpression(d@Def{defType = (TPFun stp _)}, Error _ (D.Lambda lambdaPars lambdaExpr)) = (d, Lambda lpars' expr' tp')
 				where
 					lpars' :: [(String, DataType)]
@@ -684,8 +673,8 @@ exprCall strictClass call@(D.Call name pars gens) = do
 			
 			correctType :: M.Map String DataType -> DataType -> DataType
 			correctType gns (TPGenericWrap g) = TPGenericWrap $ correctType gns g
-			correctType gns gg@(TPGeneric (Generic g)) =  fromMaybe gg $ M.lookup g gns
-			correctType gns (TPClass c g) = TPClass c (map (correctType gns) g)
+			correctType gns gg@(TPClass TPMGeneric _ (Generic g)) =  fromMaybe gg $ M.lookup g gns
+			correctType gns (TPClass t g c) = TPClass t (map (correctType gns) g) c
 			correctType gns (TPArr c) = TPArr (correctType gns c)
 			correctType _ t = t
 		in call''
@@ -697,7 +686,7 @@ allDefs env Nothing = envVals env ++ allDefsInClass (envSelfClass env) ++ envGlo
 	where
 		classConstructors = (mapMaybe (constructorToDef . snd) . M.toList) (envIndex env)
 		constructorToDef cl@Class{className = n, classConstructor = constr, classGenerics = gens} = 
-			Just Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl (map TPGeneric gens), defBody = Nop, 
+			Just Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl (map (TPClass TPMGeneric []) gens), defBody = Nop, 
 				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor], defGenerics = gens}
 		constructorToDef cl@Enum{className = n} =
 			Just Def {defName = n, defPars = [], defType = TPArr $ refDataType cl [], defBody = Nop, 
