@@ -22,9 +22,9 @@ data StructField = StructField{structFieldType :: String, structFieldName :: Str
 
 data Property = Property {propertyName :: String, propertyType :: String, propertyModifiers :: [PropertyModifier]}
 
-data PropertyModifier = ReadOnly | NonAtomic | Retain deriving(Eq)
+data PropertyModifier = ReadOnly | NonAtomic | Retain | Weak deriving(Eq)
 
-data ImplField = ImplField {implFieldName :: String, implFieldType :: String}
+data ImplField = ImplField {implFieldName :: String, implFieldType :: String, implFieldsMods :: [String]}
 
 data ImplSynthesize = ImplSynthesize String String
 
@@ -111,13 +111,13 @@ instance Show FileStm where
 		showImplFields a = "{\n"
 			++ (unlines . map (ind . showImplField)) a
 			++ "}\n"
-		showImplField (ImplField name tp) = tp ++ " " ++ name ++ ";"
+		showImplField (ImplField name tp mods) = (strs " " mods) `tryCon` " " ++ tp ++ " " ++ name ++ ";"
 		showSynthenizes = unlines . map showSynthenize
 		showStFields = unlines . map showStField
 		showSynthenize (ImplSynthesize name "") = "@synthesize " ++ name ++ ";"
 		showSynthenize (ImplSynthesize name var) = "@synthesize " ++ name ++ " = " ++ var ++ ";"
 		showImplFuns = unlines . map show
-		showStField (ImplField nm tp) = "static " ++ tp ++ " " ++ nm ++ ";"
+		showStField (ImplField nm tp mods) = "static " ++  (strs " " mods) `tryCon` " " ++ tp ++ " " ++ nm ++ ";"
 
 instance Show CFunMod where
 	show CFunStatic = "static"
@@ -150,6 +150,7 @@ instance Show PropertyModifier where
 	show ReadOnly = "readonly"
 	show NonAtomic = "nonatomic"
 	show Retain = "retain"
+	show Weak = "weak"
 
 instance Show Exp where
 	show s = strs "\n" $ expLines s

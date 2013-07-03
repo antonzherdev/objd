@@ -72,10 +72,11 @@ fieldToProperty (D.Field {D.defName = name, D.defMods = mods, D.defType = tp, D.
 	C.propertyName = name,
 	C.propertyType = showDataType tp,
 	C.propertyModifiers = if D.DefModMutable `elem` mods && not isPrivateWrite
-		then C.NonAtomic : mutModes tp 
-		else [C.NonAtomic, C.ReadOnly]
+		then C.NonAtomic : mutModes tp ++ weak
+		else [C.NonAtomic, C.ReadOnly] ++ weak
 }
 	where
+		weak = if D.DefModWeak `elem` mods then [C.Weak] else []
 		mutModes D.TPArr{} = [C.ReadOnly]
 		mutModes D.TPClass{} = [C.Retain]
 		mutModes _ = []
@@ -148,7 +149,7 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs, D.classConstruc
 synthesize :: D.Def -> C.ImplSynthesize
 synthesize D.Field{D.defName = x} = C.ImplSynthesize x ('_' : x)
 implField :: D.Def -> C.ImplField
-implField D.Field{D.defName = x, D.defType = tp} = C.ImplField ('_' : x) (showDataType tp)
+implField D.Field{D.defName = x, D.defType = tp, D.defMods = mods} = C.ImplField ('_' : x) (showDataType tp) ["__weak" | D.DefModWeak `elem` mods]
 
 implCreate :: D.Class -> D.Constructor -> C.ImplFun
 implCreate cl constr = let 
@@ -268,12 +269,12 @@ genEnumImpl cl@D.Enum {D.className = clsName, D.enumItems = items} = [
 		C.implFields = (map implField . filter D.isField) defs,
 		C.implSynthesizes = (map synthesize . filter D.isField) defs,
 		C.implFuns = [implCreate cl constr, implInit cl constr, initialize] ++ dealoc cl ++ implFuns defs ++ map itemGetter items ++ [valuesFun],
-		C.implStaticFields = map stField items ++ [C.ImplField "values" "NSArray*"]
+		C.implStaticFields = map stField items ++ [C.ImplField "values" "NSArray*" []]
 	}]
 	where
 		defs = enumAdditionalDefs ++ D.classDefs cl
 		constr = enumConst (D.classConstructor cl)
-		stField (D.EnumItem itemName _) = C.ImplField itemName (clsName ++ "*")
+		stField (D.EnumItem itemName _) = C.ImplField itemName (clsName ++ "*") []
 		itemGetter e@(D.EnumItem itemName _) = C.ImplFun (enumItemGetterFun clsName e) [C.Return $ C.Ref itemName]
 		initialize = C.ImplFun (C.Fun C.ObjectFun "void" "initialize" []) (
 			((C.Stm $ C.Call C.Super "initialize" []) : snd ( mapAccumL initItem 0 items)) ++ [setValues])

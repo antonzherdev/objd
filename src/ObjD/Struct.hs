@@ -48,7 +48,7 @@ stmName (Decl _ name _ _ _) = name
 stmName (Def _ name _ [] _ _) = name
 stmName (Def _ name _ pars _ _) = name ++ " " ++ unwords (map parName pars)
 
-data DefMod = DefModPrivate | DefModMutable | DefModStatic  deriving (Eq)
+data DefMod = DefModPrivate | DefModMutable | DefModStatic | DefModWeak  deriving (Eq)
 data DeclAcc = DeclAccRead [DeclAccMod] Exp | DeclAccWrite [DeclAccMod] Exp 
 data DeclAccMod = DeclAccModPrivate
 isDef :: ClassStm -> Bool

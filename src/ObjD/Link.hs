@@ -63,8 +63,22 @@ isStatic :: Def -> Bool
 isStatic = (DefModStatic `elem` ). defMods
 
 
-data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate  | DefModVal
+data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate  | DefModVal | DefModWeak
 	| DefModConstructor | DefModStructConstructor | DefModStub | DefModLocal | DefModEnumList deriving (Eq, Ord)
+instance Show DefMod where
+	show DefModStatic = "static"
+	show DefModMutable = "var"
+	show DefModAbstract = "abstract" 
+	show DefModPrivate = "private"
+	show DefModWeak = "weak"
+	show DefModConstructor = "constructor"
+	show DefModStructConstructor = "sConstructor"
+	show DefModStub = "stub"
+	show DefModVal = "val"
+	show DefModLocal = "local"
+	show DefModEnumList = "enumList"
+
+
 
 data FieldAcc = FieldAccRead [FieldAccMod] Exp | FieldAccWrite [FieldAccMod] Exp
 data FieldAccMod = FieldAccModPrivate deriving (Eq)
@@ -78,8 +92,8 @@ data CImport = CImportLib String | CImportUser String
 instance Show File where
 	show (File name imps cimps classes gldefs) =
 		"// " ++ name ++ ".od\n" ++
-		(sapp "\n\n" . strs' "\n") cimps ++
-		(sapp "\n\n" . strs' "\n") imps ++ 
+		((`tryCon` "\n\n" ). strs' "\n") cimps ++
+		((`tryCon` "\n\n") . strs' "\n") imps ++ 
 		strs' "\n" gldefs ++
 		strs' "\n\n" classes
 instance Show CImport where
@@ -115,18 +129,6 @@ showDef f Def {defName = name , defPars = pars, defType = tp, defBody = e, defMo
 	strs' " " mods ++ " def " ++ name ++ "(" ++ strs' ", " pars ++ ")" ++ if f then  " : " ++ show tp ++ " = " ++ show e else ""
 showDef f Field {defName = nm, defMods = mods, defType = tp, defBody = e} =
 	strs' " " mods ++ (if DefModMutable `elem` mods then "" else "val" ) ++ " " ++ nm ++ if f then " : " ++ show tp ++ show e else ""
-
-instance Show DefMod where
-	show DefModStatic = "static"
-	show DefModMutable = "var"
-	show DefModAbstract = "abstract" 
-	show DefModPrivate = "private"
-	show DefModConstructor = "constructor"
-	show DefModStructConstructor = "sConstructor"
-	show DefModStub = "stub"
-	show DefModVal = "val"
-	show DefModLocal = "local"
-	show DefModEnumList = "enumList"
 
 
 defRefPrep :: Def -> String
@@ -263,6 +265,7 @@ translateMods = map m
 		m D.DefModStatic = DefModStatic
 		m D.DefModMutable = DefModMutable
 		m D.DefModPrivate = DefModPrivate
+		m D.DefModWeak = DefModWeak
 		
 linkDef :: Env -> D.ClassStm -> Def
 linkDef env ccc = evalState (stateDef ccc) env'

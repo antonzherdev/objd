@@ -233,7 +233,7 @@ pDecl' mtf = do
 	
 pMod :: Parser DefMod	
 pMod = do
-	v <- (try(string "private") >> return DefModPrivate) <|> (try(string "static") >> return DefModStatic)
+	v <- (try(string "private") >> return DefModPrivate) <|> (try(string "static") >> return DefModStatic) <|> (try(string "weak") >> return DefModWeak)
 	sps1
 	return v
 
