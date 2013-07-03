@@ -214,8 +214,8 @@ pDecl' mtf = do
 			v <- try var <|> val
 			sps1
 			return v
-		val = string "val" >> return False
-		var = string "var" >> return True
+		val = try(string "val") >> return False
+		var = try(string "var") >> return True
 		oExp = option Nop (do
 			char '='
 			sps
