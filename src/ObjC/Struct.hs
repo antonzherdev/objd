@@ -181,11 +181,13 @@ glueAll _ [x] = x
 glueAll s (a:b:xs) = glueAll s $ ((a `app` s) `glue` b):xs
 
 stmLines :: Stm -> [String]
-stmLines (If cond t f) =
-	["if(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
-	++ (case f of
-		[] -> []
-		ff -> ["else {"] ++ stms ff ++ ["}"])
+stmLines (If cond [t] []) = ["if(" ++ show cond ++ ") " ] `glue` stmLines t
+stmLines (If cond t []) = ["if(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
+stmLines (If cond [t] [f]) = (["if(" ++ show cond ++ ") " ] `glue` stmLines t) ++ (["else "] `glue` stmLines f)
+stmLines (If cond [t] f) = (["if(" ++ show cond ++ ") " ] `glue` stmLines t) ++ ["else {"] ++ stms f ++ ["}"]
+stmLines (If cond t [f]) = ["if(" ++ show cond ++ ") {" ]  ++ stms t ++ (["} else "] `glue` stmLines f)
+stmLines (If cond t f) = ["if(" ++ show cond ++ ") {" ] ++ stms t ++ ["} else {"] ++ stms f ++ ["}"]
+
 stmLines (Set Nothing l r) = (expLines l `app` " = ") `glue` (expLines r `app` ";")
 stmLines (Set (Just tp) l r) = (expLines l `app` (" " ++ show tp ++ "= ")) `glue` (expLines r `app` ";")
 stmLines (Stm Nop) = [""]
