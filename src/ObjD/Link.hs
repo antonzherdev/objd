@@ -260,12 +260,13 @@ linkField D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBo
 		
 
 translateMods :: [D.DefMod] -> [DefMod]
-translateMods = map m
+translateMods = mapMaybe m
 	where 
-		m D.DefModStatic = DefModStatic
-		m D.DefModMutable = DefModMutable
-		m D.DefModPrivate = DefModPrivate
-		m D.DefModWeak = DefModWeak
+		m D.DefModStatic = Just DefModStatic
+		m D.DefModMutable = Just DefModMutable
+		m D.DefModPrivate = Just DefModPrivate
+		m D.DefModWeak = Just DefModWeak
+		m _ = Nothing
 		
 linkDef :: Env -> D.ClassStm -> Def
 linkDef env ccc = evalState (stateDef ccc) env'

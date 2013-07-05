@@ -391,7 +391,8 @@ tExp (D.Lambda pars e rtp) =
 tExp (D.Arr exps) = C.Arr $ map (tExpToType tpGeneric) exps
 tExp (D.Map exps) = C.Map $ map (tExpToType tpGeneric *** tExpToType tpGeneric) exps
 tExp (D.Tuple exps) = C.CCall "tuple" $ map (tExpToType tpGeneric) exps
-tExp (D.Opt e) = C.Call (C.Ref "CNOption") "opt" [("", tExp e)]
+tExp (D.Opt e) = let tp = D.exprDataType e
+	in C.Call (C.Ref "CNOption") "opt" [("", maybeVal (tp, D.TPGenericWrap tp) (tExp e))]
 tExp (D.None _) = C.Call (C.Ref "CNOption") "none" []
 
 
