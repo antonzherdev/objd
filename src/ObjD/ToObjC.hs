@@ -81,7 +81,8 @@ fieldToProperty (D.Field {D.defName = name, D.defMods = mods, D.defType = tp, D.
 	where
 		weak = if D.DefModWeak `elem` mods then [C.Weak] else []
 		mutModes D.TPArr{} = [C.ReadOnly]
-		mutModes D.TPClass{} = [C.Retain]
+		mutModes (D.TPClass D.TPMClass _ _) = [C.Retain]
+		mutModes (D.TPClass D.TPMEnum _ _) = [C.Retain]
 		mutModes _ = []
 		isPrivateWrite = (any (\(D.FieldAccWrite mmm _) -> D.FieldAccModPrivate `elem` mmm). filter isWriteAcc) accs
 		isWriteAcc D.FieldAccWrite{} = True
@@ -205,7 +206,7 @@ implFuns :: [D.Def] -> [C.ImplFun]
 implFuns defs = (map stm2ImplFun . filter D.isDef) defs ++ (concatMap accs' . filter D.isField) defs
 	where
 		stm2ImplFun def@D.Def {D.defBody = db, D.defMods = mods, D.defType = tp} 
-			| D.DefModAbstract `elem` mods = C.ImplFun (stm2Fun def) [C.Throw $ C.StringConst $ "Method " ++ D.defName def ++ " is abstact"]
+			| D.DefModAbstract `elem` mods = C.ImplFun (stm2Fun def) [C.Throw $ C.StringConst $ "Method " ++ D.defName def ++ " is abstract"]
 			| otherwise = C.ImplFun (stm2Fun def) (tStm tp db)
 		accs' :: D.Def -> [C.ImplFun]
 		accs' D.Field{D.defName = name, D.defType = tp, D.fieldAccs = accs} = mapMaybe (acc' name tp) accs
