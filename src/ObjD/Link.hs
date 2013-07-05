@@ -1,6 +1,6 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), Constructor, DataType(..), Exp(..), CImport(..), EnumItem(..), 
-	DefMod(..), FieldAcc(..), FieldAccMod(..), MathTp(..), DataTypeMod(..),
+	DefMod(..), FieldAcc(..), FieldAccMod(..), MathTp(..), DataTypeMod(..), ClassMod(..),
 	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic
 )where
 

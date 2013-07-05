@@ -294,9 +294,19 @@ genEnumImpl cl@D.Enum {D.className = clsName, D.enumItems = items} = [
 
 {- Imports -}
 procImports :: D.File -> ([C.FileStm], [C.FileStm])
-procImports D.File{D.fileImports = imps} = (map to imps, [])
+procImports D.File{D.fileImports = imps} = (h, m)
 	where 
-		to D.File{D.fileName = fn} = C.Import (fn ++ ".h")
+		filePossibleWeakImport D.File{D.fileCImports = [], D.fileClasses = cls} = all classPosibleWeakImport cls
+		filePossibleWeakImport _ = False
+		classPosibleWeakImport D.Class{D.classMods = mods} = not $ D.ClassModStruct `elem` mods
+		classPosibleWeakImport D.Enum{} = True
+		classPosibleWeakImport _ = False
+		cImport D.File{D.fileName = fn} = C.Import (fn ++ ".h")
+		h = concatMap procH imps
+		procH file
+			| filePossibleWeakImport file = map (C.ClassDecl . D.className) $ D.fileClasses file
+			| otherwise = [cImport file]
+		m = (map cImport . filter filePossibleWeakImport) imps
 
 {- DataType -}
 showDataType :: D.DataType -> String
