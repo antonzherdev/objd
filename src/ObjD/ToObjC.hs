@@ -376,7 +376,7 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)
 		(map (tExp . snd) pars)
 	| D.DefModEnumList `elem` mods = C.Call (C.Ref name) "values" []
 	| D.DefModVal `elem` mods = C.Ref name
-	| otherwise = C.CCall name (map (tExp . snd) pars)
+	| otherwise = C.CCall name (map snd . tPars $ pars)
 tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
 tExp (D.Index e i) = case D.exprDataType e of
 	D.TPMap _ _ -> C.Call (tExp e) "optionObjectFor" [("key", tExp i)]
@@ -384,11 +384,11 @@ tExp (D.Index e i) = case D.exprDataType e of
 tExp (D.Lambda pars e rtp) = 
 	let 
 		isNeedUnwrap :: D.DataType -> Bool
-		isNeedUnwrap (D.TPGenericWrap (D.TPClass D.TPMStruct _ _)) = True
+		{-isNeedUnwrap (D.TPGenericWrap (D.TPClass D.TPMStruct _ _)) = True
 		isNeedUnwrap (D.TPGenericWrap D.TPInt) = True
 		isNeedUnwrap (D.TPGenericWrap D.TPBool) = True
 		isNeedUnwrap (D.TPGenericWrap D.TPFloat) = True
-		isNeedUnwrap (D.TPGenericWrap D.TPUInt) = True
+		isNeedUnwrap (D.TPGenericWrap D.TPUInt) = True-}
 		isNeedUnwrap _ = False
 		par' (name, tp) 
 			| isNeedUnwrap tp = (name ++ "_", "id")
@@ -443,6 +443,8 @@ equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp
 equals False s1@(D.TPClass{}, _) s2@(D.TPClass{}, _) = C.Not $ equals True s1 s2
 equals True (D.TPClass D.TPMStruct _ c, e1) (_, e2) = C.CCall (D.className c ++ "Eq") [e1, e2]
 equals True (D.TPClass _ _ _, e1) (D.TPClass _ _ _, e2) = C.Call e1 "isEqual" [("", e2)]
+equals True (stp@(D.TPGenericWrap _), e1) (dtp, e2) = C.BoolOp Eq (maybeVal (stp, dtp) e1) e2
+equals True (stp, e1) (dtp@(D.TPGenericWrap _), e2) = C.BoolOp Eq e1 (maybeVal (stp, dtp) e2)
 equals True (_, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals False (_, e1) (_, e2) = C.BoolOp NotEq e1 e2
 
