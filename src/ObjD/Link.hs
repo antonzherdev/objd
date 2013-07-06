@@ -77,6 +77,7 @@ instance Show DefMod where
 	show DefModStub = "stub"
 	show DefModVal = "val"
 	show DefModLocal = "local"
+	show DefModObject = "object"
 
 
 data FieldAcc = FieldAccRead [FieldAccMod] Exp | FieldAccWrite [FieldAccMod] Exp
@@ -302,7 +303,7 @@ linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Def pnm 
 data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid 
 	| TPClass {tpMod :: DataTypeMod, tpGenerics :: [DataType], tpClass :: Class}
 	| TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown String | TPMap DataType DataType
-	| TPOption DataType | TPGenericWrap DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class}
+	| TPOption DataType | TPGenericWrap DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
 data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
@@ -377,6 +378,7 @@ instance Show DataType where
 	show TPBool = "bool"
 	show TPSelf = "self"
 	show TPNil = "nil"
+	show TPThrow = "throw"
 	show (TPUnknown s) = "???: " ++ s
 	show (TPClass _ [] c) = className c
 	show (TPObject _ c) = className c ++ ".class"
@@ -424,6 +426,7 @@ data Exp = Nop
 	| Tuple [Exp]
 	| Opt Exp
 	| None DataType
+	| Throw Exp
 
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
@@ -458,6 +461,7 @@ instance Show Exp where
 	show (Opt e) = "opt(" ++ show e ++ ")"
 	show (None tp) = "none<" ++ show tp ++ ">" 
 	show (FirstTry _ e) = "First try: " ++ show e
+	show (Throw e) = "throw " ++ show e
 
 maybeAddReturn :: DataType -> Exp -> Exp
 maybeAddReturn TPVoid e = e
@@ -468,6 +472,7 @@ addReturn (If cond t f) = If cond (addReturn t) (addReturn f)
 addReturn (Braces []) = error "Return empty braces"
 addReturn (Braces es) = Braces $ init es ++ [addReturn (last es)]
 addReturn Nop = error "Return NOP"
+addReturn e@(Throw _) = e
 addReturn e = Return e
 
 
@@ -512,6 +517,7 @@ exprDataType (Val Def{defType = tp}) = tp
 exprDataType (Opt v) = TPOption (exprDataType v)
 exprDataType (None tp) = tp
 exprDataType (FirstTry _ e) = exprDataType e
+exprDataType (Throw _) = TPThrow
 exprDataType x = error $ "No exprDataType for " ++ show x
 
 expr :: D.Exp -> State Env Exp
@@ -591,6 +597,9 @@ expr (D.Arr items) = do
 expr (D.Tuple items) = do
 	items' <- mapM expr items
 	return $ Tuple items'
+expr (D.Throw e) = do
+	e' <- expr e
+	return $ Throw e'
 
 {- expr x = error $ "No expr for " ++ show x -}
 

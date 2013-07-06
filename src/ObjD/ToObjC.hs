@@ -443,6 +443,8 @@ tStm _ (D.Set tp l r) = [C.Set tp (tExp l) (maybeVal (D.exprDataType r, D.exprDa
 tStm D.TPVoid (D.Return e) = [C.Stm $ tExp e]
 tStm tp (D.Return e) = [C.Return $ (tExpToType tp e)]
 tStm _ (D.Val D.Def{D.defName = name, D.defType = tp, D.defBody = e}) = [C.Var (showDataType tp) name (tExpToType tp e)]
+tStm _ (D.Throw e) = [C.Throw $ tExp e]
+
 tStm _ x = [C.Stm $ tExp x]
 
 equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp

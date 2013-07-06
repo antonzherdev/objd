@@ -350,7 +350,13 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pCall  <?> "Expression"
+		pTerm' = pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pCall  <?> "Expression"
+		pThrow = do
+			try $ do
+				string "throw"
+				sps1
+			e <- pExp
+			return $ Throw e
 		pArr = do
 			charSps '['
 			exps <- pExp `sepBy` charSps ','
