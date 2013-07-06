@@ -65,7 +65,7 @@ isStatic = (DefModStatic `elem` ). defMods
 
 
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate  | DefModVal | DefModWeak
-	| DefModConstructor | DefModStructConstructor | DefModStub | DefModLocal | DefModEnumList | DefModObject deriving (Eq, Ord)
+	| DefModConstructor | DefModStructConstructor | DefModStub | DefModLocal | DefModObject deriving (Eq, Ord)
 instance Show DefMod where
 	show DefModStatic = "static"
 	show DefModMutable = "var"
@@ -77,8 +77,6 @@ instance Show DefMod where
 	show DefModStub = "stub"
 	show DefModVal = "val"
 	show DefModLocal = "local"
-	show DefModEnumList = "enumList"
-
 
 
 data FieldAcc = FieldAccRead [FieldAccMod] Exp | FieldAccWrite [FieldAccMod] Exp
