@@ -622,9 +622,12 @@ exprCall strictClass call@(D.Call name pars gens) = do
 				_ -> call'
 				where
 					resolveDef Nothing c@(Call d _ _)
-						| DefModStatic `elem` defMods d = c 
+						| DefModConstructor `elem` defMods d = c
+						| DefModStructConstructor `elem` defMods d = c
+						| DefModObject `elem` defMods d = c
 						| DefModLocal `elem` defMods d = c
 						| DefModStub `elem` defMods d = c
+						| DefModStatic `elem` defMods d = let o = objectDef (tpClass $ envSelf env) in Dot (Call o (defType o) []) c 
 						| otherwise = Dot (Self (envSelf env)) c
 					resolveDef _ c = c
 			pars'' :: [(Def, Exp)]
@@ -729,12 +732,13 @@ allDefs env Nothing = envVals env ++ allDefsInClass (envSelfClass env) ++ allDef
 			Just Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl (map (TPClass TPMGeneric []) gens), defBody = Nop, 
 				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor], defGenerics = gens}
 		constructorToDef _ = Nothing
-		objects = (map (obj . snd) . M.toList) (envIndex env)
+		objects = (map (objectDef . snd) . M.toList) (envIndex env)
 		objTp cl = TPObject (refDataTypeMod cl) cl
-		obj cl = Def {defName = className cl, defPars = [], defType = objTp cl, defBody = Nop, 
-				defMods = [DefModStatic, DefModObject], defGenerics = []}
 		constructorParToPar (d, e) = Def (defName d) [] (defType d) e [DefModLocal] []
 
+objectDef :: Class -> Def
+objectDef cl = Def {defName = className cl, defPars = [], defType = TPObject (refDataTypeMod cl) cl, defBody = Nop, 
+				defMods = [DefModStatic, DefModObject], defGenerics = []}
 
 allDefsInClass :: Class -> [Def]
 allDefsInClass Generic{} = [] 
