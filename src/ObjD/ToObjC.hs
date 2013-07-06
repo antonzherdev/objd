@@ -448,6 +448,8 @@ tStm _ (D.Throw e) = [C.Throw $ tExp e]
 tStm _ x = [C.Stm $ tExp x]
 
 equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp
+equals False (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp NotEq e1 e2
+equals True (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp Eq e1 e2
 equals False s1@(D.TPClass{}, _) s2@(D.TPClass{}, _) = C.Not $ equals True s1 s2
 equals True (D.TPClass D.TPMStruct _ c, e1) (_, e2) = C.CCall (D.className c ++ "Eq") [e1, e2]
 equals True (D.TPClass _ _ _, e1) (D.TPClass _ _ _, e2) = C.Call e1 "isEqual" [("", e2)]
