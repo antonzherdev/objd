@@ -1,5 +1,5 @@
 module ObjC.Struct ( Property(..), PropertyModifier(..),FileStm(..), ImplSynthesize(..), ImplFun(..), Fun(..), FunType(..), FunPar(..),
-  Stm(..), Exp(..), ImplField(..), StructField(..), CFunPar(..), CFunMod(..)
+  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..)
 ) where
 
 import           Ex.String
@@ -14,12 +14,10 @@ data FileStm =
 		, implSynthesizes :: [ImplSynthesize]
 		, implFuns :: [ImplFun]
 		, implStaticFields :: [ImplField]}
-	| Struct {structName :: String, structFields :: [StructField]}
+	| Struct {structName :: String, structFields :: [ImplField]}
 	| TypeDefStruct {oldName :: String, newName :: String}
 	| CFun {cfunMods :: [CFunMod], cfunReturnType :: String, cfunName :: String, cfunPars :: [CFunPar], cfunExps :: [Stm]}
 	| ClassDecl String
-
-data StructField = StructField{structFieldType :: String, structFieldName :: String}
 
 data Property = Property {propertyName :: String, propertyType :: String, propertyModifiers :: [PropertyModifier]}
 
@@ -110,9 +108,9 @@ instance Show FileStm where
 		where
 		showImplFields [] = "\n"
 		showImplFields a = "{\n"
-			++ (unlines . map (ind . showImplField)) a
+			++ (unlines . map (ind . show)) a
 			++ "}\n"
-		showImplField (ImplField name tp mods) = (strs " " mods) `tryCon` " " ++ tp ++ " " ++ name ++ ";"
+		
 		showSynthenizes = unlines . map showSynthenize
 		showStFields = unlines . map showStField
 		showSynthenize (ImplSynthesize name "") = "@synthesize " ++ name ++ ";"
@@ -120,11 +118,11 @@ instance Show FileStm where
 		showImplFuns = unlines . map show
 		showStField (ImplField nm tp mods) = "static " ++  (strs " " mods) `tryCon` " " ++ tp ++ " " ++ nm ++ ";"
 	show (ClassDecl name) = "@class " ++ name ++ ";"
+instance Show ImplField where
+	show(ImplField name tp mods) = (strs " " mods) `tryCon` " " ++ tp ++ " " ++ name ++ ";"
 instance Show CFunMod where
 	show CFunStatic = "static"
 	show CFunInline = "inline"
-instance Show StructField where
-	show (StructField t n) = t ++ " " ++ n ++ ";"
 instance Show CFunPar where
 	show (CFunPar t n) = t ++ " " ++ n
 

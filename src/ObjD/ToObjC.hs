@@ -230,7 +230,7 @@ genStruct :: D.Class -> [C.FileStm]
 genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fields, C.TypeDefStruct name name, con, eq, C.EmptyLine]
 	where
 		fields = map toField defs
-		toField D.Field{D.defName = n, D.defType = tp} = C.StructField (showDataType tp) n
+		toField D.Field{D.defName = n, D.defType = tp, D.defMods = mods} = C.ImplField n (showDataType tp) ["__weak" | D.DefModWeak `elem` mods]
 		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = name, C.cfunName = name ++ "Make", C.cfunPars = map toPar defs, C.cfunExps = 
 			[C.Var name "ret" C.Nop] ++
 			map toSet defs ++
