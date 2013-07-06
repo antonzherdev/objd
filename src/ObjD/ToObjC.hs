@@ -33,7 +33,7 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 			++ cImports'
 			++ fst dImports' 
 			++ [C.EmptyLine] 
-			++ map classDecl cls
+			++ map classDecl (cls ++ enums)
 			++ [C.EmptyLine] 
 			++ concatMap genStruct structs 
 			++ map genProtocol traits
@@ -376,6 +376,7 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)
 		(map (tExp . snd) pars)
 	| D.DefModEnumList `elem` mods = C.Call (C.Ref name) "values" []
 	| D.DefModVal `elem` mods = C.Ref name
+	| D.DefModObject `elem` mods = C.Ref name
 	| otherwise = C.CCall name (map snd . tPars $ pars)
 tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
 tExp (D.Index e i) = case D.exprDataType e of

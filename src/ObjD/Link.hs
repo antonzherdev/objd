@@ -18,6 +18,7 @@ data File = File {fileName :: String, fileImports :: [File], fileCImports :: [CI
 
 data Class = Class { classMods :: [ClassMod], className :: String , classExtends :: Maybe Extends, classDefs :: [Def], classConstructor :: Constructor
 		,classGenerics :: [Class] }
+	| Object {className :: String, classExtends :: Maybe Extends, classDefs :: [Def]}
 	| Enum { className :: String, classExtends :: Maybe Extends, classDefs :: [Def], classConstructor :: Constructor, enumItems :: [EnumItem]
 		,classGenerics :: [Class] }
 	| Generic {className :: String}
@@ -64,7 +65,7 @@ isStatic = (DefModStatic `elem` ). defMods
 
 
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate  | DefModVal | DefModWeak
-	| DefModConstructor | DefModStructConstructor | DefModStub | DefModLocal | DefModEnumList deriving (Eq, Ord)
+	| DefModConstructor | DefModStructConstructor | DefModStub | DefModLocal | DefModEnumList | DefModObject deriving (Eq, Ord)
 instance Show DefMod where
 	show DefModStatic = "static"
 	show DefModMutable = "var"
@@ -303,22 +304,33 @@ linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> Def pnm 
 data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid 
 	| TPClass {tpMod :: DataTypeMod, tpGenerics :: [DataType], tpClass :: Class}
 	| TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown String | TPMap DataType DataType
-	| TPOption DataType | TPGenericWrap DataType | TPNil
+	| TPOption DataType | TPGenericWrap DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class}
 data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
 isVoid _ = False
 
 refDataType :: Class -> [DataType] -> DataType
-refDataType e@Enum{} _ = TPClass TPMEnum [] e 
-refDataType cl gens
-	| isStruct cl = TPClass TPMStruct [] cl
-	| isTrait cl = TPClass TPMTrait [] cl 
-	| isGeneric cl = TPClass TPMGeneric [] cl 
-	| otherwise = TPClass TPMClass gens cl 
+refDataType cl gens = TPClass (refDataTypeMod cl) gens cl
+	
+refDataTypeMod :: Class -> DataTypeMod
+refDataTypeMod Enum{} = TPMEnum
+refDataTypeMod cl
+	| isStruct cl = TPMStruct
+	| isTrait cl = TPMTrait
+	| isGeneric cl = TPMGeneric
+	| otherwise = TPMClass
 
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
+dataTypeClass _ (TPObject tp c) = Object { className = (className c), classExtends = Nothing, 
+	classDefs = filter ((DefModStatic `elem`) . defMods) (classDefs c) ++ addionals}
+	where 
+		addionals = case tp of
+			TPMEnum -> map enumItemToDef (enumItems c)
+			_ -> []
+		enumItemToDef (EnumItem name _)= Def {defName = name, defPars = [], defType = TPClass TPMEnum [] c, defBody = Nop, defMods = [DefModStatic], 
+			defGenerics = []}
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
 dataTypeClass env (TPArr _) = findTp "array class" (envIndex env) "ODArray"
 dataTypeClass env (TPOption _) = findTp "option class" (envIndex env) "ODOption"
@@ -369,6 +381,7 @@ instance Show DataType where
 	show TPNil = "nil"
 	show (TPUnknown s) = "???: " ++ s
 	show (TPClass _ [] c) = className c
+	show (TPObject _ c) = className c ++ ".class"
 	show (TPClass _ gens c) = className c ++ "<" ++ strs' ", " gens ++ ">"
 	show (TPGenericWrap c) = "^" ++ show c
 	show (TPArr t) = "[" ++ show t ++ "]"
@@ -483,6 +496,7 @@ exprDataType (Return e) = exprDataType e
 exprDataType (Index e _) = case exprDataType e of
 	TPArr t -> t
 	TPMap _ v -> TPOption v
+	TPObject TPMEnum c -> TPClass TPMEnum [] c
 	t -> error $ show t ++ " is not array"
 exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 	where 
@@ -700,16 +714,16 @@ exprCall strictClass call@(D.Call name pars gens) = do
 
 allDefs :: Env -> Maybe DataType -> [Def]
 allDefs env (Just ss) = allDefsInClass $ dataTypeClass env ss
-allDefs env Nothing = envVals env ++ allDefsInClass (envSelfClass env) ++ envGlobalDefIndex env ++ classConstructors
+allDefs env Nothing = envVals env ++ allDefsInClass (envSelfClass env) ++ envGlobalDefIndex env ++ classConstructors ++ objects
 	where
 		classConstructors = (mapMaybe (constructorToDef . snd) . M.toList) (envIndex env)
 		constructorToDef cl@Class{className = n, classConstructor = constr, classGenerics = gens} = 
 			Just Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl (map (TPClass TPMGeneric []) gens), defBody = Nop, 
 				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor], defGenerics = gens}
-		constructorToDef cl@Enum{className = n} =
-			Just Def {defName = n, defPars = [], defType = TPArr $ refDataType cl [], defBody = Nop, 
-				defMods = [DefModStatic, DefModEnumList], defGenerics = []}
 		constructorToDef _ = Nothing
+		objects = (map (obj . snd) . M.toList) (envIndex env)
+		obj cl = Def {defName = className cl, defPars = [], defType = TPObject (refDataTypeMod cl) cl, defBody = Nop, 
+				defMods = [DefModStatic, DefModObject], defGenerics = []}
 		constructorParToPar (d, e) = Def (defName d) [] (defType d) e [DefModLocal] []
 
 
