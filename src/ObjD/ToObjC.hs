@@ -19,32 +19,37 @@ arc = True
 toObjC :: D.File -> ([C.FileStm], [C.FileStm])
 toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cImports} = 
 	let 
-		cls = filter (\c -> D.isRealClass c && not (D.isStruct c) && not (D.isTrait c)) classes
-		structs = filter (\c -> D.isRealClass c && D.isStruct c) classes
+		isClass c = D.isRealClass c && not (D.isStruct c) && not (D.isTrait c)
+		cls = filter isClass classes
+		isStruct c = D.isRealClass c && D.isStruct c
 		enums = filter D.isEnum classes
+		isTrait c = D.isRealClass c && D.isTrait c
+
 		cImports' = map cImport' cImports
 		cImport' (D.CImportLib n) = C.ImportLib n
 		cImport' (D.CImportUser n) = C.Import n
 		dImports' = procImports f
-
-		traits = filter (\c -> D.isRealClass c && D.isTrait c) classes
-
+		
+		
 		h = [C.Import "objd.h"] 
 			++ cImports'
 			++ fst dImports' 
 			++ [C.EmptyLine] 
 			++ map classDecl (cls ++ enums)
 			++ [C.EmptyLine] 
-			++ concatMap genStruct structs 
-			++ map genProtocol traits
-			++ concatMap genEnumInterface enums 
-			++ map stmToInterface cls
-
+			++ concatMap genH classes
+		
 		enumsImpl = concatMap genEnumImpl enums
 		stmsImpl = map stmToImpl cls
 		classDecl c = C.ClassDecl $ D.className c
 		m = if null enumsImpl && null stmsImpl then []
 			else [C.Import (name ++ ".h") , C.EmptyLine] ++ snd dImports' ++ enumsImpl ++ stmsImpl
+		genH c
+			| isClass c = [stmToInterface c]
+			| isStruct c = genStruct c
+			| D.isEnum c = genEnumInterface c
+			| isTrait c = [genProtocol c]
+			| otherwise = [] 
 	in (h, m)
 
 
