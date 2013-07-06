@@ -721,7 +721,8 @@ exprCall strictClass call@(D.Call name pars gens) = do
 
 allDefs :: Env -> Maybe DataType -> [Def]
 allDefs env (Just ss) = allDefsInClass $ dataTypeClass env ss
-allDefs env Nothing = envVals env ++ allDefsInClass (envSelfClass env) ++ envGlobalDefIndex env ++ classConstructors ++ objects
+allDefs env Nothing = envVals env ++ allDefsInClass (envSelfClass env) ++ allDefsInClass (dataTypeClass env $ objTp $ envSelfClass env) 
+	++ envGlobalDefIndex env ++ classConstructors ++ objects
 	where
 		classConstructors = (mapMaybe (constructorToDef . snd) . M.toList) (envIndex env)
 		constructorToDef cl@Class{className = n, classConstructor = constr, classGenerics = gens} = 
@@ -729,14 +730,19 @@ allDefs env Nothing = envVals env ++ allDefsInClass (envSelfClass env) ++ envGlo
 				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor], defGenerics = gens}
 		constructorToDef _ = Nothing
 		objects = (map (obj . snd) . M.toList) (envIndex env)
-		obj cl = Def {defName = className cl, defPars = [], defType = TPObject (refDataTypeMod cl) cl, defBody = Nop, 
+		objTp cl = TPObject (refDataTypeMod cl) cl
+		obj cl = Def {defName = className cl, defPars = [], defType = objTp cl, defBody = Nop, 
 				defMods = [DefModStatic, DefModObject], defGenerics = []}
 		constructorParToPar (d, e) = Def (defName d) [] (defType d) e [DefModLocal] []
 
 
 allDefsInClass :: Class -> [Def]
-allDefsInClass Generic{} = []
-allDefsInClass cl = classDefs cl  ++ maybe [] (allDefsInClass . extendsClass) (classExtends cl) 
+allDefsInClass Generic{} = [] 
+allDefsInClass cl = classDefs cl  ++ maybe [] (allDefsInClass . extendsClass) (classExtends cl) ++ case cl of
+	Enum{} -> [
+		Field{defName = "ordinal", defType = TPUInt, defBody = Nop, defMods = [], fieldAccs = []},
+		Field{defName = "name", defType = TPString, defBody = Nop, defMods = [], fieldAccs = []} ]
+	_ -> []
 	
 findCall :: (String, [(Maybe String, Exp)]) -> (Env, DataType, [Def]) -> Maybe Exp
 findCall (name,pars) (_, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
