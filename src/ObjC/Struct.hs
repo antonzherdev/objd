@@ -16,6 +16,7 @@ data FileStm =
 		, implStaticFields :: [ImplField]}
 	| Struct {structName :: String, structFields :: [ImplField]}
 	| TypeDefStruct {oldName :: String, newName :: String}
+	| CFunDecl {cfunMods :: [CFunMod], cfunReturnType :: String, cfunName :: String, cfunPars :: [CFunPar]}
 	| CFun {cfunMods :: [CFunMod], cfunReturnType :: String, cfunName :: String, cfunPars :: [CFunPar], cfunExps :: [Stm]}
 	| ClassDecl String
 
@@ -86,6 +87,7 @@ instance Show FileStm where
 	show (Struct name fields) = "struct " ++ name ++ " {\n" ++
 		(unlines . map (ind . show)) fields ++
 		"};"
+	show (CFunDecl mods ret name pars) = strs " " (map show mods ++ [ret]) ++ " " ++ name ++ "(" ++ (strs ", " . map show) pars ++ ");"
 	show (CFun mods ret name pars exps) = strs " " (map show mods ++ [ret]) ++ " " ++ name ++ "(" ++ (strs ", " . map show) pars ++ ") {\n" ++
 			showStms exps ++
 		"}"

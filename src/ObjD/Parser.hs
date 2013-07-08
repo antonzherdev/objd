@@ -357,7 +357,11 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pCall  <?> "Expression"
+		pTerm' = pNot <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pCall  <?> "Expression"
+		pNot = do
+			charSps '!'
+			e <- pExp
+			return $ Not e
 		pThrow = do
 			try $ do
 				string "throw"

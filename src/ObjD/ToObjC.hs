@@ -22,6 +22,7 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 		isClass c = D.isRealClass c && not (D.isStruct c) && not (D.isTrait c)
 		cls = filter isClass classes
 		isStruct c = D.isRealClass c && D.isStruct c
+		structs = filter isStruct classes
 		enums = filter D.isEnum classes
 		isTrait c = D.isRealClass c && D.isTrait c
 
@@ -35,15 +36,18 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 			++ cImports'
 			++ fst dImports' 
 			++ [C.EmptyLine] 
-			++ map classDecl (cls ++ enums)
+			++ map classDecl (cls ++ enums) 
+			++ map structDecl structs
 			++ [C.EmptyLine] 
 			++ concatMap genH classes
 		
+		structDecl c = C.TypeDefStruct (D.className c) (D.className c)
 		enumsImpl = concatMap genEnumImpl enums
+		structImpl = concatMap genStructImpl structs 
 		stmsImpl = map stmToImpl cls
 		classDecl c = C.ClassDecl $ D.className c
 		m = if null enumsImpl && null stmsImpl then []
-			else [C.Import (name ++ ".h") , C.EmptyLine] ++ snd dImports' ++ enumsImpl ++ stmsImpl
+			else [C.Import (name ++ ".h") , C.EmptyLine] ++ snd dImports' ++ enumsImpl ++ stmsImpl ++ structImpl
 		genH c
 			| isClass c = [stmToInterface c]
 			| isStruct c = genStruct c
@@ -227,7 +231,7 @@ implFuns defs = (map stm2ImplFun . filter D.isDef) defs ++ (concatMap accs' . fi
 		
 {- Struct -}
 genStruct :: D.Class -> [C.FileStm]
-genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fields', C.TypeDefStruct name name, con, eq ] ++ defs' ++ [C.EmptyLine]
+genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fields', con, eq ] ++ defs' ++ [C.EmptyLine]
 	where
 		fields = filter D.isField defs
 		fields' = map toField fields
@@ -249,7 +253,15 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 		eqd D.Field{D.defName = n, D.defType = tp} = equals True (tp, C.Dot (C.Ref "s1") n) (tp, C.Dot (C.Ref "s2") n)
 
 		defs' = (map def' . filter D.isDef) defs
-		def' D.Def{D.defName = n, D.defType = tp, D.defBody = e, D.defPars = pars} = C.CFun{C.cfunMods = [C.CFunStatic], 
+		def' D.Def{D.defName = n, D.defType = tp, D.defPars = pars} = C.CFunDecl{C.cfunMods = [], 
+			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
+			C.cfunPars = C.CFunPar name "self" : map par' pars}
+		par' D.Def{D.defName = n, D.defType = tp} = C.CFunPar (showDataType tp) n
+
+genStructImpl :: D.Class -> [C.FileStm]
+genStructImpl D.Class {D.className = name, D.classDefs = defs} = (map def' . filter D.isDef) defs
+	where 
+		def' D.Def{D.defName = n, D.defType = tp, D.defBody = e, D.defPars = pars} = C.CFun{C.cfunMods = [], 
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
 			C.cfunPars = C.CFunPar name "self" : map par' pars,
 			C.cfunExps = tStm tp e}
@@ -265,7 +277,7 @@ structDefName sn dn = lowFirst sn ++ cap dn
 {- Enum -}
 
 enumAdditionalDefs :: [D.Def]
-enumAdditionalDefs = [D.Field "ordinal" D.TPInt D.Nop [] [], D.Field "name" D.TPString D.Nop [] []]
+enumAdditionalDefs = [D.Field "ordinal" D.TPUInt D.Nop [] [], D.Field "name" D.TPString D.Nop [] []]
 
 enumConst :: D.Constructor -> D.Constructor
 enumConst cst = map (\f -> (f, D.Nop)) enumAdditionalDefs ++ cst
@@ -279,7 +291,7 @@ genEnumInterface D.Enum {D.className = name, D.classExtends = extends, D.classDe
 		C.interfaceName = name,
 		C.interfaceExtends = maybe "NSObject" (D.className . D.extendsClass) extends,
 		C.interfaceProperties = [C.Property "name" "NSString*" [C.NonAtomic, C.ReadOnly],
-			C.Property "ordinal" "NSInteger" [C.NonAtomic, C.ReadOnly]
+			C.Property "ordinal" "NSUInteger" [C.NonAtomic, C.ReadOnly]
 			] ++ (map fieldToProperty . filter D.isField) defs,
 		C.interfaceFuns = intefaceFuns (enumAdditionalDefs ++ defs) ++ map (enumItemGetterFun name) items ++ [enumValuesFun]
 	}]
@@ -439,6 +451,7 @@ tExp (D.Tuple exps) = C.CCall "tuple" $ map (tExpToType tpGeneric) exps
 tExp (D.Opt e) = let tp = D.exprDataType e
 	in C.Call (C.Ref "CNOption") "opt" [("", maybeVal (tp, D.TPGenericWrap tp) (tExp e))]
 tExp (D.None _) = C.Call (C.Ref "CNOption") "none" []
+tExp (D.Not e) = C.Not (tExp e)
 
 
 tExp e@(D.Error _ _) = error$ show e

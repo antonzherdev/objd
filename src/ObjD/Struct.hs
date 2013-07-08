@@ -85,6 +85,7 @@ data Exp = Nop
 	| Lambda [(String, Maybe DataType)] Exp
 	| Val{valName :: String, valDataType :: Maybe DataType, valBody :: Exp, valMods :: [DefMod]}
 	| Throw Exp
+	| Not Exp
 type CallPar = (Maybe String, Exp)
 
 data DataType = DataType String [DataType] | DataTypeArr DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType] | DataTypeMap DataType DataType 
@@ -145,6 +146,7 @@ instance Show Exp where
 	show (BoolConst i) = show i
 	show (FloatConst i) = show i
 	show (Throw i) = "throw " ++ show i
+	show (Not i) = "!(" ++ show i ++ ")"
 	show (Index v i) = show v ++ "[" ++ show i ++ "]"
 	show (Lambda pars e) = strs' ", " (map (\(n, t) -> n ++ maybe "" (\tt -> " : " ++ show tt) t) pars) ++ " -> " ++ show e
 	show (Val name tp body mods) = valVar ++ " " ++ name ++ maybe "" ((" : " ++) . show) tp ++ " = " ++ show body

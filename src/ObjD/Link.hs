@@ -426,6 +426,7 @@ data Exp = Nop
 	| Opt Exp
 	| None DataType
 	| Throw Exp
+	| Not Exp
 
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
@@ -461,6 +462,7 @@ instance Show Exp where
 	show (None tp) = "none<" ++ show tp ++ ">" 
 	show (FirstTry _ e) = "First try: " ++ show e
 	show (Throw e) = "throw " ++ show e
+	show (Not e) = "!(" ++ show e ++ ")"
 
 maybeAddReturn :: DataType -> Exp -> Exp
 maybeAddReturn TPVoid e = e
@@ -517,6 +519,7 @@ exprDataType (Opt v) = TPOption (exprDataType v)
 exprDataType (None tp) = tp
 exprDataType (FirstTry _ e) = exprDataType e
 exprDataType (Throw _) = TPThrow
+exprDataType (Not _) = TPBool
 exprDataType x = error $ "No exprDataType for " ++ show x
 
 expr :: D.Exp -> State Env Exp
@@ -599,7 +602,9 @@ expr (D.Tuple items) = do
 expr (D.Throw e) = do
 	e' <- expr e
 	return $ Throw e'
-
+expr (D.Not e) = do
+	e' <- expr e
+	return $ Not e'
 {- expr x = error $ "No expr for " ++ show x -}
 
 {------------------------------------------------------------------------------------------------------------------------------ 
