@@ -227,17 +227,18 @@ implFuns defs = (map stm2ImplFun . filter D.isDef) defs ++ (concatMap accs' . fi
 		
 {- Struct -}
 genStruct :: D.Class -> [C.FileStm]
-genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fields, C.TypeDefStruct name name, con, eq, C.EmptyLine]
+genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fields', C.TypeDefStruct name name, con, eq ] ++ defs' ++ [C.EmptyLine]
 	where
-		fields = map toField defs
+		fields = filter D.isField defs
+		fields' = map toField fields
 		toField D.Field{D.defName = n, D.defType = tp, D.defMods = mods} = C.ImplField n (showDataType tp) ["__weak" | D.DefModWeak `elem` mods]
-		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = name, C.cfunName = name ++ "Make", C.cfunPars = map toPar defs, C.cfunExps = 
+		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = name, C.cfunName = name ++ "Make", C.cfunPars = map toPar fields, C.cfunExps = 
 			[C.Var name "ret" C.Nop] ++
-			map toSet defs ++
+			map toSet fields ++
 			[C.Return $ C.Ref "ret"]
 		}
 		eq = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = "BOOL", C.cfunName = name ++ "Eq", C.cfunPars = [C.CFunPar name "s1", C.CFunPar name "s2"], C.cfunExps = 
-			[C.Return $ foldl foldEq C.Nop defs]
+			[C.Return $ foldl foldEq C.Nop fields]
 		}
 		toPar D.Field{D.defName = n, D.defType = tp} = C.CFunPar (showDataType tp) n
 		toSet D.Field{D.defName = n} = C.Set Nothing (C.Dot (C.Ref "ret") n) (C.Ref n)
@@ -246,6 +247,21 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 		foldEq p d = C.BoolOp And p (eqd d)
 		eqd :: D.Def -> C.Exp
 		eqd D.Field{D.defName = n, D.defType = tp} = equals True (tp, C.Dot (C.Ref "s1") n) (tp, C.Dot (C.Ref "s2") n)
+
+		defs' = (map def' . filter D.isDef) defs
+		def' D.Def{D.defName = n, D.defType = tp, D.defBody = e, D.defPars = pars} = C.CFun{C.cfunMods = [C.CFunStatic], 
+			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
+			C.cfunPars = C.CFunPar name "self" : map par' pars,
+			C.cfunExps = tStm tp e}
+		par' D.Def{D.defName = n, D.defType = tp} = C.CFunPar (showDataType tp) n
+
+structDefName :: String -> String -> String
+structDefName sn dn = lowFirst sn ++ cap dn
+	where 
+		lowFirst (x1:x2:xs)
+			| isUpper x1 && isUpper x2 = toLower x1 : lowFirst (x2:xs)
+			| otherwise = x1:x2:xs
+		lowFirst x = x
 {- Enum -}
 
 enumAdditionalDefs :: [D.Def]
@@ -342,6 +358,9 @@ showDataType tp = show tp
 tPars :: [(D.Def, D.Exp)] -> [(String, C.Exp)]
 tPars = map (\(d, e) -> (D.defName d, maybeVal (D.exprDataType e, D.defType d) $ tExp e))
 
+tExpTo :: D.DataType -> D.Exp -> C.Exp 
+tExpTo tp e = maybeVal (D.exprDataType e, tp) (tExp e)
+
 tExp :: D.Exp -> C.Exp
 tExp (D.IntConst i) = C.IntConst i
 tExp (D.StringConst i) = C.StringConst i
@@ -350,7 +369,7 @@ tExp (D.BoolConst i) = C.BoolConst i
 tExp (D.FloatConst i) = C.FloatConst i
 tExp (D.BoolOp Eq l r) = equals True (D.exprDataType l, tExp l) (D.exprDataType r, tExp r) 
 tExp (D.BoolOp NotEq l r) = equals False (D.exprDataType l, tExp l) (D.exprDataType r, tExp r) 
-tExp (D.BoolOp t l r) = C.BoolOp t (tExp l) (tExp r)
+tExp (D.BoolOp t l r) = C.BoolOp t (tExpTo D.TPBool l) (tExpTo D.TPBool r)
 tExp (D.MathOp t l r) = let 
 		l' = tExp l
 		r' = tExp r
@@ -359,14 +378,17 @@ tExp (D.MathOp t l r) = let
 	in case ltp of
 		D.TPArr _ -> addObjectToArray l' r'
 		D.TPMap _ _ -> addKVToMap l' r
-		_ -> C.MathOp t (tExp l) (tExp r)
+		_ -> C.MathOp t (tExpTo D.TPInt l) (tExpTo D.TPInt r)
 tExp (D.PlusPlus e) = C.PlusPlus (tExp e)
 tExp (D.MinusMinus e) = C.MinusMinus (tExp e)
 
 
+tExp (D.Dot (D.Self (D.TPClass D.TPMStruct _ _)) (D.Call D.Field {D.defName = r} _ [])) = C.Dot (C.Ref "self") r
 tExp (D.Dot (D.Self _) (D.Call D.Field {D.defName = r} _ [])) = C.Ref $ '_' : r
 tExp (D.Dot l (D.Call D.Field {D.defName = r} _ [])) = C.Dot (tExp l) r
-tExp (D.Dot l (D.Call D.Def{D.defName = name} _ pars)) = C.Call (tExp l) name (tPars pars)
+tExp (D.Dot l (D.Call D.Def{D.defName = name} _ pars)) = case D.exprDataType l of
+	(D.TPClass D.TPMStruct _ c) -> C.CCall (structDefName (D.className c) name) (tExp l : (map snd . tPars) pars)
+	_ -> C.Call (tExp l) name (tPars pars)
 
 tExp (D.Self _) = C.Self
 tExp (D.Call D.Field {D.defName = r} _ []) = C.Ref $ '_' : r
