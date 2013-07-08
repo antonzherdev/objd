@@ -321,7 +321,14 @@ pExp = do
 			try(do
 			string "--"
 			sps
-			return $ MinusMinus o) <|> (return o)
+			return $ MinusMinus o) <|> 
+			try(do 
+				charSps '['
+				e <- pExp
+				sps
+				charSps ']' <?> "Array index close bracket"
+				return $ Index o e) <|>
+			(return o)
 		pOp0 = pOp1 `chainl1` pAndOrOp
 		pOp1 = pOp2 `chainl1` pCompareOp
 		pOp2 = pOp3 `chainl1` pSetOp
@@ -424,12 +431,7 @@ pTerm = do
 				charSps '('
 				pars <- pCallPar `sepBy` charSps ','
 				charSps ')' <?> "Function call close bracket"
-				return $ Call name pars gens) <|> (do
-				charSps '['
-				e <- pExp
-				sps
-				charSps ']' <?> "Array index close bracket"
-				return $ Index (Call name [] gens) e) <|> return (Call name [] gens)
+				return $ Call name pars gens) <|> return (Call name [] gens)
 
 pGensRef :: Parser [DataType]
 pGensRef = option [] $ try $ do

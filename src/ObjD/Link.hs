@@ -323,7 +323,7 @@ refDataTypeMod cl
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
 dataTypeClass _ (TPObject tp c) = Object { className = (className c), classExtends = Nothing, 
-	classDefs = filter ((DefModStatic `elem`) . defMods) (classDefs c) ++ addionals}
+	classDefs = filter ((DefModStatic `elem`) . defMods) (allDefsInClass c) ++ addionals}
 	where 
 		addionals = case tp of
 			TPMEnum -> map enumItemToDef (enumItems c)
@@ -745,7 +745,8 @@ allDefsInClass Generic{} = []
 allDefsInClass cl = classDefs cl  ++ maybe [] (allDefsInClass . extendsClass) (classExtends cl) ++ case cl of
 	Enum{} -> [
 		Field{defName = "ordinal", defType = TPUInt, defBody = Nop, defMods = [], fieldAccs = []},
-		Field{defName = "name", defType = TPString, defBody = Nop, defMods = [], fieldAccs = []} ]
+		Field{defName = "name", defType = TPString, defBody = Nop, defMods = [], fieldAccs = []},
+		Field{defName = "values", defType = TPArr $ TPClass TPMEnum [] cl, defBody = Nop, defMods = [DefModStatic], fieldAccs = []}  ]
 	_ -> []
 	
 findCall :: (String, [(Maybe String, Exp)]) -> (Env, DataType, [Def]) -> Maybe Exp
