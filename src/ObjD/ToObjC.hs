@@ -299,18 +299,18 @@ genEnumImpl cl@D.Enum {D.className = clsName, D.enumItems = items} = [
 	where
 		defs = enumAdditionalDefs ++ D.classDefs cl
 		constr = enumConst (D.classConstructor cl)
-		stField (D.EnumItem itemName _) = C.ImplField itemName (clsName ++ "*") []
-		itemGetter e@(D.EnumItem itemName _) = C.ImplFun (enumItemGetterFun clsName e) [C.Return $ C.Ref itemName]
+		stField (D.EnumItem itemName _) = C.ImplField ('_' : itemName) (clsName ++ "*") []
+		itemGetter e@(D.EnumItem itemName _) = C.ImplFun (enumItemGetterFun clsName e) [C.Return $ C.Ref $ '_' : itemName]
 		initialize = C.ImplFun (C.Fun C.ObjectFun "void" "initialize" []) (
 			((C.Stm $ C.Call C.Super "initialize" []) : snd ( mapAccumL initItem 0 items)) ++ [setValues])
 		initItem :: Int -> D.EnumItem -> (Int, C.Stm)
-		initItem n (D.EnumItem itemName pars) = (n + 1, C.Set Nothing (C.Ref itemName) $ retain $ C.Call (C.Ref clsName) (createFunName clsName ++ "With") ([
+		initItem n (D.EnumItem itemName pars) = (n + 1, C.Set Nothing (C.Ref $ '_' : itemName) $ retain $ C.Call (C.Ref clsName) (createFunName clsName ++ "With") ([
 			("ordinal", C.IntConst n),
 			("name", C.StringConst itemName)] ++ map initPar pars) )
 		initPar (D.Field{D.defName = fname}, e) = (fname, tExp e)
 		valuesFun = C.ImplFun enumValuesFun [C.Return $ C.Ref "values"]
 		setValues :: C.Stm
-		setValues = C.Set Nothing (C.Ref "values") (C.Arr $ map (C.Ref . D.enumFieldName) items)
+		setValues = C.Set Nothing (C.Ref "values") (C.Arr $ map (C.Ref . ('_' : ). D.enumFieldName) items)
 
 
 {- Imports -}
@@ -385,6 +385,9 @@ tExp (D.MinusMinus e) = C.MinusMinus (tExp e)
 
 tExp (D.Dot (D.Self (D.TPClass D.TPMStruct _ _)) (D.Call D.Field {D.defName = r} _ [])) = C.Dot (C.Ref "self") r
 tExp (D.Dot (D.Self _) (D.Call D.Field {D.defName = r} _ [])) = C.Ref $ '_' : r
+tExp (D.Dot (D.Self (D.TPClass _ _ c)) (D.Call D.Def{D.defMods = mods, D.defName = name} _ pars)) 
+	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className c) name (tPars pars)
+	| otherwise = C.Call (C.Self) name (tPars pars)
 tExp (D.Dot l (D.Call D.Field {D.defName = r} _ [])) = C.Dot (tExp l) r
 tExp (D.Dot l (D.Call D.Def{D.defName = name} _ pars)) = case D.exprDataType l of
 	(D.TPClass D.TPMStruct _ c) -> C.CCall (structDefName (D.className c) name) (tExp l : (map snd . tPars) pars)

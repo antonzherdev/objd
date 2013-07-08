@@ -328,8 +328,7 @@ dataTypeClass _ (TPObject tp c) = Object { className = (className c), classExten
 		addionals = case tp of
 			TPMEnum -> map enumItemToDef (enumItems c)
 			_ -> []
-		enumItemToDef (EnumItem name _)= Def {defName = name, defPars = [], defType = TPClass TPMEnum [] c, defBody = Nop, defMods = [DefModStatic], 
-			defGenerics = []}
+		enumItemToDef (EnumItem name _)= Field {defName = name, defType = TPClass TPMEnum [] c, defBody = Nop, defMods = [DefModStatic], fieldAccs = []}
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
 dataTypeClass env (TPArr _) = findTp "array class" (envIndex env) "ODArray"
 dataTypeClass env (TPOption _) = findTp "option class" (envIndex env) "ODOption"
@@ -627,7 +626,6 @@ exprCall strictClass call@(D.Call name pars gens) = do
 						| DefModObject `elem` defMods d = c
 						| DefModLocal `elem` defMods d = c
 						| DefModStub `elem` defMods d = c
-						| DefModStatic `elem` defMods d = let o = objectDef (tpClass $ envSelf env) in Dot (Call o (defType o) []) c 
 						| otherwise = Dot (Self (envSelf env)) c
 					resolveDef _ c = c
 			pars'' :: [(Def, Exp)]
