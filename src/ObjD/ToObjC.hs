@@ -384,6 +384,9 @@ tExp (D.MinusMinus e) = C.MinusMinus (tExp e)
 
 
 tExp (D.Dot (D.Self (D.TPClass D.TPMStruct _ _)) (D.Call D.Field {D.defName = r} _ [])) = C.Dot (C.Ref "self") r
+tExp (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call D.Def {D.defName = name} _ pars)) = 
+		C.CCall (structDefName (D.className c) name) (C.Ref "self" : (map snd . tPars) pars)
+
 tExp (D.Dot (D.Self _) (D.Call D.Field {D.defName = r} _ [])) = C.Ref $ '_' : r
 tExp (D.Dot (D.Self (D.TPClass _ _ c)) (D.Call D.Def{D.defMods = mods, D.defName = name} _ pars)) 
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className c) name (tPars pars)
