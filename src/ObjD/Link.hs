@@ -590,7 +590,7 @@ expr l@(D.Lambda pars e) = if all (isJust.snd) pars then (do
 	e' <- expr e
 	put env
 	let tp = exprDataType e'
-	return $ Lambda pars' e' tp)
+	return $ Lambda pars' (maybeAddReturn tp e') tp)
 	else return $ Error "Not all types are defined in lambda" l
 
 expr (D.Val name tp body mods) = do
