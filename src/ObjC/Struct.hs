@@ -1,5 +1,5 @@
 module ObjC.Struct ( Property(..), PropertyModifier(..),FileStm(..), ImplSynthesize(..), ImplFun(..), Fun(..), FunType(..), FunPar(..),
-  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..)
+  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..), DataType(..)
 ) where
 
 import           Ex.String
@@ -16,27 +16,29 @@ data FileStm =
 		, implStaticFields :: [ImplField]}
 	| Struct {structName :: String, structFields :: [ImplField]}
 	| TypeDefStruct {oldName :: String, newName :: String}
-	| CFunDecl {cfunMods :: [CFunMod], cfunReturnType :: String, cfunName :: String, cfunPars :: [CFunPar]}
-	| CFun {cfunMods :: [CFunMod], cfunReturnType :: String, cfunName :: String, cfunPars :: [CFunPar], cfunExps :: [Stm]}
+	| CFunDecl {cfunMods :: [CFunMod], cfunReturnType :: DataType, cfunName :: String, cfunPars :: [CFunPar]}
+	| CFun {cfunMods :: [CFunMod], cfunReturnType :: DataType, cfunName :: String, cfunPars :: [CFunPar], cfunExps :: [Stm]}
 	| ClassDecl String
 
-data Property = Property {propertyName :: String, propertyType :: String, propertyModifiers :: [PropertyModifier]}
+data Property = Property {propertyName :: String, propertyType :: DataType, propertyModifiers :: [PropertyModifier]}
 
 data PropertyModifier = ReadOnly | NonAtomic | Retain | Weak deriving(Eq)
 
-data ImplField = ImplField {implFieldName :: String, implFieldType :: String, implFieldsMods :: [String]}
+data ImplField = ImplField {implFieldName :: String, implFieldType :: DataType, implFieldsMods :: [String]}
 
 data ImplSynthesize = ImplSynthesize String String
 
 data ImplFun = ImplFun {implFunType :: Fun, implExps :: [Stm]}
 
-data Fun = Fun {funType :: FunType, funReturnType :: String, funName :: String, funPars :: [FunPar]}
+data Fun = Fun {funType :: FunType, funReturnType :: DataType, funName :: String, funPars :: [FunPar]}
 data FunType = ObjectFun | InstanceFun
-data FunPar = FunPar {funParName :: String, funParDataType :: String, funParVar :: String}
+data FunPar = FunPar {funParName :: String, funParDataType :: DataType, funParVar :: String}
 
-data CFunPar = CFunPar {cfunParDataType :: String, cfunParName :: String}
+data CFunPar = CFunPar {cfunParDataType :: DataType, cfunParName :: String}
 data CFunMod = CFunStatic | CFunInline
 {- EXPRESSIONS -}
+
+data DataType = TPSimple String | TPBlock DataType [DataType]
 
 data Stm =
 	If Exp [Stm] [Stm]
@@ -44,7 +46,7 @@ data Stm =
 	| Stm Exp
 	| Return Exp
 	| Throw Exp
-	| Var{varType :: String, varName :: String, varExp :: Exp}
+	| Var{varType :: DataType, varName :: String, varExp :: Exp}
 
 data Exp =
 	Self | Super
@@ -67,7 +69,7 @@ data Exp =
 	| Index Exp Exp
 	| Arr [Exp]
 	| Map [(Exp, Exp)]
-	| Lambda [(String, String)] [Stm] String
+	| Lambda [(String, DataType)] [Stm] DataType
 	| Not Exp
 	| Error String
 	
@@ -79,6 +81,13 @@ unlines' :: [String] -> String
 unlines' [] = ""
 unlines' a = unlines a ++ "\n"
 
+instance Show DataType where
+	show (TPSimple s) = s
+	show (TPBlock d t) = show d ++ "(^)" ++ "(" ++ strs' ", " t ++ ")"
+
+showDecl ::  DataType -> String ->String
+showDecl (TPSimple tp) name = tp ++ " " ++ name
+showDecl (TPBlock d t) name = show d ++ "(^" ++ name ++ ")" ++ "(" ++ strs' ", " t ++ ")"
 
 instance Show FileStm where
 	show (Import s) = "#import \"" ++ s ++ "\""
@@ -88,8 +97,8 @@ instance Show FileStm where
 	show (Struct name fields) = "struct " ++ name ++ " {\n" ++
 		(unlines . map (ind . show)) fields ++
 		"};"
-	show (CFunDecl mods ret name pars) = strs " " (map show mods ++ [ret]) ++ " " ++ name ++ "(" ++ (strs ", " . map show) pars ++ ");"
-	show (CFun mods ret name pars exps) = strs " " (map show mods ++ [ret]) ++ " " ++ name ++ "(" ++ (strs ", " . map show) pars ++ ") {\n" ++
+	show (CFunDecl mods ret name pars) = strs " " (map show mods ++ [show ret]) ++ " " ++ name ++ "(" ++ (strs ", " . map show) pars ++ ");"
+	show (CFun mods ret name pars exps) = strs " " (map show mods ++ [show ret]) ++ " " ++ name ++ "(" ++ (strs ", " . map show) pars ++ ") {\n" ++
 			showStms exps ++
 		"}"
 	show (Interface name extends properties funs) =
@@ -119,15 +128,15 @@ instance Show FileStm where
 		showSynthenize (ImplSynthesize name "") = "@synthesize " ++ name ++ ";"
 		showSynthenize (ImplSynthesize name var) = "@synthesize " ++ name ++ " = " ++ var ++ ";"
 		showImplFuns = unlines . map show
-		showStField (ImplField nm tp mods) = "static " ++  (strs " " mods) `tryCon` " " ++ tp ++ " " ++ nm ++ ";"
+		showStField (ImplField nm tp mods) = "static " ++  (strs " " mods) `tryCon` " " ++ showDecl tp nm ++ ";"
 	show (ClassDecl name) = "@class " ++ name ++ ";"
 instance Show ImplField where
-	show(ImplField name tp mods) = (strs " " mods) `tryCon` " " ++ tp ++ " " ++ name ++ ";"
+	show(ImplField name tp mods) = (strs " " mods) `tryCon` " " ++ showDecl tp name ++ ";"
 instance Show CFunMod where
 	show CFunStatic = "static"
 	show CFunInline = "inline"
 instance Show CFunPar where
-	show (CFunPar t n) = t ++ " " ++ n
+	show (CFunPar t n) = showDecl t n
 
 instance Show ImplFun where
 	show (ImplFun fun exps) =
@@ -136,16 +145,16 @@ instance Show ImplFun where
 		++ "}\n"
 instance Show Fun where
 	show (Fun tp ret name pars) =
-		show tp ++ " (" ++ ret ++ ")" ++ name ++ cap  (strs' " " pars)
+		show tp ++ " (" ++ show ret ++ ")" ++ name ++ cap  (strs' " " pars)
 instance Show FunPar where
- 	show (FunPar name tp var) = name ++ ":(" ++ tp ++ ")" ++ var
+ 	show (FunPar name tp var) = name ++ ":(" ++ show tp ++ ")" ++ var
 instance Show FunType where
 	show InstanceFun = "-"
 	show ObjectFun = "+"
 
 
 instance Show Property where
-	show (Property name tp mods) = "@property (" ++ strs' ", " mods ++ ") " ++ tp ++ " " ++ name ++ ";"
+	show (Property name tp mods) = "@property (" ++ strs' ", " mods ++ ") " ++ showDecl tp name ++ ";"
 
 
 instance Show PropertyModifier where
@@ -195,8 +204,8 @@ stmLines (Stm Nop) = [""]
 stmLines (Stm e) = appendLast ";" $ expLines e
 stmLines (Return e) = ["return "] `glue` (expLines e `app` ";")
 stmLines (Throw e) = ["@throw "] `glue` (expLines e `app` ";")
-stmLines (Var tp name Nop) = [tp ++ " " ++ name ++ ";"]
-stmLines (Var tp name e) = [tp ++ " " ++ name ++ " = "] `glue` (expLines e `app` ";")
+stmLines (Var tp name Nop) = [showDecl tp name ++ ";"]
+stmLines (Var tp name e) = [showDecl tp name ++ " = "] `glue` (expLines e `app` ";")
 
 expLines :: Exp -> [String]
 expLines Self = ["self"]
@@ -222,8 +231,8 @@ expLines (Index e i) = (expLines e `app` "[") `glue` (expLines i `app` "]")
 expLines (Arr e) = ["(@[" ++ strs' ", " e ++ "])"]
 expLines (Map e) = ["(@{" ++ (strs ", " . map(\(k, v) -> show k ++ " : " ++ show v) ) e ++ "})"]
 expLines (ObjCConst e) = ["@" ++ show e]
-expLines (Lambda pars e rtp) = ["^" ++ rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]
-	where showPar(name, tp) = tp ++ " " ++ name
+expLines (Lambda pars e rtp) = ["^" ++ show rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]
+	where showPar(name, tp) = showDecl tp name
 expLines (Not e) = ["!("] `glue` (expLines e `app` ")")
 expLines (Error s) = ["ERROR: "] `glue` lines s 
 
