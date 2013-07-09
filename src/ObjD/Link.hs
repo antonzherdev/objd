@@ -719,7 +719,7 @@ correctCallPar _ _ (d@Def{defType = (TPFun _ (TPClass TPMGeneric _ _) )}, Lambda
 correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, Error _ (D.Lambda lambdaPars lambdaExpr)) = (d, Lambda lpars' expr' tp')
 	where
 		lpars' :: [(String, DataType)]
-		lpars' = map (second (wrapGeneric . replaceGenerics gens)) $ zip (map fst lambdaPars) (stps stp)
+		lpars' = map (second (replaceGenerics gens)) $ zip (map fst lambdaPars) (stps stp)
 		stps :: DataType -> [DataType]
 		stps (TPTuple tps) = tps
 		stps tp = [tp]

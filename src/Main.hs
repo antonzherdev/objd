@@ -15,7 +15,7 @@ import System.FilePath
 {- main::IO()
 main = putStr "dsa" -}
 debug :: [String]
-debug = []
+debug = ["TRRailPoint"]
 
 main::IO()
 main = 
