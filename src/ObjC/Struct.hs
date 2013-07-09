@@ -69,6 +69,7 @@ data Exp =
 	| Map [(Exp, Exp)]
 	| Lambda [(String, String)] [Stm] String
 	| Not Exp
+	| Error String
 	
 showStms :: [Stm] -> String
 showStms = unlines . stms
@@ -224,4 +225,5 @@ expLines (ObjCConst e) = ["@" ++ show e]
 expLines (Lambda pars e rtp) = ["^" ++ rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]
 	where showPar(name, tp) = tp ++ " " ++ name
 expLines (Not e) = ["!("] `glue` (expLines e `app` ")")
+expLines (Error s) = ["ERROR: "] `glue` lines s 
 
