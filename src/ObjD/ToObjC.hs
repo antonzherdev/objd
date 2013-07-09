@@ -496,6 +496,8 @@ equals True (D.TPClass D.TPMStruct _ c, e1) (_, e2) = C.CCall (D.className c ++ 
 equals True (D.TPClass _ _ _, e1) (D.TPClass _ _ _, e2) = C.Call e1 "isEqual" [("", e2)]
 equals True (stp@(D.TPGenericWrap _), e1) (dtp, e2) = C.BoolOp Eq (maybeVal (stp, dtp) e1) e2
 equals True (stp, e1) (dtp@(D.TPGenericWrap _), e2) = C.BoolOp Eq e1 (maybeVal (stp, dtp) e2)
+equals True (D.TPFloat, e1) (D.TPFloat, e2) = C.CCall "eqf" [e1, e2]
+equals False (D.TPFloat, e1) (D.TPFloat, e2) = C.Not $ C.CCall "eqf" [e1, e2]
 equals True (_, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals False (_, e1) (_, e2) = C.BoolOp NotEq e1 e2
 
