@@ -447,10 +447,15 @@ pGensRef = option [] $ try $ do
 pLambda :: Parser Exp 
 pLambda =  do
 	pars <- try $ do 
-		optionMaybe $ charSps '('
-		r <- lambdaPars `sepBy` charSps ','
-		sps
-		optionMaybe $ charSps ')'
+		r <- (do 
+			charSps '('
+			r <- lambdaPars `sepBy` charSps ','
+			sps
+			charSps ')'
+			return r) <|> (do
+				r <- lambdaPars
+				sps
+				return [r])
 		string "->"
 		sps
 		return r

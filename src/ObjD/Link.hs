@@ -452,7 +452,7 @@ instance Show Exp where
 	show (BoolConst i) = show i
 	show (FloatConst i) = show i
 	show (Index e i) = show e ++ "[" ++ show i ++ "]"
-	show (Lambda pars e tp) = strs' ", " (map (\(n, t) -> n ++ " : " ++ show t) pars) ++ " -> " ++ show tp ++ " = " ++ show e
+	show (Lambda pars e tp) = strs ", " (map (\(n, t) -> n ++ " : " ++ show t) pars) ++ " -> " ++ show tp ++ " = " ++ show e
 	show (Val d) = show d
 	show (Error s e) = s ++ " in " ++ show e
 	show (Arr exps) = "["  ++ strs' ", " exps ++ "]"
@@ -723,7 +723,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 			correctType gns (TPArr c) = TPArr (correctType gns c)
 			correctType _ t = t
 		in call''
-
+exprCall _ err = return $ Error ("It is not call") err
 
 allDefs :: Env -> Maybe DataType -> [Def]
 allDefs env (Just ss) = allDefsInClass $ dataTypeClass env ss
