@@ -360,7 +360,7 @@ pTerm = do
 		pTerm' = pNot <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pCall  <?> "Expression"
 		pNot = do
 			charSps '!'
-			e <- pExp
+			e <- pTerm
 			return $ Not e
 		pThrow = do
 			try $ do
