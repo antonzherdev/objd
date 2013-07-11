@@ -390,12 +390,14 @@ tExp (D.BoolOp t l r) = C.BoolOp t (tExpTo D.TPBool l) (tExpTo D.TPBool r)
 tExp (D.MathOp t l r) = let 
 		l' = tExp l
 		r' = tExp r
-		ltp = D.exprDataType l
+		ltp = case D.exprDataType l of
+			D.TPGenericWrap t -> t
+			t -> t
 		{-rtp = D.exprDataType r-}
 	in case ltp of
 		D.TPArr _ -> addObjectToArray l' r'
 		D.TPMap _ _ -> addKVToMap l' r
-		_ -> C.MathOp t (tExpTo D.TPInt l) (tExpTo D.TPInt r)
+		_ -> C.MathOp t (tExpTo ltp l) (tExpTo ltp r)
 tExp (D.PlusPlus e) = C.PlusPlus (tExp e)
 tExp (D.MinusMinus e) = C.MinusMinus (tExp e)
 
@@ -512,7 +514,7 @@ addKVToMap :: C.Exp -> D.Exp -> C.Exp
 addKVToMap a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tExp v), ("forKey", tExp k)]
 
 
-data MaybeValTP = TPGen | TPNum | TPStruct | TPNoMatter | TPBool
+data MaybeValTP = TPGen | TPNum | TPStruct | TPNoMatter | TPBool | TPFloat
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp
 maybeVal (stp, dtp) e = let 
 	tp D.TPGenericWrap{} = TPGen
@@ -520,7 +522,7 @@ maybeVal (stp, dtp) e = let
 	tp (D.TPClass D.TPMStruct _ _) = TPStruct
 	tp D.TPInt{} = TPNum
 	tp D.TPUInt{} = TPNum
-	tp D.TPFloat{} = TPNum
+	tp D.TPFloat{} = TPFloat
 	tp D.TPBool{} = TPBool
 	tp _ = TPNoMatter
 	in case (tp stp, tp dtp) of
@@ -528,9 +530,12 @@ maybeVal (stp, dtp) e = let
 		(TPGen, TPStruct) -> C.CCall "uval" [C.Ref $ D.className $ D.tpClass dtp, e]
 		(TPNum, TPGen) -> case e of
 			C.IntConst _ -> C.ObjCConst e
-			C.FloatConst _ -> C.ObjCConst e
 			_ -> C.CCall "numi" [e]
 		(TPGen, TPNum) -> C.CCall "unumi" [e]
+		(TPFloat, TPGen) -> case e of
+			C.FloatConst _ -> C.ObjCConst e
+			_ -> C.CCall "numf" [e]
+		(TPGen, TPFloat) -> C.CCall "unumf" [e]
 		(TPBool, TPGen) -> case e of
 			C.BoolConst _ -> C.ObjCConst e
 			_ -> C.CCall "numb" [e]
