@@ -294,9 +294,11 @@ genEnumInterface cl@D.Class {D.className = name, D.classExtends = extends, D.cla
 	C.Interface {
 		C.interfaceName = name,
 		C.interfaceExtends = maybe "NSObject" (D.className . D.extendsClass) extends,
-		C.interfaceProperties = (map fieldToProperty . filter D.isField) defs,
-		C.interfaceFuns = intefaceFuns defs ++ map (enumItemGetterFun name) (D.enumItems cl) ++ [enumValuesFun]
+		C.interfaceProperties = (map fieldToProperty . filter D.isField) defs',
+		C.interfaceFuns = intefaceFuns (defs') ++ map (enumItemGetterFun name) (D.enumItems cl) ++ [enumValuesFun]
 	}]
+	where 
+		defs' = filter ((/= "values") . D.defName . D.classDef) defs
 	
 enumItemGetterFun :: String -> D.ClassDef -> C.Fun
 enumItemGetterFun name (D.EnumItem D.Def{D.defName = itemName} _) = C.Fun C.ObjectFun (C.TPSimple (name ++ "*")) itemName []
@@ -312,7 +314,7 @@ genEnumImpl cl@D.Class {D.className = clsName} = [
 	}]
 	where
 		items = D.enumItems cl
-		defs = D.classDefs cl
+		defs = filter ((/= "values") . D.defName . D.classDef) $ D.classDefs cl
 		constr = D.classConstructor cl
 		stField (D.EnumItem D.Def{D.defName = itemName} _) = C.ImplField ('_' : itemName) (C.TPSimple (clsName ++ "*")) []
 		itemGetter e@(D.EnumItem D.Def{D.defName = itemName} _) = C.ImplFun (enumItemGetterFun clsName e) [C.Return $ C.Ref $ '_' : itemName]

@@ -224,7 +224,9 @@ linkClass (ocidx, glidx) cl = self
 				className = D.className cl, 
 				classExtends = Just $ Extends (findTp "class" cidx "ODEnum") [TPClass TPMEnum [] self] 
 					[(enumOrdinal, callLocalVal "ordinal" TPUInt), (enumName, callLocalVal "name" TPString)], 
-				classDefs = map enumItem (D.enumItems cl) ++ fields ++ defs, 
+				classDefs = map enumItem (D.enumItems cl) ++ fields ++ defs ++ [ClassDef $ Def{
+					defName = "values", defType = TPArr (TPClass TPMEnum [] self), defBody = Nop,
+					defMods = [DefModStatic], defPars = [], defGenerics = []}], 
 				classConstructor = map (\f -> (f, Nop)) enumAdditionalDefs ++ constr,
 				classGenerics = generics
 			}
