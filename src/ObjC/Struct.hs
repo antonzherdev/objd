@@ -190,13 +190,16 @@ glueAll _ [] = []
 glueAll _ [x] = x
 glueAll s (a:b:xs) = glueAll s $ ((a `app` s) `glue` b):xs
 
+multiLineIf :: Stm -> [String]
+multiLineIf (If cond t f) = ["if(" ++ show cond ++ ") {" ] ++ stms t ++ ["} else {"] ++ stms f ++ ["}"]
+
 stmLines :: Stm -> [String]
 stmLines (If cond [t] []) = ["if(" ++ show cond ++ ") " ] `glue` stmLines t
 stmLines (If cond t []) = ["if(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
+stmLines i@(If cond [If{}] _) = multiLineIf i
+stmLines i@(If cond _ [If{}]) = multiLineIf i
 stmLines (If cond [t] [f]) = (["if(" ++ show cond ++ ") " ] `glue` stmLines t) ++ (["else "] `glue` stmLines f)
-stmLines (If cond [t] f) = (["if(" ++ show cond ++ ") " ] `glue` stmLines t) ++ ["else {"] ++ stms f ++ ["}"]
-stmLines (If cond t [f]) = ["if(" ++ show cond ++ ") {" ]  ++ stms t ++ (["} else "] `glue` stmLines f)
-stmLines (If cond t f) = ["if(" ++ show cond ++ ") {" ] ++ stms t ++ ["} else {"] ++ stms f ++ ["}"]
+stmLines i@If{} = multiLineIf i
 
 stmLines (Set Nothing l r) = (expLines l `app` " = ") `glue` (expLines r `app` ";")
 stmLines (Set (Just tp) l r) = (expLines l `app` (" " ++ show tp ++ "= ")) `glue` (expLines r `app` ";")
