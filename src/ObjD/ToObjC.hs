@@ -217,7 +217,7 @@ implInit cl constr  = C.ImplFun (initFun constr) (
 			where
 				implRight D.TPClass{} = retain $ C.Ref name
 				implRight _ = C.Ref name
-		implInitField D.Def{D.defName = name, D.defBody = def} = C.Set Nothing (C.Ref $ '_' : name) (tExp def)
+		implInitField D.Def{D.defName = name, D.defBody = def, D.defType = tp} = C.Set Nothing (C.Ref $ '_' : name) (tExpTo tp def)
 		
 implFuns :: [D.ClassDef] -> [C.ImplFun]
 implFuns defs = (map stm2ImplFun . filter D.isDef) defs ++ (concatMap accs' . filter D.isField) defs
