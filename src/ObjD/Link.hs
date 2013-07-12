@@ -434,6 +434,7 @@ data Exp = Nop
 	| None DataType
 	| Throw Exp
 	| Not Exp
+	| Negative Exp
 
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
@@ -470,6 +471,7 @@ instance Show Exp where
 	show (FirstTry _ e) = "First try: " ++ show e
 	show (Throw e) = "throw " ++ show e
 	show (Not e) = "!(" ++ show e ++ ")"
+	show (Negative e) = "-" ++ show e
 
 callLocalVal :: String -> DataType -> Exp
 callLocalVal name tp = Call (localVal name tp) tp []
@@ -530,6 +532,7 @@ exprDataType (None tp) = tp
 exprDataType (FirstTry _ e) = exprDataType e
 exprDataType (Throw _) = TPThrow
 exprDataType (Not _) = TPBool
+exprDataType (Negative e) = exprDataType e
 {- exprDataType x = error $ "No exprDataType for " ++ show x -}
 
 expr :: D.Exp -> State Env Exp
@@ -615,6 +618,9 @@ expr (D.Throw e) = do
 expr (D.Not e) = do
 	e' <- expr e
 	return $ Not e'
+expr (D.Negative e) = do
+	e' <- expr e
+	return $ Negative e'
 {- expr x = error $ "No expr for " ++ show x -}
 
 {------------------------------------------------------------------------------------------------------------------------------ 

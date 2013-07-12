@@ -460,6 +460,7 @@ tExp (D.Opt e) = let tp = D.exprDataType e
 	in C.Call (C.Ref "CNOption") "opt" [("", maybeVal (tp, D.TPGenericWrap tp) (tExp e))]
 tExp (D.None _) = C.Call (C.Ref "CNOption") "none" []
 tExp (D.Not e) = C.Not (tExp e)
+tExp (D.Negative e) = C.Negative (tExp e)
 tExp e@D.Error{} = C.Error $ show e
 tExp x = error $ "No tExp for " ++ show x
 

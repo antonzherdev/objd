@@ -18,7 +18,7 @@ removeComments [] = []
 removeComments ('/' : '/' : xs) = waitLine xs
 	where
 		waitLine [] = []
-		waitLine ('\n' : xxs) = removeComments xxs
+		waitLine ('\n' : xxs) = '\n' : removeComments xxs
 		waitLine (_  : xxs) = waitLine xxs
 removeComments ('/' : '*' : xs) = waitMultiLine xs
 	where
@@ -358,7 +358,11 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pNot <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> pNumConst <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pCall  <?> "Expression"
+		pTerm' = pNot <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> try(pNumConst) <|> pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pCall  <?> "Expression"
+		pMinus = do
+			charSps '-'
+			e <- pExp
+			return $ Negative e
 		pNot = do
 			charSps '!'
 			e <- pTerm
@@ -422,7 +426,7 @@ pTerm = do
 			char ')' <?> "Closing if bracket"
 			sps
 			i <- pExp
-			e <- option Nop (string "else" >> sps >> pExp)
+			e <- option Nop (try(string "else") >> sps >> pExp)
 			sps
 			return $ If cond i e
 		pSelf = try(string "self") >> return Self
