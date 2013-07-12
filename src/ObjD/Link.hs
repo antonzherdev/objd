@@ -510,7 +510,9 @@ exprDataType Nil = TPNil
 exprDataType (BoolConst _ ) = TPBool
 exprDataType (FloatConst _) = TPFloat
 exprDataType (BoolOp {}) = TPBool
-exprDataType (MathOp _ l _) = exprDataType l
+exprDataType (MathOp _ l r) = case(exprDataType l, exprDataType r) of
+	(TPInt, TPFloat) -> TPFloat
+	(l, _) -> l
 exprDataType (PlusPlus e) = exprDataType e
 exprDataType (MinusMinus e) = exprDataType e
 exprDataType (Dot _ b) = exprDataType b

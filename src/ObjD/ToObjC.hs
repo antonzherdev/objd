@@ -359,6 +359,7 @@ showDataType (D.TPClass D.TPMClass _ c) = C.TPSimple $ D.className c ++ "*"
 showDataType (D.TPClass D.TPMEnum _ c) = C.TPSimple $ D.className c ++ "*"
 showDataType (D.TPClass _ _ _) = C.TPSimple "id"
 showDataType (D.TPSelf) = C.TPSimple "id"
+showDataType (D.TPTuple _) = C.TPSimple "CNTuple*"
 showDataType (D.TPOption c) =  showDataType c
 showDataType (D.TPFun D.TPVoid d) = C.TPBlock (showDataType d) []
 showDataType (D.TPFun (D.TPTuple ss) d) = C.TPBlock (showDataType d) (map showDataType ss)
@@ -426,7 +427,7 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)
 		(tPars pars)
 	| D.DefModStructConstructor `elem` mods = C.CCall 
 		(name++ "Make")
-		(map (tExp . snd) pars)
+		((map snd. tPars) pars)
 	| D.DefModGlobalVal `elem` mods = C.Ref name
 	| D.DefModObject `elem` mods = C.Ref name
 	| otherwise = C.CCall name (map snd . tPars $ pars)
