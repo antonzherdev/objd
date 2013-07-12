@@ -177,7 +177,7 @@ linkFile fidx (D.File name stms) = fl
 		visibleFiles :: [D.FileStm] -> [File]
 		visibleFiles = mapMaybe (getFile . D.impString) . filter D.isImport
 		kernelFiles :: [File]
-		kernelFiles = map (findTp "file" fidx) ["ODArray", "ODOption", "ODMap", "ODNS", "ODEnum"]
+		kernelFiles = map (findTp "file" fidx) ["ODArray", "ODOption", "ODMap", "ODNS", "ODEnum", "ODTuple"]
 		cImports = mapMaybe toCImport stms
 		toCImport (D.Import s D.ImportTypeCUser) = Just $ CImportUser s
 		toCImport (D.Import s D.ImportTypeCLib) = Just $ CImportLib s
@@ -340,6 +340,8 @@ dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
 dataTypeClass env (TPArr _) = findTp "array class" (envIndex env) "ODArray"
 dataTypeClass env (TPOption _) = findTp "option class" (envIndex env) "ODOption"
 dataTypeClass env (TPMap _ _) = findTp "map class" (envIndex env) "ODMap"
+dataTypeClass env (TPTuple [a, b]) = findTp "tuple class" (envIndex env) "CNTuple"
+dataTypeClass env (TPTuple arr) = findTp "tuple class" (envIndex env) ("CNTuple" ++ show (length arr))
 dataTypeClass _ x = error $ "No dataTypeClass for " ++ show x
 
 dataTypeGenerics :: Env -> DataType -> [DataType]
@@ -701,12 +703,12 @@ exprCall strictClass call@(D.Call name pars gens) = do
 									
 			errorString :: String
 			errorString = "Could find reference for call " ++ callStr ++ "\n" ++
-				maybe "" (\cl -> "strict in class " ++ show cl ++ "\n") strictClass ++
+				maybe "" (\cl -> "strict in class " ++ show cl ++ "\n") strictClass {-++
 				"in defs:\n" ++
-				(strs "\n" . map (ind . showDef False)) (allDefs env strictClass)
+				(strs "\n" . map (ind . showDef False)) (allDefs env strictClass) -}
 				where callStr = name ++ case pars of
 					[] -> ""
-					_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")"
+					_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")" 
 
 			correctCall :: Exp -> Exp
 			correctCall (Call d tp _) = Call d (replaceGenerics gens'' tp) (map doImplicitConversation pars''')
@@ -744,6 +746,7 @@ replaceGenerics gns gg@(TPClass TPMGeneric _ (Generic g)) =  fromMaybe gg $ M.lo
 replaceGenerics gns (TPClass t g c) = TPClass t (map (replaceGenerics gns) g) c
 replaceGenerics gns (TPArr c) = TPArr (replaceGenerics gns c)
 replaceGenerics gns (TPOption c) = TPOption (replaceGenerics gns c)
+replaceGenerics gns (TPTuple arr) = TPTuple $ map (replaceGenerics gns) arr
 replaceGenerics _ t = t
 
 allDefs :: Env -> Maybe DataType -> [Def]
