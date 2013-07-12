@@ -737,6 +737,7 @@ replaceGenerics gns (TPGenericWrap g) = TPGenericWrap $ replaceGenerics gns g
 replaceGenerics gns gg@(TPClass TPMGeneric _ (Generic g)) =  fromMaybe gg $ M.lookup g gns
 replaceGenerics gns (TPClass t g c) = TPClass t (map (replaceGenerics gns) g) c
 replaceGenerics gns (TPArr c) = TPArr (replaceGenerics gns c)
+replaceGenerics gns (TPOption c) = TPOption (replaceGenerics gns c)
 replaceGenerics _ t = t
 
 allDefs :: Env -> Maybe DataType -> [Def]
