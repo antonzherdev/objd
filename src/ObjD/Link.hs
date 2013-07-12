@@ -791,8 +791,12 @@ findCall (name,pars) (_, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter
 	where
 		fit :: Def -> Maybe Exp
 		fit d
-			| length pars == length (defPars d) = Just $ Call d (resolveTp d) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
-			| otherwise = Nothing
+			| length pars == length (defPars d) = Just $ def' d
+			| otherwise = case defType d of
+				TPFun{} -> Just $ def' d
+				_ -> Nothing
+
+		def' d = Call d (resolveTp d) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
 		resolveTp d = case defType d of
 			TPSelf -> selfType
 			tp -> tp
