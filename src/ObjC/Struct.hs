@@ -235,7 +235,18 @@ expLines (BoolOp t l r) = [mbb l ++ " " ++ show t ++ " " ++ mbb r]
 		needb And Or = True
 		needb Or And = True
 		needb _ _ = False
-expLines (MathOp t l r) = [showOp l  (show t) r]
+expLines (MathOp t l r) = [mbb l ++ " " ++ show t ++ " " ++ mbb r]
+	where 
+		mbb :: Exp -> String
+		mbb b@(MathOp tt _ _) 
+			| needb t tt = "(" ++ show b ++ ")"
+			| otherwise = show b
+		mbb e = show e
+		needb Div Plus = True
+		needb Div Minus = True
+		needb Mul Plus = True
+		needb Mul Minus = True
+		needb _ _ = False
 expLines (Dot l r) = [show l ++ "." ++ r]
 expLines (PlusPlus e) = appendLast "++" (expLines e)
 expLines (MinusMinus e) = appendLast "--" (expLines e)
