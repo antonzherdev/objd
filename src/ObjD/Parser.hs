@@ -329,12 +329,13 @@ pExp = do
 				charSps ']' <?> "Array index close bracket"
 				return $ Index o e) <|>
 			(return o)
-		pOp0 = pOp1 `chainl1` pAndOrOp
-		pOp1 = pOp2 `chainl1` pCompareOp
-		pOp2 = pOp3 `chainl1` pSetOp
-		pOp3 = pOp4 `chainl1` (mathOp '+' Plus <|> mathOp '-' Minus)
-		pOp4 = pOp5 `chainl1` (mathOp '*' Mul <|> mathOp '/' Div)
-		pOp5 = pTerm `chainl1` pDot
+		pOp0 = pOp1 `chainl1` (pBoolOp "||" Or)
+		pOp1 = pOp2 `chainl1` (pBoolOp "&&" And)
+		pOp2 = pOp3 `chainl1` pCompareOp
+		pOp3 = pOp4 `chainl1` pSetOp
+		pOp4 = pOp5 `chainl1` (mathOp '+' Plus <|> mathOp '-' Minus)
+		pOp5 = pOp6 `chainl1` (mathOp '*' Mul <|> mathOp '/' Div)
+		pOp6 = pTerm `chainl1` pDot
 		pSetOp = try(do
 			char '='
 			notFollowedBy $ char '='
@@ -491,9 +492,6 @@ pDot = stringSps "." >> return Dot
 
 pCompareOp :: Parser (Exp -> Exp -> Exp)
 pCompareOp =  pBoolOp "==" Eq <|> pBoolOp "!=" NotEq <|> pBoolOp ">=" MoreEq <|> pBoolOp ">" More  <|> pBoolOp "<=" LessEq <|> pBoolOp "<" Less
-
-pAndOrOp :: Parser (Exp -> Exp -> Exp)
-pAndOrOp =  pBoolOp "&&" And <|> pBoolOp "||" Or
 
 pBoolOp :: String -> BoolTp -> Parser (Exp -> Exp -> Exp)
 pBoolOp s t = do 

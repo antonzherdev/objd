@@ -224,7 +224,16 @@ expLines (BoolConst True) = ["YES"]
 expLines (BoolConst False) = ["NO"]
 expLines (FloatConst i) = [show i]
 expLines (StringConst s) = ['@' : show s]
-expLines (BoolOp t l r) = [showOp l (show t) r]
+expLines (BoolOp t l r) = [mbb l ++ " " ++ show t ++ " " ++ mbb r]
+	where 
+		mbb :: Exp -> String
+		mbb b@(BoolOp tt _ _) 
+			| needb t tt = "(" ++ show b ++ ")"
+			| otherwise = show b
+		mbb e = show e
+		needb And Or = True
+		needb Or And = True
+		needb _ _ = False
 expLines (MathOp t l r) = [showOp l  (show t) r]
 expLines (Dot l r) = [show l ++ "." ++ r]
 expLines (PlusPlus e) = appendLast "++" (expLines e)

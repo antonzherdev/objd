@@ -726,7 +726,7 @@ correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, Error _ (D.Lambda lamb
 		stps (TPTuple tps) = tps
 		stps tp = [tp]
 		env' = envAddVals (map (uncurry localVal) lpars') env
-		expr' = addReturn $ evalState (expr lambdaExpr) env'
+		expr' = maybeAddReturn dtp $ evalState (expr lambdaExpr) env'
 		tp' = case dtp of
 			(TPClass TPMGeneric _ _) -> wrapGeneric $ exprDataType expr'
 			_ -> dtp
