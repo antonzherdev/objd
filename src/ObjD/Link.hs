@@ -193,13 +193,18 @@ linkFile fidx (D.File name stms) = fl
 
 type ClassIndex = M.Map String Class
 type DefIndex = [Def]
-data Env = Env{envSelf :: DataType, envIndex :: ClassIndex, envGlobalDefIndex :: DefIndex, envVals :: [Def]}
+data Env = Env{envSelf :: DataType, envIndex :: ClassIndex, envGlobalDefIndex :: DefIndex, envMods :: [EnvMod], envVals :: [Def]}
+data EnvMod = EnvModDot deriving (Eq)
 envAddVals :: [Def] -> Env -> Env 
-envAddVals newVals Env {envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals} = 
-	Env{envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals ++ newVals}
+envAddVals newVals Env {envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals, envMods = mods} = 
+	Env{envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals ++ newVals, envMods = mods}
 envAddClasses :: [Class] -> Env -> Env 
-envAddClasses newClasses Env {envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals} = 
-	Env{envSelf = self, envIndex = cidx `M.union` M.fromList (map (\cc -> (className cc, cc)) newClasses), envGlobalDefIndex = glidx, envVals = vals}
+envAddClasses newClasses Env {envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals, envMods = mods} = 
+	Env{envSelf = self, envIndex = cidx `M.union` M.fromList (map (\cc -> (className cc, cc)) newClasses), envGlobalDefIndex = glidx, envVals = vals, envMods = mods}
+envAddMod :: EnvMod -> Env -> Env
+envAddMod m Env {envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals, envMods = mods} = 
+	Env{envSelf = self, envIndex = cidx, envGlobalDefIndex = glidx, envVals = vals, envMods = mods ++ [m]}
+
 findTp :: String -> M.Map String a -> String -> a
 findTp tp mmm name =  M.findWithDefault (error $ "No " ++ tp ++ " found " ++ name) name mmm
 envSelfClass :: Env -> Class 
@@ -209,7 +214,7 @@ linkClass :: (ClassIndex, DefIndex) -> D.FileStm -> Class
 linkClass (ocidx, glidx) cl = self
 	where
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
-		env = Env selfType cidx glidx []
+		env = Env selfType cidx glidx [] []
 		self = case cl of
 			D.Class{} -> Class {
 				classMods = map clsMod (D.classMods cl), 
@@ -349,6 +354,8 @@ dataTypeGenerics _ (TPClass _ g _) = g
 dataTypeGenerics _ (TPArr g) = [g]
 dataTypeGenerics _ (TPMap k v) = [k, v]
 dataTypeGenerics _ (TPOption v) = [v]
+dataTypeGenerics _ (TPTuple arr) = arr
+dataTypeGenerics env (TPGenericWrap g) = dataTypeGenerics env g
 dataTypeGenerics _ _ = []
 
 wrapGeneric :: DataType -> DataType
@@ -564,7 +571,10 @@ expr (D.MathOp tp a b) = do
 	bb <- expr b
 	return $ MathOp tp aa bb
 expr d@(D.Dot a b) = do
+	env <- get
+	modify $ envAddMod EnvModDot
 	aa <- expr a
+	put env
 	case aa of
 		Error s _ -> return $ Error s d
 		_ -> do
@@ -694,6 +704,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 						tryDetermine :: Class -> (DataType, DataType) -> Maybe DataType
 						tryDetermine c (TPClass TPMGeneric _ gg, tp) = if c == gg then Just (wrapGeneric tp) else Nothing
 						tryDetermine c (TPArr a, TPArr a') = tryDetermine c (a, a')
+						tryDetermine c (TPClass _ gens _, TPClass _ gens' _) = listToMaybe $ mapMaybe (tryDetermine c) (zip gens gens')
 						tryDetermine c (TPFun a b, TPFun a' b') = listToMaybe $ catMaybes [tryDetermine c (a, a'), tryDetermine c (b, b')]
 						tryDetermine _ _ = Nothing
 				in case call' of
@@ -752,14 +763,16 @@ replaceGenerics _ t = t
 allDefs :: Env -> Maybe DataType -> [Def]
 allDefs env (Just ss) = map classDef . allDefsInClass $ dataTypeClass env ss
 allDefs env Nothing = envVals env ++  (map classDef . allDefsInClass) (envSelfClass env) ++ (map classDef . allDefsInClass) (dataTypeClass env $ objTp $ envSelfClass env) 
-	++ envGlobalDefIndex env ++ classConstructors ++ objects
+	++ envGlobalDefIndex env ++ objects ++ classConstructors
 	where
-		classConstructors = (mapMaybe (constructorToDef . snd) . filter(not . isEnum . snd) . M.toList) (envIndex env)
+		classConstructors  = (mapMaybe (constructorToDef . snd) . filter(not . isEnum . snd) . M.toList) (envIndex env)
 		constructorToDef cl@Class{className = n, classConstructor = constr, classGenerics = gens} = 
 			Just Def {defName = n, defPars = map constructorParToPar constr, defType = refDataType cl (map (TPClass TPMGeneric []) gens), defBody = Nop, 
 				defMods = [DefModStatic, if isStruct cl then DefModStructConstructor else DefModConstructor], defGenerics = gens}
 		constructorToDef _ = Nothing
-		objects = (map (objectDef . snd) . M.toList) (envIndex env)
+		objects 
+			| EnvModDot `elem` envMods env = (map (objectDef . snd) . M.toList) (envIndex env)
+			| otherwise = (map (objectDef . snd) . filter(isEnum . snd) . M.toList) (envIndex env)
 		objTp cl = TPObject (refDataTypeMod cl) cl
 		constructorParToPar (d, e) = Def (defName d) [] (defType d) e [DefModLocal] [] 
 
@@ -775,7 +788,9 @@ findCall :: (String, [(Maybe String, Exp)]) -> (Env, DataType, [Def]) -> Maybe E
 findCall (name,pars) (_, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
 	where
 		fit :: Def -> Maybe Exp
-		fit d = Just $ Call d (resolveTp d) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
+		fit d
+			| length pars == length (defPars d) = Just $ Call d (resolveTp d) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
+			| otherwise = Nothing
 		resolveTp d = case defType d of
 			TPSelf -> selfType
 			tp -> tp
