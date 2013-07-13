@@ -321,7 +321,8 @@ data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid
 	| TPClass {tpMod :: DataTypeMod, tpGenerics :: [DataType], tpClass :: Class}
 	| TPArr DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown String | TPMap DataType DataType
 	| TPOption DataType | TPGenericWrap DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
-data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric
+	deriving (Eq)
+data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric deriving (Eq)
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
 isVoid _ = False
@@ -395,17 +396,22 @@ instance Show DataType where
 	show TPNil = "nil"
 	show TPThrow = "throw"
 	show (TPUnknown s) = "???: " ++ s
-	show (TPClass _ [] c) = className c
-	show (TPObject _ c) = className c ++ ".class"
-	show (TPClass _ gens c) = className c ++ "<" ++ strs' ", " gens ++ ">"
+	show (TPClass t [] c) = className c ++ show t
+	show (TPObject t c) = className c ++ show t ++ ".class"
+	show (TPClass t gens c) = className c ++ show t ++ "<" ++ strs' ", " gens ++ ">"
 	show (TPGenericWrap c) = "^" ++ show c
 	show (TPArr t) = "[" ++ show t ++ "]"
 	show (TPMap k v) = "[" ++ show k ++ " : " ++ show v ++ "]"
 	show (TPFun s d) = show s ++ " -> " ++ show d
 	show (TPTuple tps) = "(" ++ strs' ", " tps ++ ")"
 	show (TPOption t) = show t ++ "?"
-
-
+instance Show DataTypeMod where
+	show TPMClass = "#C"
+	show TPMStruct = "#S"
+	show TPMEnum = "#E"
+	show TPMTrait = "#T"
+	show TPMGeneric = "#G"
+	
 getDataType :: Env -> Maybe D.DataType -> Exp -> DataType
 getDataType env tp e = maybe (exprDataType e) (dataType (envIndex env)) tp
 
@@ -617,7 +623,9 @@ expr (D.Val name tp body mods) = do
 	body' <- expr body
 	let tp' = unwrapGeneric $ maybe (exprDataType body') (dataType $ envIndex env) tp
 	let mods' = DefModLocal : [DefModMutable | D.DefModMutable `elem` mods]
-	let def' = Def{defName = name, defType = tp', defMods = mods', defPars = [], defBody = body', defGenerics = []}
+	let def' = Def{defName = name, defType = tp', defMods = mods', defPars = [], 
+		defBody = implicitConvertsion tp' body', 
+		defGenerics = []}
 	modify $ envAddVals [def']
 	return $ Val def'
 expr (D.Arr items) = do
@@ -816,7 +824,24 @@ implicitConvertsion dtp e = let stp = exprDataType e
 		(TPOption{}, TPOption{}) -> e
 		(TPNil, TPOption tp) -> None tp
 		(_, TPOption _) -> Opt e
+		(_, (TPClass TPMGeneric _ _)) -> e
+		(sc, dc@TPClass{}) -> if sc /= dc then classConversion dc sc e else e
 		_ -> e
+	where 
+		classConversion c (TPGenericWrap g) e = classConversion c g e
+		classConversion (TPClass _ _ cls@Class{classDefs = defs}) sc e =
+			maybe e wrapWithApply $
+			listToMaybe $
+				(filter(\d -> 
+					(defName d == "apply") 
+					&& (DefModStatic `elem` defMods d) 
+					&& checkApplyPars (defPars d) )  . map classDef) defs
+			where
+				checkApplyPars [Def{defType = tp}] = tp == sc
+				checkApplyPars _ = False
+				od = (objectDef cls)
+				wrapWithApply apply@Def{defPars = [par]} = Dot (Call od (defType od) []) (Call apply dtp [(par, e)])
+		classConversion t sc e = error $ show t ++ " from " ++ show sc
 
 lambdaImplicitParameters :: DataType -> [(String, DataType)]
 lambdaImplicitParameters (TPFun TPVoid _) = []

@@ -46,7 +46,7 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 		structImpl = concatMap genStructImpl structs 
 		stmsImpl = map stmToImpl cls
 		classDecl c = C.ClassDecl $ D.className c
-		m = if null enumsImpl && null stmsImpl then []
+		m = if null enumsImpl && null stmsImpl && null structImpl then []
 			else [C.Import (name ++ ".h") , C.EmptyLine] ++ snd dImports' ++ enumsImpl ++ stmsImpl ++ structImpl
 		genH c
 			| isClass c = [stmToInterface c]
@@ -263,19 +263,25 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 		eqd (D.Field D.Def{D.defName = n, D.defType = tp} _) = equals True (tp, C.Dot (C.Ref "s1") n) (tp, C.Dot (C.Ref "s2") n)
 
 		defs' = (map (def' . D.classDef) . filter D.isDef) defs
-		def' D.Def{D.defName = n, D.defType = tp, D.defPars = pars} = C.CFunDecl{C.cfunMods = [], 
+		def' D.Def{D.defName = n, D.defType = tp, D.defPars = pars, D.defMods = mods} = C.CFunDecl{C.cfunMods = [], 
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
-			C.cfunPars = C.CFunPar (C.TPSimple name) "self" : map par' pars}
-		par' D.Def{D.defName = n, D.defType = tp} = C.CFunPar (showDataType tp) n
+			C.cfunPars =  if D.DefModStatic `notElem` mods then C.CFunPar (C.TPSimple name) "self" : pars' else pars'}
+			where
+				pars' = map par' pars
+				par' D.Def{D.defName = n, D.defType = tp} = C.CFunPar (showDataType tp) n
+
 
 genStructImpl :: D.Class -> [C.FileStm]
 genStructImpl D.Class {D.className = name, D.classDefs = defs} = (map (def' . D.classDef) . filter D.isDef) defs
 	where 
-		def' D.Def{D.defName = n, D.defType = tp, D.defBody = e, D.defPars = pars} = C.CFun{C.cfunMods = [], 
+		def' D.Def{D.defName = n, D.defType = tp, D.defBody = e, D.defPars = pars, D.defMods = mods} = C.CFun{C.cfunMods = [], 
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
-			C.cfunPars = C.CFunPar (C.TPSimple name) "self" : map par' pars,
+			C.cfunPars = if D.DefModStatic `notElem` mods then C.CFunPar (C.TPSimple name) "self" : pars' else pars',
 			C.cfunExps = tStm tp e}
-		par' D.Def{D.defName = n, D.defType = tp} = C.CFunPar (showDataType tp) n
+			where
+				pars' = map par' pars
+				par' D.Def{D.defName = n, D.defType = tp} = C.CFunPar (showDataType tp) n
+		
 
 structDefName :: String -> String -> String
 structDefName sn dn = lowFirst sn ++ cap dn
@@ -411,11 +417,15 @@ tExp (D.Dot (D.Self (D.TPClass _ _ c)) (D.Call D.Def{D.defMods = mods, D.defName
 	| D.DefModField `elem` mods = C.Ref $ '_' : name
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className c) name (tPars pars)
 	| otherwise = C.Call (C.Self) name (tPars pars)
-tExp (D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
+tExp (D.Dot l r@(D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModField `elem` mods = C.Dot (tExp l) name
 	| otherwise = case D.exprDataType l of
-		(D.TPClass D.TPMStruct _ c) -> C.CCall (structDefName (D.className c) name) (tExp l : (map snd . tPars) pars)
+		(D.TPGenericWrap tp@(D.TPClass D.TPMStruct _ c)) -> structCall c (tExpTo tp l)
+		(D.TPClass D.TPMStruct _ c) -> structCall c (tExp l)
+		(D.TPObject D.TPMStruct c) -> C.CCall (structDefName (D.className c) name) ((map snd . tPars) pars)
 		_ -> C.Call (tExp l) name (tPars pars)
+	where
+		 structCall c self = C.CCall (structDefName (D.className c) name) (self : (map snd . tPars) pars)
 
 tExp (D.Self _) = C.Self
 tExp (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)
