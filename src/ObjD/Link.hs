@@ -1,6 +1,6 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), Constructor, DataType(..), Exp(..), CImport(..), ClassDef(..), 
-	DefMod(..), FieldAcc(..), FieldAccMod(..), MathTp(..), DataTypeMod(..), ClassMod(..),
+	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..),
 	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems, isStaticDef, classDefName
 )where
 
@@ -53,7 +53,7 @@ isStatic :: Def -> Bool
 isStatic = (DefModStatic `elem` ). defMods
 
 data ClassDef = ClassDef {classDef :: Def} 
-	| Field {classDef :: Def, fieldAccs :: [FieldAcc]}
+	| Field {classDef :: Def}
 	| EnumItem {classDef :: Def, enumFieldPars:: [(Def, Exp)]}
 isDef :: ClassDef -> Bool
 isDef ClassDef{} = True
@@ -74,7 +74,7 @@ classDefName cd = defName $ classDef cd
 
 instance Show ClassDef where
 	show (ClassDef d) = show d
-	show (Field d _)  = show d
+	show (Field d)  = show d
 	show (EnumItem Def{defName = name} pars) = name ++ "(" ++ strs ", " (map (\(d, e) -> showDef False d ++ " = " ++ show e) pars) ++ ")"
 
 
@@ -94,10 +94,6 @@ instance Show DefMod where
 	show DefModLocal = "local"
 	show DefModObject = "object"
 	
-
-data FieldAcc = FieldAccRead [FieldAccMod] Exp | FieldAccWrite [FieldAccMod] Exp
-data FieldAccMod = FieldAccModPrivate deriving (Eq)
-
 type Constructor = [(Def, Exp)]
 
 data CImport = CImportLib String | CImportUser String
@@ -256,23 +252,14 @@ linkClass (ocidx, glidx) cl = self
 				enumItemPars = map (correctCallPar env M.empty) $ zip (map fst constr) (map ((\e -> FirstTry e $ evalState (expr e) env) . snd) pars)
 
 linkField :: D.ClassStm -> State Env ClassDef
-linkField D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e, D.declAccs = accs} = do
+linkField D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
 	i <- expr e
 	env <- get
 	let 
 		tp' = unwrapGeneric $ getDataType env tp i
-		acc' (D.DeclAccRead accMods ex) = liftM (FieldAccRead (accMods' accMods) . addReturn) (expr ex)
-		acc' (D.DeclAccWrite accMods ex) = do
-			env' <- get
-			modify $ envAddVals [localVal name tp']
-			v <- expr ex 
-			put env'
-			return $ FieldAccWrite (accMods' accMods) v
-		accMods' = map accMod'
-		accMod' D.DeclAccModPrivate = FieldAccModPrivate 
-		in do
-			accs' <- mapM acc' accs
-			return $ Field Def{defMods = DefModField : translateMods mods, defName = name, defType = tp', defBody = implicitConvertsion tp' i, defGenerics = [], defPars = []} accs'
+		in return $ Field Def{defMods = 
+			DefModField : translateMods mods, defName = name, defType = tp', 
+			defBody = implicitConvertsion tp' i, defGenerics = [], defPars = []}
 
 		
 

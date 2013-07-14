@@ -18,4 +18,4 @@ executable ObjD
   main-is:             Main.hs
   hs-source-dirs:      src
   other-modules:       ObjC.Struct, ObjD.Struct, ObjD.ToObjC, ObjD.Parser, ObjD.Link
-  build-depends:       base ==4.5.*, parsec, containers, mtl, filepath, directory, Decimal
+  build-depends:       base >=4.5, parsec, containers, mtl, filepath, directory, Decimal

@@ -204,11 +204,7 @@ pDecl' mtf = do
 		sps
 		def <- oExp
 		sps
-		accs <- option [] (do
-			char '|'
-			sps
-			many acc)
-		return Decl{defName = name, defRetType = dataType, defMods = [DefModMutable| mut] ++ mods, defBody = def, declAccs = accs}
+		return Decl{defName = name, defRetType = dataType, defMods = [DefModMutable| mut] ++ mods, defBody = def}
 	where
 		mutableType = do
 			v <- try var <|> val
@@ -220,16 +216,6 @@ pDecl' mtf = do
 			char '='
 			sps
 			pExp)
-		acc = try(acct "get" DeclAccRead) <|> try(acct "set" DeclAccWrite)
-		acct rvn mdf = do
-			m <- many accMod
-			sps
-			string rvn
-			sps
-			e <- oExp 
-			sps
-			return $ mdf m e
-		accMod = try (string "private") >> return DeclAccModPrivate
 	
 pMod :: Parser DefMod	
 pMod = do

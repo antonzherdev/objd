@@ -1,6 +1,6 @@
 module ObjD.Struct (
 	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), 
-	ClassMod(..), DeclAcc(..), DeclAccMod(..), MathTp(..), BoolTp(..), Generic(..), StubDefMod(..),
+	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), StubDefMod(..),
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
 ) where
 import           Ex.String
@@ -41,16 +41,14 @@ data Generic = Generic String
 
 data Extends = Extends String [DataType]
 
-data ClassStm = Decl {defMods :: [DefMod], defName :: String, defRetType :: Maybe DataType, defBody :: Exp, declAccs :: [DeclAcc]}
+data ClassStm = Decl {defMods :: [DefMod], defName :: String, defRetType :: Maybe DataType, defBody :: Exp}
 	| Def {defMods :: [DefMod],  defName :: String, defGenerics :: [Generic], defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
 stmName :: ClassStm -> String
-stmName (Decl _ name _ _ _) = name
+stmName (Decl _ name _ _ ) = name
 stmName (Def _ name _ [] _ _) = name
 stmName (Def _ name _ pars _ _) = name ++ " " ++ unwords (map parName pars)
 
 data DefMod = DefModPrivate | DefModMutable | DefModStatic | DefModWeak | DefModDelegate deriving (Eq)
-data DeclAcc = DeclAccRead [DeclAccMod] Exp | DeclAccWrite [DeclAccMod] Exp 
-data DeclAccMod = DeclAccModPrivate
 isDef :: ClassStm -> Bool
 isDef Def {} = True
 isDef _ = False

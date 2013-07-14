@@ -80,10 +80,10 @@ needProperty v = D.DefModPrivate `notElem` D.defMods (D.classDef v) && D.isField
 
 
 fieldToProperty :: D.ClassDef -> C.Property
-fieldToProperty (D.Field D.Def{D.defName = name, D.defMods = mods, D.defType = tp} accs) = C.Property {
+fieldToProperty (D.Field D.Def{D.defName = name, D.defMods = mods, D.defType = tp}) = C.Property {
 	C.propertyName = name,
 	C.propertyType = showDataType tp,
-	C.propertyModifiers = if D.DefModMutable `elem` mods && not isPrivateWrite
+	C.propertyModifiers = if D.DefModMutable `elem` mods 
 		then C.NonAtomic : mutModes tp ++ weak
 		else [C.NonAtomic, C.ReadOnly] ++ weak
 }
@@ -93,10 +93,7 @@ fieldToProperty (D.Field D.Def{D.defName = name, D.defMods = mods, D.defType = t
 		mutModes (D.TPClass D.TPMClass _ _) = [C.Retain]
 		mutModes (D.TPClass D.TPMEnum _ _) = [C.Retain]
 		mutModes _ = []
-		isPrivateWrite = (any (\(D.FieldAccWrite mmm _) -> D.FieldAccModPrivate `elem` mmm). filter isWriteAcc) accs
-		isWriteAcc D.FieldAccWrite{} = True
-		isWriteAcc _ = False
-
+		
 initFun :: D.Constructor -> C.Fun
 initFun [] = C.Fun C.InstanceFun (C.TPSimple "id") "init" []
 initFun decls = C.Fun C.InstanceFun (C.TPSimple "id") "initWith" (map (funPar . fst) decls)
@@ -149,20 +146,17 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs, D.classConstruc
 	}
 	where
 		implFields = filter needField defs
-		needField f@D.Field{D.fieldAccs = accs} = (not $ any realReadAcc accs) && not (isStaticField f)
+		needField f@D.Field{} = not (isStaticField f)
 		needField _ = False
 		isStaticField f = D.isStaticDef f && D.isField f
-		realReadAcc (D.FieldAccRead _ D.Nop) = False
-		realReadAcc (D.FieldAccRead _ _) = True
-		realReadAcc _ = False
 		staticFields = filter isStaticField defs
 		staticGetters = (map staticGetter . filter((D.DefModPrivate `notElem`) . D.defMods .  D.classDef)) staticFields
-		staticGetter (D.Field f@D.Def{D.defName = name} _) = C.ImplFun (staticGetterFun f) [C.Return $ C.Ref $ '_' : name]
+		staticGetter (D.Field f@D.Def{D.defName = name}) = C.ImplFun (staticGetterFun f) [C.Return $ C.Ref $ '_' : name]
 
 synthesize :: D.ClassDef -> C.ImplSynthesize
-synthesize (D.Field D.Def{D.defName = x} _) = C.ImplSynthesize x ('_' : x)
+synthesize (D.Field D.Def{D.defName = x}) = C.ImplSynthesize x ('_' : x)
 implField :: D.ClassDef -> C.ImplField
-implField (D.Field D.Def{D.defName = x, D.defType = tp, D.defMods = mods} _) = C.ImplField ('_' : x) (showDataType tp) ["__weak" | D.DefModWeak `elem` mods]
+implField (D.Field D.Def{D.defName = x, D.defType = tp, D.defMods = mods}) = C.ImplField ('_' : x) (showDataType tp) ["__weak" | D.DefModWeak `elem` mods]
 
 implCreate :: D.Class -> D.Constructor -> C.ImplFun
 implCreate cl constr = let 
@@ -188,7 +182,7 @@ dealoc cl
 	| otherwise = [C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "void") "dealloc" []) $
 		 mapMaybe releaseField (D.classDefs cl) ++ [C.Stm $C.Call C.Super "dealloc" []]]
 	where 
-		releaseField (D.Field D.Def{D.defName = name, D.defType = D.TPClass{}} _) = Just $ C.Stm $ C.Call (C.Ref $ '_' : name) "release" []
+		releaseField (D.Field D.Def{D.defName = name, D.defType = D.TPClass{}}) = Just $ C.Stm $ C.Call (C.Ref $ '_' : name) "release" []
 		releaseField _ = Nothing
 		
 		
@@ -200,7 +194,7 @@ implInit cl constr  = C.ImplFun (initFun constr) (
 			++ [C.Stm C.Nop, C.Return C.Self]
 			)
 	where
-		hasInit (D.Field D.Def{D.defBody = D.Nop} _) = False
+		hasInit (D.Field D.Def{D.defBody = D.Nop}) = False
 		hasInit D.Field{} = True
 		hasInit _ = False
 
@@ -220,22 +214,12 @@ implInit cl constr  = C.ImplFun (initFun constr) (
 		implInitField D.Def{D.defName = name, D.defBody = def, D.defType = tp} = C.Set Nothing (C.Ref $ '_' : name) (tExpTo tp def)
 		
 implFuns :: [D.ClassDef] -> [C.ImplFun]
-implFuns defs = (map stm2ImplFun . filter D.isDef) defs ++ (concatMap accs' . filter D.isField) defs
+implFuns defs = (map stm2ImplFun . filter D.isDef) defs
 	where
 		stm2ImplFun def@(D.ClassDef D.Def {D.defName = name, D.defBody = db, D.defMods = mods, D.defType = tp} )
 			| D.DefModAbstract `elem` mods = C.ImplFun (stm2Fun def) [C.Throw $ C.StringConst $ "Method " ++ name++ " is abstract"]
 			| otherwise = C.ImplFun (stm2Fun def) (tStm tp db)
-		accs' :: D.ClassDef -> [C.ImplFun]
-		accs' (D.Field D.Def{D.defName = name, D.defType = tp} accs) = mapMaybe (acc' name tp) accs
-		acc' _ _ (D.FieldAccRead _ D.Nop) = Nothing
-		acc' _ _ (D.FieldAccWrite _ D.Nop) = Nothing
-		acc' name tp (D.FieldAccRead _ e) = Just $ C.ImplFun 
-			(C.Fun C.InstanceFun (showDataType tp) name [])
-			(tStm tp e)
-		acc' name tp (D.FieldAccWrite _ e) = Just $ C.ImplFun 
-			(C.Fun C.InstanceFun (C.TPSimple "void") "set" [C.FunPar name (showDataType tp) name])
-			(tStm D.TPVoid e)
-
+		
 		
 {- Struct -}
 genStruct :: D.Class -> [C.FileStm]
@@ -243,7 +227,7 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 	where
 		fields = filter D.isField defs
 		fields' = map toField fields
-		toField (D.Field D.Def{D.defName = n, D.defType = tp, D.defMods = mods} _) = C.ImplField n (showDataType tp) ["__weak" | D.DefModWeak `elem` mods]
+		toField (D.Field D.Def{D.defName = n, D.defType = tp, D.defMods = mods}) = C.ImplField n (showDataType tp) ["__weak" | D.DefModWeak `elem` mods]
 		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple name, 
 			C.cfunName = name ++ "Make", C.cfunPars = map toPar fields, C.cfunExps = 
 				[C.Var (C.TPSimple name) "ret" C.Nop] ++
@@ -254,13 +238,13 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 			C.cfunPars = [C.CFunPar (C.TPSimple name) "s1", C.CFunPar (C.TPSimple name) "s2"], 
 			C.cfunExps = [C.Return $ foldl foldEq C.Nop fields]
 		}
-		toPar (D.Field D.Def{D.defName = n, D.defType = tp} _)= C.CFunPar (showDataType tp) n
-		toSet (D.Field D.Def{D.defName = n} _) = C.Set Nothing (C.Dot (C.Ref "ret") n) (C.Ref n)
+		toPar (D.Field D.Def{D.defName = n, D.defType = tp})= C.CFunPar (showDataType tp) n
+		toSet (D.Field D.Def{D.defName = n}) = C.Set Nothing (C.Dot (C.Ref "ret") n) (C.Ref n)
 		foldEq :: C.Exp -> D.ClassDef -> C.Exp
 		foldEq C.Nop d = eqd d
 		foldEq p d = C.BoolOp And p (eqd d)
 		eqd :: D.ClassDef -> C.Exp
-		eqd (D.Field D.Def{D.defName = n, D.defType = tp} _) = equals True (tp, C.Dot (C.Ref "s1") n) (tp, C.Dot (C.Ref "s2") n)
+		eqd (D.Field D.Def{D.defName = n, D.defType = tp}) = equals True (tp, C.Dot (C.Ref "s1") n) (tp, C.Dot (C.Ref "s2") n)
 
 		defs' = (map (def' . D.classDef) . filter D.isDef) defs
 		def' D.Def{D.defName = n, D.defType = tp, D.defPars = pars, D.defMods = mods} = C.CFunDecl{C.cfunMods = [], 
@@ -357,7 +341,7 @@ showDataType D.TPArr{} = C.TPSimple "NSArray*"
 showDataType D.TPMap{} = C.TPSimple "NSDictionary*"
 showDataType D.TPInt = C.TPSimple "NSInteger"
 showDataType D.TPUInt = C.TPSimple "NSUInteger"
-showDataType D.TPFloat = C.TPSimple "CGFloat"
+showDataType D.TPFloat = C.TPSimple "double"
 showDataType D.TPString = C.TPSimple "NSString*"
 showDataType D.TPBool = C.TPSimple "BOOL"
 showDataType (D.TPClass D.TPMStruct _ c) = C.TPSimple $ D.className c
