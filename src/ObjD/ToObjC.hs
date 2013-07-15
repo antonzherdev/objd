@@ -426,7 +426,7 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
 tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
 tExp (D.Index e i) = case D.exprDataType e of
 	D.TPObject D.TPMEnum _ -> C.Index (C.Call (tExp e)  "values" []) (tExp i)
-	D.TPMap _ _ -> C.Call (tExp e) "optionObjectFor" [("key", tExp i)]
+	D.TPMap k _ -> C.Call (tExp e) "optionObjectFor" [("key", tExpTo k i)]
 	_ -> C.Index (tExp e) (tExp i)
 tExp (D.Lambda pars e rtp) = 
 	let 
