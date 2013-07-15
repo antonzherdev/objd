@@ -298,23 +298,9 @@ pExp :: Parser Exp
 pExp = do
 	o <- pOp0
 	sps
-	postFix o
+	return o
 	where
-		postFix o = try(do
-			string "++"
-			sps
-			return $ PlusPlus o) <|>
-			try(do
-			string "--"
-			sps
-			return $ MinusMinus o) <|> 
-			try(do 
-				charSps '['
-				e <- pExp
-				sps
-				charSps ']' <?> "Array index close bracket"
-				return $ Index o e) <|>
-			(return o)
+		
 		pOp0 = pOp1 `chainl1` (pBoolOp "||" Or)
 		pOp1 = pOp2 `chainl1` (pBoolOp "&&" And)
 		pOp2 = pOp3 `chainl1` pCompareOp
@@ -342,7 +328,7 @@ pTerm :: Parser Exp
 pTerm = do
 		e <- pTerm'
 		sps
-		return e
+		postFix e
 	where
 		pTerm' = pNot <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> try(pNumConst) <|> pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pCall  <?> "Expression"
 		pMinus = do
@@ -427,6 +413,22 @@ pTerm = do
 				pars <- pCallPar `sepBy` charSps ','
 				charSps ')' <?> "Function call close bracket"
 				return $ Call name pars gens) <|> return (Call name [] gens)
+		postFix o = try(do
+			string "++"
+			sps
+			return $ PlusPlus o) <|>
+			try(do
+			string "--"
+			sps
+			return $ MinusMinus o) <|> 
+			try(do 
+				charSps '['
+				e <- pExp
+				sps
+				charSps ']' <?> "Array index close bracket"
+				e' <- postFix e
+				return $ Index o e') <|>
+			(return o)
 
 pGensRef :: Parser [DataType]
 pGensRef = option [] $ try $ do
