@@ -1,5 +1,5 @@
 module ObjC.Struct ( Property(..), PropertyModifier(..),FileStm(..), ImplSynthesize(..), ImplFun(..), Fun(..), FunType(..), FunPar(..),
-  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..), DataType(..)
+  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..), DataType(..), Extends(..)
 ) where
 
 import           Ex.String
@@ -7,7 +7,7 @@ import 			 Data.Decimal
 
 data FileStm =
 	Import String | ImportLib String | EmptyLine 
-	| Interface { interfaceName :: String, interfaceExtends :: String, interfaceProperties :: [Property], interfaceFuns :: [Fun] }
+	| Interface { interfaceName :: String, interfaceExtends :: Extends, interfaceProperties :: [Property], interfaceFuns :: [Fun] }
 	| Protocol { interfaceName :: String, interfaceFuns :: [Fun] }
 	| Implementation {implName :: String
 		, implFields :: [ImplField]
@@ -19,7 +19,7 @@ data FileStm =
 	| CFunDecl {cfunMods :: [CFunMod], cfunReturnType :: DataType, cfunName :: String, cfunPars :: [CFunPar]}
 	| CFun {cfunMods :: [CFunMod], cfunReturnType :: DataType, cfunName :: String, cfunPars :: [CFunPar], cfunExps :: [Stm]}
 	| ClassDecl String
-
+data Extends = Extends String [String]
 data Property = Property {propertyName :: String, propertyType :: DataType, propertyModifiers :: [PropertyModifier]}
 
 data PropertyModifier = ReadOnly | NonAtomic | Retain | Weak deriving(Eq)
@@ -103,7 +103,7 @@ instance Show FileStm where
 			showStms exps ++
 		"}"
 	show (Interface name extends properties funs) =
-		"@interface " ++ name ++ " : " ++ extends ++ "\n"
+		"@interface " ++ name ++ " : " ++ show extends ++ "\n"
 		 ++ (unlines' . map show) properties
 		 ++ (unlines  . map (( ++ ";") . show)) funs
 		 ++ "@end\n\n"
@@ -131,6 +131,9 @@ instance Show FileStm where
 		showImplFuns = unlines . map show
 		showStField (ImplField nm tp mods) = "static " ++  (strs " " mods) `tryCon` " " ++ showDecl tp nm ++ ";"
 	show (ClassDecl name) = "@class " ++ name ++ ";"
+instance Show Extends where
+	show (Extends cl []) = cl
+	show (Extends cl a) = cl ++ "<" ++ strs ", " a ++ ">"
 instance Show ImplField where
 	show(ImplField name tp mods) = (strs " " mods) `tryCon` " " ++ showDecl tp name ++ ";"
 instance Show CFunMod where

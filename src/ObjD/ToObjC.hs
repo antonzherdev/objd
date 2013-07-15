@@ -59,10 +59,10 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 {- Interface -}
 
 stmToInterface :: D.Class -> C.FileStm
-stmToInterface (cl@D.Class {D.className = name, D.classExtends = extends, D.classDefs = defs}) =
+stmToInterface (cl@D.Class {D.className = name, D.classDefs = defs}) =
 	C.Interface {
 		C.interfaceName = name,
-		C.interfaceExtends = maybe "NSObject" (D.className . D.extendsClass) extends,
+		C.interfaceExtends = classExtends cl,
 		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs,
 		C.interfaceFuns = [createFun name constr, initFun constr]
 			++ intefaceFuns defs ++ staticGetters
@@ -70,6 +70,14 @@ stmToInterface (cl@D.Class {D.className = name, D.classExtends = extends, D.clas
 	where 
 		constr = D.classConstructor cl
 		staticGetters = (map staticGetterFun .filter (\f -> D.isField f && D.isStatic f)) defs
+		
+classExtends :: D.Class -> C.Extends
+classExtends cl = maybe (C.Extends "NSObject" []) (ext . D.extendsClass) (D.classExtends cl)
+	where
+		ext cl
+			| D.ClassModTrait `elem` D.classMods cl = C.Extends "NSObject" [D.className cl]
+			| otherwise = C.Extends (D.className cl) []
+
 
 staticGetterFun :: D.Def -> C.Fun
 staticGetterFun D.Def{D.defName = name, D.defType = tp} = C.Fun C.ObjectFun (showDataType tp) name []
@@ -141,7 +149,8 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs} =
 		C.implName = clsName,
 		C.implFields = map implField implFields,
 		C.implSynthesizes = (map synthesize . filter needProperty) implFields,
-		C.implFuns = [implCreate cl constr, implInit cl constr] ++ dealoc cl ++ implFuns defs ++ staticGetters,
+		C.implFuns = [implCreate cl constr, implInit cl constr] ++ maybeToList (implInitialize cl) ++ dealoc cl 
+			++ implFuns defs ++ staticGetters,
 		C.implStaticFields = map implField staticFields
 	}
 	where
@@ -184,8 +193,18 @@ dealoc cl
 	where 
 		releaseField D.Def{D.defName = name, D.defType = D.TPClass{}} = Just $ C.Stm $ C.Call (C.Ref $ '_' : name) "release" []
 		releaseField _ = Nothing
-		
-		
+
+implInitialize :: D.Class -> Maybe C.ImplFun 		
+implInitialize cl = let 
+	fields = filter hasInitialize (D.classFields cl)
+	hasInit D.Def{D.defBody = D.Nop} = False
+	hasInitialize d = D.isField d && D.isStatic d
+	in case fields of
+		[] -> Nothing
+		_ -> Just $ C.ImplFun (C.Fun C.ObjectFun (C.TPSimple "void") "initialize" []) (
+			((C.Stm $ C.Call C.Super "initialize" []) : map implInitField fields))
+
+
 
 implInit :: D.Class -> D.Def -> C.ImplFun
 implInit cl constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
@@ -195,7 +214,7 @@ implInit cl constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
 			)
 	where
 		hasInit D.Def{D.defBody = D.Nop} = False
-		hasInit d = D.isField d
+		hasInit d = D.isField d && not (D.isStatic d)
 
 		hasField f= any ((D.defName f == ) . D.defName) (D.classDefs cl)
 
@@ -210,7 +229,9 @@ implInit cl constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
 			where
 				implRight D.TPClass{} = retain $ C.Ref name
 				implRight _ = C.Ref name
-		implInitField D.Def{D.defName = name, D.defBody = def, D.defType = tp} = C.Set Nothing (C.Ref $ '_' : name) (tExpTo tp def)
+
+implInitField :: D.Def -> C.Stm
+implInitField D.Def{D.defName = name, D.defBody = def, D.defType = tp} = C.Set Nothing (C.Ref $ '_' : name) (tExpTo tp def)
 		
 implFuns :: [D.Def] -> [C.ImplFun]
 implFuns = map stm2ImplFun . filter D.isDef
@@ -279,10 +300,10 @@ enumValuesFun :: C.Fun
 enumValuesFun = C.Fun C.ObjectFun (C.TPSimple "NSArray*") "values" []
 
 genEnumInterface :: D.Class -> [C.FileStm]
-genEnumInterface cl@D.Class {D.className = name, D.classExtends = extends, D.classDefs = defs} = [
+genEnumInterface cl@D.Class {D.className = name, D.classDefs = defs} = [
 	C.Interface {
 		C.interfaceName = name,
-		C.interfaceExtends = maybe "NSObject" (D.className . D.extendsClass) extends,
+		C.interfaceExtends = classExtends cl,
 		C.interfaceProperties = (map fieldToProperty . filter D.isField) defs',
 		C.interfaceFuns = intefaceFuns defs' ++ map (enumItemGetterFun name) (D.enumItems cl) ++ [enumValuesFun]
 	}]
