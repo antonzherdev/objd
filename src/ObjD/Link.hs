@@ -340,6 +340,9 @@ data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric derivi
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
 isVoid _ = False
+isTpFun :: DataType -> Bool
+isTpFun TPFun{} = True
+isTpFun _ = False
 
 forDataType :: MonadPlus m => (DataType -> m a) -> DataType -> m a
 forDataType f tp = mplus (go tp) (f tp)
@@ -492,6 +495,7 @@ data Exp = Nop
 	| Throw Exp
 	| Not Exp
 	| Negative Exp
+	| Cast DataType Exp
 
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
@@ -530,6 +534,7 @@ instance Show Exp where
 	show (Throw e) = "throw " ++ show e
 	show (Not e) = "!(" ++ show e ++ ")"
 	show (Negative e) = '-' : show e
+	show (Cast tp e) = show e ++ ".as(" ++ show tp ++ ")"
 
 callLocalVal :: String -> DataType -> Exp
 callLocalVal name tp = Call (localVal name tp) tp []
@@ -622,6 +627,7 @@ exprDataType (FirstTry _ e) = exprDataType e
 exprDataType (Throw _) = TPThrow
 exprDataType (Not _) = TPBool
 exprDataType (Negative e) = exprDataType e
+exprDataType (Cast dtp _) = dtp
 {- exprDataType x = error $ "No exprDataType for " ++ show x -}
 
 expr :: D.Exp -> State Env Exp
@@ -832,8 +838,10 @@ exprCall _ err = return $ ExpDError "It is not call" err
 correctCallPar :: Env -> Generics -> (Def, Exp) -> (Def, Exp)
 correctCallPar env gens (d@Def{defType = (TPFun _ _)}, FirstTry _ e'@Lambda{}) = correctCallPar env gens (d, e')
 correctCallPar env gens (d@Def{defType = (TPFun _ _)}, FirstTry D.Lambda{} e') = correctCallPar env gens (d, e')
-correctCallPar env gens (d@Def{defType = tp@(TPFun _ _)}, FirstTry e _) = correctCallPar env gens (d, ExpDError "" $ 
-	D.Lambda (map (\(n, _) -> (n, Nothing)) $ lambdaImplicitParameters tp) e)
+correctCallPar env gens (d@Def{defType = tp@(TPFun _ _)}, FirstTry e e')
+	| isTpFun (exprDataType e') = (d, e')
+	| otherwise = correctCallPar env gens (d, ExpDError "" $ 
+		D.Lambda (map (\(n, _) -> (n, Nothing)) $ lambdaImplicitParameters tp) e)
 correctCallPar env gens (d, FirstTry _ e) = correctCallPar env gens (d, e)
 correctCallPar _ _ (d@Def{defType = (TPFun _ (TPClass TPMGeneric _ _) )}, Lambda lpars e dtp) = (d, Lambda lpars e dtp)
 correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, ExpDError _ (D.Lambda lambdaPars lambdaExpr)) = (d, Lambda lpars' expr' tp')
@@ -905,19 +913,25 @@ findCall (name,pars) (_, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter
 			
 {- Implicit conversion -}
 implicitConvertsion :: DataType -> Exp -> Exp
-implicitConvertsion TPMap{} (Arr []) = Map []
+implicitConvertsion dtp@(TPMap True _ _) (Arr []) = Cast dtp (Map [])
+implicitConvertsion (TPMap False _ _) (Arr []) = Map []
 implicitConvertsion _ Nop = Nop
 implicitConvertsion dtp ex = let stp = exprDataType ex
-	in case (stp, dtp) of
-		(TPFun{}, TPFun{}) -> ex
-		(_, f@(TPFun _ fdtp) ) -> Lambda (lambdaImplicitParameters f) (maybeAddReturn fdtp ex) fdtp
-		(TPOption{}, TPOption{}) -> ex
-		(TPNil, TPOption tp) -> None tp
-		(_, TPOption _) -> Opt ex
-		(_, TPClass TPMGeneric _ _) -> ex
-		(sc, dc@TPClass{}) -> if sc /= dc then classConversion dc sc ex else ex
-		_ -> ex
+	in conv stp dtp
 	where 
+		conv (TPGenericWrap s) d = conv s d
+		conv s (TPGenericWrap d) = conv s d
+		conv TPFun{} TPFun{} = ex
+		conv _ f@(TPFun _ fdtp) = Lambda (lambdaImplicitParameters f) (maybeAddReturn fdtp ex) fdtp
+		conv TPOption{} TPOption{} = ex
+		conv TPNil (TPOption tp) = None tp
+		conv _ (TPOption _) = Opt ex
+		conv _ (TPClass TPMGeneric _ _) = ex
+		conv (TPMap False _ _) (TPMap True _ _) = Cast dtp ex
+		conv (TPArr False _) (TPArr True _) = Cast dtp ex
+		conv sc dc@TPClass{} = if sc /= dc then classConversion dc sc ex else ex
+		conv _ _ = ex
+
 		classConversion c (TPGenericWrap g) e = classConversion c g e
 		classConversion (TPClass _ _ cls@Class{classDefs = defs}) sc e =
 			maybe e wrapWithApply $

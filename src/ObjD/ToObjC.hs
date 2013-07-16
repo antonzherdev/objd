@@ -480,6 +480,10 @@ tExp (D.Opt e) = let tp = D.exprDataType e
 tExp (D.None _) = C.Call (C.Ref "CNOption") "none" []
 tExp (D.Not e) = C.Not (tExp e)
 tExp (D.Negative e) = C.Negative (tExp e)
+tExp (D.Cast dtp e) = let stp = D.exprDataType e
+	in case (stp, dtp) of
+		(D.TPMap False _ _, D.TPMap True _ _) -> C.Call (tExp e) "mutableCopy" []
+		(D.TPArr False _, D.TPArr True _) -> C.Call (tExp e) "mutableCopy" []
 tExp e@D.ExpDError{} = C.Error $ show e
 tExp e@D.ExpLError{} = C.Error $ show e
 tExp x = C.Error $ "No tExp for " ++ show x
