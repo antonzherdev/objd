@@ -354,15 +354,19 @@ procImports D.File{D.fileImports = imps} = (h, m)
 
 {- DataType -}
 showDataType :: D.DataType -> C.DataType
-showDataType D.TPArr{} = C.TPSimple "NSArray*"
-showDataType D.TPMap{} = C.TPSimple "NSDictionary*"
+showDataType (D.TPArr False _) = C.TPSimple "NSArray*"
+showDataType (D.TPArr True _) = C.TPSimple "NSMutableArray*"
+showDataType (D.TPMap False _ _)  = C.TPSimple "NSDictionary*"
+showDataType (D.TPMap True _ _) = C.TPSimple "NSMutableDictionary*"
 showDataType D.TPInt = C.TPSimple "NSInteger"
 showDataType D.TPUInt = C.TPSimple "NSUInteger"
 showDataType D.TPFloat = C.TPSimple "double"
 showDataType D.TPString = C.TPSimple "NSString*"
 showDataType D.TPBool = C.TPSimple "BOOL"
 showDataType (D.TPClass D.TPMStruct _ c) = C.TPSimple $ D.className c
-showDataType (D.TPClass D.TPMClass _ c) = C.TPSimple $ D.className c ++ "*"
+showDataType (D.TPClass D.TPMClass _ c) 
+	| D.className c == "ODObject" = C.TPSimple $  "NSObject*"
+	| otherwise = C.TPSimple $ D.className c ++ "*"
 showDataType (D.TPClass D.TPMEnum _ c) = C.TPSimple $ D.className c ++ "*"
 showDataType (D.TPClass{}) = C.TPSimple "id"
 showDataType (D.TPSelf) = C.TPSimple "id"
