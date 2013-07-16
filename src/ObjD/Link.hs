@@ -597,11 +597,13 @@ exprDataType (Set _ a _) = exprDataType a
 exprDataType (Self s) = s
 exprDataType (Call _ t _) = t
 exprDataType (Return e) = exprDataType e
-exprDataType (Index e i) = case exprDataType e of
-	TPArr _ t -> t
-	TPMap _ _ v -> TPOption v
-	TPObject TPMEnum c -> TPClass TPMEnum [] c
-	t -> TPUnknown $ show t ++ " is not array " ++ show e ++ "[" ++ show i ++ "]"
+exprDataType (Index e i) = resolve $ exprDataType e 
+	where  
+		resolve (TPArr _ t) = t
+		resolve (TPMap _ _ v) = TPOption v
+		resolve (TPObject TPMEnum c) = TPClass TPMEnum [] c
+		resolve (TPGenericWrap t) = resolve t
+		resolve t = TPUnknown $ show t ++ " is not array " ++ show e ++ "[" ++ show i ++ "]"
 exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 	where 
 		parsTp :: [(String, DataType)] -> DataType
@@ -726,6 +728,7 @@ expr (D.Negative e) = do
 type Generics = M.Map String DataType
 
 exprCall :: Maybe DataType -> D.Exp -> State Env Exp		
+exprCall (Just (TPUnknown t)) e = return $ ExpDError t e
 exprCall strictClass call@(D.Call name pars gens) = do
 	env <- get
 	pars' <- mapM (\ (n, e) ->  expr e >>= (\ ee -> return (n, FirstTry e ee))) pars
@@ -795,6 +798,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 						tryDetermine :: Class -> (DataType, DataType) -> Maybe DataType
 						tryDetermine c (TPClass TPMGeneric _ gg, tp) = if c == gg then Just (wrapGeneric tp) else Nothing
 						tryDetermine c (TPArr _ a, TPArr _ a') = tryDetermine c (a, a')
+						tryDetermine c (TPOption a, TPOption a') = tryDetermine c (a, a')
 						tryDetermine c (TPMap _ a b, TPMap _ a' b') = mplus (tryDetermine c (a, a')) (tryDetermine c (b, b'))
 						tryDetermine c (TPTuple a, TPTuple a') = listToMaybe $ mapMaybe (tryDetermine c) (zip a a')
 						tryDetermine c (TPClass _ gg _, TPClass _ gg' _) = 
