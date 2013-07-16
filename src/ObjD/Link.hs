@@ -76,11 +76,12 @@ isConstructor :: Def -> Bool
 isConstructor = (DefModConstructor `elem` ) . defMods
 enumItems :: Class -> [Def]
 enumItems Class{classDefs = defs} = filter isEnumItem defs
-
+setDefName :: String -> Def -> Def
+setDefName name (Def _ pars tp body mods gens) = Def name pars tp body mods gens 
 
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate  | DefModGlobalVal | DefModWeak
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
-	| DefModField | DefModEnumItem | DefModDef deriving (Eq, Ord)
+	| DefModField | DefModEnumItem | DefModDef | DefModSpecial deriving (Eq, Ord)
 instance Show DefMod where
 	show DefModStatic = "static"
 	show DefModMutable = "var"
@@ -95,6 +96,7 @@ instance Show DefMod where
 	show DefModObject = "object"
 	show DefModEnumItem = "enum"
 	show DefModDef = "def"
+	show DefModSpecial = "special"
 data DefGenerics = DefGenerics{defGenericsClasses :: [Class], defGenericsSelfType :: DataType}
 
 data CImport = CImportLib String | CImportUser String
@@ -177,7 +179,7 @@ linkFile fidx (D.File name stms) = fl
 		visibleFiles :: [D.FileStm] -> [File]
 		visibleFiles = mapMaybe (getFile . D.impString) . filter D.isImport
 		kernelFiles :: [File]
-		kernelFiles = mapMaybe (idxFind fidx) ["ODArray", "ODOption", "ODMap", "ODNS", "ODEnum", "ODTuple"]
+		kernelFiles = mapMaybe (idxFind fidx) ["ODArray", "ODOption", "ODMap", "ODNS", "ODEnum", "ODTuple", "ODObject"]
 		cImports = mapMaybe toCImport stms
 		toCImport (D.Import s D.ImportTypeCUser) = Just $ CImportUser s
 		toCImport (D.Import s D.ImportTypeCLib) = Just $ CImportLib s
@@ -230,7 +232,7 @@ linkClass (ocidx, glidx) cl = self
 		defs = map (linkDef env) . filter D.isDef $ D.classBody cl
 		enumConstr = constr (enumAdditionalDefs ++ constrPars)
 		constr :: [Def] -> Def
-		constr pars = Def{defName = D.className cl, defMods = [DefModStatic, DefModConstructor], defBody = Nop,
+		constr pars = Def{defName = "new", defMods = [DefModStatic, DefModConstructor], defBody = Nop,
 			defPars = pars, defType = selfType, defGenerics = Just $ DefGenerics generics selfType}
 		constrPars = map constrPar (D.classFields cl)
 		constrPar f = fromJust $ idxFind fieldsMap (D.defName f)
@@ -381,8 +383,11 @@ refDataTypeMod cl
 
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
-dataTypeClass _ (TPObject _ c) = Class { classMods = [ClassModObject], className = className c, classExtends = Nothing, 
-	classDefs = filter ((DefModStatic `elem`) . defMods) (allDefsInClass c), classGenerics = []}
+dataTypeClass env (TPObject _ c) = Class { classMods = [ClassModObject], className = className c, classExtends = Nothing, 
+	classDefs = filter ((DefModStatic `elem`) . defMods) (allDefsInClass env c) ++ objectDefs, classGenerics = []}
+	where
+		obj = classFind (envIndex env) "ODClass"
+		objectDefs = classDefs obj
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
 dataTypeClass env (TPArr False _) = classFind (envIndex env) "ODArray"
 dataTypeClass env (TPArr True _) = classFind (envIndex env) "ODMutableArray"
@@ -803,6 +808,8 @@ exprCall strictClass call@(D.Call name pars gens) = do
 						tryDetermine c (TPTuple a, TPTuple a') = listToMaybe $ mapMaybe (tryDetermine c) (zip a a')
 						tryDetermine c (TPClass _ gg _, TPClass _ gg' _) = 
 							listToMaybe $ mapMaybe (tryDetermine c) (zip gg gg')
+						tryDetermine c (cl@(TPClass _ _ _), TPObject m cl') = 
+							tryDetermine c (cl, TPClass TPMClass [TPClass m [] cl'] (classFind (envIndex env) "ODClass"))
 						tryDetermine c (TPFun a b, TPFun a' b') = listToMaybe $ catMaybes [tryDetermine c (a, a'), tryDetermine c (b, b')]
 						tryDetermine c (TPGenericWrap a, TPGenericWrap b) = tryDetermine c (a, b)
 						tryDetermine c (TPGenericWrap a, b) = tryDetermine c (a, b)
@@ -860,29 +867,31 @@ replaceGenerics gns = mapDataType f
 		f _ = Nothing
 
 allDefs :: Env -> Maybe DataType -> [Def]
-allDefs env (Just ss) = allDefsInClass $ dataTypeClass env ss
+allDefs env (Just ss) = allDefsInClass env $ dataTypeClass env ss
 allDefs env Nothing = 
 	envVals env 
-	++ allDefsInClass (envSelfClass env) 
-	++ allDefsInClass (dataTypeClass env $ objTp $ envSelfClass env) 
+	++ allDefsInClass env (envSelfClass env) 
+	++ allDefsInClass env (dataTypeClass env $ objTp $ envSelfClass env) 
 	++ envGlobalDefIndex env 
 	++ objects 
 	++ classConstructors
 	where
-		classConstructors  = (map (classConstructor . snd) . filter(not . isEnum . snd) . M.toList) (envIndex env)
-		objects 
-			| EnvModDot `elem` envMods env = (map (objectDef . snd) . M.toList) (envIndex env)
-			| otherwise = (map (objectDef . snd) . filter(isEnum . snd) . M.toList) (envIndex env)
+		classConstructors  = (map (setName . classConstructor . snd) . M.toList) (envIndex env)
+		setName d@Def{defType = tp} = setDefName (className $ dataTypeClass env tp) d
+		objects = (map (objectDef . snd) . M.toList) (envIndex env)
 		objTp cl = TPObject (refDataTypeMod cl) cl
 
 objectDef :: Class -> Def
 objectDef cl = Def {defName = className cl, defPars = [], defType = TPObject (refDataTypeMod cl) cl, defBody = Nop, 
 				defMods = [DefModStatic, DefModObject], defGenerics = Nothing}
 
-allDefsInClass :: Class -> [Def]
-allDefsInClass Generic{} = [] 
-allDefsInClass cl = classDefs cl  ++ maybe [] (allDefsInClass . extendsClass) (classExtends cl) 
-	
+allDefsInClass :: Env ->  Class -> [Def]
+allDefsInClass env cl = classDefs cl  ++ maybe base (allDefsInClass env . extendsClass) (classExtends cl) 
+	where
+		base = classDefs obj
+		obj = classFind (envIndex env) "ODObject"
+
+
 findCall :: (String, [(Maybe String, Exp)]) -> (Env, DataType, [Def]) -> Maybe Exp
 findCall (name,pars) (_, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
 	where
