@@ -74,9 +74,10 @@ stmToInterface (cl@D.Class {D.className = name, D.classDefs = defs}) =
 classExtends :: D.Class -> C.Extends
 classExtends cl = maybe (C.Extends "NSObject" []) (ext . D.extendsClass) (D.classExtends cl)
 	where
-		ext cl
-			| D.ClassModTrait `elem` D.classMods cl = C.Extends "NSObject" [D.className cl]
-			| otherwise = C.Extends (D.className cl) []
+		ext ccl
+			| D.ClassModTrait `elem` D.classMods ccl = C.Extends "NSObject" [D.className ccl]
+			| D.className ccl == "ODObject" = C.Extends "NSObject" []
+			| otherwise = C.Extends (D.className ccl) []
 
 
 staticGetterFun :: D.Def -> C.Fun
