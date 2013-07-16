@@ -103,16 +103,21 @@ fieldToProperty D.Def{D.defName = name, D.defMods = mods, D.defType = tp} = C.Pr
 		mutModes (D.TPClass D.TPMEnum _ _) = [C.Retain]
 		mutModes _ = []
 		
+idTp :: C.DataType
+idTp = C.TPSimple "id" []
+voidTp :: C.DataType
+voidTp = C.TPSimple "void" []
+
 initFun :: D.Def -> C.Fun
-initFun D.Def{D.defPars = []} = C.Fun C.InstanceFun (C.TPSimple "id") "init" []
-initFun D.Def{D.defPars = decls} = C.Fun C.InstanceFun (C.TPSimple "id") "initWith" (map funPar decls)
+initFun D.Def{D.defPars = []} = C.Fun C.InstanceFun idTp "init" []
+initFun D.Def{D.defPars = decls} = C.Fun C.InstanceFun idTp "initWith" (map funPar decls)
 
 funPar :: D.Def -> C.FunPar
 funPar D.Def {D.defName = name, D.defType = dataType} = C.FunPar name (showDataType dataType) name
 
 createFun :: String -> D.Def -> C.Fun
-createFun clsName D.Def{D.defPars = []} = C.Fun C.ObjectFun (C.TPSimple "id") (createFunName clsName) []
-createFun clsName D.Def{D.defPars = decls} = C.Fun C.ObjectFun (C.TPSimple "id") (createFunName clsName ++ "With") (map funPar decls)
+createFun clsName D.Def{D.defPars = []} = C.Fun C.ObjectFun idTp (createFunName clsName) []
+createFun clsName D.Def{D.defPars = decls} = C.Fun C.ObjectFun idTp (createFunName clsName ++ "With") (map funPar decls)
 
 createFunName :: String -> String
 createFunName (x1:x2:xs)
@@ -189,7 +194,7 @@ autorelease e
 dealoc :: D.Class -> [C.ImplFun]
 dealoc cl 
 	| arc = []
-	| otherwise = [C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "void") "dealloc" []) $
+	| otherwise = [C.ImplFun (C.Fun C.InstanceFun voidTp "dealloc" []) $
 		 mapMaybe releaseField (D.classFields cl) ++ [C.Stm $C.Call C.Super "dealloc" []]]
 	where 
 		releaseField D.Def{D.defName = name, D.defType = D.TPClass{}} = Just $ C.Stm $ C.Call (C.Ref $ '_' : name) "release" []
@@ -202,7 +207,7 @@ implInitialize cl = let
 	hasInitialize d = D.isField d && D.isStatic d
 	in case fields of
 		[] -> Nothing
-		_ -> Just $ C.ImplFun (C.Fun C.ObjectFun (C.TPSimple "void") "initialize" []) (
+		_ -> Just $ C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
 			((C.Stm $ C.Call C.Super "initialize" []) : map implInitField fields))
 
 
@@ -249,14 +254,14 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 		fields = filter D.isField defs
 		fields' = map toField fields
 		toField D.Def{D.defName = n, D.defType = tp, D.defMods = mods} = C.ImplField n (showDataType tp) ["__weak" | D.DefModWeak `elem` mods]
-		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple name, 
+		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple name [], 
 			C.cfunName = name ++ "Make", C.cfunPars = map toPar fields, C.cfunExps = 
-				[C.Var (C.TPSimple name) "ret" C.Nop] ++
+				[C.Var (C.TPSimple name []) "ret" C.Nop] ++
 				map toSet fields ++
 				[C.Return $ C.Ref "ret"]
 		}
-		eq = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple "BOOL", C.cfunName = name ++ "Eq", 
-			C.cfunPars = [C.CFunPar (C.TPSimple name) "s1", C.CFunPar (C.TPSimple name) "s2"], 
+		eq = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple "BOOL" [], C.cfunName = name ++ "Eq", 
+			C.cfunPars = [C.CFunPar (C.TPSimple name []) "s1", C.CFunPar (C.TPSimple name []) "s2"], 
 			C.cfunExps = [C.Return $ foldl foldEq C.Nop fields]
 		}
 		toPar D.Def{D.defName = n, D.defType = tp}= C.CFunPar (showDataType tp) n
@@ -270,7 +275,7 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 		defs' = (map def' . filter D.isDef) defs
 		def' D.Def{D.defName = n, D.defType = tp, D.defPars = pars, D.defMods = mods} = C.CFunDecl{C.cfunMods = [], 
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
-			C.cfunPars =  if D.DefModStatic `notElem` mods then C.CFunPar (C.TPSimple name) "self" : pars' else pars'}
+			C.cfunPars =  if D.DefModStatic `notElem` mods then C.CFunPar (C.TPSimple name []) "self" : pars' else pars'}
 			where
 				pars' = map par' pars
 				par' D.Def{D.defName = nn, D.defType = tpp} = C.CFunPar (showDataType tpp) nn
@@ -281,7 +286,7 @@ genStructImpl D.Class {D.className = name, D.classDefs = defs} = (map def' . fil
 	where 
 		def' D.Def{D.defName = n, D.defType = tp, D.defBody = e, D.defPars = pars, D.defMods = mods} = C.CFun{C.cfunMods = [], 
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
-			C.cfunPars = if D.DefModStatic `notElem` mods then C.CFunPar (C.TPSimple name) "self" : pars' else pars',
+			C.cfunPars = if D.DefModStatic `notElem` mods then C.CFunPar (C.TPSimple name []) "self" : pars' else pars',
 			C.cfunExps = tStm tp e}
 			where
 				pars' = map par' pars
@@ -298,7 +303,7 @@ structDefName sn dn = lowFirst sn ++ cap dn
 {- Enum -}
 
 enumValuesFun :: C.Fun
-enumValuesFun = C.Fun C.ObjectFun (C.TPSimple "NSArray*") "values" []
+enumValuesFun = C.Fun C.ObjectFun (C.TPSimple "NSArray*" []) "values" []
 
 genEnumInterface :: D.Class -> [C.FileStm]
 genEnumInterface cl@D.Class {D.className = name, D.classDefs = defs} = [
@@ -312,7 +317,7 @@ genEnumInterface cl@D.Class {D.className = name, D.classDefs = defs} = [
 		defs' = filter ((/= "values") . D.defName) defs
 	
 enumItemGetterFun :: String -> D.Def -> C.Fun
-enumItemGetterFun name D.Def{D.defName = itemName} = C.Fun C.ObjectFun (C.TPSimple (name ++ "*")) itemName []
+enumItemGetterFun name D.Def{D.defName = itemName} = C.Fun C.ObjectFun (C.TPSimple (name ++ "*") []) itemName []
 
 genEnumImpl :: D.Class -> [C.FileStm]
 genEnumImpl cl@D.Class {D.className = clsName} = [
@@ -321,15 +326,15 @@ genEnumImpl cl@D.Class {D.className = clsName} = [
 		C.implFields = (map implField . filter D.isField) defs,
 		C.implSynthesizes = (map synthesize . filter D.isField) defs,
 		C.implFuns = [implCreate cl constr, implInit cl constr, initialize] ++ dealoc cl ++ implFuns defs ++ map itemGetter items ++ [valuesFun],
-		C.implStaticFields = map stField items ++ [C.ImplField "values" (C.TPSimple "NSArray*") []]
+		C.implStaticFields = map stField items ++ [C.ImplField "values" (C.TPSimple "NSArray*" []) []]
 	}]
 	where
 		items = D.enumItems cl
 		defs = filter ((/= "values") . D.defName) $ D.classDefs cl
 		constr = D.classConstructor cl
-		stField D.Def{D.defName = itemName} = C.ImplField ('_' : itemName) (C.TPSimple (clsName ++ "*")) []
+		stField D.Def{D.defName = itemName} = C.ImplField ('_' : itemName) (C.TPSimple (clsName ++ "*") []) []
 		itemGetter e@D.Def{D.defName = itemName} = C.ImplFun (enumItemGetterFun clsName e) [C.Return $ C.Ref $ '_' : itemName]
-		initialize = C.ImplFun (C.Fun C.ObjectFun (C.TPSimple "void") "initialize" []) (
+		initialize = C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
 			((C.Stm $ C.Call C.Super "initialize" []) : map initItem items) ++ [setValues])
 		initItem :: D.Def -> C.Stm
 		initItem D.Def{D.defName = itemName, D.defBody = body} = C.Set Nothing (C.Ref $ '_' : itemName) $ retain $ tExp body
@@ -356,34 +361,35 @@ procImports D.File{D.fileImports = imps} = (h, m)
 
 {- DataType -}
 showDataType :: D.DataType -> C.DataType
-showDataType (D.TPArr False _) = C.TPSimple "NSArray*"
-showDataType (D.TPArr True _) = C.TPSimple "NSMutableArray*"
-showDataType (D.TPMap False _ _)  = C.TPSimple "NSDictionary*"
-showDataType (D.TPMap True _ _) = C.TPSimple "NSMutableDictionary*"
-showDataType D.TPInt = C.TPSimple "NSInteger"
-showDataType D.TPUInt = C.TPSimple "NSUInteger"
-showDataType D.TPFloat = C.TPSimple "double"
-showDataType D.TPString = C.TPSimple "NSString*"
-showDataType D.TPBool = C.TPSimple "BOOL"
-showDataType (D.TPClass D.TPMStruct _ c) = C.TPSimple $ D.className c
+showDataType (D.TPArr False _) = C.TPSimple "NSArray*" []
+showDataType (D.TPArr True _) = C.TPSimple "NSMutableArray*" []
+showDataType (D.TPMap False _ _)  = C.TPSimple "NSDictionary*" []
+showDataType (D.TPMap True _ _) = C.TPSimple "NSMutableDictionary*" []
+showDataType D.TPInt = C.TPSimple "NSInteger" []
+showDataType D.TPUInt = C.TPSimple "NSUInteger" []
+showDataType D.TPFloat = C.TPSimple "double" []
+showDataType D.TPString = C.TPSimple "NSString*" []
+showDataType D.TPBool = C.TPSimple "BOOL" []
+showDataType (D.TPClass D.TPMStruct _ c) = C.TPSimple (D.className c) []
 showDataType (D.TPClass D.TPMClass _ c) 
-	| D.className c == "ODObject" = C.TPSimple $  "NSObject*"
-	| otherwise = C.TPSimple $ D.className c ++ "*"
-showDataType (D.TPClass D.TPMEnum _ c) = C.TPSimple $ D.className c ++ "*"
-showDataType (D.TPClass{}) = C.TPSimple "id"
-showDataType (D.TPSelf) = C.TPSimple "id"
-showDataType (D.TPTuple _) = C.TPSimple "CNTuple*"
+	| D.className c == "ODObject" = C.TPSimple "NSObject*" []
+	| otherwise = C.TPSimple (D.className c ++ "*") []
+showDataType (D.TPClass D.TPMEnum _ c) = C.TPSimple (D.className c ++ "*") []
+showDataType (D.TPClass D.TPMTrait _ c) = C.TPSimple "id" [D.className c]
+showDataType (D.TPClass{}) = idTp
+showDataType (D.TPSelf) = idTp
+showDataType (D.TPTuple _) = C.TPSimple "CNTuple*" []
 showDataType (D.TPOption c) =  showDataType c
 showDataType (D.TPFun D.TPVoid d) = C.TPBlock (showDataType d) []
 showDataType (D.TPFun (D.TPTuple ss) d) = C.TPBlock (showDataType d) (map showDataType ss)
 showDataType (D.TPFun s d) = C.TPBlock (showDataType d) [showDataType s]
-showDataType (D.TPGenericWrap (D.TPClass D.TPMStruct _ _)) = C.TPSimple "id"
-showDataType (D.TPGenericWrap D.TPInt) = C.TPSimple "id"
-showDataType (D.TPGenericWrap D.TPUInt) = C.TPSimple "id"
-showDataType (D.TPGenericWrap D.TPFloat) = C.TPSimple "id"
-showDataType (D.TPGenericWrap D.TPBool) = C.TPSimple "id"
+showDataType (D.TPGenericWrap (D.TPClass D.TPMStruct _ _)) = idTp
+showDataType (D.TPGenericWrap D.TPInt) = idTp
+showDataType (D.TPGenericWrap D.TPUInt) = idTp
+showDataType (D.TPGenericWrap D.TPFloat) = idTp
+showDataType (D.TPGenericWrap D.TPBool) = idTp
 showDataType (D.TPGenericWrap c) = showDataType c
-showDataType tp = C.TPSimple $ show tp
+showDataType tp = C.TPSimple (show tp) []
 
 {- Exp -}
 tPars :: [(D.Def, D.Exp)] -> [(String, C.Exp)]
@@ -465,7 +471,7 @@ tExp (D.Lambda pars e rtp) =
 		isNeedUnwrap (D.TPGenericWrap D.TPUInt) = True-}
 		isNeedUnwrap _ = False
 		par' (name, tp) 
-			| isNeedUnwrap tp = (name ++ "_", C.TPSimple "id")
+			| isNeedUnwrap tp = (name ++ "_", idTp)
 			| otherwise = (name, showDataType tp)
 		unwrapPars :: [C.Stm]
 		unwrapPars = (map unwrapPar. filter (isNeedUnwrap . snd)) pars

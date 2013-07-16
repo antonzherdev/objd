@@ -38,7 +38,7 @@ data CFunPar = CFunPar {cfunParDataType :: DataType, cfunParName :: String}
 data CFunMod = CFunStatic | CFunInline
 {- EXPRESSIONS -}
 
-data DataType = TPSimple String | TPBlock DataType [DataType]
+data DataType = TPSimple String [String]| TPBlock DataType [DataType]
 
 data Stm =
 	If Exp [Stm] [Stm]
@@ -83,11 +83,12 @@ unlines' [] = ""
 unlines' a = unlines a ++ "\n"
 
 instance Show DataType where
-	show (TPSimple s) = s
+	show (TPSimple s []) = s
+	show (TPSimple s pr) = s ++ "<" ++ strs ", " pr ++ ">"
 	show (TPBlock d t) = show d ++ "(^)" ++ "(" ++ strs' ", " t ++ ")"
 
 showDecl ::  DataType -> String ->String
-showDecl (TPSimple tp) name = tp ++ " " ++ name
+showDecl tp@TPSimple{} name = show tp ++ " " ++ name
 showDecl (TPBlock d t) name = show d ++ "(^" ++ name ++ ")" ++ "(" ++ strs' ", " t ++ ")"
 
 instance Show FileStm where

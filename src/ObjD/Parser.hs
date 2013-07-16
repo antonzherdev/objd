@@ -58,14 +58,15 @@ pType = tp
 		tp lm = do 
 			t <- arr <|> tuple <|> simple
 			sps
+			opt <- option False $ charSps '?' >> return True
+			sps
 			r <- if lm then return Nothing else optionMaybe $ do
 				string "->"
 				sps
 				tp True
 			sps
-			opt <- option False $ charSps '?' >> return True
-			let rtp = maybe t (\rr -> DataTypeFun t rr) r
-			return $ if opt then DataTypeOption rtp else rtp
+			let t' = if opt then DataTypeOption t else t
+			return $ maybe t' (\rr -> DataTypeFun t' rr) r
 		arr = do
 			charSps '['
 			m <- option False $ stringSps "var" >> return True
