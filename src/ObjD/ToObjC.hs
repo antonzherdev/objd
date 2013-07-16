@@ -403,8 +403,8 @@ tExp (D.MathOp t l r) = let
 			tt -> tt
 		{-rtp = D.exprDataType r-}
 	in case ltp of
-		D.TPArr _ -> addObjectToArray l' r'
-		D.TPMap _ _ -> addKVToMap l' r
+		D.TPArr _ _ -> addObjectToArray l' r'
+		D.TPMap _ _ _ -> addKVToMap l' r
 		_ -> C.MathOp t (tExpTo ltp l) (tExpTo ltp r)
 tExp (D.PlusPlus e) = C.PlusPlus (tExp e)
 tExp (D.MinusMinus e) = C.MinusMinus (tExp e)
@@ -447,7 +447,7 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
 tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
 tExp (D.Index e i) = case D.exprDataType e of
 	D.TPObject D.TPMEnum _ -> C.Index (C.Call (tExp e)  "values" []) (tExp i)
-	D.TPMap k _ -> C.Call (tExp e) "optionObjectFor" [("key", tExpTo k i)]
+	D.TPMap _ k _ -> C.Call (tExp e) "optionObjectFor" [("key", tExpTo k i)]
 	_ -> C.Index (tExp e) (tExp i)
 tExp (D.Lambda pars e rtp) = 
 	let 
@@ -499,8 +499,8 @@ tStm _ (D.Set (Just t) l r) = let
 		ltp = D.exprDataType l
 		rtp = D.exprDataType r
 	in case ltp of
-		D.TPArr _ -> [C.Set Nothing l' (addObjectToArray l' r')]
-		D.TPMap _ _ -> [C.Set Nothing l' (addKVToMap l' r)]
+		D.TPArr _ _ -> [C.Set Nothing l' (addObjectToArray l' r')]
+		D.TPMap _ _ _ -> [C.Set Nothing l' (addKVToMap l' r)]
 		_ -> [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
 tStm _ (D.Set tp l r) = [C.Set tp (tExp l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp r))]
 tStm D.TPVoid (D.Return e) = [C.Stm $ tExp e]

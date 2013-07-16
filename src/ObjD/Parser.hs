@@ -68,12 +68,13 @@ pType = tp
 			return $ if opt then DataTypeOption rtp else rtp
 		arr = do
 			charSps '['
+			m <- option False $ stringSps "var" >> return True
 			k <- tp False
 			sps
 			v <- optionMaybe $ charSps ':' >> tp False
 			char ']'
 			sps
-			return $ maybe (DataTypeArr k) (DataTypeMap k) v
+			return $ maybe (DataTypeArr m k) (DataTypeMap m k) v
 		tuple = do
 			charSps '('
 			t <- tp False `sepBy` charSps ','
@@ -308,7 +309,7 @@ pExp = do
 		pOp4 = pOp5 `chainl1` (mathOp '+' Plus <|> mathOp '-' Minus)
 		pOp5 = pOp6 `chainl1` (mathOp '*' Mul <|> mathOp '/' Div)
 		pOp6 = do
-			e <- pTerm `chainl1` pDot
+			e <- pTerm 
 			sps
 			postFix e
 		pSetOp = try(do
@@ -339,13 +340,12 @@ pExp = do
 				e <- pExp
 				sps
 				charSps ']' <?> "Array index close bracket"
-				e' <- postFix e
-				return $ Index o e') <|>
+				postFix $ Index o e) <|>
 			try(do 
 				charSps '.'
-				e <- pOp6
+				e <- pTerm
 				sps
-				return $ Dot o e) <|>
+				postFix $ Dot o e) <|>
 			(return o)
 
 pTerm :: Parser Exp
@@ -486,9 +486,6 @@ pCallPar = do
 	e <- pExp
 	sps
 	return (name, e)
-
-pDot :: Parser (Exp -> Exp -> Exp)
-pDot = stringSps "." >> return Dot
 
 pCompareOp :: Parser (Exp -> Exp -> Exp)
 pCompareOp =  pBoolOp "==" Eq <|> pBoolOp "!=" NotEq <|> pBoolOp ">=" MoreEq <|> pBoolOp ">" More  <|> pBoolOp "<=" LessEq <|> pBoolOp "<" Less
