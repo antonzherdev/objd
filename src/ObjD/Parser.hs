@@ -307,7 +307,10 @@ pExp = do
 		pOp3 = pOp4 `chainl1` pSetOp
 		pOp4 = pOp5 `chainl1` (mathOp '+' Plus <|> mathOp '-' Minus)
 		pOp5 = pOp6 `chainl1` (mathOp '*' Mul <|> mathOp '/' Div)
-		pOp6 = pTerm `chainl1` pDot
+		pOp6 = do
+			e <- pTerm `chainl1` pDot
+			sps
+			postFix e
 		pSetOp = try(do
 			char '='
 			notFollowedBy $ char '='
@@ -323,12 +326,33 @@ pExp = do
 			notFollowedBy $ (char '=' <|> char s <|> char '>')
 			sps
 			return $ MathOp t)
+		postFix o = try(do
+			string "++"
+			sps
+			return $ PlusPlus o) <|>
+			try(do
+			string "--"
+			sps
+			return $ MinusMinus o) <|> 
+			try(do 
+				charSps '['
+				e <- pExp
+				sps
+				charSps ']' <?> "Array index close bracket"
+				e' <- postFix e
+				return $ Index o e') <|>
+			try(do 
+				charSps '.'
+				e <- pOp6
+				sps
+				return $ Dot o e) <|>
+			(return o)
 
 pTerm :: Parser Exp
 pTerm = do
 		e <- pTerm'
 		sps
-		postFix e
+		return e
 	where
 		pTerm' = pNot <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> try(pNumConst) <|> pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pCall  <?> "Expression"
 		pMinus = do
@@ -413,22 +437,6 @@ pTerm = do
 				pars <- pCallPar `sepBy` charSps ','
 				charSps ')' <?> "Function call close bracket"
 				return $ Call name pars gens) <|> return (Call name [] gens)
-		postFix o = try(do
-			string "++"
-			sps
-			return $ PlusPlus o) <|>
-			try(do
-			string "--"
-			sps
-			return $ MinusMinus o) <|> 
-			try(do 
-				charSps '['
-				e <- pExp
-				sps
-				charSps ']' <?> "Array index close bracket"
-				e' <- postFix e
-				return $ Index o e') <|>
-			(return o)
 
 pGensRef :: Parser [DataType]
 pGensRef = option [] $ try $ do

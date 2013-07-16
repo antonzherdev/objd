@@ -197,7 +197,7 @@ dealoc cl
 implInitialize :: D.Class -> Maybe C.ImplFun 		
 implInitialize cl = let 
 	fields = filter hasInitialize (D.classFields cl)
-	hasInit D.Def{D.defBody = D.Nop} = False
+	hasInitialize D.Def{D.defBody = D.Nop} = False
 	hasInitialize d = D.isField d && D.isStatic d
 	in case fields of
 		[] -> Nothing
@@ -475,8 +475,9 @@ tExp (D.Opt e) = let tp = D.exprDataType e
 tExp (D.None _) = C.Call (C.Ref "CNOption") "none" []
 tExp (D.Not e) = C.Not (tExp e)
 tExp (D.Negative e) = C.Negative (tExp e)
-tExp e@D.Error{} = C.Error $ show e
-tExp x = error $ "No tExp for " ++ show x
+tExp e@D.ExpDError{} = C.Error $ show e
+tExp e@D.ExpLError{} = C.Error $ show e
+tExp x = C.Error $ "No tExp for " ++ show x
 
 tpGeneric :: D.DataType
 tpGeneric = D.TPClass D.TPMGeneric [] (D.Generic "?")

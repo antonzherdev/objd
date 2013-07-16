@@ -34,6 +34,8 @@ main =
 			linkedFiles = do
 				fs <- parsedFiles
 				let linked = (uncurry zip . second L.link. unzip) fs
+				let errors = checkErrors $ map snd linked 
+				forM_ errors (\e -> print e)
 				forM_ (filter ((`elem` debug). L.fileName . snd) linked) (\(path, f) -> do
 					putStrLn $ "= Linked " ++ path
 					print f)
