@@ -19,6 +19,7 @@ data FileStm =
 	| CFunDecl {cfunMods :: [CFunMod], cfunReturnType :: DataType, cfunName :: String, cfunPars :: [CFunPar]}
 	| CFun {cfunMods :: [CFunMod], cfunReturnType :: DataType, cfunName :: String, cfunPars :: [CFunPar], cfunExps :: [Stm]}
 	| ClassDecl String
+	| ProtocolDecl String
 data Extends = Extends String [String]
 data Property = Property {propertyName :: String, propertyType :: DataType, propertyModifiers :: [PropertyModifier]}
 
@@ -109,7 +110,7 @@ instance Show FileStm where
 		 ++ (unlines  . map (( ++ ";") . show)) funs
 		 ++ "@end\n\n"
 	show (Protocol name funs) =
-		"@protocol " ++ name ++ "\n"
+		"@protocol " ++ name ++ "<NSObject>\n"
 		 ++ (unlines  . map (( ++ ";") . show)) funs
 		 ++ "@end\n\n"
 	show Implementation{implName = iName, implFields = fields, implSynthesizes = synzs, implFuns = funs, implStaticFields = stFields} =
@@ -132,6 +133,7 @@ instance Show FileStm where
 		showImplFuns = unlines . map show
 		showStField (ImplField nm tp mods) = "static " ++  (strs " " mods) `tryCon` " " ++ showDecl tp nm ++ ";"
 	show (ClassDecl name) = "@class " ++ name ++ ";"
+	show (ProtocolDecl name) = "@protocol " ++ name ++ ";"
 instance Show Extends where
 	show (Extends cl []) = cl
 	show (Extends cl a) = cl ++ "<" ++ strs ", " a ++ ">"

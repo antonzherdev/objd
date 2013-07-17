@@ -354,10 +354,13 @@ procImports D.File{D.fileImports = imps} = (h, m)
 		cImport D.File{D.fileName = fn} = C.Import (fn ++ ".h")
 		h = concatMap procH imps
 		procH file
-			| filePossibleWeakImport file = map (C.ClassDecl . D.className) . 
-				filter (\ c -> not (D.isStruct c) && not (D.isTrait c) ) $ D.fileClasses file
+			| filePossibleWeakImport file = map decl . 
+				filter (\ c -> not (D.isStruct c)) $ D.fileClasses file
 			| otherwise = [cImport file]
 		m = (map cImport . filter filePossibleWeakImport) imps
+		decl cl 
+			| D.isTrait cl = C.ProtocolDecl . D.className $ cl
+			| otherwise = C.ClassDecl . D.className $ cl
 
 {- DataType -}
 showDataType :: D.DataType -> C.DataType
@@ -379,7 +382,7 @@ showDataType (D.TPClass D.TPMTrait _ c) = C.TPSimple "id" [D.className c]
 showDataType (D.TPClass{}) = idTp
 showDataType (D.TPSelf) = idTp
 showDataType (D.TPTuple _) = C.TPSimple "CNTuple*" []
-showDataType (D.TPOption c) =  showDataType c
+showDataType (D.TPOption c) = idTp
 showDataType (D.TPFun D.TPVoid d) = C.TPBlock (showDataType d) []
 showDataType (D.TPFun (D.TPTuple ss) d) = C.TPBlock (showDataType d) (map showDataType ss)
 showDataType (D.TPFun s d) = C.TPBlock (showDataType d) [showDataType s]
