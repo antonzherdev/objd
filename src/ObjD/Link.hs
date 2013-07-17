@@ -2,7 +2,7 @@ module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), DataType(..), Exp(..), CImport(..), 
 	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..),
 	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
-	classConstructor, classFields, checkErrors
+	classConstructor, classFields, checkErrors, dataTypeClassName
 )where
 
 import 			 Control.Arrow
@@ -394,6 +394,19 @@ dataTypeClass env (TPTuple [_, _]) = classFind (envIndex env) "CNTuple"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("CNTuple" ++ show (length a))
 dataTypeClass _ x = classError (show x) ("No dataTypeClass for " ++ show x)
 
+dataTypeClassName :: DataType -> String
+dataTypeClassName (TPClass _ _ c ) = className c
+dataTypeClassName (TPObject _ c) = className c
+dataTypeClassName (TPGenericWrap c) = dataTypeClassName c
+dataTypeClassName (TPArr False _) = "ODArray"
+dataTypeClassName (TPArr True _) = "ODMutableArray"
+dataTypeClassName (TPOption _) = "ODOption"
+dataTypeClassName (TPMap False _ _) = "ODMap"
+dataTypeClassName (TPMap True _ _) = "ODMutableMap"
+dataTypeClassName (TPTuple [_, _]) = "CNTuple"
+dataTypeClassName (TPTuple a) = "CNTuple" ++ show (length a)
+dataTypeClassName x = error ("No dataTypeClassName for " ++ show x)
+
 dataTypeGenerics :: Env -> DataType -> [DataType]
 dataTypeGenerics _ (TPClass _ g _) = g
 dataTypeGenerics _ (TPArr _ g) = [g]
@@ -496,6 +509,8 @@ data Exp = Nop
 	| Not Exp
 	| Negative Exp
 	| Cast DataType Exp
+	| As DataType
+	| Is DataType
 
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
@@ -534,7 +549,9 @@ instance Show Exp where
 	show (Throw e) = "throw " ++ show e
 	show (Not e) = "!(" ++ show e ++ ")"
 	show (Negative e) = '-' : show e
-	show (Cast tp e) = show e ++ ".as(" ++ show tp ++ ")"
+	show (Cast tp e) = show e ++ ".cast<" ++ show tp ++ ")"
+	show (As tp) = "as<" ++ show tp ++ ">"
+	show (Is tp) = "is<" ++ show tp ++ ">"
 
 callLocalVal :: String -> DataType -> Exp
 callLocalVal name tp = Call (localVal name tp) tp []
@@ -628,6 +645,8 @@ exprDataType (Throw _) = TPThrow
 exprDataType (Not _) = TPBool
 exprDataType (Negative e) = exprDataType e
 exprDataType (Cast dtp _) = dtp
+exprDataType (As dtp) = dtp
+exprDataType (Is dtp) = TPBool
 {- exprDataType x = error $ "No exprDataType for " ++ show x -}
 
 expr :: D.Exp -> State Env Exp
@@ -733,6 +752,8 @@ type Generics = M.Map String DataType
 
 exprCall :: (Bool, Maybe DataType) -> D.Exp -> State Env Exp		
 exprCall (_, Just (TPUnknown t)) e = return $ ExpDError t e
+exprCall (_, Just _) (D.Call "as" [] [tp]) = get >>= \env -> return $ As $ dataType (envIndex env) tp
+exprCall (_, Just _) (D.Call "is" [] [tp]) = get >>= \env -> return $ Is $ dataType (envIndex env) tp
 exprCall (dot, strictClass) call@(D.Call name pars gens) = do
 	env <- get
 	pars' <- mapM (\ (n, e) ->  expr e >>= (\ ee -> return (n, FirstTry e ee))) pars

@@ -439,6 +439,9 @@ tExp (D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars))
 		_ -> C.Call (tExp l) name (tPars pars)
 	where
 		 structCall c self = C.CCall (structDefName (D.className c) name) (self : (map snd . tPars) pars)
+tExp (D.Dot l (D.Is dtp)) = C.Call (tExp l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [])]
+tExp (D.Dot l (D.As dtp)) = C.Call (tExp l) "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [])]
+
 
 tExp (D.Self _) = C.Self
 tExp (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
