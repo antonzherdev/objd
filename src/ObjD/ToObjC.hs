@@ -69,7 +69,8 @@ stmToInterface (cl@D.Class {D.className = name, D.classDefs = defs}) =
 	}
 	where 
 		constr = D.classConstructor cl
-		staticGetters = (map staticGetterFun .filter (\f -> D.isField f && D.isStatic f)) defs
+		staticGetters = (map staticGetterFun .filter (\f -> 
+			(D.DefModPrivate `notElem` D.defMods f) && D.isField f && D.isStatic f)) defs
 		
 classExtends :: D.Class -> C.Extends
 classExtends cl = maybe (C.Extends "NSObject" []) (ext . D.extendsClass) (D.classExtends cl)
@@ -345,12 +346,14 @@ genEnumImpl cl@D.Class {D.className = clsName} = [
 
 {- Imports -}
 procImports :: D.File -> ([C.FileStm], [C.FileStm])
-procImports D.File{D.fileImports = imps} = (h, m)
+procImports D.File{D.fileImports = imps, D.fileClasses = classes} = (h, m)
 	where 
 		filePossibleWeakImport D.File{D.fileCImports = [], D.fileClasses = cls} = all classPosibleWeakImport cls
 		filePossibleWeakImport _ = False
-		classPosibleWeakImport D.Class{D.classMods = mods} = D.ClassModStruct `notElem` mods
+		classPosibleWeakImport cl@D.Class{D.classMods = mods} = D.ClassModStruct `notElem` mods && not (hasExtends cl)
 		classPosibleWeakImport _ = False
+		hasExtends cl = cl `elem` extends
+		extends = (map  D.extendsClass . mapMaybe D.classExtends) classes
 		cImport D.File{D.fileName = fn} = C.Import (fn ++ ".h")
 		h = concatMap procH imps
 		procH file
@@ -382,7 +385,7 @@ showDataType (D.TPClass D.TPMTrait _ c) = C.TPSimple "id" [D.className c]
 showDataType (D.TPClass{}) = idTp
 showDataType (D.TPSelf) = idTp
 showDataType (D.TPTuple _) = C.TPSimple "CNTuple*" []
-showDataType (D.TPOption c) = idTp
+showDataType (D.TPOption _) = idTp
 showDataType (D.TPFun D.TPVoid d) = C.TPBlock (showDataType d) []
 showDataType (D.TPFun (D.TPTuple ss) d) = C.TPBlock (showDataType d) (map showDataType ss)
 showDataType (D.TPFun s d) = C.TPBlock (showDataType d) [showDataType s]
