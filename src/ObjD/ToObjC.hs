@@ -441,8 +441,9 @@ tExp (D.Dot (D.Self (D.TPClass _ _ c)) (D.Call D.Def{D.defMods = mods, D.defName
 	| D.DefModField `elem` mods = C.Ref $ '_' : name
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className c) name (tPars pars)
 	| otherwise = C.Call C.Self name (tPars pars)
-tExp (D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
+tExp d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModField `elem` mods = C.Dot (tExp l) name
+	| D.DefModConstructor `elem` mods = callConstructor (D.exprDataType d) pars
 	| otherwise = case D.exprDataType l of
 		(D.TPGenericWrap tp@(D.TPClass D.TPMStruct _ c)) -> structCall c (tExpTo tp l)
 		(D.TPClass D.TPMStruct _ c) -> structCall c (tExp l)
@@ -458,15 +459,7 @@ tExp (D.Self _) = C.Self
 tExp (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
 	| D.DefModField `elem` mods = C.Ref $ '_' : name
 	| D.DefModLocal `elem` mods && null pars = C.Ref name
-	| D.DefModConstructor `elem` mods = case tp of 
-		D.TPClass D.TPMStruct _ _ -> C.CCall 
-			(name++ "Make")
-			((map snd. tPars) pars)
-	 	_ ->
-			C.Call 
-			(C.Ref name) 
-			(createFunName $ name ++ if null pars then "" else "With") 
-			(tPars pars)
+	| D.DefModConstructor `elem` mods = callConstructor tp pars
 	| D.DefModGlobalVal `elem` mods = C.Ref name
 	| D.DefModObject `elem` mods = C.Ref name
 	| otherwise = C.CCall name (map snd . tPars $ pars)
@@ -559,6 +552,18 @@ addObjectToArray a obj = C.Call a "arrayByAdding" [("object", obj)]
 addKVToMap :: C.Exp -> D.Exp -> C.Exp
 addKVToMap a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tExp v), ("forKey", tExp k)]
 
+callConstructor :: D.DataType -> [(D.Def, D.Exp)] -> C.Exp
+callConstructor tp pars = let
+	name = D.dataTypeClassName tp
+	in case tp of 
+		D.TPClass D.TPMStruct _ _ -> C.CCall 
+			(name++ "Make")
+			((map snd. tPars) pars)
+	 	_ ->
+			C.Call 
+			(C.Ref name) 
+			(createFunName $ name ++ if null pars then "" else "With") 
+			(tPars pars)
 
 data MaybeValTP = TPGen | TPNum | TPStruct | TPNoMatter | TPBool | TPFloat
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp

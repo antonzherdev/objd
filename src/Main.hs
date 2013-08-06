@@ -19,7 +19,7 @@ debug = []
 main::IO()
 main = 
 	let
-		root = "/Users/antonzherdev/Dev/trains3d/Trains3D/"
+		root = "/Users/antonzherdev/dev/trains3d/Trains3D/"
 	in do 
 		putStrLn $ "Root: " ++ root
 		t <- odFiles root

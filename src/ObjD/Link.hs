@@ -245,7 +245,7 @@ linkClass (ocidx, glidx) cl = self
 				defType = selfType, defGenerics = Nothing, defPars = [], 
 				defBody = enumConstrCall})
 			where
-				enumConstrCall = evalState (exprCall (False, Nothing) enumConstrDCall) env
+				enumConstrCall = evalState (exprCall Nothing enumConstrDCall) env
 				enumConstrDCall = D.Call 
 					(D.className cl) 
 					([ (Nothing,D.IntConst ordinal), (Nothing, D.StringConst name)] ++  pars)
@@ -678,12 +678,12 @@ expr (D.MathOp tp a b) = do
 expr d@(D.Dot a b) = do
 	env <- get
 	aa <- case a of
-		D.Call {} -> exprCall (True, Nothing) a
+		D.Call {} -> exprCall Nothing a
 		_ -> expr a
 	case aa of
 		ExpDError s _ -> return $ ExpDError s d
 		_ -> do
-			bb <- exprCall (False, Just $ exprDataType aa)  b
+			bb <- exprCall (Just $ exprDataType aa)  b
 			put env
 			return $ Dot aa bb
 expr (D.Set tp a b) = do
@@ -699,7 +699,7 @@ expr (D.MinusMinus e) = do
 expr D.Self = do
 	env <- get
 	return $ Self $ envSelf env
-expr r@D.Call{} = exprCall (False, Nothing) r
+expr r@D.Call{} = exprCall Nothing r
 expr (D.Index e i) = do
 	e' <- expr e
 	let obf =expr $ D.Dot e (D.Call "objectFor" [(Nothing, i)] [])
@@ -750,18 +750,18 @@ expr (D.Negative e) = do
 
 type Generics = M.Map String DataType
 
-exprCall :: (Bool, Maybe DataType) -> D.Exp -> State Env Exp		
-exprCall (_, Just (TPUnknown t)) e = return $ ExpDError t e
-exprCall (_, Just _) (D.Call "as" [] [tp]) = get >>= \env -> return $ As $ dataType (envIndex env) tp
-exprCall (_, Just _) (D.Call "is" [] [tp]) = get >>= \env -> return $ Is $ dataType (envIndex env) tp
-exprCall (dot, strictClass) call@(D.Call name pars gens) = do
+exprCall :: Maybe DataType -> D.Exp -> State Env Exp		
+exprCall (Just (TPUnknown t)) e = return $ ExpDError t e
+exprCall (Just _) (D.Call "as" [] [tp]) = get >>= \env -> return $ As $ dataType (envIndex env) tp
+exprCall (Just _) (D.Call "is" [] [tp]) = get >>= \env -> return $ Is $ dataType (envIndex env) tp
+exprCall strictClass call@(D.Call name pars gens) = do
 	env <- get
 	pars' <- mapM (\ (n, e) ->  expr e >>= (\ ee -> return (n, FirstTry e ee))) pars
 	return $
 		let
 			self = fromMaybe (envSelf env) strictClass
 			call' :: Exp
-			call' = fromMaybe (ExpDError errorString call) $ findCall (name, pars') (env, self, allDefs env (dot, strictClass))
+			call' = fromMaybe (ExpDError errorString call) $ findCall (name, pars') (env, self, allDefs env strictClass)
 			call'' :: Exp
 			call'' = case call' of
 				Call{} -> (resolveDef strictClass . correctCall) call'
@@ -842,7 +842,7 @@ exprCall (dot, strictClass) call@(D.Call name pars gens) = do
 			errorString = "Could find reference for call " ++ callStr ++ "\n" ++
 				maybe "" (\cl -> "strict in class " ++ show cl ++ "\n") strictClass ++
 				(if detailedReferenceError then "in defs:\n" ++
-				(strs "\n" . map (ind . showDef False)) (allDefs env (dot, strictClass))  else "")
+				(strs "\n" . map (ind . showDef False)) (allDefs env strictClass)  else "")
 				where callStr = name ++ case pars of
 					[] -> ""
 					_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")" 
@@ -886,9 +886,9 @@ replaceGenerics gns = mapDataType f
 		f (TPClass TPMGeneric _ (Generic g)) = M.lookup g gns
 		f _ = Nothing
 
-allDefs :: Env -> (Bool, Maybe DataType) -> [Def]
-allDefs env (_, Just ss) = allDefsInClass env $ dataTypeClass env ss
-allDefs env (dot, Nothing) = 
+allDefs :: Env -> Maybe DataType -> [Def]
+allDefs env (Just ss) = allDefsInClass env $ dataTypeClass env ss
+allDefs env Nothing = 
 	envVals env 
 	++ allDefsInClass env (envSelfClass env) 
 	++ allDefsInClass env (dataTypeClass env $ objTp $ envSelfClass env) 
@@ -897,9 +897,7 @@ allDefs env (dot, Nothing) =
 	++ objects 
 	where
 		classConstructors = (map (setName . classConstructor . snd) . M.toList) (envIndex env)
-		classConstructors' 
-			| dot = filter (not . null . defPars) classConstructors
-			| otherwise = classConstructors
+		classConstructors' = filter (not . null . defPars) classConstructors
 		setName d@Def{defType = tp} = setDefName (className $ dataTypeClass env tp) d
 		objects = (map (objectDef . snd) . M.toList) (envIndex env)
 		objTp cl = TPObject (refDataTypeMod cl) cl
