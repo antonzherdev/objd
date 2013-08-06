@@ -16,7 +16,6 @@ import System.FilePath
 main = putStr "dsa" -}
 debug :: [String]
 debug = []
-
 main::IO()
 main = 
 	let
@@ -54,7 +53,7 @@ main =
 			in do
 				txtFS <- textFiles
 				forM_ txtFS (\(path, (h, m)) -> do
-					putStrLn ("File: " ++ path)
+					{-putStrLn ("File: " ++ path)-}
 					write ".h" path h
 					write ".m" path m)
 				

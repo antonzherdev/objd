@@ -157,7 +157,7 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs} =
 		C.implFields = map implField implFields,
 		C.implSynthesizes = (map synthesize . filter needProperty) implFields,
 		C.implFuns = [implCreate cl constr, implInit cl constr] ++ maybeToList (implInitialize cl) ++ dealoc cl 
-			++ implFuns defs ++ staticGetters,
+			++ implFuns defs ++ staticGetters ++ copyImpls,
 		C.implStaticFields = map implField staticFields
 	}
 	where
@@ -168,6 +168,9 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs} =
 		staticFields = filter isStaticField defs
 		staticGetters = (map staticGetter . filter((D.DefModPrivate `notElem`) . D.defMods)) staticFields
 		staticGetter f@D.Def{D.defName = name} = C.ImplFun (staticGetterFun f) [C.Return $ C.Ref $ '_' : name]
+
+copyImpls :: [C.ImplFun]
+copyImpls = [C.ImplFun (C.Fun C.InstanceFun idTp "copyWith" [C.FunPar "zone" (C.TPSimple "NSZone*" []) "zone"]) [C.Return C.Self]]
 
 synthesize :: D.Def -> C.ImplSynthesize
 synthesize D.Def{D.defName = x} = C.ImplSynthesize x ('_' : x)
@@ -326,10 +329,12 @@ genEnumImpl cl@D.Class {D.className = clsName} = [
 		C.implName = clsName,
 		C.implFields = (map implField . filter D.isField) defs,
 		C.implSynthesizes = (map synthesize . filter D.isField) defs,
-		C.implFuns = [implCreate cl constr, implInit cl constr, initialize] ++ dealoc cl ++ implFuns defs ++ map itemGetter items ++ [valuesFun],
-		C.implStaticFields = map stField items ++ [C.ImplField "values" (C.TPSimple "NSArray*" []) []]
+		C.implFuns = [implCreate cl constr, implInit cl constr, initialize] ++ dealoc cl 
+			++ implFuns defs ++ map itemGetter items ++ [valuesFun],
+		C.implStaticFields = map stField items ++ [C.ImplField valuesVarName (C.TPSimple "NSArray*" []) []] 
 	}]
 	where
+		valuesVarName =  "_" ++ clsName ++ "_values"
 		items = D.enumItems cl
 		defs = filter ((/= "values") . D.defName) $ D.classDefs cl
 		constr = D.classConstructor cl
@@ -339,9 +344,9 @@ genEnumImpl cl@D.Class {D.className = clsName} = [
 			((C.Stm $ C.Call C.Super "initialize" []) : map initItem items) ++ [setValues])
 		initItem :: D.Def -> C.Stm
 		initItem D.Def{D.defName = itemName, D.defBody = body} = C.Set Nothing (C.Ref $ '_' : itemName) $ retain $ tExp body
-		valuesFun = C.ImplFun enumValuesFun [C.Return $ C.Ref "values"]
+		valuesFun = C.ImplFun enumValuesFun [C.Return $ C.Ref valuesVarName]
 		setValues :: C.Stm
-		setValues = C.Set Nothing (C.Ref "values") (C.Arr $ map (C.Ref . ('_' : ). D.defName) items)
+		setValues = C.Set Nothing (C.Ref valuesVarName) (C.Arr $ map (C.Ref . ('_' : ). D.defName) items)
 
 
 {- Imports -}
