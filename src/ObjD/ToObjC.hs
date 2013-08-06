@@ -409,6 +409,12 @@ tPars = map (\(d, e) -> (D.defName d, maybeVal (D.exprDataType e, D.defType d) $
 tExpTo :: D.DataType -> D.Exp -> C.Exp 
 tExpTo tp e = maybeVal (D.exprDataType e, tp) (tExp e)
 
+castGeneric :: D.Exp -> C.Exp -> C.Exp
+castGeneric dexp e = case D.exprDataType dexp of
+	D.TPGenericWrap c@(D.TPClass D.TPMClass _ _) -> C.Cast (showDataType c) e
+	D.TPGenericWrap c@(D.TPClass D.TPMEnum _ _) -> C.Cast (showDataType c) e
+	_ -> e
+
 tExp :: D.Exp -> C.Exp
 tExp (D.IntConst i) = C.IntConst i
 tExp (D.StringConst i) = C.StringConst i
@@ -442,13 +448,13 @@ tExp (D.Dot (D.Self (D.TPClass _ _ c)) (D.Call D.Def{D.defMods = mods, D.defName
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className c) name (tPars pars)
 	| otherwise = C.Call C.Self name (tPars pars)
 tExp d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
-	| D.DefModField `elem` mods = C.Dot (tExp l) name
+	| D.DefModField `elem` mods = castGeneric d $ C.Dot (tExp l) name
 	| D.DefModConstructor `elem` mods = callConstructor (D.exprDataType d) pars
 	| otherwise = case D.exprDataType l of
 		(D.TPGenericWrap tp@(D.TPClass D.TPMStruct _ c)) -> structCall c (tExpTo tp l)
 		(D.TPClass D.TPMStruct _ c) -> structCall c (tExp l)
 		(D.TPObject D.TPMStruct c) -> C.CCall (structDefName (D.className c) name) ((map snd . tPars) pars)
-		_ -> C.Call (tExp l) name (tPars pars)
+		_ -> castGeneric d $ C.Call (tExp l) name (tPars pars)
 	where
 		 structCall c self = C.CCall (structDefName (D.className c) name) (self : (map snd . tPars) pars)
 tExp (D.Dot l (D.Is dtp)) = C.Call (tExp l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [])]
