@@ -469,7 +469,7 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
 	| D.DefModGlobalVal `elem` mods = C.Ref name
 	| D.DefModObject `elem` mods = C.Ref name
 	| otherwise = C.CCall name (map snd . tPars $ pars)
-tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
+tExp (D.If cond t f) = C.InlineIf (tExpTo D.TPBool cond) (tExp t) (tExp f)
 tExp ee@(D.Index e i) = case D.exprDataType e of
 	D.TPObject D.TPMEnum _ -> castGeneric ee $ C.Index (C.Call (tExp e)  "values" []) (tExp i)
 	D.TPMap _ k _ -> castGeneric ee $ C.Call (tExp e) "optionObjectFor" [("key", tExpTo k i)]
@@ -520,7 +520,7 @@ tStm _ (D.Braces []) = []
 tStm v (D.Braces [x]) = tStm v x
 tStm v (D.Braces xs) = concatMap (tStm v) xs
 
-tStm v (D.If cond t f) = [C.If (tExp cond) (tStm v t) (tStm v f)]
+tStm v (D.If cond t f) = [C.If (tExpTo D.TPBool cond) (tStm v t) (tStm v f)]
 
 tStm _ (D.Set (Just t) l r) = let 
 		l' = tExp l

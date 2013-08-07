@@ -437,6 +437,7 @@ dataType cidx (D.DataType name gens) = case name of
 	_ -> maybe (TPUnknown $ "No class found " ++ name) (\cl -> refDataType cl (map (wrapGeneric . dataType cidx) gens)) (idxFind cidx name)
 dataType cidx (D.DataTypeArr m tp) = TPArr m $ wrapGeneric $ dataType cidx tp
 dataType cidx (D.DataTypeMap m k v) = TPMap m (wrapGeneric $ dataType cidx k) (wrapGeneric $ dataType cidx v)
+dataType cidx (D.DataTypeFun (D.DataTypeTuple tps) d) = TPFun (TPTuple $ map (dataType cidx) tps) (dataType cidx d)
 dataType cidx (D.DataTypeFun s d) = TPFun (dataType cidx s) (dataType cidx d)
 dataType cidx (D.DataTypeTuple tps) = TPTuple $ map (wrapGeneric . dataType cidx) tps
 dataType cidx (D.DataTypeOption t) = TPOption $ (wrapGeneric . dataType cidx) t
