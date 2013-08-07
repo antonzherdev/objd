@@ -68,7 +68,7 @@ stmToInterface (cl@D.Class {D.className = name, D.classDefs = defs}) =
 			++ intefaceFuns defs ++ staticGetters
 	}
 	where 
-		constr = D.classConstructor cl
+		constr = fromMaybe (error "No class constructor") (D.classConstructor cl)
 		staticGetters = (map staticGetterFun .filter (\f -> 
 			(D.DefModPrivate `notElem` D.defMods f) && D.isField f && D.isStatic f)) defs
 		
@@ -161,7 +161,7 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs} =
 		C.implStaticFields = map implField staticFields
 	}
 	where
-		constr = D.classConstructor cl
+		constr = fromMaybe (error "No class constructor") (D.classConstructor cl)
 		implFields = filter needField defs
 		needField f = D.isField f && not (D.isStatic f)
 		isStaticField f = D.isStatic f && D.isField f
@@ -337,7 +337,7 @@ genEnumImpl cl@D.Class {D.className = clsName} = [
 		valuesVarName =  "_" ++ clsName ++ "_values"
 		items = D.enumItems cl
 		defs = filter ((/= "values") . D.defName) $ D.classDefs cl
-		constr = D.classConstructor cl
+		constr = fromMaybe (error "No class constructor") (D.classConstructor cl)
 		stField D.Def{D.defName = itemName} = C.ImplField ('_' : itemName) (C.TPSimple (clsName ++ "*") []) []
 		itemGetter e@D.Def{D.defName = itemName} = C.ImplFun (enumItemGetterFun clsName e) [C.Return $ C.Ref $ '_' : itemName]
 		initialize = C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
@@ -470,10 +470,10 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
 	| D.DefModObject `elem` mods = C.Ref name
 	| otherwise = C.CCall name (map snd . tPars $ pars)
 tExp (D.If cond t f) = C.InlineIf (tExp cond) (tExp t) (tExp f)
-tExp (D.Index e i) = case D.exprDataType e of
-	D.TPObject D.TPMEnum _ -> C.Index (C.Call (tExp e)  "values" []) (tExp i)
-	D.TPMap _ k _ -> C.Call (tExp e) "optionObjectFor" [("key", tExpTo k i)]
-	_ -> C.Index (tExp e) (tExp i)
+tExp ee@(D.Index e i) = case D.exprDataType e of
+	D.TPObject D.TPMEnum _ -> castGeneric ee $ C.Index (C.Call (tExp e)  "values" []) (tExp i)
+	D.TPMap _ k _ -> castGeneric ee $ C.Call (tExp e) "optionObjectFor" [("key", tExpTo k i)]
+	_ -> castGeneric ee $ C.Index (tExp e) (tExp i)
 tExp (D.Lambda pars e rtp) = 
 	let 
 		isNeedUnwrap :: D.DataType -> Bool
@@ -509,7 +509,7 @@ tExp e@D.ExpLError{} = C.Error $ show e
 tExp x = C.Error $ "No tExp for " ++ show x
 
 tpGeneric :: D.DataType
-tpGeneric = D.TPClass D.TPMGeneric [] (D.Generic "?")
+tpGeneric = D.TPClass D.TPMGeneric [] (D.Generic "?" [])
 tExpToType :: D.DataType -> D.Exp -> C.Exp
 tExpToType tp e = maybeVal (D.exprDataType e, tp) (tExp e)
 

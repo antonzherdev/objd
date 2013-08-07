@@ -23,7 +23,7 @@ data File = File {fileName :: String, fileImports :: [File], fileCImports :: [CI
 
 data Class = Class { classMods :: [ClassMod], className :: String, classExtends :: Maybe Extends
 		, classDefs :: [Def], classGenerics :: [Class]}
-	| Generic {className :: String}
+	| Generic {className :: String, classDefs :: [Def]}
 	| ClassError {className :: String, classErrorText :: String, classDefs :: [Def], classExtends :: Maybe Extends
 		, classGenerics :: [Class]}
 instance Eq Class where
@@ -31,8 +31,9 @@ instance Eq Class where
 
 classError :: String -> String -> Class
 classError name err = ClassError { className = name, classErrorText = err, classDefs = [], classExtends = Nothing, classGenerics = []}
-classConstructor :: Class -> Def 
-classConstructor = head . filter isConstructor . classDefs
+classConstructor :: Class -> Maybe Def 
+classConstructor Generic{} = Nothing
+classConstructor cl = (listToMaybe . filter isConstructor . classDefs) cl
 isClass :: Class -> Bool
 isClass (Class {}) = True
 isClass _ = False
@@ -125,8 +126,7 @@ instance Show Class where
 				| isEnum c = "enum"
 				| otherwise = "class"
 			tp Generic{} = "generic"
-			sConstr Generic{} = ""
-			sConstr c = "(" ++ (strs ", " . map defName . defPars) (classConstructor c) ++ ")"
+			sConstr c = maybe "" (\cc -> "(" ++ (strs ", " . map defName . defPars) cc ++ ")") (classConstructor c)
 			
 instance Show Extends where
 	show (Extends cls generics pars) = "extends " ++ className cls ++ "<" ++ strs' ", " generics ++ "> (" ++ 
@@ -238,7 +238,7 @@ linkClass (ocidx, glidx) cl = self
 		constrPars = map constrPar (D.classFields cl)
 		constrPar f = fromJust $ idxFind fieldsMap (D.defName f)
 		generics = map generic (D.classGenerics cl)
-		generic (D.Generic name) = Generic name
+		generic (D.Generic name) = Generic name []
 		
 		enumItem :: Int -> D.EnumItem -> (Int, Def)
 		enumItem ordinal (D.EnumItem name pars) = (ordinal + 1, Def{defName = name, defMods = [DefModStatic, DefModEnumItem], 
@@ -276,7 +276,7 @@ linkDef :: Env -> D.ClassStm -> Def
 linkDef env ccc = evalState (stateDef ccc) env'
 	where 
 		env' = envAddClasses generics' env
-		genericClass (D.Generic genericName) = Generic genericName
+		genericClass (D.Generic genericName) = Generic genericName []
 		generics' = map genericClass (D.defGenerics ccc)
 
 		stateDef:: D.ClassStm -> State Env Def
@@ -645,8 +645,8 @@ exprDataType (Throw _) = TPThrow
 exprDataType (Not _) = TPBool
 exprDataType (Negative e) = exprDataType e
 exprDataType (Cast dtp _) = dtp
-exprDataType (As dtp) = dtp
-exprDataType (Is dtp) = TPBool
+exprDataType (As dtp) = TPOption dtp
+exprDataType (Is _) = TPBool
 {- exprDataType x = error $ "No exprDataType for " ++ show x -}
 
 expr :: D.Exp -> State Env Exp
@@ -883,7 +883,7 @@ correctCallPar _ _ e = e
 replaceGenerics :: Generics -> DataType -> DataType
 replaceGenerics gns = mapDataType f
 	where 
-		f (TPClass TPMGeneric _ (Generic g)) = M.lookup g gns
+		f (TPClass TPMGeneric _ (Generic g _)) = M.lookup g gns
 		f _ = Nothing
 
 allDefs :: Env -> Maybe DataType -> [Def]
@@ -896,7 +896,7 @@ allDefs env Nothing =
 	++ classConstructors'
 	++ objects 
 	where
-		classConstructors = (map (setName . classConstructor . snd) . M.toList) (envIndex env)
+		classConstructors = (map setName . mapMaybe (classConstructor . snd) . M.toList) (envIndex env)
 		classConstructors' = filter (not . null . defPars) classConstructors
 		setName d@Def{defType = tp} = setDefName (className $ dataTypeClass env tp) d
 		objects = (map (objectDef . snd) . M.toList) (envIndex env)
