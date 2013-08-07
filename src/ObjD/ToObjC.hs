@@ -269,12 +269,12 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 			C.cfunExps = [C.Return $ foldl foldEq C.Nop fields]
 		}
 		toPar D.Def{D.defName = n, D.defType = tp}= C.CFunPar (showDataType tp) n
-		toSet D.Def{D.defName = n} = C.Set Nothing (C.Dot (C.Ref "ret") n) (C.Ref n)
+		toSet D.Def{D.defName = n} = C.Set Nothing (C.Dot (C.Ref "ret") (C.Ref n)) (C.Ref n)
 		foldEq :: C.Exp -> D.Def -> C.Exp
 		foldEq C.Nop d = eqd d
 		foldEq p d = C.BoolOp And p (eqd d)
 		eqd :: D.Def -> C.Exp
-		eqd D.Def{D.defName = n, D.defType = tp} = equals True (tp, C.Dot (C.Ref "s1") n) (tp, C.Dot (C.Ref "s2") n)
+		eqd D.Def{D.defName = n, D.defType = tp} = equals True (tp, C.Dot (C.Ref "s1") (C.Ref n)) (tp, C.Dot (C.Ref "s2") (C.Ref n))
 
 		defs' = (map def' . filter D.isDef) defs
 		def' D.Def{D.defName = n, D.defType = tp, D.defPars = pars, D.defMods = mods} = C.CFunDecl{C.cfunMods = [], 
@@ -440,23 +440,24 @@ tExp (D.MinusMinus e) = C.MinusMinus (tExp e)
 
 
 tExp (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call D.Def {D.defName = name, D.defMods = mods} _ pars)) 
-	| D.DefModField `elem` mods = C.Dot (C.Ref "self") name
-	| otherwise = C.CCall (structDefName (D.className c) name) (C.Ref "self" : (map snd . tPars) pars)
+	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
+	| otherwise = C.CCall (C.Ref $ structDefName (D.className c) name) (C.Ref "self" : (map snd . tPars) pars)
 
 tExp (D.Dot (D.Self (D.TPClass _ _ c)) (D.Call D.Def{D.defMods = mods, D.defName = name} _ pars)) 
 	| D.DefModField `elem` mods = C.Ref $ '_' : name
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className c) name (tPars pars)
 	| otherwise = C.Call C.Self name (tPars pars)
 tExp d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
-	| D.DefModField `elem` mods = castGeneric d $ C.Dot (tExp l) name
+	| D.DefModField `elem` mods && null pars = castGeneric d $ C.Dot (tExp l) (C.Ref name)
+	| D.DefModField `elem` mods = castGeneric d $ C.Dot (tExp l) $ C.CCall (C.Ref name) ((map snd . tPars) pars)
 	| D.DefModConstructor `elem` mods = callConstructor (D.exprDataType d) pars
 	| otherwise = case D.exprDataType l of
 		(D.TPGenericWrap tp@(D.TPClass D.TPMStruct _ c)) -> structCall c (tExpTo tp l)
 		(D.TPClass D.TPMStruct _ c) -> structCall c (tExp l)
-		(D.TPObject D.TPMStruct c) -> C.CCall (structDefName (D.className c) name) ((map snd . tPars) pars)
+		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.className c) name) ((map snd . tPars) pars)
 		_ -> castGeneric d $ C.Call (tExp l) name (tPars pars)
 	where
-		 structCall c self = C.CCall (structDefName (D.className c) name) (self : (map snd . tPars) pars)
+		 structCall c self = C.CCall (C.Ref $ structDefName (D.className c) name) (self : (map snd . tPars) pars)
 tExp (D.Dot l (D.Is dtp)) = C.Call (tExp l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [])]
 tExp (D.Dot l (D.As dtp)) = C.Call (tExp l) "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [])]
 
@@ -468,7 +469,7 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
 	| D.DefModConstructor `elem` mods = callConstructor tp pars
 	| D.DefModGlobalVal `elem` mods = C.Ref name
 	| D.DefModObject `elem` mods = C.Ref name
-	| otherwise = C.CCall name (map snd . tPars $ pars)
+	| otherwise = C.CCall (C.Ref name) (map snd . tPars $ pars)
 tExp (D.If cond t f) = C.InlineIf (tExpTo D.TPBool cond) (tExp t) (tExp f)
 tExp ee@(D.Index e i) = case D.exprDataType e of
 	D.TPObject D.TPMEnum _ -> castGeneric ee $ C.Index (C.Call (tExp e)  "values" []) (tExp i)
@@ -494,7 +495,7 @@ tExp (D.Lambda pars e rtp) =
 	C.Lambda (map par' pars) (unwrapPars ++ tStm rtp e) (showDataType rtp)
 tExp (D.Arr exps) = C.Arr $ map (tExpToType tpGeneric) exps
 tExp (D.Map exps) = C.Map $ map (tExpToType tpGeneric *** tExpToType tpGeneric) exps
-tExp (D.Tuple exps) = C.CCall "tuple" $ map (tExpToType tpGeneric) exps
+tExp (D.Tuple exps) = C.CCall (C.Ref "tuple") $ map (tExpToType tpGeneric) exps
 tExp (D.Opt e) = let tp = D.exprDataType e
 	in C.Call (C.Ref "CNOption") "opt" [("", maybeVal (tp, D.TPGenericWrap tp) (tExp e))]
 tExp (D.None _) = C.Call (C.Ref "CNOption") "none" []
@@ -543,12 +544,12 @@ equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp
 equals False (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp NotEq e1 e2
 equals True (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp Eq e1 e2
 equals False s1@(D.TPClass{}, _) s2@(D.TPClass{}, _) = C.Not $ equals True s1 s2
-equals True (D.TPClass D.TPMStruct _ c, e1) (_, e2) = C.CCall (D.className c ++ "Eq") [e1, e2]
+equals True (D.TPClass D.TPMStruct _ c, e1) (_, e2) = C.CCall (C.Ref (D.className c ++ "Eq")) [e1, e2]
 equals True (D.TPClass {}, e1) (D.TPClass _ _ _, e2) = C.Call e1 "isEqual" [("", e2)]
 equals True (stp@(D.TPGenericWrap _), e1) (dtp, e2) = C.BoolOp Eq (maybeVal (stp, dtp) e1) e2
 equals True (stp, e1) (dtp@(D.TPGenericWrap _), e2) = C.BoolOp Eq e1 (maybeVal (stp, dtp) e2)
-equals True (D.TPFloat, e1) (D.TPFloat, e2) = C.CCall "eqf" [e1, e2]
-equals False (D.TPFloat, e1) (D.TPFloat, e2) = C.Not $ C.CCall "eqf" [e1, e2]
+equals True (D.TPFloat, e1) (D.TPFloat, e2) = C.CCall (C.Ref "eqf") [e1, e2]
+equals False (D.TPFloat, e1) (D.TPFloat, e2) = C.Not $ C.CCall (C.Ref "eqf") [e1, e2]
 equals True (_, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals False (_, e1) (_, e2) = C.BoolOp NotEq e1 e2
 
@@ -563,7 +564,7 @@ callConstructor tp pars = let
 	name = D.dataTypeClassName tp
 	in case tp of 
 		D.TPClass D.TPMStruct _ _ -> C.CCall 
-			(name++ "Make")
+			(C.Ref (name++ "Make"))
 			((map snd. tPars) pars)
 	 	_ ->
 			C.Call 
@@ -583,18 +584,18 @@ maybeVal (stp, dtp) e = let
 	tp D.TPBool{} = TPBool
 	tp _ = TPNoMatter
 	in case (tp stp, tp dtp) of
-		(TPStruct, TPGen) -> C.CCall "val" [e]
-		(TPGen, TPStruct) -> C.CCall "uval" [C.Ref $ D.className $ D.tpClass dtp, e]
+		(TPStruct, TPGen) -> C.CCall (C.Ref "val") [e]
+		(TPGen, TPStruct) -> C.CCall (C.Ref "uval") [C.Ref $ D.className $ D.tpClass dtp, e]
 		(TPNum, TPGen) -> case e of
 			C.IntConst _ -> C.ObjCConst e
-			_ -> C.CCall "numi" [e]
-		(TPGen, TPNum) -> C.CCall "unumi" [e]
+			_ -> C.CCall (C.Ref "numi") [e]
+		(TPGen, TPNum) -> C.CCall (C.Ref "unumi") [e]
 		(TPFloat, TPGen) -> case e of
 			C.FloatConst _ -> C.ObjCConst e
-			_ -> C.CCall "numf" [e]
-		(TPGen, TPFloat) -> C.CCall "unumf" [e]
+			_ -> C.CCall (C.Ref "numf") [e]
+		(TPGen, TPFloat) -> C.CCall (C.Ref "unumf") [e]
 		(TPBool, TPGen) -> case e of
 			C.BoolConst _ -> C.ObjCConst e
-			_ -> C.CCall "numb" [e]
-		(TPGen, TPBool) -> C.CCall "unumb" [e]
+			_ -> C.CCall (C.Ref "numb") [e]
+		(TPGen, TPBool) -> C.CCall (C.Ref "unumb") [e]
 		_ -> e

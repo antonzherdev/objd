@@ -52,7 +52,7 @@ data Stm =
 data Exp =
 	Self | Super
 	| Call {callInst :: Exp, callName :: String, callPars :: [(String, Exp)]}
-	| CCall {callName :: String, ccallPars :: [Exp]}
+	| CCall Exp [Exp]
 	| Ref String
 	| IntConst Int
 	| BoolConst Bool
@@ -61,7 +61,7 @@ data Exp =
 	| ObjCConst Exp
 	| BoolOp BoolTp Exp Exp 
 	| MathOp MathTp Exp Exp 
-	| Dot Exp String
+	| Dot Exp Exp
 	| PlusPlus Exp
 	| MinusMinus Exp
 	| Nop
@@ -204,8 +204,8 @@ multiLineIf (If cond t f) = ["if(" ++ show cond ++ ") {" ] ++ stms t ++ ["} else
 stmLines :: Stm -> [String]
 stmLines (If cond [t] []) = ["if(" ++ show cond ++ ") " ] `glue` stmLines t
 stmLines (If cond t []) = ["if(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
-stmLines i@(If cond [If{}] _) = multiLineIf i
-stmLines i@(If cond _ [If{}]) = multiLineIf i
+stmLines i@(If _ [If{}] _) = multiLineIf i
+stmLines i@(If _ _ [If{}]) = multiLineIf i
 stmLines (If cond [t] [f]) = (["if(" ++ show cond ++ ") " ] `glue` stmLines t) ++ (["else "] `glue` stmLines f)
 stmLines i@If{} = multiLineIf i
 
@@ -223,7 +223,7 @@ expLines Self = ["self"]
 expLines Super = ["super"]
 expLines (Call inst name pars) = ["["] `glue` (expLines inst `app` (" " ++ name)) `glue` (pars' `app` "]")
 	where pars' = (mapFirst cap . glueAll " " . map (\(nm, e) -> [nm ++ ":"] `glue` expLines e)) pars
-expLines (CCall name pars) = [name ++ "("] `glue` (pars' `app` ")")
+expLines (CCall name pars) = (expLines name `app` "(") `glue` (pars' `app` ")")
 	where pars' = (glueAll ", " . map expLines) pars
 expLines (Ref name) = [name]
 expLines (IntConst i) = [show i]
@@ -254,7 +254,7 @@ expLines (MathOp t l r) = [mbb l ++ " " ++ show t ++ " " ++ mbb r]
 		needb Mul Plus = True
 		needb Mul Minus = True
 		needb _ _ = False
-expLines (Dot l r) = [show l ++ "." ++ r]
+expLines (Dot l r) = (expLines l `app` ".") `glue` expLines r
 expLines (PlusPlus e) = appendLast "++" (expLines e)
 expLines (MinusMinus e) = appendLast "--" (expLines e)
 expLines (InlineIf c t f) = (expLines c `app` " ? ") `glue` (expLines t `app` " : ") `glue` (expLines f) 
