@@ -535,7 +535,9 @@ tStm _ (D.Set (Just t) l r) = let
 		ltp = D.exprDataType l
 		rtp = D.exprDataType r
 	in case ltp of
-		D.TPArr _ _ -> [C.Set Nothing l' (addObjectToArray l' r')]
+		D.TPArr _ _ ->  case t of
+			Plus -> [C.Set Nothing l' (addObjectToArray l' r')]
+			Minus -> [C.Set Nothing l' (removeObjectFromArray l' r')]
 		D.TPMap _ _ _ -> [C.Set Nothing l' (addKVToMap l' r)]
 		_ -> [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
 tStm _ (D.Set tp l r) = [C.Set tp (tExp l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp r))]
@@ -561,6 +563,8 @@ equals False (_, e1) (_, e2) = C.BoolOp NotEq e1 e2
 
 addObjectToArray :: C.Exp -> C.Exp -> C.Exp
 addObjectToArray a obj = C.Call a "arrayByAdding" [("object", obj)] []
+removeObjectFromArray :: C.Exp -> C.Exp -> C.Exp
+removeObjectFromArray a obj = C.Call a "arrayByRemoving" [("object", obj)] []
 
 addKVToMap :: C.Exp -> D.Exp -> C.Exp
 addKVToMap a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tExp v), ("forKey", tExp k)] []
