@@ -108,19 +108,13 @@ stringSps s = string s >> sps
 
 pStub :: Parser FileStm
 pStub = do
-	mods <- try (do
+	def <- try (do
 		string "stub"
 		sps
-		(string "def" >> return []) <|> (string "val" >> return [StubDefModVal])
+		pDef <|> pDecl
 		)
 	sps
-	name <- ident
-	sps
-	pars <- pDefPars
-	sps
-	ret <- option (DataType "void" []) (pDataType False)
-	sps
-	return StubDef {stubDefName = name, stubDefPars = pars, stubDefRetType = ret, stubDefMods = mods}
+	return $ StubDef def
 
 
 pClass :: Parser FileStm
@@ -206,7 +200,7 @@ pDecl' mtf = do
 		sps
 		def <- oExp
 		sps
-		return Decl{defName = name, defRetType = dataType, defMods = [DefModMutable| mut] ++ mods, defBody = def}
+		return Def{defName = name, defRetType = dataType, defMods = DefModVal : [DefModMutable| mut] ++ mods, defBody = def, defGenerics = [], defPars = []}
 	where
 		mutableType = do
 			v <- try var <|> val

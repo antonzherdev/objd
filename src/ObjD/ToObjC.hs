@@ -182,26 +182,26 @@ implCreate cl constr@D.Def{D.defPars = constrPars} = let
 		clsName = D.className cl
 		pars D.Def{D.defName = name} = (name, C.Ref name)
 	in C.ImplFun (createFun clsName constr) [C.Return $
-		autorelease $ C.Call (C.Call (C.Ref clsName) "alloc" []) (if null constrPars then "init" else "initWith") (map pars constrPars)
+		autorelease $ C.Call (C.Call (C.Ref clsName) "alloc" [] []) (if null constrPars then "init" else "initWith") (map pars constrPars) []
 	] 
 
 retain :: C.Exp -> C.Exp
 retain f 
 	| arc = f
-	| otherwise = C.Call f "retain" []			
+	| otherwise = C.Call f "retain" [] []			
 
 autorelease :: C.Exp -> C.Exp
 autorelease e 
 	| arc = e
-	| otherwise = C.Call e "autorelease" []
+	| otherwise = C.Call e "autorelease" [] []
 
 dealoc :: D.Class -> [C.ImplFun]
 dealoc cl 
 	| arc = []
 	| otherwise = [C.ImplFun (C.Fun C.InstanceFun voidTp "dealloc" []) $
-		 mapMaybe releaseField (D.classFields cl) ++ [C.Stm $C.Call C.Super "dealloc" []]]
+		 mapMaybe releaseField (D.classFields cl) ++ [C.Stm $C.Call C.Super "dealloc" [] []]]
 	where 
-		releaseField D.Def{D.defName = name, D.defType = D.TPClass{}} = Just $ C.Stm $ C.Call (C.Ref $ '_' : name) "release" []
+		releaseField D.Def{D.defName = name, D.defType = D.TPClass{}} = Just $ C.Stm $ C.Call (C.Ref $ '_' : name) "release" [] []
 		releaseField _ = Nothing
 
 implInitialize :: D.Class -> Maybe C.ImplFun 		
@@ -212,7 +212,7 @@ implInitialize cl = let
 	in case fields of
 		[] -> Nothing
 		_ -> Just $ C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
-			((C.Stm $ C.Call C.Super "initialize" []) : map implInitField fields))
+			((C.Stm $ C.Call C.Super "initialize" [] []) : map implInitField fields))
 
 
 
@@ -228,9 +228,9 @@ implInit cl constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
 
 		hasField f= any ((D.defName f == ) . D.defName) (D.classDefs cl)
 
-		superInit Nothing = C.Call C.Super "init" []
-		superInit (Just (D.Extends _ _ [])) = C.Call C.Super "init" []
-		superInit (Just (D.Extends _ _ pars)) = C.Call C.Super "initWith" $ map (D.defName *** tExp) pars
+		superInit Nothing = C.Call C.Super "init" [] []
+		superInit (Just (D.Extends _ _ [])) = C.Call C.Super "init" [] []
+		superInit (Just (D.Extends _ _ pars)) = C.Call C.Super "initWith" (map (D.defName *** tExp) pars) []
 
 		implInitFields :: [D.Def] -> [D.Def] -> [C.Stm]
 		implInitFields [] [] = []
@@ -341,7 +341,7 @@ genEnumImpl cl@D.Class {D.className = clsName} = [
 		stField D.Def{D.defName = itemName} = C.ImplField ('_' : itemName) (C.TPSimple (clsName ++ "*") []) []
 		itemGetter e@D.Def{D.defName = itemName} = C.ImplFun (enumItemGetterFun clsName e) [C.Return $ C.Ref $ '_' : itemName]
 		initialize = C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
-			((C.Stm $ C.Call C.Super "initialize" []) : map initItem items) ++ [setValues])
+			((C.Stm $ C.Call C.Super "initialize" [] []) : map initItem items) ++ [setValues])
 		initItem :: D.Def -> C.Stm
 		initItem D.Def{D.defName = itemName, D.defBody = body} = C.Set Nothing (C.Ref $ '_' : itemName) $ retain $ tExp body
 		valuesFun = C.ImplFun enumValuesFun [C.Return $ C.Ref valuesVarName]
@@ -445,8 +445,8 @@ tExp (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call D.Def {D.defName = name
 
 tExp (D.Dot (D.Self (D.TPClass _ _ c)) (D.Call D.Def{D.defMods = mods, D.defName = name} _ pars)) 
 	| D.DefModField `elem` mods = C.Ref $ '_' : name
-	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className c) name (tPars pars)
-	| otherwise = C.Call C.Self name (tPars pars)
+	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className c) name (tPars pars) []
+	| otherwise = C.Call C.Self name (tPars pars) []
 tExp d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModField `elem` mods && null pars = castGeneric d $ C.Dot (tExp l) (C.Ref name)
 	| D.DefModField `elem` mods = castGeneric d $ C.Dot (tExp l) $ C.CCall (C.Ref name) ((map snd . tPars) pars)
@@ -455,11 +455,11 @@ tExp d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars))
 		(D.TPGenericWrap tp@(D.TPClass D.TPMStruct _ c)) -> structCall c (tExpTo tp l)
 		(D.TPClass D.TPMStruct _ c) -> structCall c (tExp l)
 		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.className c) name) ((map snd . tPars) pars)
-		_ -> castGeneric d $ C.Call (tExp l) name (tPars pars)
+		_ -> castGeneric d $ C.Call (tExp l) name (tPars pars) []
 	where
 		 structCall c self = C.CCall (C.Ref $ structDefName (D.className c) name) (self : (map snd . tPars) pars)
-tExp (D.Dot l (D.Is dtp)) = C.Call (tExp l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [])]
-tExp (D.Dot l (D.As dtp)) = C.Call (tExp l) "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [])]
+tExp (D.Dot l (D.Is dtp)) = C.Call (tExp l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
+tExp (D.Dot l (D.As dtp)) = C.Call (tExp l) "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
 
 
 tExp (D.Self _) = C.Self
@@ -472,8 +472,8 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
 	| otherwise = C.CCall (C.Ref name) (map snd . tPars $ pars)
 tExp (D.If cond t f) = C.InlineIf (tExpTo D.TPBool cond) (tExp t) (tExp f)
 tExp ee@(D.Index e i) = case D.exprDataType e of
-	D.TPObject D.TPMEnum _ -> castGeneric ee $ C.Index (C.Call (tExp e)  "values" []) (tExp i)
-	D.TPMap _ k _ -> castGeneric ee $ C.Call (tExp e) "optionObjectFor" [("key", tExpTo k i)]
+	D.TPObject D.TPMEnum _ -> castGeneric ee $ C.Index (C.Call (tExp e)  "values" [] []) (tExp i)
+	D.TPMap _ k _ -> castGeneric ee $ C.Call (tExp e) "optionObjectFor" [("key", tExpTo k i)] []
 	_ -> castGeneric ee $ C.Index (tExp e) (tExp i)
 tExp (D.Lambda pars e rtp) = 
 	let 
@@ -497,14 +497,20 @@ tExp (D.Arr exps) = C.Arr $ map (tExpToType tpGeneric) exps
 tExp (D.Map exps) = C.Map $ map (tExpToType tpGeneric *** tExpToType tpGeneric) exps
 tExp (D.Tuple exps) = C.CCall (C.Ref "tuple") $ map (tExpToType tpGeneric) exps
 tExp (D.Opt e) = let tp = D.exprDataType e
-	in C.Call (C.Ref "CNOption") "opt" [("", maybeVal (tp, D.TPGenericWrap tp) (tExp e))]
-tExp (D.None _) = C.Call (C.Ref "CNOption") "none" []
+	in C.Call (C.Ref "CNOption") "opt" [("", maybeVal (tp, D.TPGenericWrap tp) (tExp e))] []
+tExp (D.None _) = C.Call (C.Ref "CNOption") "none" [] []
 tExp (D.Not e) = C.Not (tExp e)
 tExp (D.Negative e) = C.Negative (tExp e)
-tExp (D.Cast dtp e) = let stp = D.exprDataType e
+tExp (D.Cast dtp e) = let 
+		stp = D.exprDataType e
+		toString format = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] [tExpTo stp e]
 	in case (stp, dtp) of
-		(D.TPMap False _ _, D.TPMap True _ _) -> C.Call (tExp e) "mutableCopy" []
-		(D.TPArr False _, D.TPArr True _) -> C.Call (tExp e) "mutableCopy" []
+		(D.TPMap False _ _, D.TPMap True _ _) -> C.Call (tExp e) "mutableCopy" [] []
+		(D.TPArr False _, D.TPArr True _) -> C.Call (tExp e) "mutableCopy" [] []
+		(D.TPInt, D.TPString) -> toString "%li" 
+		(D.TPUInt, D.TPString) -> toString "%li" 
+		(D.TPFloat, D.TPString) -> toString "%f" 
+
 tExp e@D.ExpDError{} = C.Error $ show e
 tExp e@D.ExpLError{} = C.Error $ show e
 tExp x = C.Error $ "No tExp for " ++ show x
@@ -545,7 +551,7 @@ equals False (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.Boo
 equals True (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp Eq e1 e2
 equals False s1@(D.TPClass{}, _) s2@(D.TPClass{}, _) = C.Not $ equals True s1 s2
 equals True (D.TPClass D.TPMStruct _ c, e1) (_, e2) = C.CCall (C.Ref (D.className c ++ "Eq")) [e1, e2]
-equals True (D.TPClass {}, e1) (D.TPClass _ _ _, e2) = C.Call e1 "isEqual" [("", e2)]
+equals True (D.TPClass {}, e1) (D.TPClass _ _ _, e2) = C.Call e1 "isEqual" [("", e2)] []
 equals True (stp@(D.TPGenericWrap _), e1) (dtp, e2) = C.BoolOp Eq (maybeVal (stp, dtp) e1) e2
 equals True (stp, e1) (dtp@(D.TPGenericWrap _), e2) = C.BoolOp Eq e1 (maybeVal (stp, dtp) e2)
 equals True (D.TPFloat, e1) (D.TPFloat, e2) = C.CCall (C.Ref "eqf") [e1, e2]
@@ -554,10 +560,10 @@ equals True (_, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals False (_, e1) (_, e2) = C.BoolOp NotEq e1 e2
 
 addObjectToArray :: C.Exp -> C.Exp -> C.Exp
-addObjectToArray a obj = C.Call a "arrayByAdding" [("object", obj)]
+addObjectToArray a obj = C.Call a "arrayByAdding" [("object", obj)] []
 
 addKVToMap :: C.Exp -> D.Exp -> C.Exp
-addKVToMap a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tExp v), ("forKey", tExp k)]
+addKVToMap a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tExp v), ("forKey", tExp k)] []
 
 callConstructor :: D.DataType -> [(D.Def, D.Exp)] -> C.Exp
 callConstructor tp pars = let
@@ -566,11 +572,11 @@ callConstructor tp pars = let
 		D.TPClass D.TPMStruct _ _ -> C.CCall 
 			(C.Ref (name++ "Make"))
 			((map snd. tPars) pars)
-	 	_ ->
-			C.Call 
-			(C.Ref name) 
-			(createFunName $ name ++ if null pars then "" else "With") 
-			(tPars pars)
+	 	_ -> C.Call 
+				(C.Ref name) 
+				(createFunName $ name ++ if null pars then "" else "With") 
+				(tPars pars)
+				[]
 
 data MaybeValTP = TPGen | TPNum | TPStruct | TPNoMatter | TPBool | TPFloat
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp

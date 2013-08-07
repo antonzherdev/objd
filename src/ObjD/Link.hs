@@ -175,7 +175,7 @@ linkFile fidx (D.File name stms) = fl
 		files = visibleFiles stms
 		isCls s = D.isClass s || D.isStub s || D.isEnum s
 		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . (++ kernelFiles) . visibleFiles) stms
-		glidx = concatMap globalDefs (fl : files)
+		glidx = concatMap globalDefs (fl : files ++ kernelFiles)
 		visibleFiles :: [D.FileStm] -> [File]
 		visibleFiles = mapMaybe (getFile . D.impString) . filter D.isImport
 		kernelFiles :: [File]
@@ -187,12 +187,12 @@ linkFile fidx (D.File name stms) = fl
 
 		getFile f = M.lookup f fidx
 		gldefs = (map gldef . filter D.isStubDef) stms
-		gldef D.StubDef{D.stubDefName = sn, D.stubDefPars = pars, D.stubDefRetType = tp, D.stubDefMods = mods} = 
-			Def {defName = sn, defPars = linkDefPars cidx pars, defType = dataType cidx tp, 
-				defMods = DefModStub : map md' mods , 
-				defBody = Nop, defGenerics = Nothing}
+		gldef (D.StubDef d@D.Def{D.defMods = mods}) = 
+			(linkDef env d){defMods = DefModStub : mapMaybe md' mods}
 			where
-				md' D.StubDefModVal = DefModGlobalVal
+				env = Env{envSelf = TPVoid, envIndex = cidx, envGlobalDefIndex = glidx,  envVals = []}
+				md' D.DefModVal = Just DefModGlobalVal
+				md' _ = Nothing
 
 linkClass :: (ClassIndex, DefIndex) -> D.FileStm -> Class
 linkClass (ocidx, glidx) cl = self
@@ -252,7 +252,7 @@ linkClass (ocidx, glidx) cl = self
 					[]
 
 linkField :: D.ClassStm -> State Env Def
-linkField D.Decl {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
+linkField D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
 	i <- expr e
 	env <- get
 	let 
@@ -949,6 +949,9 @@ implicitConvertsion dtp ex = let stp = exprDataType ex
 		conv _ (TPClass TPMGeneric _ _) = ex
 		conv (TPMap False _ _) (TPMap True _ _) = Cast dtp ex
 		conv (TPArr False _) (TPArr True _) = Cast dtp ex
+		conv TPInt TPString = Cast TPString ex
+		conv TPUInt TPString = Cast TPString ex
+		conv TPFloat TPString = Cast TPString ex
 		conv sc dc@TPClass{} = if sc /= dc then classConversion dc sc ex else ex
 		conv _ _ = ex
 

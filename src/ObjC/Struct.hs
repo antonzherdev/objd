@@ -51,7 +51,7 @@ data Stm =
 
 data Exp =
 	Self | Super
-	| Call {callInst :: Exp, callName :: String, callPars :: [(String, Exp)]}
+	| Call {callInst :: Exp, callName :: String, callPars :: [(String, Exp)], callVargs :: [Exp]}
 	| CCall Exp [Exp]
 	| Ref String
 	| IntConst Int
@@ -75,7 +75,7 @@ data Exp =
 	| Negative Exp
 	| Error String
 	| Cast DataType Exp
-	
+
 showStms :: [Stm] -> String
 showStms = unlines . stms
 stms :: [Stm] -> [String]
@@ -221,8 +221,11 @@ stmLines (Var tp name e) = [showDecl tp name ++ " = "] `glue` (expLines e `app` 
 expLines :: Exp -> [String]
 expLines Self = ["self"]
 expLines Super = ["super"]
-expLines (Call inst name pars) = ["["] `glue` (expLines inst `app` (" " ++ name)) `glue` (pars' `app` "]")
-	where pars' = (mapFirst cap . glueAll " " . map (\(nm, e) -> [nm ++ ":"] `glue` expLines e)) pars
+expLines (Call inst name pars vargs) = ["["] `glue` (expLines inst `app` (" " ++ name)) `glue` pars' `glue` (vargs'  `app` "]")
+	where 
+		pars' = (mapFirst cap . glueAll " " . map (\(nm, e) -> [nm ++ ":"] `glue` expLines e)) pars
+		vargs' = (glueAll "" . map varg') vargs
+		varg' = ([", "] `glue` ) . expLines
 expLines (CCall name pars) = (expLines name `app` "(") `glue` (pars' `app` ")")
 	where pars' = (glueAll ", " . map expLines) pars
 expLines (Ref name) = [name]
