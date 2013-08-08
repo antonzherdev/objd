@@ -9,6 +9,7 @@ import 		     Ex.String
 import           Control.Arrow
 import           Data.Char
 import           Data.Maybe
+import           Data.List
 import qualified ObjC.Struct   as C
 import qualified ObjD.Link   as D
 
@@ -157,7 +158,7 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs} =
 		C.implFields = map implField implFields,
 		C.implSynthesizes = (map synthesize . filter needProperty) implFields,
 		C.implFuns = [implCreate cl constr, implInit cl constr] ++ maybeToList (implInitialize cl) ++ dealoc cl 
-			++ implFuns defs ++ staticGetters ++ copyImpls,
+			++ implFuns defs ++ staticGetters ++ copyImpls ++ (if null vars then [equal, hash] else []) ++ [description],
 		C.implStaticFields = map implField staticFields
 	}
 	where
@@ -168,6 +169,24 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs} =
 		staticFields = filter isStaticField defs
 		staticGetters = (map staticGetter . filter((D.DefModPrivate `notElem`) . D.defMods)) staticFields
 		staticGetter f@D.Def{D.defName = name} = C.ImplFun (staticGetterFun f) [C.Return $ C.Ref $ '_' : name]
+		selfTp = (C.TPSimple (clsName ++ "*") []) 
+		
+		equal = C.ImplFun equalFun ([
+			C.If (C.BoolOp Eq C.Self (C.Ref "other")) [C.Return $ C.BoolConst True] [],
+			C.If (C.BoolOp Or (C.Not $ C.Ref "other") (C.Not equalClass)) [C.Return $ C.BoolConst False] [],
+			C.Var selfTp "o" (C.Cast selfTp (C.Ref "other"))
+			] ++ equalsFun C.Self (C.Ref "o") equalFields)
+		equalClass = C.Call (C.Call C.Self "class" [] []) "isEqual" [("", C.Call (C.Ref "other") "class" [] [])] []
+		equalFun = C.Fun C.InstanceFun (C.TPSimple "BOOL" []) "isEqual" [(C.FunPar "" (C.TPSimple "id" []) "other")]
+		equalFields = (maybe [] (D.defPars) $ D.classConstructor cl) 
+		vars = filter ( (D.DefModMutable `elem` ). D.defMods) defs
+ 		
+ 		hash = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSUInteger" []) "hash" []) (hashFun equalFields)
+ 		description = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSString*" []) "description" []) 
+ 			(descriptionFun descStart equalFields)
+ 		descStart = C.Call (C.Ref "NSMutableString") "stringWith" [("format", C.StringConst "<%@: ")] 
+			[C.CCall (C.Ref "NSStringFromClass") [C.Call C.Self "class" [] []]]
+			
 
 copyImpls :: [C.ImplFun]
 copyImpls = [C.ImplFun (C.Fun C.InstanceFun idTp "copyWith" [C.FunPar "zone" (C.TPSimple "NSZone*" []) "zone"]) [C.Return C.Self]]
@@ -253,7 +272,7 @@ implFuns = map stm2ImplFun . filter D.isDef
 		
 {- Struct -}
 genStruct :: D.Class -> [C.FileStm]
-genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fields', con, eq ] ++ defs' ++ [C.EmptyLine]
+genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fields', con, eq, hash, description] ++ defs' ++ [C.EmptyLine]
 	where
 		fields = filter D.isField defs
 		fields' = map toField fields
@@ -266,16 +285,20 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 		}
 		eq = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple "BOOL" [], C.cfunName = name ++ "Eq", 
 			C.cfunPars = [C.CFunPar (C.TPSimple name []) "s1", C.CFunPar (C.TPSimple name []) "s2"], 
-			C.cfunExps = [C.Return $ foldl foldEq C.Nop fields]
+			C.cfunExps = equalsFun (C.Ref "s1") (C.Ref "s2") fields
 		}
+		hash = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple "NSUInteger" [], C.cfunName = name ++ "Hash", 
+			C.cfunPars = [C.CFunPar (C.TPSimple name []) "self"], 
+			C.cfunExps = hashFun fields
+		}
+		description = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple "NSString*" [], C.cfunName = name ++ "Description", 
+			C.cfunPars = [C.CFunPar (C.TPSimple name []) "self"], 
+			C.cfunExps = descriptionFun descStart fields
+		}
+		descStart = C.Call (C.Ref "NSMutableString") "stringWith" [("string", C.StringConst $ "<" ++ name ++ ": ")] []
 		toPar D.Def{D.defName = n, D.defType = tp}= C.CFunPar (showDataType tp) n
 		toSet D.Def{D.defName = n} = C.Set Nothing (C.Dot (C.Ref "ret") (C.Ref n)) (C.Ref n)
-		foldEq :: C.Exp -> D.Def -> C.Exp
-		foldEq C.Nop d = eqd d
-		foldEq p d = C.BoolOp And p (eqd d)
-		eqd :: D.Def -> C.Exp
-		eqd D.Def{D.defName = n, D.defType = tp} = equals True (tp, C.Dot (C.Ref "s1") (C.Ref n)) (tp, C.Dot (C.Ref "s2") (C.Ref n))
-
+		
 		defs' = (map def' . filter D.isDef) defs
 		def' D.Def{D.defName = n, D.defType = tp, D.defPars = pars, D.defMods = mods} = C.CFunDecl{C.cfunMods = [], 
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
@@ -284,6 +307,57 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 				pars' = map par' pars
 				par' D.Def{D.defName = nn, D.defType = tpp} = C.CFunPar (showDataType tpp) nn
 
+equalsFun :: C.Exp -> C.Exp -> [D.Def] -> [C.Stm]
+equalsFun _ _ [] = [C.Return $ C.BoolConst True]
+equalsFun s1 s2 fields = [C.Return $ foldl foldEq C.Nop fields]
+	where
+		foldEq :: C.Exp -> D.Def -> C.Exp
+		foldEq C.Nop d = eqd d
+		foldEq p d = C.BoolOp And p (eqd d)
+		eqd :: D.Def -> C.Exp
+		eqd D.Def{D.defName = n, D.defType = tp} = equals True (tp, C.Dot s1 (C.Ref n)) (tp, C.Dot s2 (C.Ref n))
+
+hashFun :: [D.Def] -> [C.Stm]
+hashFun [] = [C.Return $ C.IntConst 0]
+hashFun fields = 
+	[C.Var (C.TPSimple "NSUInteger" []) "hash" (C.IntConst 0)] ++
+	map hashSet fields ++
+	[C.Return $ C.Ref "hash"]
+	where
+		hashSet D.Def{D.defName = nm, D.defType = tp} = C.Set Nothing (C.Ref "hash") $
+			C.MathOp Plus (C.MathOp Mul (C.Ref "hash") (C.IntConst 31)) $ case tp of
+				D.TPClass D.TPMEnum _ _ -> C.Call ref "ordinal" [] []
+				D.TPClass D.TPMStruct _ scl -> C.CCall (C.Ref $ D.className scl ++ "Hash") [ref]
+				D.TPFloat -> C.Call (C.Call (C.Ref "NSNumber") "numberWith" [("double", ref)] []) "hash" [] []
+				D.TPInt -> ref
+				D.TPUInt -> ref
+				D.TPBool -> ref
+				_ -> C.Call ref "hash" [] []
+			where
+				ref = C.Dot C.Self (C.Ref nm)
+
+descriptionFun :: C.Exp -> [D.Def] -> [C.Stm]
+descriptionFun start fields = 
+	[C.Var (C.TPSimple "NSMutableString*" []) "description" start] ++
+	snd (mapAccumL append 0 fields)++
+	[C.Stm end, C.Return $ C.Ref "description"]
+	where
+		end = C.Call (C.Ref "description") "append" [("string", C.StringConst ">")] []
+		append :: Int -> D.Def -> (Int, C.Stm)
+		append i D.Def{D.defName = nm, D.defType = tp} = (i + 1, C.Stm $ C.Call (C.Ref "description") "append" 
+			[("format", C.StringConst $ (if i > 0 then ", " else "") ++ nm ++ "="  ++ case tp of
+				D.TPInt -> "%li"
+				D.TPUInt -> "%li"
+				D.TPFloat -> "%f"
+				D.TPBool -> "%d"
+				_ -> "%@"
+				)]
+			[case tp of
+				D.TPClass D.TPMStruct _ scl -> C.CCall (C.Ref $ D.className scl ++ "Description") [ref]
+				_ -> ref
+				])
+			where
+				ref = C.Dot C.Self (C.Ref nm)
 
 genStructImpl :: D.Class -> [C.FileStm]
 genStructImpl D.Class {D.className = name, D.classDefs = defs} = (map def' . filter D.isDef) defs
@@ -550,16 +624,20 @@ tStm _ x = [C.Stm $ tExp x]
 
 equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp
 equals False (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp NotEq e1 e2
+equals False (D.TPInt, e1) (_, e2) = C.BoolOp NotEq e1 e2
+equals False (D.TPUInt, e1) (_, e2) = C.BoolOp NotEq e1 e2
+equals False (D.TPBool, e1) (_, e2) = C.BoolOp NotEq e1 e2
+equals False s1@(_, _) s2@(_, _) = C.Not $ equals True s1 s2
+
 equals True (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp Eq e1 e2
-equals False s1@(D.TPClass{}, _) s2@(D.TPClass{}, _) = C.Not $ equals True s1 s2
 equals True (D.TPClass D.TPMStruct _ c, e1) (_, e2) = C.CCall (C.Ref (D.className c ++ "Eq")) [e1, e2]
-equals True (D.TPClass {}, e1) (D.TPClass _ _ _, e2) = C.Call e1 "isEqual" [("", e2)] []
 equals True (stp@(D.TPGenericWrap _), e1) (dtp, e2) = C.BoolOp Eq (maybeVal (stp, dtp) e1) e2
 equals True (stp, e1) (dtp@(D.TPGenericWrap _), e2) = C.BoolOp Eq e1 (maybeVal (stp, dtp) e2)
-equals True (D.TPFloat, e1) (D.TPFloat, e2) = C.CCall (C.Ref "eqf") [e1, e2]
-equals False (D.TPFloat, e1) (D.TPFloat, e2) = C.Not $ C.CCall (C.Ref "eqf") [e1, e2]
-equals True (_, e1) (_, e2) = C.BoolOp Eq e1 e2
-equals False (_, e1) (_, e2) = C.BoolOp NotEq e1 e2
+equals True (D.TPFloat, e1) (_, e2) = C.CCall (C.Ref "eqf") [e1, e2]
+equals True (D.TPInt, e1) (_, e2) = C.BoolOp Eq e1 e2
+equals True (D.TPUInt, e1) (_, e2) = C.BoolOp Eq e1 e2
+equals True (D.TPBool, e1) (_, e2) = C.BoolOp Eq e1 e2
+equals True (_, e1) (_, e2) = C.Call e1 "isEqual" [("", e2)] []
 
 addObjectToArray :: C.Exp -> C.Exp -> C.Exp
 addObjectToArray a obj = C.Call a "arrayByAdding" [("object", obj)] []

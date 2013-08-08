@@ -91,7 +91,7 @@ instance Show FileStm where
 		where 
 			tp = (if ClassModStub `elem` mods then "stub " else "") ++ (if ClassModStruct `elem` mods then "struct" else "class")
 	show (Enum{className = name, classFields = fields, classBody = body}) = "enum " ++ name ++  "(" ++ strs' ", " fields ++ ")" ++ showClassBody body
-	show (StubDef stubDef) = "stub " ++ show stubDef
+	show (StubDef d) = "stub " ++ show d
 	show (Import name ImportTypeD) = "import " ++ name
 	show (Import name ImportTypeCLib) = "import <" ++ name ++ ">"
 	show (Import name ImportTypeCUser) = "import \"" ++ name ++ "\""

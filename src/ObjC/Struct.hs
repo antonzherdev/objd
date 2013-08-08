@@ -271,4 +271,4 @@ expLines (Not e) = ["!("] `glue` (expLines e `app` ")")
 expLines (Negative e) = ["-"] `glue` expLines e
 expLines (Cast tp e) =  ["((" ++ show tp ++ ")"] `glue` (expLines e `app` ")")
 expLines (Error s) = ["<#ERROR: "] `glue` (lines s `app` "#>")
-
+expLines Nop = []
