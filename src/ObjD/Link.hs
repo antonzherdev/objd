@@ -945,6 +945,7 @@ findCall (name,pars) (_, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter
 		def' d = Call d (resolveTp d) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
 		resolveTp d = case defType d of
 			TPSelf -> selfType
+			tp@(TPFun _ dtp)-> if length pars == length (defPars d) then tp else dtp
 			tp -> tp
 		defPars' :: Def -> [Def]
 		defPars' Def{defType = t, defPars = []} = dataTypePars t

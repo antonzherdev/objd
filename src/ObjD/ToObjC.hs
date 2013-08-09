@@ -518,7 +518,8 @@ tExp (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call D.Def {D.defName = name
 	| otherwise = C.CCall (C.Ref $ structDefName (D.className c) name) (C.Ref "self" : (map snd . tPars) pars)
 
 tExp (D.Dot (D.Self (D.TPClass _ _ c)) (D.Call D.Def{D.defMods = mods, D.defName = name} _ pars)) 
-	| D.DefModField `elem` mods = C.Ref $ '_' : name
+	| D.DefModField `elem` mods && null pars = C.Ref $ '_' : name
+	| D.DefModField `elem` mods = C.CCall (C.Ref ('_' : name)) ((map snd . tPars) pars)
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className c) name (tPars pars) []
 	| otherwise = C.Call C.Self name (tPars pars) []
 tExp d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
