@@ -349,11 +349,16 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pNot <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> try(pNumConst) <|> pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pSelf <|> pNil <|> pCall  <?> "Expression"
+		pTerm' = pNot <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> try(pNumConst) <|> pBreak <|>
+			pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pWhile <|> pDo <|> pSelf <|> pNil <|> pCall  <?> "Expression"
 		pMinus = do
 			charSps '-'
 			e <- pExp
 			return $ Negative e
+		pBreak = try $ do 
+			string "break"
+			sps1
+			return Break
 		pNot = do
 			charSps '!'
 			e <- pTerm
@@ -420,6 +425,30 @@ pTerm = do
 			e <- option Nop (try(string "else") >> sps >> pExp)
 			sps
 			return $ If cond i e
+		pWhile = do
+			try $ do 
+				string "while"
+				sps
+				charSps '('
+			cond <- pExp
+			sps
+			charSps ')' <?> "Closing while bracket"
+			e <- pExp
+			sps
+			return $ While cond e
+		pDo = do
+			try $ do 
+				string "do"
+				sps
+				e <- pExp
+				sps
+				string "while"
+				sps
+				charSps '('
+				cond <- pExp
+				sps
+				charSps ')'
+				return $ Do cond e
 		pSelf = try(string "self") >> return Self
 		pNil = try(string "nil") >> return Nil
 		pCall = do

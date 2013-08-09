@@ -78,6 +78,9 @@ data Exp = Nop
 	| Throw Exp
 	| Not Exp
 	| Negative Exp
+	| While Exp Exp
+	| Do Exp Exp
+	| Break
 type CallPar = (Maybe String, Exp)
 
 data DataType = DataType String [DataType] 
@@ -122,8 +125,12 @@ instance Show Exp where
 	show (Tuple exps) = "("  ++ strs' ", " exps ++ ")"
 	show (If cond t Nop) = "if(" ++ show cond ++ ") " ++ show t
 	show (If cond t f) = "if(" ++ show cond ++ ") " ++ show t ++ "\nelse " ++ show f
+	show (While cond e) = "while(" ++ show cond ++ ") " ++ show e
+	show (Do cond e) = "do" ++ show e ++ " while(" ++ show cond ++ ")"
 	show Nop = ""
 	show Self = "self"
+	show Nil = "nil"
+	show Break = "break"
 	show (Dot l r) = showOp' l "." r
 	show (Set Nothing l r) = showOp l "=" r
 	show (Set (Just t) l r) = showOp l (show t ++ "=") r
@@ -147,5 +154,4 @@ instance Show Exp where
 	show (Lambda pars e) = strs' ", " (map (\(n, t) -> n ++ maybe "" (\tt -> " : " ++ show tt) t) pars) ++ " -> " ++ show e
 	show (Val name tp body mods) = valVar ++ " " ++ name ++ maybe "" ((" : " ++) . show) tp ++ " = " ++ show body
 		where valVar = if DefModMutable `elem` mods then "var" else "val"
-
 

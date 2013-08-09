@@ -43,11 +43,14 @@ data DataType = TPSimple String [String]| TPBlock DataType [DataType]
 
 data Stm =
 	If Exp [Stm] [Stm]
+	| While Exp [Stm]
+	| Do Exp [Stm]
 	| Set (Maybe MathTp) Exp Exp
 	| Stm Exp
 	| Return Exp
 	| Throw Exp
 	| Var{varType :: DataType, varName :: String, varExp :: Exp}
+	| Break
 
 data Exp =
 	Self | Super
@@ -204,6 +207,8 @@ multiLineIf (If cond t f) = ["if(" ++ show cond ++ ") {" ] ++ stms t ++ ["} else
 stmLines :: Stm -> [String]
 stmLines (If cond [t] []) = ["if(" ++ show cond ++ ") " ] `glue` stmLines t
 stmLines (If cond t []) = ["if(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
+stmLines (While cond t) = ["while(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
+stmLines (Do cond t) = ["do {"] ++ stms t ++ ["} while(" ++ show cond ++ ");"]
 stmLines i@(If _ [If{}] _) = multiLineIf i
 stmLines i@(If _ _ [If{}]) = multiLineIf i
 stmLines (If cond [t] [f]) = (["if(" ++ show cond ++ ") " ] `glue` stmLines t) ++ (["else "] `glue` stmLines f)
@@ -217,6 +222,7 @@ stmLines (Return e) = ["return "] `glue` (expLines e `app` ";")
 stmLines (Throw e) = ["@throw "] `glue` (expLines e `app` ";")
 stmLines (Var tp name Nop) = [showDecl tp name ++ ";"]
 stmLines (Var tp name e) = [showDecl tp name ++ " = "] `glue` (expLines e `app` ";")
+stmLines (Break) = ["break;"]
 
 expLines :: Exp -> [String]
 expLines Self = ["self"]

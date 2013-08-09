@@ -602,6 +602,8 @@ tStm v (D.Braces [x]) = tStm v x
 tStm v (D.Braces xs) = concatMap (tStm v) xs
 
 tStm v (D.If cond t f) = [C.If (tExpTo D.TPBool cond) (tStm v t) (tStm v f)]
+tStm v (D.While cond t) = [C.While (tExpTo D.TPBool cond) (tStm v t)]
+tStm v (D.Do cond t) = [C.Do (tExpTo D.TPBool cond) (tStm v t)]
 
 tStm _ (D.Set (Just t) l r) = let 
 		l' = tExp l
@@ -619,6 +621,7 @@ tStm D.TPVoid (D.Return e) = [C.Stm $ tExp e]
 tStm tp (D.Return e) = [C.Return $ tExpToType tp e]
 tStm _ (D.Val D.Def{D.defName = name, D.defType = tp, D.defBody = e}) = [C.Var (showDataType tp) name (tExpToType tp e)]
 tStm _ (D.Throw e) = [C.Throw $ tExp e]
+tStm _ D.Break = [C.Break]
 
 tStm _ x = [C.Stm $ tExp x]
 

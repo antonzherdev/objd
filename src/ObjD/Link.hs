@@ -485,6 +485,8 @@ data Exp = Nop
 	| FloatConst Decimal
 	| Braces [Exp]
 	| If Exp Exp Exp
+	| While Exp Exp
+	| Do Exp Exp
 	| Self DataType
 	| Nil
 	| BoolOp BoolTp Exp Exp
@@ -512,11 +514,14 @@ data Exp = Nop
 	| Cast DataType Exp
 	| As DataType
 	| Is DataType
+	| Break
 
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
 	show (If cond t Nop) = "if(" ++ show cond ++ ") " ++ show t
 	show (If cond t f) = "if(" ++ show cond ++ ") " ++ show t ++ "\nelse " ++ show f
+	show (While cond e) = "while(" ++ show cond ++ ") " ++ show e
+	show (Do cond e) = "do" ++ show e ++ " while(" ++ show cond ++ ")"
 	show Nop = ""
 	show (Self c) = "<" ++ show c ++ ">self"
 	show (Return e) = "return " ++ show e
@@ -553,6 +558,7 @@ instance Show Exp where
 	show (Cast tp e) = show e ++ ".cast<" ++ show tp ++ ")"
 	show (As tp) = "as<" ++ show tp ++ ">"
 	show (Is tp) = "is<" ++ show tp ++ ">"
+	show (Break) = "break"
 
 callLocalVal :: String -> DataType -> Exp
 callLocalVal name tp = Call (localVal name tp) tp []
@@ -580,6 +586,8 @@ forExp f ee = mplus (go ee) (f ee)
 		go (If cond te fe) =  mplus (forExp f cond) $ mplus (forExp f te) (forExp f fe)
 		go (BoolOp _ l r) = mplus (forExp f l) (forExp f r)
 		go (MathOp _ l r) = mplus (forExp f l) (forExp f r)
+		go (While l r) = mplus (forExp f l) (forExp f r)
+		go (Do l r) = mplus (forExp f l) (forExp f r)
 		go (Set _ l r) = mplus (forExp f l) (forExp f r)
 		go (Dot l r) = mplus (forExp f l) (forExp f r)
 		go (Index l r) = mplus (forExp f l) (forExp f r)
@@ -599,6 +607,8 @@ forExp f ee = mplus (go ee) (f ee)
 exprDataType :: Exp -> DataType
 exprDataType (If _ _ Nop) = TPVoid
 exprDataType (If _ t _) = exprDataType t
+exprDataType (While _ _) = TPVoid
+exprDataType (Do _ _) = TPVoid
 exprDataType (Braces []) = TPVoid
 exprDataType (Braces es) = exprDataType $ last es
 exprDataType (Nop) = TPVoid
@@ -648,6 +658,7 @@ exprDataType (Negative e) = exprDataType e
 exprDataType (Cast dtp _) = dtp
 exprDataType (As dtp) = TPOption dtp
 exprDataType (Is _) = TPBool
+exprDataType Break = TPVoid
 {- exprDataType x = error $ "No exprDataType for " ++ show x -}
 
 expr :: D.Exp -> State Env Exp
@@ -656,6 +667,14 @@ expr (D.If cond t f) = do
 	tt <- expr t
 	ff <- expr f
 	return $ If c tt ff
+expr (D.While cond t) = do
+	c <- expr cond
+	tt <- expr t
+	return $ While c tt 
+expr (D.Do cond t) = do
+	c <- expr cond
+	tt <- expr t
+	return $ Do c tt 
 expr (D.Braces []) = return Nop
 expr (D.Braces es) = do
 	env <- get
@@ -743,6 +762,7 @@ expr (D.Not e) = do
 expr (D.Negative e) = do
 	e' <- expr e
 	return $ Negative e'
+expr D.Break = return Break
 {- expr x = error $ "No expr for " ++ show x -}
 
 {------------------------------------------------------------------------------------------------------------------------------ 
