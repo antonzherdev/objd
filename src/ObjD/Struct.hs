@@ -81,6 +81,7 @@ data Exp = Nop
 	| While Exp Exp
 	| Do Exp Exp
 	| Break
+	| Return Exp
 type CallPar = (Maybe String, Exp)
 
 data DataType = DataType String [DataType] 
@@ -149,6 +150,7 @@ instance Show Exp where
 	show (FloatConst i) = show i
 	show (Throw i) = "throw " ++ show i
 	show (Not i) = "!(" ++ show i ++ ")"
+	show (Return e) = "return " ++ show e
 	show (Negative i) = "-" ++ show i 
 	show (Index v i) = show v ++ "[" ++ show i ++ "]"
 	show (Lambda pars e) = strs' ", " (map (\(n, t) -> n ++ maybe "" (\tt -> " : " ++ show tt) t) pars) ++ " -> " ++ show e

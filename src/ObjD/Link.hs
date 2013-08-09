@@ -518,7 +518,7 @@ data Exp = Nop
 	| As DataType
 	| Is DataType
 	| Break
-
+	
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
 	show (If cond t Nop) = "if(" ++ show cond ++ ") " ++ show t
@@ -562,7 +562,7 @@ instance Show Exp where
 	show (As tp) = "as<" ++ show tp ++ ">"
 	show (Is tp) = "is<" ++ show tp ++ ">"
 	show (Break) = "break"
-
+	
 callLocalVal :: String -> DataType -> Exp
 callLocalVal name tp = Call (localVal name tp) tp []
 
@@ -576,6 +576,7 @@ addReturn e@(Braces []) = ExpLError "Return empty braces" e
 addReturn (Braces es) = Braces $ init es ++ [addReturn (last es)]
 addReturn Nop = ExpLError "Return NOP" Nop
 addReturn e@(Throw _) = e
+addReturn e@(Return _) = e
 addReturn e = Return e
 
 forExp :: MonadPlus m => (Exp -> m a) -> Exp -> m a
@@ -759,6 +760,9 @@ expr (D.Tuple items) = do
 expr (D.Throw e) = do
 	e' <- expr e
 	return $ Throw e'
+expr (D.Return e) = do
+	e' <- expr e
+	return $ Return e'
 expr (D.Not e) = do
 	e' <- expr e
 	return $ Not e'

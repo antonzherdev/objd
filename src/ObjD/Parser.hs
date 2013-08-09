@@ -349,7 +349,7 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pNot <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> try(pNumConst) <|> pBreak <|>
+		pTerm' = pNot <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> try(pNumConst) <|> pBreak <|> pReturn <|>
 			pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pWhile <|> pDo <|> pSelf <|> pNil <|> pCall  <?> "Expression"
 		pMinus = do
 			charSps '-'
@@ -369,6 +369,12 @@ pTerm = do
 				sps1
 			e <- pExp
 			return $ Throw e
+		pReturn = do
+			try $ do
+				string "return"
+				sps1
+			e <- pExp
+			return $ Return e
 		pArr = do
 			charSps '['
 			exps <- pExp `sepBy` charSps ','
