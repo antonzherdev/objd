@@ -158,7 +158,7 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs} =
 		C.implFields = map implField implFields,
 		C.implSynthesizes = (map synthesize . filter needProperty) implFields,
 		C.implFuns = [implCreate cl constr, implInit cl constr] ++ maybeToList (implInitialize cl) ++ dealoc cl 
-			++ implFuns defs ++ staticGetters ++ copyImpls ++ (if null vars then [equal, hash] else []) ++ [description],
+			++ implFuns defs ++ staticGetters ++ copyImpls ++ (if equalsIsPosible cl then [equal, hash] else []) ++ [description],
 		C.implStaticFields = map implField staticFields
 	}
 	where
@@ -178,15 +178,16 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs} =
 			] ++ equalsFun C.Self (C.Ref "o") equalFields)
 		equalClass = C.Call (C.Call C.Self "class" [] []) "isEqual" [("", C.Call (C.Ref "other") "class" [] [])] []
 		equalFun = C.Fun C.InstanceFun (C.TPSimple "BOOL" []) "isEqual" [(C.FunPar "" (C.TPSimple "id" []) "other")]
-		equalFields = (maybe [] (D.defPars) $ D.classConstructor cl) 
-		vars = filter ( (D.DefModMutable `elem` ). D.defMods) defs
- 		
+		equalFields = maybe [] (D.defPars) $ D.classConstructor cl
+		
  		hash = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSUInteger" []) "hash" []) (hashFun equalFields)
  		description = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSString*" []) "description" []) 
  			(descriptionFun descStart equalFields)
  		descStart = C.Call (C.Ref "NSMutableString") "stringWith" [("format", C.StringConst "<%@: ")] 
 			[C.CCall (C.Ref "NSStringFromClass") [C.Call C.Self "class" [] []]]
-			
+
+equalsIsPosible :: D.Class -> Bool
+equalsIsPosible D.Class {D.classDefs = defs} = null $ filter ( (D.DefModMutable `elem` ). D.defMods) defs
 
 copyImpls :: [C.ImplFun]
 copyImpls = [C.ImplFun (C.Fun C.InstanceFun idTp "copyWith" [C.FunPar "zone" (C.TPSimple "NSZone*" []) "zone"]) [C.Return C.Self]]
@@ -336,22 +337,26 @@ hashFun fields =
 			where
 				ref = C.Dot C.Self (C.Ref nm)
 
+stringFormatForType :: D.DataType -> String
+stringFormatForType D.TPInt = "%li"
+stringFormatForType D.TPUInt = "%li"
+stringFormatForType D.TPFloat = "%f"
+stringFormatForType D.TPBool = "%d"
+stringFormatForType _ = "%@"
+
+
 descriptionFun :: C.Exp -> [D.Def] -> [C.Stm]
 descriptionFun start fields = 
 	[C.Var (C.TPSimple "NSMutableString*" []) "description" start] ++
-	snd (mapAccumL append 0 fields)++
+	snd (mapAccumL append 0 $ filter pos fields)++
 	[C.Stm end, C.Return $ C.Ref "description"]
 	where
+		pos D.Def{D.defType = D.TPFun{}} = False
+		pos _ = True
 		end = C.Call (C.Ref "description") "append" [("string", C.StringConst ">")] []
 		append :: Int -> D.Def -> (Int, C.Stm)
 		append i D.Def{D.defName = nm, D.defType = tp} = (i + 1, C.Stm $ C.Call (C.Ref "description") "append" 
-			[("format", C.StringConst $ (if i > 0 then ", " else "") ++ nm ++ "="  ++ case tp of
-				D.TPInt -> "%li"
-				D.TPUInt -> "%li"
-				D.TPFloat -> "%f"
-				D.TPBool -> "%d"
-				_ -> "%@"
-				)]
+			[("format", C.StringConst $ (if i > 0 then ", " else "") ++ nm ++ "="  ++ stringFormatForType tp)]
 			[case tp of
 				D.TPClass D.TPMStruct _ scl -> C.CCall (C.Ref $ D.className scl ++ "Description") [ref]
 				_ -> ref
@@ -504,10 +509,15 @@ tExp (D.MathOp t l r) = let
 		ltp = case D.exprDataType l of
 			D.TPGenericWrap tt -> tt
 			tt -> tt
-		{-rtp = D.exprDataType r-}
+		rtp = case D.exprDataType r of
+			D.TPGenericWrap tt -> tt
+			tt -> tt
 	in case ltp of
 		D.TPArr _ _ -> addObjectToArray l' r'
 		D.TPMap _ _ _ -> addKVToMap l' r
+		D.TPString -> case rtp of
+			D.TPString -> C.Call l' "stringByAppending" [("string", r')] []
+			_ -> C.Call l' "stringByAppending" [("format",  C.StringConst $ stringFormatForType rtp)] [maybeVal (D.exprDataType r, rtp) r']
 		_ -> C.MathOp t (tExpTo ltp l) (tExpTo ltp r)
 tExp (D.PlusPlus e) = C.PlusPlus (tExp e)
 tExp (D.MinusMinus e) = C.MinusMinus (tExp e)
@@ -591,7 +601,7 @@ tExp e@D.ExpLError{} = C.Error $ show e
 tExp x = C.Error $ "No tExp for " ++ show x
 
 tpGeneric :: D.DataType
-tpGeneric = D.TPClass D.TPMGeneric [] (D.Generic "?" [])
+tpGeneric = D.TPClass D.TPMGeneric [] (D.Generic "?" [] Nothing)
 tExpToType :: D.DataType -> D.Exp -> C.Exp
 tExpToType tp e = maybeVal (D.exprDataType e, tp) (tExp e)
 
@@ -628,9 +638,13 @@ tStm _ x = [C.Stm $ tExp x]
 
 equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp
 equals False (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp NotEq e1 e2
+equals False (D.TPClass D.TPMClass _ cl, e1) (_, e2) 
+	| not (equalsIsPosible cl) = C.BoolOp NotEq e1 e2
 equals False (D.TPInt, e1) (_, e2) = C.BoolOp NotEq e1 e2
 equals False (D.TPUInt, e1) (_, e2) = C.BoolOp NotEq e1 e2
 equals False (D.TPBool, e1) (_, e2) = C.BoolOp NotEq e1 e2
+equals False (D.TPNil, e1) (_, e2) = C.BoolOp NotEq e1 e2
+equals False (_, e1) (D.TPNil, e2) = C.BoolOp NotEq e1 e2
 equals False s1@(_, _) s2@(_, _) = C.Not $ equals True s1 s2
 
 equals True (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp Eq e1 e2
@@ -641,6 +655,11 @@ equals True (D.TPFloat, e1) (_, e2) = C.CCall (C.Ref "eqf") [e1, e2]
 equals True (D.TPInt, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPUInt, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPBool, e1) (_, e2) = C.BoolOp Eq e1 e2
+equals True (D.TPNil, e1) (_, e2) = C.BoolOp Eq e1 e2
+equals True (_, e1) (D.TPNil, e2) = C.BoolOp Eq e1 e2
+equals True (D.TPClass D.TPMClass _ cl, e1) (_, e2) 
+	| not (equalsIsPosible cl) = C.BoolOp Eq e1 e2
+
 equals True (_, e1) (_, e2) = C.Call e1 "isEqual" [("", e2)] []
 
 addObjectToArray :: C.Exp -> C.Exp -> C.Exp

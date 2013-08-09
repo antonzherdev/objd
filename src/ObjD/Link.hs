@@ -23,7 +23,7 @@ data File = File {fileName :: String, fileImports :: [File], fileCImports :: [CI
 
 data Class = Class { classMods :: [ClassMod], className :: String, classExtends :: Maybe Extends
 		, classDefs :: [Def], classGenerics :: [Class]}
-	| Generic {className :: String, classDefs :: [Def]}
+	| Generic {className :: String, classDefs :: [Def], classExtends :: Maybe Extends}
 	| ClassError {className :: String, classErrorText :: String, classDefs :: [Def], classExtends :: Maybe Extends
 		, classGenerics :: [Class]}
 instance Eq Class where
@@ -194,6 +194,9 @@ linkFile fidx (D.File name stms) = fl
 				md' D.DefModVal = Just DefModGlobalVal
 				md' _ = Nothing
 
+baseClassExtends :: ClassIndex -> Extends
+baseClassExtends cidx = Extends (classFind cidx "ODObject") [] []
+
 linkClass :: (ClassIndex, DefIndex) -> D.FileStm -> Class
 linkClass (ocidx, glidx) cl = self
 	where
@@ -204,7 +207,7 @@ linkClass (ocidx, glidx) cl = self
 				classMods = map clsMod (D.classMods cl), 
 				className = D.className cl, 
 				classExtends = if D.className cl == "ODObject" then Nothing else Just $ 
-					fromMaybe (Extends (classFind cidx "ODObject") [] []) extends, 
+					fromMaybe (baseClassExtends cidx) extends, 
 				classDefs = constr constrPars : fields ++ defs, 
 				classGenerics = generics
 			}
@@ -237,8 +240,8 @@ linkClass (ocidx, glidx) cl = self
 			defPars = pars, defType = selfType, defGenerics = Just $ DefGenerics generics selfType}
 		constrPars = map constrPar (D.classFields cl)
 		constrPar f = fromJust $ idxFind fieldsMap (D.defName f)
-		generics = map generic (D.classGenerics cl)
-		generic (D.Generic name) = Generic name []
+		generics = map generic (D.classGenerics cl) 
+		generic (D.Generic name) = Generic name [] (Just $ baseClassExtends cidx)
 		
 		enumItem :: Int -> D.EnumItem -> (Int, Def)
 		enumItem ordinal (D.EnumItem name pars) = (ordinal + 1, Def{defName = name, defMods = [DefModStatic, DefModEnumItem], 
@@ -276,7 +279,7 @@ linkDef :: Env -> D.ClassStm -> Def
 linkDef env ccc = evalState (stateDef ccc) env'
 	where 
 		env' = envAddClasses generics' env
-		genericClass (D.Generic genericName) = Generic genericName []
+		genericClass (D.Generic genericName) = Generic genericName [] (Just $ baseClassExtends (envIndex env))
 		generics' = map genericClass (D.defGenerics ccc)
 
 		stateDef:: D.ClassStm -> State Env Def
@@ -904,7 +907,7 @@ correctCallPar _ _ e = e
 replaceGenerics :: Generics -> DataType -> DataType
 replaceGenerics gns = mapDataType f
 	where 
-		f (TPClass TPMGeneric _ (Generic g _)) = M.lookup g gns
+		f (TPClass TPMGeneric _ (Generic g _ _)) = M.lookup g gns
 		f _ = Nothing
 
 allDefs :: Env -> Maybe DataType -> [Def]
