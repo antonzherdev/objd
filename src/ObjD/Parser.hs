@@ -166,7 +166,8 @@ pGenerics = option [] $ between (charSps '<') (charSps '>') (pClassGeneric `sepB
 		pClassGeneric = do
 			name <- ident
 			sps
-			return $ Generic name
+			extends <- pExtends
+			return $ Generic name extends
 
 pExtends :: Parser (Maybe Extends)
 pExtends = optionMaybe (do

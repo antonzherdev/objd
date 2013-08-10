@@ -114,7 +114,7 @@ instance Show CImport where
 	show (CImportUser l) = "import \"" ++ l ++ "\""
 
 instance Show Class where
-	show cl@Generic{} = className cl
+	show Generic{className = name, classExtends = ext} =  name ++ maybe "" ((" " ++ ) . show) ext
 	show ClassError{className = name, classErrorText = er} = name ++ ": " ++ er
 	show cl =
 		tp cl ++ " " ++ className cl ++ sConstr cl ++ maybe "" (( ++ " "). show) (classExtends cl) ++ " {\n" ++
@@ -202,6 +202,7 @@ linkClass (ocidx, glidx) cl = self
 	where
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
 		env = Env selfType cidx glidx []
+		staticEnv = Env (TPObject (refDataTypeMod self) self) ocidx glidx []
 		self = case cl of
 			D.Class{} -> Class {
 				classMods = map clsMod (D.classMods cl), 
@@ -229,19 +230,22 @@ linkClass (ocidx, glidx) cl = self
 		clsMod D.ClassModStruct = ClassModStruct
 		clsMod D.ClassModStub = ClassModStub
 		clsMod D.ClassModTrait = ClassModTrait
-		extends = fmap (\(D.Extends ecls gens) -> Extends (classFind cidx ecls) (map (dataType cidx) gens) []) (D.classExtends cl)
-		fields =  mapM (evalState . linkField) decls env
+		extends = fmap (linkExtends cidx) (D.classExtends cl)
+		
+		fields =  mapM (evalState . linkField) (filter (D.isStatic) decls) staticEnv ++
+			mapM (evalState . linkField) (filter (not . D.isStatic) decls) env
 		fieldsMap = M.fromList $ map (idx defName) fields
 		decls = D.classFields cl ++ filter D.isDecl (D.classBody cl)
-		defs = map (linkDef env) . filter D.isDef $ D.classBody cl
+		defs = map (\ def -> linkDef (envForDef def) def) . filter D.isDef $ D.classBody cl
+		envForDef def = if D.isStatic def then staticEnv else env
 		enumConstr = constr (enumAdditionalDefs ++ constrPars)
 		constr :: [Def] -> Def
 		constr pars = Def{defName = "new", defMods = [DefModStatic, DefModConstructor], defBody = Nop,
 			defPars = pars, defType = selfType, defGenerics = Just $ DefGenerics generics selfType}
 		constrPars = map constrPar (D.classFields cl)
 		constrPar f = fromJust $ idxFind fieldsMap (D.defName f)
-		generics = map generic (D.classGenerics cl) 
-		generic (D.Generic name) = Generic name [] (Just $ baseClassExtends cidx)
+		generics = map (linkGeneric cidx) (D.classGenerics cl) 
+		
 		
 		enumItem :: Int -> D.EnumItem -> (Int, Def)
 		enumItem ordinal (D.EnumItem name pars) = (ordinal + 1, Def{defName = name, defMods = [DefModStatic, DefModEnumItem], 
@@ -253,6 +257,12 @@ linkClass (ocidx, glidx) cl = self
 					(D.className cl) 
 					([ (Nothing,D.IntConst ordinal), (Nothing, D.StringConst name)] ++  pars)
 					[]
+
+linkExtends :: ClassIndex -> D.Extends -> Extends
+linkExtends cidx (D.Extends ecls gens) = Extends (classFind cidx ecls) (map (dataType cidx) gens) []
+
+linkGeneric :: ClassIndex -> D.Generic -> Class
+linkGeneric cidx (D.Generic name ext) = Generic name [] (Just $ maybe (baseClassExtends cidx) (linkExtends cidx) ext)
 
 linkField :: D.ClassStm -> State Env Def
 linkField D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
@@ -279,8 +289,7 @@ linkDef :: Env -> D.ClassStm -> Def
 linkDef env ccc = evalState (stateDef ccc) env'
 	where 
 		env' = envAddClasses generics' env
-		genericClass (D.Generic genericName) = Generic genericName [] (Just $ baseClassExtends (envIndex env))
-		generics' = map genericClass (D.defGenerics ccc)
+		generics' = map (linkGeneric $ envIndex env) (D.defGenerics ccc)
 
 		stateDef:: D.ClassStm -> State Env Def
 		stateDef D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = 

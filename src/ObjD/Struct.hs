@@ -1,7 +1,7 @@
 module ObjD.Struct (
 	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), 
 	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), 
-	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum
+	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum, isStatic
 ) where
 import           Ex.String
 import 			 Data.Decimal
@@ -35,7 +35,7 @@ data ImportType = ImportTypeCUser | ImportTypeCLib | ImportTypeD
 
 data ClassMod = ClassModStruct | ClassModStub | ClassModTrait deriving (Eq)
 
-data Generic = Generic String
+data Generic = Generic String (Maybe Extends)
 
 data Extends = Extends String [DataType]
 
@@ -49,6 +49,8 @@ isDef :: ClassStm -> Bool
 isDef = (DefModVal `notElem`) . defMods
 isDecl :: ClassStm -> Bool
 isDecl = (DefModVal `elem`) . defMods
+isStatic :: ClassStm -> Bool
+isStatic = (DefModStatic `elem`) . defMods
 
 data EnumItem = EnumItem{enumItemName :: String, enumItemPars :: [CallPar]}
 
