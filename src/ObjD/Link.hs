@@ -338,6 +338,7 @@ data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid
 	| TPArr Bool DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown String 
 	| TPMap Bool DataType DataType
 	| TPOption DataType | TPGenericWrap DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
+	| TPAnyGeneric
 	deriving (Eq)
 data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric deriving (Eq)
 isVoid :: DataType -> Bool
@@ -437,6 +438,7 @@ dataType cidx (D.DataType name gens) = case name of
 	"string" -> TPString
 	"bool" -> TPBool
 	"self" -> TPSelf
+	"_" -> TPAnyGeneric
 	_ -> maybe (TPUnknown $ "No class found " ++ name) (\cl -> refDataType cl (map (wrapGeneric . dataType cidx) gens)) (idxFind cidx name)
 dataType cidx (D.DataTypeArr m tp) = TPArr m $ wrapGeneric $ dataType cidx tp
 dataType cidx (D.DataTypeMap m k v) = TPMap m (wrapGeneric $ dataType cidx k) (wrapGeneric $ dataType cidx v)
@@ -456,6 +458,7 @@ instance Show DataType where
 	show TPSelf = "self"
 	show TPNil = "nil"
 	show TPThrow = "throw"
+	show TPAnyGeneric = "_"
 	show (TPUnknown s) = s
 	show (TPClass t [] c) = className c ++ show t
 	show (TPObject t c) = className c ++ show t ++ ".class"

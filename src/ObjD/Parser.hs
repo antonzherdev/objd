@@ -276,7 +276,7 @@ pDef = do
 		where
 			calcTp :: Maybe DataType -> Maybe Exp -> DataType
 			calcTp Nothing Nothing = DataType "void" []
-			calcTp (Just tp) Nothing = tp
+			calcTp (Just tp) _ = tp
 			calcTp Nothing _ = DataType "void" []
 
 
