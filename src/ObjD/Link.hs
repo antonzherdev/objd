@@ -568,16 +568,16 @@ callLocalVal name tp = Call (localVal name tp) tp []
 
 maybeAddReturn :: DataType -> Exp -> Exp
 maybeAddReturn TPVoid e = e
-maybeAddReturn _ e = addReturn e
+maybeAddReturn tp e = addReturn tp e
 
-addReturn :: Exp -> Exp
-addReturn (If cond t f) = If cond (addReturn t) (addReturn f)
-addReturn e@(Braces []) = ExpLError "Return empty braces" e
-addReturn (Braces es) = Braces $ init es ++ [addReturn (last es)]
-addReturn Nop = ExpLError "Return NOP" Nop
-addReturn e@(Throw _) = e
-addReturn e@(Return _) = e
-addReturn e = Return e
+addReturn :: DataType -> Exp -> Exp
+addReturn tp (If cond t f) = If cond (addReturn tp t) (addReturn tp f)
+addReturn _ e@(Braces []) = ExpLError "Return empty braces" e
+addReturn tp (Braces es) = Braces $ init es ++ [addReturn tp (last es)]
+addReturn _ Nop = ExpLError "Return NOP" Nop
+addReturn _ e@(Throw _) = e
+addReturn _ e@(Return _) = e
+addReturn tp e = Return $ implicitConvertsion tp e
 
 forExp :: MonadPlus m => (Exp -> m a) -> Exp -> m a
 forExp f ee = mplus (go ee) (f ee)
