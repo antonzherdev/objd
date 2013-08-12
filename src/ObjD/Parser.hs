@@ -310,10 +310,16 @@ pExp = do
 		pOp3 = pOp4 `chainl1` pSetOp
 		pOp4 = pOp5 `chainl1` (mathOp '+' Plus <|> mathOp '-' Minus)
 		pOp5 = pOp6 `chainl1` (mathOp '*' Mul <|> mathOp '/' Div)
-		pOp6 = do
-			e <- pTerm 
-			sps
-			postFix e
+		pOp6 = 
+			(do
+				charSps '!'	
+				e <- pTerm
+				pf <- postFix e
+				return $ Not $ pf)
+			<|> (do
+				e <- pTerm 
+				sps
+				postFix e)
 		pSetOp = try(do
 			char '='
 			notFollowedBy $ char '='
@@ -356,7 +362,7 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pNot <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> try(pNumConst) <|> pBreak <|> pReturn <|>
+		pTerm' = pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> try(pNumConst) <|> pBreak <|> pReturn <|>
 			pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pWhile <|> pDo <|> pSelf <|> pNil <|> pCall  <?> "Expression"
 		pMinus = do
 			charSps '-'
@@ -366,10 +372,6 @@ pTerm = do
 			string "break"
 			sps1
 			return Break
-		pNot = do
-			charSps '!'
-			e <- pTerm
-			return $ Not e
 		pThrow = do
 			try $ do
 				string "throw"

@@ -407,6 +407,9 @@ dataTypeClass env (TPOption _) = classFind (envIndex env) "ODOption"
 dataTypeClass env (TPMap False _ _) = classFind(envIndex env) "ODMap"
 dataTypeClass env (TPMap True _ _) = classFind(envIndex env) "ODMutableMap"
 dataTypeClass env (TPTuple [_, _]) = classFind (envIndex env) "CNTuple"
+dataTypeClass env (TPInt) = classFind (envIndex env) "ODInt"
+dataTypeClass env (TPFloat) = classFind (envIndex env) "ODFloat"
+dataTypeClass env (TPUInt) = classFind (envIndex env) "ODUInt"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("CNTuple" ++ show (length a))
 dataTypeClass _ x = classError (show x) ("No dataTypeClass for " ++ show x)
 
@@ -661,8 +664,8 @@ exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 		parsTp ps = TPTuple $ map snd ps
 exprDataType e@(ExpDError _ _) = TPUnknown $ show e
 exprDataType e@(ExpLError _ _) = TPUnknown $ show e
-exprDataType (Arr []) = TPArr False $ TPUnknown "Empty array"
-exprDataType (Map []) = TPMap False (TPUnknown "Empty map key") (TPUnknown "Empty map value")
+exprDataType (Arr []) = TPArr False TPVoid
+exprDataType (Map []) = TPMap False TPVoid TPVoid
 exprDataType (Arr exps) = TPArr False $ wrapGeneric $ exprDataType $ head exps
 exprDataType (Map exps) = let (k, v) = ((exprDataType >>> wrapGeneric) *** (exprDataType >>> wrapGeneric)) $ head exps 
 	in TPMap False k v
