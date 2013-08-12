@@ -549,6 +549,7 @@ tExp (D.Dot l (D.As dtp)) = C.Call (tExp l) "asKindOf" [("class", C.Call (C.Ref 
 
 
 tExp (D.Self _) = C.Self
+tExp (D.LambdaCall e) = C.CCall (tExp e) []
 tExp (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
 	| D.DefModField `elem` mods = C.Ref $ '_' : name
 	| D.DefModEnumItem `elem` mods = C.Ref $ '_' : name

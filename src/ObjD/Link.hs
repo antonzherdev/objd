@@ -543,6 +543,7 @@ data Exp = Nop
 	| As DataType
 	| Is DataType
 	| Break
+	| LambdaCall Exp
 	
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
@@ -587,6 +588,7 @@ instance Show Exp where
 	show (As tp) = "as<" ++ show tp ++ ">"
 	show (Is tp) = "is<" ++ show tp ++ ">"
 	show (Break) = "break"
+	show (LambdaCall e) = show e ++ "()"
 	
 callLocalVal :: String -> DataType -> Exp
 callLocalVal name tp = Call (localVal name tp) tp []
@@ -688,6 +690,9 @@ exprDataType (Cast dtp _) = dtp
 exprDataType (As dtp) = TPOption $ wrapGeneric dtp
 exprDataType (Is _) = TPBool
 exprDataType Break = TPVoid
+exprDataType (LambdaCall e) = case unwrapGeneric $ exprDataType e of
+	(TPFun _ d) -> d
+	t -> t
 {- exprDataType x = error $ "No exprDataType for " ++ show x -}
 
 expr :: D.Exp -> State Env Exp
@@ -1003,6 +1008,7 @@ implicitConvertsion dtp ex = let stp = exprDataType ex
 		conv s (TPGenericWrap d) = conv s d
 		conv TPFun{} TPFun{} = ex
 		conv _ f@(TPFun _ fdtp) = Lambda (lambdaImplicitParameters f) (maybeAddReturn fdtp ex) fdtp
+		conv TPFun{} _ = LambdaCall ex
 		conv TPOption{} TPOption{} = ex
 		conv TPNil (TPOption tp) = None tp
 		conv _ (TPOption _) = Opt ex
