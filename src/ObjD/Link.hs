@@ -2,7 +2,7 @@ module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), DataType(..), Exp(..), CImport(..), 
 	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..),
 	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
-	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile
+	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile, unwrapGeneric
 )where
 
 import 			 Control.Arrow
@@ -30,7 +30,7 @@ instance Eq Class where
 	a == b = className a == className b
 
 isCoreFile :: File -> Bool
-isCoreFile File{filePackage = (x : xs)} = x == "core"
+isCoreFile File{filePackage = (x : _)} = x == "core"
 isCoreFile _ = False
 classError :: String -> String -> Class
 classError name err = ClassError { className = name, classErrorText = err, classDefs = [], classExtends = Nothing, classGenerics = []}
@@ -85,7 +85,7 @@ setDefName name (Def _ pars tp body mods gens) = Def name pars tp body mods gens
 
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate  | DefModGlobalVal | DefModWeak
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
-	| DefModField | DefModEnumItem | DefModDef | DefModSpecial deriving (Eq, Ord)
+	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct deriving (Eq, Ord)
 instance Show DefMod where
 	show DefModStatic = "static"
 	show DefModMutable = "var"
@@ -101,6 +101,7 @@ instance Show DefMod where
 	show DefModEnumItem = "enum"
 	show DefModDef = "def"
 	show DefModSpecial = "special"
+	show DefModStruct = "struct"
 data DefGenerics = DefGenerics{defGenericsClasses :: [Class], defGenericsSelfType :: DataType}
 
 data CImport = CImportLib String | CImportUser String
@@ -124,12 +125,15 @@ instance Show Class where
 			(unlines . map ind . concatMap (lines . show)) (classDefs cl)  ++
 		"}"
 		where
-			tp c@Class{}
-				| isStub c = "stub"
-				| isEnum c = "enum"
-				| otherwise = "class"
+			tp c@Class{classMods = mods} = strs' " " mods
 			tp Generic{} = "generic"
 			sConstr c = maybe "" (\cc -> "(" ++ (strs ", " . map defName . defPars) cc ++ ")") (classConstructor c)
+instance Show ClassMod where
+	show ClassModStub = "stub"
+	show ClassModStruct = "struct"
+	show ClassModTrait = "trait"
+	show ClassModEnum = "enum"
+	show ClassModObject = "object"
 			
 instance Show Extends where
 	show (Extends cls generics pars) = "extends " ++ className cls ++ "<" ++ strs' ", " generics ++ "> (" ++ 
@@ -191,7 +195,7 @@ linkFile fidx (D.File name package stms) = fl
 		getFile f = M.lookup f fidx
 		gldefs = (map gldef . filter D.isStubDef) stms
 		gldef (D.StubDef d@D.Def{D.defMods = mods}) = 
-			(linkDef env d){defMods = DefModStub : mapMaybe md' mods}
+			(linkDef False env d){defMods = DefModStub : mapMaybe md' mods}
 			where
 				env = Env{envSelf = TPVoid, envIndex = cidx, envGlobalDefIndex = glidx,  envVals = []}
 				md' D.DefModVal = Just DefModGlobalVal
@@ -234,12 +238,15 @@ linkClass (ocidx, glidx) cl = self
 		clsMod D.ClassModStub = ClassModStub
 		clsMod D.ClassModTrait = ClassModTrait
 		extends = fmap (linkExtends cidx) (D.classExtends cl)
-		
-		fields =  mapM (evalState . linkField) (filter (D.isStatic) decls) staticEnv ++
-			mapM (evalState . linkField) (filter (not . D.isStatic) decls) env
+		selfIsStruct = case cl of
+			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
+			_ -> False
+
+		fields =  mapM (evalState . linkField selfIsStruct) (filter (D.isStatic) decls) staticEnv ++
+			mapM (evalState . linkField selfIsStruct) (filter (not . D.isStatic) decls) env
 		fieldsMap = M.fromList $ map (idx defName) fields
 		decls = D.classFields cl ++ filter D.isDecl (D.classBody cl)
-		defs = map (\ def -> linkDef (envForDef def) def) . filter D.isDef $ D.classBody cl
+		defs = map (\ def -> linkDef selfIsStruct (envForDef def) def) . filter D.isDef $ D.classBody cl
 		envForDef def = if D.isStatic def then staticEnv else env
 		enumConstr = constr (enumAdditionalDefs ++ constrPars)
 		constr :: [Def] -> Def
@@ -267,14 +274,14 @@ linkExtends cidx (D.Extends ecls gens) = Extends (classFind cidx ecls) (map (dat
 linkGeneric :: ClassIndex -> D.Generic -> Class
 linkGeneric cidx (D.Generic name ext) = Generic name [] (Just $ maybe (baseClassExtends cidx) (linkExtends cidx) ext)
 
-linkField :: D.ClassStm -> State Env Def
-linkField D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
+linkField :: Bool -> D.ClassStm -> State Env Def
+linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
 	i <- expr e
 	env <- get
 	let 
 		tp' = unwrapGeneric $ getDataType env tp i
 		in return Def{defMods = 
-			DefModField : translateMods mods, defName = name, defType = tp', 
+			DefModField : translateMods mods ++ [DefModStruct | str], defName = name, defType = tp', 
 			defBody = implicitConvertsion tp' i, defGenerics = Nothing, defPars = []}
 
 		
@@ -288,8 +295,8 @@ translateMods = mapMaybe m
 		m D.DefModWeak = Just DefModWeak
 		m _ = Nothing
 		
-linkDef :: Env -> D.ClassStm -> Def
-linkDef env ccc = evalState (stateDef ccc) env'
+linkDef :: Bool -> Env -> D.ClassStm -> Def
+linkDef str env ccc = evalState (stateDef ccc) env'
 	where 
 		env' = envAddClasses generics' env
 		generics' = map (linkGeneric $ envIndex env) (D.defGenerics ccc)
@@ -307,7 +314,7 @@ linkDef env ccc = evalState (stateDef ccc) env'
 				 mods' = translateMods mods
 				 in 
 				(case body of
-					D.Nop -> return Def {defMods = DefModDef : DefModAbstract : mods' , defName = name, defGenerics = defGenerics',
+					D.Nop -> return Def {defMods = DefModDef : DefModAbstract : mods' ++ [DefModStruct | str], defName = name, defGenerics = defGenerics',
 							defPars = pars',
 							defType = dataType (envIndex env') (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
 					_   -> do 
@@ -315,7 +322,7 @@ linkDef env ccc = evalState (stateDef ccc) env'
 						b <- expr body
 						put env'
 						let tp' = unwrapGeneric $ getDataType env' tp b
-						return Def {defMods = DefModDef : mods', defName = name, defGenerics = defGenerics',
+						return Def {defMods = DefModDef : mods' ++ [DefModStruct | str], defName = name, defGenerics = defGenerics',
 							defPars = pars,
 							defType = tp', defBody = maybeAddReturn tp' b})
 
@@ -640,7 +647,7 @@ exprDataType Nil = TPNil
 exprDataType (BoolConst _ ) = TPBool
 exprDataType (FloatConst _) = TPFloat
 exprDataType (BoolOp {}) = TPBool
-exprDataType (MathOp _ l r) = case(exprDataType l, exprDataType r) of
+exprDataType (MathOp _ l r) = case(unwrapGeneric $ exprDataType l, unwrapGeneric $ exprDataType r) of
 	(TPInt, TPFloat) -> TPFloat
 	(lt, _) -> lt
 exprDataType (PlusPlus e) = exprDataType e
@@ -678,7 +685,7 @@ exprDataType (Throw _) = TPThrow
 exprDataType (Not _) = TPBool
 exprDataType (Negative e) = exprDataType e
 exprDataType (Cast dtp _) = dtp
-exprDataType (As dtp) = TPOption dtp
+exprDataType (As dtp) = TPOption $ wrapGeneric dtp
 exprDataType (Is _) = TPBool
 exprDataType Break = TPVoid
 {- exprDataType x = error $ "No exprDataType for " ++ show x -}

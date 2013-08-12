@@ -492,6 +492,7 @@ castGeneric :: D.Exp -> C.Exp -> C.Exp
 castGeneric dexp e = case D.exprDataType dexp of
 	D.TPGenericWrap c@(D.TPClass D.TPMClass _ _) -> C.Cast (showDataType c) e
 	D.TPGenericWrap c@(D.TPClass D.TPMEnum _ _) -> C.Cast (showDataType c) e
+	D.TPGenericWrap c@D.TPTuple{} -> C.Cast (showDataType c) e
 	_ -> e
 
 tExp :: D.Exp -> C.Exp
@@ -532,16 +533,17 @@ tExp (D.Dot (D.Self stp) (D.Call D.Def{D.defMods = mods, D.defName = name} _ par
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className $ D.tpClass stp) name (tPars pars) []
 	| otherwise = C.Call C.Self name (tPars pars) []
 tExp d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
-	| D.DefModField `elem` mods && null pars = castGeneric d $ C.Dot (tExp l) (C.Ref name)
-	| D.DefModField `elem` mods = castGeneric d $ C.Dot (tExp l) $ C.CCall (C.Ref name) ((map snd . tPars) pars)
-	| D.DefModConstructor `elem` mods = callConstructor (D.exprDataType d) pars
-	| otherwise = case D.exprDataType l of
-		(D.TPGenericWrap tp@(D.TPClass D.TPMStruct _ c)) -> structCall c (tExpTo tp l)
-		(D.TPClass D.TPMStruct _ c) -> structCall c (tExp l)
+	| D.DefModField `elem` mods && null pars = castGeneric d $ C.Dot (tExpTo ltp l) (C.Ref name)
+	| D.DefModField `elem` mods = castGeneric d $ C.Dot (tExpTo ltp l) $ C.CCall (C.Ref name) ((map snd . tPars) pars)
+	| D.DefModStruct `elem` mods = case ltp  of
+		(D.TPClass D.TPMStruct _ c) -> structCall (D.className c) (tExpTo ltp l)
 		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.className c) name) ((map snd . tPars) pars)
-		_ -> castGeneric d $ C.Call (tExp l) name (tPars pars) []
+		tp -> structCall (show tp) (tExpTo ltp l)
+	| D.DefModConstructor `elem` mods = callConstructor (D.exprDataType d) pars
+	| otherwise = castGeneric d $ C.Call (tExp l) name (tPars pars) []
 	where
-		 structCall c self = C.CCall (C.Ref $ structDefName (D.className c) name) (self : (map snd . tPars) pars)
+		 structCall c self = C.CCall (C.Ref $ structDefName c name) (self : (map snd . tPars) pars)
+		 ltp = D.unwrapGeneric $ D.exprDataType l
 tExp (D.Dot l (D.Is dtp)) = C.Call (tExp l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
 tExp (D.Dot l (D.As dtp)) = C.Call (tExp l) "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
 
