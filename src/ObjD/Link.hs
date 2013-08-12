@@ -969,7 +969,8 @@ findCall (name,pars) (_, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter
 	where
 		fit :: Def -> Maybe Exp
 		fit d
-			| length pars == length (defPars d) = Just $ def' d
+			| length pars == length (defPars d) = 
+					if checkParameters pars (defPars d) then Just $ def' d else Nothing
 			| otherwise = case defType d of
 				TPFun{} -> Just $ def' d
 				_ -> Nothing
@@ -982,6 +983,11 @@ findCall (name,pars) (_, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter
 		defPars' :: Def -> [Def]
 		defPars' Def{defType = t, defPars = []} = dataTypePars t
 		defPars' Def{defPars = r} = r
+		checkParameters :: [(Maybe String, Exp)] -> [Def] -> Bool
+		checkParameters cp dp = all (checkParameter) $ zip cp dp
+		checkParameter :: ((Maybe String, Exp), Def) -> Bool
+		checkParameter ((Just cn, _), Def{defName = dn}) = cn == dn
+		checkParameter _ = True
 
 			
 {- Implicit conversion -}

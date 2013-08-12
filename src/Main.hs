@@ -14,7 +14,7 @@ import System.FilePath
 {- main::IO()
 main = putStr "dsa" -}
 debug :: [String]
-debug = ["EGFigure"]
+debug = []
 main::IO()
 main = 
 	let
