@@ -248,7 +248,7 @@ linkClass (ocidx, glidx) cl = self
 		
 		
 		enumItem :: Int -> D.EnumItem -> (Int, Def)
-		enumItem ordinal (D.EnumItem name pars) = (ordinal + 1, Def{defName = name, defMods = [DefModStatic, DefModEnumItem], 
+		enumItem ordinal (D.EnumItem name pars) = (ordinal + 1, Def{defName = name, defMods = [DefModStatic, DefModEnumItem, DefModField], 
 				defType = selfType, defGenerics = Nothing, defPars = [], 
 				defBody = enumConstrCall})
 			where
@@ -812,7 +812,6 @@ exprCall strictClass call@(D.Call name pars gens) = do
 						| DefModObject `elem` defMods d = c
 						| DefModLocal `elem` defMods d = c
 						| DefModStub `elem` defMods d = c
-						| DefModStatic `elem` defMods d = c
 						| otherwise = Dot (Self (envSelf env)) c
 					resolveDef _ c = c
 			pars'' :: [(Def, Exp)]

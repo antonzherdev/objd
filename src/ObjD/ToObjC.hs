@@ -393,7 +393,7 @@ genEnumInterface cl@D.Class {D.className = name, D.classDefs = defs} = [
 	C.Interface {
 		C.interfaceName = name,
 		C.interfaceExtends = classExtends cl,
-		C.interfaceProperties = (map fieldToProperty . filter D.isField) defs',
+		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs',
 		C.interfaceFuns = intefaceFuns defs' ++ map (enumItemGetterFun name) (D.enumItems cl) ++ [enumValuesFun]
 	}]
 	where 
@@ -406,8 +406,8 @@ genEnumImpl :: D.Class -> [C.FileStm]
 genEnumImpl cl@D.Class {D.className = clsName} = [
 	C.Implementation {
 		C.implName = clsName,
-		C.implFields = (map implField . filter D.isField) defs,
-		C.implSynthesizes = (map synthesize . filter D.isField) defs,
+		C.implFields = (map implField . filter needProperty) defs,
+		C.implSynthesizes = (map synthesize . filter needProperty) defs,
 		C.implFuns = [implCreate cl constr, implInit cl constr, initialize] ++ dealoc cl 
 			++ implFuns defs ++ map itemGetter items ++ [valuesFun],
 		C.implStaticFields = map stField items ++ [C.ImplField valuesVarName (C.TPSimple "NSArray*" []) []] 
@@ -526,11 +526,10 @@ tExp (D.MinusMinus e) = C.MinusMinus (tExp e)
 tExp (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call D.Def {D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
 	| otherwise = C.CCall (C.Ref $ structDefName (D.className c) name) (C.Ref "self" : (map snd . tPars) pars)
-
-tExp (D.Dot (D.Self (D.TPClass _ _ c)) (D.Call D.Def{D.defMods = mods, D.defName = name} _ pars)) 
+tExp (D.Dot (D.Self stp) (D.Call D.Def{D.defMods = mods, D.defName = name} _ pars)) 
 	| D.DefModField `elem` mods && null pars = C.Ref $ '_' : name
 	| D.DefModField `elem` mods = C.CCall (C.Ref ('_' : name)) ((map snd . tPars) pars)
-	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className c) name (tPars pars) []
+	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className $ D.tpClass stp) name (tPars pars) []
 	| otherwise = C.Call C.Self name (tPars pars) []
 tExp d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModField `elem` mods && null pars = castGeneric d $ C.Dot (tExp l) (C.Ref name)
@@ -550,6 +549,7 @@ tExp (D.Dot l (D.As dtp)) = C.Call (tExp l) "asKindOf" [("class", C.Call (C.Ref 
 tExp (D.Self _) = C.Self
 tExp (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
 	| D.DefModField `elem` mods = C.Ref $ '_' : name
+	| D.DefModEnumItem `elem` mods = C.Ref $ '_' : name
 	| D.DefModLocal `elem` mods && null pars = C.Ref name
 	| D.DefModConstructor `elem` mods = callConstructor tp pars
 	| D.DefModGlobalVal `elem` mods = C.Ref name
