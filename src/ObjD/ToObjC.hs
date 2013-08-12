@@ -32,7 +32,7 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 		dImports' = procImports f
 		
 		
-		h = [C.Import "objd.h"] 
+		h = (if D.isCoreFile f then [C.ImportLib "Foundation/Foundation.h"] else [ C.Import "objd.h"] )
 			++ cImports'
 			++ fst dImports' 
 			++ [C.EmptyLine] 

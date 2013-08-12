@@ -2,7 +2,7 @@ module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), DataType(..), Exp(..), CImport(..), 
 	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..),
 	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
-	classConstructor, classFields, checkErrors, dataTypeClassName
+	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile
 )where
 
 import 			 Control.Arrow
@@ -18,7 +18,7 @@ detailedReferenceError :: Bool
 detailedReferenceError = False
 
 type Sources = [File]
-data File = File {fileName :: String, fileImports :: [File], fileCImports :: [CImport]
+data File = File {fileName :: String, filePackage :: [String], fileImports :: [File], fileCImports :: [CImport]
 	, fileClasses :: [Class], globalDefs :: [Def]}
 
 data Class = Class { classMods :: [ClassMod], className :: String, classExtends :: Maybe Extends
@@ -29,6 +29,9 @@ data Class = Class { classMods :: [ClassMod], className :: String, classExtends 
 instance Eq Class where
 	a == b = className a == className b
 
+isCoreFile :: File -> Bool
+isCoreFile File{filePackage = (x : xs)} = x == "core"
+isCoreFile _ = False
 classError :: String -> String -> Class
 classError name err = ClassError { className = name, classErrorText = err, classDefs = [], classExtends = Nothing, classGenerics = []}
 classConstructor :: Class -> Maybe Def 
@@ -103,7 +106,7 @@ data DefGenerics = DefGenerics{defGenericsClasses :: [Class], defGenericsSelfTyp
 data CImport = CImportLib String | CImportUser String
 
 instance Show File where
-	show (File name _ _ classes _) =
+	show (File name _ _ _ classes _) =
 		"// " ++ name ++ ".od\n" ++
 		{-((`tryCon` "\n\n" ). strs' "\n") cimps ++
 		((`tryCon` "\n\n") . strs' "\n") imps ++ 
@@ -167,11 +170,11 @@ link src = map (\D.File{D.fileName = name} ->  fromMaybe (error $ "Could not fin
 		fidx = M.fromList $ map (idx fileName . linkFile fidx) src
 
 linkFile :: M.Map String File -> D.File -> File
-linkFile fidx (D.File name stms) = fl
+linkFile fidx (D.File name package stms) = fl
 	where
 		fl :: File
 		fl = File {fileName = name, fileImports = files, fileCImports = cImports, 
-			fileClasses =(map (linkClass (cidx, glidx)) . filter isCls) stms, globalDefs = gldefs}
+			fileClasses =(map (linkClass (cidx, glidx)) . filter isCls) stms, globalDefs = gldefs, filePackage = package}
 		files = visibleFiles stms
 		isCls s = D.isClass s || D.isStub s || D.isEnum s
 		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . (++ kernelFiles) . visibleFiles) stms

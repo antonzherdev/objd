@@ -5,7 +5,6 @@ import ObjD.Parser
 import ObjD.Link as L
 import ObjD.Struct as D
 import ObjC.Struct as C
-import Ex.String
 import Control.Monad
 import Control.Arrow
 import System.Directory (doesDirectoryExist, getDirectoryContents)
@@ -62,13 +61,13 @@ parseFiles :: [(FilePath, String)] -> IO [(FilePath, D.File)]
 parseFiles = mapM parse
 	where
 		fn = dropExtension . takeFileName
-		parse (path, txt) = case parseFile txt of
+		parse (path, txt) = case parseFile (fn path) txt of
 			Left err -> error $ "Error in parse " ++ path ++ ":\n" ++ removeComments txt ++ "\n\nError:" ++ show err
 			Right val -> do
 				when (fn path `elem` debug) (do
 					putStrLn $ "= Parsed " ++ path ++ ":"
-					putStrLn $ strs' "\n" val)
-				return (path, D.File (fn path) val)
+					putStrLn $ show val)
+				return (path, val)
 
 readOdFiles :: FilePath -> IO [(FilePath, String)]
 readOdFiles root = join $ liftM (mapM readOdFile) (odFiles root)

@@ -9,8 +9,9 @@ import           Data.Decimal
 import           Text.ParserCombinators.Parsec
 
 
-parseFile :: String -> Either ParseError [FileStm]
-parseFile = parse pFile "ObjD" . removeComments
+parseFile :: String -> String -> Either ParseError File
+parseFile name text  = fmap (\(pack, stms) -> File name pack stms) (parse pFile "ObjD" $ removeComments $ text)
+
 
 
 removeComments :: String -> String
@@ -27,12 +28,17 @@ removeComments ('/' : '*' : xs) = waitMultiLine xs
 		waitMultiLine (_ : xxs) = waitMultiLine xxs
 removeComments (x : xs) = x : removeComments xs
 
-pFile :: Parser [FileStm]
+pFile :: Parser ([String], [FileStm])
 pFile = do
+	sps
+	package <- option [] $ do
+		string "package"
+		sps1
+		ident `sepBy` char '.'
 	sps
 	res <- many pStatement
 	eof
-	return res
+	return (package, res)
 
 parseStatement :: String -> Either ParseError FileStm
 parseStatement = parse pStatement "ObjD"

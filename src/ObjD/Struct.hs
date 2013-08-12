@@ -7,7 +7,10 @@ import           Ex.String
 import 			 Data.Decimal
 type Sources = [File]
 
-data File = File {fileName :: String, fileStms :: [FileStm]}
+data File = File {fileName :: String, filePackage :: [String], fileStms :: [FileStm]}
+
+instance Show File where
+	show (File _ package stms) = "package " ++ strs "." package ++ "\n\n" ++ strs' "\n" stms
 
 data FileStm =
 	Import {impString :: String, impType :: ImportType }
