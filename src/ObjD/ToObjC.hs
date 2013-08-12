@@ -591,7 +591,7 @@ tExp (D.Negative e) = C.Negative (tExp e)
 tExp (D.Cast dtp e) = let 
 		stp = D.exprDataType e
 		toString format = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] [tExpTo stp e]
-	in case (stp, dtp) of
+	in case (D.unwrapGeneric stp, D.unwrapGeneric dtp) of
 		(D.TPMap False _ _, D.TPMap True _ _) -> C.Call (tExp e) "mutableCopy" [] []
 		(D.TPArr False _, D.TPArr True _) -> C.Call (tExp e) "mutableCopy" [] []
 		(D.TPInt, D.TPString) -> toString "%li" 

@@ -926,7 +926,8 @@ correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, ExpDError _ (D.Lambda 
 		stps (TPTuple tps) = tps
 		stps tp = [tp]
 		env' = envAddVals (map (uncurry localVal) lpars') env
-		expr' = maybeAddReturn dtp $ evalState (expr lambdaExpr) env'
+		dtp' = replaceGenerics gens dtp
+		expr' = maybeAddReturn dtp $ implicitConvertsion dtp' $ evalState (expr lambdaExpr) env'
 		tp' = if containsGeneric dtp then wrapGeneric (exprDataType expr') else dtp
 		containsGeneric = fromMaybe False . forDataType (\t -> case t of
 			TPClass TPMGeneric _ _ -> Just True
