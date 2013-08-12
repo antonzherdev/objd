@@ -812,6 +812,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 						| DefModObject `elem` defMods d = c
 						| DefModLocal `elem` defMods d = c
 						| DefModStub `elem` defMods d = c
+						| DefModStatic `elem` defMods d = c
 						| otherwise = Dot (Self (envSelf env)) c
 					resolveDef _ c = c
 			pars'' :: [(Def, Exp)]
