@@ -125,7 +125,7 @@ instance Show Class where
 			(unlines . map ind . concatMap (lines . show)) (classDefs cl)  ++
 		"}"
 		where
-			tp c@Class{classMods = mods} = strs' " " mods
+			tp Class{classMods = mods} = strs' " " mods
 			tp Generic{} = "generic"
 			sConstr c = maybe "" (\cc -> "(" ++ (strs ", " . map defName . defPars) cc ++ ")") (classConstructor c)
 instance Show ClassMod where
@@ -405,7 +405,7 @@ refDataTypeMod cl
 
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
-dataTypeClass env (TPObject _ c) = Class { classMods = [ClassModObject], className = className c, classExtends = Nothing, 
+dataTypeClass _ (TPObject _ c) = Class { classMods = [ClassModObject], className = className c, classExtends = Nothing, 
 	classDefs = filter ((DefModStatic `elem`) . defMods) (allDefsInClass c), classGenerics = []}
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
 dataTypeClass env (TPArr False _) = classFind (envIndex env) "ODArray"
@@ -894,7 +894,10 @@ exprCall strictClass call@(D.Call name pars gens) = do
 						tryDetermine c (TPGenericWrap a, TPGenericWrap b) = tryDetermine c (a, b)
 						tryDetermine c (TPGenericWrap a, b) = tryDetermine c (a, b)
 						tryDetermine c (a, TPGenericWrap b) = tryDetermine c (a, b)
+						tryDetermine c (a, b@TPArr{}) = tryDetermine c (a, dtpw b)
+						tryDetermine c (a, b@TPMap{}) = tryDetermine c (a, dtpw b)
 						tryDetermine _ _ = Nothing
+						dtpw tp = TPClass TPMGeneric (dataTypeGenerics env tp) (dataTypeClass env tp) 
 				in case call' of
 					(Call Def{defGenerics = Just defGens} _ _) -> 
 						M.fromList $ ddefGenerics defGens ++ dclassGenerics
@@ -973,16 +976,16 @@ allDefsInClass :: Class -> [Def]
 allDefsInClass cl = defsInClass M.empty cl 
 	where
 		defsInClass :: Generics -> Class -> [Def]
-		defsInClass gens cl = map (replaceGenericsInDef gens) (classDefs cl)  ++ maybe [] (defsInParentClass gens) (classExtends cl) 
+		defsInClass gens cll = map (replaceGenericsInDef gens) (classDefs cll)  ++ maybe [] (defsInParentClass gens) (classExtends cll) 
 		replaceGenericsInDef :: Generics -> Def -> Def
 		replaceGenericsInDef gens d = d {defType = replaceGenerics gens (defType d)}
 		defsInParentClass :: Generics -> Extends -> [Def]
-		defsInParentClass gens Extends{extendsClass = cl, extendsGenerics = extGens} = 
+		defsInParentClass gens Extends{extendsClass = cll, extendsGenerics = extGens} = 
 			let
 				extGens' = map (replaceGenerics gens) extGens
-				clGens = classGenerics cl
+				clGens = classGenerics cll
 				gens' = M.fromList $ zip (map className clGens) extGens'
-			in defsInClass gens' cl
+			in defsInClass gens' cll
 	
 
 findCall :: (String, [(Maybe String, Exp)]) -> (Env, DataType, [Def]) -> Maybe Exp

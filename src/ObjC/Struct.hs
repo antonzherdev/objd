@@ -8,7 +8,7 @@ import 			 Data.Decimal
 data FileStm =
 	Import String | ImportLib String | EmptyLine 
 	| Interface { interfaceName :: String, interfaceExtends :: Extends, interfaceProperties :: [Property], interfaceFuns :: [Fun] }
-	| Protocol { interfaceName :: String, interfaceFuns :: [Fun] }
+	| Protocol { interfaceName :: String, interfaceExtends :: Extends, interfaceFuns :: [Fun] }
 	| Implementation {implName :: String
 		, implFields :: [ImplField]
 		, implSynthesizes :: [ImplSynthesize]
@@ -113,8 +113,8 @@ instance Show FileStm where
 		 ++ (unlines' . map show) properties
 		 ++ (unlines  . map (( ++ ";") . show)) funs
 		 ++ "@end\n\n"
-	show (Protocol name funs) =
-		"@protocol " ++ name ++ "<NSObject>\n"
+	show (Protocol name (Extends cl trs) funs) =
+		"@protocol " ++ name ++ "<" ++ cl ++ unwords (map (", " ++ ) trs) ++ ">\n"
 		 ++ (unlines  . map (( ++ ";") . show)) funs
 		 ++ "@end\n\n"
 	show Implementation{implName = iName, implFields = fields, implSynthesizes = synzs, implFuns = funs, implStaticFields = stFields} =

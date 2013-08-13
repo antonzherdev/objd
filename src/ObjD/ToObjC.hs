@@ -142,11 +142,14 @@ stm2Fun D.Def{D.defName = name, D.defPars = pars, D.defType = tp, D.defMods = mo
 		par (D.Def{D.defName = nm, D.defType = ttp}) = C.FunPar nm (showDataType ttp) nm
 
 genProtocol :: D.Class -> C.FileStm
-genProtocol (D.Class {D.className = name, D.classDefs = defs}) =
+genProtocol (D.Class {D.className = name, D.classDefs = defs, D.classExtends = exts}) =
 	C.Protocol {
 		C.interfaceName = name,
-		C.interfaceFuns = intefaceFuns defs
+		C.interfaceFuns = intefaceFuns defs,
+		C.interfaceExtends = C.Extends ((cn . D.className . D.extendsClass . fromJust) exts) []
 	}
+	where
+		cn n = if n == "ODObject" then "NSObject" else n
 
 
 {- Implementation -}
