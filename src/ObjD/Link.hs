@@ -982,7 +982,7 @@ allDefsInClass cl = defsInClass M.empty cl
 		defsInParentClass :: Generics -> Extends -> [Def]
 		defsInParentClass gens Extends{extendsClass = cll, extendsGenerics = extGens} = 
 			let
-				extGens' = map (replaceGenerics gens) extGens
+				extGens' = map (wrapGeneric .replaceGenerics gens) extGens
 				clGens = classGenerics cll
 				gens' = M.fromList $ zip (map className clGens) extGens'
 			in defsInClass gens' cll
