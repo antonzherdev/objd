@@ -2,7 +2,7 @@ module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), DataType(..), Exp(..), CImport(..), 
 	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..),
 	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
-	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile, unwrapGeneric
+	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile, unwrapGeneric, forExp
 )where
 
 import 			 Control.Arrow

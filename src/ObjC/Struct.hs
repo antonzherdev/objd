@@ -49,7 +49,7 @@ data Stm =
 	| Stm Exp
 	| Return Exp
 	| Throw Exp
-	| Var{varType :: DataType, varName :: String, varExp :: Exp}
+	| Var{varType :: DataType, varName :: String, varExp :: Exp, varMods :: [String]}
 	| Break
 
 data Exp =
@@ -220,8 +220,8 @@ stmLines (Stm Nop) = [""]
 stmLines (Stm e) = appendLast ";" $ expLines e
 stmLines (Return e) = ["return "] `glue` (expLines e `app` ";")
 stmLines (Throw e) = ["@throw "] `glue` (expLines e `app` ";")
-stmLines (Var tp name Nop) = [showDecl tp name ++ ";"]
-stmLines (Var tp name e) = [showDecl tp name ++ " = "] `glue` (expLines e `app` ";")
+stmLines (Var tp name Nop mods) = [(unwords . map (++ " ")) mods ++ showDecl tp name ++ ";"]
+stmLines (Var tp name e mods) = [(unwords . map (++ " ")) mods ++ showDecl tp name ++ " = "] `glue` (expLines e `app` ";")
 stmLines (Break) = ["break;"]
 
 expLines :: Exp -> [String]

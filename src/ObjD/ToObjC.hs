@@ -187,7 +187,7 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
 		equal = C.ImplFun equalFun ([
 			C.If (C.BoolOp Eq C.Self (C.Ref "other")) [C.Return $ C.BoolConst True] [],
 			C.If (C.BoolOp Or (C.Not $ C.Ref "other") (C.Not equalClass)) [C.Return $ C.BoolConst False] [],
-			C.Var selfTp "o" (C.Cast selfTp (C.Ref "other"))
+			C.Var selfTp "o" (C.Cast selfTp (C.Ref "other")) []
 			] ++ equalsFun C.Self (C.Ref "o") equalFields)
 		equalClass = C.Call (C.Call C.Self "class" [] []) "isEqual" [("", C.Call (C.Ref "other") "class" [] [])] []
 		equalFun = C.Fun C.InstanceFun (C.TPSimple "BOOL" []) "isEqual" [(C.FunPar "" (C.TPSimple "id" []) "other")]
@@ -281,7 +281,7 @@ implFuns = map stm2ImplFun . filter D.isDef
 	where
 		stm2ImplFun def@D.Def {D.defName = name, D.defBody = db, D.defMods = mods, D.defType = tp}
 			| D.DefModAbstract `elem` mods = C.ImplFun (stm2Fun def) [C.Throw $ C.StringConst $ "Method " ++ name++ " is abstract"]
-			| otherwise = C.ImplFun (stm2Fun def) (tStm tp db)
+			| otherwise = C.ImplFun (stm2Fun def) (tStm tp [] db)
 		
 		
 {- Struct -}
@@ -293,7 +293,7 @@ genStruct D.Class {D.className = name, D.classDefs = defs} = [C.Struct name fiel
 		toField D.Def{D.defName = n, D.defType = tp, D.defMods = mods} = C.ImplField n (showDataType tp) ["__weak" | D.DefModWeak `elem` mods]
 		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple name [], 
 			C.cfunName = name ++ "Make", C.cfunPars = map toPar fields, C.cfunExps = 
-				[C.Var (C.TPSimple name []) "ret" C.Nop] ++
+				[C.Var (C.TPSimple name []) "ret" C.Nop []] ++
 				map toSet fields ++
 				[C.Return $ C.Ref "ret"]
 		}
@@ -334,7 +334,7 @@ equalsFun s1 s2 fields = [C.Return $ foldl foldEq C.Nop fields]
 hashFun :: [D.Def] -> [C.Stm]
 hashFun [] = [C.Return $ C.IntConst 0]
 hashFun fields = 
-	[C.Var (C.TPSimple "NSUInteger" []) "hash" (C.IntConst 0)] ++
+	[C.Var (C.TPSimple "NSUInteger" []) "hash" (C.IntConst 0) []] ++
 	map hashSet fields ++
 	[C.Return $ C.Ref "hash"]
 	where
@@ -360,7 +360,7 @@ stringFormatForType _ = "%@"
 
 descriptionFun :: C.Exp -> [D.Def] -> [C.Stm]
 descriptionFun start fields = 
-	[C.Var (C.TPSimple "NSMutableString*" []) "description" start] ++
+	[C.Var (C.TPSimple "NSMutableString*" []) "description" start []] ++
 	snd (mapAccumL append 0 $ filter pos fields)++
 	[C.Stm end, C.Return $ C.Ref "description"]
 	where
@@ -383,7 +383,7 @@ genStructImpl D.Class {D.className = name, D.classDefs = defs} = (map def' . fil
 		def' D.Def{D.defName = n, D.defType = tp, D.defBody = e, D.defPars = pars, D.defMods = mods} = C.CFun{C.cfunMods = [], 
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
 			C.cfunPars = if D.DefModStatic `notElem` mods then C.CFunPar (C.TPSimple name []) "self" : pars' else pars',
-			C.cfunExps = tStm tp e}
+			C.cfunExps = tStm tp [] e}
 			where
 				pars' = map par' pars
 				par' D.Def{D.defName = nn, D.defType = tpp} = C.CFunPar (showDataType tpp) nn
@@ -592,9 +592,9 @@ tExp (D.Lambda pars e rtp) =
 		unwrapPars :: [C.Stm]
 		unwrapPars = (map unwrapPar. filter (isNeedUnwrap . snd)) pars
 		unwrapPar ::(String, D.DataType) -> C.Stm
-		unwrapPar (name, D.TPGenericWrap tp) = C.Var (showDataType tp) name (maybeVal (D.TPGenericWrap tp, tp) $ C.Ref $ name ++ "_")
+		unwrapPar (name, D.TPGenericWrap tp) = C.Var (showDataType tp) name (maybeVal (D.TPGenericWrap tp, tp) $ C.Ref $ name ++ "_") []
 	in
-	C.Lambda (map par' pars) (unwrapPars ++ tStm rtp e) (showDataType rtp)
+	C.Lambda (map par' pars) (unwrapPars ++ tStm rtp [] e) (showDataType rtp)
 tExp (D.Arr exps) = C.Arr $ map (tExpToType tpGeneric) exps
 tExp (D.Map exps) = C.Map $ map (tExpToType tpGeneric *** tExpToType tpGeneric) exps
 tExp (D.Tuple exps) = C.CCall (C.Ref "tuple") $ map (tExpToType tpGeneric) exps
@@ -622,18 +622,18 @@ tpGeneric = D.TPClass D.TPMGeneric [] (D.Generic "?" [] Nothing)
 tExpToType :: D.DataType -> D.Exp -> C.Exp
 tExpToType tp e = maybeVal (D.exprDataType e, tp) (tExp e)
 
-tStm :: D.DataType -> D.Exp -> [C.Stm]
-tStm _ (D.Nop) = []
+tStm :: D.DataType -> [D.Exp] -> D.Exp -> [C.Stm]
+tStm _ _ (D.Nop) = []
 
-tStm _ (D.Braces []) = []
-tStm v (D.Braces [x]) = tStm v x
-tStm v (D.Braces xs) = concatMap (tStm v) xs
+tStm _ _ (D.Braces []) = []
+tStm v _ (D.Braces [x]) = tStm v [] x
+tStm v _ (D.Braces xs) = concatMap (tStm v xs) xs
 
-tStm v (D.If cond t f) = [C.If (tExpTo D.TPBool cond) (tStm v t) (tStm v f)]
-tStm v (D.While cond t) = [C.While (tExpTo D.TPBool cond) (tStm v t)]
-tStm v (D.Do cond t) = [C.Do (tExpTo D.TPBool cond) (tStm v t)]
+tStm v _ (D.If cond t f) = [C.If (tExpTo D.TPBool cond) (tStm v [] t) (tStm v [] f)]
+tStm v _ (D.While cond t) = [C.While (tExpTo D.TPBool cond) (tStm v [] t)]
+tStm v _ (D.Do cond t) = [C.Do (tExpTo D.TPBool cond) (tStm v [] t)]
 
-tStm _ (D.Set (Just t) l r) = let 
+tStm _ _ (D.Set (Just t) l r) = let 
 		l' = tExp l
 		r' = tExp r
 		ltp = D.exprDataType l
@@ -644,14 +644,25 @@ tStm _ (D.Set (Just t) l r) = let
 			Minus -> [C.Set Nothing l' (removeObjectFromArray l' r')]
 		D.TPMap _ _ _ -> [C.Set Nothing l' (addKVToMap l' r)]
 		_ -> [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
-tStm _ (D.Set tp l r) = [C.Set tp (tExp l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp r))]
-tStm D.TPVoid (D.Return e) = [C.Stm $ tExp e]
-tStm tp (D.Return e) = [C.Return $ tExpToType tp e]
-tStm _ (D.Val D.Def{D.defName = name, D.defType = tp, D.defBody = e}) = [C.Var (showDataType tp) name (tExpToType tp e)]
-tStm _ (D.Throw e) = [C.Throw $ tExp e]
-tStm _ D.Break = [C.Break]
+tStm _ _ (D.Set tp l r) = [C.Set tp (tExp l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp r))]
+tStm D.TPVoid _ (D.Return e) = [C.Stm $ tExp e]
+tStm tp _ (D.Return e) = [C.Return $ tExpToType tp e]
+tStm _ parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = e, D.defMods = mods}) = 
+	[C.Var (showDataType tp) name (tExpToType tp e) ["__block" | needBlock]]
+	where 
+		needBlock = D.DefModMutable `elem` mods && existsSetInLambda
+		existsSetInLambda = any (isJust . setsInLambda) parLambdas
+		parLambdas :: [D.Exp]
+		parLambdas = D.forExp isLambda (D.Braces parexps)
+		isLambda ee@D.Lambda{} = [ee]
+		isLambda _ = []
+		setsInLambda (D.Lambda _ lambdaExpr _) = D.forExp isSet lambdaExpr
+		isSet ee@(D.Set _ (D.Call d _ _) _) = if D.defName d == D.defName def then Just ee else Nothing
+		isSet _ = Nothing
+tStm _ _ (D.Throw e) = [C.Throw $ tExp e]
+tStm _ _ D.Break = [C.Break]
 
-tStm _ x = [C.Stm $ tExp x]
+tStm _ _ x = [C.Stm $ tExp x]
 
 equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp
 equals False (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp NotEq e1 e2
