@@ -546,6 +546,7 @@ tExp d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars))
 		 ltp = D.unwrapGeneric $ D.exprDataType l
 tExp (D.Dot l (D.Is dtp)) = C.Call (tExp l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
 tExp (D.Dot l (D.As dtp)) = C.Call (tExp l) "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
+tExp (D.Dot l (D.CastDot dtp)) = C.Cast (showDataType dtp) (tExp l)
 
 
 tExp (D.Self _) = C.Self

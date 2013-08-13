@@ -542,6 +542,7 @@ data Exp = Nop
 	| Cast DataType Exp
 	| As DataType
 	| Is DataType
+	| CastDot DataType
 	| Break
 	| LambdaCall Exp
 	
@@ -587,6 +588,7 @@ instance Show Exp where
 	show (Cast tp e) = show e ++ ".cast<" ++ show tp ++ ")"
 	show (As tp) = "as<" ++ show tp ++ ">"
 	show (Is tp) = "is<" ++ show tp ++ ">"
+	show (CastDot tp) = "cast<" ++ show tp ++ ">"
 	show (Break) = "break"
 	show (LambdaCall e) = show e ++ "()"
 	
@@ -688,6 +690,7 @@ exprDataType (Not _) = TPBool
 exprDataType (Negative e) = exprDataType e
 exprDataType (Cast dtp _) = dtp
 exprDataType (As dtp) = TPOption $ wrapGeneric dtp
+exprDataType (CastDot dtp) = dtp
 exprDataType (Is _) = TPBool
 exprDataType Break = TPVoid
 exprDataType (LambdaCall e) = case unwrapGeneric $ exprDataType e of
@@ -812,6 +815,7 @@ exprCall :: Maybe DataType -> D.Exp -> State Env Exp
 exprCall (Just (TPUnknown t)) e = return $ ExpDError t e
 exprCall (Just _) (D.Call "as" [] [tp]) = get >>= \env -> return $ As $ dataType (envIndex env) tp
 exprCall (Just _) (D.Call "is" [] [tp]) = get >>= \env -> return $ Is $ dataType (envIndex env) tp
+exprCall (Just _) (D.Call "cast" [] [tp]) = get >>= \env -> return $ CastDot $ dataType (envIndex env) tp
 exprCall strictClass call@(D.Call name pars gens) = do
 	env <- get
 	pars' <- mapM (\ (n, e) ->  expr e >>= (\ ee -> return (n, FirstTry e ee))) pars
