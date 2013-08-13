@@ -406,7 +406,7 @@ refDataTypeMod cl
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
 dataTypeClass env (TPObject _ c) = Class { classMods = [ClassModObject], className = className c, classExtends = Nothing, 
-	classDefs = filter ((DefModStatic `elem`) . defMods) (allDefsInClass env c), classGenerics = []}
+	classDefs = filter ((DefModStatic `elem`) . defMods) (allDefsInClass c), classGenerics = []}
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
 dataTypeClass env (TPArr False _) = classFind (envIndex env) "ODArray"
 dataTypeClass env (TPArr True _) = classFind (envIndex env) "ODMutableArray"
@@ -950,11 +950,11 @@ replaceGenerics gns = mapDataType f
 		f _ = Nothing
 
 allDefs :: Env -> Maybe DataType -> [Def]
-allDefs env (Just ss) = allDefsInClass env $ dataTypeClass env ss
+allDefs env (Just ss) = allDefsInClass $ dataTypeClass env ss
 allDefs env Nothing = 
 	envVals env 
-	++ allDefsInClass env (envSelfClass env) 
-	++ allDefsInClass env (dataTypeClass env $ objTp $ envSelfClass env) 
+	++ allDefsInClass (envSelfClass env) 
+	++ allDefsInClass (dataTypeClass env $ objTp $ envSelfClass env) 
 	++ envGlobalDefIndex env 
 	++ classConstructors'
 	++ objects 
@@ -969,9 +969,20 @@ objectDef :: Class -> Def
 objectDef cl = Def {defName = className cl, defPars = [], defType = TPObject (refDataTypeMod cl) cl, defBody = Nop, 
 				defMods = [DefModStatic, DefModObject], defGenerics = Nothing}
 
-allDefsInClass :: Env ->  Class -> [Def]
-allDefsInClass env cl = classDefs cl  ++ maybe [] (allDefsInClass env . extendsClass) (classExtends cl) 
-
+allDefsInClass :: Class -> [Def]
+allDefsInClass cl = defsInClass M.empty cl 
+	where
+		defsInClass :: Generics -> Class -> [Def]
+		defsInClass gens cl = map (replaceGenericsInDef gens) (classDefs cl)  ++ maybe [] (defsInParentClass gens) (classExtends cl) 
+		replaceGenericsInDef :: Generics -> Def -> Def
+		replaceGenericsInDef gens d = d {defType = replaceGenerics gens (defType d)}
+		defsInParentClass :: Generics -> Extends -> [Def]
+		defsInParentClass gens Extends{extendsClass = cl, extendsGenerics = extGens} = 
+			let
+				extGens' = map (replaceGenerics gens) extGens
+				clGens = classGenerics cl
+				gens' = M.fromList $ zip (map className clGens) extGens'
+			in defsInClass gens' cl
 	
 
 findCall :: (String, [(Maybe String, Exp)]) -> (Env, DataType, [Def]) -> Maybe Exp
