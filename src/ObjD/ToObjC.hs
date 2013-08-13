@@ -152,7 +152,7 @@ genProtocol (D.Class {D.className = name, D.classDefs = defs}) =
 {- Implementation -}
 
 stmToImpl :: D.Class -> C.FileStm
-stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs} =
+stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
 	C.Implementation {
 		C.implName = clsName,
 		C.implFields = map implField implFields,
@@ -162,6 +162,16 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = defs} =
 		C.implStaticFields = map implField staticFields
 	}
 	where
+		defs :: [D.Def]
+		defs = nubBy eqDefs $clDefs ++ traitDefs cl
+		eqDefs :: D.Def -> D.Def -> Bool
+		eqDefs a b = D.defName a == D.defName b && length (D.defPars a) == length (D.defPars b) &&all eqPars (zip (D.defPars a)(D.defPars b))
+		eqPars :: (D.Def, D.Def) -> Bool
+		eqPars (a, b) = D.defName a == D.defName b
+		traitDefs :: D.Class -> [D.Def]
+		traitDefs cll =
+			(if D.isTrait cll then filter ( (D.DefModAbstract `notElem`). D.defMods) (D.classDefs cll) else []) ++
+			maybe [] (\e -> traitDefs (D.extendsClass e) ) (D.classExtends cll)
 		constr = fromMaybe (error "No class constructor") (D.classConstructor cl)
 		implFields = filter needField defs
 		needField f = D.isField f && not (D.isStatic f)
