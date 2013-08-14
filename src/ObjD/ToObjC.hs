@@ -202,7 +202,11 @@ equalFun :: C.Fun
 equalFun = C.Fun C.InstanceFun (C.TPSimple "BOOL" []) "isEqual" [(C.FunPar "" (C.TPSimple "id" []) "other")]
 
 equalsIsPosible :: D.Class -> Bool
-equalsIsPosible D.Class {D.classDefs = defs} = null $ filter ( (D.DefModMutable `elem` ). D.defMods) defs
+equalsIsPosible D.Class {D.classDefs = defs} = 
+	(null $ filter ( (D.DefModMutable `elem` ). D.defMods) defs)
+	|| (not $ null $ filter ( isVal . D.defMods) defs)
+	where
+		isVal mods = (D.DefModField `elem` mods) && (D.DefModMutable `notElem` mods)
 
 copyImpls :: [C.ImplFun]
 copyImpls = [C.ImplFun (C.Fun C.InstanceFun idTp "copyWith" [C.FunPar "zone" (C.TPSimple "NSZone*" []) "zone"]) [C.Return C.Self]]
