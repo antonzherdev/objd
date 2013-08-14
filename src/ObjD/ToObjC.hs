@@ -166,11 +166,8 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
 	}
 	where
 		defs :: [D.Def]
-		defs = nubBy eqDefs $clDefs ++ traitDefs cl
-		eqDefs :: D.Def -> D.Def -> Bool
-		eqDefs a b = D.defName a == D.defName b && length (D.defPars a) == length (D.defPars b) &&all eqPars (zip (D.defPars a)(D.defPars b))
-		eqPars :: (D.Def, D.Def) -> Bool
-		eqPars (a, b) = D.defName a == D.defName b
+		defs = nub $ clDefs ++ traitDefs cl
+		
 		traitDefs :: D.Class -> [D.Def]
 		traitDefs cll =
 			(if D.isTrait cll then filter ( (D.DefModAbstract `notElem`). D.defMods) (D.classDefs cll) else []) ++
@@ -516,7 +513,12 @@ tExp (D.BoolConst i) = C.BoolConst i
 tExp (D.FloatConst i) = C.FloatConst i
 tExp (D.BoolOp Eq l r) = equals True (D.exprDataType l, tExp l) (D.exprDataType r, tExp r) 
 tExp (D.BoolOp NotEq l r) = equals False (D.exprDataType l, tExp l) (D.exprDataType r, tExp r) 
-tExp (D.BoolOp t l r) = C.BoolOp t (tExpTo D.TPBool l) (tExpTo D.TPBool r)
+tExp (D.BoolOp t l r) = C.BoolOp t (tExpTo tp l) (tExpTo tp r)
+	where
+		tp = ttp t
+		ttp And = D.TPBool
+		ttp Or = D.TPBool
+		ttp _ = D.exprDataType l
 tExp (D.MathOp t l r) = let 
 		l' = tExp l
 		r' = tExp r

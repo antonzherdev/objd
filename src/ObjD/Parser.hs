@@ -246,7 +246,7 @@ pImport = do
 		char '"'
 		return $ Import lib ImportTypeCUser
 	pImportD = impIdent >>= \lib -> return $ Import lib ImportTypeD
-	impIdent = many1 (letter <|> digit <|> oneOf "_/.")
+	impIdent = many1 (letter <|> digit <|> oneOf "_/.+")
 
 pStm :: Parser ClassStm
 pStm = pDef <|> pDecl <?> "Class statement"

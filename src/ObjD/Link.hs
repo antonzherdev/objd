@@ -60,6 +60,8 @@ isEnum (Class {classMods = mods}) = ClassModEnum `elem` mods
 isEnum _ = False
 classFields :: Class -> [Def]
 classFields = filter isField . classDefs
+classParents :: Class -> [Class]
+classParents = maybe [] (\e -> [extendsClass e]) . classExtends
 
 data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject deriving (Eq)
 
@@ -82,6 +84,11 @@ enumItems :: Class -> [Def]
 enumItems Class{classDefs = defs} = filter isEnumItem defs
 setDefName :: String -> Def -> Def
 setDefName name (Def _ pars tp body mods gens) = Def name pars tp body mods gens 
+instance Eq Def where
+	a == b = defName a == defName b && length (defPars a) == length (defPars b) && all eqPar (zip (defPars a)(defPars b))
+
+eqPar :: (Def, Def) -> Bool
+eqPar (x, y) = defName x == defName y
 
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate  | DefModGlobalVal | DefModWeak
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
@@ -300,7 +307,7 @@ linkDef str env ccc = evalState (stateDef ccc) env'
 	where 
 		env' = envAddClasses generics' env
 		generics' = map (linkGeneric $ envIndex env) (D.defGenerics ccc)
-
+		cl = envSelfClass env
 		stateDef:: D.ClassStm -> State Env Def
 		stateDef D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = 
 			let 
@@ -312,6 +319,11 @@ linkDef str env ccc = evalState (stateDef ccc) env'
 				 	[] -> envSelf env
 				 	Def{defName = dn, defType = dtp} : _ -> if dn == "self" then dtp else envSelf env
 				 mods' = translateMods mods
+				 overrideDef :: Maybe Def
+				 overrideDef = listToMaybe $ mapMaybe findThisDef (classParents cl)
+				 findThisDef c = find eqDef (classDefs c) 
+				 eqDef d = defName d == name && length (defPars d) == length opars && all eqPar (zip (defPars d) pars)
+				 needWrapRetType = fromMaybe False $ fmap (isTpGeneric . defType) overrideDef
 				 in 
 				(case body of
 					D.Nop -> return Def {defMods = DefModDef : DefModAbstract : mods' ++ [DefModStruct | str], defName = name, defGenerics = defGenerics',
@@ -322,9 +334,10 @@ linkDef str env ccc = evalState (stateDef ccc) env'
 						b <- expr body
 						put env'
 						let tp' = unwrapGeneric $ getDataType env' tp b
+						let tp'' = if needWrapRetType then wrapGeneric tp' else tp'
 						return Def {defMods = DefModDef : mods' ++ [DefModStruct | str], defName = name, defGenerics = defGenerics',
-							defPars = pars,
-							defType = tp', defBody = maybeAddReturn tp' b})
+							defPars = pars',
+							defType = tp'', defBody = maybeAddReturn tp'' b})
 
 linkDefPars :: ClassIndex -> [D.Par] -> [Def]
 linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> localVal pnm (dataType cidx ttt))
@@ -366,6 +379,9 @@ isVoid _ = False
 isTpFun :: DataType -> Bool
 isTpFun TPFun{} = True
 isTpFun _ = False
+isTpGeneric :: DataType -> Bool
+isTpGeneric (TPClass TPMGeneric _ _) = True
+isTpGeneric _ = False
 
 forDataType :: MonadPlus m => (DataType -> m a) -> DataType -> m a
 forDataType f tp = mplus (go tp) (f tp)
