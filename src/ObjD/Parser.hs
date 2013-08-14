@@ -475,7 +475,7 @@ pTerm = do
 				charSps '('
 				pars <- pCallPar `sepBy` charSps ','
 				charSps ')' <?> "Function call close bracket"
-				return $ Call name pars gens) <|> return (Call name [] gens)
+				return $ Call name (Just pars) gens) <|> return (Call name Nothing gens)
 
 pGensRef :: Parser [DataType]
 pGensRef = option [] $ try $ do

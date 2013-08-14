@@ -23,7 +23,7 @@ data File = File {fileName :: String, filePackage :: [String], fileImports :: [F
 
 data Class = Class { classMods :: [ClassMod], className :: String, classExtends :: Maybe Extends
 		, classDefs :: [Def], classGenerics :: [Class]}
-	| Generic {className :: String, classDefs :: [Def], classExtends :: Maybe Extends}
+	| Generic {className :: String, classDefs :: [Def], classExtends :: Maybe Extends, classGenerics :: [Class]}
 	| ClassError {className :: String, classErrorText :: String, classDefs :: [Def], classExtends :: Maybe Extends
 		, classGenerics :: [Class]}
 instance Eq Class where
@@ -272,14 +272,14 @@ linkClass (ocidx, glidx) cl = self
 				enumConstrCall = evalState (exprCall Nothing enumConstrDCall) env
 				enumConstrDCall = D.Call 
 					(D.className cl) 
-					([ (Nothing,D.IntConst ordinal), (Nothing, D.StringConst name)] ++  pars)
+					(Just $ [ (Nothing,D.IntConst ordinal), (Nothing, D.StringConst name)] ++  pars)
 					[]
 
 linkExtends :: ClassIndex -> D.Extends -> Extends
 linkExtends cidx (D.Extends ecls gens) = Extends (classFind cidx ecls) (map (dataType cidx) gens) []
 
 linkGeneric :: ClassIndex -> D.Generic -> Class
-linkGeneric cidx (D.Generic name ext) = Generic name [] (Just $ maybe (baseClassExtends cidx) (linkExtends cidx) ext)
+linkGeneric cidx (D.Generic name ext) = Generic name [] (Just $ maybe (baseClassExtends cidx) (linkExtends cidx) ext) []
 
 linkField :: Bool -> D.ClassStm -> State Env Def
 linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
@@ -775,7 +775,7 @@ expr D.Self = do
 expr r@D.Call{} = exprCall Nothing r
 expr (D.Index e i) = do
 	e' <- expr e
-	let obf =expr $ D.Dot e (D.Call "objectFor" [(Nothing, i)] [])
+	let obf =expr $ D.Dot e (D.Call "objectFor" (Just [(Nothing, i)]) [])
 	case exprDataType e' of
 		TPClass{} -> obf
 		(TPGenericWrap TPClass{}) -> obf
@@ -829,12 +829,12 @@ type Generics = M.Map String DataType
 
 exprCall :: Maybe DataType -> D.Exp -> State Env Exp		
 exprCall (Just (TPUnknown t)) e = return $ ExpDError t e
-exprCall (Just _) (D.Call "as" [] [tp]) = get >>= \env -> return $ As $ dataType (envIndex env) tp
-exprCall (Just _) (D.Call "is" [] [tp]) = get >>= \env -> return $ Is $ dataType (envIndex env) tp
-exprCall (Just _) (D.Call "cast" [] [tp]) = get >>= \env -> return $ CastDot $ dataType (envIndex env) tp
+exprCall (Just _) (D.Call "as" Nothing [tp]) = get >>= \env -> return $ As $ dataType (envIndex env) tp
+exprCall (Just _) (D.Call "is" Nothing [tp]) = get >>= \env -> return $ Is $ dataType (envIndex env) tp
+exprCall (Just _) (D.Call "cast" Nothing [tp]) = get >>= \env -> return $ CastDot $ dataType (envIndex env) tp
 exprCall strictClass call@(D.Call name pars gens) = do
 	env <- get
-	pars' <- mapM (\ (n, e) ->  expr e >>= (\ ee -> return (n, FirstTry e ee))) pars
+	pars' <- mapM (\ (n, e) ->  expr e >>= (\ ee -> return (n, FirstTry e ee))) (fromMaybe [] pars)
 	return $
 		let
 			self = fromMaybe (envSelf env) strictClass
@@ -852,6 +852,14 @@ exprCall strictClass call@(D.Call name pars gens) = do
 						| DefModStub `elem` defMods d = c
 						| otherwise = Dot (Self (envSelf env)) c
 					resolveDef _ c = c
+
+			call''' = case pars of
+				Just [] -> case exprDataType call'' of
+					t@(TPFun TPVoid _) -> LambdaCall (Cast t call'')
+					TPGenericWrap t@(TPFun TPVoid _) -> LambdaCall (Cast t call'')
+					_ -> call''
+				_ -> call''
+
 			pars'' :: [(Def, Exp)]
 			pars'' = case call' of
 				Call _ _ r -> r
@@ -924,17 +932,15 @@ exprCall strictClass call@(D.Call name pars gens) = do
 				maybe "" (\cl -> "strict in class " ++ show cl ++ "\n") strictClass ++
 				(if detailedReferenceError then "in defs:\n" ++
 				(strs "\n" . map (ind . showDef False)) (allDefs env strictClass)  else "")
-				where callStr = name ++ case pars of
-					[] -> ""
-					_  -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) pars) ++ ")" 
+				where callStr = name ++ maybe "" (\ps -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) ps) ++ ")" ) pars
 
 			correctCall :: Exp -> Exp
 			correctCall (Call d tp _) = Call d (replaceGenerics gens'' tp) (map doImplicitConversation pars''')
 				where
-					doImplicitConversation (dd, e) = (dd, implicitConvertsion (defType dd) e)
+					doImplicitConversation (dd, e) = (dd, implicitConvertsion (replaceGenerics gens'' $ defType dd) e)
 			
 			
-		in call''
+		in call'''
 exprCall _ err = return $ ExpDError "It is not call" err
 
 correctCallPar :: Env -> Generics -> (Def, Exp) -> (Def, Exp)
@@ -965,7 +971,7 @@ correctCallPar _ _ e = e
 replaceGenerics :: Generics -> DataType -> DataType
 replaceGenerics gns = mapDataType f
 	where 
-		f (TPClass TPMGeneric _ (Generic g _ _)) = M.lookup g gns
+		f (TPClass TPMGeneric _ (Generic g _ _ _)) = M.lookup g gns
 		f _ = Nothing
 
 allDefs :: Env -> Maybe DataType -> [Def]

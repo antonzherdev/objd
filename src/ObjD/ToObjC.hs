@@ -604,6 +604,8 @@ tExp d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars))
 tExp (D.Dot l (D.Is dtp)) = C.Call (tExp l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
 tExp (D.Dot l (D.As dtp)) = C.Call (tExp l) "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
 tExp (D.Dot l (D.CastDot dtp)) = C.Cast (showDataType dtp) (tExp l)
+tExp (D.Dot l (D.Cast tp c)) = C.Cast (showDataType tp) (tExp (D.Dot l c))
+tExp (D.Dot l (D.LambdaCall c)) = C.CCall (tExp (D.Dot l c)) [] 
 
 
 tExp (D.Self _) = C.Self
@@ -662,7 +664,7 @@ tExp e@D.ExpLError{} = C.Error $ show e
 tExp x = C.Error $ "No tExp for " ++ show x
 
 tpGeneric :: D.DataType
-tpGeneric = D.TPClass D.TPMGeneric [] (D.Generic "?" [] Nothing)
+tpGeneric = D.TPClass D.TPMGeneric [] (D.Generic "?" [] Nothing [])
 tExpToType :: D.DataType -> D.Exp -> C.Exp
 tExpToType tp e = maybeVal (D.exprDataType e, tp) (tExp e)
 

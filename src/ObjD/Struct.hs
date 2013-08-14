@@ -76,7 +76,7 @@ data Exp = Nop
 	| MathOp MathTp Exp Exp
 	| PlusPlus Exp
 	| MinusMinus Exp
-	| Call String [CallPar] [DataType]
+	| Call String (Maybe [CallPar]) [DataType]
 	| Index Exp Exp
 	| Lambda [(String, Maybe DataType)] Exp
 	| Val{valName :: String, valDataType :: Maybe DataType, valBody :: Exp, valMods :: [DefMod]}
@@ -144,8 +144,8 @@ instance Show Exp where
 	show (MathOp t l r) = showOp l (show t) r
 	show (PlusPlus e) = show e ++ "++"
 	show (MinusMinus e) = show e ++ "--"
-	show (Call n [] gens) = n ++ showGens gens
-	show (Call n pars gens) = n ++ showGens gens ++ "(" ++ strs ", " (map showPar pars) ++ ")"
+	show (Call n Nothing gens) = n ++ showGens gens
+	show (Call n (Just pars) gens) = n ++ showGens gens ++ "(" ++ strs ", " (map showPar pars) ++ ")"
 		where
 			showPar (Nothing, e) = show e
 			showPar (Just name, e) = name ++ " = " ++ show e
