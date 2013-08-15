@@ -418,7 +418,7 @@ pTerm = do
 		pNumConst = do
 			sign <- option 1 (charSps '-' >> return (-1))
 			i <- liftM read (many1 digit)
-			d <- optionMaybe $ do
+			d <- optionMaybe $ try $ do
 				char '.'
 				many1 digit
 			return $ maybe (IntConst $ sign*i) (FloatConst . (toFloat sign i) ) d
