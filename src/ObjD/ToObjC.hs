@@ -658,6 +658,7 @@ tExp (D.Cast dtp e) = let
 		(D.TPInt, D.TPString) -> toString "%li" 
 		(D.TPUInt, D.TPString) -> toString "%li" 
 		(D.TPFloat, D.TPString) -> toString "%f" 
+		(stp', _) -> C.Cast (showDataType dtp) (tExpTo stp' e)
 
 tExp e@D.ExpDError{} = C.Error $ show e
 tExp e@D.ExpLError{} = C.Error $ show e

@@ -1115,6 +1115,9 @@ implicitConvertsion dtp ex = let stp = exprDataType ex
 		conv TPInt TPString = Cast TPString ex
 		conv TPUInt TPString = Cast TPString ex
 		conv TPFloat TPString = Cast TPString ex
+		conv TPInt TPUInt = Cast TPUInt ex
+		conv TPFloat TPUInt = Cast TPUInt ex
+		conv TPFloat TPInt = Cast TPInt ex
 		conv sc dc@TPClass{} = if sc /= dc then classConversion dc sc ex else ex
 		conv _ _ = ex
 
