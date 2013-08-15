@@ -38,6 +38,7 @@ data Extends = Extends {extendsClass :: Maybe ExtendsClass, extendsTraits :: [Ex
 type CallPar = (Def, Exp)
 data ExtendsClass = ExtendsClass ExtendsRef [CallPar]
 type Generics = M.Map String DataType
+type ClassRef = (Class, Generics)
 
 instance Show Class where
 	show Generic{className = name, classExtends = ext} =  name ++ " " ++ show ext
@@ -119,37 +120,19 @@ replaceGenerics gns = mapDataType f
 		f (TPClass TPMGeneric _ (Generic g _ _ _)) = M.lookup g gns
 		f _ = Nothing
 
-allDefs :: Env -> Maybe DataType -> [Def]
-allDefs env (Just ss) = allDefsInClass $ dataTypeClass env ss
-allDefs env Nothing = 
-	envVals env 
-	++ allDefsInClass (envSelfClass env) 
-	++ allDefsInClass (dataTypeClass env $ objTp $ envSelfClass env) 
-	++ envGlobalDefIndex env 
-	++ classConstructors'
-	++ objects 
-	where
-		classConstructors = (map setName . mapMaybe (classConstructor . snd) . M.toList) (envIndex env)
-		classConstructors' = filter (not . null . defPars) classConstructors
-		setName d@Def{defType = tp} = setDefName (className $ dataTypeClass env tp) d
-		objects = (map (objectDef . snd) . M.toList) (envIndex env)
-		objTp cl = TPObject (refDataTypeMod cl) cl
-
 objectDef :: Class -> Def
 objectDef cl = Def {defName = className cl, defPars = [], defType = TPObject (refDataTypeMod cl) cl, defBody = Nop, 
 				defMods = [DefModStatic, DefModObject], defGenerics = Nothing}
 
-allDefsInClass :: Class -> [Def]
-allDefsInClass cl = defsInClass M.empty cl 
+allDefsInClass :: ClassRef -> [Def]
+allDefsInClass (cl, gens) = map replaceGenericsInDef (classDefs cl)  ++ defsInParentClass (classExtends cl) 
 	where
-		defsInClass :: Generics -> Class -> [Def]
-		defsInClass gens cll = map (replaceGenericsInDef gens) (classDefs cll)  ++ defsInParentClass gens (classExtends cll) 
-		replaceGenericsInDef :: Generics -> Def -> Def
-		replaceGenericsInDef gens d = d {defType = replaceGenerics gens (defType d)}
-		defsInParentClass :: Generics -> Extends -> [Def]
-		defsInParentClass gens extends = concatMap (defsInExtends gens) $ extendsRefs extends
-		defsInExtends :: Generics -> ExtendsRef -> [Def]
-		defsInExtends gens extRef@(cll, _)= defsInClass (superGenerics gens extRef) cll
+		replaceGenericsInDef :: Def -> Def
+		replaceGenericsInDef  d = d {defType = replaceGenerics gens (defType d), defPars = map replaceGenericsInDef (defPars d) }
+		defsInParentClass :: Extends -> [Def]
+		defsInParentClass extends = concatMap defsInExtends $ extendsRefs extends
+		defsInExtends :: ExtendsRef -> [Def]
+		defsInExtends extRef@(cll, _)= allDefsInClass (cll, (superGenerics gens extRef))
 
 buildGenerics :: Class -> [DataType] -> Generics
 buildGenerics cl gens = M.fromList $ zip (map className $ classGenerics cl) gens
@@ -157,12 +140,12 @@ buildGenerics cl gens = M.fromList $ zip (map className $ classGenerics cl) gens
 superGenerics :: Generics -> ExtendsRef -> Generics
 superGenerics gens (cl, extGens) = buildGenerics cl $ map (wrapGeneric .replaceGenerics gens) extGens
 
-upGenericsToClass :: Class -> (Class, Generics) -> Maybe Generics
+upGenericsToClass :: Class -> ClassRef -> Maybe Generics
 upGenericsToClass destinationClass (cl, gens) 
 	| destinationClass == cl = Just gens
 	| otherwise = listToMaybe $ mapMaybe mapRef $ extendsRefs (classExtends cl)
 		where
-			mapRef ref@(cl, _)= upGenericsToClass destinationClass (cl, superGenerics gens ref)
+			mapRef ref@(ccl, _)= upGenericsToClass destinationClass (ccl, superGenerics gens ref)
 extendsClassClass :: ExtendsClass -> Class
 extendsClassClass (ExtendsClass (cl, _) _) = cl
 {-----------------------------------------------------------------------------------------------------------------------------------------
@@ -506,10 +489,15 @@ refDataTypeMod cl
 	| isGeneric cl = TPMGeneric
 	| otherwise = TPMClass
 
+dataTypeClassRef :: Env -> DataType -> ClassRef
+dataTypeClassRef env tp = let 
+		cl = dataTypeClass env tp
+	in (cl, buildGenerics cl $ dataTypeGenerics env tp)
+
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
 dataTypeClass _ (TPObject _ c) = Class { classMods = [ClassModObject], className = className c, classExtends = extendsNothing, 
-	classDefs = filter ((DefModStatic `elem`) . defMods) (allDefsInClass c), classGenerics = []}
+	classDefs = filter ((DefModStatic `elem`) . defMods) (allDefsInClass (c, M.empty) ), classGenerics = []}
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
 dataTypeClass env (TPArr False _) = classFind (envIndex env) "ODArray"
 dataTypeClass env (TPArr True _) = classFind (envIndex env) "ODMutableArray"
@@ -696,7 +684,7 @@ instance Show Exp where
 
 showCallPars :: [CallPar] -> String
 showCallPars [] = ""
-showCallPars pars = strs ", " (map showPar pars) 
+showCallPars pars = "(" ++ strs ", " (map showPar pars) ++ ")"
 	where showPar (Def {defName = name}, e) = name ++ " = " ++ show e
 	
 callLocalVal :: String -> DataType -> Exp
@@ -955,10 +943,10 @@ exprCall strictClass call@(D.Call name pars gens) = do
 			pars''' :: [(Def, Exp)]
 			pars''' = (map (correctCallPar env gens') pars'')
 			
-			gens' :: M.Map String DataType
+			gens' :: Generics
 			gens' = resolveGenerics pars''
 
-			gens'' :: M.Map String DataType
+			gens'' :: Generics
 			gens'' = resolveGenerics pars'''
 
 			extendList :: Int -> [a] -> [Maybe a]
@@ -967,7 +955,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 				| length a > l = (map Just . take l) a
 				| otherwise = map Just a ++ replicate (l - length a) Nothing 
 
-			resolveGenerics :: [(Def, Exp)] -> M.Map String DataType
+			resolveGenerics :: [(Def, Exp)] -> Generics
 			resolveGenerics rpars = let
 				ddefGenerics :: DefGenerics -> [(String, DataType)]
 				ddefGenerics DefGenerics{defGenericsClasses = defGens, defGenericsSelfType = selfType} = 
@@ -1033,6 +1021,23 @@ exprCall strictClass call@(D.Call name pars gens) = do
 			
 		in call'''
 exprCall _ err = return $ ExpDError "It is not call" err
+
+allDefs :: Env -> Maybe DataType -> [Def]
+allDefs env (Just ss) = allDefsInClass $ dataTypeClassRef env ss
+allDefs env Nothing = 
+	envVals env 
+	++ allDefsInClass (dataTypeClassRef env $ envSelf env) 
+	++ allDefsInClass (dataTypeClassRef env $ objTp $ envSelfClass env) 
+	++ envGlobalDefIndex env 
+	++ classConstructors'
+	++ objects 
+	where
+		classConstructors = (map setName . mapMaybe (classConstructor . snd) . M.toList) (envIndex env)
+		classConstructors' = filter (not . null . defPars) classConstructors
+		setName d@Def{defType = tp} = setDefName (className $ dataTypeClass env tp) d
+		objects = (map (objectDef . snd) . M.toList) (envIndex env)
+		objTp cl = TPObject (refDataTypeMod cl) cl
+
 
 correctCallPar :: Env -> Generics -> (Def, Exp) -> (Def, Exp)
 correctCallPar env gens (d@Def{defType = (TPFun _ _)}, FirstTry _ e'@Lambda{}) = correctCallPar env gens (d, e')
