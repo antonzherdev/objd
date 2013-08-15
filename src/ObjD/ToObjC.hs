@@ -74,9 +74,9 @@ stmToInterface (cl@D.Class {D.className = name, D.classDefs = defs}) =
 			(D.DefModPrivate `notElem` D.defMods f) && D.isField f && D.isStatic f)) defs
 		
 classExtends :: D.Class -> C.Extends
-classExtends cl = maybe (C.Extends "NSObject" []) (ext . D.extendsClass) (D.classExtends cl)
+classExtends cl = maybe (C.Extends "NSObject" []) ext (D.extendsClass $ D.classExtends cl)
 	where
-		ext ccl
+		ext (D.ExtendsClass (ccl, _) _)
 			| D.ClassModTrait `elem` D.classMods ccl = C.Extends "NSObject" [D.className ccl]
 			| D.className ccl == "ODObject" = C.Extends "NSObject" []
 			| otherwise = C.Extends (D.className ccl) []
@@ -146,7 +146,7 @@ genProtocol (D.Class {D.className = name, D.classDefs = defs, D.classExtends = e
 	C.Protocol {
 		C.interfaceName = name,
 		C.interfaceFuns = intefaceFuns defs,
-		C.interfaceExtends = C.Extends ((cn . D.className . D.extendsClass . fromJust) exts) []
+		C.interfaceExtends = C.Extends ((cn . D.className . D.extendsClassClass . fromJust . D.extendsClass) exts) []
 	}
 	where
 		cn n = if n == "ODObject" then "NSObject" else n
@@ -171,7 +171,7 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
 		traitDefs :: D.Class -> [D.Def]
 		traitDefs cll =
 			(if D.isTrait cll then filter ( (D.DefModAbstract `notElem`). D.defMods) (D.classDefs cll) else []) ++
-			maybe [] (\e -> traitDefs (D.extendsClass e) ) (D.classExtends cll)
+			concatMap (traitDefs . fst) ((D.extendsRefs . D.classExtends) cll)
 		constr = fromMaybe (error "No class constructor") (D.classConstructor cl)
 		implFields = filter needField defs
 		needField f = D.isField f && not (D.isStatic f)
@@ -257,7 +257,7 @@ implInitialize cl = let
 
 implInit :: D.Class -> D.Def -> C.ImplFun
 implInit cl constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
-			[C.Set Nothing C.Self (superInit $ D.classExtends cl)]
+			[C.Set Nothing C.Self (superInit $ D.extendsClass $ D.classExtends cl)]
 			++ implInitFields (filter hasField constrPars) (filter hasInit (D.classDefs cl))
 			++ [C.Stm C.Nop, C.Return C.Self]
 			)
@@ -268,8 +268,8 @@ implInit cl constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
 		hasField f= any ((D.defName f == ) . D.defName) (D.classDefs cl)
 
 		superInit Nothing = C.Call C.Super "init" [] []
-		superInit (Just (D.Extends _ _ [])) = C.Call C.Super "init" [] []
-		superInit (Just (D.Extends _ _ pars)) = C.Call C.Super "initWith" (map (D.defName *** tExp) pars) []
+		superInit (Just (D.ExtendsClass _ [])) = C.Call C.Super "init" [] []
+		superInit (Just (D.ExtendsClass _ pars)) = C.Call C.Super "initWith" (map (D.defName *** tExp) pars) []
 
 		implInitFields :: [D.Def] -> [D.Def] -> [C.Stm]
 		implInitFields [] [] = []
@@ -489,7 +489,7 @@ procImports D.File{D.fileImports = imps, D.fileClasses = classes} = (h, m)
 		classPosibleWeakImport cl@D.Class{D.classMods = mods} = D.ClassModStruct `notElem` mods && not (hasExtends cl)
 		classPosibleWeakImport _ = False
 		hasExtends cl = cl `elem` extends
-		extends = (map  D.extendsClass . mapMaybe D.classExtends) classes
+		extends = (map fst . concatMap (D.extendsRefs . D.classExtends)) classes
 		cImport D.File{D.fileName = fn} = C.Import (fn ++ ".h")
 		h = concatMap procH imps
 		procH file
@@ -641,9 +641,9 @@ tExp (D.Lambda pars e rtp) =
 		unwrapPar (name, D.TPGenericWrap tp) = C.Var (showDataType tp) name (maybeVal (D.TPGenericWrap tp, tp) $ C.Ref $ name ++ "_") []
 	in
 	C.Lambda (map par' pars) (unwrapPars ++ tStm rtp [] e) (showDataType rtp)
-tExp (D.Arr exps) = C.Arr $ map (tExpToType tpGeneric) exps
-tExp (D.Map exps) = C.Map $ map (tExpToType tpGeneric *** tExpToType tpGeneric) exps
-tExp (D.Tuple exps) = C.CCall (C.Ref "tuple") $ map (tExpToType tpGeneric) exps
+tExp (D.Arr exps) = C.Arr $ map (tExpToType D.tpGeneric) exps
+tExp (D.Map exps) = C.Map $ map (tExpToType D.tpGeneric *** tExpToType D.tpGeneric) exps
+tExp (D.Tuple exps) = C.CCall (C.Ref "tuple") $ map (tExpToType D.tpGeneric) exps
 tExp (D.Opt e) = let tp = D.exprDataType e
 	in C.Call (C.Ref "CNOption") "opt" [("", maybeVal (tp, D.TPGenericWrap tp) (tExp e))] []
 tExp (D.None _) = C.Call (C.Ref "CNOption") "none" [] []
@@ -663,8 +663,6 @@ tExp e@D.ExpDError{} = C.Error $ show e
 tExp e@D.ExpLError{} = C.Error $ show e
 tExp x = C.Error $ "No tExp for " ++ show x
 
-tpGeneric :: D.DataType
-tpGeneric = D.TPClass D.TPMGeneric [] (D.Generic "?" [] Nothing [])
 tExpToType :: D.DataType -> D.Exp -> C.Exp
 tExpToType tp e = maybeVal (D.exprDataType e, tp) (tExp e)
 
