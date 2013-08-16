@@ -3,7 +3,7 @@ module ObjD.Link (
 	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef,
 	link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
-	tpGeneric, superType
+	tpGeneric, superType, wrapGeneric
 )where
 
 import 			 Control.Arrow

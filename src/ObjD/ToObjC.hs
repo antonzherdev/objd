@@ -578,7 +578,7 @@ tExp (D.MathOp t l r) = let
 			D.TPGenericWrap tt -> tt
 			tt -> tt
 	in case ltp of
-		D.TPArr _ _ -> addObjectToArray l' r'
+		D.TPArr _ _ -> addObjectToArray rtp l' r'
 		D.TPMap _ _ _ -> addKVToMap l' r
 		D.TPString -> case rtp of
 			D.TPString -> C.Call l' "stringByAppending" [("string", r')] []
@@ -692,8 +692,8 @@ tStm _ _ (D.Set (Just t) l r) = let
 		rtp = D.exprDataType r
 	in case ltp of
 		D.TPArr _ _ ->  case t of
-			Plus -> [C.Set Nothing l' (addObjectToArray l' r')]
-			Minus -> [C.Set Nothing l' (removeObjectFromArray l' r')]
+			Plus -> [C.Set Nothing l' (addObjectToArray rtp l' r')]
+			Minus -> [C.Set Nothing l' (removeObjectFromArray rtp l' r')]
 		D.TPMap _ _ _ -> [C.Set Nothing l' (addKVToMap l' r)]
 		_ -> [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
 tStm _ _ (D.Set tp l r) = [C.Set tp (tExp l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp r))]
@@ -730,8 +730,9 @@ equals False s1@(_, _) s2@(_, _) = C.Not $ equals True s1 s2
 
 equals True (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPClass D.TPMStruct _ c, e1) (_, e2) = C.CCall (C.Ref (D.className c ++ "Eq")) [e1, e2]
-equals True (stp@(D.TPGenericWrap _), e1) (dtp, e2) = C.BoolOp Eq (maybeVal (stp, dtp) e1) e2
-equals True (stp, e1) (dtp@(D.TPGenericWrap _), e2) = C.BoolOp Eq e1 (maybeVal (stp, dtp) e2)
+equals True (D.TPGenericWrap{}, e1) (D.TPGenericWrap{}, e2) = C.Call e1 "isEqual" [("", e2)] []
+equals True (stp@(D.TPGenericWrap stp'), e1) (dtp, e2) = equals True (stp', maybeVal (stp, dtp) e1) (dtp, e2)
+equals True (stp, e1) (dtp@(D.TPGenericWrap dtp'), e2) = equals True (stp, e1) (dtp', maybeVal (stp, dtp) e2)
 equals True (D.TPFloat, e1) (_, e2) = C.CCall (C.Ref "eqf") [e1, e2]
 equals True (D.TPInt, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPUInt, e1) (_, e2) = C.BoolOp Eq e1 e2
@@ -743,10 +744,10 @@ equals True (D.TPClass D.TPMClass _ cl, e1) (_, e2)
 
 equals True (_, e1) (_, e2) = C.Call e1 "isEqual" [("", e2)] []
 
-addObjectToArray :: C.Exp -> C.Exp -> C.Exp
-addObjectToArray a obj = C.Call a "arrayByAdding" [("object", obj)] []
-removeObjectFromArray :: C.Exp -> C.Exp -> C.Exp
-removeObjectFromArray a obj = C.Call a "arrayByRemoving" [("object", obj)] []
+addObjectToArray :: D.DataType -> C.Exp -> C.Exp -> C.Exp
+addObjectToArray tp a obj = C.Call a "arrayByAdding" [("object", maybeVal (tp, D.wrapGeneric tp) obj)] []
+removeObjectFromArray :: D.DataType -> C.Exp -> C.Exp -> C.Exp
+removeObjectFromArray tp a obj = C.Call a "arrayByRemoving" [("object", maybeVal (tp, D.wrapGeneric tp) obj)] []
 
 addKVToMap :: C.Exp -> D.Exp -> C.Exp
 addKVToMap a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tExp v), ("forKey", tExp k)] []
