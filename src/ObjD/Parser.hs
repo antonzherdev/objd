@@ -44,7 +44,7 @@ parseStatement :: String -> Either ParseError FileStm
 parseStatement = parse pStatement "ObjD"
 
 pStatement :: Parser FileStm
-pStatement = pImport <|> pStub <|> pClass <|> pEnum
+pStatement = pTypeStm <|> pImport <|> pStub <|> pClass <|> pEnum
 
 sps :: Parser String
 sps = many (char ' ' <|> char '\t'  <|> char '\n') <?> ""
@@ -122,6 +122,21 @@ pStub = do
 	sps
 	return $ StubDef def
 
+pTypeStm :: Parser FileStm
+pTypeStm = do
+	try(string "type")
+	sps1
+	name <- ident
+	sps
+	generics <- pGenerics
+	sps
+	charSps '='
+	tp <- ident
+	sps
+	gens <- pGensRef
+	sps
+	return $ Type name generics (tp, gens)
+
 
 pClass :: Parser FileStm
 pClass = do
@@ -182,7 +197,7 @@ pExtends = optionMaybe (do
 		sps
 		gens <- pGensRef
 		sps
-		return $ Extends cls gens
+		return $ Extends (cls, gens)
 	)
 
 pClassBody :: Parser [ClassStm]

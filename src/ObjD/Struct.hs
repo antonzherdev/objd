@@ -1,7 +1,7 @@
 module ObjD.Struct (
 	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), 
-	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), 
-	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum, isStatic
+	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), ExtendsRef,
+	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum, isStatic, isType
 ) where
 import           Ex.String
 import 			 Data.Decimal
@@ -19,6 +19,7 @@ data FileStm =
 	| StubDef {stubDef :: ClassStm}
 	| Enum {className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, enumItems :: [EnumItem], classBody :: [ClassStm]
 		, classGenerics :: [Generic] }
+	| Type {className :: String, classGenerics :: [Generic], typeDef :: ExtendsRef}
 isClass :: FileStm -> Bool
 isClass (Class {}) = True
 isClass _ = False
@@ -34,13 +35,17 @@ isImport _ = False
 isStubDef :: FileStm -> Bool
 isStubDef (StubDef {}) = True
 isStubDef _ = False
+isType :: FileStm -> Bool
+isType (Type {}) = True
+isType _ = False
 data ImportType = ImportTypeCUser | ImportTypeCLib | ImportTypeD
 
 data ClassMod = ClassModStruct | ClassModStub | ClassModTrait deriving (Eq)
 
 data Generic = Generic String (Maybe Extends)
 
-data Extends = Extends String [DataType]
+data Extends = Extends ExtendsRef
+type ExtendsRef =  (String, [DataType])
 
 data ClassStm = Def {defMods :: [DefMod],  defName :: String, defGenerics :: [Generic], defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
 stmName :: ClassStm -> String
@@ -100,6 +105,7 @@ instance Show FileStm where
 		where 
 			tp = (if ClassModStub `elem` mods then "stub " else "") ++ (if ClassModStruct `elem` mods then "struct" else "class")
 	show (Enum{className = name, classFields = fields, classBody = body}) = "enum " ++ name ++  "(" ++ strs' ", " fields ++ ")" ++ showClassBody body
+	show (Type{className = name, typeDef = (td, _)}) = "type " ++ name ++  " = " ++ td
 	show (StubDef d) = "stub " ++ show d
 	show (Import name ImportTypeD) = "import " ++ name
 	show (Import name ImportTypeCLib) = "import <" ++ name ++ ">"

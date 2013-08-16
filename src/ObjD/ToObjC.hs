@@ -37,6 +37,7 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 			++ fst dImports' 
 			++ [C.EmptyLine] 
 			++ map classDecl (cls ++ enums) 
+			++ map (C.ProtocolDecl . D.className) (filter D.isTrait classes) 
 			++ map structDecl structs
 			++ [C.EmptyLine] 
 			++ concatMap (fst . gen) classes
@@ -503,16 +504,17 @@ procImports D.File{D.fileImports = imps, D.fileClasses = classes} = (h, m)
 
 {- DataType -}
 showDataType :: D.DataType -> C.DataType
-showDataType (D.TPArr False _) = C.TPSimple "NSArray*" []
-showDataType (D.TPArr True _) = C.TPSimple "NSMutableArray*" []
-showDataType (D.TPMap False _ _)  = C.TPSimple "NSDictionary*" []
-showDataType (D.TPMap True _ _) = C.TPSimple "NSMutableDictionary*" []
+showDataType (D.TPArr False _) = C.TPSimple "id<CNList>" []
+showDataType (D.TPArr True _) = C.TPSimple "id<CNMutableList>" []
+showDataType (D.TPMap False _ _)  = C.TPSimple "id<CNMap>" []
+showDataType (D.TPMap True _ _) = C.TPSimple "id<CNMutableMap>" []
 showDataType D.TPInt = C.TPSimple "NSInteger" []
 showDataType D.TPUInt = C.TPSimple "NSUInteger" []
 showDataType D.TPFloat = C.TPSimple "double" []
 showDataType D.TPString = C.TPSimple "NSString*" []
 showDataType D.TPBool = C.TPSimple "BOOL" []
 showDataType (D.TPClass D.TPMStruct _ c) = C.TPSimple (D.className c) []
+showDataType tp@(D.TPClass D.TPMType _ _) = showDataType $ fromMaybe (error "Not found super type for type") $ D.superType tp
 showDataType (D.TPClass D.TPMClass _ c) 
 	| D.className c == "ODObject" = C.TPSimple "NSObject*" []
 	| otherwise = C.TPSimple (D.className c ++ "*") []
@@ -621,7 +623,7 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
 tExp (D.If cond t f) = C.InlineIf (tExpTo D.TPBool cond) (tExp t) (tExp f)
 tExp ee@(D.Index e i) = case D.exprDataType e of
 	D.TPObject D.TPMEnum _ -> castGeneric ee $ C.Index (C.Call (tExp e)  "values" [] []) (tExp i)
-	D.TPMap _ k _ -> castGeneric ee $ C.Call (tExp e) "optionObjectFor" [("key", tExpTo k i)] []
+	D.TPMap _ k _ -> castGeneric ee $ C.Call (tExp e) "apply" [("key", tExpTo k i)] []
 	_ -> castGeneric ee $ C.Index (tExp e) (tExp i)
 tExp (D.Lambda pars e rtp) = 
 	let 

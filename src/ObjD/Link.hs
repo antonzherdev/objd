@@ -1,9 +1,9 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), DataType(..), Exp(..), CImport(..), 
-	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef(..),
-	link, isClass, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
+	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef,
+	link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
-	tpGeneric
+	tpGeneric, superType
 )where
 
 import 			 Control.Arrow
@@ -31,7 +31,7 @@ data Class = Class { classMods :: [ClassMod], className :: String, classExtends 
 	| ClassError {className :: String, classErrorText :: String, classDefs :: [Def], classExtends :: Extends
 		, classGenerics :: [Class]}
 
-data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject deriving (Eq)
+data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType deriving (Eq)
 
 type ExtendsRef = (Class, [DataType])
 data Extends = Extends {extendsClass :: Maybe ExtendsClass, extendsTraits :: [ExtendsRef]}
@@ -88,6 +88,9 @@ isGeneric _ = False
 isStruct :: Class -> Bool
 isStruct (Class {classMods = mods}) = ClassModStruct `elem` mods
 isStruct _ = False
+isType :: Class -> Bool
+isType (Class {classMods = mods}) = ClassModType `elem` mods
+isType _ = False
 isTrait :: Class -> Bool
 isTrait (Class {classMods = mods}) = ClassModTrait `elem` mods
 isTrait _ = False
@@ -102,7 +105,6 @@ isEnum (Class {classMods = mods}) = ClassModEnum `elem` mods
 isEnum _ = False
 classFields :: Class -> [Def]
 classFields = filter isField . classDefs
-
 
 extendsNothing :: Extends
 extendsNothing = Extends Nothing []
@@ -148,6 +150,14 @@ upGenericsToClass destinationClass (cl, gens)
 			mapRef ref@(ccl, _)= upGenericsToClass destinationClass (ccl, superGenerics gens ref)
 extendsClassClass :: ExtendsClass -> Class
 extendsClassClass (ExtendsClass (cl, _) _) = cl
+
+superType :: DataType -> Maybe DataType
+superType (TPClass _ gens cl) = fmap superTypeForExtClass $ (extendsClass . classExtends) cl 
+	where
+		generics = buildGenerics cl gens
+		superTypeForExtClass :: ExtendsClass -> DataType
+		superTypeForExtClass (ExtendsClass extRef@(extCl, _) _) = 
+			TPClass (refDataTypeMod extCl) (map snd $ M.toList $ superGenerics generics extRef) extCl
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - Def 
  -----------------------------------------------------------------------------------------------------------------------------------------}
@@ -257,13 +267,13 @@ linkFile fidx (D.File name package stms) = fl
 		fl = File {fileName = name, fileImports = files, fileCImports = cImports, 
 			fileClasses =(map (linkClass (cidx, glidx)) . filter isCls) stms, globalDefs = gldefs, filePackage = package}
 		files = visibleFiles stms
-		isCls s = D.isClass s || D.isStub s || D.isEnum s
+		isCls s = D.isClass s || D.isStub s || D.isEnum s || D.isType s
 		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . (++ kernelFiles) . visibleFiles) stms
 		glidx = concatMap globalDefs (fl : files ++ kernelFiles)
 		visibleFiles :: [D.FileStm] -> [File]
 		visibleFiles = mapMaybe (getFile . D.impString) . filter D.isImport
 		kernelFiles :: [File]
-		kernelFiles = mapMaybe (idxFind fidx) ["ODArray", "ODOption", "ODMap", "ODNS", "ODEnum", "ODTuple", "ODObject"]
+		kernelFiles = mapMaybe (idxFind fidx) ["ODEnum", "ODObject", "CNTuple", "CNOption", "CNList", "CNMap"]
 		cImports = mapMaybe toCImport stms
 		toCImport (D.Import s D.ImportTypeCUser) = Just $ CImportUser s
 		toCImport (D.Import s D.ImportTypeCLib) = Just $ CImportLib s
@@ -307,6 +317,13 @@ linkClass (ocidx, glidx) cl = self
 					defMods = [DefModStatic], defPars = [], defGenerics = Nothing}],
 				classGenerics = generics
 			}
+			D.Type{} -> Class {
+				classMods = [ClassModType, ClassModStub], 
+				className = D.className cl, 
+				classExtends = Extends (Just $ ExtendsClass (linkExtendsRef cidx (D.typeDef cl)) []) [], 
+				classDefs = [], 
+				classGenerics = generics
+			}
 		enumOrdinal = Def "ordinal" [] TPUInt Nop [] Nothing
 		enumName = Def "name" [] TPString Nop [] Nothing
 		enumAdditionalDefs = [enumOrdinal, enumName]
@@ -346,7 +363,10 @@ linkClass (ocidx, glidx) cl = self
 					[]
 
 linkExtends :: ClassIndex -> D.Extends -> Extends
-linkExtends cidx (D.Extends ecls gens) = Extends (Just $ ExtendsClass (classFind cidx ecls, map (dataType cidx) gens) []) []
+linkExtends cidx (D.Extends eref) = Extends (Just $ ExtendsClass (linkExtendsRef cidx eref) []) []
+
+linkExtendsRef :: ClassIndex -> D.ExtendsRef -> ExtendsRef
+linkExtendsRef cidx (ecls, gens) = (classFind cidx ecls, map (dataType cidx) gens) 
 
 linkGeneric :: ClassIndex -> D.Generic -> Class
 linkGeneric cidx (D.Generic name ext) = Generic name [] (maybe (Extends (Just $ baseClassExtends cidx ) [] ) (linkExtends cidx) ext) []
@@ -442,7 +462,7 @@ data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid
 	| TPOption DataType | TPGenericWrap DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
 	| TPAnyGeneric
 	deriving (Eq)
-data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric deriving (Eq)
+data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric | TPMType deriving (Eq)
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
 isVoid _ = False
@@ -487,6 +507,7 @@ refDataTypeMod cl
 	| isEnum cl = TPMEnum
 	| isTrait cl = TPMTrait
 	| isGeneric cl = TPMGeneric
+	| isType cl = TPMType
 	| otherwise = TPMClass
 
 dataTypeClassRef :: Env -> DataType -> ClassRef
@@ -499,11 +520,11 @@ dataTypeClass _ (TPClass _ _ c ) = c
 dataTypeClass _ (TPObject _ c) = Class { classMods = [ClassModObject], className = className c, classExtends = extendsNothing, 
 	classDefs = filter ((DefModStatic `elem`) . defMods) (allDefsInClass (c, M.empty) ), classGenerics = []}
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
-dataTypeClass env (TPArr False _) = classFind (envIndex env) "ODArray"
-dataTypeClass env (TPArr True _) = classFind (envIndex env) "ODMutableArray"
-dataTypeClass env (TPOption _) = classFind (envIndex env) "ODOption"
-dataTypeClass env (TPMap False _ _) = classFind(envIndex env) "ODMap"
-dataTypeClass env (TPMap True _ _) = classFind(envIndex env) "ODMutableMap"
+dataTypeClass env (TPArr False _) = classFind (envIndex env) "CNArray"
+dataTypeClass env (TPArr True _) = classFind (envIndex env) "CNMutableArray"
+dataTypeClass env (TPOption _) = classFind (envIndex env) "CNOption"
+dataTypeClass env (TPMap False _ _) = classFind(envIndex env) "CNMap"
+dataTypeClass env (TPMap True _ _) = classFind(envIndex env) "CNMutableMap"
 dataTypeClass env (TPTuple [_, _]) = classFind (envIndex env) "CNTuple"
 dataTypeClass env (TPInt) = classFind (envIndex env) "ODInt"
 dataTypeClass env (TPFloat) = classFind (envIndex env) "ODFloat"
@@ -515,11 +536,11 @@ dataTypeClassName :: DataType -> String
 dataTypeClassName (TPClass _ _ c ) = className c
 dataTypeClassName (TPObject _ c) = className c
 dataTypeClassName (TPGenericWrap c) = dataTypeClassName c
-dataTypeClassName (TPArr False _) = "ODArray"
-dataTypeClassName (TPArr True _) = "ODMutableArray"
-dataTypeClassName (TPOption _) = "ODOption"
-dataTypeClassName (TPMap False _ _) = "ODMap"
-dataTypeClassName (TPMap True _ _) = "ODMutableMap"
+dataTypeClassName (TPArr False _) = "CNArray"
+dataTypeClassName (TPArr True _) = "CNMutableArray"
+dataTypeClassName (TPOption _) = "CNOption"
+dataTypeClassName (TPMap False _ _) = "CNMap"
+dataTypeClassName (TPMap True _ _) = "CNMutableMap"
 dataTypeClassName (TPTuple [_, _]) = "CNTuple"
 dataTypeClassName (TPTuple a) = "CNTuple" ++ show (length a)
 dataTypeClassName x = error ("No dataTypeClassName for " ++ show x)
@@ -584,6 +605,7 @@ instance Show DataType where
 	show (TPOption t) = show t ++ "?"
 instance Show DataTypeMod where
 	show TPMClass = "#C"
+	show TPMType = "#P"
 	show TPMStruct = "#S"
 	show TPMEnum = "#E"
 	show TPMTrait = "#T"
@@ -854,7 +876,7 @@ expr D.Self = do
 expr r@D.Call{} = exprCall Nothing r
 expr (D.Index e i) = do
 	e' <- expr e
-	let obf =expr $ D.Dot e (D.Call "objectFor" (Just [(Nothing, i)]) [])
+	let obf =expr $ D.Dot e (D.Call "apply" (Just [(Nothing, i)]) [])
 	case exprDataType e' of
 		TPClass{} -> obf
 		(TPGenericWrap TPClass{}) -> obf
