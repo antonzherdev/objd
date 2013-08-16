@@ -639,7 +639,7 @@ data Exp = Nop
 	| Dot Exp Exp
 	| Set (Maybe MathTp) Exp Exp
 	| Call Def DataType [CallPar]
-	| Return Exp
+	| Return Bool Exp
 	| Index Exp Exp
 	| Lambda [(String, DataType)] Exp DataType
 	| Val Def
@@ -669,7 +669,7 @@ instance Show Exp where
 	show (Do cond e) = "do" ++ show e ++ " while(" ++ show cond ++ ")"
 	show Nop = ""
 	show (Self c) = "<" ++ show c ++ ">self"
-	show (Return e) = "return " ++ show e
+	show (Return _ e) = "return " ++ show e
 	show (Set Nothing l r) = showOp l "=" r
 	show (Set (Just t) l r) = showOp l (show t ++ "=") r
 	show (BoolOp t l r) = showOp l (show t) r
@@ -722,8 +722,8 @@ addReturn _ e@(Braces []) = ExpLError "Return empty braces" e
 addReturn tp (Braces es) = Braces $ init es ++ [addReturn tp (last es)]
 addReturn _ Nop = ExpLError "Return NOP" Nop
 addReturn _ e@(Throw _) = e
-addReturn _ e@(Return _) = e
-addReturn tp e = Return $ implicitConvertsion tp e
+addReturn _ e@(Return _ _) = e
+addReturn tp e = Return False $ implicitConvertsion tp e
 
 forExp :: MonadPlus m => (Exp -> m a) -> Exp -> m a
 forExp f ee = mplus (go ee) (f ee)
@@ -743,7 +743,7 @@ forExp f ee = mplus (go ee) (f ee)
 		go (Index l r) = mplus (forExp f l) (forExp f r)
 		go (PlusPlus e) = forExp f e
 		go (MinusMinus e) = forExp f e
-		go (Return e) = forExp f e
+		go (Return _ e) = forExp f e
 		go (Opt e) = forExp f e
 		go (Throw e) = forExp f e
 		go (Not e) = forExp f e
@@ -777,7 +777,7 @@ exprDataType (Dot _ b) = exprDataType b
 exprDataType (Set _ a _) = exprDataType a
 exprDataType (Self s) = s
 exprDataType (Call _ t _) = t
-exprDataType (Return e) = exprDataType e
+exprDataType (Return _ e) = exprDataType e
 exprDataType (Index e i) = resolve $ exprDataType e 
 	where  
 		resolve (TPArr _ t) = t
@@ -912,7 +912,7 @@ expr (D.Throw e) = do
 	return $ Throw e'
 expr (D.Return e) = do
 	e' <- expr e
-	return $ Return e'
+	return $ Return True e'
 expr (D.Not e) = do
 	e' <- expr e
 	return $ Not e'

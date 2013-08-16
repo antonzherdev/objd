@@ -349,10 +349,11 @@ genStruct D.Class {D.className = name, D.classDefs = defs} =
 			C.implName = wrapName,
 			C.implFields = [C.ImplField "_value" selfTp []],
 			C.implSynthesizes = [C.ImplSynthesize "value" "_value"],
-			C.implFuns = [wrapFunImpl, initWrapFunImpl, descriptionImpl, equalsImpl, hashImpl] ++ copyImpls,
+			C.implFuns = [wrapFunImpl, initWrapFunImpl, descriptionImpl, equalsImpl, hashImpl] ++ maybeToList compareImpl ++ copyImpls,
 			C.implStaticFields = []
 		}	
 		wrapName = name ++ "Wrap"
+		selfWrapTp = C.TPSimple (wrapName ++ "*") []
 		wrapFunImpl = C.ImplFun wrapFun [C.Return $ C.Call (C.Call (C.Ref wrapName) "alloc" [] []) "initWith" [("value", C.Ref "value")] []]
 		initWrapFunImpl = C.ImplFun initWrapFun [
 			C.Set Nothing C.Self $ C.Call C.Super "init" [] [],
@@ -369,6 +370,10 @@ genStruct D.Class {D.className = name, D.classDefs = defs} =
 		hashImpl = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSUInteger" []) "hash" []) [
 			C.Return $ C.CCall (C.Ref $ name ++ "Hash") [C.Ref "_value"]
 			]
+		hasCompare = any (("compare" == ). D.defName) defs
+		compareImpl = if hasCompare then Just $ C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSInteger" []) "compare" [C.FunPar "to" selfWrapTp "to"]) [
+			C.Return $ C.CCall (C.Ref $ structDefName name "Compare") [C.Ref "_value", C.Dot (C.Ref "to") (C.Ref "value")]
+			] else Nothing
 
 
 equalsFun :: C.Exp -> C.Exp -> [D.Def] -> [C.Stm]
@@ -692,8 +697,9 @@ tStm _ _ (D.Set (Just t) l r) = let
 		D.TPMap _ _ _ -> [C.Set Nothing l' (addKVToMap l' r)]
 		_ -> [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
 tStm _ _ (D.Set tp l r) = [C.Set tp (tExp l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp r))]
-tStm D.TPVoid _ (D.Return e) = [C.Stm $ tExp e]
-tStm tp _ (D.Return e) = [C.Return $ tExpToType tp e]
+tStm D.TPVoid _ (D.Return True _) = [C.Return C.Nop]
+tStm D.TPVoid _ (D.Return _ e) = [C.Stm $ tExp e]
+tStm tp _ (D.Return _ e) = [C.Return $ tExpToType tp e]
 tStm _ parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = e, D.defMods = mods}) = 
 	[C.Var (showDataType tp) name (tExpToType tp e) ["__block" | needBlock]]
 	where 
