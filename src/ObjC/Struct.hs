@@ -86,6 +86,9 @@ stms = map ind . concatMap stmLines
 unlines' :: [String] -> String
 unlines' [] = ""
 unlines' a = unlines a ++ "\n"
+kw :: String -> String
+kw "switch" = "aSwitch"
+kw s = s
 
 instance Show DataType where
 	show (TPSimple s []) = s
@@ -142,12 +145,12 @@ instance Show Extends where
 	show (Extends cl []) = cl
 	show (Extends cl a) = cl ++ "<" ++ strs ", " a ++ ">"
 instance Show ImplField where
-	show(ImplField name tp mods) = (strs " " mods) `tryCon` " " ++ showDecl tp name ++ ";"
+	show(ImplField name tp mods) = (strs " " mods) `tryCon` " " ++ showDecl tp (kw name) ++ ";"
 instance Show CFunMod where
 	show CFunStatic = "static"
 	show CFunInline = "inline"
 instance Show CFunPar where
-	show (CFunPar t n) = showDecl t n
+	show (CFunPar t n) = showDecl t (kw n)
 
 instance Show ImplFun where
 	show (ImplFun fun exps) =
@@ -156,16 +159,16 @@ instance Show ImplFun where
 		++ "}\n"
 instance Show Fun where
 	show (Fun tp ret name pars) =
-		show tp ++ " (" ++ show ret ++ ")" ++ name ++ cap  (strs' " " pars)
+		show tp ++ " (" ++ show ret ++ ")" ++ kw name ++ cap  (strs' " " pars)
 instance Show FunPar where
- 	show (FunPar name tp var) = name ++ ":(" ++ show tp ++ ")" ++ var
+ 	show (FunPar name tp var) = kw name ++ ":(" ++ show tp ++ ")" ++ kw var
 instance Show FunType where
 	show InstanceFun = "-"
 	show ObjectFun = "+"
 
 
 instance Show Property where
-	show (Property name tp mods) = "@property (" ++ strs' ", " mods ++ ") " ++ showDecl tp name ++ ";"
+	show (Property name tp mods) = "@property (" ++ strs' ", " mods ++ ") " ++ showDecl tp (kw name) ++ ";"
 
 
 instance Show PropertyModifier where
@@ -227,14 +230,14 @@ stmLines (Break) = ["break;"]
 expLines :: Exp -> [String]
 expLines Self = ["self"]
 expLines Super = ["super"]
-expLines (Call inst name pars vargs) = ["["] `glue` (expLines inst `app` (" " ++ name)) `glue` pars' `glue` (vargs'  `app` "]")
+expLines (Call inst name pars vargs) = ["["] `glue` (expLines inst `app` (" " ++ kw name)) `glue` pars' `glue` (vargs'  `app` "]")
 	where 
-		pars' = (mapFirst cap . glueAll " " . map (\(nm, e) -> [nm ++ ":"] `glue` expLines e)) pars
+		pars' = (mapFirst cap . glueAll " " . map (\(nm, e) -> [kw nm ++ ":"] `glue` expLines e)) pars
 		vargs' = (glueAll "" . map varg') vargs
 		varg' = ([", "] `glue` ) . expLines
 expLines (CCall name pars) = (expLines name `app` "(") `glue` (pars' `app` ")")
 	where pars' = (glueAll ", " . map expLines) pars
-expLines (Ref name) = [name]
+expLines (Ref name) = [kw name]
 expLines (IntConst i) = [show i]
 expLines Nil = ["nil"]
 expLines (BoolConst True) = ["YES"]
@@ -272,7 +275,7 @@ expLines (Arr e) = ["(@[" ++ strs' ", " e ++ "])"]
 expLines (Map e) = ["(@{" ++ (strs ", " . map(\(k, v) -> show k ++ " : " ++ show v) ) e ++ "})"]
 expLines (ObjCConst e) = ["@" ++ show e]
 expLines (Lambda pars e rtp) = ["^" ++ show rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]
-	where showPar(name, tp) = showDecl tp name
+	where showPar(name, tp) = showDecl tp (kw name)
 expLines (Not e) = ["!("] `glue` (expLines e `app` ")")
 expLines (Negative e) = ["-"] `glue` expLines e
 expLines (Cast tp e) =  ["((" ++ show tp ++ ")"] `glue` (expLines e `app` ")")

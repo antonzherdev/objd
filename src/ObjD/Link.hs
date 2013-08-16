@@ -566,8 +566,11 @@ unwrapGeneric g = g
 dataType :: ClassIndex -> D.DataType -> DataType
 dataType cidx (D.DataType name gens) = case name of
 	"int" -> TPInt
+	"ODInt" -> TPGenericWrap TPInt
 	"uint" -> TPUInt
+	"ODUInt" -> TPGenericWrap TPUInt
 	"float" -> TPFloat
+	"ODFloat" -> TPGenericWrap TPFloat
 	"void" -> TPVoid
 	"string" -> TPString
 	"bool" -> TPBool
