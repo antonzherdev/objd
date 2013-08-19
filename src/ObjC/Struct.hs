@@ -278,6 +278,6 @@ expLines (Lambda pars e rtp) = ["^" ++ show rtp ++ "(" ++ strs ", " (map showPar
 	where showPar(name, tp) = showDecl tp (kw name)
 expLines (Not e) = ["!("] `glue` (expLines e `app` ")")
 expLines (Negative e) = ["-"] `glue` expLines e
-expLines (Cast tp e) =  ["((" ++ show tp ++ ")"] `glue` (expLines e `app` ")")
+expLines (Cast tp e) =  ["((" ++ show tp ++ ")("] `glue` (expLines e `app` "))")
 expLines (Error s) = ["<#ERROR: "] `glue` (lines s `app` "#>")
 expLines Nop = []
