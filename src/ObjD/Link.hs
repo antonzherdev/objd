@@ -363,7 +363,8 @@ linkClass (ocidx, glidx) cl = self
 					[]
 
 linkExtends :: ClassIndex -> D.Extends -> Extends
-linkExtends cidx (D.Extends eref) = Extends (Just $ ExtendsClass (linkExtendsRef cidx eref) []) []
+linkExtends cidx (D.Extends (D.ExtendsClass eref pars) withs) = Extends (Just $ ExtendsClass (linkExtendsRef cidx eref) []) $ 
+	map (linkExtendsRef cidx) withs
 
 linkExtendsRef :: ClassIndex -> D.ExtendsRef -> ExtendsRef
 linkExtendsRef cidx (ecls, gens) = (classFind cidx ecls, map (dataType cidx) gens) 

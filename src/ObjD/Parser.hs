@@ -193,12 +193,25 @@ pGenerics = option [] $ between (charSps '<') (charSps '>') (pClassGeneric `sepB
 pExtends :: Parser (Maybe Extends)
 pExtends = optionMaybe (do
 		try $ string "extends" >> sps1
-		cls <- ident
-		sps
-		gens <- pGensRef
-		sps
-		return $ Extends (cls, gens)
+		cls <- pExtendsCls
+		withs <- many $ string "with" >> sps1 >> pExtendsRef
+		return $ Extends cls withs
 	)
+	where 
+		pExtendsCls = do
+			ref <- pExtendsRef
+			p <- option [] $ do
+				charSps '('
+				pars <- pCallPar `sepBy` charSps ','
+				charSps ')'
+				return pars
+			return $ ExtendsClass ref  p
+		pExtendsRef = do
+			cls <- ident
+			sps
+			gens <- pGensRef
+			sps
+			return (cls, gens)
 
 pClassBody :: Parser [ClassStm]
 pClassBody = option [] $ braces $ many pStm

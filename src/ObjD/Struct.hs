@@ -1,6 +1,6 @@
 module ObjD.Struct (
 	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), 
-	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), ExtendsRef,
+	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), ExtendsRef, ExtendsClass(..),
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum, isStatic, isType
 ) where
 import           Ex.String
@@ -44,7 +44,8 @@ data ClassMod = ClassModStruct | ClassModStub | ClassModTrait deriving (Eq)
 
 data Generic = Generic String (Maybe Extends)
 
-data Extends = Extends ExtendsRef
+data Extends = Extends ExtendsClass [ExtendsRef]
+data ExtendsClass = ExtendsClass ExtendsRef [CallPar]
 type ExtendsRef =  (String, [DataType])
 
 data ClassStm = Def {defMods :: [DefMod],  defName :: String, defGenerics :: [Generic], defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
