@@ -629,6 +629,7 @@ tExp (D.If cond t f) = C.InlineIf (tExpTo D.TPBool cond) (tExp t) (tExp f)
 tExp ee@(D.Index e i) = case D.exprDataType e of
 	D.TPObject D.TPMEnum _ -> castGeneric ee $ C.Index (C.Call (tExp e)  "values" [] []) (tExp i)
 	D.TPMap _ k _ -> castGeneric ee $ C.Call (tExp e) "apply" [("key", tExpTo k i)] []
+	D.TPArr _ _ -> castGeneric ee $ C.Call (tExp e) "apply" [("index", tExpTo D.TPUInt i)] []
 	_ -> castGeneric ee $ C.Index (tExp e) (tExp i)
 tExp (D.Lambda pars e rtp) = 
 	let 

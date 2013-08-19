@@ -717,16 +717,17 @@ callLocalVal name tp = Call (localVal name tp) tp []
 
 maybeAddReturn :: DataType -> Exp -> Exp
 maybeAddReturn TPVoid e = e
-maybeAddReturn tp e = addReturn tp e
+maybeAddReturn tp e = addReturn True tp e
 
-addReturn :: DataType -> Exp -> Exp
-addReturn tp (If cond t f) = If cond (addReturn tp t) (addReturn tp f)
-addReturn _ e@(Braces []) = ExpLError "Return empty braces" e
-addReturn tp (Braces es) = Braces $ init es ++ [addReturn tp (last es)]
-addReturn _ Nop = ExpLError "Return NOP" Nop
-addReturn _ e@(Throw _) = e
-addReturn _ e@(Return _ _) = e
-addReturn tp e = Return False $ implicitConvertsion tp e
+addReturn :: Bool -> DataType -> Exp -> Exp
+addReturn hard tp (If cond t f) = If cond (addReturn hard tp t) (addReturn hard tp f)
+addReturn True _ e@(Braces []) = ExpLError "Return empty braces" e
+addReturn True tp (Braces es) = Braces $ map (addReturn False tp) (init es) ++ [addReturn True tp (last es)]
+addReturn True _ Nop = ExpLError "Return NOP" Nop
+addReturn _ _ e@(Throw _) = e
+addReturn _ tp (Return _ e) = Return True $ implicitConvertsion tp e
+addReturn True tp e = Return False $ implicitConvertsion tp e
+addReturn _ _ e = e
 
 forExp :: MonadPlus m => (Exp -> m a) -> Exp -> m a
 forExp f ee = mplus (go ee) (f ee)
