@@ -33,7 +33,6 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 		
 		
 		h = (if D.isCoreFile f then [C.ImportLib "Foundation/Foundation.h"] else [ C.Import "objd.h"] )
-			++ cImports'
 			++ fst dImports' 
 			++ [C.EmptyLine] 
 			++ map classDecl (cls ++ enums) 
@@ -48,7 +47,7 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 		m = let
 				 impls = concatMap (snd . gen) classes
 			in if null impls then []
-			else [C.Import (name ++ ".h") , C.EmptyLine] ++ snd dImports' ++ impls
+			else [C.Import (name ++ ".h") ] ++ cImports' ++ [ C.EmptyLine] ++ snd dImports' ++ impls
 		gen c
 			| isClass c = ([stmToInterface c], [stmToImpl c])
 			| isStruct c = genStruct c
