@@ -474,7 +474,7 @@ classFind cidx name = fromMaybe (classError name ("Class " ++ name ++ " not foun
 
 data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid 
 	| TPClass {tpMod :: DataTypeMod, tpGenerics :: [DataType], tpClass :: Class}
-	| TPEArr Int DataType
+	| TPEArr Int DataType | TPData
 	| TPArr Int DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown String 
 	| TPMap DataType DataType
 	| TPOption DataType | TPGenericWrap DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
@@ -596,6 +596,7 @@ dataType cidx (D.DataType name gens) = case name of
 	_ -> maybe (TPUnknown $ "No class found " ++ name) (\cl -> refDataType cl (map (wrapGeneric . dataType cidx) gens)) (idxFind cidx name)
 dataType cidx (D.DataTypeArr m tp) = case tp' of
 		TPClass TPMStruct _ _ -> if m == 0 then arrr else TPEArr m tp'
+		TPVoid -> TPData
 		_ -> arrr
 	where
 		tp' = dataType cidx tp
@@ -618,6 +619,7 @@ instance Show DataType where
 	show TPNil = "nil"
 	show TPThrow = "throw"
 	show TPAnyGeneric = "_"
+	show TPData = "[void]"
 	show (TPUnknown s) = s
 	show (TPClass t [] c) = className c ++ show t
 	show (TPObject t c) = className c ++ show t ++ ".class"

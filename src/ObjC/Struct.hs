@@ -142,7 +142,7 @@ instance Show FileStm where
 		showSynthenize (ImplSynthesize name var) = "@synthesize " ++ name ++ " = " ++ var ++ ";"
 		showImplFuns = unlines . map show
 		showStField (ImplField nm tp mods Nop) = "static " ++  (strs " " mods) `tryCon` " " ++ showDecl tp nm ++  ";"
-		showStField (ImplField nm tp mods e) = unlines $ ["static " ++  (strs " " mods) `tryCon` " " ++ showDecl tp nm ++ " = "] `glue` (expLines e `app` ";")
+		showStField (ImplField nm tp mods e) = strs "\n" $ ["static " ++  (strs " " mods) `tryCon` " " ++ showDecl tp nm ++ " = "] `glue` (expLines e `app` ";")
 	show (ClassDecl name) = "@class " ++ name ++ ";"
 	show (ProtocolDecl name) = "@protocol " ++ name ++ ";"
 instance Show Extends where

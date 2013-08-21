@@ -555,6 +555,7 @@ showDataType (D.TPGenericWrap D.TPUInt) = idTp
 showDataType (D.TPGenericWrap D.TPFloat) = idTp
 showDataType (D.TPGenericWrap D.TPBool) = idTp
 showDataType (D.TPGenericWrap c) = showDataType c
+showDataType D.TPData = C.TPSimple "void*" []
 showDataType tp = C.TPSimple (show tp) []
 
 {- Exp -}
