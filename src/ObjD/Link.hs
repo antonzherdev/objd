@@ -3,7 +3,7 @@ module ObjD.Link (
 	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef,
 	link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
-	tpGeneric, superType, wrapGeneric
+	tpGeneric, superType, wrapGeneric, isConst
 )where
 
 import 			 Control.Arrow
@@ -234,12 +234,24 @@ instance Show DefGenerics where
 	show (DefGenerics tps s) = "<" ++ strs' ", " tps ++ " | self = " ++ show s ++ ">"
 
 defRefPrep :: Def -> String
-defRefPrep Def{defMods = mods}
-	| DefModStub `elem` mods = "<S>"
-	| DefModLocal `elem` mods = "<L>"
-	| DefModField `elem` mods = "<F>"
-	| DefModGlobalVal `elem` mods = "<G>"
-	| otherwise = "<D>"
+defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
+	where
+		ch DefModStatic = 't'
+		ch DefModMutable = 'm'
+		ch DefModAbstract = 'a' 
+		ch DefModPrivate = 'p'
+		ch DefModWeak = 'w'
+		ch DefModConstructor = 'c'
+		ch DefModStub = 'b'
+		ch DefModGlobalVal = 'g'
+		ch DefModField = 'f'
+		ch DefModLocal = 'l'
+		ch DefModObject = 'o'
+		ch DefModEnumItem = 'e'
+		ch DefModDef = 'd'
+		ch DefModSpecial = 'i'
+		ch DefModStruct = 's'
+
 
 dataTypePars :: DataType -> [Def]
 dataTypePars (TPFun (TPTuple pars) _) = map (localVal "") pars
@@ -344,7 +356,7 @@ linkClass (ocidx, glidx) cl = self
 		envForDef def = if D.isStatic def then staticEnv else env
 		enumConstr = constr (enumAdditionalDefs ++ constrPars)
 		constr :: [Def] -> Def
-		constr pars = Def{defName = "new", defMods = [DefModStatic, DefModConstructor], defBody = Nop,
+		constr pars = Def{defName = "new", defMods = [DefModStatic, DefModConstructor] ++ [DefModStruct | selfIsStruct], defBody = Nop,
 			defPars = pars, defType = selfType, defGenerics = Just $ DefGenerics generics selfType}
 		constrPars = map constrPar (D.classFields cl)
 		constrPar f = fromJust $ idxFind fieldsMap (D.defName f)
@@ -768,6 +780,23 @@ forExp f ee = mplus (go ee) (f ee)
 		go (FirstTry _ e) = forExp f e
 		go (Val d) = forExp f (defBody d)
 		go _ = mzero
+
+isConst :: Exp -> Bool
+isConst (IntConst _) = True 
+isConst (StringConst _) = True 
+isConst (BoolConst _) = True 
+isConst (FloatConst _) = True 
+isConst Nil = True 
+isConst (Tuple exps) = all isConst exps
+isConst (Arr exps) = all isConst exps
+isConst (Map exps) = all (\(a, b) -> isConst a && isConst b) exps
+isConst (Cast _ e) = isConst e
+isConst (Dot l r) = isConst l && isConst r
+isConst (Call Def {defMods = mods} _ pars) = DefModStruct `elem` mods  &&  DefModConstructor `elem` mods && all (isConst . snd) pars
+isConst (As _) = True
+isConst (Is _) = True
+isConst (CastDot _) = True
+isConst _ = False
 
 
 exprDataType :: Exp -> DataType

@@ -159,11 +159,11 @@ stmToImpl :: D.Class -> C.FileStm
 stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
 	C.Implementation {
 		C.implName = clsName,
-		C.implFields = map implField implFields,
+		C.implFields = map (implField False) implFields,
 		C.implSynthesizes = (map synthesize . filter needProperty) implFields,
 		C.implFuns = [implCreate cl constr, implInit cl constr] ++ maybeToList (implInitialize cl) ++ dealoc cl 
 			++ implFuns defs ++ staticGetters ++ copyImpls ++ (if equalsIsPosible cl then [equal, hash] else []) ++ [description],
-		C.implStaticFields = map implField staticFields
+		C.implStaticFields = map (implField True) staticFields
 	}
 	where
 		defs :: [D.Def]
@@ -214,8 +214,10 @@ copyImpls = [C.ImplFun (C.Fun C.InstanceFun idTp "copyWith" [C.FunPar "zone" (C.
 
 synthesize :: D.Def -> C.ImplSynthesize
 synthesize D.Def{D.defName = x} = C.ImplSynthesize x ('_' : x)
-implField :: D.Def -> C.ImplField
-implField D.Def{D.defName = x, D.defType = tp, D.defMods = mods} = C.ImplField ('_' : x) (showDataType tp) ["__weak" | D.DefModWeak `elem` mods]
+implField :: Bool -> D.Def -> C.ImplField
+implField static D.Def{D.defName = x, D.defType = tp, D.defMods = mods, D.defBody = e} = 
+	C.ImplField ('_' : x) (showDataType tp) ["__weak" | D.DefModWeak `elem` mods] $ 
+		if static && D.isConst e then tExpTo newEnv{envCStruct = True} tp e else C.Nop
 
 implCreate :: D.Class -> D.Def -> C.ImplFun
 implCreate cl constr@D.Def{D.defPars = constrPars} = let 
@@ -248,7 +250,7 @@ implInitialize :: D.Class -> Maybe C.ImplFun
 implInitialize cl = let 
 	fields = filter hasInitialize (D.classFields cl)
 	hasInitialize D.Def{D.defBody = D.Nop} = False
-	hasInitialize d = D.isField d && D.isStatic d
+	hasInitialize d@D.Def{D.defBody = b} = not (D.isConst b) && D.isField d && D.isStatic d
 	in case fields of
 		[] -> Nothing
 		_ -> Just $ C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
@@ -299,7 +301,7 @@ genStruct D.Class {D.className = name, D.classDefs = defs} =
 	where
 		fields = filter D.isField defs
 		fields' = map toField fields
-		toField D.Def{D.defName = n, D.defType = tp, D.defMods = mods} = C.ImplField n (showDataType tp) ["__weak" | D.DefModWeak `elem` mods]
+		toField D.Def{D.defName = n, D.defType = tp, D.defMods = mods} = C.ImplField n (showDataType tp) ["__weak" | D.DefModWeak `elem` mods] C.Nop
 		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple name [], 
 			C.cfunName = name ++ "Make", C.cfunPars = map toPar fields, C.cfunExps = 
 				[C.Var (C.TPSimple name []) "ret" C.Nop []] ++
@@ -348,7 +350,7 @@ genStruct D.Class {D.className = name, D.classDefs = defs} =
 				par' D.Def{D.defName = nn, D.defType = tpp} = C.CFunPar (showDataType tpp) nn
 		wrapImpl = C.Implementation {
 			C.implName = wrapName,
-			C.implFields = [C.ImplField "_value" selfTp []],
+			C.implFields = [C.ImplField "_value" selfTp [] C.Nop],
 			C.implSynthesizes = [C.ImplSynthesize "value" "_value"],
 			C.implFuns = [wrapFunImpl, initWrapFunImpl, descriptionImpl, equalsImpl, hashImpl] ++ maybeToList compareImpl ++ copyImpls,
 			C.implStaticFields = []
@@ -479,18 +481,18 @@ genEnumImpl :: D.Class -> [C.FileStm]
 genEnumImpl cl@D.Class {D.className = clsName} = [
 	C.Implementation {
 		C.implName = clsName,
-		C.implFields = (map implField . filter needProperty) defs,
+		C.implFields = (map (implField False) . filter needProperty) defs,
 		C.implSynthesizes = (map synthesize . filter needProperty) defs,
 		C.implFuns = [implCreate cl constr, implInit cl constr, initialize] ++ dealoc cl 
 			++ implFuns defs ++ map itemGetter items ++ [valuesFun],
-		C.implStaticFields = map stField items ++ [C.ImplField valuesVarName (C.TPSimple "NSArray*" []) []] 
+		C.implStaticFields = map stField items ++ [C.ImplField valuesVarName (C.TPSimple "NSArray*" []) [] C.Nop] 
 	}]
 	where
 		valuesVarName =  "_" ++ clsName ++ "_values"
 		items = D.enumItems cl
 		defs = filter ((/= "values") . D.defName) $ D.classDefs cl
 		constr = fromMaybe (error "No class constructor") (D.classConstructor cl)
-		stField D.Def{D.defName = itemName} = C.ImplField ('_' : itemName) (C.TPSimple (clsName ++ "*") []) []
+		stField D.Def{D.defName = itemName} = C.ImplField ('_' : itemName) (C.TPSimple (clsName ++ "*") []) [] C.Nop
 		itemGetter e@D.Def{D.defName = itemName} = C.ImplFun (enumItemGetterFun clsName e) [C.Return $ C.Ref $ '_' : itemName]
 		initialize = C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
 			((C.Stm $ C.Call C.Super "initialize" [] []) : map initItem items) ++ [setValues])

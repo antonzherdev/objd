@@ -25,7 +25,7 @@ data Property = Property {propertyName :: String, propertyType :: DataType, prop
 
 data PropertyModifier = ReadOnly | NonAtomic | Retain | Weak deriving(Eq)
 
-data ImplField = ImplField {implFieldName :: String, implFieldType :: DataType, implFieldsMods :: [String]}
+data ImplField = ImplField {implFieldName :: String, implFieldType :: DataType, implFieldsMods :: [String], implFieldExp :: Exp}
 
 data ImplSynthesize = ImplSynthesize String String
 
@@ -141,14 +141,15 @@ instance Show FileStm where
 		showSynthenize (ImplSynthesize name "") = "@synthesize " ++ name ++ ";"
 		showSynthenize (ImplSynthesize name var) = "@synthesize " ++ name ++ " = " ++ var ++ ";"
 		showImplFuns = unlines . map show
-		showStField (ImplField nm tp mods) = "static " ++  (strs " " mods) `tryCon` " " ++ showDecl tp nm ++ ";"
+		showStField (ImplField nm tp mods Nop) = "static " ++  (strs " " mods) `tryCon` " " ++ showDecl tp nm ++  ";"
+		showStField (ImplField nm tp mods e) = unlines $ ["static " ++  (strs " " mods) `tryCon` " " ++ showDecl tp nm ++ " = "] `glue` (expLines e `app` ";")
 	show (ClassDecl name) = "@class " ++ name ++ ";"
 	show (ProtocolDecl name) = "@protocol " ++ name ++ ";"
 instance Show Extends where
 	show (Extends cl []) = cl
 	show (Extends cl a) = cl ++ "<" ++ strs ", " a ++ ">"
 instance Show ImplField where
-	show(ImplField name tp mods) = (strs " " mods) `tryCon` " " ++ showDecl tp (kw name) ++ ";"
+	show(ImplField name tp mods _) = (strs " " mods) `tryCon` " " ++ showDecl tp (kw name) ++ ";"
 instance Show CFunMod where
 	show CFunStatic = "static"
 	show CFunInline = "inline"
