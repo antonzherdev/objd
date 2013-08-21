@@ -63,6 +63,12 @@ pType = tp
 	where
 		tp lm = do 
 			t <- arr <|> tuple <|> simple
+			al <- optionMaybe $ do
+				charSps '['
+				d <- option "0" $ many digit
+				sps
+				charSps ']'
+				return d
 			sps
 			opt <- option False $ charSps '?' >> return True
 			sps
@@ -71,8 +77,9 @@ pType = tp
 				sps
 				tp True
 			sps
-			let t' = if opt then DataTypeOption t else t
-			return $ maybe t' (\rr -> DataTypeFun t' rr) r
+			let t' = maybe t (\s -> DataTypeArr (read s) t) al
+			let t'' = if opt then DataTypeOption t' else t'
+			return $ maybe t'' (\rr -> DataTypeFun t'' rr) r
 		arr = do
 			charSps '['
 			k <- tp False

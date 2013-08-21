@@ -39,7 +39,7 @@ data CFunPar = CFunPar {cfunParDataType :: DataType, cfunParName :: String}
 data CFunMod = CFunStatic | CFunInline
 {- EXPRESSIONS -}
 
-data DataType = TPSimple String [String]| TPBlock DataType [DataType]
+data DataType = TPSimple String [String]| TPBlock DataType [DataType] | TPArr Int String 
 
 data Stm =
 	If Exp [Stm] [Stm]
@@ -92,10 +92,12 @@ kw s = s
 
 instance Show DataType where
 	show (TPSimple s []) = s
+	show (TPArr n s) = s ++ "[" ++ show n ++ "]"
 	show (TPSimple s pr) = s ++ "<" ++ strs ", " pr ++ ">"
 	show (TPBlock d t) = show d ++ "(^)" ++ "(" ++ strs' ", " t ++ ")"
 
 showDecl ::  DataType -> String ->String
+showDecl (TPArr n tp) name = tp ++ " " ++ name ++ "[" ++ show n ++ "]"
 showDecl tp@TPSimple{} name = show tp ++ " " ++ name
 showDecl (TPBlock d t) name = show d ++ "(^" ++ name ++ ")" ++ "(" ++ strs' ", " t ++ ")"
 

@@ -320,6 +320,7 @@ genStruct D.Class {D.className = name, D.classDefs = defs} =
 		}
 		descStart = C.Call (C.Ref "NSMutableString") "stringWith" [("string", C.StringConst $ "<" ++ name ++ ": ")] []
 		toPar D.Def{D.defName = n, D.defType = tp}= C.CFunPar (showDataType tp) n
+		toSet D.Def{D.defName = n, D.defType = tp@D.TPEArr{}} = C.Stm $ eArraySet (C.Dot (C.Ref "ret") (C.Ref n)) (C.Ref n) tp
 		toSet D.Def{D.defName = n} = C.Set Nothing (C.Dot (C.Ref "ret") (C.Ref n)) (C.Ref n)
 		
 		defs' = (map def' . filter D.isDef) defs
@@ -394,22 +395,35 @@ hashFun fields =
 	[C.Return $ C.Ref "hash"]
 	where
 		hashSet D.Def{D.defName = nm, D.defType = tp} = C.Set Nothing (C.Ref "hash") $
-			C.MathOp Plus (C.MathOp Mul (C.Ref "hash") (C.IntConst 31)) $ case tp of
-				D.TPClass D.TPMEnum _ _ -> C.Call ref "ordinal" [] []
-				D.TPClass D.TPMStruct _ scl -> C.CCall (C.Ref $ D.className scl ++ "Hash") [ref]
-				D.TPFloat -> C.Call (C.Call (C.Ref "NSNumber") "numberWith" [("double", ref)] []) "hash" [] []
-				D.TPInt -> ref
-				D.TPUInt -> ref
-				D.TPBool -> ref
-				_ -> C.Call ref "hash" [] []
-			where
-				ref = C.Dot C.Self (C.Ref nm)
+			C.MathOp Plus (C.MathOp Mul (C.Ref "hash") (C.IntConst 31)) $ hashCall tp (C.Dot C.Self (C.Ref nm))
+		
+
+hashCall :: D.DataType -> C.Exp -> C.Exp
+hashCall tp ref = 
+	case tp of
+		D.TPClass D.TPMEnum _ _ -> C.Call ref "ordinal" [] []
+		D.TPClass D.TPMStruct _ scl -> C.CCall (C.Ref $ D.className scl ++ "Hash") [ref]
+		D.TPFloat -> C.Call (C.Call (C.Ref "NSNumber") "numberWith" [("double", ref)] []) "hash" [] []
+		D.TPInt -> ref
+		D.TPUInt -> ref
+		D.TPBool -> ref
+		D.TPEArr n atp -> arrHash atp n 0 C.Nop
+		_ -> C.Call ref "hash" [] []
+	where	
+		arrElemHash atp i = hashCall atp $ C.Index ref (C.IntConst i)
+		arrHash _ 0 _ _ = C.IntConst 0
+		arrHash atp n i op 
+			| i >= n = op
+			| i == 0 = arrHash atp n 1 (arrElemHash atp i)
+			| otherwise = arrHash atp n (i + 1) $ C.MathOp Plus (C.MathOp Mul (C.IntConst 13) op) (arrElemHash atp i)
+
 
 stringFormatForType :: D.DataType -> String
 stringFormatForType D.TPInt = "%li"
 stringFormatForType D.TPUInt = "%li"
 stringFormatForType D.TPFloat = "%f"
 stringFormatForType D.TPBool = "%d"
+stringFormatForType (D.TPEArr n tp)  = "[" ++ strs ", " (replicate n (stringFormatForType tp)) ++ "]"
 stringFormatForType _ = "%@"
 
 
@@ -425,10 +439,11 @@ descriptionFun start fields =
 		append :: Int -> D.Def -> (Int, C.Stm)
 		append i D.Def{D.defName = nm, D.defType = tp} = (i + 1, C.Stm $ C.Call (C.Ref "description") "append" 
 			[("format", C.StringConst $ (if i > 0 then ", " else "") ++ nm ++ "="  ++ stringFormatForType tp)]
-			[case tp of
-				D.TPClass D.TPMStruct _ scl -> C.CCall (C.Ref $ D.className scl ++ "Description") [ref]
-				_ -> ref
-				])
+			(case tp of
+				D.TPClass D.TPMStruct _ scl -> [C.CCall (C.Ref $ D.className scl ++ "Description") [ref]]
+				D.TPEArr n _ -> map (\j -> C.Index ref (C.IntConst j)) [0..n - 1]
+				_ -> [ref]
+				))
 			where
 				ref = C.Dot C.Self (C.Ref nm)
 		
@@ -510,6 +525,7 @@ procImports D.File{D.fileImports = imps, D.fileClasses = classes} = (h, m)
 
 {- DataType -}
 showDataType :: D.DataType -> C.DataType
+showDataType (D.TPEArr n tp) = C.TPArr n $ show (showDataType tp)
 showDataType (D.TPArr _ _) = C.TPSimple "id<CNList>" []
 showDataType (D.TPMap _ _)  = C.TPSimple "id<CNMap>" []
 showDataType D.TPInt = C.TPSimple "NSInteger" []
@@ -672,6 +688,9 @@ tExp x = C.Error $ "No tExp for " ++ show x
 tExpToType :: D.DataType -> D.Exp -> C.Exp
 tExpToType tp e = maybeVal (D.exprDataType e, tp) (tExp e)
 
+eArraySet :: C.Exp -> C.Exp -> D.DataType -> C.Exp
+eArraySet l' r' (D.TPEArr n tp) = C.CCall (C.Ref "memcpy") [l', r', C.CCall (C.Ref "sizeof") [C.Index (C.Ref (show $ showDataType tp)) (C.IntConst n)]]
+
 tStm :: D.DataType -> [D.Exp] -> D.Exp -> [C.Stm]
 tStm _ _ (D.Nop) = []
 
@@ -689,6 +708,7 @@ tStm _ _ (D.Set (Just t) l r) = let
 		ltp = D.exprDataType l
 		rtp = D.exprDataType r
 	in case ltp of
+		tp@D.TPEArr{} -> [C.Stm $ eArraySet l' r' tp]
 		D.TPArr _ _ ->  case t of
 			Plus -> [C.Set Nothing l' (addObjectToArray rtp l' r')]
 			Minus -> [C.Set Nothing l' (removeObjectFromArray rtp l' r')]
@@ -739,7 +759,8 @@ equals True (D.TPNil, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (_, e1) (D.TPNil, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPClass D.TPMClass _ cl, e1) (_, e2) 
 	| not (equalsIsPosible cl) = C.BoolOp Eq e1 e2
-
+equals True (D.TPEArr n tp, e1) (_, e2)  =
+	C.CCall (C.Ref "memcmp") [e1, e2, C.CCall (C.Ref "sizeof") [C.Index (C.Ref (show $ showDataType tp)) (C.IntConst n)]]
 equals True (_, e1) (_, e2) = C.Call e1 "isEqual" [("", e2)] []
 
 addObjectToArray :: D.DataType -> C.Exp -> C.Exp -> C.Exp

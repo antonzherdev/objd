@@ -378,9 +378,13 @@ linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.de
 	env <- get
 	let 
 		tp' = unwrapGeneric $ getDataType env tp i
+		tp'' = if str then case tp' of
+				TPArr n atp -> TPEArr n $ unwrapGeneric atp 
+				_ -> tp' 
+			else tp'
 		in return Def{defMods = 
-			DefModField : translateMods mods ++ [DefModStruct | str], defName = name, defType = tp', 
-			defBody = implicitConvertsion tp' i, defGenerics = Nothing, defPars = []}
+			DefModField : translateMods mods ++ [DefModStruct | str], defName = name, defType = tp'', 
+			defBody = implicitConvertsion tp'' i, defGenerics = Nothing, defPars = []}
 
 		
 
@@ -458,6 +462,7 @@ classFind cidx name = fromMaybe (classError name ("Class " ++ name ++ " not foun
 
 data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid 
 	| TPClass {tpMod :: DataTypeMod, tpGenerics :: [DataType], tpClass :: Class}
+	| TPEArr Int DataType
 	| TPArr Int DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown String 
 	| TPMap DataType DataType
 	| TPOption DataType | TPGenericWrap DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
@@ -479,6 +484,7 @@ forDataType f tp = mplus (go tp) (f tp)
 	where
 		go (TPClass _ gens _) = msum $ map (forDataType f) gens
 		go (TPArr _ a) = forDataType f a
+		go (TPEArr _ a) = forDataType f a
 		go (TPFun a b) = mplus (forDataType f a) (forDataType f b)
 		go (TPMap a b) = mplus (forDataType f a) (forDataType f b)
 		go (TPGenericWrap a) = forDataType f a
@@ -492,6 +498,7 @@ mapDataType f tp = fromMaybe (go tp) (f tp)
 	where
 		go (TPClass mods gens cl) = TPClass mods (map (mapDataType f) gens) cl
 		go (TPArr m a) = TPArr m (mapDataType f a)
+		go (TPEArr m a) = TPEArr m (mapDataType f a)
 		go (TPFun a b) = TPFun (mapDataType f a) (mapDataType f b)
 		go (TPMap a b) = TPMap (mapDataType f a) (mapDataType f b)
 		go (TPGenericWrap a) = TPGenericWrap (mapDataType f a)
@@ -545,6 +552,7 @@ dataTypeClassName x = error ("No dataTypeClassName for " ++ show x)
 dataTypeGenerics :: Env -> DataType -> [DataType]
 dataTypeGenerics _ (TPClass _ g _) = g
 dataTypeGenerics _ (TPArr _ g) = [g]
+dataTypeGenerics _ (TPEArr _ g) = [g]
 dataTypeGenerics _ (TPMap k v) = [k, v]
 dataTypeGenerics _ (TPOption v) = [v]
 dataTypeGenerics _ (TPTuple a) = a
@@ -600,6 +608,7 @@ instance Show DataType where
 	show (TPGenericWrap c) = '^' : show c
 	show (TPArr 0 t) = "[" ++ show t ++ "]"
 	show (TPArr s r) = show r ++ "[" ++ show s ++ "]"
+	show (TPEArr s r) = "*" ++ show r ++ "[" ++ show s ++ "]"
 	show (TPMap k v) = "[" ++ show k ++ " : " ++ show v ++ "]"
 	show (TPFun s d) = show s ++ " -> " ++ show d
 	show (TPTuple tps) = "(" ++ strs' ", " tps ++ ")"
