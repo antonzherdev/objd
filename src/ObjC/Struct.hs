@@ -72,6 +72,7 @@ data Exp =
 	| InlineIf Exp Exp Exp
 	| Index Exp Exp
 	| Arr [Exp]
+	| EArr [Exp]
 	| Map [(Exp, Exp)]
 	| Lambda [(String, DataType)] [Stm] DataType
 	| Not Exp
@@ -274,6 +275,7 @@ expLines (MinusMinus e) = appendLast "--" (expLines e)
 expLines (InlineIf c t f) = ["(("] `glue` (expLines c `app` ") ? ") `glue` (expLines t `app` " : ") `glue` (expLines f `app` ")") 
 expLines (Index e i) = (expLines e `app` "[") `glue` (expLines i `app` "]")
 expLines (Arr e) = ["(@[" ++ strs' ", " e ++ "])"]
+expLines (EArr e) = ["{" ++ strs' ", " e ++ "}"]
 expLines (Map e) = ["(@{" ++ (strs ", " . map(\(k, v) -> show k ++ " : " ++ show v) ) e ++ "})"]
 expLines (ObjCConst e) = ["@" ++ show e]
 expLines (Lambda pars e rtp) = ["^" ++ show rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]

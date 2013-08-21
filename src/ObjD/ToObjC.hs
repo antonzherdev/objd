@@ -270,7 +270,7 @@ implInit cl constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
 
 		superInit Nothing = C.Call C.Super "init" [] []
 		superInit (Just (D.ExtendsClass _ [])) = C.Call C.Super "init" [] []
-		superInit (Just (D.ExtendsClass _ pars)) = C.Call C.Super "initWith" (map (D.defName *** tExp) pars) []
+		superInit (Just (D.ExtendsClass _ pars)) = C.Call C.Super "initWith" (map (D.defName *** tExp newEnv) pars) []
 
 		implInitFields :: [D.Def] -> [D.Def] -> [C.Stm]
 		implInitFields [] [] = []
@@ -281,7 +281,7 @@ implInit cl constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
 				implRight _ = C.Ref name
 
 implInitField :: D.Def -> C.Stm
-implInitField D.Def{D.defName = name, D.defBody = def, D.defType = tp} = C.Set Nothing (C.Ref $ '_' : name) (tExpTo tp def)
+implInitField D.Def{D.defName = name, D.defBody = def, D.defType = tp} = C.Set Nothing (C.Ref $ '_' : name) (tExpTo newEnv tp def)
 		
 implFuns :: [D.Def] -> [C.ImplFun]
 implFuns = map stm2ImplFun . filter D.isDef
@@ -495,7 +495,7 @@ genEnumImpl cl@D.Class {D.className = clsName} = [
 		initialize = C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
 			((C.Stm $ C.Call C.Super "initialize" [] []) : map initItem items) ++ [setValues])
 		initItem :: D.Def -> C.Stm
-		initItem D.Def{D.defName = itemName, D.defBody = body} = C.Set Nothing (C.Ref $ '_' : itemName) $ retain $ tExp body
+		initItem D.Def{D.defName = itemName, D.defBody = body} = C.Set Nothing (C.Ref $ '_' : itemName) $ retain $ tExp newEnv body
 		valuesFun = C.ImplFun enumValuesFun [C.Return $ C.Ref valuesVarName]
 		setValues :: C.Stm
 		setValues = C.Set Nothing (C.Ref valuesVarName) (C.Arr $ map (C.Ref . ('_' : ). D.defName) items)
@@ -556,11 +556,13 @@ showDataType (D.TPGenericWrap c) = showDataType c
 showDataType tp = C.TPSimple (show tp) []
 
 {- Exp -}
-tPars :: [(D.Def, D.Exp)] -> [(String, C.Exp)]
-tPars = map (\(d, e) -> (D.defName d, maybeVal (D.exprDataType e, D.defType d) $ tExp e))
+tPars :: Env -> [(D.Def, D.Exp)] -> [(String, C.Exp)]
+tPars env = 
+	let env' = env {envCStruct = False}
+	in map (\(d, e) -> (D.defName d, maybeVal (D.exprDataType e, D.defType d) $ tExp env' e))
 
-tExpTo :: D.DataType -> D.Exp -> C.Exp 
-tExpTo tp e = maybeVal (D.exprDataType e, tp) (tExp e)
+tExpTo :: Env -> D.DataType -> D.Exp -> C.Exp 
+tExpTo env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
 
 castGeneric :: D.Exp -> C.Exp -> C.Exp
 castGeneric dexp e = case D.exprDataType dexp of
@@ -569,23 +571,28 @@ castGeneric dexp e = case D.exprDataType dexp of
 	D.TPGenericWrap c@D.TPTuple{} -> C.Cast (showDataType c) e
 	_ -> e
 
-tExp :: D.Exp -> C.Exp
-tExp (D.IntConst i) = C.IntConst i
-tExp (D.StringConst i) = C.StringConst i
-tExp (D.Nil) = C.Nil
-tExp (D.BoolConst i) = C.BoolConst i
-tExp (D.FloatConst i) = C.FloatConst i
-tExp (D.BoolOp Eq l r) = equals True (D.exprDataType l, tExp l) (D.exprDataType r, tExp r) 
-tExp (D.BoolOp NotEq l r) = equals False (D.exprDataType l, tExp l) (D.exprDataType r, tExp r) 
-tExp (D.BoolOp t l r) = C.BoolOp t (tExpTo tp l) (tExpTo tp r)
+data Env = Env{envCStruct :: Bool}
+newEnv :: Env
+newEnv = Env False
+
+
+tExp :: Env -> D.Exp -> C.Exp
+tExp _ (D.IntConst i) = C.IntConst i
+tExp _ (D.StringConst i) = C.StringConst i
+tExp _ (D.Nil) = C.Nil
+tExp _ (D.BoolConst i) = C.BoolConst i
+tExp _ (D.FloatConst i) = C.FloatConst i
+tExp env (D.BoolOp Eq l r) = equals True (D.exprDataType l, tExp env l) (D.exprDataType r, tExp env r) 
+tExp env (D.BoolOp NotEq l r) = equals False (D.exprDataType l, tExp env l) (D.exprDataType r, tExp env r) 
+tExp env (D.BoolOp t l r) = C.BoolOp t (tExpTo env tp l) (tExpTo env tp r)
 	where
 		tp = ttp t
 		ttp And = D.TPBool
 		ttp Or = D.TPBool
 		ttp _ = D.exprDataType l
-tExp (D.MathOp t l r) = let 
-		l' = tExp l
-		r' = tExp r
+tExp env (D.MathOp t l r) = let 
+		l' = tExp env l
+		r' = tExp env r
 		ltp = case D.exprDataType l of
 			D.TPGenericWrap tt -> tt
 			tt -> tt
@@ -594,59 +601,59 @@ tExp (D.MathOp t l r) = let
 			tt -> tt
 	in case ltp of
 		D.TPArr _ _ -> addObjectToArray rtp l' r'
-		D.TPMap _ _ -> addKVToMap l' r
+		D.TPMap _ _ -> addKVToMap env l' r
 		D.TPString -> case rtp of
 			D.TPString -> C.Call l' "stringByAppending" [("string", r')] []
 			_ -> C.Call l' "stringByAppending" [("format",  C.StringConst $ stringFormatForType rtp)] [maybeVal (D.exprDataType r, rtp) r']
-		_ -> C.MathOp t (tExpTo ltp l) (tExpTo ltp r)
-tExp (D.PlusPlus e) = C.PlusPlus (tExp e)
-tExp (D.MinusMinus e) = C.MinusMinus (tExp e)
+		_ -> C.MathOp t (tExpTo env ltp l) (tExpTo env ltp r)
+tExp env (D.PlusPlus e) = C.PlusPlus (tExp env e)
+tExp env (D.MinusMinus e) = C.MinusMinus (tExp env e)
 
 
-tExp (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call D.Def {D.defName = name, D.defMods = mods} _ pars)) 
+tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call D.Def {D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
-	| otherwise = C.CCall (C.Ref $ structDefName (D.className c) name) (C.Ref "self" : (map snd . tPars) pars)
-tExp (D.Dot (D.Self stp) (D.Call D.Def{D.defMods = mods, D.defName = name} _ pars)) 
+	| otherwise = C.CCall (C.Ref $ structDefName (D.className c) name) (C.Ref "self" : (map snd . tPars env) pars)
+tExp env (D.Dot (D.Self stp) (D.Call D.Def{D.defMods = mods, D.defName = name} _ pars)) 
 	| D.DefModField `elem` mods && null pars = C.Ref $ '_' : name
-	| D.DefModField `elem` mods = C.CCall (C.Ref ('_' : name)) ((map snd . tPars) pars)
-	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className $ D.tpClass stp) name (tPars pars) []
-	| otherwise = C.Call C.Self name (tPars pars) []
-tExp d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
-	| D.DefModField `elem` mods && null pars = castGeneric d $ C.Dot (tExpTo ltp l) (C.Ref name)
-	| D.DefModField `elem` mods = castGeneric d $ C.Dot (tExpTo ltp l) $ C.CCall (C.Ref name) ((map snd . tPars) pars)
+	| D.DefModField `elem` mods = C.CCall (C.Ref ('_' : name)) ((map snd . tPars env) pars)
+	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className $ D.tpClass stp) name (tPars env pars) []
+	| otherwise = C.Call C.Self name (tPars env pars) []
+tExp env d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
+	| D.DefModField `elem` mods && null pars = castGeneric d $ C.Dot (tExpTo env ltp l) (C.Ref name)
+	| D.DefModField `elem` mods = castGeneric d $ C.Dot (tExpTo env ltp l) $ C.CCall (C.Ref name) ((map snd . tPars env) pars)
 	| D.DefModStruct `elem` mods = case ltp  of
-		(D.TPClass D.TPMStruct _ c) -> structCall (D.className c) (tExpTo ltp l)
-		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.className c) name) ((map snd . tPars) pars)
-		tp -> structCall (show tp) (tExpTo ltp l)
-	| D.DefModConstructor `elem` mods = callConstructor (D.exprDataType d) pars
-	| otherwise = castGeneric d $ C.Call (tExp l) name (tPars pars) []
+		(D.TPClass D.TPMStruct _ c) -> structCall (D.className c) (tExpTo env ltp l)
+		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.className c) name) ((map snd . tPars env) pars)
+		tp -> structCall (show tp) (tExpTo env ltp l)
+	| D.DefModConstructor `elem` mods = callConstructor env (D.exprDataType d) pars
+	| otherwise = castGeneric d $ C.Call (tExp env l) name (tPars env pars ) []
 	where
-		 structCall c self = C.CCall (C.Ref $ structDefName c name) (self : (map snd . tPars) pars)
+		 structCall c self = C.CCall (C.Ref $ structDefName c name) (self : (map snd . tPars env) pars)
 		 ltp = D.unwrapGeneric $ D.exprDataType l
-tExp (D.Dot l (D.Is dtp)) = C.Call (tExp l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
-tExp (D.Dot l (D.As dtp)) = C.Call (tExp l) "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
-tExp (D.Dot l (D.CastDot dtp)) = C.Cast (showDataType dtp) (tExp l)
-tExp (D.Dot l (D.Cast tp c)) = C.Cast (showDataType tp) (tExp (D.Dot l c))
-tExp (D.Dot l (D.LambdaCall c)) = C.CCall (tExp (D.Dot l c)) [] 
+tExp env (D.Dot l (D.Is dtp)) = C.Call (tExp env l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
+tExp env (D.Dot l (D.As dtp)) = C.Call (tExp env l) "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
+tExp env (D.Dot l (D.CastDot dtp)) = C.Cast (showDataType dtp) (tExp env l)
+tExp env (D.Dot l (D.Cast tp c)) = C.Cast (showDataType tp) (tExp env (D.Dot l c))
+tExp env (D.Dot l (D.LambdaCall c)) = C.CCall (tExp env (D.Dot l c)) [] 
 
 
-tExp (D.Self _) = C.Self
-tExp (D.LambdaCall e) = C.CCall (tExp e) []
-tExp (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
+tExp _ (D.Self _) = C.Self
+tExp env (D.LambdaCall e) = C.CCall (tExp env e) []
+tExp env (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
 	| D.DefModField `elem` mods = C.Ref $ '_' : name
 	| D.DefModEnumItem `elem` mods = C.Ref $ '_' : name
 	| D.DefModLocal `elem` mods && null pars = C.Ref name
-	| D.DefModConstructor `elem` mods = callConstructor tp pars
+	| D.DefModConstructor `elem` mods = callConstructor env tp pars
 	| D.DefModGlobalVal `elem` mods = C.Ref name
 	| D.DefModObject `elem` mods = C.Ref name
-	| otherwise = C.CCall (C.Ref name) (map snd . tPars $ pars)
-tExp (D.If cond t f) = C.InlineIf (tExpTo D.TPBool cond) (tExp t) (tExp f)
-tExp ee@(D.Index e i) = case D.exprDataType e of
-	D.TPObject D.TPMEnum _ -> castGeneric ee $ C.Index (C.Call (tExp e)  "values" [] []) (tExp i)
-	D.TPMap k _ -> castGeneric ee $ C.Call (tExp e) "apply" [("key", tExpTo k i)] []
-	D.TPArr _ _ -> castGeneric ee $ C.Call (tExp e) "apply" [("index", tExpTo D.TPUInt i)] []
-	_ -> castGeneric ee $ C.Index (tExp e) (tExp i)
-tExp (D.Lambda pars e rtp) = 
+	| otherwise = C.CCall (C.Ref name) (map snd . tPars env $ pars)
+tExp env (D.If cond t f) = C.InlineIf (tExpTo env D.TPBool cond) (tExp env t) (tExp env f)
+tExp env ee@(D.Index e i) = case D.exprDataType e of
+	D.TPObject D.TPMEnum _ -> castGeneric ee $ C.Index (C.Call (tExp env e)  "values" [] []) (tExp env i)
+	D.TPMap k _ -> castGeneric ee $ C.Call (tExp env e) "apply" [("key", tExpTo env k i)] []
+	D.TPArr _ _ -> castGeneric ee $ C.Call (tExp env e) "apply" [("index", tExpTo env D.TPUInt i)] []
+	_ -> castGeneric ee $ C.Index (tExp env e) (tExp env i)
+tExp _ (D.Lambda pars e rtp) = 
 	let 
 		isNeedUnwrap :: D.DataType -> Bool
 		{-isNeedUnwrap (D.TPGenericWrap (D.TPClass D.TPMStruct _ _)) = True
@@ -664,29 +671,33 @@ tExp (D.Lambda pars e rtp) =
 		unwrapPar (name, D.TPGenericWrap tp) = C.Var (showDataType tp) name (maybeVal (D.TPGenericWrap tp, tp) $ C.Ref $ name ++ "_") []
 	in
 	C.Lambda (map par' pars) (unwrapPars ++ tStm rtp [] e) (showDataType rtp)
-tExp (D.Arr exps) = C.Arr $ map (tExpToType D.tpGeneric) exps
-tExp (D.Map exps) = C.Map $ map (tExpToType D.tpGeneric *** tExpToType D.tpGeneric) exps
-tExp (D.Tuple exps) = C.CCall (C.Ref "tuple") $ map (tExpToType D.tpGeneric) exps
-tExp (D.Opt e) = let tp = D.exprDataType e
-	in C.Call (C.Ref "CNOption") "opt" [("", maybeVal (tp, D.TPGenericWrap tp) (tExp e))] []
-tExp (D.None _) = C.Call (C.Ref "CNOption") "none" [] []
-tExp (D.Not e) = C.Not (tExp e)
-tExp (D.Negative e) = C.Negative (tExp e)
-tExp (D.Cast dtp e) = let 
+tExp env (D.Arr exps) = C.Arr $ map (tExpToType env D.tpGeneric) exps
+tExp env (D.Map exps) = C.Map $ map (tExpToType env D.tpGeneric *** tExpToType env D.tpGeneric) exps
+tExp env (D.Tuple exps) = C.CCall (C.Ref "tuple") $ map (tExpToType env D.tpGeneric) exps
+tExp env (D.Opt e) = let tp = D.exprDataType e
+	in C.Call (C.Ref "CNOption") "opt" [("", maybeVal (tp, D.TPGenericWrap tp) (tExp env e))] []
+tExp _ (D.None _) = C.Call (C.Ref "CNOption") "none" [] []
+tExp env (D.Not e) = C.Not (tExp env e)
+tExp env (D.Negative e) = C.Negative (tExp env e)
+tExp env (D.Cast dtp e) = let 
 		stp = D.exprDataType e
-		toString format = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] [tExpTo stp e]
+		toString format = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] [tExpTo env stp e]
 	in case (D.unwrapGeneric stp, D.unwrapGeneric dtp) of
 		(D.TPInt, D.TPString) -> toString "%li" 
 		(D.TPUInt, D.TPString) -> toString "%li" 
 		(D.TPFloat, D.TPString) -> toString "%f" 
-		(stp', _) -> C.Cast (showDataType dtp) (tExpTo stp' e)
+		(D.TPArr{}, D.TPEArr{}) ->
+			case e of
+				D.Arr exps -> C.EArr $ map (tExp env) exps
+				_ -> error $ "Could not convert to EArr " ++ show e
+		(stp', _) -> C.Cast (showDataType dtp) (tExpTo env stp' e)
 
-tExp e@D.ExpDError{} = C.Error $ show e
-tExp e@D.ExpLError{} = C.Error $ show e
-tExp x = C.Error $ "No tExp for " ++ show x
+tExp _ e@D.ExpDError{} = C.Error $ show e
+tExp _ e@D.ExpLError{} = C.Error $ show e
+tExp _ x = C.Error $ "No tExp for " ++ show x
 
-tExpToType :: D.DataType -> D.Exp -> C.Exp
-tExpToType tp e = maybeVal (D.exprDataType e, tp) (tExp e)
+tExpToType :: Env -> D.DataType -> D.Exp -> C.Exp
+tExpToType env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
 
 eArraySet :: C.Exp -> C.Exp -> D.DataType -> C.Exp
 eArraySet l' r' (D.TPEArr n tp) = C.CCall (C.Ref "memcpy") [l', r', C.CCall (C.Ref "sizeof") [C.Index (C.Ref (show $ showDataType tp)) (C.IntConst n)]]
@@ -698,13 +709,13 @@ tStm _ _ (D.Braces []) = []
 tStm v _ (D.Braces [x]) = tStm v [] x
 tStm v _ (D.Braces xs) = concatMap (tStm v xs) xs
 
-tStm v _ (D.If cond t f) = [C.If (tExpTo D.TPBool cond) (tStm v [] t) (tStm v [] f)]
-tStm v _ (D.While cond t) = [C.While (tExpTo D.TPBool cond) (tStm v [] t)]
-tStm v _ (D.Do cond t) = [C.Do (tExpTo D.TPBool cond) (tStm v [] t)]
+tStm v _ (D.If cond t f) = [C.If (tExpTo newEnv D.TPBool cond) (tStm v [] t) (tStm v [] f)]
+tStm v _ (D.While cond t) = [C.While (tExpTo newEnv D.TPBool cond) (tStm v [] t)]
+tStm v _ (D.Do cond t) = [C.Do (tExpTo newEnv D.TPBool cond) (tStm v [] t)]
 
 tStm _ _ (D.Set (Just t) l r) = let 
-		l' = tExp l
-		r' = tExp r
+		l' = tExp newEnv l
+		r' = tExp newEnv r
 		ltp = D.exprDataType l
 		rtp = D.exprDataType r
 	in case ltp of
@@ -712,14 +723,14 @@ tStm _ _ (D.Set (Just t) l r) = let
 		D.TPArr _ _ ->  case t of
 			Plus -> [C.Set Nothing l' (addObjectToArray rtp l' r')]
 			Minus -> [C.Set Nothing l' (removeObjectFromArray rtp l' r')]
-		D.TPMap _ _ -> [C.Set Nothing l' (addKVToMap l' r)]
+		D.TPMap _ _ -> [C.Set Nothing l' (addKVToMap newEnv l' r)]
 		_ -> [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
-tStm _ _ (D.Set tp l r) = [C.Set tp (tExp l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp r))]
+tStm _ _ (D.Set tp l r) = [C.Set tp (tExp newEnv l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp newEnv r))]
 tStm D.TPVoid _ (D.Return True _) = [C.Return C.Nop]
-tStm D.TPVoid _ (D.Return _ e) = [C.Stm $ tExp e]
-tStm tp _ (D.Return _ e) = [C.Return $ tExpToType tp e]
+tStm D.TPVoid _ (D.Return _ e) = [C.Stm $ tExp newEnv{envCStruct = False} e]
+tStm tp _ (D.Return _ e) = [C.Return $ tExpToType newEnv{envCStruct = False} tp e]
 tStm _ parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = e, D.defMods = mods}) = 
-	[C.Var (showDataType tp) name (tExpToType tp e) ["__block" | needBlock]]
+	[C.Var (showDataType tp) name (tExpToType newEnv tp e) ["__block" | needBlock]]
 	where 
 		needBlock = D.DefModMutable `elem` mods && existsSetInLambda
 		existsSetInLambda = any (isJust . setsInLambda) parLambdas
@@ -730,10 +741,10 @@ tStm _ parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = e,
 		setsInLambda (D.Lambda _ lambdaExpr _) = D.forExp isSet lambdaExpr
 		isSet ee@(D.Set _ (D.Call d _ _) _) = if D.defName d == D.defName def then Just ee else Nothing
 		isSet _ = Nothing
-tStm _ _ (D.Throw e) = [C.Throw $ tExp e]
+tStm _ _ (D.Throw e) = [C.Throw $ tExp newEnv e]
 tStm _ _ D.Break = [C.Break]
 
-tStm _ _ x = [C.Stm $ tExp x]
+tStm _ _ x = [C.Stm $ tExp newEnv x]
 
 equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp
 equals False (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp NotEq e1 e2
@@ -768,20 +779,21 @@ addObjectToArray tp a obj = C.Call a "arrayByAdding" [("object", maybeVal (tp, D
 removeObjectFromArray :: D.DataType -> C.Exp -> C.Exp -> C.Exp
 removeObjectFromArray tp a obj = C.Call a "arrayByRemoving" [("object", maybeVal (tp, D.wrapGeneric tp) obj)] []
 
-addKVToMap :: C.Exp -> D.Exp -> C.Exp
-addKVToMap a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tExp v), ("forKey", tExp k)] []
+addKVToMap :: Env -> C.Exp -> D.Exp -> C.Exp
+addKVToMap env a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tExp env v), ("forKey", tExp env k)] []
 
-callConstructor :: D.DataType -> [(D.Def, D.Exp)] -> C.Exp
-callConstructor tp pars = let
+callConstructor :: Env -> D.DataType -> [(D.Def, D.Exp)] -> C.Exp
+callConstructor env tp pars = let
 	name = D.dataTypeClassName tp
 	in case tp of 
-		D.TPClass D.TPMStruct _ _ -> C.CCall 
-			(C.Ref (name++ "Make"))
-			((map snd. tPars) pars)
+		D.TPClass D.TPMStruct _ _ -> 
+			if envCStruct env then C.EArr ((map snd. tPars env) pars) else C.CCall 
+				(C.Ref (name++ "Make"))
+				((map snd. tPars env) pars)
 	 	_ -> C.Call 
 				(C.Ref name) 
 				(createFunName $ name ++ if null pars then "" else "With") 
-				(tPars pars)
+				(tPars env pars)
 				[]
 
 data MaybeValTP = TPGen | TPNum | TPStruct | TPNoMatter | TPBool | TPFloat

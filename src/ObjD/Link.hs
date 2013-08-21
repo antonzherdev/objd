@@ -582,7 +582,12 @@ dataType cidx (D.DataType name gens) = case name of
 	"self" -> TPSelf
 	"_" -> TPAnyGeneric
 	_ -> maybe (TPUnknown $ "No class found " ++ name) (\cl -> refDataType cl (map (wrapGeneric . dataType cidx) gens)) (idxFind cidx name)
-dataType cidx (D.DataTypeArr m tp) = TPArr m $ wrapGeneric $ dataType cidx tp
+dataType cidx (D.DataTypeArr m tp) = case tp' of
+		TPClass TPMStruct _ _ -> if m == 0 then arrr else TPEArr m tp'
+		_ -> arrr
+	where
+		tp' = dataType cidx tp
+		arrr = TPArr m $ wrapGeneric tp'
 dataType cidx (D.DataTypeMap k v) = TPMap (wrapGeneric $ dataType cidx k) (wrapGeneric $ dataType cidx v)
 dataType cidx (D.DataTypeFun (D.DataTypeTuple tps) d) = TPFun (TPTuple $ map (dataType cidx) tps) (dataType cidx d)
 dataType cidx (D.DataTypeFun s d) = TPFun (dataType cidx s) (dataType cidx d)
@@ -1148,6 +1153,7 @@ implicitConvertsion dtp ex = let stp = exprDataType ex
 		conv TPInt TPUInt = Cast TPUInt ex
 		conv TPFloat TPUInt = Cast TPUInt ex
 		conv TPFloat TPInt = Cast TPInt ex
+		conv (TPArr _ _) d@(TPEArr _ _) = Cast d ex
 		conv sc dc@TPClass{} = if sc /= dc then classConversion dc sc ex else ex
 		conv _ _ = ex
 
