@@ -96,8 +96,8 @@ data Exp = Nop
 type CallPar = (Maybe String, Exp)
 
 data DataType = DataType String [DataType] 
-	| DataTypeArr Bool DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType] 
-	| DataTypeMap Bool DataType DataType 
+	| DataTypeArr Int DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType] 
+	| DataTypeMap DataType DataType 
 	| DataTypeOption DataType
 
 instance Show FileStm where
@@ -122,9 +122,10 @@ instance Show ClassStm where
 instance Show DataType where
 	show (DataType s []) = s
 	show (DataType s pars) = s ++ "<" ++ strs' ", " pars ++ ">"
-	show (DataTypeArr m r) = "[" ++ if m then "var " else "" ++ show r ++ "]"
+	show (DataTypeArr 0 r) = "[" ++ show r ++ "]"
+	show (DataTypeArr s r) = show r ++ "[" ++ show s ++ "]"
 	show (DataTypeTuple r) = "(" ++ strs' ", " r ++ ")"
-	show (DataTypeMap m k v) = "[" ++ if m then "var " else "" ++ show k ++ " : " ++ show v ++ "]"
+	show (DataTypeMap k v) = "[" ++ show k ++ " : " ++ show v ++ "]"
 	show (DataTypeOption s) = show s ++ "?"
 	show (DataTypeFun s d) = show s ++ " -> " ++ show d
 

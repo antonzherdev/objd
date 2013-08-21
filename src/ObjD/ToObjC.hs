@@ -492,7 +492,8 @@ procImports D.File{D.fileImports = imps, D.fileClasses = classes} = (h, m)
 	where 
 		filePossibleWeakImport D.File{D.fileCImports = [], D.fileClasses = cls} = all classPosibleWeakImport cls
 		filePossibleWeakImport _ = False
-		classPosibleWeakImport cl@D.Class{D.classMods = mods} = D.ClassModStruct `notElem` mods && not (hasExtends cl)
+		classPosibleWeakImport cl@D.Class{D.classMods = mods} = 
+				(D.ClassModStub `elem` mods || D.ClassModStruct `notElem` mods) && not (hasExtends cl)
 		classPosibleWeakImport _ = False
 		hasExtends cl = cl `elem` extends
 		extends = (map fst . concatMap (D.extendsRefs . D.classExtends)) classes
@@ -509,10 +510,8 @@ procImports D.File{D.fileImports = imps, D.fileClasses = classes} = (h, m)
 
 {- DataType -}
 showDataType :: D.DataType -> C.DataType
-showDataType (D.TPArr False _) = C.TPSimple "id<CNList>" []
-showDataType (D.TPArr True _) = C.TPSimple "id<CNMutableList>" []
-showDataType (D.TPMap False _ _)  = C.TPSimple "id<CNMap>" []
-showDataType (D.TPMap True _ _) = C.TPSimple "id<CNMutableMap>" []
+showDataType (D.TPArr _ _) = C.TPSimple "id<CNList>" []
+showDataType (D.TPMap _ _)  = C.TPSimple "id<CNMap>" []
 showDataType D.TPInt = C.TPSimple "NSInteger" []
 showDataType D.TPUInt = C.TPSimple "NSUInteger" []
 showDataType D.TPFloat = C.TPSimple "double" []
@@ -579,7 +578,7 @@ tExp (D.MathOp t l r) = let
 			tt -> tt
 	in case ltp of
 		D.TPArr _ _ -> addObjectToArray rtp l' r'
-		D.TPMap _ _ _ -> addKVToMap l' r
+		D.TPMap _ _ -> addKVToMap l' r
 		D.TPString -> case rtp of
 			D.TPString -> C.Call l' "stringByAppending" [("string", r')] []
 			_ -> C.Call l' "stringByAppending" [("format",  C.StringConst $ stringFormatForType rtp)] [maybeVal (D.exprDataType r, rtp) r']
@@ -628,7 +627,7 @@ tExp (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
 tExp (D.If cond t f) = C.InlineIf (tExpTo D.TPBool cond) (tExp t) (tExp f)
 tExp ee@(D.Index e i) = case D.exprDataType e of
 	D.TPObject D.TPMEnum _ -> castGeneric ee $ C.Index (C.Call (tExp e)  "values" [] []) (tExp i)
-	D.TPMap _ k _ -> castGeneric ee $ C.Call (tExp e) "apply" [("key", tExpTo k i)] []
+	D.TPMap k _ -> castGeneric ee $ C.Call (tExp e) "apply" [("key", tExpTo k i)] []
 	D.TPArr _ _ -> castGeneric ee $ C.Call (tExp e) "apply" [("index", tExpTo D.TPUInt i)] []
 	_ -> castGeneric ee $ C.Index (tExp e) (tExp i)
 tExp (D.Lambda pars e rtp) = 
@@ -661,8 +660,6 @@ tExp (D.Cast dtp e) = let
 		stp = D.exprDataType e
 		toString format = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] [tExpTo stp e]
 	in case (D.unwrapGeneric stp, D.unwrapGeneric dtp) of
-		(D.TPMap False _ _, D.TPMap True _ _) -> C.Call (tExp e) "mutableCopy" [] []
-		(D.TPArr False _, D.TPArr True _) -> C.Call (tExp e) "mutableCopy" [] []
 		(D.TPInt, D.TPString) -> toString "%li" 
 		(D.TPUInt, D.TPString) -> toString "%li" 
 		(D.TPFloat, D.TPString) -> toString "%f" 
@@ -695,7 +692,7 @@ tStm _ _ (D.Set (Just t) l r) = let
 		D.TPArr _ _ ->  case t of
 			Plus -> [C.Set Nothing l' (addObjectToArray rtp l' r')]
 			Minus -> [C.Set Nothing l' (removeObjectFromArray rtp l' r')]
-		D.TPMap _ _ _ -> [C.Set Nothing l' (addKVToMap l' r)]
+		D.TPMap _ _ -> [C.Set Nothing l' (addKVToMap l' r)]
 		_ -> [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
 tStm _ _ (D.Set tp l r) = [C.Set tp (tExp l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp r))]
 tStm D.TPVoid _ (D.Return True _) = [C.Return C.Nop]

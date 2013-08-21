@@ -75,13 +75,12 @@ pType = tp
 			return $ maybe t' (\rr -> DataTypeFun t' rr) r
 		arr = do
 			charSps '['
-			m <- option False $ stringSps "var" >> return True
 			k <- tp False
 			sps
 			v <- optionMaybe $ charSps ':' >> tp False
 			char ']'
 			sps
-			return $ maybe (DataTypeArr m k) (DataTypeMap m k) v
+			return $ maybe (DataTypeArr 0 k) (DataTypeMap k) v
 		tuple = do
 			charSps '('
 			t <- tp False `sepBy` charSps ','
