@@ -3,7 +3,7 @@ module ObjD.Link (
 	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef,
 	link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
-	tpGeneric, superType, wrapGeneric, isConst
+	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4
 )where
 
 import 			 Control.Arrow
@@ -322,7 +322,7 @@ linkClass (ocidx, glidx) cl = self
 				className = D.className cl, 
 				classExtends = Extends (Just $ ExtendsClass 
 					(classFind cidx "ODEnum", [TPClass TPMEnum [] self])  
-					[(enumOrdinal, callLocalVal "ordinal" TPUInt), (enumName, callLocalVal "name" TPString)]) [], 
+					[(enumOrdinal, callLocalVal "ordinal" uint), (enumName, callLocalVal "name" TPString)]) [], 
 				classDefs =  enumConstr: 
 					snd (mapAccumL enumItem 0 (D.enumItems cl)) ++ fields ++ defs ++ [Def{
 					defName = "values", defType = TPArr 0 (TPClass TPMEnum [] self), defBody = Nop,
@@ -336,7 +336,7 @@ linkClass (ocidx, glidx) cl = self
 				classDefs = [], 
 				classGenerics = generics
 			}
-		enumOrdinal = Def "ordinal" [] TPUInt Nop [] Nothing
+		enumOrdinal = Def "ordinal" [] uint Nop [] Nothing
 		enumName = Def "name" [] TPString Nop [] Nothing
 		enumAdditionalDefs = [enumOrdinal, enumName]
 		selfType = refDataType self (map (TPClass TPMGeneric []) generics)
@@ -472,7 +472,7 @@ classFind cidx name = fromMaybe (classError name ("Class " ++ name ++ " not foun
  - DataType 
  ------------------------------------------------------------------------------------------------------------------------------}
 
-data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid 
+data DataType = TPNumber Bool Int | TPFloatNumber Int | TPString | TPVoid 
 	| TPClass {tpMod :: DataTypeMod, tpGenerics :: [DataType], tpClass :: Class}
 	| TPEArr Int DataType | TPData
 	| TPArr Int DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown String 
@@ -481,6 +481,30 @@ data DataType = TPInt | TPUInt| TPFloat | TPString | TPVoid
 	| TPAnyGeneric
 	deriving (Eq)
 data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric | TPMType deriving (Eq)
+
+byte :: DataType
+byte = TPNumber False 1
+ubyte :: DataType
+ubyte = TPNumber False 2
+int4 :: DataType
+int4 = TPNumber False 4
+uint4 :: DataType
+uint4 = TPNumber True 4
+int :: DataType
+int = TPNumber False 0
+uint :: DataType
+uint = TPNumber True 0
+int8 :: DataType
+int8 = TPNumber False 8
+uint8 :: DataType
+uint8 = TPNumber True 8
+float :: DataType
+float = TPFloatNumber 0
+float4 :: DataType
+float4 = TPFloatNumber 4
+float8 :: DataType
+float8 = TPFloatNumber 8
+
 isVoid :: DataType -> Bool
 isVoid TPVoid = True
 isVoid _ = False
@@ -544,9 +568,17 @@ dataTypeClass env (TPArr _ _) = classFind (envIndex env) "CNArray"
 dataTypeClass env (TPOption _) = classFind (envIndex env) "CNOption"
 dataTypeClass env (TPMap _ _) = classFind(envIndex env) "CNMap"
 dataTypeClass env (TPTuple [_, _]) = classFind (envIndex env) "CNTuple"
-dataTypeClass env (TPInt) = classFind (envIndex env) "ODInt"
-dataTypeClass env (TPFloat) = classFind (envIndex env) "ODFloat"
-dataTypeClass env (TPUInt) = classFind (envIndex env) "ODUInt"
+dataTypeClass env (TPNumber False 1) = classFind (envIndex env) "ODByte"
+dataTypeClass env (TPNumber True 1) = classFind (envIndex env) "ODUByte"
+dataTypeClass env (TPNumber False 0) = classFind (envIndex env) "ODInt"
+dataTypeClass env (TPNumber True 0) = classFind (envIndex env) "ODUInt"
+dataTypeClass env (TPNumber False 4) = classFind (envIndex env) "ODInt4"
+dataTypeClass env (TPNumber True 4) = classFind (envIndex env) "ODUInt4"
+dataTypeClass env (TPNumber False 8) = classFind (envIndex env) "ODInt8"
+dataTypeClass env (TPNumber True 8) = classFind (envIndex env) "ODUInt8"
+dataTypeClass env (TPFloatNumber 4) = classFind (envIndex env) "ODFloat4"
+dataTypeClass env (TPFloatNumber 8) = classFind (envIndex env) "ODFloat8"
+dataTypeClass env (TPFloatNumber 0) = classFind (envIndex env) "ODFloat"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("CNTuple" ++ show (length a))
 dataTypeClass _ x = classError (show x) ("No dataTypeClass for " ++ show x)
 
@@ -582,12 +614,22 @@ unwrapGeneric g = g
 
 dataType :: ClassIndex -> D.DataType -> DataType
 dataType cidx (D.DataType name gens) = case name of
-	"int" -> TPInt
-	"ODInt" -> TPGenericWrap TPInt
-	"uint" -> TPUInt
-	"ODUInt" -> TPGenericWrap TPUInt
-	"float" -> TPFloat
-	"ODFloat" -> TPGenericWrap TPFloat
+	"byte" -> byte
+	"ODByte" -> TPGenericWrap byte
+	"ubyte" -> ubyte
+	"ODUByte" -> TPGenericWrap ubyte
+	"int" -> int
+	"ODInt" -> TPGenericWrap int
+	"uint" -> uint
+	"ODUInt" -> TPGenericWrap uint
+	"int4" -> int4
+	"ODInt4" -> TPGenericWrap int4
+	"uint4" -> uint4
+	"ODUInt4" -> TPGenericWrap uint4
+	"float4" -> float4
+	"ODFloat4" -> TPGenericWrap float4
+	"float" -> float
+	"ODFloat" -> TPGenericWrap float
 	"void" -> TPVoid
 	"string" -> TPString
 	"bool" -> TPBool
@@ -595,12 +637,16 @@ dataType cidx (D.DataType name gens) = case name of
 	"_" -> TPAnyGeneric
 	_ -> maybe (TPUnknown $ "No class found " ++ name) (\cl -> refDataType cl (map (wrapGeneric . dataType cidx) gens)) (idxFind cidx name)
 dataType cidx (D.DataTypeArr m tp) = case tp' of
-		TPClass TPMStruct _ _ -> if m == 0 then arrr else TPEArr m tp'
+		TPClass TPMStruct _ _ ->arrr'
+		TPNumber _ _ -> arrr'
+		TPFloatNumber _  -> arrr'
+		TPBool -> arrr'
 		TPVoid -> TPData
 		_ -> arrr
 	where
 		tp' = dataType cidx tp
 		arrr = TPArr m $ wrapGeneric tp'
+		arrr' =  if m == 0 then arrr else TPEArr m tp'
 dataType cidx (D.DataTypeMap k v) = TPMap (wrapGeneric $ dataType cidx k) (wrapGeneric $ dataType cidx v)
 dataType cidx (D.DataTypeFun (D.DataTypeTuple tps) d) = TPFun (TPTuple $ map (dataType cidx) tps) (dataType cidx d)
 dataType cidx (D.DataTypeFun s d) = TPFun (dataType cidx s) (dataType cidx d)
@@ -609,9 +655,17 @@ dataType cidx (D.DataTypeOption t) = TPOption $ (wrapGeneric . dataType cidx) t
 
 
 instance Show DataType where
-	show TPInt = "int"
-	show TPUInt = "uint"
-	show TPFloat = "float"
+	show (TPNumber False 1) = "byte"
+	show (TPNumber True 1) = "ubyte"
+	show (TPNumber False 4) = "int4"
+	show (TPNumber True 4) = "uint4"
+	show (TPNumber False 0) = "int"
+	show (TPNumber False 8) = "int8"
+	show (TPNumber True 0) = "uint"
+	show (TPNumber True 8) = "uint8"
+	show (TPFloatNumber 4) = "float4"
+	show (TPFloatNumber 0) = "float"
+	show (TPFloatNumber 8) = "float8"
 	show TPVoid = "void"
 	show TPString = "string"
 	show TPBool = "bool"
@@ -809,14 +863,14 @@ exprDataType (Do _ _) = TPVoid
 exprDataType (Braces []) = TPVoid
 exprDataType (Braces es) = exprDataType $ last es
 exprDataType (Nop) = TPVoid
-exprDataType (IntConst _ ) = TPInt
+exprDataType (IntConst _ ) = int
 exprDataType (StringConst _ ) = TPString
 exprDataType Nil = TPNil
 exprDataType (BoolConst _ ) = TPBool
-exprDataType (FloatConst _) = TPFloat
+exprDataType (FloatConst _) = float
 exprDataType (BoolOp {}) = TPBool
 exprDataType (MathOp _ l r) = case(unwrapGeneric $ exprDataType l, unwrapGeneric $ exprDataType r) of
-	(TPInt, TPFloat) -> TPFloat
+	(TPNumber _ _, rtp@TPFloatNumber{}) -> rtp
 	(lt, _) -> lt
 exprDataType (PlusPlus e) = exprDataType e
 exprDataType (MinusMinus e) = exprDataType e
@@ -1178,12 +1232,12 @@ implicitConvertsion dtp ex = let stp = exprDataType ex
 		conv TPNil (TPOption tp) = None tp
 		conv _ (TPOption _) = Opt ex
 		conv _ (TPClass TPMGeneric _ _) = ex
-		conv TPInt TPString = Cast TPString ex
-		conv TPUInt TPString = Cast TPString ex
-		conv TPFloat TPString = Cast TPString ex
-		conv TPInt TPUInt = Cast TPUInt ex
-		conv TPFloat TPUInt = Cast TPUInt ex
-		conv TPFloat TPInt = Cast TPInt ex
+		conv (TPNumber _ _) TPString = Cast TPString ex
+		conv (TPFloatNumber _ ) TPString = Cast TPString ex
+		conv (TPNumber s1 l1) d@(TPNumber s2 l2) = if s1 /= s2 || l1 /= l2 then Cast d ex else ex
+		conv (TPFloatNumber l1) d@(TPFloatNumber l2) = if l1 /= l2 then Cast d ex else ex
+		conv TPFloatNumber{} d@TPNumber{} = Cast d ex
+		conv TPNumber{} d@TPFloatNumber{} = Cast d ex
 		conv (TPArr _ _) d@(TPEArr _ _) = Cast d ex
 		conv sc dc@TPClass{} = if sc /= dc then classConversion dc sc ex else ex
 		conv _ _ = ex

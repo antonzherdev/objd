@@ -405,9 +405,8 @@ hashCall tp ref =
 	case tp of
 		D.TPClass D.TPMEnum _ _ -> C.Call ref "ordinal" [] []
 		D.TPClass D.TPMStruct _ scl -> C.CCall (C.Ref $ D.className scl ++ "Hash") [ref]
-		D.TPFloat -> C.Call (C.Call (C.Ref "NSNumber") "numberWith" [("double", ref)] []) "hash" [] []
-		D.TPInt -> ref
-		D.TPUInt -> ref
+		D.TPFloatNumber{} -> C.CCall (C.Ref $ show tp ++ "Hash") [ref]
+		D.TPNumber{} -> ref
 		D.TPBool -> ref
 		D.TPEArr n atp -> arrHash atp n 0 C.Nop
 		_ -> C.Call ref "hash" [] []
@@ -421,9 +420,10 @@ hashCall tp ref =
 
 
 stringFormatForType :: D.DataType -> String
-stringFormatForType D.TPInt = "%li"
-stringFormatForType D.TPUInt = "%li"
-stringFormatForType D.TPFloat = "%f"
+stringFormatForType (D.TPNumber _ 8) = "%li"
+stringFormatForType (D.TPNumber _ 0) = "%li"
+stringFormatForType (D.TPNumber _ _)= "%d"
+stringFormatForType (D.TPFloatNumber _) = "%f"
 stringFormatForType D.TPBool = "%d"
 stringFormatForType (D.TPEArr n tp)  = "[" ++ strs ", " (replicate n (stringFormatForType tp)) ++ "]"
 stringFormatForType _ = "%@"
@@ -530,9 +530,17 @@ showDataType :: D.DataType -> C.DataType
 showDataType (D.TPEArr n tp) = C.TPArr n $ show (showDataType tp)
 showDataType (D.TPArr _ _) = C.TPSimple "id<CNList>" []
 showDataType (D.TPMap _ _)  = C.TPSimple "id<CNMap>" []
-showDataType D.TPInt = C.TPSimple "NSInteger" []
-showDataType D.TPUInt = C.TPSimple "NSUInteger" []
-showDataType D.TPFloat = C.TPSimple "double" []
+showDataType (D.TPNumber False 1) = C.TPSimple "char" []
+showDataType (D.TPNumber True 1) = C.TPSimple "unsigned char" []
+showDataType (D.TPNumber False 4) = C.TPSimple "int" []
+showDataType (D.TPNumber True 4) = C.TPSimple "unsigned int" []
+showDataType (D.TPNumber False 8) = C.TPSimple "long" []
+showDataType (D.TPNumber True 8) = C.TPSimple "unsigned long" []
+showDataType (D.TPNumber False 0) = C.TPSimple "NSInteger" []
+showDataType (D.TPNumber True 0) = C.TPSimple "NSUInteger" []
+showDataType (D.TPFloatNumber 4) = C.TPSimple "float" []
+showDataType (D.TPFloatNumber 8) = C.TPSimple "double" []
+showDataType (D.TPFloatNumber 0) = C.TPSimple "CGFloat" []
 showDataType D.TPString = C.TPSimple "NSString*" []
 showDataType D.TPBool = C.TPSimple "BOOL" []
 showDataType (D.TPClass D.TPMStruct _ c) = C.TPSimple (D.className c) []
@@ -550,9 +558,8 @@ showDataType (D.TPFun D.TPVoid d) = C.TPBlock (showDataType d) []
 showDataType (D.TPFun (D.TPTuple ss) d) = C.TPBlock (showDataType d) (map showDataType ss)
 showDataType (D.TPFun s d) = C.TPBlock (showDataType d) [showDataType s]
 showDataType (D.TPGenericWrap (D.TPClass D.TPMStruct _ _)) = idTp
-showDataType (D.TPGenericWrap D.TPInt) = idTp
-showDataType (D.TPGenericWrap D.TPUInt) = idTp
-showDataType (D.TPGenericWrap D.TPFloat) = idTp
+showDataType (D.TPGenericWrap D.TPNumber{}) = idTp
+showDataType (D.TPGenericWrap D.TPFloatNumber{}) = idTp
 showDataType (D.TPGenericWrap D.TPBool) = idTp
 showDataType (D.TPGenericWrap c) = showDataType c
 showDataType D.TPData = C.TPSimple "void*" []
@@ -654,7 +661,7 @@ tExp env (D.If cond t f) = C.InlineIf (tExpTo env D.TPBool cond) (tExp env t) (t
 tExp env ee@(D.Index e i) = case D.exprDataType e of
 	D.TPObject D.TPMEnum _ -> castGeneric ee $ C.Index (C.Call (tExp env e)  "values" [] []) (tExp env i)
 	D.TPMap k _ -> castGeneric ee $ C.Call (tExp env e) "apply" [("key", tExpTo env k i)] []
-	D.TPArr _ _ -> castGeneric ee $ C.Call (tExp env e) "apply" [("index", tExpTo env D.TPUInt i)] []
+	D.TPArr _ _ -> castGeneric ee $ C.Call (tExp env e) "apply" [("index", tExpTo env D.uint i)] []
 	_ -> castGeneric ee $ C.Index (tExp env e) (tExp env i)
 tExp _ (D.Lambda pars e rtp) = 
 	let 
@@ -686,9 +693,8 @@ tExp env (D.Cast dtp e) = let
 		stp = D.exprDataType e
 		toString format = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] [tExpTo env stp e]
 	in case (D.unwrapGeneric stp, D.unwrapGeneric dtp) of
-		(D.TPInt, D.TPString) -> toString "%li" 
-		(D.TPUInt, D.TPString) -> toString "%li" 
-		(D.TPFloat, D.TPString) -> toString "%f" 
+		(D.TPNumber{}, D.TPString) -> toString $ stringFormatForType stp
+		(D.TPFloatNumber{}, D.TPString) -> toString $ stringFormatForType stp
 		(D.TPArr{}, D.TPEArr{}) ->
 			case e of
 				D.Arr exps -> C.EArr $ map (tExp env) exps
@@ -697,6 +703,7 @@ tExp env (D.Cast dtp e) = let
 
 tExp _ e@D.ExpDError{} = C.Error $ show e
 tExp _ e@D.ExpLError{} = C.Error $ show e
+tExp _ D.Nop = C.Nop
 tExp _ x = C.Error $ "No tExp for " ++ show x
 
 tExpToType :: Env -> D.DataType -> D.Exp -> C.Exp
@@ -753,8 +760,7 @@ equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp
 equals False (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp NotEq e1 e2
 equals False (D.TPClass D.TPMClass _ cl, e1) (_, e2) 
 	| not (equalsIsPosible cl) = C.BoolOp NotEq e1 e2
-equals False (D.TPInt, e1) (_, e2) = C.BoolOp NotEq e1 e2
-equals False (D.TPUInt, e1) (_, e2) = C.BoolOp NotEq e1 e2
+equals False (D.TPNumber{}, e1) (_, e2) = C.BoolOp NotEq e1 e2
 equals False (D.TPBool, e1) (_, e2) = C.BoolOp NotEq e1 e2
 equals False (D.TPNil, e1) (_, e2) = C.BoolOp NotEq e1 e2
 equals False (_, e1) (D.TPNil, e2) = C.BoolOp NotEq e1 e2
@@ -765,16 +771,17 @@ equals True (D.TPClass D.TPMStruct _ c, e1) (_, e2) = C.CCall (C.Ref (D.classNam
 equals True (D.TPGenericWrap{}, e1) (D.TPGenericWrap{}, e2) = C.Call e1 "isEqual" [("", e2)] []
 equals True (stp@(D.TPGenericWrap stp'), e1) (dtp, e2) = equals True (stp', maybeVal (stp, dtp) e1) (dtp, e2)
 equals True (stp, e1) (dtp@(D.TPGenericWrap dtp'), e2) = equals True (stp, e1) (dtp', maybeVal (stp, dtp) e2)
-equals True (D.TPFloat, e1) (_, e2) = C.CCall (C.Ref "eqf") [e1, e2]
-equals True (D.TPInt, e1) (_, e2) = C.BoolOp Eq e1 e2
-equals True (D.TPUInt, e1) (_, e2) = C.BoolOp Eq e1 e2
+equals True (D.TPFloatNumber 0, e1) (_, e2) = C.CCall (C.Ref "eqf") [e1, e2]
+equals True (D.TPFloatNumber 4, e1) (_, e2) = C.CCall (C.Ref "eqf4") [e1, e2]
+equals True (D.TPFloatNumber 8, e1) (_, e2) = C.CCall (C.Ref "eqf8") [e1, e2]
+equals True (D.TPNumber{}, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPBool, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPNil, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (_, e1) (D.TPNil, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPClass D.TPMClass _ cl, e1) (_, e2) 
 	| not (equalsIsPosible cl) = C.BoolOp Eq e1 e2
 equals True (D.TPEArr n tp, e1) (_, e2)  =
-	C.CCall (C.Ref "memcmp") [e1, e2, C.CCall (C.Ref "sizeof") [C.Index (C.Ref (show $ showDataType tp)) (C.IntConst n)]]
+	C.BoolOp Eq (C.CCall (C.Ref "memcmp") [e1, e2, C.CCall (C.Ref "sizeof") [C.Index (C.Ref (show $ showDataType tp)) (C.IntConst n)]]) (C.IntConst 0)
 equals True (_, e1) (_, e2) = C.Call e1 "isEqual" [("", e2)] []
 
 addObjectToArray :: D.DataType -> C.Exp -> C.Exp -> C.Exp
@@ -805,24 +812,35 @@ maybeVal (stp, dtp) e = let
 	tp D.TPGenericWrap{} = TPGen
 	tp (D.TPClass D.TPMGeneric _ _) = TPGen
 	tp (D.TPClass D.TPMStruct _ _) = TPStruct
-	tp D.TPInt{} = TPNum
-	tp D.TPUInt{} = TPNum
-	tp D.TPFloat{} = TPFloat
+	tp D.TPNumber{} = TPNum
+	tp D.TPFloatNumber{} = TPFloat
 	tp D.TPBool{} = TPBool
 	tp _ = TPNoMatter
+	fnm (D.TPNumber False 1) = "numc"
+	fnm (D.TPNumber True 1) = "numuc"
+	fnm (D.TPNumber False 4) = "numi4"
+	fnm (D.TPNumber True 4) = "numui4"
+	fnm (D.TPNumber False 0) = "numi"
+	fnm (D.TPNumber True 0) = "numui"
+	fnm (D.TPNumber False 8) = "numi8"
+	fnm (D.TPNumber True 8) = "numui8"
+	fnm D.TPBool = "numb"
+	fnm (D.TPFloatNumber 0) = "numf"
+	fnm (D.TPFloatNumber 4) = "numf4"
+	fnm (D.TPFloatNumber 8) = "numf8"
 	in case (tp stp, tp dtp) of
 		(TPStruct, TPGen) -> C.CCall (C.Ref "wrap") [C.Ref $ D.className $ D.tpClass stp, e]
 		(TPGen, TPStruct) -> C.CCall (C.Ref "uwrap") [C.Ref $ D.className $ D.tpClass dtp, e]
 		(TPNum, TPGen) -> case e of
 			C.IntConst _ -> C.ObjCConst e
-			_ -> C.CCall (C.Ref "numi") [e]
-		(TPGen, TPNum) -> C.CCall (C.Ref "unumi") [e]
+			_ -> C.CCall (C.Ref $ fnm stp) [e]
+		(TPGen, TPNum) -> C.CCall (C.Ref $ "u" ++ fnm dtp) [e]
 		(TPFloat, TPGen) -> case e of
 			C.FloatConst _ -> C.ObjCConst e
-			_ -> C.CCall (C.Ref "numf") [e]
-		(TPGen, TPFloat) -> C.CCall (C.Ref "unumf") [e]
+			_ -> C.CCall (C.Ref $ fnm stp) [e]
+		(TPGen, TPFloat) -> C.CCall (C.Ref $ "u" ++ fnm dtp) [e]
 		(TPBool, TPGen) -> case e of
 			C.BoolConst _ -> C.ObjCConst e
-			_ -> C.CCall (C.Ref "numb") [e]
-		(TPGen, TPBool) -> C.CCall (C.Ref "unumb") [e]
+			_ -> C.CCall (C.Ref $ fnm stp) [e]
+		(TPGen, TPBool) -> C.CCall (C.Ref $ "u" ++ fnm dtp) [e]
 		_ -> e
