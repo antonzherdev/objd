@@ -626,8 +626,14 @@ dataType cidx (D.DataType name gens) = case name of
 	"ODInt4" -> TPGenericWrap int4
 	"uint4" -> uint4
 	"ODUInt4" -> TPGenericWrap uint4
+	"int8" -> int8
+	"ODInt8" -> TPGenericWrap int8
+	"uint8" -> uint8
+	"ODUInt8" -> TPGenericWrap uint8
 	"float4" -> float4
 	"ODFloat4" -> TPGenericWrap float4
+	"float8" -> float8
+	"ODFloat8" -> TPGenericWrap float8
 	"float" -> float
 	"ODFloat" -> TPGenericWrap float
 	"void" -> TPVoid
