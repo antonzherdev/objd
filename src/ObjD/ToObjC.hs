@@ -127,6 +127,10 @@ createFunName (x1:x2:xs)
 	| isUpper x1 && isUpper x2  =  createFunName(x2 : xs)
 	| isUpper x1 = toLower x1 : x2 : xs
 	| otherwise = x1 : x2 : xs
+createFunName (x : xs) 
+	| isUpper x = toLower x : xs
+	| otherwise = x : xs
+createFunName x = x
 
 
 intefaceFuns :: [D.Def] -> [C.Fun]
