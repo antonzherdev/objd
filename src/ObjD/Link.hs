@@ -164,6 +164,8 @@ superType (TPClass _ gens cl) = fmap superTypeForExtClass $ (extendsClass . clas
 
 data Def = Def {defName :: String, defPars :: [Def], defType :: DataType, defBody :: Exp, defMods :: [DefMod]
 	, defGenerics :: Maybe DefGenerics}
+unknownDef :: Def
+unknownDef = Def "???" [] TPVoid Nop [] Nothing
 localVal :: String -> DataType -> Def
 localVal name tp = Def name [] tp Nop [DefModLocal] Nothing
 isStatic :: Def -> Bool
@@ -332,7 +334,7 @@ linkClass (ocidx, glidx) cl = self
 			D.Type{} -> Class {
 				classMods = [ClassModType, ClassModStub], 
 				className = D.className cl, 
-				classExtends = Extends (Just $ ExtendsClass (linkExtendsRef cidx (D.typeDef cl)) []) [], 
+				classExtends = Extends (Just $ ExtendsClass (linkExtendsRef env (D.typeDef cl)) []) [], 
 				classDefs = [], 
 				classGenerics = generics
 			}
@@ -343,7 +345,7 @@ linkClass (ocidx, glidx) cl = self
 		clsMod D.ClassModStruct = ClassModStruct
 		clsMod D.ClassModStub = ClassModStub
 		clsMod D.ClassModTrait = ClassModTrait
-		extends = fmap (linkExtends cidx) (D.classExtends cl)
+		extends = fmap (linkExtends env) (D.classExtends cl)
 		selfIsStruct = case cl of
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
 			_ -> False
@@ -360,7 +362,7 @@ linkClass (ocidx, glidx) cl = self
 			defPars = pars, defType = selfType, defGenerics = Just $ DefGenerics generics selfType}
 		constrPars = map constrPar (D.classFields cl)
 		constrPar f = fromJust $ idxFind fieldsMap (D.defName f)
-		generics = map (linkGeneric cidx) (D.classGenerics cl) 
+		generics = map (linkGeneric env) (D.classGenerics cl) 
 		
 		
 		enumItem :: Int -> D.EnumItem -> (Int, Def)
@@ -374,15 +376,21 @@ linkClass (ocidx, glidx) cl = self
 					(Just $ [ (Nothing,D.IntConst ordinal), (Nothing, D.StringConst name)] ++  pars)
 					[]
 
-linkExtends :: ClassIndex -> D.Extends -> Extends
-linkExtends cidx (D.Extends (D.ExtendsClass eref pars) withs) = Extends (Just $ ExtendsClass (linkExtendsRef cidx eref) []) $ 
-	map (linkExtendsRef cidx) withs
+linkExtends :: Env -> D.Extends -> Extends
+linkExtends env (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
+	let 
+		superCall = D.Dot D.Super $ D.Call "new" (Just $ pars) gens
+		superCall' = evalState (expr superCall) env
+		superCallPars = case superCall' of
+			Dot _ (Call _ _ pars') -> pars'
+			err -> [(unknownDef, err)]
+	in Extends (Just $ ExtendsClass (linkExtendsRef env eref) superCallPars) $ map (linkExtendsRef env) withs
 
-linkExtendsRef :: ClassIndex -> D.ExtendsRef -> ExtendsRef
-linkExtendsRef cidx (ecls, gens) = (classFind cidx ecls, map (dataType cidx) gens) 
+linkExtendsRef :: Env -> D.ExtendsRef -> ExtendsRef
+linkExtendsRef env (ecls, gens) = (classFind (envIndex env) ecls, map (dataType (envIndex env)) gens) 
 
-linkGeneric :: ClassIndex -> D.Generic -> Class
-linkGeneric cidx (D.Generic name ext) = Generic name [] (maybe (Extends (Just $ baseClassExtends cidx ) [] ) (linkExtends cidx) ext) []
+linkGeneric :: Env -> D.Generic -> Class
+linkGeneric env (D.Generic name ext) = Generic name [] (maybe (Extends (Just $ baseClassExtends (envIndex env) ) [] ) (linkExtends env) ext) []
 
 linkField :: Bool -> D.ClassStm -> State Env Def
 linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
@@ -413,7 +421,7 @@ linkDef :: Bool -> Env -> D.ClassStm -> Def
 linkDef str env ccc = evalState (stateDef ccc) env'
 	where 
 		env' = envAddClasses generics' env
-		generics' = map (linkGeneric $ envIndex env) (D.defGenerics ccc)
+		generics' = map (linkGeneric env) (D.defGenerics ccc)
 		cl = envSelfClass env
 		stateDef:: D.ClassStm -> State Env Def
 		stateDef D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = 
@@ -720,6 +728,7 @@ data Exp = Nop
 	| While Exp Exp
 	| Do Exp Exp
 	| Self DataType
+	| Super DataType
 	| Nil
 	| BoolOp BoolTp Exp Exp
 	| MathOp MathTp Exp Exp
@@ -758,6 +767,7 @@ instance Show Exp where
 	show (Do cond e) = "do" ++ show e ++ " while(" ++ show cond ++ ")"
 	show Nop = ""
 	show (Self c) = "<" ++ show c ++ ">self"
+	show (Super c) = "<" ++ show c ++ ">super"
 	show (Return _ e) = "return " ++ show e
 	show (Set Nothing l r) = showOp l "=" r
 	show (Set (Just t) l r) = showOp l (show t ++ "=") r
@@ -883,6 +893,7 @@ exprDataType (MinusMinus e) = exprDataType e
 exprDataType (Dot _ b) = exprDataType b
 exprDataType (Set _ a _) = exprDataType a
 exprDataType (Self s) = s
+exprDataType (Super s) = s
 exprDataType (Call _ t _) = t
 exprDataType (Return _ e) = exprDataType e
 exprDataType (Index e i) = resolve $ exprDataType e 
@@ -980,6 +991,9 @@ expr (D.MinusMinus e) = do
 expr D.Self = do
 	env <- get
 	return $ Self $ envSelf env
+expr D.Super = do
+	env <- get
+	return $ Super $ fromMaybe (error "No super data type") $ superType $ envSelf env
 expr r@D.Call{} = exprCall Nothing r
 expr (D.Index e i) = do
 	e' <- expr e

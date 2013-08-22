@@ -648,6 +648,7 @@ tExp env (D.Dot l (D.LambdaCall c)) = C.CCall (tExp env (D.Dot l c)) []
 
 
 tExp _ (D.Self _) = C.Self
+tExp _ (D.Super _) = C.Super
 tExp env (D.LambdaCall e) = C.CCall (tExp env e) []
 tExp env (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
 	| D.DefModField `elem` mods = C.Ref $ '_' : name

@@ -75,6 +75,7 @@ data Exp = Nop
 	| Braces [Exp]
 	| If Exp Exp Exp
 	| Self
+	| Super
 	| Nil
 	| BoolOp BoolTp Exp Exp
 	| Dot Exp Exp
@@ -143,6 +144,7 @@ instance Show Exp where
 	show (Do cond e) = "do" ++ show e ++ " while(" ++ show cond ++ ")"
 	show Nop = ""
 	show Self = "self"
+	show Super = "super"
 	show Nil = "nil"
 	show Break = "break"
 	show (Dot l r) = showOp' l "." r

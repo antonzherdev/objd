@@ -397,7 +397,7 @@ pTerm = do
 		return e
 	where
 		pTerm' = pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> try(pNumConst) <|> pBreak <|> pReturn <|>
-			pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pWhile <|> pDo <|> pSelf <|> pNil <|> pCall  <?> "Expression"
+			pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pWhile <|> pDo <|> pSelf <|> pSuper <|> pNil <|> pCall  <?> "Expression"
 		pMinus = do
 			charSps '-'
 			e <- pExp
@@ -499,6 +499,7 @@ pTerm = do
 				charSps ')'
 				return $ Do cond e
 		pSelf = try(string "self") >> return Self
+		pSuper = try(string "super") >> return Super
 		pNil = try(string "nil") >> return Nil
 		pCall = do
 			name <- ident
