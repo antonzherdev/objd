@@ -79,6 +79,7 @@ data Exp =
 	| Negative Exp
 	| Error String
 	| Cast DataType Exp
+	| ShortCast DataType Exp
 
 showStms :: [Stm] -> String
 showStms = unlines . stms
@@ -93,11 +94,13 @@ kw s = s
 
 instance Show DataType where
 	show (TPSimple s []) = s
+	show (TPArr 0 s) = s ++ "[]"
 	show (TPArr n s) = s ++ "[" ++ show n ++ "]"
 	show (TPSimple s pr) = s ++ "<" ++ strs ", " pr ++ ">"
 	show (TPBlock d t) = show d ++ "(^)" ++ "(" ++ strs' ", " t ++ ")"
 
 showDecl ::  DataType -> String ->String
+showDecl (TPArr 0 tp) name = tp ++ " " ++ name ++ "[]"
 showDecl (TPArr n tp) name = tp ++ " " ++ name ++ "[" ++ show n ++ "]"
 showDecl tp@TPSimple{} name = show tp ++ " " ++ name
 showDecl (TPBlock d t) name = show d ++ "(^" ++ name ++ ")" ++ "(" ++ strs' ", " t ++ ")"
@@ -284,5 +287,6 @@ expLines (Lambda pars e rtp) = ["^" ++ show rtp ++ "(" ++ strs ", " (map showPar
 expLines (Not e) = ["!("] `glue` (expLines e `app` ")")
 expLines (Negative e) = ["-"] `glue` expLines e
 expLines (Cast tp e) =  ["((" ++ show tp ++ ")("] `glue` (expLines e `app` "))")
+expLines (ShortCast tp e) =  ["(" ++ show tp ++ ")"] `glue` expLines e
 expLines (Error s) = ["<#ERROR: "] `glue` (lines s `app` "#>")
 expLines Nop = []

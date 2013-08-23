@@ -304,7 +304,7 @@ linkFile fidx (D.File name package stms) = fl
 		visibleFiles :: [D.FileStm] -> [File]
 		visibleFiles = mapMaybe (getFile . D.impString) . filter D.isImport
 		kernelFiles :: [File]
-		kernelFiles = mapMaybe (idxFind fidx) ["ODEnum", "ODObject", "CNTuple", "CNOption", "CNList", "CNMap", "CNSeq"]
+		kernelFiles = mapMaybe (idxFind fidx) ["ODEnum", "ODObject", "CNTuple", "CNOption", "CNList", "CNMap", "CNSeq", "CNData"]
 		cImports = mapMaybe toCImport stms
 		toCImport (D.Import s D.ImportTypeCUser) = Just $ CImportUser s
 		toCImport (D.Import s D.ImportTypeCLib) = Just $ CImportLib s
@@ -521,7 +521,7 @@ data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric | TPMT
 byte :: DataType
 byte = TPNumber False 1
 ubyte :: DataType
-ubyte = TPNumber False 2
+ubyte = TPNumber True 1
 int4 :: DataType
 int4 = TPNumber False 4
 uint4 :: DataType
@@ -601,6 +601,7 @@ dataTypeClass _ (TPObject _ c) = Class { classMods = [ClassModObject], className
 	classDefs = filter ((DefModStatic `elem`) . defMods) (allDefsInClass (c, M.empty) ), classGenerics = []}
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
 dataTypeClass env (TPArr _ _) = classFind (envIndex env) "CNSeq"
+dataTypeClass env (TPEArr _ _) = classFind (envIndex env) "CNPArray"
 dataTypeClass env (TPOption _) = classFind (envIndex env) "CNOption"
 dataTypeClass env (TPMap _ _) = classFind(envIndex env) "CNMap"
 dataTypeClass env (TPTuple [_, _]) = classFind (envIndex env) "CNTuple"
@@ -692,15 +693,16 @@ dataType cidx (D.DataType name gens) = case name of
 	_ -> maybe (TPUnknown $ "No class found " ++ name) (\cl -> refDataType cl (map (wrapGeneric . dataType cidx) gens)) (idxFind cidx name)
 dataType cidx (D.DataTypeArr m tp) = case tp' of
 		TPClass TPMStruct _ _ ->arrr'
-		TPNumber _ _ -> arrr'
-		TPFloatNumber _  -> arrr'
-		TPBool -> arrr'
-		TPVoid -> TPData
+		TPNumber _ _ -> earr
+		TPFloatNumber _  -> earr
+		TPBool -> earr
+		TPVoid -> earr
 		_ -> arrr
 	where
 		tp' = dataType cidx tp
 		arrr = TPArr m $ wrapGeneric tp'
-		arrr' =  if m == 0 then arrr else TPEArr m tp'
+		arrr' =  if m == 0 then arrr else earr
+		earr = TPEArr m tp'
 dataType cidx (D.DataTypeMap k v) = TPMap (wrapGeneric $ dataType cidx k) (wrapGeneric $ dataType cidx v)
 dataType cidx (D.DataTypeFun (D.DataTypeTuple tps) d) = TPFun (TPTuple $ map (dataType cidx) tps) (dataType cidx d)
 dataType cidx (D.DataTypeFun s d) = TPFun (dataType cidx s) (dataType cidx d)
@@ -740,6 +742,7 @@ instance Show DataType where
 	show (TPFun s d) = show s ++ " -> " ++ show d
 	show (TPTuple tps) = "(" ++ strs' ", " tps ++ ")"
 	show (TPOption t) = show t ++ "?"
+	show _ =  "UnknownTP"
 instance Show DataTypeMod where
 	show TPMClass = "#C"
 	show TPMType = "#P"
@@ -836,7 +839,7 @@ instance Show Exp where
 	show (Throw e) = "throw " ++ show e
 	show (Not e) = "!(" ++ show e ++ ")"
 	show (Negative e) = '-' : show e
-	show (Cast tp e) = show e ++ ".cast<" ++ show tp ++ ")"
+	show (Cast tp e) = show e ++ ".cast<" ++ show tp ++ ">"
 	show (As tp) = "as<" ++ show tp ++ ">"
 	show (Is tp) = "is<" ++ show tp ++ ">"
 	show (CastDot tp) = "cast<" ++ show tp ++ ">"
@@ -1306,6 +1309,7 @@ implicitConvertsion dtp ex = let stp = exprDataType ex
 		conv TPFloatNumber{} d@TPNumber{} = Cast d ex
 		conv TPNumber{} d@TPFloatNumber{} = Cast d ex
 		conv (TPArr _ _) d@(TPEArr _ _) = Cast d ex
+		conv (TPArr _ _) (TPClass _ [d] Class{className = "CNPArray"}) = Cast (TPEArr 0 (unwrapGeneric d)) ex
 		conv sc dc@TPClass{} = if sc /= dc then classConversion dc sc ex else ex
 		conv _ _ = ex
 

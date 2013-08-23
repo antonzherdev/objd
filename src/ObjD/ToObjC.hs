@@ -536,7 +536,7 @@ procImports D.File{D.fileImports = imps, D.fileClasses = classes} = (h, m)
 
 {- DataType -}
 showDataType :: D.DataType -> C.DataType
-showDataType (D.TPEArr n tp) = C.TPArr n $ show (showDataType tp)
+showDataType (D.TPEArr _ _) = C.TPSimple "id<CNSeq>" []
 showDataType (D.TPArr _ _) = C.TPSimple "id<CNSeq>" []
 showDataType (D.TPMap _ _)  = C.TPSimple "id<CNMap>" []
 showDataType (D.TPNumber False 1) = C.TPSimple "char" []
@@ -619,6 +619,7 @@ tExp env (D.MathOp t l r) = let
 			D.TPGenericWrap tt -> tt
 			tt -> tt
 	in case ltp of
+		D.TPEArr _ _ -> addObjectToArray rtp l' r'
 		D.TPArr _ _ -> addObjectToArray rtp l' r'
 		D.TPMap _ _ -> addKVToMap env l' r
 		D.TPString -> case rtp of
@@ -706,9 +707,18 @@ tExp env (D.Cast dtp e) = let
 	in case (D.unwrapGeneric stp, D.unwrapGeneric dtp) of
 		(D.TPNumber{}, D.TPString) -> toString $ stringFormatForType stp
 		(D.TPFloatNumber{}, D.TPString) -> toString $ stringFormatForType stp
-		(D.TPArr{}, D.TPEArr{}) ->
+		(D.TPArr{}, D.TPEArr _ etp) ->
 			case e of
-				D.Arr exps -> C.EArr $ map (tExp env) exps
+				D.Arr exps -> 
+					let etpnm =  show $ showDataType etp
+					in
+						C.Call (C.Ref "CNPArray") "arrayWith" [
+							("bytes", C.ShortCast (C.TPArr 0 etpnm) $ C.EArr $ map (tExp env) exps), 
+							("count", C.IntConst $ length exps),
+							("stride", C.CCall (C.Ref "sizeof") [C.Ref etpnm]),
+							("wrap", C.Lambda [("arr", C.TPSimple "void*" []), ("i", C.TPSimple "NSUInteger" [])] [
+								C.Return $ wrapVal etp $ C.Index (C.Cast (C.TPSimple (etpnm ++ "*") []) (C.Ref "arr")) (C.Ref "i")
+							] idTp)] []
 				_ -> error $ "Could not convert to EArr " ++ show e
 		(stp', _) -> C.Cast (showDataType dtp) (tExpTo env stp' e)
 
@@ -791,8 +801,6 @@ equals True (D.TPNil, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (_, e1) (D.TPNil, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPClass D.TPMClass _ cl, e1) (_, e2) 
 	| not (equalsIsPosible cl) = C.BoolOp Eq e1 e2
-equals True (D.TPEArr n tp, e1) (_, e2)  =
-	C.BoolOp Eq (C.CCall (C.Ref "memcmp") [e1, e2, C.CCall (C.Ref "sizeof") [C.Index (C.Ref (show $ showDataType tp)) (C.IntConst n)]]) (C.IntConst 0)
 equals True (_, e1) (_, e2) = C.Call e1 "isEqual" [("", e2)] []
 
 addObjectToArray :: D.DataType -> C.Exp -> C.Exp -> C.Exp
@@ -816,6 +824,9 @@ callConstructor env tp pars = let
 				(createFunName $ name ++ if null pars then "" else "With") 
 				(tPars env pars)
 				[]
+
+wrapVal :: D.DataType -> C.Exp -> C.Exp
+wrapVal tp e = maybeVal (tp, D.wrapGeneric tp) e
 
 data MaybeValTP = TPGen | TPNum | TPStruct | TPNoMatter | TPBool | TPFloat
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp
