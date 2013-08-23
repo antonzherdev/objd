@@ -106,9 +106,6 @@ isEnum _ = False
 classFields :: Class -> [Def]
 classFields = filter isField . classDefs
 
-classApplies :: Class -> [Def]
-classApplies cl = filter (("apply" == ) . defName) $ classDefs cl
-
 extendsNothing :: Extends
 extendsNothing = Extends Nothing []
 
@@ -388,7 +385,7 @@ linkClass (ocidx, glidx) cl = self
 				defType = selfType, defGenerics = Nothing, defPars = [], 
 				defBody = enumConstrCall})
 			where
-				enumConstrCall = evalState (exprCall Nothing enumConstrDCall) env
+				enumConstrCall = exprCall env Nothing enumConstrDCall
 				enumConstrDCall = D.Call 
 					(D.className cl) 
 					(Just $ [ (Nothing,D.IntConst ordinal), (Nothing, D.StringConst name)] ++  pars)
@@ -1000,12 +997,12 @@ expr (D.MathOp tp a b) = do
 expr d@(D.Dot a b) = do
 	env <- get
 	aa <- case a of
-		D.Call {} -> exprCall Nothing a
+		D.Call {} -> return $ exprCall env Nothing a
 		_ -> expr a
 	case aa of
 		ExpDError s _ -> return $ ExpDError s d
 		_ -> do
-			bb <- exprCall (Just $ exprDataType aa)  b
+			bb <- return $ exprCall env (Just $ exprDataType aa)  b
 			put env
 			return $ Dot aa bb
 expr (D.Set tp a b) = do
@@ -1024,7 +1021,7 @@ expr D.Self = do
 expr D.Super = do
 	env <- get
 	return $ Super $ fromMaybe (error "No super data type") $ superType $ envSelf env
-expr r@D.Call{} = exprCall Nothing r
+expr r@D.Call{} = get >>= (\env -> return $ exprCall env Nothing r)
 expr (D.Index e i) = do
 	e' <- expr e
 	let obf = expr $ D.Dot e (D.Call "apply" (Just [(Nothing, i)]) [])
@@ -1077,164 +1074,170 @@ expr D.Break = return Break
  - Calling 
  ------------------------------------------------------------------------------------------------------------------------------}
 
-exprCall :: Maybe DataType -> D.Exp -> State Env Exp		
-exprCall (Just (TPUnknown t)) e = return $ ExpDError t e
-exprCall (Just _) (D.Call "as" Nothing [tp]) = get >>= \env -> return $ As $ dataType (envIndex env) tp
-exprCall (Just _) (D.Call "is" Nothing [tp]) = get >>= \env -> return $ Is $ dataType (envIndex env) tp
-exprCall (Just _) (D.Call "cast" Nothing [tp]) = get >>= \env -> return $ CastDot $ dataType (envIndex env) tp
-exprCall strictClass call@(D.Call name pars gens) = do
-	env <- get
-	pars' <- mapM (\ (n, e) ->  expr e >>= (\ ee -> return (n, FirstTry e ee))) (fromMaybe [] pars)
-	return $
-		let
-			self = fromMaybe (envSelf env) strictClass
-			call' :: Exp
-			call' = fromMaybe (ExpDError errorString call) $ findCall
-			call'' :: Exp
-			call'' = case call' of
-				Call{} -> (resolveDef strictClass . correctCall) call'
-				_ -> call'
-				where
-					resolveDef Nothing c@(Call d _ _)
-						| DefModConstructor `elem` defMods d = c
-						| DefModObject `elem` defMods d = c
-						| DefModLocal `elem` defMods d = c
-						| DefModStub `elem` defMods d = c
-						| otherwise = Dot (Self (envSelf env)) c
-					resolveDef _ c = c
+exprCall :: Env-> Maybe DataType -> D.Exp -> Exp
+exprCall _ (Just (TPUnknown t)) e = ExpDError t e
+exprCall env (Just _) (D.Call "as" Nothing [tp]) = As $ dataType (envIndex env) tp
+exprCall env (Just _) (D.Call "is" Nothing [tp]) = Is $ dataType (envIndex env) tp
+exprCall env (Just _) (D.Call "cast" Nothing [tp]) = CastDot $ dataType (envIndex env) tp
+exprCall env strictClass call@(D.Call name pars gens) = 
+	case tryExprCall env strictClass call of
+		err@ExpDError{} ->
+			case tryExprCall env strictClass (D.Call name Nothing gens) of
+				ExpDError{} -> err
+				e -> case tryExprCall env (Just $ exprDataType e) (D.Call "apply" pars gens) of
+					ExpDError{} -> err
+					ee ->  ee
+		e -> e
+		
+exprCall _ _ err = ExpDError "It is not call" err
 
-			call''' = case pars of
-				Just [] -> case exprDataType call'' of
-					t@(TPFun TPVoid _) -> LambdaCall (Cast t call'')
-					TPGenericWrap t@(TPFun TPVoid _) -> LambdaCall (Cast t call'')
-					_ -> call''
+tryExprCall :: Env-> Maybe DataType -> D.Exp -> Exp
+tryExprCall _ (Just (TPUnknown t)) e = ExpDError t e
+tryExprCall env strictClass call@(D.Call name pars gens) = call'''
+	where
+		pars' = evalState (mapM (\ (n, e) ->  expr e >>= (\ ee -> return (n, FirstTry e ee))) (fromMaybe [] pars)) env
+		self = fromMaybe (envSelf env) strictClass
+		call' :: Exp
+		call' = fromMaybe (ExpDError errorString call) $ findCall
+		call'' :: Exp
+		call'' = case call' of
+			Call{} -> (resolveDef strictClass . correctCall) call'
+			_ -> call'
+			where
+				resolveDef Nothing c@(Call d _ _)
+					| DefModConstructor `elem` defMods d = c
+					| DefModObject `elem` defMods d = c
+					| DefModLocal `elem` defMods d = c
+					| DefModStub `elem` defMods d = c
+					| otherwise = Dot (Self (envSelf env)) c
+				resolveDef _ c = c
+
+		call''' = case pars of
+			Just [] -> case exprDataType call'' of
+				t@(TPFun TPVoid _) -> LambdaCall (Cast t call'')
+				TPGenericWrap t@(TPFun TPVoid _) -> LambdaCall (Cast t call'')
 				_ -> call''
+			_ -> call''
 
-			pars'' :: [(Def, Exp)]
-			pars'' = case call' of
-				Call _ _ r -> r
-			pars''' :: [(Def, Exp)]
-			pars''' = (map (correctCallPar env gens') pars'')
-			
-			gens' :: Generics
-			gens' = resolveGenerics pars''
+		pars'' :: [(Def, Exp)]
+		pars'' = case call' of
+			Call _ _ r -> r
+		pars''' :: [(Def, Exp)]
+		pars''' = (map (correctCallPar env gens') pars'')
+		
+		gens' :: Generics
+		gens' = resolveGenerics pars''
 
-			gens'' :: Generics
-			gens'' = resolveGenerics pars'''
+		gens'' :: Generics
+		gens'' = resolveGenerics pars'''
 
+		
+
+		resolveGenerics :: [(Def, Exp)] -> Generics
+		resolveGenerics rpars = let
 			extendList :: Int -> [a] -> [Maybe a]
 			extendList l a
 				| length a == l = map Just a
 				| length a > l = (map Just . take l) a
 				| otherwise = map Just a ++ replicate (l - length a) Nothing 
-
-			resolveGenerics :: [(Def, Exp)] -> Generics
-			resolveGenerics rpars = let
-				ddefGenerics :: DefGenerics -> [(String, DataType)]
-				ddefGenerics DefGenerics{defGenericsClasses = defGens, defGenericsSelfType = selfType} = 
-					(zipWith (determineGenericType selfType) defGens . extendList (length defGens)) gens
-				srcClassGenerics = classGenerics $ dataTypeClass env self
-				dclassGenerics :: [(String, DataType)]
-				dclassGenerics = (zipWith extractGen srcClassGenerics . extendList (length srcClassGenerics)) (dataTypeGenerics env self) 
-					where 
-						extractGen :: Class -> Maybe DataType -> (String, DataType)
-						extractGen g (Just t) = (className g, t)
-						extractGen g Nothing = (className g, TPUnknown $
-							"Could not find generic type for " ++ show g ++ " in self " ++ show self ++ " for call " ++ show call')
-					
-				determineGenericType :: DataType -> Class -> Maybe D.DataType -> (String, DataType)
-				determineGenericType _ g (Just tp) = (className g, (wrapGeneric . dataType (envIndex env)) tp)
-				determineGenericType selfType g  _ = (className g, 
-						fromMaybe (TPUnknown errorText) $ 
-						mplus determineBySelfType determineByPars
-					)
-					where 
-						determineByPars :: Maybe DataType
-						determineByPars = (listToMaybe . mapMaybe ( (defType *** (exprDataType >>> unwrapGeneric))>>> tryDetermine g) ) rpars
-						determineBySelfType :: Maybe DataType
-						determineBySelfType = tryDetermine g (selfType, self)
-						errorText = "Could not determine generic type for " ++ show g ++ " in " ++ show call 
-						tryDetermine :: Class -> (DataType, DataType) -> Maybe DataType
-						tryDetermine c (TPClass TPMGeneric _ gg, tp) = if c == gg then Just (wrapGeneric tp) else Nothing
-						tryDetermine c (TPArr _ a, TPArr _ a') = tryDetermine c (a, a')
-						tryDetermine c (TPOption a, TPOption a') = tryDetermine c (a, a')
-						tryDetermine c (TPMap a b, TPMap a' b') = mplus (tryDetermine c (a, a')) (tryDetermine c (b, b'))
-						tryDetermine c (TPTuple a, TPTuple a') = listToMaybe $ mapMaybe (tryDetermine c) (zip a a')
-						tryDetermine c (TPClass _ gg cl, TPClass _ gg' cl') = 
-							listToMaybe $ mapMaybe (tryDetermine c) (zip gg gg'')
-							where
-								gg'' = map snd $ M.toList $ fromMaybe M.empty $ upGenericsToClass cl (cl', buildGenerics cl' gg')
-						tryDetermine c (cl@(TPClass _ _ _), TPObject m cl') = 
-							tryDetermine c (cl, TPClass TPMClass [TPClass m [] cl'] (classFind (envIndex env) "ODClass"))
-						tryDetermine c (TPFun a b, TPFun a' b') = listToMaybe $ catMaybes [tryDetermine c (a, a'), tryDetermine c (b, b')]
-						tryDetermine c (TPGenericWrap a, TPGenericWrap b) = tryDetermine c (a, b)
-						tryDetermine c (TPGenericWrap a, b) = tryDetermine c (a, b)
-						tryDetermine c (a, TPGenericWrap b) = tryDetermine c (a, b)
-						tryDetermine c (a, b@TPArr{}) = tryDetermine c (a, dtpw b)
-						tryDetermine c (a, b@TPMap{}) = tryDetermine c (a, dtpw b)
-						tryDetermine _ _ = Nothing
-						dtpw tp = TPClass TPMGeneric (dataTypeGenerics env tp) (dataTypeClass env tp) 
-				in case call' of
-					(Call Def{defGenerics = Just defGens} _ _) -> 
-						M.fromList $ ddefGenerics defGens ++ dclassGenerics
-					_ -> M.fromList dclassGenerics 
-									
-			errorString :: String
-			errorString = "Could find reference for call " ++ callStr ++ "\n" ++
-				maybe "" (\cl -> "strict in class " ++ show cl ++ "\n") strictClass ++
-				(if detailedReferenceError then "in defs:\n" ++
-				(strs "\n" . map (ind . showDef False)) (allDefs)  else "")
-				where callStr = name ++ maybe "" (\ps -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) ps) ++ ")" ) pars
-
-			correctCall :: Exp -> Exp
-			correctCall (Call d tp _) = Call d (replaceGenerics gens'' tp) (map doImplicitConversation pars''')
-				where
-					doImplicitConversation (dd, e) = (dd, implicitConvertsion (replaceGenerics gens'' $ defType dd) e)
-
-			allDefs :: [Def]
-			allDefs = maybe allDefsInEnv allDefsInStrictClass strictClass
+			ddefGenerics :: DefGenerics -> [(String, DataType)]
+			ddefGenerics DefGenerics{defGenericsClasses = defGens, defGenericsSelfType = selfType} = 
+				(zipWith (determineGenericType selfType) defGens . extendList (length defGens)) gens
+			srcClassGenerics = classGenerics $ dataTypeClass env self
+			dclassGenerics :: [(String, DataType)]
+			dclassGenerics = (zipWith extractGen srcClassGenerics . extendList (length srcClassGenerics)) (dataTypeGenerics env self) 
 				where 
-				allDefsInStrictClass sc = allDefsInClass $ dataTypeClassRef env sc
-				allDefsInEnv = envVals env 
-					++ allDefsInClass (dataTypeClassRef env $ envSelf env) 
-					++ allDefsInClass (dataTypeClassRef env $ objTp $ envSelfClass env) 
-					++ envGlobalDefIndex env 
-					++ classConstructors'
-					++ objects 
-				classConstructors = (map setName . mapMaybe (classConstructor . snd) . M.toList) (envIndex env)
-				classConstructors' = if isJust pars then classConstructors else  (filter (not . null . defPars) classConstructors)
-				setName d@Def{defType = tp} = setDefName (className $ dataTypeClass env tp) d
-				objects = (map (objectDef . snd) . M.toList) (envIndex env)
-				objTp cl = TPObject (refDataTypeMod cl) cl
-			
-			findCall :: Maybe Exp
-			findCall = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) allDefs
-				where
-					fit :: Def -> Maybe Exp
-					fit d
-						| length pars' == length (defPars d) = 
-								if checkParameters pars' (defPars d) then Just $ def' d else Nothing
-						| otherwise = case defType d of
-							TPFun{} -> Just $ def' d
-							_ -> Nothing
+					extractGen :: Class -> Maybe DataType -> (String, DataType)
+					extractGen g (Just t) = (className g, t)
+					extractGen g Nothing = (className g, TPUnknown $
+						"Could not find generic type for " ++ show g ++ " in self " ++ show self ++ " for call " ++ show call')
+				
+			determineGenericType :: DataType -> Class -> Maybe D.DataType -> (String, DataType)
+			determineGenericType _ g (Just tp) = (className g, (wrapGeneric . dataType (envIndex env)) tp)
+			determineGenericType selfType g  _ = (className g, 
+					fromMaybe (TPUnknown errorText) $ 
+					mplus determineBySelfType determineByPars
+				)
+				where 
+					determineByPars :: Maybe DataType
+					determineByPars = (listToMaybe . mapMaybe ( (defType *** (exprDataType >>> unwrapGeneric))>>> tryDetermine g) ) rpars
+					determineBySelfType :: Maybe DataType
+					determineBySelfType = tryDetermine g (selfType, self)
+					errorText = "Could not determine generic type for " ++ show g ++ " in " ++ show call 
+					tryDetermine :: Class -> (DataType, DataType) -> Maybe DataType
+					tryDetermine c (TPClass TPMGeneric _ gg, tp) = if c == gg then Just (wrapGeneric tp) else Nothing
+					tryDetermine c (TPArr _ a, TPArr _ a') = tryDetermine c (a, a')
+					tryDetermine c (TPOption a, TPOption a') = tryDetermine c (a, a')
+					tryDetermine c (TPMap a b, TPMap a' b') = mplus (tryDetermine c (a, a')) (tryDetermine c (b, b'))
+					tryDetermine c (TPTuple a, TPTuple a') = listToMaybe $ mapMaybe (tryDetermine c) (zip a a')
+					tryDetermine c (TPClass _ gg cl, TPClass _ gg' cl') = 
+						listToMaybe $ mapMaybe (tryDetermine c) (zip gg gg'')
+						where
+							gg'' = map snd $ M.toList $ fromMaybe M.empty $ upGenericsToClass cl (cl', buildGenerics cl' gg')
+					tryDetermine c (cl@(TPClass _ _ _), TPObject m cl') = 
+						tryDetermine c (cl, TPClass TPMClass [TPClass m [] cl'] (classFind (envIndex env) "ODClass"))
+					tryDetermine c (TPFun a b, TPFun a' b') = listToMaybe $ catMaybes [tryDetermine c (a, a'), tryDetermine c (b, b')]
+					tryDetermine c (TPGenericWrap a, TPGenericWrap b) = tryDetermine c (a, b)
+					tryDetermine c (TPGenericWrap a, b) = tryDetermine c (a, b)
+					tryDetermine c (a, TPGenericWrap b) = tryDetermine c (a, b)
+					tryDetermine c (a, b@TPArr{}) = tryDetermine c (a, dtpw b)
+					tryDetermine c (a, b@TPMap{}) = tryDetermine c (a, dtpw b)
+					tryDetermine _ _ = Nothing
+					dtpw tp = TPClass TPMGeneric (dataTypeGenerics env tp) (dataTypeClass env tp) 
+			in case call' of
+				(Call Def{defGenerics = Just defGens} _ _) -> 
+					M.fromList $ ddefGenerics defGens ++ dclassGenerics
+				_ -> M.fromList dclassGenerics 
+								
+		errorString :: String
+		errorString = "Could find reference for call " ++ callStr ++ "\n" ++
+			maybe "" (\cl -> "strict in class " ++ show cl ++ "\n") strictClass ++
+			(if detailedReferenceError then "in defs:\n" ++
+			(strs "\n" . map (ind . showDef False)) (allDefs)  else "")
+			where callStr = name ++ maybe "" (\ps -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) ps) ++ ")" ) pars
 
-					def' d = Call d (resolveTp d) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars'
-					resolveTp d = case defType d of
-						TPSelf -> self
-						tp@(TPFun _ dtp)-> if length pars' == length (defPars d) then tp else dtp
-						tp -> tp
-					defPars' :: Def -> [Def]
-					defPars' Def{defType = t, defPars = []} = dataTypePars t
-					defPars' Def{defPars = r} = r
-					checkParameters :: [(Maybe String, Exp)] -> [Def] -> Bool
-					checkParameters cp dp = all (checkParameter) $ zip cp dp
-					checkParameter :: ((Maybe String, Exp), Def) -> Bool
-					checkParameter ((Just cn, _), Def{defName = dn}) = cn == dn
-					checkParameter _ = True
+		correctCall :: Exp -> Exp
+		correctCall (Call d tp _) = Call d (replaceGenerics gens'' tp) (map doImplicitConversation pars''')
+			where
+				doImplicitConversation (dd, e) = (dd, implicitConvertsion (replaceGenerics gens'' $ defType dd) e)
 
-			
-		in call'''
-exprCall _ err = return $ ExpDError "It is not call" err
+		allDefs :: [Def]
+		allDefs = maybe allDefsInEnv allDefsInStrictClass strictClass
+			where 
+			allDefsInStrictClass sc = allDefsInClass $ dataTypeClassRef env sc
+			allDefsInEnv = envVals env 
+				++ allDefsInClass (dataTypeClassRef env $ envSelf env) 
+				++ allDefsInClass (dataTypeClassRef env $ objTp $ envSelfClass env) 
+				++ envGlobalDefIndex env 
+				++ objects 
+			objects = if isNothing pars then (map (objectDef . snd) . M.toList) (envIndex env) else []
+			objTp cl = TPObject (refDataTypeMod cl) cl
+		
+		findCall :: Maybe Exp
+		findCall = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) allDefs
+			where
+				fit :: Def -> Maybe Exp
+				fit d
+					| length pars' == length (defPars d) = 
+							if checkParameters pars' (defPars d) then Just $ def' d else Nothing
+					| otherwise = case defType d of
+						TPFun{} -> Just $ def' d
+						_ -> Nothing
+
+				def' d = Call d (resolveTp d) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars'
+				resolveTp d = case defType d of
+					TPSelf -> self
+					tp@(TPFun _ dtp)-> if length pars' == length (defPars d) then tp else dtp
+					tp -> tp
+				defPars' :: Def -> [Def]
+				defPars' Def{defType = t, defPars = []} = dataTypePars t
+				defPars' Def{defPars = r} = r
+				checkParameters :: [(Maybe String, Exp)] -> [Def] -> Bool
+				checkParameters cp dp = all (checkParameter) $ zip cp dp
+				checkParameter :: ((Maybe String, Exp), Def) -> Bool
+				checkParameter ((Just cn, _), Def{defName = dn}) = cn == dn
+				checkParameter _ = True
+
 
 
 
