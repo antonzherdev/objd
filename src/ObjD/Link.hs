@@ -106,6 +106,9 @@ isEnum _ = False
 classFields :: Class -> [Def]
 classFields = filter isField . classDefs
 
+classApplies :: Class -> [Def]
+classApplies cl = filter (("apply" == ) . defName) $ classDefs cl
+
 extendsNothing :: Extends
 extendsNothing = Extends Nothing []
 
@@ -1086,7 +1089,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 		let
 			self = fromMaybe (envSelf env) strictClass
 			call' :: Exp
-			call' = fromMaybe (ExpDError errorString call) $ findCall (name, pars') (env, self, allDefs)
+			call' = fromMaybe (ExpDError errorString call) $ findCall
 			call'' :: Exp
 			call'' = case call' of
 				Call{} -> (resolveDef strictClass . correctCall) call'
@@ -1204,6 +1207,31 @@ exprCall strictClass call@(D.Call name pars gens) = do
 				objects = (map (objectDef . snd) . M.toList) (envIndex env)
 				objTp cl = TPObject (refDataTypeMod cl) cl
 			
+			findCall :: Maybe Exp
+			findCall = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) allDefs
+				where
+					fit :: Def -> Maybe Exp
+					fit d
+						| length pars' == length (defPars d) = 
+								if checkParameters pars' (defPars d) then Just $ def' d else Nothing
+						| otherwise = case defType d of
+							TPFun{} -> Just $ def' d
+							_ -> Nothing
+
+					def' d = Call d (resolveTp d) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars'
+					resolveTp d = case defType d of
+						TPSelf -> self
+						tp@(TPFun _ dtp)-> if length pars' == length (defPars d) then tp else dtp
+						tp -> tp
+					defPars' :: Def -> [Def]
+					defPars' Def{defType = t, defPars = []} = dataTypePars t
+					defPars' Def{defPars = r} = r
+					checkParameters :: [(Maybe String, Exp)] -> [Def] -> Bool
+					checkParameters cp dp = all (checkParameter) $ zip cp dp
+					checkParameter :: ((Maybe String, Exp), Def) -> Bool
+					checkParameter ((Just cn, _), Def{defName = dn}) = cn == dn
+					checkParameter _ = True
+
 			
 		in call'''
 exprCall _ err = return $ ExpDError "It is not call" err
@@ -1234,31 +1262,6 @@ correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, ExpDError _ (D.Lambda 
 			TPClass TPMGeneric _ _ -> Just True
 			_ -> Nothing)
 correctCallPar _ _ e = e
-
-findCall :: (String, [(Maybe String, Exp)]) -> (Env, DataType, [Def]) -> Maybe Exp
-findCall (name,pars) (_, selfType, fdefs) = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) fdefs
-	where
-		fit :: Def -> Maybe Exp
-		fit d
-			| length pars == length (defPars d) = 
-					if checkParameters pars (defPars d) then Just $ def' d else Nothing
-			| otherwise = case defType d of
-				TPFun{} -> Just $ def' d
-				_ -> Nothing
-
-		def' d = Call d (resolveTp d) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars
-		resolveTp d = case defType d of
-			TPSelf -> selfType
-			tp@(TPFun _ dtp)-> if length pars == length (defPars d) then tp else dtp
-			tp -> tp
-		defPars' :: Def -> [Def]
-		defPars' Def{defType = t, defPars = []} = dataTypePars t
-		defPars' Def{defPars = r} = r
-		checkParameters :: [(Maybe String, Exp)] -> [Def] -> Bool
-		checkParameters cp dp = all (checkParameter) $ zip cp dp
-		checkParameter :: ((Maybe String, Exp), Def) -> Bool
-		checkParameter ((Just cn, _), Def{defName = dn}) = cn == dn
-		checkParameter _ = True
 
 
 {-----------------------------------------------------------------------------------------------------------------------------------------
