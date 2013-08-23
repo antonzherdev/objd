@@ -113,6 +113,9 @@ extendsRefs :: Extends -> [ExtendsRef]
 extendsRefs (Extends Nothing traits) = traits
 extendsRefs (Extends (Just (ExtendsClass cl _)) traits) = cl : traits
 
+superClass :: Class -> Maybe Class
+superClass = fmap extendsClassClass . extendsClass . classExtends
+
 superClasses :: Class -> [Class]
 superClasses = map fst . extendsRefs . classExtends
 
@@ -366,8 +369,11 @@ linkClass (ocidx, glidx) cl = self
 
 		fields =  mapM (evalState . linkField selfIsStruct) (filter (D.isStatic) decls) staticEnv ++
 			mapM (evalState . linkField selfIsStruct) (filter (not . D.isStatic) decls) env
-		fieldsMap = M.fromList $ map (idx defName) fields
-		decls = D.classFields cl ++ filter D.isDecl (D.classBody cl)
+		decls = filter (not . containsInSuper) (D.classFields cl) ++ filter D.isDecl (D.classBody cl)
+		containsInSuper D.Def {D.defName = name} =  case superClass self of
+			Nothing -> False
+			Just super -> any (\d -> DefModField `elem` defMods d && defName d == name) $ classDefs super
+
 		defs = map (\ def -> linkDef selfIsStruct (envForDef def) def) . filter D.isDef $ D.classBody cl
 		envForDef def = if D.isStatic def then staticEnv else env
 		enumConstr = constr (enumAdditionalDefs ++ constrPars)
@@ -375,7 +381,7 @@ linkClass (ocidx, glidx) cl = self
 		constr pars = Def{defName = "apply", defMods = [DefModStatic, DefModConstructor] ++ [DefModStruct | selfIsStruct], defBody = Nop,
 			defPars = pars, defType = selfType, defGenerics = Just $ DefGenerics generics selfType}
 		constrPars = map constrPar (D.classFields cl)
-		constrPar f = fromJust $ idxFind fieldsMap (D.defName f)
+		constrPar D.Def{D.defName = name, D.defRetType = Just tp} = localVal name $ dataType cidx tp
 		generics = map (linkGeneric env) (D.classGenerics cl) 
 		
 		
