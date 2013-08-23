@@ -638,13 +638,14 @@ tExp env (D.Dot (D.Self stp) (D.Call D.Def{D.defMods = mods, D.defName = name} _
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className $ D.tpClass stp) name (tPars env pars) []
 	| otherwise = C.Call C.Self name (tPars env pars) []
 tExp env d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
+	| D.DefModApplyLambda `elem` mods = C.CCall (tExp env l) ((map snd . tPars env) pars) 
 	| D.DefModField `elem` mods && null pars = castGeneric d $ C.Dot (tExpTo env ltp l) (C.Ref name)
 	| D.DefModField `elem` mods = castGeneric d $ C.Dot (tExpTo env ltp l) $ C.CCall (C.Ref name) ((map snd . tPars env) pars)
+	| D.DefModConstructor `elem` mods = callConstructor env (D.exprDataType d) pars
 	| D.DefModStruct `elem` mods = case ltp  of
 		(D.TPClass D.TPMStruct _ c) -> structCall (D.className c) (tExpTo env ltp l)
 		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.className c) name) ((map snd . tPars env) pars)
 		tp -> structCall (show tp) (tExpTo env ltp l)
-	| D.DefModConstructor `elem` mods = callConstructor env (D.exprDataType d) pars
 	| otherwise = castGeneric d $ C.Call (tExp env l) name (tPars env pars ) []
 	where
 		 structCall c self = C.CCall (C.Ref $ structDefName c name) (self : (map snd . tPars env) pars)

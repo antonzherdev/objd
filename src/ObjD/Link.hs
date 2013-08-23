@@ -195,8 +195,6 @@ isConstructor :: Def -> Bool
 isConstructor = (DefModConstructor `elem` ) . defMods
 enumItems :: Class -> [Def]
 enumItems Class{classDefs = defs} = filter isEnumItem defs
-setDefName :: String -> Def -> Def
-setDefName name (Def _ pars tp body mods gens) = Def name pars tp body mods gens 
 instance Eq Def where
 	a == b = defName a == defName b && length (defPars a) == length (defPars b) && all eqPar (zip (defPars a)(defPars b))
 
@@ -205,7 +203,7 @@ eqPar (x, y) = defName x == defName y
 
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate  | DefModGlobalVal | DefModWeak
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
-	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct deriving (Eq, Ord)
+	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda deriving (Eq, Ord)
 instance Show DefMod where
 	show DefModStatic = "static"
 	show DefModMutable = "var"
@@ -268,6 +266,7 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModDef = 'd'
 		ch DefModSpecial = 'i'
 		ch DefModStruct = 's'
+		ch DefModApplyLambda = 'd'
 
 
 dataTypePars :: DataType -> [Def]
@@ -611,6 +610,14 @@ dataTypeClass env (TPFloatNumber 4) = classFind (envIndex env) "ODFloat4"
 dataTypeClass env (TPFloatNumber 8) = classFind (envIndex env) "ODFloat8"
 dataTypeClass env (TPFloatNumber 0) = classFind (envIndex env) "ODFloat"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("CNTuple" ++ show (length a))
+dataTypeClass _ (TPFun stp dtp) = Class { classMods = [], className = "", classExtends = extendsNothing, 
+	classDefs = [apply], classGenerics = []}
+	where
+		sourceTypes = case stp of
+			TPVoid -> []
+			TPTuple tps -> tps
+			tp -> [tp]
+		apply = Def {defName = "apply", defPars = map (localVal "") sourceTypes, defType = dtp, defBody = Nop, defMods = [DefModApplyLambda], defGenerics = Nothing}
 dataTypeClass _ x = classError (show x) ("No dataTypeClass for " ++ show x)
 
 dataTypeClassName :: DataType -> String
@@ -1004,7 +1011,9 @@ expr d@(D.Dot a b) = do
 		_ -> do
 			bb <- return $ exprCall env (Just $ exprDataType aa)  b
 			put env
-			return $ Dot aa bb
+			return $ case bb of
+				Dot l r -> Dot (Dot aa l) r
+				_ -> Dot aa bb
 expr (D.Set tp a b) = do
 	aa <- expr a
 	bb <- expr b
@@ -1081,12 +1090,12 @@ exprCall env (Just _) (D.Call "is" Nothing [tp]) = Is $ dataType (envIndex env) 
 exprCall env (Just _) (D.Call "cast" Nothing [tp]) = CastDot $ dataType (envIndex env) tp
 exprCall env strictClass call@(D.Call name pars gens) = 
 	case tryExprCall env strictClass call of
-		err@ExpDError{} ->
+		err@ExpDError{} -> if isNothing pars then err else
 			case tryExprCall env strictClass (D.Call name Nothing gens) of
-				ExpDError{} -> err
+				ExpDError es _ -> ExpLError es err
 				e -> case tryExprCall env (Just $ exprDataType e) (D.Call "apply" pars gens) of
-					ExpDError{} -> err
-					ee ->  ee
+					ExpDError es _ -> ExpLError es err
+					ee -> Dot e ee
 		e -> e
 		
 exprCall _ _ err = ExpDError "It is not call" err
@@ -1220,9 +1229,7 @@ tryExprCall env strictClass call@(D.Call name pars gens) = call'''
 				fit d
 					| length pars' == length (defPars d) = 
 							if checkParameters pars' (defPars d) then Just $ def' d else Nothing
-					| otherwise = case defType d of
-						TPFun{} -> Just $ def' d
-						_ -> Nothing
+					| otherwise = Nothing
 
 				def' d = Call d (resolveTp d) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars'
 				resolveTp d = case defType d of
