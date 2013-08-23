@@ -171,12 +171,17 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
 	}
 	where
 		defs :: [D.Def]
-		defs = nub $ clDefs ++ traitDefs cl
+		defs = nub $ clDefs ++ traitDefs
 		
-		traitDefs :: D.Class -> [D.Def]
-		traitDefs cll =
-			(if D.isTrait cll then filter ( (D.DefModAbstract `notElem`). D.defMods) (D.classDefs cll) else []) ++
-			concatMap (traitDefs . fst) ((D.extendsRefs . D.classExtends) cll)
+		traitDefs :: [D.Def]
+		traitDefs = allInParentTraits cl
+			where 
+				allInParentTraits cll = concatMap (traitDefsRec . fst) ((D.extendsRefs . D.classExtends) cll)
+				traitDefsRec cll 
+					| D.isTrait cll = filter ( (D.DefModAbstract `notElem`). D.defMods) (D.classDefs cll) ++ allInParentTraits cll
+					| otherwise = []
+					
+
 		constr = fromMaybe (error "No class constructor") (D.classConstructor cl)
 		implFields = filter needField defs
 		needField f = D.isField f && not (D.isStatic f)
