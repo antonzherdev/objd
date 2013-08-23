@@ -287,7 +287,7 @@ linkFile fidx (D.File name package stms) = fl
 		visibleFiles :: [D.FileStm] -> [File]
 		visibleFiles = mapMaybe (getFile . D.impString) . filter D.isImport
 		kernelFiles :: [File]
-		kernelFiles = mapMaybe (idxFind fidx) ["ODEnum", "ODObject", "CNTuple", "CNOption", "CNList", "CNMap"]
+		kernelFiles = mapMaybe (idxFind fidx) ["ODEnum", "ODObject", "CNTuple", "CNOption", "CNList", "CNMap", "CNSeq"]
 		cImports = mapMaybe toCImport stms
 		toCImport (D.Import s D.ImportTypeCUser) = Just $ CImportUser s
 		toCImport (D.Import s D.ImportTypeCLib) = Just $ CImportLib s
@@ -572,7 +572,7 @@ dataTypeClass _ (TPClass _ _ c ) = c
 dataTypeClass _ (TPObject _ c) = Class { classMods = [ClassModObject], className = className c, classExtends = extendsNothing, 
 	classDefs = filter ((DefModStatic `elem`) . defMods) (allDefsInClass (c, M.empty) ), classGenerics = []}
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
-dataTypeClass env (TPArr _ _) = classFind (envIndex env) "CNArray"
+dataTypeClass env (TPArr _ _) = classFind (envIndex env) "CNSeq"
 dataTypeClass env (TPOption _) = classFind (envIndex env) "CNOption"
 dataTypeClass env (TPMap _ _) = classFind(envIndex env) "CNMap"
 dataTypeClass env (TPTuple [_, _]) = classFind (envIndex env) "CNTuple"
