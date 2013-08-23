@@ -804,7 +804,7 @@ addKVToMap env a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tEx
 
 callConstructor :: Env -> D.DataType -> [(D.Def, D.Exp)] -> C.Exp
 callConstructor env tp pars = let
-	name = D.dataTypeClassName tp
+	name = D.dataTypeClassName $ D.resolveTypeAlias tp
 	in case tp of 
 		D.TPClass D.TPMStruct _ _ -> 
 			if envCStruct env then C.EArr ((map snd. tPars env) pars) else C.CCall 

@@ -3,7 +3,7 @@ module ObjD.Link (
 	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef,
 	link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
-	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4
+	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias
 )where
 
 import 			 Control.Arrow
@@ -126,11 +126,13 @@ objectDef :: Class -> Def
 objectDef cl = Def {defName = className cl, defPars = [], defType = TPObject (refDataTypeMod cl) cl, defBody = Nop, 
 				defMods = [DefModStatic, DefModObject], defGenerics = Nothing}
 
+replaceGenericsInDef :: Generics -> Def -> Def
+replaceGenericsInDef gens d = d {defType = replaceGenerics gens (defType d), defPars = map (replaceGenericsInDef gens) (defPars d) }
+		
+
 allDefsInClass :: ClassRef -> [Def]
-allDefsInClass (cl, gens) = map replaceGenericsInDef (classDefs cl)  ++ defsInParentClass (classExtends cl) 
+allDefsInClass (cl, gens) = map (replaceGenericsInDef gens) (classDefs cl)  ++ defsInParentClass (classExtends cl) 
 	where
-		replaceGenericsInDef :: Def -> Def
-		replaceGenericsInDef  d = d {defType = replaceGenerics gens (defType d), defPars = map replaceGenericsInDef (defPars d) }
 		defsInParentClass :: Extends -> [Def]
 		defsInParentClass extends = concatMap defsInExtends $ extendsRefs extends
 		defsInExtends :: ExtendsRef -> [Def]
@@ -138,6 +140,10 @@ allDefsInClass (cl, gens) = map replaceGenericsInDef (classDefs cl)  ++ defsInPa
 
 buildGenerics :: Class -> [DataType] -> Generics
 buildGenerics cl gens = M.fromList $ zip (map className $ classGenerics cl) gens
+
+buildGenericsForSelf :: Class -> Generics
+buildGenericsForSelf cl = M.fromList $ map (\g -> (className g, refDataType g []) ) $ classGenerics cl
+
 
 superGenerics :: Generics -> ExtendsRef -> Generics
 superGenerics gens (cl, extGens) = buildGenerics cl $ map (wrapGeneric .replaceGenerics gens) extGens
@@ -150,6 +156,10 @@ upGenericsToClass destinationClass (cl, gens)
 			mapRef ref@(ccl, _)= upGenericsToClass destinationClass (ccl, superGenerics gens ref)
 extendsClassClass :: ExtendsClass -> Class
 extendsClassClass (ExtendsClass (cl, _) _) = cl
+
+extendsClassRef :: ExtendsClass -> ExtendsRef
+extendsClassRef (ExtendsClass ref _) = ref
+
 
 superType :: DataType -> Maybe DataType
 superType (TPClass _ gens cl) = fmap superTypeForExtClass $ (extendsClass . classExtends) cl 
@@ -335,7 +345,7 @@ linkClass (ocidx, glidx) cl = self
 				classMods = [ClassModType, ClassModStub], 
 				className = D.className cl, 
 				classExtends = Extends (Just $ ExtendsClass (linkExtendsRef env (D.typeDef cl)) []) [], 
-				classDefs = [], 
+				classDefs = [constructorForType], 
 				classGenerics = generics
 			}
 		enumOrdinal = Def "ordinal" [] uint Nop [] Nothing
@@ -375,6 +385,14 @@ linkClass (ocidx, glidx) cl = self
 					(D.className cl) 
 					(Just $ [ (Nothing,D.IntConst ordinal), (Nothing, D.StringConst name)] ++  pars)
 					[]
+		constructorForType = parConstructor' {defType = selfType}
+			where
+				gens = buildGenericsForSelf self
+				parGenerics = superGenerics gens (extendsClassRef parClassExtends)
+				parClassExtends = fromJust $ extendsClass $ classExtends $ self
+				parConstructor = fromJust $ classConstructor $ extendsClassClass $ parClassExtends
+				parConstructor' = replaceGenericsInDef parGenerics parConstructor
+		
 
 linkExtends :: Env -> D.Extends -> Extends
 linkExtends env (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
@@ -600,6 +618,10 @@ dataTypeClassName (TPMap _ _) = "CNMap"
 dataTypeClassName (TPTuple [_, _]) = "CNTuple"
 dataTypeClassName (TPTuple a) = "CNTuple" ++ show (length a)
 dataTypeClassName x = error ("No dataTypeClassName for " ++ show x)
+
+resolveTypeAlias :: DataType -> DataType
+resolveTypeAlias tp@(TPClass TPMType _ _) = fromJust $ superType tp
+resolveTypeAlias tp = tp
 
 dataTypeGenerics :: Env -> DataType -> [DataType]
 dataTypeGenerics _ (TPClass _ g _) = g
@@ -1059,7 +1081,7 @@ exprCall strictClass call@(D.Call name pars gens) = do
 		let
 			self = fromMaybe (envSelf env) strictClass
 			call' :: Exp
-			call' = fromMaybe (ExpDError errorString call) $ findCall (name, pars') (env, self, allDefs env strictClass)
+			call' = fromMaybe (ExpDError errorString call) $ findCall (name, pars') (env, self, allDefs)
 			call'' :: Exp
 			call'' = case call' of
 				Call{} -> (resolveDef strictClass . correctCall) call'
@@ -1153,33 +1175,34 @@ exprCall strictClass call@(D.Call name pars gens) = do
 			errorString = "Could find reference for call " ++ callStr ++ "\n" ++
 				maybe "" (\cl -> "strict in class " ++ show cl ++ "\n") strictClass ++
 				(if detailedReferenceError then "in defs:\n" ++
-				(strs "\n" . map (ind . showDef False)) (allDefs env strictClass)  else "")
+				(strs "\n" . map (ind . showDef False)) (allDefs)  else "")
 				where callStr = name ++ maybe "" (\ps -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) ps) ++ ")" ) pars
 
 			correctCall :: Exp -> Exp
 			correctCall (Call d tp _) = Call d (replaceGenerics gens'' tp) (map doImplicitConversation pars''')
 				where
 					doImplicitConversation (dd, e) = (dd, implicitConvertsion (replaceGenerics gens'' $ defType dd) e)
+
+			allDefs :: [Def]
+			allDefs = maybe allDefsInEnv allDefsInStrictClass strictClass
+				where 
+				allDefsInStrictClass sc = allDefsInClass $ dataTypeClassRef env sc
+				allDefsInEnv = envVals env 
+					++ allDefsInClass (dataTypeClassRef env $ envSelf env) 
+					++ allDefsInClass (dataTypeClassRef env $ objTp $ envSelfClass env) 
+					++ envGlobalDefIndex env 
+					++ classConstructors'
+					++ objects 
+				classConstructors = (map setName . mapMaybe (classConstructor . snd) . M.toList) (envIndex env)
+				classConstructors' = if isJust pars then classConstructors else  (filter (not . null . defPars) classConstructors)
+				setName d@Def{defType = tp} = setDefName (className $ dataTypeClass env tp) d
+				objects = (map (objectDef . snd) . M.toList) (envIndex env)
+				objTp cl = TPObject (refDataTypeMod cl) cl
 			
 			
 		in call'''
 exprCall _ err = return $ ExpDError "It is not call" err
 
-allDefs :: Env -> Maybe DataType -> [Def]
-allDefs env (Just ss) = allDefsInClass $ dataTypeClassRef env ss
-allDefs env Nothing = 
-	envVals env 
-	++ allDefsInClass (dataTypeClassRef env $ envSelf env) 
-	++ allDefsInClass (dataTypeClassRef env $ objTp $ envSelfClass env) 
-	++ envGlobalDefIndex env 
-	++ classConstructors'
-	++ objects 
-	where
-		classConstructors = (map setName . mapMaybe (classConstructor . snd) . M.toList) (envIndex env)
-		classConstructors' = filter (not . null . defPars) classConstructors
-		setName d@Def{defType = tp} = setDefName (className $ dataTypeClass env tp) d
-		objects = (map (objectDef . snd) . M.toList) (envIndex env)
-		objTp cl = TPObject (refDataTypeMod cl) cl
 
 
 correctCallPar :: Env -> Generics -> (Def, Exp) -> (Def, Exp)
