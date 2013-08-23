@@ -131,8 +131,13 @@ replaceGenericsInDef gens d = d {defType = replaceGenerics gens (defType d), def
 		
 
 allDefsInClass :: ClassRef -> [Def]
-allDefsInClass (cl, gens) = map (replaceGenericsInDef gens) (classDefs cl)  ++ defsInParentClass (classExtends cl) 
+allDefsInClass (cl, gens) = 
+	map (replaceGenericsInDef gens) notStaticDefs 
+	++ map (replaceGenericsInDef gens) staticDefs  
+	++ defsInParentClass (classExtends cl) 
 	where
+		staticDefs = filter isStatic (classDefs cl) 
+		notStaticDefs = filter (not . isStatic) (classDefs cl) 
 		defsInParentClass :: Extends -> [Def]
 		defsInParentClass extends = concatMap defsInExtends $ extendsRefs extends
 		defsInExtends :: ExtendsRef -> [Def]
@@ -326,7 +331,7 @@ linkClass (ocidx, glidx) cl = self
 				classMods = map clsMod (D.classMods cl), 
 				className = D.className cl, 
 				classExtends = if D.className cl == "ODObject" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
-				classDefs = constr constrPars : fields ++ defs, 
+				classDefs = fields ++ defs ++ [constr constrPars], 
 				classGenerics = generics
 			}
 			D.Enum{} -> Class {
@@ -368,7 +373,7 @@ linkClass (ocidx, glidx) cl = self
 		envForDef def = if D.isStatic def then staticEnv else env
 		enumConstr = constr (enumAdditionalDefs ++ constrPars)
 		constr :: [Def] -> Def
-		constr pars = Def{defName = "new", defMods = [DefModStatic, DefModConstructor] ++ [DefModStruct | selfIsStruct], defBody = Nop,
+		constr pars = Def{defName = "apply", defMods = [DefModStatic, DefModConstructor] ++ [DefModStruct | selfIsStruct], defBody = Nop,
 			defPars = pars, defType = selfType, defGenerics = Just $ DefGenerics generics selfType}
 		constrPars = map constrPar (D.classFields cl)
 		constrPar f = fromJust $ idxFind fieldsMap (D.defName f)
@@ -397,7 +402,7 @@ linkClass (ocidx, glidx) cl = self
 linkExtends :: Env -> D.Extends -> Extends
 linkExtends env (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
 	let 
-		superCall = D.Dot D.Super $ D.Call "new" (Just $ pars) gens
+		superCall = D.Dot D.Super $ D.Call "apply" (Just $ pars) gens
 		superCall' = evalState (expr superCall) env
 		superCallPars = case superCall' of
 			Dot _ (Call _ _ pars') -> pars'
@@ -1019,7 +1024,7 @@ expr D.Super = do
 expr r@D.Call{} = exprCall Nothing r
 expr (D.Index e i) = do
 	e' <- expr e
-	let obf =expr $ D.Dot e (D.Call "apply" (Just [(Nothing, i)]) [])
+	let obf = expr $ D.Dot e (D.Call "apply" (Just [(Nothing, i)]) [])
 	case exprDataType e' of
 		TPClass{} -> obf
 		(TPGenericWrap TPClass{}) -> obf
