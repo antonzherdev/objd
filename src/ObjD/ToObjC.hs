@@ -751,13 +751,16 @@ tStm v _ (D.Set (Just t) l r) = let
 		r' = tExp v r
 		ltp = D.exprDataType l
 		rtp = D.exprDataType r
+		set = [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
 	in case ltp of
-		tp@D.TPEArr{} -> [C.Stm $ eArraySet l' r' tp]
+		D.TPEArr _ _ ->  case t of
+			Plus -> [C.Set Nothing l' (addObjectToArray rtp l' r')]
+			Minus -> [C.Set Nothing l' (removeObjectFromArray rtp l' r')]
 		D.TPArr _ _ ->  case t of
 			Plus -> [C.Set Nothing l' (addObjectToArray rtp l' r')]
 			Minus -> [C.Set Nothing l' (removeObjectFromArray rtp l' r')]
 		D.TPMap _ _ -> [C.Set Nothing l' (addKVToMap v l' r)]
-		_ -> [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
+		_ -> set
 tStm v _ (D.Set tp l r) = [C.Set tp (tExp v l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp v r))]
 tStm Env{envDataType = D.TPVoid} _ (D.Return True _) = [C.Return C.Nop]
 tStm env@Env{envDataType = D.TPVoid} _ (D.Return _ e) = [C.Stm $ tExp env{envCStruct = False} e]
