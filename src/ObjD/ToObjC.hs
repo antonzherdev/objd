@@ -299,7 +299,7 @@ implFuns = map stm2ImplFun . filter D.isDef
 	where
 		stm2ImplFun def@D.Def {D.defName = name, D.defBody = db, D.defMods = mods, D.defType = tp}
 			| D.DefModAbstract `elem` mods = C.ImplFun (stm2Fun def) [C.Throw $ C.StringConst $ "Method " ++ name++ " is abstract"]
-			| otherwise = C.ImplFun (stm2Fun def) (tStm tp [] db)
+			| otherwise = C.ImplFun (stm2Fun def) (tStm (newEnvWithDataType tp) [] db)
 		
 		
 {- Struct -}
@@ -353,7 +353,7 @@ genStruct D.Class {D.className = name, D.classDefs = defs} =
 		defImpl' D.Def{D.defName = n, D.defType = tp, D.defBody = e, D.defPars = pars, D.defMods = mods} = C.CFun{C.cfunMods = [], 
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
 			C.cfunPars = if D.DefModStatic `notElem` mods then C.CFunPar (C.TPSimple name []) "self" : pars' else pars',
-			C.cfunExps = tStm tp [] e}
+			C.cfunExps = tStm (newEnvWithDataType tp) [] e}
 			where
 				pars' = map par' pars
 				par' D.Def{D.defName = nn, D.defType = tpp} = C.CFunPar (showDataType tpp) nn
@@ -590,9 +590,11 @@ castGeneric dexp e = case D.exprDataType dexp of
 	D.TPGenericWrap c@D.TPTuple{} -> C.Cast (showDataType c) e
 	_ -> e
 
-data Env = Env{envCStruct :: Bool}
+data Env = Env{envCStruct :: Bool, envDataType :: D.DataType}
 newEnv :: Env
-newEnv = Env False
+newEnv = Env False D.TPVoid
+newEnvWithDataType :: D.DataType -> Env
+newEnvWithDataType tp = Env False tp
 
 
 tExp :: Env -> D.Exp -> C.Exp
@@ -675,7 +677,7 @@ tExp env ee@(D.Index e i) = case D.exprDataType e of
 	D.TPMap k _ -> castGeneric ee $ C.Call (tExp env e) "apply" [("key", tExpTo env k i)] []
 	D.TPArr _ _ -> castGeneric ee $ C.Call (tExp env e) "apply" [("index", tExpTo env D.uint i)] []
 	_ -> castGeneric ee $ C.Index (tExp env e) (tExp env i)
-tExp _ (D.Lambda pars e rtp) = 
+tExp env (D.Lambda pars e rtp) = 
 	let 
 		isNeedUnwrap :: D.DataType -> Bool
 		{-isNeedUnwrap (D.TPGenericWrap (D.TPClass D.TPMStruct _ _)) = True
@@ -692,7 +694,7 @@ tExp _ (D.Lambda pars e rtp) =
 		unwrapPar ::(String, D.DataType) -> C.Stm
 		unwrapPar (name, D.TPGenericWrap tp) = C.Var (showDataType tp) name (maybeVal (D.TPGenericWrap tp, tp) $ C.Ref $ name ++ "_") []
 	in
-	C.Lambda (map par' pars) (unwrapPars ++ tStm rtp [] e) (showDataType rtp)
+	C.Lambda (map par' pars) (unwrapPars ++ tStm env{envDataType = rtp} [] e) (showDataType rtp)
 tExp env (D.Arr exps) = C.Arr $ map (tExpToType env D.tpGeneric) exps
 tExp env (D.Map exps) = C.Map $ map (tExpToType env D.tpGeneric *** tExpToType env D.tpGeneric) exps
 tExp env (D.Tuple exps) = C.CCall (C.Ref "tuple") $ map (tExpToType env D.tpGeneric) exps
@@ -733,20 +735,20 @@ tExpToType env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
 eArraySet :: C.Exp -> C.Exp -> D.DataType -> C.Exp
 eArraySet l' r' (D.TPEArr n tp) = C.CCall (C.Ref "memcpy") [l', r', C.CCall (C.Ref "sizeof") [C.Index (C.Ref (show $ showDataType tp)) (C.IntConst n)]]
 
-tStm :: D.DataType -> [D.Exp] -> D.Exp -> [C.Stm]
+tStm :: Env -> [D.Exp] -> D.Exp -> [C.Stm]
 tStm _ _ (D.Nop) = []
 
 tStm _ _ (D.Braces []) = []
 tStm v _ (D.Braces [x]) = tStm v [] x
 tStm v _ (D.Braces xs) = concatMap (tStm v xs) xs
 
-tStm v _ (D.If cond t f) = [C.If (tExpTo newEnv D.TPBool cond) (tStm v [] t) (tStm v [] f)]
-tStm v _ (D.While cond t) = [C.While (tExpTo newEnv D.TPBool cond) (tStm v [] t)]
-tStm v _ (D.Do cond t) = [C.Do (tExpTo newEnv D.TPBool cond) (tStm v [] t)]
+tStm v _ (D.If cond t f) = [C.If (tExpTo v D.TPBool cond) (tStm v [] t) (tStm v [] f)]
+tStm v _ (D.While cond t) = [C.While (tExpTo v D.TPBool cond) (tStm v [] t)]
+tStm v _ (D.Do cond t) = [C.Do (tExpTo v D.TPBool cond) (tStm v [] t)]
 
-tStm _ _ (D.Set (Just t) l r) = let 
-		l' = tExp newEnv l
-		r' = tExp newEnv r
+tStm v _ (D.Set (Just t) l r) = let 
+		l' = tExp v l
+		r' = tExp v r
 		ltp = D.exprDataType l
 		rtp = D.exprDataType r
 	in case ltp of
@@ -754,14 +756,14 @@ tStm _ _ (D.Set (Just t) l r) = let
 		D.TPArr _ _ ->  case t of
 			Plus -> [C.Set Nothing l' (addObjectToArray rtp l' r')]
 			Minus -> [C.Set Nothing l' (removeObjectFromArray rtp l' r')]
-		D.TPMap _ _ -> [C.Set Nothing l' (addKVToMap newEnv l' r)]
+		D.TPMap _ _ -> [C.Set Nothing l' (addKVToMap v l' r)]
 		_ -> [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
-tStm _ _ (D.Set tp l r) = [C.Set tp (tExp newEnv l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp newEnv r))]
-tStm D.TPVoid _ (D.Return True _) = [C.Return C.Nop]
-tStm D.TPVoid _ (D.Return _ e) = [C.Stm $ tExp newEnv{envCStruct = False} e]
-tStm tp _ (D.Return _ e) = [C.Return $ tExpToType newEnv{envCStruct = False} tp e]
-tStm _ parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = e, D.defMods = mods}) = 
-	[C.Var (showDataType tp) name (tExpToType newEnv tp e) ["__block" | needBlock]]
+tStm v _ (D.Set tp l r) = [C.Set tp (tExp v l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp v r))]
+tStm Env{envDataType = D.TPVoid} _ (D.Return True _) = [C.Return C.Nop]
+tStm env@Env{envDataType = D.TPVoid} _ (D.Return _ e) = [C.Stm $ tExp env{envCStruct = False} e]
+tStm env@Env{envDataType = tp}  _ (D.Return _ e) = [C.Return $ tExpToType env{envCStruct = False} tp e]
+tStm env parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = e, D.defMods = mods}) = 
+	[C.Var (showDataType tp) name (tExpToType env tp e) ["__block" | needBlock]]
 	where 
 		needBlock = D.DefModMutable `elem` mods && existsSetInLambda
 		existsSetInLambda = any (isJust . setsInLambda) parLambdas
@@ -772,10 +774,10 @@ tStm _ parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = e,
 		setsInLambda (D.Lambda _ lambdaExpr _) = D.forExp isSet lambdaExpr
 		isSet ee@(D.Set _ (D.Call d _ _) _) = if D.defName d == D.defName def then Just ee else Nothing
 		isSet _ = Nothing
-tStm _ _ (D.Throw e) = [C.Throw $ tExp newEnv e]
+tStm env _ (D.Throw e) = [C.Throw $ tExp env e]
 tStm _ _ D.Break = [C.Break]
 
-tStm _ _ x = [C.Stm $ tExp newEnv x]
+tStm env _ x = [C.Stm $ tExp env x]
 
 equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp
 equals False (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp NotEq e1 e2
