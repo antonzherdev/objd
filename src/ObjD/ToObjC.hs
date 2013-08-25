@@ -705,15 +705,23 @@ tExp env (D.Not e) = C.Not (tExp env e)
 tExp env (D.Negative e) = C.Negative (tExp env e)
 tExp env (D.Cast dtp e) = let 
 		stp = D.exprDataType e
+		stp' = D.unwrapGeneric stp
 		toString format = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] [tExpTo env stp e]
-	in case (D.unwrapGeneric stp, D.unwrapGeneric dtp) of
+		cast = C.Cast (showDataType dtp) (tExpTo env stp' e)
+	in case (stp', D.unwrapGeneric dtp) of
 		(D.TPNumber{}, D.TPString) -> toString $ stringFormatForType stp
 		(D.TPFloatNumber{}, D.TPString) -> toString $ stringFormatForType stp
+		(D.TPNumber{}, D.TPFloatNumber{}) -> case e of
+			D.IntConst n -> C.FloatConst $ read $ show n ++ ".0"
+			_ -> cast
+		(D.TPNumber{}, D.TPNumber{}) -> case e of
+			D.IntConst n -> C.IntConst n
+			_ -> cast
 		(D.TPArr{}, D.TPEArr _ etp) ->
 			case e of
 				D.Arr exps -> C.EArrConst ("arr" ++ (dataTypeSuffix etp)) $ map (tExp env) exps
 				_ -> error $ "Could not convert to EArr " ++ show e
-		(stp', _) -> C.Cast (showDataType dtp) (tExpTo env stp' e)
+		_ -> cast 
 
 tExp _ e@D.ExpDError{} = C.Error $ show e
 tExp _ e@D.ExpLError{} = C.Error $ show e
