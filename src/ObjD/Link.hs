@@ -362,7 +362,7 @@ linkClass (ocidx, glidx) cl = self
 		clsMod D.ClassModStruct = ClassModStruct
 		clsMod D.ClassModStub = ClassModStub
 		clsMod D.ClassModTrait = ClassModTrait
-		extends = fmap (linkExtends env) (D.classExtends cl)
+		extends = fmap (linkExtends env constrPars) (D.classExtends cl) 
 		selfIsStruct = case cl of
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
 			_ -> False
@@ -404,11 +404,12 @@ linkClass (ocidx, glidx) cl = self
 				parConstructor' = replaceGenericsInDef parGenerics parConstructor
 		
 
-linkExtends :: Env -> D.Extends -> Extends
-linkExtends env (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
+linkExtends :: Env -> [Def] -> D.Extends -> Extends
+linkExtends env constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
 	let 
+		env' = envAddVals constrPars env
 		superCall = D.Dot D.Super $ D.Call "apply" (Just $ pars) gens
-		superCall' = evalState (expr superCall) env
+		superCall' = evalState (expr superCall) env'
 		superCallPars = case superCall' of
 			Dot _ (Call _ _ pars') -> pars'
 			err -> [(unknownDef, err)]
@@ -418,7 +419,7 @@ linkExtendsRef :: Env -> D.ExtendsRef -> ExtendsRef
 linkExtendsRef env (ecls, gens) = (classFind (envIndex env) ecls, map (dataType (envIndex env)) gens) 
 
 linkGeneric :: Env -> D.Generic -> Class
-linkGeneric env (D.Generic name ext) = Generic name [] (maybe (Extends (Just $ baseClassExtends (envIndex env) ) [] ) (linkExtends env) ext) []
+linkGeneric env (D.Generic name ext) = Generic name [] (maybe (Extends (Just $ baseClassExtends (envIndex env) ) [] ) (linkExtends env []) ext) []
 
 linkField :: Bool -> D.ClassStm -> State Env Def
 linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
