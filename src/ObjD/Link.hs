@@ -144,7 +144,10 @@ allDefsInClass (cl, gens) =
 		defsInParentClass :: Extends -> [Def]
 		defsInParentClass extends = concatMap defsInExtends $ extendsRefs extends
 		defsInExtends :: ExtendsRef -> [Def]
-		defsInExtends extRef@(cll, _)= allDefsInClass (cll, (superGenerics gens extRef))
+		defsInExtends extRef@(cll, _)= map addSuperMod $ allDefsInClass (cll, (superGenerics gens extRef))
+		addSuperMod d
+			| DefModSuper `elem` defMods d = d
+			| otherwise = d {defMods = DefModSuper : defMods d}
 
 buildGenerics :: Class -> [DataType] -> Generics
 buildGenerics cl gens = M.fromList $ zip (map className $ classGenerics cl) gens
@@ -206,7 +209,7 @@ eqPar (x, y) = defName x == defName y
 
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate  | DefModGlobalVal | DefModWeak
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
-	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda deriving (Eq, Ord)
+	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper deriving (Eq, Ord)
 instance Show DefMod where
 	show DefModStatic = "static"
 	show DefModMutable = "var"

@@ -634,8 +634,8 @@ tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call D.Def {D.defName = 
 	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
 	| otherwise = C.CCall (C.Ref $ structDefName (D.className c) name) (C.Ref "self" : (map snd . tPars env) pars)
 tExp env (D.Dot (D.Self stp) (D.Call D.Def{D.defMods = mods, D.defName = name} _ pars)) 
-	| D.DefModField `elem` mods && null pars = C.Ref $ '_' : name
-	| D.DefModField `elem` mods = C.CCall (C.Ref ('_' : name)) ((map snd . tPars env) pars)
+	| D.DefModField `elem` mods && null pars && D.DefModSuper `notElem` mods = C.Ref $ '_' : name
+	| D.DefModField `elem` mods && D.DefModSuper `notElem` mods = C.CCall (C.Ref ('_' : name)) ((map snd . tPars env) pars)
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className $ D.tpClass stp) name (tPars env pars) []
 	| otherwise = C.Call C.Self name (tPars env pars) []
 tExp env d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
