@@ -165,7 +165,7 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
 		C.implName = clsName,
 		C.implFields = map (implField False) implFields,
 		C.implSynthesizes = (map synthesize . filter needProperty) implFields,
-		C.implFuns = [implCreate cl constr, implInit cl constr] ++ maybeToList (implInitialize cl) ++ dealoc cl 
+		C.implFuns = nub $ [implCreate cl constr, implInit cl constr] ++ maybeToList (implInitialize cl) ++ dealoc cl 
 			++ implFuns defs ++ staticGetters ++ copyImpls ++ (if equalsIsPosible cl then [equal, hash] else []) ++ [description],
 		C.implStaticFields = map (implField True) staticFields
 	}
@@ -492,7 +492,7 @@ genEnumImpl cl@D.Class {D.className = clsName} = [
 		C.implName = clsName,
 		C.implFields = (map (implField False) . filter needProperty) defs,
 		C.implSynthesizes = (map synthesize . filter needProperty) defs,
-		C.implFuns = [implCreate cl constr, implInit cl constr, initialize] ++ dealoc cl 
+		C.implFuns = nub $ [implCreate cl constr, implInit cl constr, initialize] ++ dealoc cl 
 			++ implFuns defs ++ map itemGetter items ++ [valuesFun],
 		C.implStaticFields = map stField items ++ [C.ImplField valuesVarName (C.TPSimple "NSArray*" []) [] C.Nop] 
 	}]

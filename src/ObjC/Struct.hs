@@ -30,10 +30,17 @@ data ImplField = ImplField {implFieldName :: String, implFieldType :: DataType, 
 data ImplSynthesize = ImplSynthesize String String
 
 data ImplFun = ImplFun {implFunType :: Fun, implExps :: [Stm]}
+instance Eq ImplFun where
+	a == b = (implFunType a) == (implFunType b)
 
 data Fun = Fun {funType :: FunType, funReturnType :: DataType, funName :: String, funPars :: [FunPar]}
-data FunType = ObjectFun | InstanceFun
+instance Eq Fun where
+	a == b = funType a == funType b && funName a == funName b && funPars a == funPars b
+
+data FunType = ObjectFun | InstanceFun deriving(Eq)
 data FunPar = FunPar {funParName :: String, funParDataType :: DataType, funParVar :: String}
+instance Eq FunPar where
+	a == b = funParName a == funParName b
 
 data CFunPar = CFunPar {cfunParDataType :: DataType, cfunParName :: String}
 data CFunMod = CFunStatic | CFunInline
