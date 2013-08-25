@@ -519,7 +519,7 @@ procImports D.File{D.fileImports = imps, D.fileClasses = classes} = (h, m)
 		filePossibleWeakImport D.File{D.fileCImports = [], D.fileClasses = cls} = all classPosibleWeakImport cls
 		filePossibleWeakImport _ = False
 		classPosibleWeakImport cl@D.Class{D.classMods = mods} = 
-				(D.ClassModStub `elem` mods || D.ClassModStruct `notElem` mods) && not (hasExtends cl)
+				D.ClassModStruct `notElem` mods && not (hasExtends cl)
 		classPosibleWeakImport _ = False
 		hasExtends cl = cl `elem` extends
 		extends = (map fst . concatMap (D.extendsRefs . D.classExtends)) classes
@@ -711,16 +711,7 @@ tExp env (D.Cast dtp e) = let
 		(D.TPFloatNumber{}, D.TPString) -> toString $ stringFormatForType stp
 		(D.TPArr{}, D.TPEArr _ etp) ->
 			case e of
-				D.Arr exps -> 
-					let etpnm =  show $ showDataType etp
-					in
-						C.Call (C.Ref "CNPArray") "arrayWith" [
-							("bytes", C.ShortCast (C.TPArr 0 etpnm) $ C.EArr $ map (tExp env) exps), 
-							("count", C.IntConst $ length exps),
-							("stride", C.CCall (C.Ref "sizeof") [C.Ref etpnm]),
-							("wrap", C.Lambda [("arr", C.TPSimple "void*" []), ("i", C.TPSimple "NSUInteger" [])] [
-								C.Return $ wrapVal etp $ C.Index (C.Cast (C.TPSimple (etpnm ++ "*") []) (C.Ref "arr")) (C.Ref "i")
-							] idTp)] []
+				D.Arr exps -> C.EArrConst ("arr" ++ (dataTypeSuffix etp)) $ map (tExp env) exps
 				_ -> error $ "Could not convert to EArr " ++ show e
 		(stp', _) -> C.Cast (showDataType dtp) (tExpTo env stp' e)
 
@@ -833,6 +824,20 @@ callConstructor env tp pars = let
 wrapVal :: D.DataType -> C.Exp -> C.Exp
 wrapVal tp e = maybeVal (tp, D.wrapGeneric tp) e
 
+dataTypeSuffix :: D.DataType -> String
+dataTypeSuffix (D.TPNumber False 1) = "c"
+dataTypeSuffix (D.TPNumber True 1) = "uc"
+dataTypeSuffix (D.TPNumber False 4) = "i4"
+dataTypeSuffix (D.TPNumber True 4) = "ui4"
+dataTypeSuffix (D.TPNumber False 0) = "i"
+dataTypeSuffix (D.TPNumber True 0) = "ui"
+dataTypeSuffix (D.TPNumber False 8) = "i8"
+dataTypeSuffix (D.TPNumber True 8) = "ui8"
+dataTypeSuffix D.TPBool = "b"
+dataTypeSuffix (D.TPFloatNumber 0) = "f"
+dataTypeSuffix (D.TPFloatNumber 4) = "f4"
+dataTypeSuffix (D.TPFloatNumber 8) = "f8"
+
 data MaybeValTP = TPGen | TPNum | TPStruct | TPNoMatter | TPBool | TPFloat
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp
 maybeVal (stp, dtp) e = let 
@@ -843,18 +848,7 @@ maybeVal (stp, dtp) e = let
 	tp D.TPFloatNumber{} = TPFloat
 	tp D.TPBool{} = TPBool
 	tp _ = TPNoMatter
-	fnm (D.TPNumber False 1) = "numc"
-	fnm (D.TPNumber True 1) = "numuc"
-	fnm (D.TPNumber False 4) = "numi4"
-	fnm (D.TPNumber True 4) = "numui4"
-	fnm (D.TPNumber False 0) = "numi"
-	fnm (D.TPNumber True 0) = "numui"
-	fnm (D.TPNumber False 8) = "numi8"
-	fnm (D.TPNumber True 8) = "numui8"
-	fnm D.TPBool = "numb"
-	fnm (D.TPFloatNumber 0) = "numf"
-	fnm (D.TPFloatNumber 4) = "numf4"
-	fnm (D.TPFloatNumber 8) = "numf8"
+	fnm = ("num" ++ ) . dataTypeSuffix
 	in case (tp stp, tp dtp) of
 		(TPStruct, TPGen) -> C.CCall (C.Ref "wrap") [C.Ref $ D.className $ D.tpClass stp, e]
 		(TPGen, TPStruct) -> C.CCall (C.Ref "uwrap") [C.Ref $ D.className $ D.tpClass dtp, e]
