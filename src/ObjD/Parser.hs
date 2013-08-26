@@ -46,6 +46,8 @@ parseStatement = parse pStatement "ObjD"
 pStatement :: Parser FileStm
 pStatement = pTypeStm <|> pImport <|> pStub <|> pClass <|> pEnum
 
+wsps :: Parser String
+wsps = many (char ' ' <|> char '\t') <?> ""
 sps :: Parser String
 sps = many (char ' ' <|> char '\t'  <|> char '\n') <?> ""
 sps1 :: Parser String
@@ -503,14 +505,22 @@ pTerm = do
 		pNil = try(string "nil") >> return Nil
 		pCall = do
 			name <- ident
-			sps
+			wsps
 			gens <- pGensRef
-			sps
-			(do
+			wsps
+			pars <- optionMaybe (do
 				charSps '('
-				pars <- pCallPar `sepBy` charSps ','
-				charSps ')' <?> "Function call close bracket"
-				return $ Call name (Just pars) gens) <|> return (Call name Nothing gens)
+				ps <- pCallPar `sepBy` charSps ','
+				char ')' <?> "Function call close bracket"
+				return ps) 
+			wsps
+			postLambda <- liftM (fmap (\l -> (Nothing, l))) $ optionMaybe pPostLambda
+			let parsList = fromMaybe [] pars ++ maybeToList postLambda
+			return $ Call name (if null parsList && isNothing pars then Nothing else Just parsList) gens
+
+createBraces :: [Exp] -> Exp
+createBraces [e] = e
+createBraces exps = Braces exps
 
 pGensRef :: Parser [DataType]
 pGensRef = option [] $ try $ do
@@ -519,29 +529,60 @@ pGensRef = option [] $ try $ do
 	charSps '>'
 	return r
 
-pLambda :: Parser Exp 
-pLambda =  do
-	pars <- try $ do 
-		r <- (do 
-			charSps '('
-			r <- lambdaPars `sepBy` charSps ','
-			sps
-			charSps ')'
-			return r) <|> (do
-				r <- lambdaPars
+pPostLambda :: Parser Exp
+pPostLambda = (do 
+		charSps '{'
+		pars <- option [] $ try (do		
+				r <- pLambdaPar `sepBy` charSps ','
 				sps
-				return [r])
+				string "->"
+				sps
+				return r)
+		exps <- many pExp
+		sps
+		charSps '}'
+		return $ Lambda pars (createBraces exps))
+
+pLambda :: Parser Exp 
+pLambda =  (do
+	pars <- try $ do 
+		r <- lambdaPars
 		string "->"
 		sps
 		return r
 	e <- pExp
-	return $ Lambda pars e
+	return $ Lambda pars e)
+	<|> (do 
+		pars <- try (do
+				charSps '{'
+				r <- pLambdaPar `sepBy` charSps ','
+				sps
+				string "->"
+				return r)
+		sps
+		exps <- many pExp
+		sps
+		charSps '}'
+		return $ Lambda pars (createBraces exps))
+
 	where
-		lambdaPars = do
-			name <- ident
+		lambdaPars = (do 
+			charSps '('
+			r <- pLambdaPar `sepBy` charSps ','
 			sps
-			tp <- optionMaybe $ pDataType True
-			return (name, tp)
+			charSps ')'
+			return r) 
+			<|> (do
+				r <- pLambdaPar
+				sps
+				return [r])
+
+pLambdaPar :: Parser (String, Maybe DataType)
+pLambdaPar = do
+	name <- ident
+	sps
+	tp <- optionMaybe $ pDataType True
+	return (name, tp)
 
 pBraces :: Parser Exp
 pBraces = liftM Braces $ braces (many (do
