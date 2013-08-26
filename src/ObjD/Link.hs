@@ -1337,6 +1337,12 @@ implicitConvertsion dtp ex = let stp = exprDataType ex
 		conv TPFloatNumber{} d@TPNumber{} = Cast d ex
 		conv TPNumber{} d@TPFloatNumber{} = Cast d ex
 		conv (TPArr _ _) d@(TPEArr _ _) = Cast d ex
+		conv (TPTuple _) (TPTuple dtps) = case ex of
+			Tuple exps -> Tuple $ zipWith implicitConvertsion dtps exps
+			_ -> ex
+		conv (TPArr _ _) (TPArr _ adtp) = case ex of
+			Arr exps -> Arr $ map (implicitConvertsion adtp) exps
+			_ -> ex
 		conv (TPArr _ _) (TPClass _ [d] Class{className = "CNPArray"}) = Cast (TPEArr 0 (unwrapGeneric d)) ex
 		conv sc dc@TPClass{} = if sc /= dc then classConversion dc sc ex else ex
 		conv _ _ = ex
