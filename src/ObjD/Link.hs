@@ -136,10 +136,8 @@ replaceGenericsInDef gens d = d {defType = replaceGenerics gens (defType d), def
 allDefsInClass :: ClassRef -> [Def]
 allDefsInClass (cl, gens) = 
 	map (replaceGenericsInDef gens) notStaticDefs 
-	++ map (replaceGenericsInDef gens) staticDefs  
 	++ defsInParentClass (classExtends cl) 
 	where
-		staticDefs = filter isStatic (classDefs cl) 
 		notStaticDefs = filter (not . isStatic) (classDefs cl) 
 		defsInParentClass :: Extends -> [Def]
 		defsInParentClass extends = concatMap defsInExtends $ extendsRefs extends
@@ -148,6 +146,21 @@ allDefsInClass (cl, gens) =
 		addSuperMod d
 			| DefModSuper `elem` defMods d = d
 			| otherwise = d {defMods = DefModSuper : defMods d}
+
+allDefsInObject :: ClassRef -> [Def]
+allDefsInObject (cl, gens) = 
+	map (replaceGenericsInDef gens) staticDefs  
+	++ defsInParentObject (classExtends cl) 
+	where
+		staticDefs = filter isStatic (classDefs cl) 
+		defsInParentObject :: Extends -> [Def]
+		defsInParentObject extends = concatMap defsInExtends $ extendsRefs extends
+		defsInExtends :: ExtendsRef -> [Def]
+		defsInExtends extRef@(cll, _)= map addSuperMod $ allDefsInObject (cll, (superGenerics gens extRef))
+		addSuperMod d
+			| DefModSuper `elem` defMods d = d
+			| otherwise = d {defMods = DefModSuper : defMods d}
+
 
 buildGenerics :: Class -> [DataType] -> Generics
 buildGenerics cl gens = M.fromList $ zip (map className $ classGenerics cl) gens
@@ -179,6 +192,11 @@ superType (TPClass _ gens cl) = fmap superTypeForExtClass $ (extendsClass . clas
 		superTypeForExtClass :: ExtendsClass -> DataType
 		superTypeForExtClass (ExtendsClass extRef@(extCl, _) _) = 
 			TPClass (refDataTypeMod extCl) (map snd $ M.toList $ superGenerics generics extRef) extCl
+superType (TPObject _ cl) = fmap superTypeForExtClass $ (extendsClass . classExtends) cl 
+	where
+		superTypeForExtClass :: ExtendsClass -> DataType
+		superTypeForExtClass (ExtendsClass (extCl, _) _) = 
+			TPObject (refDataTypeMod extCl) extCl
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - Def 
  -----------------------------------------------------------------------------------------------------------------------------------------}
@@ -410,7 +428,7 @@ linkClass (ocidx, glidx) cl = self
 linkExtends :: Env -> [Def] -> D.Extends -> Extends
 linkExtends env constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
 	let 
-		env' = envAddVals constrPars env
+		env' = env {envVals = constrPars, envSelf = objectType $ envSelf env}
 		superCall = D.Dot D.Super $ D.Call "apply" (Just $ pars) gens
 		superCall' = evalState (expr superCall) env'
 		superCallPars = case superCall' of
@@ -602,7 +620,7 @@ dataTypeClassRef env tp = let
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
 dataTypeClass _ (TPObject _ c) = Class { classMods = [ClassModObject], className = className c, classExtends = extendsNothing, 
-	classDefs = filter ((DefModStatic `elem`) . defMods) (allDefsInClass (c, M.empty) ), classGenerics = []}
+	classDefs = allDefsInObject (c, M.empty), classGenerics = []}
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
 dataTypeClass env (TPArr _ _) = classFind (envIndex env) "CNSeq"
 dataTypeClass env (TPEArr _ _) = classFind (envIndex env) "CNPArray"
@@ -761,6 +779,10 @@ getDataType env tp e = maybe (exprDataType e) (dataType (envIndex env)) tp
 
 tpGeneric :: DataType
 tpGeneric = TPClass TPMGeneric [] (Generic "?" [] extendsNothing [])
+
+objectType :: DataType -> DataType
+objectType (TPClass t _ cl) = TPObject t cl
+objectType e = TPUnknown $ "No object type for type " ++ show e
 
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Expression 
@@ -1226,14 +1248,16 @@ tryExprCall env strictClass call@(D.Call name pars gens) = call'''
 		allDefs :: [Def]
 		allDefs = maybe allDefsInEnv allDefsInStrictClass strictClass
 			where 
-			allDefsInStrictClass sc = allDefsInClass $ dataTypeClassRef env sc
+			clRef = dataTypeClassRef env (fromJust strictClass)
+			allDefsInStrictClass _ = 
+				allDefsInClass clRef 
+				++ allDefsInObject clRef
 			allDefsInEnv = envVals env 
 				++ allDefsInClass (dataTypeClassRef env $ envSelf env) 
-				++ allDefsInClass (dataTypeClassRef env $ objTp $ envSelfClass env) 
+				++ allDefsInObject (dataTypeClassRef env $ envSelf env) 
 				++ envGlobalDefIndex env 
 				++ objects 
 			objects = if isNothing pars then (map (objectDef . snd) . M.toList) (envIndex env) else []
-			objTp cl = TPObject (refDataTypeMod cl) cl
 		
 		findCall :: Maybe Exp
 		findCall = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) allDefs
