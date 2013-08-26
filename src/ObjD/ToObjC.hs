@@ -190,7 +190,27 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
 		staticGetters = (map staticGetter . filter((D.DefModPrivate `notElem`) . D.defMods)) staticFields
 		staticGetter f@D.Def{D.defName = name} = C.ImplFun (staticGetterFun f) [C.Return $ C.Ref $ '_' : name]
 
-		equal = C.ImplFun equalFun (equalPrelude clsName (not (null equalFields)) ++ equalsFun C.Self (C.Ref "o") equalFields)
+		reloadedEquals = filter ( ("isEqualTo" == ). D.defName) defs
+		equal :: C.ImplFun
+		equal 
+			| null reloadedEquals = C.ImplFun equalFun (equalPrelude clsName (not (null equalFields)) ++ equalsFun C.Self (C.Ref "o") equalFields)
+			| otherwise = C.ImplFun equalFun $ [
+				C.If (C.BoolOp Eq C.Self (C.Ref "other")) [C.Return $ C.BoolConst True] [],
+				C.If (C.Not $ C.Ref "other") [C.Return $ C.BoolConst False] []]
+				++ map reloadedEqualCall reloadedEquals
+				++ [C.Return $ C.BoolConst False]
+		reloadedEqualCall :: D.Def -> C.Stm
+		reloadedEqualCall D.Def{D.defPars = [D.Def{D.defType = tp, D.defName = parName}]} = case tp of
+			D.TPClass D.TPMTrait _ _ ->
+				C.If (C.Call (C.Ref "other") "conformsTo" [("protocol", C.ProtocolRef (C.Ref $ D.dataTypeClassName tp))] []) [
+					C.Return $ C.Call C.Self "isEqualTo" [(parName, C.Cast (C.TPSimple "id" [D.dataTypeClassName tp]) (C.Ref "other") )] []
+				] []
+			_ ->
+				C.If (C.Call (C.Ref "other") "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName tp) "class" [] [])] []) [
+					C.Return $ C.Call C.Self "isEqualTo" [(parName, C.Cast (C.TPSimple ((D.dataTypeClassName tp) ++ "*") []) (C.Ref "other") )] []
+				] []
+		reloadedEqualCall d = C.Stm $ C.Error $ "Incorrect equal def " ++ show d
+
 		equalFields = maybe [] (D.defPars) $ D.classConstructor cl
 		
  		hash = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSUInteger" []) "hash" []) (hashFun equalFields)
@@ -205,8 +225,9 @@ equalPrelude clsName o = [
 			C.If (C.BoolOp Or (C.Not $ C.Ref "other") (C.Not equalClass)) [C.Return $ C.BoolConst False] []
 			] ++ [C.Var selfTp "o" (C.Cast selfTp (C.Ref "other")) [] | o]
 	where
-		equalClass = C.Call (C.Call C.Self "class" [] []) "isEqual" [("", C.Call (C.Ref "other") "class" [] [])] []
 		selfTp = (C.TPSimple (clsName ++ "*") []) 
+		equalClass = C.Call (C.Call C.Self "class" [] []) "isEqual" [("", C.Call (C.Ref "other") "class" [] [])] []
+
 
 equalFun :: C.Fun
 equalFun = C.Fun C.InstanceFun (C.TPSimple "BOOL" []) "isEqual" [(C.FunPar "" (C.TPSimple "id" []) "other")]

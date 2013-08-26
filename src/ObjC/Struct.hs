@@ -88,6 +88,7 @@ data Exp =
 	| Cast DataType Exp
 	| ShortCast DataType Exp
 	| EArrConst String [Exp]
+	| ProtocolRef Exp
 
 showStms :: [Stm] -> String
 showStms = unlines . stms
@@ -297,5 +298,6 @@ expLines (Not e) = ["!("] `glue` (expLines e `app` ")")
 expLines (Negative e) = ["-"] `glue` expLines e
 expLines (Cast tp e) =  ["((" ++ show tp ++ ")("] `glue` (expLines e `app` "))")
 expLines (ShortCast tp e) =  ["(" ++ show tp ++ ")"] `glue` expLines e
+expLines (ProtocolRef e) =  ["@protocol(" ++ show e ++ ")"]
 expLines (Error s) = ["<#ERROR: "] `glue` (lines s `app` "#>")
 expLines Nop = []
