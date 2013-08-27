@@ -436,8 +436,10 @@ pTerm = do
 				_ -> Tuple exps
 		pString = do
 			char '"'
+			pos <- getPosition
 			s <- manyTill anyChar (char '"')
-			return $ StringConst s
+			let stringLines = lines s
+			return $ StringConst $ unlines $ head stringLines : map (drop (sourceColumn pos - 1)) (tail stringLines)
 		pVal = do
 			mods <- try $ do
 				m <- (try (string "val") >> return [] ) <|> (string "var" >> return [DefModMutable])

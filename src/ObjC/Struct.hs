@@ -259,7 +259,10 @@ expLines Nil = ["nil"]
 expLines (BoolConst True) = ["YES"]
 expLines (BoolConst False) = ["NO"]
 expLines (FloatConst i) = [show i]
-expLines (StringConst s) = ['@' : show s]
+expLines (StringConst s) = case lines s of
+		[] -> ["@\"\""]
+		[x] -> ['@' : '"' : x ++ "\""]
+		x:xs -> ('@' : '"' : x ++ "\\n\"") : map (\line -> ind $ '"' : line ++ "\\n\"" ) (init xs) ++ [ind $ '"' : last xs ++ "\""]
 expLines (BoolOp t l r) = [mbb l ++ " " ++ show t ++ " " ++ mbb r]
 	where 
 		mbb :: Exp -> String
