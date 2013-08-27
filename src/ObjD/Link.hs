@@ -172,6 +172,10 @@ buildGenericsForSelf cl = M.fromList $ map (\g -> (className g, refDataType g []
 superGenerics :: Generics -> ExtendsRef -> Generics
 superGenerics gens (cl, extGens) = buildGenerics cl $ map (wrapGeneric .replaceGenerics gens) extGens
 
+superClassRef :: ClassRef -> ExtendsRef -> ClassRef
+superClassRef (_, gens) (cl, extGens) = (cl, buildGenerics cl $ map (wrapGeneric .replaceGenerics gens) extGens)
+
+
 upGenericsToClass :: Class -> ClassRef -> Maybe Generics
 upGenericsToClass destinationClass (cl, gens) 
 	| destinationClass == cl = Just gens
@@ -198,15 +202,15 @@ superType (TPObject _ cl) = fmap superTypeForExtClass $ (extendsClass . classExt
 		superTypeForExtClass (ExtendsClass (extCl, _) _) = 
 			TPObject (refDataTypeMod extCl) extCl
 
-commonClassRef :: ClassRef -> ClassRef -> Maybe ClassRef
-commonClassRef rr1 rr2 = mplus (refRightRec rr1 rr2) (refRightRec rr2 rr1)
-	where
-		refRightRec ::  ClassRef -> ClassRef -> Maybe ClassRef
-		refRightRec r1@(cl1, _) (cl2, gens2)
-			| cl1 == cl2 = Just r1
-			| otherwise = case extendsRefs $ classExtends cl2 of
-				[] -> Nothing
-				x:xs -> refRightRec r1 (fst x, superGenerics gens2 x)
+isInstanceOf :: Class -> Class -> Bool
+isInstanceOf target cl 
+	| target == cl = True
+	| otherwise = any (isInstanceOf target . fst) $ extendsRefs (classExtends cl)
+
+commonClassRef :: ClassRef -> ClassRef -> [ClassRef]
+commonClassRef rr1@(cl, _ ) rr2@(cl2, _) 
+	| isInstanceOf cl2 cl = [rr2]
+	| otherwise = concatMap (commonClassRef rr1 . superClassRef rr2) $ extendsRefs (classExtends cl)
 	
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - Def 
@@ -810,10 +814,10 @@ objectType :: DataType -> DataType
 objectType (TPClass t _ cl) = TPObject t cl
 objectType e = TPUnknown $ "No object type for type " ++ show e
 
-reduceTypes :: Env -> [DataType] -> Maybe DataType
-reduceTypes env tps = foldl1 (\r x -> r >>= commonType env (fromJust x) ) $ map Just tps
+reduceTypes :: Env -> [DataType] -> [DataType]
+reduceTypes env tps = foldl1 (\r x -> r >>= commonType env (head x) ) $ map (\r -> [r]) tps
 
-commonType :: Env -> DataType -> DataType -> Maybe DataType
+commonType :: Env -> DataType -> DataType -> [DataType]
 commonType env tp1 tp2 = fmap (\ (cl, gens) -> refDataType cl (map snd $ M.toList gens) ) $ 
 	commonClassRef (dataTypeClassRef env tp1) (dataTypeClassRef env tp2)
 
@@ -1249,7 +1253,7 @@ linkCase (D.Case mainExpr items) = do
 			return $ Set Nothing (callRef ret) (callRef val)
 	items' <- mapM linkCaseItem items
 	env <- get
-	let _result' = _result {defType = fromMaybe (TPUnknown "No common type for case") $ reduceTypes env $ map snd items'}
+	let _result' = _result {defType = fromMaybe (TPUnknown "No common type for case") $  listToMaybe $ reduceTypes env $ map snd items'}
 	return $ Braces $ [Val _case, Val _incomplete, Val _result'] ++ map fst items' ++ [callRef _result']
 
 
