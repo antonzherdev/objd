@@ -398,8 +398,9 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> try(pNumConst) <|> pBreak <|> pReturn <|>
+		pTerm' = pCase <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> try(pNumConst) <|> pBreak <|> pReturn <|>
 			pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pWhile <|> pDo <|> pSelf <|> pSuper <|> pNil <|> pCall  <?> "Expression"
+
 		pMinus = do
 			charSps '-'
 			e <- pExp
@@ -531,6 +532,64 @@ pGensRef = option [] $ try $ do
 	charSps '>'
 	return r
 
+
+pCase :: Parser Exp
+pCase = do
+	try $ string "case" >> sps >> charSps '('
+	e <- pExp
+	sps
+	charSps ')'
+	br <- optionMaybe $ charSps '{'
+	items <- many pCaseItem
+	sps
+	when(isJust br) $ charSps '}' >> return ()
+	return $ Case e items
+
+pCaseItem :: Parser CaseItem
+pCaseItem = do
+	cond <- try $ do 
+		c <- pCaseCondition
+		sps
+		string "->"
+		sps
+		return c
+	e <- pExp
+	sps
+	return (cond, e)
+pCaseCondition :: Parser CaseCondition
+pCaseCondition = unapplyItem <|> typeItem
+	where
+		unapplyItem = do
+			name <- optionMaybe $ try $ do
+				n <- ident
+				sps
+				charSps '@'
+				return n
+			ref <- try $ do
+				n <- option "" ident
+				sps
+				charSps '('
+				return n
+			conds <- pCaseCondition `sepBy` charSps ','
+			sps
+			charSps ')'
+			return  $ CaseUnapply name ref conds
+		typeItem = do
+			cond <- anyItem <|> valItem
+			sps
+			tp <- optionMaybe $ do
+				charSps ':'
+				pDataType False
+			return $ maybe cond (\t -> CaseType cond t) tp
+		anyItem = try $ do
+			char '_'
+			sps1
+			return CaseAny
+		valItem = do
+			name <- ident
+			sps
+			return $ CaseVal name
+			
 pPostLambda :: Parser Exp
 pPostLambda = (do 
 		charSps '{'

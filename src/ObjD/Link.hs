@@ -197,6 +197,17 @@ superType (TPObject _ cl) = fmap superTypeForExtClass $ (extendsClass . classExt
 		superTypeForExtClass :: ExtendsClass -> DataType
 		superTypeForExtClass (ExtendsClass (extCl, _) _) = 
 			TPObject (refDataTypeMod extCl) extCl
+
+commonClassRef :: ClassRef -> ClassRef -> Maybe ClassRef
+commonClassRef rr1 rr2 = mplus (refRightRec rr1 rr2) (refRightRec rr2 rr1)
+	where
+		refRightRec ::  ClassRef -> ClassRef -> Maybe ClassRef
+		refRightRec r1@(cl1, _) (cl2, gens2)
+			| cl1 == cl2 = Just r1
+			| otherwise = case extendsRefs $ classExtends cl2 of
+				[] -> Nothing
+				x:xs -> refRightRec r1 (fst x, superGenerics gens2 x)
+	
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - Def 
  -----------------------------------------------------------------------------------------------------------------------------------------}
@@ -354,7 +365,7 @@ linkClass (ocidx, glidx) cl = self
 				classMods = map clsMod (D.classMods cl), 
 				className = D.className cl, 
 				classExtends = if D.className cl == "ODObject" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
-				classDefs = fields ++ defs ++ [constr constrPars], 
+				classDefs = fields ++ defs ++ [constr constrPars] ++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply], 
 				classGenerics = generics
 			}
 			D.Enum{} -> Class {
@@ -423,7 +434,22 @@ linkClass (ocidx, glidx) cl = self
 				parClassExtends = fromJust $ extendsClass $ classExtends $ self
 				parConstructor = fromJust $ classConstructor $ extendsClassClass $ parClassExtends
 				parConstructor' = replaceGenericsInDef parGenerics parConstructor
-		
+		unapply :: Def
+		unapply = Def{defMods = [DefModDef, DefModStatic] ++ [DefModStruct | selfIsStruct], defName = "unapply", defType = unapplyTp, 
+			defBody = Return True unapplyRet, defGenerics = Nothing, defPars = [par]}
+			where
+				par = localVal (D.className cl) selfType
+				unapplyTp = TPOption $ case constrPars of
+					[] -> TPNil
+					[x] -> wrapGeneric $ defType x
+					xs -> TPTuple $ map (wrapGeneric . defType) xs
+				unapplyRet :: Exp
+				unapplyRet = case constrPars of
+					[] -> Some Nil
+					[x] -> Some $ Dot (callRef par) (callRef x) 
+					xs -> Some $ Tuple $ map (\x -> Dot (callRef par) (callRef x)) xs
+		hasUnapply :: Bool
+		hasUnapply = any ( ("unapply" == ). D.defName) (D.classBody cl)
 
 linkExtends :: Env -> [Def] -> D.Extends -> Extends
 linkExtends env constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
@@ -784,6 +810,13 @@ objectType :: DataType -> DataType
 objectType (TPClass t _ cl) = TPObject t cl
 objectType e = TPUnknown $ "No object type for type " ++ show e
 
+reduceTypes :: Env -> [DataType] -> Maybe DataType
+reduceTypes env tps = foldl1 (\r x -> r >>= commonType env (fromJust x) ) $ map Just tps
+
+commonType :: Env -> DataType -> DataType -> Maybe DataType
+commonType env tp1 tp2 = fmap (\ (cl, gens) -> refDataType cl (map snd $ M.toList gens) ) $ 
+	commonClassRef (dataTypeClassRef env tp1) (dataTypeClassRef env tp2)
+
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Expression 
  ------------------------------------------------------------------------------------------------------------------------------}
@@ -812,11 +845,13 @@ data Exp = Nop
 	| Val Def
 	| ExpDError String D.Exp 
 	| ExpLError String Exp 
+	| ExpError String 
 	| FirstTry D.Exp Exp 
 	| Arr [Exp]
 	| Map [(Exp, Exp)]
 	| Tuple [Exp]
 	| Opt Exp
+	| Some Exp
 	| None DataType
 	| Throw Exp
 	| Not Exp
@@ -855,11 +890,13 @@ instance Show Exp where
 	show (Lambda pars e tp) = strs ", " (map (\(n, t) -> n ++ " : " ++ show t) pars) ++ " -> " ++ show tp ++ " = " ++ show e
 	show (Val d) = show d
 	show (ExpDError s e) = "<#" ++ show e ++ ": " ++ (strs " " . lines) s ++ "#>"
+	show (ExpError s) = "<#" ++ (strs " " . lines) s ++ "#>"
 	show (ExpLError s e) = "<#" ++ show e ++ ": " ++ (strs " " . lines) s ++ "#>"
 	show (Arr exps) = "["  ++ strs' ", " exps ++ "]"
 	show (Map exps) = "["  ++ strs' ", " exps ++ "]"
 	show (Tuple exps) = "("  ++ strs' ", " exps ++ ")"
 	show (Opt e) = "opt(" ++ show e ++ ")"
+	show (Some e) = "some(" ++ show e ++ ")"
 	show (None tp) = "none<" ++ show tp ++ ">" 
 	show (FirstTry _ e) = "First try: " ++ show e
 	show (Throw e) = "throw " ++ show e
@@ -871,6 +908,9 @@ instance Show Exp where
 	show (CastDot tp) = "cast<" ++ show tp ++ ">"
 	show (Break) = "break"
 	show (LambdaCall e) = show e ++ "()"
+
+callRef :: Def -> Exp
+callRef d = Call d (defType d) []
 
 showCallPars :: [CallPar] -> String
 showCallPars [] = ""
@@ -914,6 +954,7 @@ forExp f ee = mplus (go ee) (f ee)
 		go (MinusMinus e) = forExp f e
 		go (Return _ e) = forExp f e
 		go (Opt e) = forExp f e
+		go (Some e) = forExp f e
 		go (Throw e) = forExp f e
 		go (Not e) = forExp f e
 		go (Negative e) = forExp f e
@@ -978,6 +1019,7 @@ exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 		parsTp [(_, tp)] = tp
 		parsTp ps = TPTuple $ map snd ps
 exprDataType e@(ExpDError _ _) = TPUnknown $ show e
+exprDataType e@(ExpError _) = TPUnknown $ show e
 exprDataType e@(ExpLError _ _) = TPUnknown $ show e
 exprDataType (Arr []) = TPArr 0 TPVoid
 exprDataType (Map []) = TPMap TPVoid TPVoid
@@ -987,6 +1029,7 @@ exprDataType (Map exps) = let (k, v) = ((exprDataType >>> wrapGeneric) *** (expr
 exprDataType (Tuple exps) = TPTuple $ map (wrapGeneric .exprDataType) exps
 exprDataType (Val Def{defType = tp}) = tp
 exprDataType (Opt v) = TPOption (exprDataType v)
+exprDataType (Some v) = TPOption (exprDataType v)
 exprDataType (None tp) = tp
 exprDataType (FirstTry _ e) = exprDataType e
 exprDataType (Throw _) = TPThrow
@@ -1112,7 +1155,103 @@ expr (D.Negative e) = do
 	e' <- expr e
 	return $ Negative e'
 expr D.Break = return Break
+expr c@D.Case{} = linkCase c
 {- expr x = error $ "No expr for " ++ show x -}
+
+{------------------------------------------------------------------------------------------------------------------------------ 
+ - Pattern matching
+ ------------------------------------------------------------------------------------------------------------------------------}
+
+data CaseEnv = CaseEvn{caseEnvEnv :: Env, caseEnvCurrentVal :: Def, caseEnvValNum :: Int, caseEnvDefs :: [Def]}
+ 
+
+linkCase :: D.Exp -> State Env Exp
+linkCase (D.Case mainExpr items) = do
+	mainExpr' <- expr mainExpr
+	let 
+		_case = (localVal "__case__" (exprDataType mainExpr')) {defBody = mainExpr'}
+	 	_incomplete = (localVal "__incomplete__" TPBool) {defBody = BoolConst True}
+	 	_ok = (localVal "__ok__" TPBool) {defBody = BoolConst True}
+	 	notOk = Set Nothing (callRef _ok) (BoolConst False)
+	 	isOk = callRef _ok
+		_result = (localVal "__result__" TPVoid)
+		linkCaseItem :: D.CaseItem -> State Env (Exp, DataType)
+		linkCaseItem (cond, e) = do
+			env <- get
+			let 
+				(ex, caseEnv) = runState (linkCaseCond cond) $ CaseEvn env _case 1 []
+				caseDefs = caseEnvDefs caseEnv
+				vars = map Val caseDefs
+			modify (envAddVals caseDefs)
+			itemExpr <- expr e
+			put env
+			let
+				setResultTo to = Set Nothing (callRef _result) to
+				setResult = case itemExpr of
+					Braces exprs -> init exprs ++ [setResultTo $ last exprs]
+					ee -> [setResultTo ee]
+
+			return $ (If (callRef _incomplete) (Braces $ 
+				Val _ok : vars ++ [
+					ex, 
+					If isOk (Braces $ setResult ++ [Set Nothing (callRef _incomplete) (BoolConst False)])
+						Nop]) Nop, exprDataType itemExpr)
+		linkCaseCond :: D.CaseCondition -> State CaseEnv Exp
+		linkCaseCond (D.CaseUnapply _ "" [par]) = linkCaseCond par
+		linkCaseCond (D.CaseUnapply _ ref pars) = do
+			caseEnv <- get
+			let 
+				val = caseEnvCurrentVal caseEnv
+				env = caseEnvEnv caseEnv
+				tp = dataType (envIndex env) $ D.DataType ref []
+				cl = dataTypeClass env tp
+				newValOpt = localVal  ("__caseOpt" ++ show (caseEnvValNum caseEnv) ++ "__") newTpOpt
+				newTpOpt = maybe (TPUnknown "Not found unapply")  (defType) $ mplus unapply unapply2
+				newVal = localVal  ("__case" ++ show (caseEnvValNum caseEnv) ++ "__") newTp
+				newTp = case newTpOpt of
+					TPOption t -> t
+					t -> t
+
+				allUnappies = filter ( ("unapply" == ). defName) $ filter ( (DefModStatic `elem`) .defMods) $ classDefs cl
+				unapplyCall :: [Exp] -> Exp
+				unapplyCall next = maybe (buildIf next) (buildCall next) unapply
+				buildCall next f@Def{defType = ftp, defPars = [fpar]} = Braces $
+					(Val $ newValOpt{defBody = Dot (callRef (objectDef cl)) (Call f ftp [(fpar, Cast tp $ callRef val)])}) : next
+				buildIf next = If (Dot (callRef val) (Is tp)) 
+					(maybe (ExpError "Not found unapply") (buildCall next) unapply2)
+					notOk
+				unapply :: Maybe Def
+				unapply = find (parsTypeIs (defType val)) allUnappies
+				unapply2 :: Maybe Def
+				unapply2  = find (parsTypeIs tp) allUnappies
+				parsTypeIs dtp def = case defPars def of
+					[x] -> defType x == dtp
+					_ -> False
+				callFromValOpt fname = Dot (callRef newValOpt) (exprCall env (Just newTpOpt) (D.Call fname Nothing []))
+				
+				caseEnv' = caseEnv {caseEnvCurrentVal = newVal, caseEnvValNum = caseEnvValNum caseEnv + 1}
+			put caseEnv'
+			tupleCond <- linkCaseCond (D.CaseUnapply Nothing "" pars)
+			modify (\e -> e{caseEnvCurrentVal = val})
+			return $ unapplyCall [If (callFromValOpt "isDefined") (Braces [
+						Val $ newVal{defBody = callFromValOpt "get"},
+						tupleCond])
+						notOk 
+						]
+		linkCaseCond D.CaseAny = return Nop
+		linkCaseCond  (D.CaseVal name) = do
+			caseEnv <- get
+			let 
+				val = caseEnvCurrentVal caseEnv
+				ret = localVal name $ defType val
+				caseEnv' = caseEnv{caseEnvDefs = caseEnvDefs caseEnv ++ [ret]}
+			put caseEnv'
+			return $ Set Nothing (callRef ret) (callRef val)
+	items' <- mapM linkCaseItem items
+	env <- get
+	let _result' = _result {defType = fromMaybe (TPUnknown "No common type for case") $ reduceTypes env $ map snd items'}
+	return $ Braces $ [Val _case, Val _incomplete, Val _result'] ++ map fst items' ++ [callRef _result']
+
 
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Calling 
@@ -1434,6 +1573,7 @@ checkErrorsInExp = forExp f
 		f (Val Def{defType = tp}) = checkErrorsInDataType tp
 		f (ExpDError t e) = [Error (show e ++ ": " ++ t)]
 		f (ExpLError t e) = [Error (show e ++ ": " ++ t)]
+		f (ExpError t) = [Error t]
 		f e@FirstTry{} = [Error ("First try in out " ++ show e)]
 		f (None tp) = checkErrorsInDataType tp
 		f _ = []

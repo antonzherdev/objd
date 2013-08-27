@@ -718,9 +718,11 @@ tExp env (D.Lambda pars e rtp) =
 	C.Lambda (map par' pars) (unwrapPars ++ tStm env{envDataType = rtp} [] e) (showDataType rtp)
 tExp env (D.Arr exps) = C.Arr $ map (tExpToType env D.tpGeneric) exps
 tExp env (D.Map exps) = C.Map $ map (tExpToType env D.tpGeneric *** tExpToType env D.tpGeneric) exps
-tExp env (D.Tuple exps) = C.CCall (C.Ref "tuple") $ map (tExpToType env D.tpGeneric) exps
+tExp env (D.Tuple exps) = C.CCall (C.Ref $ "tuple" ++ if length exps == 2 then "" else show (length exps) ) $ map (tExpToType env D.tpGeneric) exps
 tExp env (D.Opt e) = let tp = D.exprDataType e
 	in C.Call (C.Ref "CNOption") "opt" [("", maybeVal (tp, D.TPGenericWrap tp) (tExp env e))] []
+tExp env (D.Some e) = let tp = D.exprDataType e
+	in C.Call (C.Ref "CNOption") "some" [("", maybeVal (tp, D.TPGenericWrap tp) (tExp env e))] []
 tExp _ (D.None _) = C.Call (C.Ref "CNOption") "none" [] []
 tExp env (D.Not e) = C.Not (tExp env e)
 tExp env (D.Negative e) = C.Negative (tExp env e)

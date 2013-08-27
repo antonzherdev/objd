@@ -1,6 +1,6 @@
 module ObjD.Struct (
 	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), 
-	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), ExtendsRef, ExtendsClass(..),
+	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), ExtendsRef, ExtendsClass(..), CaseCondition(..), CaseItem,
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum, isStatic, isType
 ) where
 import           Ex.String
@@ -94,7 +94,11 @@ data Exp = Nop
 	| Do Exp Exp
 	| Break
 	| Return Exp
+	| Case Exp [CaseItem]
 type CallPar = (Maybe String, Exp)
+
+type CaseItem = (CaseCondition, Exp)
+data CaseCondition = CaseUnapply (Maybe String) String [CaseCondition] | CaseAny | CaseVal String | CaseType CaseCondition DataType
 
 data DataType = DataType String [DataType] 
 	| DataTypeArr Int DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType] 
@@ -171,4 +175,16 @@ instance Show Exp where
 	show (Lambda pars e) = strs' ", " (map (\(n, t) -> n ++ maybe "" (\tt -> " : " ++ show tt) t) pars) ++ " -> " ++ show e
 	show (Val name tp body mods) = valVar ++ " " ++ name ++ maybe "" ((" : " ++) . show) tp ++ " = " ++ show body
 		where valVar = if DefModMutable `elem` mods then "var" else "val"
+	show(Case e items) = "case(" ++ show e ++ ") {\n"
+		++ (strs "\n" . map (ind . showCaseItem)) items ++ "\n}"
 
+showCaseItem :: (CaseCondition, Exp) -> String
+showCaseItem (cond, e) = show cond ++ " -> " ++ show e
+
+instance Show CaseCondition where
+	show (CaseUnapply (Just name) ref conds) = name ++ "@" ++ ref ++ "(" ++ strs' ", " conds ++ ")"
+	show (CaseUnapply Nothing ref conds) = ref ++ "(" ++ strs' ", " conds ++ ")"
+	show CaseAny = "_"
+	show (CaseVal s) = s
+	show (CaseType cond tp) = show cond ++ " : " ++ show tp
+	
