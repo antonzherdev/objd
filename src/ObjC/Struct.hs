@@ -99,6 +99,7 @@ unlines' [] = ""
 unlines' a = unlines a ++ "\n"
 kw :: String -> String
 kw "switch" = "aSwitch"
+kw "default" = "aDefault"
 kw s = s
 
 instance Show DataType where
