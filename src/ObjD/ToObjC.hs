@@ -244,7 +244,7 @@ equalsIsPosible D.Class {D.classDefs = defs} =
 	(null $ filter ( (D.DefModMutable `elem` ). D.defMods) defs)
 	|| (not $ null $ filter ( isVal . D.defMods) defs)
 	where
-		isVal mods = (D.DefModField `elem` mods) && (D.DefModMutable `notElem` mods)
+		isVal mods = (D.DefModField `elem` mods) && (D.DefModMutable `notElem` mods) && (D.DefModStatic `notElem` mods)
 
 copyImpls :: [C.ImplFun]
 copyImpls = [C.ImplFun (C.Fun C.InstanceFun idTp "copyWith" [C.FunPar "zone" (C.TPSimple "NSZone*" []) "zone"]) [C.Return C.Self]]
