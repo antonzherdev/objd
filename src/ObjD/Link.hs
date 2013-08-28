@@ -369,7 +369,7 @@ linkClass (ocidx, glidx) cl = self
 				classMods = map clsMod (D.classMods cl), 
 				className = D.className cl, 
 				classExtends = if D.className cl == "ODObject" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
-				classDefs = fields ++ defs ++ [constr constrPars] ++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply], 
+				classDefs = fields ++ defs ++ [constr constrPars] {-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
 				classGenerics = generics
 			}
 			D.Enum{} -> Class {
@@ -438,7 +438,7 @@ linkClass (ocidx, glidx) cl = self
 				parClassExtends = fromJust $ extendsClass $ classExtends $ self
 				parConstructor = fromJust $ classConstructor $ extendsClassClass $ parClassExtends
 				parConstructor' = replaceGenericsInDef parGenerics parConstructor
-		unapply :: Def
+		{-unapply :: Def
 		unapply = Def{defMods = [DefModDef, DefModStatic] ++ [DefModStruct | selfIsStruct], defName = "unapply", defType = unapplyTp, 
 			defBody = Return True unapplyRet, defGenerics = Nothing, defPars = [par]}
 			where
@@ -453,7 +453,7 @@ linkClass (ocidx, glidx) cl = self
 					[x] -> Some $ Dot (callRef par) (callRef x) 
 					xs -> Some $ Tuple $ map (\x -> Dot (callRef par) (callRef x)) xs
 		hasUnapply :: Bool
-		hasUnapply = any ( ("unapply" == ). D.defName) (D.classBody cl)
+		hasUnapply = any ( ("unapply" == ). D.defName) (D.classBody cl)-}
 
 linkExtends :: Env -> [Def] -> D.Extends -> Extends
 linkExtends env constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
@@ -1168,6 +1168,10 @@ expr c@D.Case{} = linkCase c
 
 data CaseEnv = CaseEvn{caseEnvEnv :: Env, caseEnvCurrentVal :: Def, caseEnvValNum :: Int, caseEnvDefs :: [Def]}
  
+caseEnvIncVal :: CaseEnv -> CaseEnv
+caseEnvIncVal env = env {caseEnvValNum = caseEnvValNum env + 1}
+caseEnvAddDef :: Def -> CaseEnv -> CaseEnv
+caseEnvAddDef d env = env {caseEnvDefs = caseEnvDefs env ++ [d]}
 
 linkCase :: D.Exp -> State Env Exp
 linkCase (D.Case mainExpr items) = do
@@ -1179,6 +1183,7 @@ linkCase (D.Case mainExpr items) = do
 	 	notOk = Set Nothing (callRef _ok) (BoolConst False)
 	 	isOk = callRef _ok
 		_result = (localVal "__result__" TPVoid)
+		caseEnvVal env = "__case" ++ show (caseEnvValNum env) ++ "__"
 		linkCaseItem :: D.CaseItem -> State Env (Exp, DataType)
 		linkCaseItem (cond, e) = do
 			env <- get
@@ -1201,7 +1206,33 @@ linkCase (D.Case mainExpr items) = do
 					If isOk (Braces $ setResult ++ [Set Nothing (callRef _incomplete) (BoolConst False)])
 						Nop]) Nop, exprDataType itemExpr)
 		linkCaseCond :: D.CaseCondition -> State CaseEnv Exp
-		linkCaseCond (D.CaseUnapply _ "" [par]) = linkCaseCond par
+		linkCaseCond (D.CaseUnapply _ "" pars) = do
+			caseEnv <- get
+			let
+				val = caseEnvCurrentVal caseEnv
+				valTp = defType val
+				env = caseEnvEnv caseEnv
+				valCl = dataTypeClass env valTp
+				constr = fromMaybe (error $ "No constructor") $ classConstructor valCl
+
+				linkPar :: (Def, D.CaseCondition) -> State CaseEnv [Exp]
+				linkPar (_, D.CaseAny) = return []
+				linkPar (d@Def{defType = newTp}, D.CaseVal valName)= do
+					let newVal = localVal valName newTp
+					modify $ caseEnvAddDef newVal
+					return [Set Nothing (callRef newVal) $Dot (callRef val) (callRef d)]
+				linkPar (d@Def{defType = newTp}, cond)= do
+					let newVal = localVal (caseEnvVal caseEnv) newTp
+					modify caseEnvIncVal
+					e <- get
+					put e{caseEnvCurrentVal = newVal}
+					cond' <- linkCaseCond cond
+					e' <- get
+					put e'{caseEnvCurrentVal = val}
+					return $ (Val $ newVal{defBody = Dot (callRef val) (callRef d)}) : [cond']
+			pars' <- mapM linkPar $ zip (defPars constr) pars
+			return $ Braces $ join pars'
+
 		linkCaseCond (D.CaseUnapply _ ref pars) = do
 			caseEnv <- get
 			let 
@@ -1210,24 +1241,27 @@ linkCase (D.Case mainExpr items) = do
 				tp = dataType (envIndex env) $ D.DataType ref []
 				cl = dataTypeClass env tp
 				newValOpt = localVal  ("__caseOpt" ++ show (caseEnvValNum caseEnv) ++ "__") newTpOpt
-				newTpOpt = maybe (TPUnknown "Not found unapply")  (defType) $ mplus unapply unapply2
-				newVal = localVal  ("__case" ++ show (caseEnvValNum caseEnv) ++ "__") newTp
+				newTpOpt = maybe (TPUnknown "Not found unapply") defType unapply
+				newVal = localVal  (caseEnvVal caseEnv) newTp
 				newTp = case newTpOpt of
 					TPOption t -> t
+					TPUnknown _ -> tp
 					t -> t
 
 				allUnappies = filter ( ("unapply" == ). defName) $ filter ( (DefModStatic `elem`) .defMods) $ classDefs cl
 				unapplyCall :: [Exp] -> Exp
 				unapplyCall next = maybe (buildIf next) (buildCall next) unapply
 				buildCall next f@Def{defType = ftp, defPars = [fpar]} = Braces $
-					(Val $ newValOpt{defBody = Dot (callRef (objectDef cl)) (Call f ftp [(fpar, Cast tp $ callRef val)])}) : next
-				buildIf next = If (Dot (callRef val) (Is tp)) 
-					(maybe (ExpError "Not found unapply") (buildCall next) unapply2)
+					[Val $ newValOpt{defBody = Dot (callRef (objectDef cl)) (Call f ftp [(fpar, Cast tp $ callRef val)])},
+					If (callFromValOpt "isDefined") 
+						(Braces $ (Val $ newVal{defBody = callFromValOpt "get"}): next)
+						notOk 
+						]
+				buildIf next = If (Dot (callRef val) (Is tp)) (Braces $
+					(Val $  newVal{defBody = Dot (callRef val) (CastDot tp)}) : next)
 					notOk
 				unapply :: Maybe Def
 				unapply = find (parsTypeIs (defType val)) allUnappies
-				unapply2 :: Maybe Def
-				unapply2  = find (parsTypeIs tp) allUnappies
 				parsTypeIs dtp def = case defPars def of
 					[x] -> defType x == dtp
 					_ -> False
@@ -1237,24 +1271,25 @@ linkCase (D.Case mainExpr items) = do
 			put caseEnv'
 			tupleCond <- linkCaseCond (D.CaseUnapply Nothing "" pars)
 			modify (\e -> e{caseEnvCurrentVal = val})
-			return $ unapplyCall [If (callFromValOpt "isDefined") (Braces [
-						Val $ newVal{defBody = callFromValOpt "get"},
-						tupleCond])
-						notOk 
-						]
+			return $ unapplyCall [tupleCond]
+
 		linkCaseCond D.CaseAny = return Nop
 		linkCaseCond  (D.CaseVal name) = do
 			caseEnv <- get
 			let 
 				val = caseEnvCurrentVal caseEnv
 				ret = localVal name $ defType val
-				caseEnv' = caseEnv{caseEnvDefs = caseEnvDefs caseEnv ++ [ret]}
+				caseEnv' = caseEnvAddDef ret caseEnv
 			put caseEnv'
 			return $ Set Nothing (callRef ret) (callRef val)
 	items' <- mapM linkCaseItem items
 	env <- get
 	let _result' = _result {defType = fromMaybe (TPUnknown "No common type for case") $  listToMaybe $ reduceTypes env $ map snd items'}
-	return $ Braces $ [Val _case, Val _incomplete, Val _result'] ++ map fst items' ++ [callRef _result']
+	return $ Braces $ [
+		Val _case, Val _incomplete, Val _result'] 
+		++ map fst items' 
+		++ [If (callRef _incomplete) (Throw $ StringConst "Case incomplete") Nop, 
+			callRef _result']
 
 
 {------------------------------------------------------------------------------------------------------------------------------ 
