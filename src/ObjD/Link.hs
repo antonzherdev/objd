@@ -235,7 +235,7 @@ isConstructor = (DefModConstructor `elem` ) . defMods
 enumItems :: Class -> [Def]
 enumItems Class{classDefs = defs} = filter isEnumItem defs
 instance Eq Def where
-	a == b = defName a == defName b && length (defPars a) == length (defPars b) && all eqPar (zip (defPars a)(defPars b))
+	a == b = defName a == defName b && length (defPars a) == length (defPars b) && all eqPar (zip (defPars a)(defPars b)) && (isStatic a == isStatic b)
 
 eqPar :: (Def, Def) -> Bool
 eqPar (x, y) = defName x == defName y
@@ -340,7 +340,7 @@ linkFile fidx (D.File name package stms) = fl
 		visibleFiles :: [D.FileStm] -> [File]
 		visibleFiles = mapMaybe (getFile . D.impString) . filter D.isImport
 		kernelFiles :: [File]
-		kernelFiles = mapMaybe (idxFind fidx) ["ODEnum", "ODObject", "CNTuple", "CNOption", "CNList", "CNMap", "CNSeq", "CNData"]
+		kernelFiles = mapMaybe (idxFind fidx) ["ODEnum", "ODObject", "CNTuple", "CNOption", "CNList", "CNMap", "CNSeq", "CNData", "ODType"]
 		cImports = mapMaybe toCImport stms
 		toCImport (D.Import s D.ImportTypeCUser) = Just $ CImportUser s
 		toCImport (D.Import s D.ImportTypeCLib) = Just $ CImportLib s
@@ -369,7 +369,8 @@ linkClass (ocidx, glidx) cl = self
 				classMods = map clsMod (D.classMods cl), 
 				className = D.className cl, 
 				classExtends = if D.className cl == "ODObject" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
-				classDefs = fields ++ defs ++ [constr constrPars] {-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
+				classDefs = fields ++ defs ++ [constr constrPars] ++ if selfIsStruct then [] else [typeField, typeForInstance] 
+				{-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
 				classGenerics = generics
 			}
 			D.Enum{} -> Class {
@@ -438,6 +439,18 @@ linkClass (ocidx, glidx) cl = self
 				parClassExtends = fromJust $ extendsClass $ classExtends $ self
 				parConstructor = fromJust $ classConstructor $ extendsClassClass $ parClassExtends
 				parConstructor' = replaceGenericsInDef parGenerics parConstructor
+
+		typeField :: Def 
+		typeField = Def{defMods = [DefModField, DefModStatic], defName = "type", defType = TPClass TPMClass [selfType] (classFind cidx "ODType"), 
+			defBody = createType, 
+			defGenerics = Nothing, defPars = []}
+			where 
+				createType = exprCall env Nothing $ D.Call "ODType" (Just [(Nothing, getClass)]) [D.DataType (D.className cl) []]
+				getClass = D.Call "class" Nothing []
+		typeForInstance :: Def
+		typeForInstance = Def{defMods = [DefModDef], defName = "type", defType = TPClass TPMClass [selfType] (classFind cidx "ODType"), 
+			defBody = Return True $ callRef typeField, 
+			defGenerics = Nothing, defPars = []}
 		{-unapply :: Def
 		unapply = Def{defMods = [DefModDef, DefModStatic] ++ [DefModStruct | selfIsStruct], defName = "unapply", defType = unapplyTp, 
 			defBody = Return True unapplyRet, defGenerics = Nothing, defPars = [par]}

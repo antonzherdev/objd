@@ -32,7 +32,7 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 		dImports' = procImports f
 		
 		
-		h = (if D.isCoreFile f then [C.ImportLib "Foundation/Foundation.h"] else [ C.Import "objd.h"] )
+		h = [C.Import $ if D.isCoreFile f then "objdcore.h" else "objd.h"] 
 			++ fst dImports' 
 			++ [C.EmptyLine] 
 			++ map classDecl (cls ++ enums) 
@@ -163,13 +163,14 @@ stmToImpl :: D.Class -> C.FileStm
 stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
 	C.Implementation {
 		C.implName = clsName,
-		C.implFields = map (implField False) implFields,
-		C.implSynthesizes = (map synthesize . filter needProperty) implFields,
-		C.implFuns = nub $ [implCreate cl constr, implInit cl constr] ++ maybeToList (implInitialize cl) ++ dealoc cl 
-			++ implFuns defs ++ staticGetters ++ copyImpls ++ (if equalsIsPosible cl then [equal, hash] else []) ++ [description],
-		C.implStaticFields = map (implField True) staticFields
+		C.implFields = map (implField env) implFields,
+		C.implSynthesizes = (map (synthesize env) . filter needProperty) implFields,
+		C.implFuns = nub $ [implCreate cl constr, implInit env constr] ++ maybeToList (implInitialize env) ++ dealoc env 
+			++ implFuns env defs ++ staticGetters ++ copyImpls ++ (if equalsIsPosible cl then [equal, hash] else []) ++ [description],
+		C.implStaticFields = map (implField env) staticFields
 	}
 	where
+		env = Env cl False D.TPVoid
 		defs :: [D.Def]
 		defs = nub $ clDefs ++ traitDefs
 		
@@ -188,7 +189,7 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
 		isStaticField f = D.isStatic f && D.isField f
 		staticFields = filter isStaticField defs
 		staticGetters = (map staticGetter . filter((D.DefModPrivate `notElem`) . D.defMods)) staticFields
-		staticGetter f@D.Def{D.defName = name} = C.ImplFun (staticGetterFun f) [C.Return $ C.Ref $ '_' : name]
+		staticGetter f = C.ImplFun (staticGetterFun f) [C.Return $ C.Ref $ fieldName env f]
 
 		reloadedEquals = filter ( ("isEqualTo" == ). D.defName) defs
 		equal :: C.ImplFun
@@ -219,6 +220,12 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
  		descStart = C.Call (C.Ref "NSMutableString") "stringWith" [("format", C.StringConst "<%@: ")] 
 			[C.CCall (C.Ref "NSStringFromClass") [C.Call C.Self "class" [] []]]
 
+fieldName :: Env -> D.Def -> String
+fieldName env def 
+	| D.DefModStatic `elem` D.defMods def =  '_' : D.className (envClass env) ++ "_" ++ D.defName def
+	| otherwise = '_' : D.defName def
+
+
 equalPrelude :: String -> Bool -> [C.Stm]
 equalPrelude clsName o = [
 			C.If (C.BoolOp Eq C.Self (C.Ref "other")) [C.Return $ C.BoolConst True] [],
@@ -242,12 +249,13 @@ equalsIsPosible D.Class {D.classDefs = defs} =
 copyImpls :: [C.ImplFun]
 copyImpls = [C.ImplFun (C.Fun C.InstanceFun idTp "copyWith" [C.FunPar "zone" (C.TPSimple "NSZone*" []) "zone"]) [C.Return C.Self]]
 
-synthesize :: D.Def -> C.ImplSynthesize
-synthesize D.Def{D.defName = x} = C.ImplSynthesize x ('_' : x)
-implField :: Bool -> D.Def -> C.ImplField
-implField static D.Def{D.defName = x, D.defType = tp, D.defMods = mods, D.defBody = e} = 
-	C.ImplField ('_' : x) (showDataType tp) ["__weak" | D.DefModWeak `elem` mods] $ 
-		if static && D.isConst e then tExpTo newEnv{envCStruct = True} tp e else C.Nop
+synthesize :: Env -> D.Def -> C.ImplSynthesize
+synthesize env d@D.Def{D.defName = x} = C.ImplSynthesize x $ fieldName env d
+
+implField :: Env -> D.Def -> C.ImplField
+implField env d@D.Def{D.defType = tp, D.defMods = mods, D.defBody = e} = 
+	C.ImplField (fieldName env d) (showDataType tp) ["__weak" | D.DefModWeak `elem` mods] $ 
+		if D.DefModStatic `elem` mods && D.isConst e then tExpTo env{envCStruct = True} tp e else C.Nop
 
 implCreate :: D.Class -> D.Def -> C.ImplFun
 implCreate cl constr@D.Def{D.defPars = constrPars} = let 
@@ -267,29 +275,29 @@ autorelease e
 	| arc = e
 	| otherwise = C.Call e "autorelease" [] []
 
-dealoc :: D.Class -> [C.ImplFun]
-dealoc cl 
+dealoc :: Env -> [C.ImplFun]
+dealoc env@Env{envClass = cl}
 	| arc = []
 	| otherwise = [C.ImplFun (C.Fun C.InstanceFun voidTp "dealloc" []) $
 		 mapMaybe releaseField (D.classFields cl) ++ [C.Stm $C.Call C.Super "dealloc" [] []]]
 	where 
-		releaseField D.Def{D.defName = name, D.defType = D.TPClass{}} = Just $ C.Stm $ C.Call (C.Ref $ '_' : name) "release" [] []
+		releaseField d@D.Def{D.defType = D.TPClass{}} = Just $ C.Stm $ C.Call (C.Ref $ fieldName env d) "release" [] []
 		releaseField _ = Nothing
 
-implInitialize :: D.Class -> Maybe C.ImplFun 		
-implInitialize cl = let 
+implInitialize :: Env -> Maybe C.ImplFun 		
+implInitialize env@Env{envClass = cl} = let 
 	fields = filter hasInitialize (D.classFields cl)
 	hasInitialize D.Def{D.defBody = D.Nop} = False
 	hasInitialize d@D.Def{D.defBody = b} = not (D.isConst b) && D.isField d && D.isStatic d
 	in case fields of
 		[] -> Nothing
 		_ -> Just $ C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
-			((C.Stm $ C.Call C.Super "initialize" [] []) : map implInitField fields))
+			((C.Stm $ C.Call C.Super "initialize" [] []) : map (implInitField env) fields))
 
 
 
-implInit :: D.Class -> D.Def -> C.ImplFun
-implInit cl constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
+implInit :: Env -> D.Def -> C.ImplFun
+implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
 			[C.Set Nothing C.Self (superInit $ D.extendsClass $ D.classExtends cl)]
 			++ implInitFields (filter hasField constrPars) (filter hasInit (D.classDefs cl))
 			++ [C.Stm C.Nop, C.Return C.Self]
@@ -302,33 +310,34 @@ implInit cl constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
 
 		superInit Nothing = C.Call C.Super "init" [] []
 		superInit (Just (D.ExtendsClass _ [])) = C.Call C.Super "init" [] []
-		superInit (Just (D.ExtendsClass _ pars)) = C.Call C.Super "initWith" (map (D.defName *** tExp newEnv) pars) []
+		superInit (Just (D.ExtendsClass _ pars)) = C.Call C.Super "initWith" (map (D.defName *** tExp env) pars) []
 
 		implInitFields :: [D.Def] -> [D.Def] -> [C.Stm]
 		implInitFields [] [] = []
-		implInitFields co fields = [C.If C.Self (map implConstrField co ++ map implInitField fields) []]
-		implConstrField D.Def{D.defName = name, D.defType = tp} = C.Set Nothing (C.Ref $ '_' : name) (implRight tp) 
+		implInitFields co fields = [C.If C.Self (map implConstrField co ++ map (implInitField env) fields) []]
+		implConstrField d@D.Def{D.defName = name, D.defType = tp} = C.Set Nothing (C.Ref $ fieldName env d) (implRight tp) 
 			where
 				implRight D.TPClass{} = retain $ C.Ref name
 				implRight _ = C.Ref name
 
-implInitField :: D.Def -> C.Stm
-implInitField D.Def{D.defName = name, D.defBody = def, D.defType = tp} = C.Set Nothing (C.Ref $ '_' : name) (tExpTo newEnv tp def)
+implInitField :: Env -> D.Def -> C.Stm
+implInitField env d@D.Def{D.defBody = def, D.defType = tp} = C.Set Nothing (C.Ref $ fieldName env d) (tExpTo env tp def)
 		
-implFuns :: [D.Def] -> [C.ImplFun]
-implFuns = map stm2ImplFun . filter D.isDef
+implFuns :: Env -> [D.Def] -> [C.ImplFun]
+implFuns env = map stm2ImplFun . filter D.isDef
 	where
 		stm2ImplFun def@D.Def {D.defName = name, D.defBody = db, D.defMods = mods, D.defType = tp}
 			| D.DefModAbstract `elem` mods = C.ImplFun (stm2Fun def) [C.Throw $ C.StringConst $ "Method " ++ name++ " is abstract"]
-			| otherwise = C.ImplFun (stm2Fun def) (tStm (newEnvWithDataType tp) [] db)
+			| otherwise = C.ImplFun (stm2Fun def) (tStm (env{envDataType = tp}) [] db)
 		
 		
 {- Struct -}
 genStruct :: D.Class -> ([C.FileStm], [C.FileStm])
-genStruct D.Class {D.className = name, D.classDefs = defs} = 
+genStruct cl@D.Class {D.className = name, D.classDefs = defs} = 
 	([C.Struct name fields', con, eq, hash, description] ++ defs' ++ [wrapClass, C.EmptyLine], 
 		(map defImpl' . filter D.isDef) defs ++ [wrapImpl, C.EmptyLine])
 	where
+		env = Env cl False D.TPVoid
 		fields = filter D.isField defs
 		fields' = map toField fields
 		toField D.Def{D.defName = n, D.defType = tp, D.defMods = mods} = C.ImplField n (showDataType tp) ["__weak" | D.DefModWeak `elem` mods] C.Nop
@@ -374,7 +383,7 @@ genStruct D.Class {D.className = name, D.classDefs = defs} =
 		defImpl' D.Def{D.defName = n, D.defType = tp, D.defBody = e, D.defPars = pars, D.defMods = mods} = C.CFun{C.cfunMods = [], 
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
 			C.cfunPars = if D.DefModStatic `notElem` mods then C.CFunPar (C.TPSimple name []) "self" : pars' else pars',
-			C.cfunExps = tStm (newEnvWithDataType tp) [] e}
+			C.cfunExps = tStm (env {envDataType = tp}) [] e}
 			where
 				pars' = map par' pars
 				par' D.Def{D.defName = nn, D.defType = tpp} = C.CFunPar (showDataType tpp) nn
@@ -511,26 +520,27 @@ genEnumImpl :: D.Class -> [C.FileStm]
 genEnumImpl cl@D.Class {D.className = clsName} = [
 	C.Implementation {
 		C.implName = clsName,
-		C.implFields = (map (implField False) . filter needProperty) defs,
-		C.implSynthesizes = (map synthesize . filter needProperty) defs,
-		C.implFuns = nub $ [implCreate cl constr, implInit cl constr, initialize] ++ dealoc cl 
-			++ implFuns defs ++ map itemGetter items ++ [valuesFun],
+		C.implFields = (map (implField env) . filter needProperty) defs,
+		C.implSynthesizes = (map (synthesize env) . filter needProperty) defs,
+		C.implFuns = nub $ [implCreate cl constr, implInit env constr, initialize] ++ dealoc env 
+			++ implFuns env defs ++ map itemGetter items ++ [valuesFun],
 		C.implStaticFields = map stField items ++ [C.ImplField valuesVarName (C.TPSimple "NSArray*" []) [] C.Nop] 
 	}]
 	where
+		env = Env  cl False D.TPVoid
 		valuesVarName =  "_" ++ clsName ++ "_values"
 		items = D.enumItems cl
 		defs = filter ((/= "values") . D.defName) $ D.classDefs cl
 		constr = fromMaybe (error "No class constructor") (D.classConstructor cl)
-		stField D.Def{D.defName = itemName} = C.ImplField ('_' : itemName) (C.TPSimple (clsName ++ "*") []) [] C.Nop
-		itemGetter e@D.Def{D.defName = itemName} = C.ImplFun (enumItemGetterFun clsName e) [C.Return $ C.Ref $ '_' : itemName]
+		stField d = C.ImplField (fieldName env d) (C.TPSimple (clsName ++ "*") []) [] C.Nop
+		itemGetter e = C.ImplFun (enumItemGetterFun clsName e) [C.Return $ C.Ref $ fieldName env e]
 		initialize = C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
 			((C.Stm $ C.Call C.Super "initialize" [] []) : map initItem items) ++ [setValues])
 		initItem :: D.Def -> C.Stm
-		initItem D.Def{D.defName = itemName, D.defBody = body} = C.Set Nothing (C.Ref $ '_' : itemName) $ retain $ tExp newEnv body
+		initItem d@D.Def{D.defBody = body} = C.Set Nothing (C.Ref $ fieldName env d) $ retain $ tExp env body
 		valuesFun = C.ImplFun enumValuesFun [C.Return $ C.Ref valuesVarName]
 		setValues :: C.Stm
-		setValues = C.Set Nothing (C.Ref valuesVarName) (C.Arr $ map (C.Ref . ('_' : ). D.defName) items)
+		setValues = C.Set Nothing (C.Ref valuesVarName) (C.Arr $ map (C.Ref . (fieldName env)) items)
 
 
 {- Imports -}
@@ -611,11 +621,7 @@ castGeneric dexp e = case D.exprDataType dexp of
 	D.TPGenericWrap c@D.TPTuple{} -> C.Cast (showDataType c) e
 	_ -> e
 
-data Env = Env{envCStruct :: Bool, envDataType :: D.DataType}
-newEnv :: Env
-newEnv = Env False D.TPVoid
-newEnvWithDataType :: D.DataType -> Env
-newEnvWithDataType tp = Env False tp
+data Env = Env{envClass :: D.Class, envCStruct :: Bool, envDataType :: D.DataType}
 
 
 tExp :: Env -> D.Exp -> C.Exp
@@ -656,9 +662,9 @@ tExp env (D.MinusMinus e) = C.MinusMinus (tExp env e)
 tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call D.Def {D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
 	| otherwise = C.CCall (C.Ref $ structDefName (D.className c) name) (C.Ref "self" : (map snd . tPars env) pars)
-tExp env (D.Dot (D.Self stp) (D.Call D.Def{D.defMods = mods, D.defName = name} _ pars)) 
-	| D.DefModField `elem` mods && null pars && D.DefModSuper `notElem` mods = C.Ref $ '_' : name
-	| D.DefModField `elem` mods && D.DefModSuper `notElem` mods = C.CCall (C.Ref ('_' : name)) ((map snd . tPars env) pars)
+tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name} _ pars)) 
+	| D.DefModField `elem` mods && null pars && D.DefModSuper `notElem` mods = C.Ref $ fieldName env d
+	| D.DefModField `elem` mods && D.DefModSuper `notElem` mods = C.CCall (C.Ref $ fieldName env d) ((map snd . tPars env) pars)
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className $ D.tpClass stp) name (tPars env pars) []
 	| otherwise = C.Call C.Self name (tPars env pars) []
 tExp env d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
@@ -684,9 +690,9 @@ tExp env (D.Dot l (D.LambdaCall c)) = C.CCall (tExp env (D.Dot l c)) []
 tExp _ (D.Self _) = C.Self
 tExp _ (D.Super _) = C.Super
 tExp env (D.LambdaCall e) = C.CCall (tExp env e) []
-tExp env (D.Call D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
-	| D.DefModField `elem` mods = C.Ref $ '_' : name
-	| D.DefModEnumItem `elem` mods = C.Ref $ '_' : name
+tExp env (D.Call d@D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
+	| D.DefModField `elem` mods = C.Ref $ fieldName env d
+	| D.DefModEnumItem `elem` mods = C.Ref $ fieldName env d
 	| D.DefModLocal `elem` mods && null pars = C.Ref name
 	| D.DefModConstructor `elem` mods = callConstructor env tp pars
 	| D.DefModGlobalVal `elem` mods = C.Ref name
