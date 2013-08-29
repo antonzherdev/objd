@@ -306,6 +306,7 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModSpecial = 'i'
 		ch DefModStruct = 's'
 		ch DefModApplyLambda = 'd'
+		ch DefModSuper = 'r'
 
 
 dataTypePars :: DataType -> [Def]
@@ -441,14 +442,14 @@ linkClass (ocidx, glidx) cl = self
 				parConstructor' = replaceGenericsInDef parGenerics parConstructor
 
 		typeField :: Def 
-		typeField = Def{defMods = [DefModField, DefModStatic], defName = "type", defType = TPClass TPMClass [selfType] (classFind cidx "ODType"), 
+		typeField = Def{defMods = [DefModField, DefModStatic], defName = "type", defType = TPClass TPMClass [selfType] (classFind cidx "Type"), 
 			defBody = createType, 
 			defGenerics = Nothing, defPars = []}
 			where 
 				createType = exprCall env Nothing $ D.Call "ODType" (Just [(Nothing, getClass)]) [D.DataType (D.className cl) []]
 				getClass = D.Call "class" Nothing []
 		typeForInstance :: Def
-		typeForInstance = Def{defMods = [DefModDef], defName = "type", defType = TPClass TPMClass [selfType] (classFind cidx "ODType"), 
+		typeForInstance = Def{defMods = [DefModDef], defName = "type", defType = TPClass TPMClass [selfType] (classFind cidx "Type"), 
 			defBody = Return True $ callRef typeField, 
 			defGenerics = Nothing, defPars = []}
 		{-unapply :: Def
