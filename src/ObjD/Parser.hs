@@ -2,10 +2,13 @@ module ObjD.Parser(
 	parseFile, parseStatement, removeComments
 ) where
 
+import 			 Ex.String
 import           Control.Monad
+import           Data.Char
 import           Data.Maybe
 import           ObjD.Struct
 import           Data.Decimal
+import 			 Control.Arrow
 import           Text.ParserCombinators.Parsec
 
 
@@ -64,7 +67,7 @@ pType :: Bool -> Parser  DataType
 pType = tp
 	where
 		tp lm = do 
-			t <- arr <|> tuple <|> simple
+			t <- arrr <|> tuple <|> simple
 			al <- optionMaybe $ do
 				charSps '['
 				d <- option "0" $ many digit
@@ -82,7 +85,7 @@ pType = tp
 			let t' = maybe t (\s -> DataTypeArr (read s) t) al
 			let t'' = if opt then DataTypeOption t' else t'
 			return $ maybe t'' (\rr -> DataTypeFun t'' rr) r
-		arr = do
+		arrr = do
 			charSps '['
 			k <- tp False
 			sps
@@ -435,12 +438,6 @@ pTerm = do
 			return $ case exps of
 				[e] -> e
 				_ -> Tuple exps
-		pString = do
-			char '"'
-			pos <- getPosition
-			s <- manyTill anyChar (char '"')
-			let stringLines = lines s
-			return $ StringConst $ unlines $ head stringLines : map (drop (sourceColumn pos - 1)) (tail stringLines)
 		pVal = do
 			mods <- try $ do
 				m <- (try (string "val") >> return [] ) <|> (string "var" >> return [DefModMutable])
@@ -506,24 +503,89 @@ pTerm = do
 		pSelf = try(string "self") >> return Self
 		pSuper = try(string "super") >> return Super
 		pNil = try(string "nil") >> return Nil
-		pCall = do
-			name <- ident
-			wsps
-			gens <- pGensRef
-			wsps
-			pars <- optionMaybe (do
-				charSps '('
-				ps <- pCallPar `sepBy` charSps ','
-				char ')' <?> "Function call close bracket"
-				return ps) 
-			wsps
-			postLambda <- liftM (fmap (\l -> (Nothing, l))) $ optionMaybe pPostLambda
-			let parsList = fromMaybe [] pars ++ maybeToList postLambda
-			return $ Call name (if null parsList && isNothing pars then Nothing else Just parsList) gens
+
+pCall :: Parser Exp
+pCall = do
+	name <- ident
+	wsps
+	gens <- pGensRef
+	wsps
+	pars <- optionMaybe (do
+		charSps '('
+		ps <- pCallPar `sepBy` charSps ','
+		char ')' <?> "Function call close bracket"
+		return ps) 
+	wsps
+	postLambda <- liftM (fmap (\l -> (Nothing, l))) $ optionMaybe pPostLambda
+	let parsList = fromMaybe [] pars ++ maybeToList postLambda
+	return $ Call name (if null parsList && isNothing pars then Nothing else Just parsList) gens
 
 createBraces :: [Exp] -> Exp
 createBraces [e] = e
 createBraces exps = Braces exps
+
+pString :: Parser Exp
+pString = do
+	char '"'
+	pos <- getPosition
+	let 
+		startPos = sourceColumn pos
+		pStringParts :: Parser Exp
+		pStringParts = do 
+			parts <- many pPart
+			return $ case parts of
+				[] -> StringConst ""
+				[(part, Nothing)] -> StringConst $ cutString part
+				_ -> case last parts of
+					(lastPart, Nothing) -> StringBuild (map extract $ init parts) (cutString lastPart)
+					_ -> StringBuild (map extract parts) ""
+		extract :: ((Int, String), Maybe Exp) -> (String, Exp)
+		extract = cutString *** fromMaybe (error "Error in string parsing")
+		cutString :: (Int, String) -> String
+		cutString (partStart, str) = let
+			stringLines = lines str
+			maybeDrop n s
+				| n <= 0 = s
+				| otherwise = dropWhile isSpace (take n s) ++ drop n s
+			in strs "\n" $
+				 maybeDrop (startPos - partStart - 1) (head stringLines) 
+				 : map (maybeDrop (startPos - 1)) (tail stringLines)
+		pStringPart :: Parser String
+		pStringPart = many1 (pEscape <|> noneOf "\"$")
+		pPart :: Parser ((Int, String), Maybe Exp)
+		pPart = do
+			p <- getPosition
+			str <- pStringPart 
+			e <- optionMaybe pStringExp
+			return ((sourceColumn p, str), e)
+		pStringExp :: Parser Exp
+		pStringExp = try (char '$' >> notFollowedBy (try(string "else") <|> try(string "endif")) ) >> (pIfString <|> pCall <|> brackets pExp)
+		pIfString :: Parser Exp
+		pIfString = do
+			try$ string "if" >> sps >> charSps '('
+			cond <- pExp
+			char ')'
+			t <- pStringParts
+			f <- pElseString <|> pEndIfString
+			return $ If cond t f
+		pElseString :: Parser Exp 
+		pElseString = do
+			try $ string "$else"
+			pIfString <|> do 
+				b <- pStringParts
+				pEndIfString
+				return b
+		pEndIfString :: Parser Exp
+		pEndIfString = try (string "$endif") >> return Nop
+
+
+		pEscape :: Parser Char
+		pEscape = char '\\' >> anyChar
+	ret <- pStringParts
+	char '"'
+	sps
+	return ret
+		
 
 pGensRef :: Parser [DataType]
 pGensRef = option [] $ try $ do

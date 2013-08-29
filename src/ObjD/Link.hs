@@ -879,6 +879,7 @@ data Exp = Nop
 	| CastDot DataType
 	| Break
 	| LambdaCall Exp
+	| StringBuild [(String, Exp)] String
 	
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
@@ -925,6 +926,7 @@ instance Show Exp where
 	show (CastDot tp) = "cast<" ++ show tp ++ ">"
 	show (Break) = "break"
 	show (LambdaCall e) = show e ++ "()"
+	show (StringBuild pars lastS) = "\"" ++ join (map (\(prev, e) -> prev ++ "$" ++ show e) pars) ++ lastS ++ "\""
 
 callRef :: Def -> Exp
 callRef d = Call d (defType d) []
@@ -955,6 +957,7 @@ forExp :: MonadPlus m => (Exp -> m a) -> Exp -> m a
 forExp f ee = mplus (go ee) (f ee)
 	where
 		go (Braces es) = msum $ map (forExp f) es
+		go (StringBuild pars _) = msum $ map (forExp f . snd) pars
 		go (Arr es) = msum $ map (forExp f) es
 		go (Tuple es) = msum $ map (forExp f) es
 		go (Map es) = msum $ map (forExp f *** forExp f >>> uncurry mplus) es
@@ -987,6 +990,7 @@ isConst (BoolConst _) = True
 isConst (FloatConst _) = True 
 isConst Nil = True 
 isConst (Tuple exps) = all isConst exps
+isConst (StringBuild exps _) = all (isConst . snd) exps
 isConst (Arr exps) = all isConst exps
 isConst (Map exps) = all (\(a, b) -> isConst a && isConst b) exps
 isConst (Cast _ e) = isConst e
@@ -1057,6 +1061,7 @@ exprDataType (As dtp) = TPOption $ wrapGeneric dtp
 exprDataType (CastDot dtp) = dtp
 exprDataType (Is _) = TPBool
 exprDataType Break = TPVoid
+exprDataType StringBuild{} = TPString
 exprDataType (LambdaCall e) = case unwrapGeneric $ exprDataType e of
 	(TPFun _ d) -> d
 	t -> t
@@ -1173,7 +1178,38 @@ expr (D.Negative e) = do
 	return $ Negative e'
 expr D.Break = return Break
 expr c@D.Case{} = linkCase c
+expr s@D.StringBuild {} = do
+	env <- get 
+	return $ linkStringBuild env s
 {- expr x = error $ "No expr for " ++ show x -}
+
+{------------------------------------------------------------------------------------------------------------------------------ 
+ - String build
+ ------------------------------------------------------------------------------------------------------------------------------}
+linkStringBuild :: Env -> D.Exp -> Exp
+linkStringBuild _ (D.StringBuild [] lastString) =  StringConst lastString
+linkStringBuild env (D.StringBuild pars lastString) = 
+	let 
+		processPart :: String -> (String, D.Exp) -> (String, (Exp, String))
+		processPart next (prev, e) = (modPrev e prev, (compile prev e next, modNext e next))
+		modPrev :: D.Exp -> String -> String
+		modPrev (D.Call "when" (Just [_]) _) s = (reverse . tail . dropWhile ( /= '\n') . reverse) s
+		modPrev _ s = s
+		modNext :: D.Exp -> String -> String
+		modNext _ s = s
+		compile :: String -> D.Exp -> String -> Exp
+		compile prev (D.Call "when" (Just [(_, e)]) _) _ = 
+			If (evalState (expr e) env) 
+				(StringConst $ '\n':(reverse . takeWhile ( /= '\n') . reverse) prev) 
+				(StringConst "")
+		compile _ e _ = evalState (expr e) env
+		accumr :: (String, [(Exp, String)])
+		accumr = mapAccumR processPart lastString pars
+		accuml :: (String, [(String, Exp)])
+		accuml = mapAccumL (\prev (e, next) -> (next, (prev, e)) ) (fst accumr) (snd accumr)
+	in StringBuild (snd accuml) (fst accuml)
+
+
 
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Pattern matching

@@ -69,6 +69,7 @@ data Exp = Nop
 	| IntConst Int 
 	| BoolConst Bool
 	| StringConst String
+	| StringBuild [(String, Exp)] String
 	| FloatConst Decimal
 	| Tuple [Exp]
 	| Arr [Exp]
@@ -104,6 +105,7 @@ data DataType = DataType String [DataType]
 	| DataTypeArr Int DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType] 
 	| DataTypeMap DataType DataType 
 	| DataTypeOption DataType
+
 
 instance Show FileStm where
 	show (Class{className = name, classFields = fields, classMods = mods, classBody = body}) = 

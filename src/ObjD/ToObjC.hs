@@ -752,6 +752,10 @@ tExp env (D.Cast dtp e) = let
 				_ -> error $ "Could not convert to EArr " ++ show e
 		_ -> cast 
 
+tExp env (D.StringBuild pars lastString) = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] pars'
+	where
+		format = concatMap (\(prev, e) -> prev ++ stringFormatForType (D.exprDataType e) ) pars ++ lastString
+		pars' = map (tExp env . snd) pars
 tExp _ e@D.ExpDError{} = C.Error $ show e
 tExp _ e@D.ExpLError{} = C.Error $ show e
 tExp _ D.Nop = C.Nop
