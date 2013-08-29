@@ -179,6 +179,7 @@ instance Show Exp where
 		where valVar = if DefModMutable `elem` mods then "var" else "val"
 	show(Case e items) = "case(" ++ show e ++ ") {\n"
 		++ (strs "\n" . map (ind . showCaseItem)) items ++ "\n}"
+	show (StringBuild pars lastS) = "\"" ++ concatMap (\(prev, e) -> prev ++ "$" ++ show e) pars ++ lastS ++ "\""
 
 showCaseItem :: (CaseCondition, Exp) -> String
 showCaseItem (cond, e) = show cond ++ " -> " ++ show e
