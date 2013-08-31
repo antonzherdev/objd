@@ -104,6 +104,7 @@ fieldToProperty D.Def{D.defName = name, D.defMods = mods, D.defType = tp} = C.Pr
 		mutModes D.TPArr{} = [C.ReadOnly]
 		mutModes (D.TPClass D.TPMClass _ _) = [C.Retain | D.DefModWeak `notElem` mods]
 		mutModes (D.TPClass D.TPMEnum _ _) = [C.Retain | D.DefModWeak `notElem` mods]
+		mutModes (D.TPFun {}) = [C.Copy]
 		mutModes _ = []
 		
 idTp :: C.DataType

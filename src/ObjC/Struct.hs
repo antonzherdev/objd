@@ -23,7 +23,7 @@ data FileStm =
 data Extends = Extends String [String]
 data Property = Property {propertyName :: String, propertyType :: DataType, propertyModifiers :: [PropertyModifier]}
 
-data PropertyModifier = ReadOnly | NonAtomic | Retain | Weak deriving(Eq)
+data PropertyModifier = ReadOnly | NonAtomic | Retain | Weak | Copy deriving(Eq)
 
 data ImplField = ImplField {implFieldName :: String, implFieldType :: DataType, implFieldsMods :: [String], implFieldExp :: Exp}
 
@@ -192,6 +192,7 @@ instance Show PropertyModifier where
 	show ReadOnly = "readonly"
 	show NonAtomic = "nonatomic"
 	show Retain = "retain"
+	show Copy = "copy"
 	show Weak = "weak"
 
 instance Show Exp where
