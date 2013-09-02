@@ -370,7 +370,7 @@ linkClass (ocidx, glidx) cl = self
 				classMods = map clsMod (D.classMods cl), 
 				className = D.className cl, 
 				classExtends = if D.className cl == "ODObject" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
-				classDefs = fields ++ defs ++ [constr constrPars] ++ if selfIsStruct then [] else [typeField, typeForInstance] 
+				classDefs = fields ++ defs ++ [constr constrPars, typeField] 
 				{-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
 				classGenerics = generics
 			}
@@ -442,16 +442,12 @@ linkClass (ocidx, glidx) cl = self
 				parConstructor' = replaceGenericsInDef parGenerics parConstructor
 
 		typeField :: Def 
-		typeField = Def{defMods = [DefModField, DefModStatic], defName = "type", defType = TPClass TPMType [selfType] (classFind cidx "Type"), 
-			defBody = createType, 
+		typeField = Def{defMods = [DefModField, DefModStatic, DefModSpecial], defName = "type", defType = TPClass TPMType [selfType] (classFind cidx typeName), 
+			defBody = Nop, 
 			defGenerics = Nothing, defPars = []}
 			where 
-				createType = exprCall env Nothing $ D.Call "ODType" (Just [(Nothing, getClass)]) [D.DataType (D.className cl) []]
-				getClass = D.Call "class" Nothing []
-		typeForInstance :: Def
-		typeForInstance = Def{defMods = [DefModDef], defName = "type", defType = TPClass TPMType [selfType] (classFind cidx "Type"), 
-			defBody = Return True $ callRef typeField, 
-			defGenerics = Nothing, defPars = []}
+				typeName = if selfIsStruct then "PType" else "ClassType"
+	
 		{-unapply :: Def
 		unapply = Def{defMods = [DefModDef, DefModStatic] ++ [DefModStruct | selfIsStruct], defName = "unapply", defType = unapplyTp, 
 			defBody = Return True unapplyRet, defGenerics = Nothing, defPars = [par]}

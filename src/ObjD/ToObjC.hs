@@ -65,14 +65,17 @@ stmToInterface (cl@D.Class {D.className = name, D.classDefs = defs}) =
 		C.interfaceName = name,
 		C.interfaceExtends = classExtends cl,
 		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs,
-		C.interfaceFuns = [createFun name constr, initFun constr]
+		C.interfaceFuns = [createFun name constr, initFun constr, typeInstanceFun]
 			++ intefaceFuns defs ++ staticGetters
 	}
 	where 
 		constr = fromMaybe (error "No class constructor") (D.classConstructor cl)
 		staticGetters = (map staticGetterFun .filter (\f -> 
 			(D.DefModPrivate `notElem` D.defMods f) && D.isField f && D.isStatic f)) defs
-		
+
+typeInstanceFun :: C.Fun		
+typeInstanceFun = C.Fun C.InstanceFun (C.TPSimple "ODClassType*" []) "type" []		
+
 classExtends :: D.Class -> C.Extends
 classExtends cl = addTraits $ maybe (C.Extends "NSObject" []) ext (D.extendsClass $ D.classExtends cl)
 	where
@@ -166,8 +169,8 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
 		C.implName = clsName,
 		C.implFields = map (implField env) implFields,
 		C.implSynthesizes = (map (synthesize env) . filter needProperty) implFields,
-		C.implFuns = nub $ [implCreate cl constr, implInit env constr] ++ maybeToList (implInitialize env) ++ dealoc env 
-			++ implFuns env defs ++ staticGetters ++ copyImpls ++ (if equalsIsPosible cl then [equal, hash] else []) ++ [description],
+		C.implFuns = nub $ [implCreate cl constr, implInit env constr, implInitialize env] ++ dealoc env 
+			++ implFuns env defs ++ [instanceType] ++ staticGetters ++ copyImpls ++ (if equalsIsPosible cl then [equal, hash] else []) ++ [description],
 		C.implStaticFields = map (implField env) staticFields
 	}
 	where
@@ -220,11 +223,15 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
  			(descriptionFun descStart equalFields)
  		descStart = C.Call (C.Ref "NSMutableString") "stringWith" [("format", C.StringConst "<%@: ")] 
 			[C.CCall (C.Ref "NSStringFromClass") [C.Call C.Self "class" [] []]]
+		instanceType = C.ImplFun typeInstanceFun [C.Return $ C.Call (C.Ref clsName) "type" [] []]
 
 fieldName :: Env -> D.Def -> String
 fieldName env def 
-	| D.DefModStatic `elem` D.defMods def =  '_' : D.className (envClass env) ++ "_" ++ D.defName def
+	| D.DefModStatic `elem` D.defMods def =  staticName env $ D.defName def
 	| otherwise = '_' : D.defName def
+
+staticName :: Env -> String -> String
+staticName env name = '_' : D.className (envClass env) ++ "_" ++ name
 
 
 equalPrelude :: String -> Bool -> [C.Stm]
@@ -285,15 +292,15 @@ dealoc env@Env{envClass = cl}
 		releaseField d@D.Def{D.defType = D.TPClass{}} = Just $ C.Stm $ C.Call (C.Ref $ fieldName env d) "release" [] []
 		releaseField _ = Nothing
 
-implInitialize :: Env -> Maybe C.ImplFun 		
+implInitialize :: Env ->  C.ImplFun 		
 implInitialize env@Env{envClass = cl} = let 
 	fields = filter hasInitialize (D.classFields cl)
 	hasInitialize D.Def{D.defBody = D.Nop} = False
 	hasInitialize d@D.Def{D.defBody = b} = not (D.isConst b) && D.isField d && D.isStatic d
-	in case fields of
-		[] -> Nothing
-		_ -> Just $ C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
-			((C.Stm $ C.Call C.Super "initialize" [] []) : map (implInitField env) fields))
+	typeInit = C.Set Nothing (C.Ref $ staticName env "type") $ 
+		C.Call (C.Ref "ODClassType") "classTypeWith" [("cls", C.Call (C.Ref $ D.className cl) "class" [] [])] []
+	in C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
+			((C.Stm $ C.Call C.Super "initialize" [] []) : typeInit : map (implInitField env) fields))
 
 
 
@@ -334,12 +341,13 @@ implFuns env = map stm2ImplFun . filter D.isDef
 		
 {- Struct -}
 genStruct :: D.Class -> ([C.FileStm], [C.FileStm])
-genStruct cl@D.Class {D.className = name, D.classDefs = defs} = 
+genStruct cl@D.Class {D.className = name, D.classDefs = clDefs} = 
 	([C.Struct name fields', con, eq, hash, description] ++ defs' ++ [wrapClass, C.EmptyLine], 
-		(map defImpl' . filter D.isDef) defs ++ [wrapImpl, C.EmptyLine])
+		map defImpl' defs ++ [wrapImpl, C.EmptyLine])
 	where
+		defs = filter D.isDef clDefs
 		env = Env cl False D.TPVoid
-		fields = filter D.isField defs
+		fields = filter (\d -> not (D.isStatic d) && D.isField d) clDefs
 		fields' = map toField fields
 		toField D.Def{D.defName = n, D.defType = tp, D.defMods = mods} = C.ImplField n (showDataType tp) ["__weak" | D.DefModWeak `elem` mods] C.Nop
 		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple name [], 
@@ -365,7 +373,7 @@ genStruct cl@D.Class {D.className = name, D.classDefs = defs} =
 		toSet D.Def{D.defName = n, D.defType = tp@D.TPEArr{}} = C.Stm $ eArraySet (C.Dot (C.Ref "ret") (C.Ref n)) (C.Ref n) tp
 		toSet D.Def{D.defName = n} = C.Set Nothing (C.Dot (C.Ref "ret") (C.Ref n)) (C.Ref n)
 		
-		defs' = (map def' . filter D.isDef) defs
+		defs' = map def' defs
 		def' D.Def{D.defName = n, D.defType = tp, D.defPars = pars, D.defMods = mods} = C.CFunDecl{C.cfunMods = [], 
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
 			C.cfunPars =  if D.DefModStatic `notElem` mods then C.CFunPar (C.TPSimple name []) "self" : pars' else pars'}
