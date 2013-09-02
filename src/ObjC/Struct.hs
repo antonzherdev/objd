@@ -1,5 +1,5 @@
 module ObjC.Struct ( Property(..), PropertyModifier(..),FileStm(..), ImplSynthesize(..), ImplFun(..), Fun(..), FunType(..), FunPar(..),
-  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..), DataType(..), Extends(..)
+  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..), DataType(..), Extends(..), tp
 ) where
 
 import           Ex.String
@@ -47,6 +47,8 @@ data CFunMod = CFunStatic | CFunInline
 {- EXPRESSIONS -}
 
 data DataType = TPSimple String [String]| TPBlock DataType [DataType] | TPArr Int String 
+tp :: String -> DataType
+tp name = TPSimple name []
 
 data Stm =
 	If Exp [Stm] [Stm]
@@ -89,6 +91,7 @@ data Exp =
 	| ShortCast DataType Exp
 	| EArrConst String [Exp]
 	| ProtocolRef Exp
+	| GetPointer Exp
 
 showStms :: [Stm] -> String
 showStms = unlines . stms
@@ -110,9 +113,9 @@ instance Show DataType where
 	show (TPBlock d t) = show d ++ "(^)" ++ "(" ++ strs' ", " t ++ ")"
 
 showDecl ::  DataType -> String ->String
-showDecl (TPArr 0 tp) name = tp ++ " " ++ name ++ "[]"
-showDecl (TPArr n tp) name = tp ++ " " ++ name ++ "[" ++ show n ++ "]"
-showDecl tp@TPSimple{} name = show tp ++ " " ++ name
+showDecl (TPArr 0 tpp) name = tpp ++ " " ++ name ++ "[]"
+showDecl (TPArr n tpp) name = tpp ++ " " ++ name ++ "[" ++ show n ++ "]"
+showDecl tpp@TPSimple{} name = show tpp ++ " " ++ name
 showDecl (TPBlock d t) name = show d ++ "(^" ++ name ++ ")" ++ "(" ++ strs' ", " t ++ ")"
 
 instance Show FileStm where
@@ -154,15 +157,15 @@ instance Show FileStm where
 		showSynthenize (ImplSynthesize name "") = "@synthesize " ++ name ++ ";"
 		showSynthenize (ImplSynthesize name var) = "@synthesize " ++ name ++ " = " ++ var ++ ";"
 		showImplFuns = unlines . map show
-		showStField (ImplField nm tp mods Nop) = "static " ++  (strs " " mods) `tryCon` " " ++ showDecl tp nm ++  ";"
-		showStField (ImplField nm tp mods e) = strs "\n" $ ["static " ++  (strs " " mods) `tryCon` " " ++ showDecl tp nm ++ " = "] `glue` (expLines e `app` ";")
+		showStField (ImplField nm tpp mods Nop) = "static " ++  (strs " " mods) `tryCon` " " ++ showDecl tpp nm ++  ";"
+		showStField (ImplField nm tpp mods e) = strs "\n" $ ["static " ++  (strs " " mods) `tryCon` " " ++ showDecl tpp nm ++ " = "] `glue` (expLines e `app` ";")
 	show (ClassDecl name) = "@class " ++ name ++ ";"
 	show (ProtocolDecl name) = "@protocol " ++ name ++ ";"
 instance Show Extends where
 	show (Extends cl []) = cl
 	show (Extends cl a) = cl ++ "<" ++ strs ", " a ++ ">"
 instance Show ImplField where
-	show(ImplField name tp mods _) = (strs " " mods) `tryCon` " " ++ showDecl tp (kw name) ++ ";"
+	show(ImplField name tpp mods _) = (strs " " mods) `tryCon` " " ++ showDecl tpp (kw name) ++ ";"
 instance Show CFunMod where
 	show CFunStatic = "static"
 	show CFunInline = "inline"
@@ -175,17 +178,17 @@ instance Show ImplFun where
 		++ showStms exps
 		++ "}\n"
 instance Show Fun where
-	show (Fun tp ret name pars) =
-		show tp ++ " (" ++ show ret ++ ")" ++ kw name ++ cap  (strs' " " pars)
+	show (Fun tpp ret name pars) =
+		show tpp ++ " (" ++ show ret ++ ")" ++ kw name ++ cap  (strs' " " pars)
 instance Show FunPar where
- 	show (FunPar name tp var) = kw name ++ ":(" ++ show tp ++ ")" ++ kw var
+ 	show (FunPar name tpp var) = kw name ++ ":(" ++ show tpp ++ ")" ++ kw var
 instance Show FunType where
 	show InstanceFun = "-"
 	show ObjectFun = "+"
 
 
 instance Show Property where
-	show (Property name tp mods) = "@property (" ++ strs' ", " mods ++ ") " ++ showDecl tp (kw name) ++ ";"
+	show (Property name tpp mods) = "@property (" ++ strs' ", " mods ++ ") " ++ showDecl tpp (kw name) ++ ";"
 
 
 instance Show PropertyModifier where
@@ -236,13 +239,13 @@ stmLines (If cond [t] [f]) = (["if(" ++ show cond ++ ") " ] `glue` stmLines t) +
 stmLines i@If{} = multiLineIf i
 
 stmLines (Set Nothing l r) = (expLines l `app` " = ") `glue` (expLines r `app` ";")
-stmLines (Set (Just tp) l r) = (expLines l `app` (" " ++ show tp ++ "= ")) `glue` (expLines r `app` ";")
+stmLines (Set (Just tpp) l r) = (expLines l `app` (" " ++ show tpp ++ "= ")) `glue` (expLines r `app` ";")
 stmLines (Stm Nop) = [""]
 stmLines (Stm e) = appendLast ";" $ expLines e
 stmLines (Return e) = ["return "] `glue` (expLines e `app` ";")
 stmLines (Throw e) = ["@throw "] `glue` (expLines e `app` ";")
-stmLines (Var tp name Nop mods) = [(unwords . map (++ " ")) mods ++ showDecl tp name ++ ";"]
-stmLines (Var tp name e mods) = [(unwords . map (++ " ")) mods ++ showDecl tp name ++ " = "] `glue` (expLines e `app` ";")
+stmLines (Var tpp name Nop mods) = [(unwords . map (++ " ")) mods ++ showDecl tpp name ++ ";"]
+stmLines (Var tpp name e mods) = [(unwords . map (++ " ")) mods ++ showDecl tpp name ++ " = "] `glue` (expLines e `app` ";")
 stmLines (Break) = ["break;"]
 
 expLines :: Exp -> [String]
@@ -298,11 +301,12 @@ expLines (EArrConst name e) = ["[ " ++ name ++ "(" ++ show (length e) ++ ") {" +
 expLines (Map e) = ["(@{" ++ (strs ", " . map(\(k, v) -> show k ++ " : " ++ show v) ) e ++ "})"]
 expLines (ObjCConst e) = ["@" ++ show e]
 expLines (Lambda pars e rtp) = ["^" ++ show rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]
-	where showPar(name, tp) = showDecl tp (kw name)
+	where showPar(name, tpp) = showDecl tpp (kw name)
 expLines (Not e) = ["!("] `glue` (expLines e `app` ")")
 expLines (Negative e) = ["-"] `glue` expLines e
-expLines (Cast tp e) =  ["((" ++ show tp ++ ")("] `glue` (expLines e `app` "))")
-expLines (ShortCast tp e) =  ["(" ++ show tp ++ ")"] `glue` expLines e
+expLines (Cast tpp e) =  ["((" ++ show tpp ++ ")("] `glue` (expLines e `app` "))")
+expLines (ShortCast tpp e) =  ["(" ++ show tpp ++ ")"] `glue` expLines e
 expLines (ProtocolRef e) =  ["@protocol(" ++ show e ++ ")"]
+expLines (GetPointer e) =  ["&(" ++ show e ++ ")"]
 expLines (Error s) = ["<#ERROR: "] `glue` (lines s `app` "#>")
 expLines Nop = []

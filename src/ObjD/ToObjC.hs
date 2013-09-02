@@ -342,12 +342,13 @@ implFuns env = map stm2ImplFun . filter D.isDef
 {- Struct -}
 genStruct :: D.Class -> ([C.FileStm], [C.FileStm])
 genStruct cl@D.Class {D.className = name, D.classDefs = clDefs} = 
-	([C.Struct name fields', con, eq, hash, description] ++ defs' ++ [wrapClass, C.EmptyLine], 
-		map defImpl' defs ++ [wrapImpl, C.EmptyLine])
+	([C.Struct name fields', con, eq, hash, description] ++ map def' defs ++  map def' staticFields ++ [wrapClass, C.EmptyLine], 
+		map defImpl' defs ++ map staticFieldImpl' staticFields ++ [wrapImpl, C.EmptyLine])
 	where
 		defs = filter D.isDef clDefs
 		env = Env cl False D.TPVoid
 		fields = filter (\d -> not (D.isStatic d) && D.isField d) clDefs
+		staticFields = filter (\d -> (D.isStatic d) && D.isField d) clDefs
 		fields' = map toField fields
 		toField D.Def{D.defName = n, D.defType = tp, D.defMods = mods} = C.ImplField n (showDataType tp) ["__weak" | D.DefModWeak `elem` mods] C.Nop
 		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple name [], 
@@ -373,7 +374,6 @@ genStruct cl@D.Class {D.className = name, D.classDefs = clDefs} =
 		toSet D.Def{D.defName = n, D.defType = tp@D.TPEArr{}} = C.Stm $ eArraySet (C.Dot (C.Ref "ret") (C.Ref n)) (C.Ref n) tp
 		toSet D.Def{D.defName = n} = C.Set Nothing (C.Dot (C.Ref "ret") (C.Ref n)) (C.Ref n)
 		
-		defs' = map def' defs
 		def' D.Def{D.defName = n, D.defType = tp, D.defPars = pars, D.defMods = mods} = C.CFunDecl{C.cfunMods = [], 
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
 			C.cfunPars =  if D.DefModStatic `notElem` mods then C.CFunPar (C.TPSimple name []) "self" : pars' else pars'}
@@ -396,6 +396,27 @@ genStruct cl@D.Class {D.className = name, D.classDefs = clDefs} =
 			where
 				pars' = map par' pars
 				par' D.Def{D.defName = nn, D.defType = tpp} = C.CFunPar (showDataType tpp) nn
+		staticFieldImpl' D.Def{D.defName = n, D.defType = tp, D.defBody = e} = C.CFun{C.cfunMods = [], 
+			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
+			C.cfunPars = [],
+			C.cfunExps = 
+				[C.Var{C.varType = showDataType tp, C.varName = "_ret", C.varExp = C.Nil, C.varMods = ["static"]},
+				 C.If (C.BoolOp Eq (C.Ref "_ret") C.Nil) [
+				 	C.Set Nothing (C.Ref "_ret") $ buildExp n e
+				 ] [],
+				 C.Return $ C.Ref "_ret"
+				]
+			}
+			where
+				buildExp "type" D.Nop = C.Call (C.Ref "ODPType") "typeWith" [
+					("cls", C.Call (C.Ref wrapName) "class" [] []),
+					("name", C.StringConst name),
+					("size", C.CCall (C.Ref "sizeof") [C.Ref name]),
+					("wrap", C.Lambda [("data", C.tp "void*"), ("i", C.tp "NSUInteger")] [
+						C.Return $ C.CCall (C.Ref "wrap") [C.Ref name, C.Index (C.Cast (C.tp $ name ++ "*") $ C.Ref "data") (C.Ref "i")]
+						] idTp)
+					] []
+				buildExp _ ee = tExpTo env tp ee
 		wrapImpl = C.Implementation {
 			C.implName = wrapName,
 			C.implFields = [C.ImplField "_value" selfTp [] C.Nop],
@@ -473,6 +494,7 @@ stringFormatForType (D.TPNumber _ 0) = "%li"
 stringFormatForType (D.TPNumber _ _)= "%d"
 stringFormatForType (D.TPFloatNumber _) = "%f"
 stringFormatForType D.TPBool = "%d"
+stringFormatForType D.TPVoidRef = "%p"
 stringFormatForType (D.TPEArr n tp)  = "[" ++ strs ", " (replicate n (stringFormatForType tp)) ++ "]"
 stringFormatForType _ = "%@"
 
@@ -678,8 +700,12 @@ tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name}
 	| otherwise = C.Call C.Self name (tPars env pars) []
 tExp env d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModApplyLambda `elem` mods = C.CCall (tExp env l) ((map snd . tPars env) pars) 
-	| D.DefModField `elem` mods && null pars = castGeneric d $ C.Dot (tExpTo env ltp l) (C.Ref name)
-	| D.DefModField `elem` mods = castGeneric d $ C.Dot (tExpTo env ltp l) $ C.CCall (C.Ref name) ((map snd . tPars env) pars)
+	| D.DefModField `elem` mods && null pars && 
+		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
+			castGeneric d $ C.Dot (tExpTo env ltp l) (C.Ref name)
+	| D.DefModField `elem` mods && 
+		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
+			castGeneric d $ C.Dot (tExpTo env ltp l) $ C.CCall (C.Ref name) ((map snd . tPars env) pars)
 	| D.DefModConstructor `elem` mods = callConstructor env (D.exprDataType d) pars
 	| D.DefModStruct `elem` mods = case ltp  of
 		(D.TPClass D.TPMStruct _ c) -> structCall (D.className c) (tExpTo env ltp l)
@@ -745,7 +771,9 @@ tExp env (D.Cast dtp e) = let
 		stp = D.exprDataType e
 		stp' = D.unwrapGeneric stp
 		toString format = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] [tExpTo env stp e]
-		cast = C.Cast (showDataType dtp) (tExpTo env stp' e)
+		cast = C.Cast (showDataType dtp) e'
+		e' = (tExpTo env stp' e)
+		voidRefStructCast = C.CCall (C.Ref "voidRef") [e']
 	in case (stp', D.unwrapGeneric dtp) of
 		(D.TPNumber{}, D.TPString) -> toString $ stringFormatForType stp
 		(D.TPFloatNumber{}, D.TPString) -> toString $ stringFormatForType stp
@@ -759,6 +787,13 @@ tExp env (D.Cast dtp e) = let
 			case e of
 				D.Arr exps -> C.EArrConst ("arr" ++ (dataTypeSuffix etp)) $ map (tExp env) exps
 				_ -> error $ "Could not convert to EArr " ++ show e
+		(D.TPNumber{}, D.TPVoidRef) -> voidRefStructCast
+		(D.TPFloatNumber{}, D.TPVoidRef) -> voidRefStructCast
+		(D.TPClass D.TPMStruct _ _, D.TPVoidRef) -> voidRefStructCast
+		(D.TPArr _ etp, D.TPVoidRef) ->
+			case e of
+				D.Arr exps -> C.Cast (C.TPArr 0 $ show $ showDataType $ D.unwrapGeneric etp) $ C.EArr $ map (tExp env) exps
+				_ -> cast
 		_ -> cast 
 
 tExp env (D.StringBuild pars lastString) = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] pars'

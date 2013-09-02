@@ -442,7 +442,7 @@ linkClass (ocidx, glidx) cl = self
 				parConstructor' = replaceGenericsInDef parGenerics parConstructor
 
 		typeField :: Def 
-		typeField = Def{defMods = [DefModField, DefModStatic, DefModSpecial], defName = "type", defType = TPClass TPMType [selfType] (classFind cidx typeName), 
+		typeField = Def{defMods = [DefModField, DefModStatic, DefModSpecial] ++ [DefModStruct | selfIsStruct], defName = "type", defType = TPClass TPMType [selfType] (classFind cidx typeName), 
 			defBody = Nop, 
 			defGenerics = Nothing, defPars = []}
 			where 
@@ -576,7 +576,7 @@ data DataType = TPNumber Bool Int | TPFloatNumber Int | TPString | TPVoid
 	| TPArr Int DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown String 
 	| TPMap DataType DataType
 	| TPOption DataType | TPGenericWrap DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
-	| TPAnyGeneric
+	| TPAnyGeneric | TPVoidRef
 	deriving (Eq)
 data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric | TPMType deriving (Eq)
 
@@ -751,6 +751,7 @@ dataType cidx (D.DataType name gens) = case name of
 	"string" -> TPString
 	"bool" -> TPBool
 	"self" -> TPSelf
+	"VoidRef" -> TPVoidRef
 	"_" -> TPAnyGeneric
 	_ -> maybe (TPUnknown $ "No class found " ++ name) (\cl -> refDataType cl (map (wrapGeneric . dataType cidx) gens)) (idxFind cidx name)
 dataType cidx (D.DataTypeArr m tp) = case tp' of
@@ -792,6 +793,7 @@ instance Show DataType where
 	show TPThrow = "throw"
 	show TPAnyGeneric = "_"
 	show TPData = "[void]"
+	show TPVoidRef = "VoidRef"
 	show (TPUnknown s) = s
 	show (TPClass t [] c) = className c ++ show t
 	show (TPObject t c) = className c ++ show t ++ ".class"
@@ -1543,7 +1545,7 @@ implicitConvertsion :: DataType -> Exp -> Exp
 implicitConvertsion (TPMap _ _) (Arr []) = Map []
 implicitConvertsion _ Nop = Nop
 implicitConvertsion dtp ex = let stp = exprDataType ex
-	in conv stp dtp
+	in if stp == dtp then ex else conv stp dtp
 	where 
 		conv (TPGenericWrap s) d = conv s d
 		conv s (TPGenericWrap d) = conv s d
@@ -1568,6 +1570,7 @@ implicitConvertsion dtp ex = let stp = exprDataType ex
 			Arr exps -> Arr $ map (implicitConvertsion adtp) exps
 			_ -> ex
 		conv (TPArr _ _) (TPClass _ [d] Class{className = "CNPArray"}) = Cast (TPEArr 0 (unwrapGeneric d)) ex
+		conv TPClass{} TPVoidRef = Cast dtp ex
 		conv sc dc@TPClass{} = if sc /= dc then classConversion dc sc ex else ex
 		conv _ _ = ex
 
