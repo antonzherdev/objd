@@ -572,7 +572,7 @@ classFind cidx name = fromMaybe (classError name ("Class " ++ name ++ " not foun
 
 data DataType = TPNumber Bool Int | TPFloatNumber Int | TPString | TPVoid 
 	| TPClass {tpMod :: DataTypeMod, tpGenerics :: [DataType], tpClass :: Class}
-	| TPEArr Int DataType | TPData
+	| TPEArr Int DataType | TPAny
 	| TPArr Int DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown String 
 	| TPMap DataType DataType
 	| TPOption DataType | TPGenericWrap DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
@@ -678,6 +678,7 @@ dataTypeClass env (TPNumber True 8) = classFind (envIndex env) "ODUInt8"
 dataTypeClass env (TPFloatNumber 4) = classFind (envIndex env) "ODFloat4"
 dataTypeClass env (TPFloatNumber 8) = classFind (envIndex env) "ODFloat8"
 dataTypeClass env (TPFloatNumber 0) = classFind (envIndex env) "ODFloat"
+dataTypeClass env TPAny = classFind (envIndex env) "ODAny"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("CNTuple" ++ show (length a))
 dataTypeClass _ (TPFun stp dtp) = Class { classMods = [], className = "", classExtends = extendsNothing, 
 	classDefs = [apply], classGenerics = []}
@@ -696,6 +697,7 @@ dataTypeClassName (TPGenericWrap c) = dataTypeClassName c
 dataTypeClassName (TPArr _ _) = "CNArray"
 dataTypeClassName (TPOption _) = "CNOption"
 dataTypeClassName (TPMap _ _) = "CNMap"
+dataTypeClassName TPAny = "ODAny"
 dataTypeClassName (TPTuple [_, _]) = "CNTuple"
 dataTypeClassName (TPTuple a) = "CNTuple" ++ show (length a)
 dataTypeClassName x = error ("No dataTypeClassName for " ++ show x)
@@ -752,6 +754,7 @@ dataType cidx (D.DataType name gens) = case name of
 	"bool" -> TPBool
 	"self" -> TPSelf
 	"VoidRef" -> TPVoidRef
+	"any" -> TPAny
 	"_" -> TPAnyGeneric
 	_ -> maybe (TPUnknown $ "No class found " ++ name) (\cl -> refDataType cl (map (wrapGeneric . dataType cidx) gens)) (idxFind cidx name)
 dataType cidx (D.DataTypeArr m tp) = case tp' of
@@ -792,8 +795,8 @@ instance Show DataType where
 	show TPNil = "nil"
 	show TPThrow = "throw"
 	show TPAnyGeneric = "_"
-	show TPData = "[void]"
 	show TPVoidRef = "VoidRef"
+	show TPAny = "any"
 	show (TPUnknown s) = s
 	show (TPClass t [] c) = className c ++ show t
 	show (TPObject t c) = className c ++ show t ++ ".class"

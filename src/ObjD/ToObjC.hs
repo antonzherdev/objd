@@ -614,6 +614,7 @@ showDataType (D.TPFloatNumber 8) = C.TPSimple "double" []
 showDataType (D.TPFloatNumber 0) = C.TPSimple "CGFloat" []
 showDataType D.TPString = C.TPSimple "NSString*" []
 showDataType D.TPBool = C.TPSimple "BOOL" []
+showDataType D.TPAny = idTp
 showDataType (D.TPClass D.TPMStruct _ c) = C.TPSimple (D.className c) []
 showDataType tp@(D.TPClass D.TPMType _ _) = showDataType $ fromMaybe (error "Not found super type for type") $ D.superType tp
 showDataType (D.TPClass D.TPMClass _ c) 
@@ -633,7 +634,6 @@ showDataType (D.TPGenericWrap D.TPNumber{}) = idTp
 showDataType (D.TPGenericWrap D.TPFloatNumber{}) = idTp
 showDataType (D.TPGenericWrap D.TPBool) = idTp
 showDataType (D.TPGenericWrap c) = showDataType c
-showDataType D.TPData = C.TPSimple "void*" []
 showDataType tp = C.TPSimple (show tp) []
 
 {- Exp -}
