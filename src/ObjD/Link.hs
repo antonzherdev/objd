@@ -216,6 +216,9 @@ isInstanceOfTp :: Env -> DataType -> DataType -> Bool
 isInstanceOfTp env target cl 
 	| target == cl = True
 	| otherwise = isInstanceOf (dataTypeClass env target) (dataTypeClass env cl)
+
+findDefWithName :: String -> Class -> Maybe Def
+findDefWithName name cl = find ((name ==) . defName) $ classDefs cl
 	
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - Def 
@@ -247,7 +250,7 @@ eqPar (x, y) = defName x == defName y
 
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate  | DefModGlobalVal | DefModWeak
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
-	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper deriving (Eq, Ord)
+	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper | DefModInline deriving (Eq, Ord)
 instance Show DefMod where
 	show DefModStatic = "static"
 	show DefModMutable = "var"
@@ -264,6 +267,7 @@ instance Show DefMod where
 	show DefModDef = "def"
 	show DefModSpecial = "special"
 	show DefModStruct = "struct"
+	show DefModInline = "inline"
 data DefGenerics = DefGenerics{defGenericsClasses :: [Class], defGenericsSelfType :: DataType}
 
 data CImport = CImportLib String | CImportUser String
@@ -312,6 +316,7 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModStruct = 's'
 		ch DefModApplyLambda = 'd'
 		ch DefModSuper = 'r'
+		ch DefModInline = 'i'
 
 
 dataTypePars :: DataType -> [Def]
@@ -346,7 +351,7 @@ linkFile fidx (D.File name package stms) = fl
 		visibleFiles :: [D.FileStm] -> [File]
 		visibleFiles = mapMaybe (getFile . D.impString) . filter D.isImport
 		kernelFiles :: [File]
-		kernelFiles = mapMaybe (idxFind fidx) ["ODEnum", "ODObject", "CNTuple", "CNOption", "CNList", "CNMap", "CNSeq", "CNData", "ODType"]
+		kernelFiles = mapMaybe (idxFind fidx) ["ODEnum", "ODObject", "CNTuple", "CNOption", "CNList", "CNMap", "CNSeq", "CNData", "ODType", "ODLazy"]
 		cImports = mapMaybe toCImport stms
 		toCImport (D.Import s D.ImportTypeCUser) = Just $ CImportUser s
 		toCImport (D.Import s D.ImportTypeCLib) = Just $ CImportLib s
@@ -410,7 +415,7 @@ linkClass (ocidx, glidx) cl = self
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
 			_ -> False
 
-		fields =  mapM (evalState . linkField selfIsStruct) (filter (D.isStatic) decls) staticEnv ++
+		fields =  join $ mapM (evalState . linkField selfIsStruct) (filter (D.isStatic) decls) staticEnv ++
 			mapM (evalState . linkField selfIsStruct) (filter (not . D.isStatic) decls) env
 		decls = filter (not . containsInSuper) (D.classFields cl) ++ filter D.isDecl (D.classBody cl)
 		containsInSuper D.Def {D.defName = name} =  case superClass self of
@@ -487,7 +492,7 @@ linkExtendsRef env (ecls, gens) = (classFind (envIndex env) ecls, map (dataType 
 linkGeneric :: Env -> D.Generic -> Class
 linkGeneric env (D.Generic name ext) = Generic name [] (maybe (Extends (Just $ baseClassExtends (envIndex env) ) [] ) (linkExtends env []) ext) []
 
-linkField :: Bool -> D.ClassStm -> State Env Def
+linkField :: Bool -> D.ClassStm -> State Env [Def]
 linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
 	i <- expr e
 	env <- get
@@ -497,9 +502,22 @@ linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.de
 				TPArr n atp -> TPEArr n $ unwrapGeneric atp 
 				_ -> tp' 
 			else tp'
-		in return Def{defMods = 
+		def = Def{defMods = 
 			DefModField : translateMods mods ++ [DefModStruct | str], defName = name, defType = tp'', 
 			defBody = implicitConvertsion env tp'' i, defGenerics = Nothing, defPars = []}
+		isLazy = D.DefModLazy `elem` mods
+		lazyClass = classFind (envIndex env) "ODLazy"
+		lazyGet = fromJust $ findDefWithName "get" lazyClass
+		lazyConstr = fromJust $ classConstructor lazyClass
+		lazyTp = TPClass TPMClass [wrapGeneric tp''] lazyClass
+		defLazy = Def{defMods = [DefModField, DefModPrivate], defName = "_lazy_" ++ name, 
+			defType = lazyTp, 
+			defBody = Dot (callRef (objectDef lazyClass)) (Call lazyConstr lazyTp [(head $ defPars lazyConstr, Lambda [] (Return True i) tp'')]), 
+			defGenerics = Nothing, defPars = []}
+		defLazyGet = Def{defMods = DefModInline : DefModDef : translateMods mods, defName = name, 
+			defType = tp'', 
+			defBody = Return True $ Dot (callRef defLazy) (Call lazyGet tp'' []), defGenerics = Nothing, defPars = []}
+		in return $ if isLazy then [defLazyGet, defLazy] else [def]
 
 		
 

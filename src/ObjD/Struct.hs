@@ -53,7 +53,7 @@ stmName :: ClassStm -> String
 stmName (Def _ name _ [] _ _) = name
 stmName (Def _ name _ pars _ _) = name ++ " " ++ unwords (map parName pars)
 
-data DefMod = DefModPrivate | DefModMutable | DefModVal | DefModStatic | DefModWeak | DefModDelegate deriving (Eq)
+data DefMod = DefModPrivate | DefModMutable | DefModVal | DefModStatic | DefModWeak | DefModDelegate | DefModLazy deriving (Eq)
 isDef :: ClassStm -> Bool
 isDef = (DefModVal `notElem`) . defMods
 isDecl :: ClassStm -> Bool
