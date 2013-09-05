@@ -248,7 +248,7 @@ instance Eq Def where
 eqPar :: (Def, Def) -> Bool
 eqPar (x, y) = defName x == defName y
 
-data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate  | DefModGlobalVal | DefModWeak
+data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModProtected | DefModGlobalVal | DefModWeak
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
 	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper | DefModInline deriving (Eq, Ord)
 instance Show DefMod where
@@ -256,6 +256,7 @@ instance Show DefMod where
 	show DefModMutable = "var"
 	show DefModAbstract = "abstract" 
 	show DefModPrivate = "private"
+	show DefModProtected = "protected"
 	show DefModWeak = "weak"
 	show DefModConstructor = "constructor"
 	show DefModStub = "stub"
@@ -303,6 +304,7 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModMutable = 'm'
 		ch DefModAbstract = 'a' 
 		ch DefModPrivate = 'p'
+		ch DefModProtected = 'q'
 		ch DefModWeak = 'w'
 		ch DefModConstructor = 'c'
 		ch DefModStub = 'b'
@@ -351,7 +353,7 @@ linkFile fidx (D.File name package stms) = fl
 		visibleFiles :: [D.FileStm] -> [File]
 		visibleFiles = mapMaybe (getFile . D.impString) . filter D.isImport
 		kernelFiles :: [File]
-		kernelFiles = mapMaybe (idxFind fidx) ["ODEnum", "ODObject", "CNTuple", "CNOption", "CNList", "CNMap", "CNSeq", "CNData", "ODType", "ODLazy"]
+		kernelFiles = mapMaybe (idxFind fidx) ["ODEnum", "ODObject", "CNTuple", "CNOption", "CNList", "CNMap", "CNSeq", "CNData", "ODType", "CNLazy"]
 		cImports = mapMaybe toCImport stms
 		toCImport (D.Import s D.ImportTypeCUser) = Just $ CImportUser s
 		toCImport (D.Import s D.ImportTypeCLib) = Just $ CImportLib s
@@ -506,7 +508,7 @@ linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.de
 			DefModField : translateMods mods ++ [DefModStruct | str], defName = name, defType = tp'', 
 			defBody = implicitConvertsion env tp'' i, defGenerics = Nothing, defPars = []}
 		isLazy = D.DefModLazy `elem` mods
-		lazyClass = classFind (envIndex env) "ODLazy"
+		lazyClass = classFind (envIndex env) "CNLazy"
 		lazyGet = fromJust $ findDefWithName "get" lazyClass
 		lazyConstr = fromJust $ classConstructor lazyClass
 		lazyTp = TPClass TPMClass [wrapGeneric tp''] lazyClass
@@ -527,6 +529,7 @@ translateMods = mapMaybe m
 		m D.DefModStatic = Just DefModStatic
 		m D.DefModMutable = Just DefModMutable
 		m D.DefModPrivate = Just DefModPrivate
+		m D.DefModProtected = Just DefModProtected
 		m D.DefModWeak = Just DefModWeak
 		m _ = Nothing
 		

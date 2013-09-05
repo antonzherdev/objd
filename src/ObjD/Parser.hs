@@ -261,7 +261,8 @@ pDecl' mtf = do
 	
 pMod :: Parser DefMod	
 pMod = do
-	v <- (try(string "private") >> return DefModPrivate) <|> (try(string "static") >> return DefModStatic) 
+	v <- (try(string "private") >> return DefModPrivate) <|> (try(string "protected") >> return DefModProtected)
+		<|> (try(string "static") >> return DefModStatic) 
 		<|> (try(string "weak") >> return DefModWeak) <|> (try(string "delegate") >> return DefModDelegate)
 		<|> (try(string "lazy") >> return DefModLazy)
 	sps1
