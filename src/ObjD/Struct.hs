@@ -1,7 +1,7 @@
 module ObjD.Struct (
 	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, ImportType(..), EnumItem(..), CallPar, DefMod(..), 
 	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), ExtendsRef, ExtendsClass(..), CaseCondition(..), CaseItem,
-	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum, isStatic, isType
+	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum, isStatic, isType, isExport
 ) where
 import           Ex.String
 import 			 Data.Decimal
@@ -14,6 +14,7 @@ instance Show File where
 
 data FileStm =
 	Import {impString :: String, impType :: ImportType }
+	| Export {expString :: String}
 	| Class {classMods :: [ClassMod], className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, classBody :: [ClassStm]
 		, classGenerics :: [Generic] }
 	| StubDef {stubDef :: ClassStm}
@@ -32,6 +33,9 @@ isStub _ = False
 isImport :: FileStm -> Bool
 isImport Import{} = True
 isImport _ = False
+isExport :: FileStm -> Bool
+isExport Export{} = True
+isExport _ = False
 isStubDef :: FileStm -> Bool
 isStubDef (StubDef {}) = True
 isStubDef _ = False
@@ -115,6 +119,7 @@ instance Show FileStm where
 	show (Enum{className = name, classFields = fields, classBody = body}) = "enum " ++ name ++  "(" ++ strs' ", " fields ++ ")" ++ showClassBody body
 	show (Type{className = name, typeDef = (td, _)}) = "type " ++ name ++  " = " ++ td
 	show (StubDef d) = "stub " ++ show d
+	show (Export name) = "export " ++ name
 	show (Import name ImportTypeD) = "import " ++ name
 	show (Import name ImportTypeCLib) = "import <" ++ name ++ ">"
 	show (Import name ImportTypeCUser) = "import \"" ++ name ++ "\""

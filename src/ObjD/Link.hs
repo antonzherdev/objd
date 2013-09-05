@@ -19,8 +19,10 @@ detailedReferenceError :: Bool
 detailedReferenceError = False
 
 type Sources = [File]
-data File = File {fileName :: String, filePackage :: [String], fileImports :: [File], fileCImports :: [CImport]
+data File = File {fileName :: String, filePackage :: [String], fileImports :: [File], fileCImports :: [CImport], fileExports :: [File]
 	, fileClasses :: [Class], globalDefs :: [Def]}
+instance Eq File where
+	File {fileName = a, filePackage = ap} == File {fileName = b, filePackage = bp} = a == b && ap == bp
 
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - CLASS 
@@ -274,7 +276,7 @@ data DefGenerics = DefGenerics{defGenericsClasses :: [Class], defGenericsSelfTyp
 data CImport = CImportLib String | CImportUser String
 
 instance Show File where
-	show (File name _ _ _ classes _) =
+	show (File name _ _ _ _ classes _) =
 		"// " ++ name ++ ".od\n" ++
 		{-((`tryCon` "\n\n" ). strs' "\n") cimps ++
 		((`tryCon` "\n\n") . strs' "\n") imps ++ 
@@ -344,14 +346,17 @@ linkFile :: M.Map String File -> D.File -> File
 linkFile fidx (D.File name package stms) = fl
 	where
 		fl :: File
-		fl = File {fileName = name, fileImports = files, fileCImports = cImports, 
+		fl = File {fileName = name, fileImports = imports, fileCImports = cImports, fileExports = exports,
 			fileClasses =(map (linkClass (cidx, glidx)) . filter isCls) stms, globalDefs = gldefs, filePackage = package}
-		files = visibleFiles stms
 		isCls s = D.isClass s || D.isStub s || D.isEnum s || D.isType s
-		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . (++ kernelFiles) . visibleFiles) stms
-		glidx = concatMap globalDefs (fl : files ++ kernelFiles)
-		visibleFiles :: [D.FileStm] -> [File]
-		visibleFiles = mapMaybe (getFile . D.impString) . filter D.isImport
+		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . (++ kernelFiles) ) imports
+		glidx = concatMap globalDefs (fl : imports ++ kernelFiles)
+		
+		imports = 
+			let local = mapMaybe (getFile . D.impString) . filter D.isImport $ stms
+			in nub $ local ++ exports ++ concatMap fileExports local
+		exports = mapMaybe (getFile . D.expString) . filter D.isExport $ stms
+
 		kernelFiles :: [File]
 		kernelFiles = mapMaybe (idxFind fidx) ["ODEnum", "ODObject", "CNTuple", "CNOption", "CNList", "CNMap", "CNSeq", "CNData", "ODType", "CNLazy"]
 		cImports = mapMaybe toCImport stms
@@ -1023,7 +1028,9 @@ isConst (Arr exps) = all isConst exps
 isConst (Map exps) = all (\(a, b) -> isConst a && isConst b) exps
 isConst (Cast _ e) = isConst e
 isConst (Dot l r) = isConst l && isConst r
-isConst (Call Def {defMods = mods} _ pars) = DefModStruct `elem` mods  &&  DefModConstructor `elem` mods && all (isConst . snd) pars
+isConst (Call Def {defMods = mods} _ pars) = 
+	(DefModStruct `elem` mods  &&  DefModConstructor `elem` mods && all (isConst . snd) pars)
+	|| (DefModObject `elem` mods && null pars)
 isConst (As _) = True
 isConst (Is _) = True
 isConst (CastDot _) = True

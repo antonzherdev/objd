@@ -47,7 +47,7 @@ parseStatement :: String -> Either ParseError FileStm
 parseStatement = parse pStatement "ObjD"
 
 pStatement :: Parser FileStm
-pStatement = pTypeStm <|> pImport <|> pStub <|> pClass <|> pEnum
+pStatement = pTypeStm <|> pImport <|> pExport  <|> pStub <|> pClass <|> pEnum
 
 wsps :: Parser String
 wsps = many (char ' ' <|> char '\t') <?> ""
@@ -267,6 +267,14 @@ pMod = do
 		<|> (try(string "lazy") >> return DefModLazy)
 	sps1
 	return v
+
+pExport :: Parser FileStm
+pExport = do
+	try $ string "export"
+	sps
+	e <- ident
+	sps
+	return $ Export e
 
 pImport :: Parser FileStm
 pImport = do

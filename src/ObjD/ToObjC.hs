@@ -400,12 +400,17 @@ genStruct cl@D.Class {D.className = name, D.classDefs = clDefs} =
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
 			C.cfunPars = [],
 			C.cfunExps = 
-				[C.Var{C.varType = showDataType tp, C.varName = "_ret", C.varExp = C.Nil, C.varMods = ["static"]},
-				 C.If (C.BoolOp Eq (C.Ref "_ret") C.Nil) [
-				 	C.Set Nothing (C.Ref "_ret") $ buildExp n e
-				 ] [],
-				 C.Return $ C.Ref "_ret"
-				]
+				if D.isConst e then 
+					[C.Var{C.varType = showDataType tp, C.varName = "_ret", C.varExp = buildExp n e, C.varMods = ["static"]},
+					 C.Return $ C.Ref "_ret"
+					]
+				else 
+					[C.Var{C.varType = showDataType tp, C.varName = "_ret", C.varExp = C.Nil, C.varMods = ["static"]},
+					 C.If (C.BoolOp Eq (C.Ref "_ret") C.Nil) [
+					 	C.Set Nothing (C.Ref "_ret") $ buildExp n e
+					 ] [],
+					 C.Return $ C.Ref "_ret"
+					]
 			}
 			where
 				buildExp "type" D.Nop = C.Call (C.Ref "ODPType") "typeWith" [
@@ -416,7 +421,7 @@ genStruct cl@D.Class {D.className = name, D.classDefs = clDefs} =
 						C.Return $ C.CCall (C.Ref "wrap") [C.Ref name, C.Index (C.Cast (C.tp $ name ++ "*") $ C.Ref "data") (C.Ref "i")]
 						] idTp)
 					] []
-				buildExp _ ee = tExpTo env tp ee
+				buildExp _ ee = tExpTo env{envCStruct = True} tp ee
 		wrapImpl = C.Implementation {
 			C.implName = wrapName,
 			C.implFields = [C.ImplField "_value" selfTp [] C.Nop],
