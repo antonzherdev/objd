@@ -803,6 +803,15 @@ tExp env (D.StringBuild pars lastString) = C.Call (C.Ref "NSString") "stringWith
 tExp _ e@D.ExpDError{} = C.Error $ show e
 tExp _ e@D.ExpLError{} = C.Error $ show e
 tExp _ D.Nop = C.Nop
+
+tExp _ (D.Braces []) = C.Nop
+tExp env (D.Braces [x]) = tExp env x
+tExp env e@(D.Braces _) = 
+	let 
+		rtp = D.exprDataType e
+		lambda = C.Lambda [] (tStm env{envDataType = rtp} [] e) (showDataType rtp)
+	in C.CCall lambda []
+
 tExp _ x = C.Error $ "No tExp for " ++ show x
 
 tExpToType :: Env -> D.DataType -> D.Exp -> C.Exp

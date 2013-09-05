@@ -1575,7 +1575,10 @@ implicitConvertsion :: Env -> DataType -> Exp -> Exp
 implicitConvertsion _ (TPMap _ _) (Arr []) = Map []
 implicitConvertsion _ _ Nop = Nop
 implicitConvertsion env dtp ex = let stp = exprDataType ex
-	in if stp == dtp then ex else conv stp dtp
+	in 
+		case ex of
+			Braces _ -> maybeAddReturn env dtp ex
+			_ -> if stp == dtp then ex else conv stp dtp
 	where 
 		conv (TPGenericWrap s) d = conv s d
 		conv s (TPGenericWrap d) = conv s d
