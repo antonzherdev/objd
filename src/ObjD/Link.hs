@@ -1031,6 +1031,7 @@ isConst (Dot l r) = isConst l && isConst r
 isConst (Call Def {defMods = mods} _ pars) = 
 	(DefModStruct `elem` mods  &&  DefModConstructor `elem` mods && all (isConst . snd) pars)
 	|| (DefModObject `elem` mods && null pars)
+	|| (DefModStub `elem` mods  &&  DefModGlobalVal `elem` mods)
 isConst (As _) = True
 isConst (Is _) = True
 isConst (CastDot _) = True

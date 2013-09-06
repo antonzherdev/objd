@@ -782,6 +782,9 @@ tExp env (D.Cast dtp e) = let
 	in case (stp', D.unwrapGeneric dtp) of
 		(D.TPNumber{}, D.TPString) -> toString $ stringFormatForType stp
 		(D.TPFloatNumber{}, D.TPString) -> toString $ stringFormatForType stp
+		(D.TPFloatNumber{}, D.TPFloatNumber{}) -> case e of
+			D.FloatConst n -> C.FloatConst n
+			_ -> cast
 		(D.TPNumber{}, D.TPFloatNumber{}) -> case e of
 			D.IntConst n -> C.FloatConst $ read $ show n ++ ".0"
 			_ -> cast
