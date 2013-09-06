@@ -353,7 +353,7 @@ genStruct cl@D.Class {D.className = name, D.classDefs = clDefs} =
 		toField D.Def{D.defName = n, D.defType = tp, D.defMods = mods} = C.ImplField n (showDataType tp) ["__weak" | D.DefModWeak `elem` mods] C.Nop
 		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple name [], 
 			C.cfunName = name ++ "Make", C.cfunPars = map toPar fields, C.cfunExps = 
-				[C.Return $ C.ShortCast selfTp $ C.EArr $ map (C.Ref . D.defName) fields]
+				[C.Return $ C.ShortCast selfTp $ C.EArr $ map toEArr fields]
 		}
 		eq = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple "BOOL" [], C.cfunName = name ++ "Eq", 
 			C.cfunPars = [C.CFunPar (C.TPSimple name []) "s1", C.CFunPar (C.TPSimple name []) "s2"], 
@@ -447,6 +447,9 @@ genStruct cl@D.Class {D.className = name, D.classDefs = clDefs} =
 		compareImpl = fmap (\d -> C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSInteger" []) "compare" [C.FunPar "to" selfWrapTp "to"]) [
 			C.Return $ C.CCall (C.Ref $ structDefName name d) [C.Ref "_value", C.Dot (C.Ref "to") (C.Ref "value")]
 			]) compareFun
+		toEArr D.Def{D.defType = D.TPEArr n _, D.defName = nm}
+			| n > 0 = C.EArr $ map ( C.Index (C.Ref nm) . C.IntConst) [0 .. n - 1]
+		toEArr d = C.Ref . D.defName  $ d
 
 
 equalsFun :: C.Exp -> C.Exp -> [D.Def] -> [C.Stm]
@@ -512,13 +515,13 @@ descriptionFun start fields =
 		append :: Int -> D.Def -> (Int, C.Stm)
 		append i D.Def{D.defName = nm, D.defType = tp} = (i + 1, C.Stm $ C.Call (C.Ref "description") "append" 
 			[("format", C.StringConst $ (if i > 0 then ", " else "") ++ nm ++ "="  ++ stringFormatForType tp)]
-			(case tp of
-				D.TPClass D.TPMStruct _ scl -> [C.CCall (C.Ref $ D.className scl ++ "Description") [ref]]
-				D.TPEArr n _ -> map (\j -> C.Index ref (C.IntConst j)) [0..n - 1]
-				_ -> [ref]
-				))
+			(expressionForTp tp $ C.Dot C.Self (C.Ref nm)) )
 			where
-				ref = C.Dot C.Self (C.Ref nm)
+				expressionForTp rtp ref= (case rtp of
+					D.TPClass D.TPMStruct _ scl -> [C.CCall (C.Ref $ D.className scl ++ "Description") [ref]]
+					D.TPEArr n etp -> concatMap (\j -> expressionForTp etp $ C.Index ref (C.IntConst j)) [0..n - 1]
+					_ -> [ref]
+					)
 		
 		
 
@@ -775,6 +778,7 @@ tExp env (D.Cast dtp e) = let
 		cast = C.Cast (showDataType dtp) e'
 		e' = (tExpTo env stp' e)
 		voidRefStructCast = C.CCall (C.Ref "voidRef") [e']
+		ear etp exps = C.ShortCast (C.TPArr 0 $ show $ showDataType $ D.unwrapGeneric etp) $ C.EArr $ map (tExp env) exps
 	in case (stp', D.unwrapGeneric dtp) of
 		(D.TPNumber{}, D.TPString) -> toString $ stringFormatForType stp
 		(D.TPFloatNumber{}, D.TPString) -> toString $ stringFormatForType stp
@@ -790,16 +794,16 @@ tExp env (D.Cast dtp e) = let
 					D.TPClass{} -> C.EArrConst "arrs" (show $ showDataType etp) $ map (tExp env) exps
 					_ -> C.EArrConst ("arr" ++ (dataTypeSuffix etp)) "" $ map (tExp env) exps
 				_ -> error $ "Could not convert to EArr " ++ show e
-		(D.TPArr{}, D.TPEArr _ _) -> 
+		(D.TPArr{}, D.TPEArr _ etp) -> 
 			case e of
-				D.Arr exps -> C.EArr $ map (tExp env) exps
+				D.Arr exps -> ear etp exps
 				_ -> error $ "Could not convert to EArr " ++ show e
 		(D.TPNumber{}, D.TPVoidRef) -> voidRefStructCast
 		(D.TPFloatNumber{}, D.TPVoidRef) -> voidRefStructCast
 		(D.TPClass D.TPMStruct _ _, D.TPVoidRef) -> voidRefStructCast
 		(D.TPArr _ etp, D.TPVoidRef) ->
 			case e of
-				D.Arr exps -> C.Cast (C.TPArr 0 $ show $ showDataType $ D.unwrapGeneric etp) $ C.EArr $ map (tExp env) exps
+				D.Arr exps -> ear etp exps
 				_ -> cast
 		_ -> cast 
 
@@ -892,6 +896,7 @@ equals True (D.TPFloatNumber 8, e1) (_, e2) = C.CCall (C.Ref "eqf8") [e1, e2]
 equals True (D.TPNumber{}, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPBool, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPNil, e1) (_, e2) = C.BoolOp Eq e1 e2
+equals True (D.TPEArr _ _, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (_, e1) (D.TPNil, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPClass D.TPMClass _ cl, e1) (_, e2) 
 	| not (equalsIsPosible cl) = C.BoolOp Eq e1 e2

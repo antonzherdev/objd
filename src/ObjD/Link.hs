@@ -1065,6 +1065,7 @@ exprDataType (Return _ e) = exprDataType e
 exprDataType (Index e i) = resolve $ exprDataType e 
 	where  
 		resolve (TPArr _ t) = t
+		resolve (TPEArr _ t) = t
 		resolve (TPMap _ v) = TPOption v
 		resolve (TPObject TPMEnum c) = TPClass TPMEnum [] c
 		resolve (TPGenericWrap t) = resolve t
