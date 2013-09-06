@@ -370,8 +370,8 @@ genStruct cl@D.Class {D.className = name, D.classDefs = clDefs} =
 		descStart = C.Call (C.Ref "NSMutableString") "stringWith" [("string", C.StringConst $ "<" ++ name ++ ": ")] []
 		toPar D.Def{D.defName = n, D.defType = tp}= C.CFunPar (showDataType tp) n
 		
-		def' D.Def{D.defName = n, D.defType = tp, D.defPars = pars, D.defMods = mods} = C.CFunDecl{C.cfunMods = [], 
-			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
+		def' d@D.Def{D.defType = tp, D.defPars = pars, D.defMods = mods} = C.CFunDecl{C.cfunMods = [], 
+			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name d,
 			C.cfunPars =  if D.DefModStatic `notElem` mods then C.CFunPar (C.TPSimple name []) "self" : pars' else pars'}
 			where
 				pars' = map par' pars
@@ -385,15 +385,15 @@ genStruct cl@D.Class {D.className = name, D.classDefs = clDefs} =
 			C.interfaceProperties = [C.Property "value" selfTp [C.ReadOnly, C.NonAtomic]],
 			C.interfaceFuns = [wrapFun, initWrapFun]
 		}
-		defImpl' D.Def{D.defName = n, D.defType = tp, D.defBody = e, D.defPars = pars, D.defMods = mods} = C.CFun{C.cfunMods = [], 
-			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
+		defImpl' d@D.Def{D.defType = tp, D.defBody = e, D.defPars = pars, D.defMods = mods} = C.CFun{C.cfunMods = [], 
+			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name d,
 			C.cfunPars = if D.DefModStatic `notElem` mods then C.CFunPar (C.TPSimple name []) "self" : pars' else pars',
 			C.cfunExps = tStm (env {envDataType = tp}) [] e}
 			where
 				pars' = map par' pars
 				par' D.Def{D.defName = nn, D.defType = tpp} = C.CFunPar (showDataType tpp) nn
-		staticFieldImpl' D.Def{D.defName = n, D.defType = tp, D.defBody = e} = C.CFun{C.cfunMods = [], 
-			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
+		staticFieldImpl' d@D.Def{D.defName = n, D.defType = tp, D.defBody = e} = C.CFun{C.cfunMods = [], 
+			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name d,
 			C.cfunPars = [],
 			C.cfunExps = 
 				if D.isConst e then 
@@ -443,10 +443,10 @@ genStruct cl@D.Class {D.className = name, D.classDefs = clDefs} =
 		hashImpl = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSUInteger" []) "hash" []) [
 			C.Return $ C.CCall (C.Ref $ name ++ "Hash") [C.Ref "_value"]
 			]
-		hasCompare = any (("compare" == ). D.defName) defs
-		compareImpl = if hasCompare then Just $ C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSInteger" []) "compare" [C.FunPar "to" selfWrapTp "to"]) [
-			C.Return $ C.CCall (C.Ref $ structDefName name "Compare") [C.Ref "_value", C.Dot (C.Ref "to") (C.Ref "value")]
-			] else Nothing
+		compareFun = find (("compare" == ). D.defName) defs
+		compareImpl = fmap (\d -> C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSInteger" []) "compare" [C.FunPar "to" selfWrapTp "to"]) [
+			C.Return $ C.CCall (C.Ref $ structDefName name d) [C.Ref "_value", C.Dot (C.Ref "to") (C.Ref "value")]
+			]) compareFun
 
 
 equalsFun :: C.Exp -> C.Exp -> [D.Def] -> [C.Stm]
@@ -522,8 +522,8 @@ descriptionFun start fields =
 		
 		
 
-structDefName :: String -> String -> String
-structDefName sn dn = lowFirst sn ++ cap dn
+structDefName :: String -> D.Def -> String
+structDefName sn D.Def{D.defName = dn, D.defPars = pars} = lowFirst sn ++ cap dn ++ (strs "" . map (cap . D.defName)) pars
 	where 
 		lowFirst (x1:x2:xs)
 			| isUpper x1 && isUpper x2 = toLower x1 : lowFirst (x2:xs)
@@ -691,15 +691,15 @@ tExp env (D.PlusPlus e) = C.PlusPlus (tExp env e)
 tExp env (D.MinusMinus e) = C.MinusMinus (tExp env e)
 
 
-tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call D.Def {D.defName = name, D.defMods = mods} _ pars)) 
+tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call d@D.Def {D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
-	| otherwise = C.CCall (C.Ref $ structDefName (D.className c) name) (C.Ref "self" : (map snd . tPars env) pars)
+	| otherwise = C.CCall (C.Ref $ structDefName (D.className c) d) (C.Ref "self" : (map snd . tPars env) pars)
 tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name} _ pars)) 
 	| D.DefModField `elem` mods && null pars && D.DefModSuper `notElem` mods = C.Ref $ fieldName env d
 	| D.DefModField `elem` mods && D.DefModSuper `notElem` mods = C.CCall (C.Ref $ fieldName env d) ((map snd . tPars env) pars)
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className $ D.tpClass stp) name (tPars env pars) []
 	| otherwise = C.Call C.Self name (tPars env pars) []
-tExp env d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars)) 
+tExp env d@(D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModApplyLambda `elem` mods = C.CCall (tExp env l) ((map snd . tPars env) pars) 
 	| D.DefModField `elem` mods && null pars && 
 		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
@@ -710,11 +710,11 @@ tExp env d@(D.Dot l (D.Call D.Def{D.defName = name, D.defMods = mods} _ pars))
 	| D.DefModConstructor `elem` mods = callConstructor env (D.exprDataType d) pars
 	| D.DefModStruct `elem` mods = case ltp  of
 		(D.TPClass D.TPMStruct _ c) -> structCall (D.className c) (tExpTo env ltp l)
-		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.className c) name) ((map snd . tPars env) pars)
+		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.className c) dd) ((map snd . tPars env) pars)
 		tp -> structCall (show tp) (tExpTo env ltp l)
 	| otherwise = castGeneric d $ C.Call (tExp env l) name (tPars env pars ) []
 	where
-		 structCall c self = C.CCall (C.Ref $ structDefName c name) (self : (map snd . tPars env) pars)
+		 structCall c self = C.CCall (C.Ref $ structDefName c dd) (self : (map snd . tPars env) pars)
 		 ltp = D.unwrapGeneric $ D.exprDataType l
 tExp env (D.Dot l (D.Is dtp)) = C.Call (tExp env l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
 tExp env (D.Dot l (D.As dtp)) = C.Call (tExp env l) "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
