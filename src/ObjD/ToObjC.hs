@@ -640,9 +640,7 @@ showDataType tp = C.TPSimple (show tp) []
 
 {- Exp -}
 tPars :: Env -> [(D.Def, D.Exp)] -> [(String, C.Exp)]
-tPars env = 
-	let env' = env {envCStruct = False}
-	in map (\(d, e) -> (D.defName d, maybeVal (D.exprDataType e, D.defType d) $ tExp env' e))
+tPars env = map (\(d, e) -> (D.defName d, maybeVal (D.exprDataType e, D.defType d) $ tExp env e))
 
 tExpTo :: Env -> D.DataType -> D.Exp -> C.Exp 
 tExpTo env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
@@ -786,11 +784,15 @@ tExp env (D.Cast dtp e) = let
 		(D.TPNumber{}, D.TPNumber{}) -> case e of
 			D.IntConst n -> C.IntConst n
 			_ -> cast
-		(D.TPArr{}, D.TPEArr _ etp) ->
+		(D.TPArr{}, D.TPEArr 0 etp) ->
 			case e of
 				D.Arr exps -> case etp of
 					D.TPClass{} -> C.EArrConst "arrs" (show $ showDataType etp) $ map (tExp env) exps
 					_ -> C.EArrConst ("arr" ++ (dataTypeSuffix etp)) "" $ map (tExp env) exps
+				_ -> error $ "Could not convert to EArr " ++ show e
+		(D.TPArr{}, D.TPEArr _ _) -> 
+			case e of
+				D.Arr exps -> C.EArr $ map (tExp env) exps
 				_ -> error $ "Could not convert to EArr " ++ show e
 		(D.TPNumber{}, D.TPVoidRef) -> voidRefStructCast
 		(D.TPFloatNumber{}, D.TPVoidRef) -> voidRefStructCast
@@ -821,9 +823,6 @@ tExp _ x = C.Error $ "No tExp for " ++ show x
 
 tExpToType :: Env -> D.DataType -> D.Exp -> C.Exp
 tExpToType env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
-
-eArraySet :: C.Exp -> C.Exp -> D.DataType -> C.Exp
-eArraySet l' r' (D.TPEArr n tp) = C.CCall (C.Ref "memcpy") [l', r', C.CCall (C.Ref "sizeof") [C.Index (C.Ref (show $ showDataType tp)) (C.IntConst n)]]
 
 tStm :: Env -> [D.Exp] -> D.Exp -> [C.Stm]
 tStm _ _ (D.Nop) = []
