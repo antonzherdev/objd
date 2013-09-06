@@ -353,9 +353,7 @@ genStruct cl@D.Class {D.className = name, D.classDefs = clDefs} =
 		toField D.Def{D.defName = n, D.defType = tp, D.defMods = mods} = C.ImplField n (showDataType tp) ["__weak" | D.DefModWeak `elem` mods] C.Nop
 		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple name [], 
 			C.cfunName = name ++ "Make", C.cfunPars = map toPar fields, C.cfunExps = 
-				[C.Var (C.TPSimple name []) "ret" C.Nop []] ++
-				map toSet fields ++
-				[C.Return $ C.Ref "ret"]
+				[C.Return $ C.ShortCast selfTp $ C.EArr $ map (C.Ref . D.defName) fields]
 		}
 		eq = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple "BOOL" [], C.cfunName = name ++ "Eq", 
 			C.cfunPars = [C.CFunPar (C.TPSimple name []) "s1", C.CFunPar (C.TPSimple name []) "s2"], 
@@ -371,8 +369,6 @@ genStruct cl@D.Class {D.className = name, D.classDefs = clDefs} =
 		}
 		descStart = C.Call (C.Ref "NSMutableString") "stringWith" [("string", C.StringConst $ "<" ++ name ++ ": ")] []
 		toPar D.Def{D.defName = n, D.defType = tp}= C.CFunPar (showDataType tp) n
-		toSet D.Def{D.defName = n, D.defType = tp@D.TPEArr{}} = C.Stm $ eArraySet (C.Dot (C.Ref "ret") (C.Ref n)) (C.Ref n) tp
-		toSet D.Def{D.defName = n} = C.Set Nothing (C.Dot (C.Ref "ret") (C.Ref n)) (C.Ref n)
 		
 		def' D.Def{D.defName = n, D.defType = tp, D.defPars = pars, D.defMods = mods} = C.CFunDecl{C.cfunMods = [], 
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name n,
