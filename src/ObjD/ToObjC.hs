@@ -699,6 +699,7 @@ tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name}
 	| D.DefModField `elem` mods && null pars && D.DefModSuper `notElem` mods = C.Ref $ fieldName env d
 	| D.DefModField `elem` mods && D.DefModSuper `notElem` mods = C.CCall (C.Ref $ fieldName env d) ((map snd . tPars env) pars)
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className $ D.tpClass stp) name (tPars env pars) []
+	| null pars = C.Dot C.Self $ C.Ref name
 	| otherwise = C.Call C.Self name (tPars env pars) []
 tExp env d@(D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModApplyLambda `elem` mods = C.CCall (tExp env l) ((map snd . tPars env) pars) 
