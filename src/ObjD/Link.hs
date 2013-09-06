@@ -517,7 +517,7 @@ linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.de
 		lazyGet = fromJust $ findDefWithName "get" lazyClass
 		lazyConstr = fromJust $ classConstructor lazyClass
 		lazyTp = TPClass TPMClass [wrapGeneric tp''] lazyClass
-		defLazy = Def{defMods = [DefModField, DefModPrivate], defName = "_lazy_" ++ name, 
+		defLazy = Def{defMods = [DefModField, DefModPrivate] ++ [DefModStatic | D.DefModStatic `elem` mods], defName = "_lazy_" ++ name, 
 			defType = lazyTp, 
 			defBody = Dot (callRef (objectDef lazyClass)) (Call lazyConstr lazyTp [(head $ defPars lazyConstr, Lambda [] (Return True i) tp'')]), 
 			defGenerics = Nothing, defPars = []}
