@@ -89,7 +89,7 @@ data Exp =
 	| Error String
 	| Cast DataType Exp
 	| ShortCast DataType Exp
-	| EArrConst String [Exp]
+	| EArrConst String String [Exp]
 	| ProtocolRef Exp
 	| GetPointer Exp
 
@@ -297,7 +297,7 @@ expLines (InlineIf c t f) = ["(("] `glue` (expLines c `app` ") ? ") `glue` (expL
 expLines (Index e i) = (expLines e `app` "[") `glue` (expLines i `app` "]")
 expLines (Arr e) = ["(@[" ++ strs' ", " e ++ "])"]
 expLines (EArr e) = ["{" ++ strs' ", " e ++ "}"]
-expLines (EArrConst name e) = ["[ " ++ name ++ "(" ++ show (length e) ++ ") {" ++ strs' ", " e ++ "}]"]
+expLines (EArrConst name tp e) = ["[ " ++ name ++ "(" ++ (if null tp then "" else tp ++ ", ") ++ show (length e) ++ ") {" ++ strs' ", " e ++ "}]"]
 expLines (Map e) = ["(@{" ++ (strs ", " . map(\(k, v) -> show k ++ " : " ++ show v) ) e ++ "})"]
 expLines (ObjCConst e) = ["@" ++ show e]
 expLines (Lambda pars e rtp) = ["^" ++ show rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]

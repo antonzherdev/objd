@@ -599,7 +599,8 @@ procImports D.File{D.fileImports = imps, D.fileClasses = classes} = (h, m)
 
 {- DataType -}
 showDataType :: D.DataType -> C.DataType
-showDataType (D.TPEArr _ _) = C.TPSimple "id<CNSeq>" []
+showDataType (D.TPEArr 0 _) = C.TPSimple "id<CNSeq>" []
+showDataType (D.TPEArr n tp) = C.TPArr n $ show $ showDataType tp
 showDataType (D.TPArr _ _) = C.TPSimple "id<CNSeq>" []
 showDataType (D.TPMap _ _)  = C.TPSimple "id<CNMap>" []
 showDataType (D.TPNumber False 1) = C.TPSimple "char" []
@@ -786,7 +787,9 @@ tExp env (D.Cast dtp e) = let
 			_ -> cast
 		(D.TPArr{}, D.TPEArr _ etp) ->
 			case e of
-				D.Arr exps -> C.EArrConst ("arr" ++ (dataTypeSuffix etp)) $ map (tExp env) exps
+				D.Arr exps -> case etp of
+					D.TPClass{} -> C.EArrConst "arrs" (show $ showDataType etp) $ map (tExp env) exps
+					_ -> C.EArrConst ("arr" ++ (dataTypeSuffix etp)) "" $ map (tExp env) exps
 				_ -> error $ "Could not convert to EArr " ++ show e
 		(D.TPNumber{}, D.TPVoidRef) -> voidRefStructCast
 		(D.TPFloatNumber{}, D.TPVoidRef) -> voidRefStructCast
