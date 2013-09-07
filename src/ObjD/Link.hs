@@ -19,7 +19,8 @@ detailedReferenceError :: Bool
 detailedReferenceError = False
 
 type Sources = [File]
-data File = File {fileName :: String, filePackage :: [String], fileImports :: [File], fileCImports :: [CImport], fileExports :: [File]
+type Package = [String]
+data File = File {fileName :: String, filePackage :: Package, fileImports :: [File], fileCImports :: [CImport], fileExports :: [File]
 	, fileClasses :: [Class], globalDefs :: [Def]}
 instance Eq File where
 	File {fileName = a, filePackage = ap} == File {fileName = b, filePackage = bp} = a == b && ap == bp

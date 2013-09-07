@@ -592,13 +592,14 @@ procImports D.File{D.fileImports = imps, D.fileClasses = classes} = (h, m)
 		cImport D.File{D.fileName = fn} = C.Import (fn ++ ".h")
 		h = concatMap procH imps
 		procH file
-			| filePossibleWeakImport file = map decl . 
+			| filePossibleWeakImport file = mapMaybe decl . 
 				filter (\ c -> not (D.isStruct c)) $ D.fileClasses file
 			| otherwise = [cImport file]
 		m = (map cImport . filter filePossibleWeakImport) imps
 		decl cl 
-			| D.isTrait cl = C.ProtocolDecl . D.className $ cl
-			| otherwise = C.ClassDecl . D.className $ cl
+			| D.isType cl = Nothing
+			| D.isTrait cl = Just $ C.ProtocolDecl . D.className $ cl
+			| otherwise = Just $ C.ClassDecl . D.className $ cl
 
 {- DataType -}
 showDataType :: D.DataType -> C.DataType
