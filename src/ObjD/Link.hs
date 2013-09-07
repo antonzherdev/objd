@@ -337,28 +337,31 @@ idx f a = (f a, a)
  -----------------------------------------------------------------------------------------------------------------------------------------}
 
 link :: D.Sources -> Sources
-link src = map (\D.File{D.fileName = name} ->  fromMaybe (error $ "Could not find linked file " ++ name) $ M.lookup name fidx) src
+link src = files
 	where
-		fidx :: M.Map String File
-		fidx = M.fromList $ map (idx fileName . linkFile fidx) src
+		files = map (linkFile files) src
 
-linkFile :: M.Map String File -> D.File -> File
-linkFile fidx (D.File name package stms) = fl
+linkFile :: [File] -> D.File -> File
+linkFile files (D.File name package stms) = fl
 	where
 		fl :: File
 		fl = File {fileName = name, fileImports = imports,
-			fileClasses =(map (linkClass (cidx, glidx)) . filter isCls) stms, globalDefs = gldefs, filePackage = package}
+			fileClasses =(map (linkClass (cidx, glidx)) . filter isCls) stms, globalDefs = gldefs, filePackage = package'}
 		isCls s = D.isClass s || D.isStub s || D.isEnum s || D.isType s
-		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . (++ kernelFiles) ) imports
+		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . (++ kernelFiles ++ packageFiles) ) imports
 		glidx = concatMap globalDefs (fl : imports ++ kernelFiles)
+		package' = case package of
+			[] -> error $ "Empty package for file " ++ name
+			_ -> package
 		
-		imports = mapMaybe (getFile . impString) . filter D.isImport $ stms
+		imports = nub $ mapMaybe (getFileWithName . impString) . filter D.isImport $ stms
+		packageFiles = filter (\f -> f /= fl && package == filePackage f) files
 		impString (D.Import names) = strs "." names
 		
 		kernelFiles :: [File]
-		kernelFiles = mapMaybe (idxFind fidx) ["ODEnum", "ODObject", "CNTuple", "CNOption", "CNList", "CNMap", "CNSeq", "CNData", "ODType", "CNLazy"]
+		kernelFiles = filter ((== "core") . head . filePackage ) files 
 		
-		getFile f = M.lookup f fidx
+		getFileWithName f = find ((== f) . fileName) files
 		gldefs = (map gldef . filter D.isStubDef) stms
 		gldef (D.StubDef d@D.Def{D.defMods = mods}) = 
 			(linkDef False env d){defMods = DefModStub : mapMaybe md' mods}
