@@ -20,10 +20,9 @@ detailedReferenceError = False
 
 type Sources = [File]
 type Package = [String]
-data File = File {fileName :: String, filePackage :: Package, fileImports :: [File], fileCImports :: [CImport], fileExports :: [File]
-	, fileClasses :: [Class], globalDefs :: [Def]}
+data File = File {fileName :: String, filePackage :: Package, fileImports :: [File], fileClasses :: [Class], globalDefs :: [Def]}
 instance Eq File where
-	File {fileName = a, filePackage = ap} == File {fileName = b, filePackage = bp} = a == b && ap == bp
+	File {fileName = a, filePackage = appp} == File {fileName = b, filePackage = bp} = a == b && appp == bp
 
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - CLASS 
@@ -277,12 +276,12 @@ data DefGenerics = DefGenerics{defGenericsClasses :: [Class], defGenericsSelfTyp
 data CImport = CImportLib String | CImportUser String
 
 instance Show File where
-	show (File name _ _ _ _ classes _) =
-		"// " ++ name ++ ".od\n" ++
+	show f =
+		"// " ++ fileName f ++ ".od\n" ++
 		{-((`tryCon` "\n\n" ). strs' "\n") cimps ++
 		((`tryCon` "\n\n") . strs' "\n") imps ++ 
 		{trs' "\n" gldefs ++-}
-		strs' "\n\n" classes
+		strs' "\n\n" (fileClasses f)
 instance Show CImport where
 	show (CImportLib l) = "import <" ++ l ++ ">"
 	show (CImportUser l) = "import \"" ++ l ++ "\""
@@ -347,24 +346,18 @@ linkFile :: M.Map String File -> D.File -> File
 linkFile fidx (D.File name package stms) = fl
 	where
 		fl :: File
-		fl = File {fileName = name, fileImports = imports, fileCImports = cImports, fileExports = exports,
+		fl = File {fileName = name, fileImports = imports,
 			fileClasses =(map (linkClass (cidx, glidx)) . filter isCls) stms, globalDefs = gldefs, filePackage = package}
 		isCls s = D.isClass s || D.isStub s || D.isEnum s || D.isType s
 		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . (++ kernelFiles) ) imports
 		glidx = concatMap globalDefs (fl : imports ++ kernelFiles)
 		
-		imports = 
-			let local = mapMaybe (getFile . D.impString) . filter D.isImport $ stms
-			in nub $ local ++ exports ++ concatMap fileExports local
-		exports = mapMaybe (getFile . D.expString) . filter D.isExport $ stms
-
+		imports = mapMaybe (getFile . impString) . filter D.isImport $ stms
+		impString (D.Import names) = strs "." names
+		
 		kernelFiles :: [File]
 		kernelFiles = mapMaybe (idxFind fidx) ["ODEnum", "ODObject", "CNTuple", "CNOption", "CNList", "CNMap", "CNSeq", "CNData", "ODType", "CNLazy"]
-		cImports = mapMaybe toCImport stms
-		toCImport (D.Import s D.ImportTypeCUser) = Just $ CImportUser s
-		toCImport (D.Import s D.ImportTypeCLib) = Just $ CImportLib s
-		toCImport _ = Nothing
-
+		
 		getFile f = M.lookup f fidx
 		gldefs = (map gldef . filter D.isStubDef) stms
 		gldef (D.StubDef d@D.Def{D.defMods = mods}) = 

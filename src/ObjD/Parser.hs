@@ -47,7 +47,7 @@ parseStatement :: String -> Either ParseError FileStm
 parseStatement = parse pStatement "ObjD"
 
 pStatement :: Parser FileStm
-pStatement = pTypeStm <|> pImport <|> pExport  <|> pStub <|> pClass <|> pEnum
+pStatement = pTypeStm <|> pImport <|> pStub <|> pClass <|> pEnum
 
 wsps :: Parser String
 wsps = many (char ' ' <|> char '\t') <?> ""
@@ -268,34 +268,15 @@ pMod = do
 	sps1
 	return v
 
-pExport :: Parser FileStm
-pExport = do
-	try $ string "export"
-	sps
-	e <- ident
-	sps
-	return $ Export e
 
 pImport :: Parser FileStm
 pImport = do
 	string "import"
 	sps
-	ret <- pImportLib <|> pImportUser <|> pImportD
+	ret <- ident `sepBy1` char '.'
 	sps
-	return ret
-	where
-	pImportLib = do
-		char '<'
-		lib <- impIdent
-		char '>'
-		return $ Import lib ImportTypeCLib
-	pImportUser = do
-		char '"'
-		lib <- impIdent
-		char '"'
-		return $ Import lib ImportTypeCUser
-	pImportD = impIdent >>= \lib -> return $ Import lib ImportTypeD
-	impIdent = many1 (letter <|> digit <|> oneOf "_/.+")
+	return $ Import ret
+	
 
 pStm :: Parser ClassStm
 pStm = pDef <|> pDecl <?> "Class statement"

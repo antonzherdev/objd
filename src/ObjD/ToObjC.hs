@@ -17,7 +17,7 @@ arc :: Bool
 arc = True
 
 toObjC :: D.File -> ([C.FileStm], [C.FileStm])
-toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cImports} = 
+toObjC f@D.File{D.fileName = name, D.fileClasses = classes} = 
 	let 
 		isClass c = D.isRealClass c && not (D.isStruct c) && not (D.isTrait c) && not (D.isEnum c)
 		cls = filter isClass classes
@@ -26,9 +26,6 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 		enums = filter D.isEnum classes
 		isTrait c = D.isRealClass c && D.isTrait c
 
-		cImports' = map cImport' cImports
-		cImport' (D.CImportLib n) = C.ImportLib n
-		cImport' (D.CImportUser n) = C.Import n
 		dImports' = procImports f
 		
 		
@@ -48,7 +45,7 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes, D.fileCImports = cIm
 				 impls = concatMap (snd . gen) classes
 			in if null impls then []
 			else [C.Import "objd.h" | D.isCoreFile f] ++
-				[C.Import (name ++ ".h") ] ++ cImports' ++ [ C.EmptyLine] ++ snd dImports' ++ impls
+				[C.Import (name ++ ".h") ] ++ [ C.EmptyLine] ++ snd dImports' ++ impls
 		gen c
 			| isClass c = ([stmToInterface c], [stmToImpl c])
 			| isStruct c = genStruct c
@@ -583,8 +580,7 @@ genEnumImpl cl@D.Class {D.className = clsName} = [
 procImports :: D.File -> ([C.FileStm], [C.FileStm])
 procImports D.File{D.fileImports = imps, D.fileClasses = classes} = (h, m)
 	where 
-		filePossibleWeakImport D.File{D.fileCImports = [], D.fileClasses = cls} = all classPosibleWeakImport cls
-		filePossibleWeakImport _ = False
+		filePossibleWeakImport D.File{D.fileClasses = cls} = all classPosibleWeakImport cls
 		classPosibleWeakImport cl@D.Class{D.classMods = mods} = 
 				D.ClassModStruct `notElem` mods && not (hasExtends cl)
 		classPosibleWeakImport _ = False
