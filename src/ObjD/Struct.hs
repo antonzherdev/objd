@@ -44,7 +44,7 @@ isType (Type {}) = True
 isType _ = False
 data ImportType = ImportTypeCUser | ImportTypeCLib | ImportTypeD
 
-data ClassMod = ClassModStruct | ClassModStub | ClassModTrait deriving (Eq)
+data ClassMod = ClassModStruct | ClassModStub | ClassModTrait | ClassModObject deriving (Eq)
 
 data Generic = Generic String (Maybe Extends)
 

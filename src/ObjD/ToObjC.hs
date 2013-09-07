@@ -65,11 +65,11 @@ stmToInterface (cl@D.Class {D.className = name, D.classDefs = defs}) =
 		C.interfaceName = name,
 		C.interfaceExtends = classExtends cl,
 		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs,
-		C.interfaceFuns = [createFun name constr, initFun constr, typeInstanceFun]
+		C.interfaceFuns = constrFuns ++ [typeInstanceFun]
 			++ intefaceFuns defs ++ staticGetters
 	}
 	where 
-		constr = fromMaybe (error "No class constructor") (D.classConstructor cl)
+		constrFuns = fromMaybe [] $ fmap (\constr -> [createFun name constr, initFun constr]) (D.classConstructor cl)
 		staticGetters = (map staticGetterFun .filter (\f -> 
 			(D.DefModPrivate `notElem` D.defMods f) && D.isField f && D.isStatic f)) defs
 
@@ -169,7 +169,7 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
 		C.implName = clsName,
 		C.implFields = map (implField env) implFields,
 		C.implSynthesizes = (map (synthesize env) . filter needProperty) implFields,
-		C.implFuns = nub $ [implCreate cl constr, implInit env constr, implInitialize env] ++ dealoc env 
+		C.implFuns = nub $ constrFuns ++ [implInitialize env] ++ dealoc env 
 			++ implFuns env defs ++ [instanceType] ++ staticGetters ++ copyImpls ++ (if equalsIsPosible cl then [equal, hash] else []) ++ [description],
 		C.implStaticFields = map (implField env) staticFields
 	}
@@ -187,7 +187,7 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
 					| otherwise = []
 					
 
-		constr = fromMaybe (error "No class constructor") (D.classConstructor cl)
+		constrFuns = fromMaybe [] $ fmap (\constr -> [implCreate cl constr, implInit env constr]) (D.classConstructor cl)
 		implFields = filter needField defs
 		needField f = D.isField f && not (D.isStatic f)
 		isStaticField f = D.isStatic f && D.isField f

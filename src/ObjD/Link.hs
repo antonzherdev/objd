@@ -382,12 +382,17 @@ linkClass (ocidx, glidx) cl = self
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
 		env = Env selfType cidx glidx []
 		staticEnv = Env (TPObject (refDataTypeMod self) self) ocidx glidx []
+		isObject = case cl of
+			D.Class{} -> D.ClassModObject `elem` D.classMods cl
+			_ -> False
 		self = case cl of
 			D.Class{} -> Class {
-				classMods = map clsMod (D.classMods cl), 
+				classMods = mapMaybe clsMod (D.classMods cl), 
 				className = D.className cl, 
 				classExtends = if D.className cl == "ODObject" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
-				classDefs = fields ++ defs ++ [constr constrPars, typeField] 
+				classDefs = 
+					if isObject then map (\d -> d{defMods = DefModStatic : defMods d}) $ fields ++ defs ++ [typeField] 
+					else fields ++ defs ++ [constr constrPars, typeField] 
 				{-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
 				classGenerics = generics
 			}
@@ -414,23 +419,24 @@ linkClass (ocidx, glidx) cl = self
 		enumName = Def "name" [] TPString Nop [] Nothing
 		enumAdditionalDefs = [enumOrdinal, enumName]
 		selfType = refDataType self (map (TPClass TPMGeneric []) generics)
-		clsMod D.ClassModStruct = ClassModStruct
-		clsMod D.ClassModStub = ClassModStub
-		clsMod D.ClassModTrait = ClassModTrait
+		clsMod D.ClassModStruct = Just ClassModStruct
+		clsMod D.ClassModStub = Just ClassModStub
+		clsMod D.ClassModTrait = Just ClassModTrait
+		clsMod _ = Nothing
 		extends = fmap (linkExtends env constrPars) (D.classExtends cl) 
 		selfIsStruct = case cl of
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
 			_ -> False
-
-		fields =  join $ mapM (evalState . linkField selfIsStruct) (filter (D.isStatic) decls) staticEnv ++
-			mapM (evalState . linkField selfIsStruct) (filter (not . D.isStatic) decls) env
+		isStaticDecl d = isObject || D.isStatic d
+		fields =  join $ mapM (evalState . linkField selfIsStruct) (filter (isStaticDecl) decls) staticEnv ++
+			mapM (evalState . linkField selfIsStruct) (filter (not . isStaticDecl) decls) env
 		decls = filter (not . containsInSuper) (D.classFields cl) ++ filter D.isDecl (D.classBody cl)
 		containsInSuper D.Def {D.defName = name} =  case superClass self of
 			Nothing -> False
 			Just super -> any (\d -> DefModField `elem` defMods d && defName d == name) $ classDefs super
 
 		defs = map (\ def -> linkDef selfIsStruct (envForDef def) def) . filter D.isDef $ D.classBody cl
-		envForDef def = if D.isStatic def then staticEnv else env
+		envForDef def = if isStaticDecl def then staticEnv else env
 		enumConstr = constr (enumAdditionalDefs ++ constrPars)
 		constr :: [Def] -> Def
 		constr pars = Def{defName = "apply", defMods = [DefModStatic, DefModConstructor] ++ [DefModStruct | selfIsStruct], defBody = Nop,

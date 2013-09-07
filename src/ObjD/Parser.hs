@@ -153,7 +153,7 @@ pClass :: Parser FileStm
 pClass = do
 	stub <- option [] $ (try (string "stub")) >> return [ClassModStub]
 	sps
-	struct <- (string "class" >> return []) <|> (string "struct" >> return [ClassModStruct]) <|> (string "trait" >> return [ClassModTrait])
+	struct <- (string "class" >> return []) <|> (string "struct" >> return [ClassModStruct]) <|> (string "trait" >> return [ClassModTrait]) <|> (string "object" >> return [ClassModObject])
 	sps
 	name <- ident
 	sps
