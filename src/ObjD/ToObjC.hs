@@ -155,7 +155,7 @@ genProtocol cl =
 	C.Protocol {
 		C.interfaceName = D.className cl,
 		C.interfaceFuns = intefaceFuns $ D.classDefs cl,
-		C.interfaceExtends = C.Extends ((cn . D.className . D.extendsClassClass . fromJust . D.extendsClass) $ D.classExtends cl) []
+		C.interfaceExtends = C.Extends ((cn . D.className . D.extendsClassClass . fromMaybe (error $ "No class extends for " ++ D.className cl) . D.extendsClass) $ D.classExtends cl) []
 	}
 	where
 		cn n = if n == "ODObject" then "NSObject" else n
@@ -600,6 +600,7 @@ procImports D.File{D.fileImports = imps, D.fileClasses = classes} = (h, m)
 		m = (map cImport . filter filePossibleWeakImport) imps
 		decl cl 
 			| D.isType cl = Nothing
+			| D.isGlobalDefObject cl = Nothing
 			| D.isTrait cl = Just $ C.ProtocolDecl . D.className $ cl
 			| otherwise = Just $ C.ClassDecl . D.className $ cl
 
@@ -929,9 +930,6 @@ callConstructor env tp pars = let
 				(createFunName $ name ++ if null pars then "" else "With") 
 				(tPars env pars)
 				[]
-
-wrapVal :: D.DataType -> C.Exp -> C.Exp
-wrapVal tp e = maybeVal (tp, D.wrapGeneric tp) e
 
 dataTypeSuffix :: D.DataType -> String
 dataTypeSuffix (D.TPNumber False 1) = "c"

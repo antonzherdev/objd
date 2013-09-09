@@ -4,7 +4,7 @@ module ObjD.Link (
 	link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
-	classDefs, classGenerics, classExtends, classMods, classFile, classPackage
+	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGlobalDefObject
 )where
 
 import 			 Control.Arrow
@@ -21,11 +21,11 @@ detailedReferenceError = False
 
 type Sources = [File]
 type Package = [String]
-data File = File {fileName :: String, filePackage :: Package, fileImports :: [File], fileClasses :: [Class], globalDefs :: [Def]}
+data File = File {fileName :: String, filePackage :: Package, fileImports :: [File], fileClasses :: [Class]}
 instance Eq File where
 	File {fileName = a, filePackage = appp} == File {fileName = b, filePackage = bp} = a == b && appp == bp
 coreFakeFile :: File
-coreFakeFile = File "fake.od" ["core"] [] [] []
+coreFakeFile = File "fake.od" ["core"] [] []
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - CLASS 
  -----------------------------------------------------------------------------------------------------------------------------------------}
@@ -53,9 +53,11 @@ classDefs _ = []
 classMods :: Class -> [ClassMod]
 classMods Class{_classMods = r} = r
 classMods _ = []
+globalDefsObject :: File -> [Def] -> Class
+globalDefsObject fl defs = Class{_classFile = fl, _classPackage = filePackage fl, className = "_GlobalDefs", _classGenerics = [],
+	_classExtends = extendsNothing, _classMods = [ClassModStub, ClassModObject, ClassGlobalDefObject], _classDefs = defs}
 
-
-data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType deriving (Eq)
+data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType | ClassGlobalDefObject deriving (Eq)
 
 type ExtendsRef = (Class, [DataType])
 data Extends = Extends {extendsClass :: Maybe ExtendsClass, extendsTraits :: [ExtendsRef]}
@@ -77,6 +79,7 @@ instance Show Class where
 			sConstr c = maybe "" (\cc -> "(" ++ (strs ", " . map defName . defPars) cc ++ ")") (classConstructor c)
 instance Show ClassMod where
 	show ClassModStub = "stub"
+	show ClassGlobalDefObject = "glObject"
 	show ClassModStruct = "struct"
 	show ClassModTrait = "trait"
 	show ClassModEnum = "enum"
@@ -115,6 +118,9 @@ isTrait :: Class -> Bool
 isTrait = (ClassModTrait `elem` ) . classMods
 isStub :: Class -> Bool
 isStub = (ClassModStub `elem` ) . classMods
+isGlobalDefObject :: Class -> Bool
+isGlobalDefObject = (ClassGlobalDefObject `elem` ) . classMods
+
 isRealClass :: Class -> Bool
 isRealClass = (ClassModStub `notElem` ) . classMods
 isEnum :: Class -> Bool
@@ -360,10 +366,10 @@ linkFile files (D.File name package stms) = fl
 	where
 		fl :: File
 		fl = File {fileName = name, fileImports = imports,
-			fileClasses =(map (linkClass (cidx, glidx, fl, package')) . filter isCls) stms, globalDefs = gldefs, filePackage = package'}
+			fileClasses =(map (linkClass (cidx, glidx, fl, package')) . filter isCls) stms ++ glObjects, filePackage = package'}
 		isCls s = D.isClass s || D.isStub s || D.isEnum s || D.isType s
 		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . (++ kernelFiles ++ packageFiles) ) imports
-		glidx = concatMap globalDefs (fl : imports ++ kernelFiles)
+		glidx = concatMap (filter ( (ClassGlobalDefObject `elem`). classMods) . fileClasses) (fl : imports ++ kernelFiles)
 		package' = case package of
 			[] -> error $ "Empty package for file " ++ name
 			_ -> package
@@ -375,19 +381,22 @@ linkFile files (D.File name package stms) = fl
 		kernelFiles :: [File]
 		kernelFiles = filter ((== "core") . head . filePackage ) files 
 		
+		glObjects = case gldefs of 
+			[] -> []
+			_ -> [globalDefsObject fl gldefs]
 		getFileWithName f = find ((== f) . fileName) files
 		gldefs = (map gldef . filter D.isStubDef) stms
 		gldef (D.StubDef d@D.Def{D.defMods = mods}) = 
 			(linkDef False env d){defMods = DefModStub : mapMaybe md' mods}
 			where
-				env = Env{envSelf = TPVoid, envIndex = cidx, envGlobalDefIndex = glidx,  envVals = []}
+				env = Env{envSelf = TPVoid, envIndex = cidx, envObjectIndex = glidx,  envVals = []}
 				md' D.DefModVal = Just DefModGlobalVal
 				md' _ = Nothing
 
 baseClassExtends :: ClassIndex -> ExtendsClass
 baseClassExtends cidx = ExtendsClass (classFind cidx "ODObject", []) []
 
-linkClass :: (ClassIndex, DefIndex, File, Package) -> D.FileStm -> Class
+linkClass :: (ClassIndex, ObjectIndex, File, Package) -> D.FileStm -> Class
 linkClass (ocidx, glidx, file, package) cl = self
 	where
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
@@ -606,8 +615,8 @@ linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> localVal
  ------------------------------------------------------------------------------------------------------------------------------}
 
 type ClassIndex = M.Map String Class
-type DefIndex = [Def]
-data Env = Env{envSelf :: DataType, envIndex :: ClassIndex, envGlobalDefIndex :: DefIndex, envVals :: [Def]}
+type ObjectIndex = [Class]
+data Env = Env{envSelf :: DataType, envIndex :: ClassIndex, envObjectIndex :: ObjectIndex, envVals :: [Def]}
 envAddVals :: [Def] -> Env -> Env 
 envAddVals newVals env@Env{envVals = vals} = env{envVals = vals ++ newVals}
 envAddClasses :: [Class] -> Env -> Env 
@@ -760,7 +769,7 @@ dataTypeClassName (TPTuple a) = "CNTuple" ++ show (length a)
 dataTypeClassName x = error ("No dataTypeClassName for " ++ show x)
 
 resolveTypeAlias :: DataType -> DataType
-resolveTypeAlias tp@(TPClass TPMType _ _) = fromJust $ superType tp
+resolveTypeAlias tp@(TPClass TPMType _ c) = fromMaybe (TPUnknown $ "No super type for type " ++ className c) $ superType tp
 resolveTypeAlias tp = tp
 
 dataTypeGenerics :: Env -> DataType -> [DataType]
@@ -1546,7 +1555,7 @@ tryExprCall env strictClass call@(D.Call name pars gens) = call'''
 			allDefsInEnv = envVals env 
 				++ allDefsInClass (dataTypeClassRef env $ envSelf env) 
 				++ allDefsInObject (dataTypeClassRef env $ envSelf env) 
-				++ envGlobalDefIndex env 
+				++ concatMap classDefs (envObjectIndex env)
 				++ objects 
 			objects = if isNothing pars then (map (objectDef . snd) . M.toList) (envIndex env) else []
 		
