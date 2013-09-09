@@ -400,7 +400,7 @@ genStruct cl =
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name d,
 			C.cfunPars = [],
 			C.cfunExps = 
-				if D.isConst e then 
+				if D.isConst e && not (D.isNop e) then 
 					[C.Var{C.varType = showDataType tp, C.varName = "_ret", C.varExp = buildExp n e, C.varMods = ["static"]},
 					 C.Return $ C.Ref "_ret"
 					]
@@ -583,28 +583,64 @@ genEnumImpl cl@D.Class {D.className = clsName} = [
 		setValues = C.Set Nothing (C.Ref valuesVarName) (C.Arr $ map (C.Ref . (fieldName env)) items)
 
 
-{- Imports -}
+-----------------------------------------------------------------------------------------------------------------------------------------
+-- Imports 
+-----------------------------------------------------------------------------------------------------------------------------------------
 procImports :: D.File -> ([C.FileStm], [C.FileStm])
-procImports D.File{D.fileImports = imps, D.fileClasses = classes} = (h, m)
+procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
 	where 
-		filePossibleWeakImport D.File{D.fileClasses = cls} = all classPosibleWeakImport cls
-		classPosibleWeakImport cl = D.ClassModStruct `notElem` D.classMods cl && not (hasExtends cl)
-		hasExtends cl = cl `elem` extends
-		extends = (map fst . concatMap (D.extendsRefs . D.classExtends)) classes
+		procClasses :: [(D.Class, Bool)]
+		procClasses = concatMap procClass classes
+		procClass :: D.Class -> [(D.Class, Bool)]
+		procClass cl = procExtends (D.classExtends cl) 
+			++ concatMap procDef (D.classDefs cl)
+		procDef :: D.Def -> [(D.Class, Bool)]
+		procDef def = procDataType (D.defType def) ++ procExp (D.defBody def) ++ concatMap procDef (D.defPars def)
+		procExtends :: D.Extends -> [(D.Class, Bool)]
+		procExtends e = concatMap procExtendsRef (D.extendsRefs e) ++ 
+			(fromMaybe [] . fmap (\(D.ExtendsClass _ p) -> procPars p ) ) (D.extendsClass e)
+		procPars :: [D.CallPar] -> [(D.Class, Bool)] 
+		procPars pars = concatMap (procExp . snd) pars
+		procExtendsRef :: D.ExtendsRef -> [(D.Class, Bool)] 
+		procExtendsRef (cl, _) = [(cl, True) | needRetCl cl] 
+		procDataType :: D.DataType -> [(D.Class, Bool)] 
+		procDataType (D.TPGenericWrap cl) = procDataType cl
+		procDataType (D.TPClass _ _ cl) = retCl cl
+		procDataType (D.TPObject _ cl) = retCl cl
+		procDataType _ = []
+		procExp :: D.Exp -> [(D.Class, Bool)] 
+		procExp = D.forExp f
+			where
+				f (D.Dot l _) = procDataType $ (D.exprDataType l)
+				f _ = []
+		retCl :: D.Class -> [(D.Class, Bool)] 
+		retCl cl
+			| needRetCl cl = [(cl, D.isStruct cl)]
+			| otherwise = []
+		needRetCl :: D.Class -> Bool
+		needRetCl cl = not (D.isType cl) && not (D.isGeneric cl) 
+		isStubObject cl = D.ClassModStub `elem` D.classMods cl && D.ClassModObject `elem` D.classMods cl
+		
+		hardImportFiles :: [D.File]
+		hardImportFiles = (filter filterFile . nub . mapMaybe (D.classFile . fst) . filter snd) procClasses
+		weekImportClasses :: [D.Class]
+		weekImportClasses = (nub . filter ((\f -> f `notElem` hardImportFiles && filterFile f). D._classFile) . map fst . filter (not . snd)) procClasses
+		weekImportFiles :: [D.File]
+		weekImportFiles = (filter filterFile . nub . mapMaybe D.classFile) weekImportClasses
+		filterFile :: D.File -> Bool
+		filterFile f = f /= thisFile && (not (D.isCoreFile f) || D.isCoreFile thisFile)
+		h = map cImport hardImportFiles ++ mapMaybe decl weekImportClasses
+		m = map cImport weekImportFiles
+
 		cImport D.File{D.fileName = fn} = C.Import (fn ++ ".h")
-		h = concatMap procH imps
-		procH file
-			| filePossibleWeakImport file = mapMaybe decl . 
-				filter (\ c -> not (D.isStruct c)) $ D.fileClasses file
-			| otherwise = [cImport file]
-		m = (map cImport . filter filePossibleWeakImport) imps
 		decl cl 
-			| D.isType cl = Nothing
-			| D.isGlobalDefObject cl = Nothing
-			| D.isTrait cl = Just $ C.ProtocolDecl . D.className $ cl
+			| isStubObject cl = Nothing
+			| D.isTrait cl =  Just $ C.ProtocolDecl . D.className $ cl
 			| otherwise = Just $ C.ClassDecl . D.className $ cl
 
-{- DataType -}
+{-----------------------------------------------------------------------------------------------------------------------------------------
+ - DataType 
+ -----------------------------------------------------------------------------------------------------------------------------------------}
 showDataType :: D.DataType -> C.DataType
 showDataType (D.TPEArr 0 _) = C.TPSimple "id<CNSeq>" []
 showDataType (D.TPEArr n tp) = C.TPArr n $ show $ showDataType tp
@@ -707,6 +743,9 @@ tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name}
 	| D.DefModField `elem` mods && null pars = C.Dot C.Self $ C.Ref name
 	| otherwise = C.Call C.Self name (tPars env pars) []
 tExp env d@(D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars)) 
+	| D.DefModStatic `elem` mods && isStubObject = 
+		if D.DefModField `elem` mods then C.Ref name
+		else C.CCall (C.Ref $ name) ((map snd . tPars env) pars)
 	| D.DefModApplyLambda `elem` mods = C.CCall (tExp env l) ((map snd . tPars env) pars) 
 	| D.DefModField `elem` mods && null pars && 
 		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
@@ -723,6 +762,9 @@ tExp env d@(D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars)
 	where
 		 structCall c self = C.CCall (C.Ref $ structDefName c dd) (self : (map snd . tPars env) pars)
 		 ltp = D.unwrapGeneric $ D.exprDataType l
+		 isStubObject = case ltp of
+		 	D.TPObject _  cl -> D.ClassModStub `elem` D.classMods cl && D.ClassModObject `elem` D.classMods cl
+		 	_ -> False
 tExp env (D.Dot l (D.Is dtp)) = C.Call (tExp env l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
 tExp env (D.Dot l (D.As dtp)) = C.Call (tExp env l) "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
 tExp env (D.Dot l (D.CastDot dtp)) = C.Cast (showDataType dtp) (tExp env l)

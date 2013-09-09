@@ -1,10 +1,10 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), DataType(..), Exp(..), CImport(..), 
-	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef,
-	link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
+	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef, CallPar,
+	Import(..), link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
-	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGlobalDefObject
+	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGlobalDefObject, isGeneric, isNop
 )where
 
 import 			 Control.Arrow
@@ -21,7 +21,8 @@ detailedReferenceError = False
 
 type Sources = [File]
 type Package = [String]
-data File = File {fileName :: String, filePackage :: Package, fileImports :: [File], fileClasses :: [Class]}
+data File = File {fileName :: String, filePackage :: Package, fileImports :: [Import], fileClasses :: [Class]}
+data Import = ImportClass {importClass :: Class} | ImportObjectDefs {importClass :: Class} deriving (Eq)
 instance Eq File where
 	File {fileName = a, filePackage = appp} == File {fileName = b, filePackage = bp} = a == b && appp == bp
 coreFakeFile :: File
@@ -368,17 +369,39 @@ linkFile files (D.File name package stms) = fl
 	where
 		fl :: File
 		fl = File {fileName = name, fileImports = imports,
-			fileClasses =(map (linkClass (cidx, glidx, fl, package')) . filter isCls) stms ++ glObjects, filePackage = package'}
+			fileClasses = classes ++ glObjects, filePackage = package'}
+		classes = (map (linkClass (cidx, glidx, fl, package')) . filter isCls) stms
 		isCls s = D.isClass s || D.isStub s || D.isEnum s || D.isType s
-		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . (++ kernelFiles ++ packageFiles) ) imports
-		glidx = concatMap (filter ( (ClassGlobalDefObject `elem`). classMods) . fileClasses) (fl : imports ++ kernelFiles)
+		cidx = M.fromList . map (idx className) $ classes ++ importClasses ++ (concatMap fileClasses $ kernelFiles ++ packageFiles)
+		glidx = importObjectDefs ++ glObjects
 		package' = case package of
 			[] -> error $ "Empty package for file " ++ name
 			_ -> package
-		
-		imports = nub $ mapMaybe (getFileWithName . impString) . filter D.isImport $ stms
+
+		importClasses = mapMaybe impcl imports
+			where
+				impcl (ImportClass cl)= Just cl
+				impcl _ = Nothing
+		importObjectDefs = mapMaybe impcl imports
+			where
+				impcl (ImportObjectDefs cl)= Just cl
+				impcl _ = Nothing
+		imports :: [Import]
+		imports = nub $ concatMap processImport . filter D.isImport $ stms
+			where
+				processImport :: D.FileStm -> [Import]
+				processImport (D.Import imp)  
+					| last imp == "_" = let s = init imp
+						in (map ImportClass . filter (startsWith s . classPackage)) allClasses 
+							++ (map ImportObjectDefs . classesWithName) s
+					| otherwise = map ImportClass $ classesWithName imp
+				classesWithName imp = filter (\c -> className c == last imp && classPackage c == init imp) allClasses
+
 		packageFiles = filter (\f -> f /= fl && package == filePackage f) files
-		impString (D.Import names) = strs "." names
+		
+		allClasses = concatMap fileClasses . filter (/= fl) $ files
+
+
 		
 		kernelFiles :: [File]
 		kernelFiles = filter ((== "core") . head . filePackage ) files 
@@ -386,7 +409,6 @@ linkFile files (D.File name package stms) = fl
 		glObjects = case gldefs of 
 			[] -> []
 			_ -> [globalDefsObject fl gldefs]
-		getFileWithName f = find ((== f) . fileName) files
 		gldefs = (map gldef . filter D.isStubDef) stms
 		gldef (D.StubDef d@D.Def{D.defMods = mods}) = 
 			(linkDef False env d){defMods = DefModStatic : DefModStub : mapMaybe md' mods}
@@ -450,7 +472,7 @@ linkClass (ocidx, glidx, file, package) cl = self
 		clsMod D.ClassModStruct = Just ClassModStruct
 		clsMod D.ClassModStub = Just ClassModStub
 		clsMod D.ClassModTrait = Just ClassModTrait
-		clsMod _ = Nothing
+		clsMod D.ClassModObject = Just ClassModObject
 		extends = fmap (linkExtends env constrPars) (D.classExtends cl) 
 		selfIsStruct = case cl of
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
@@ -573,7 +595,7 @@ translateMods = mapMaybe m
 		m _ = Nothing
 		
 linkDef :: Bool -> Env -> D.ClassStm -> Def
-linkDef str env ccc = evalState (stateDef ccc) env'
+linkDef str env ccc =  evalState (stateDef ccc) env'
 	where 
 		env' = envAddClasses generics' env
 		generics' = map (linkGeneric env) (D.defGenerics ccc)
@@ -1044,6 +1066,7 @@ forExp f ee = mplus (go ee) (f ee)
 		go (MinusMinus e) = forExp f e
 		go (Return _ e) = forExp f e
 		go (Opt e) = forExp f e
+		go (Cast _ e) = forExp f e
 		go (Some e) = forExp f e
 		go (Throw e) = forExp f e
 		go (Not e) = forExp f e
@@ -1052,6 +1075,10 @@ forExp f ee = mplus (go ee) (f ee)
 		go (FirstTry _ e) = forExp f e
 		go (Val d) = forExp f (defBody d)
 		go _ = mzero
+
+isNop :: Exp -> Bool
+isNop Nop = True
+isNop _ = False
 
 isConst :: Exp -> Bool
 isConst (IntConst _) = True 
@@ -1065,13 +1092,15 @@ isConst (Arr exps) = all isConst exps
 isConst (Map exps) = all (\(a, b) -> isConst a && isConst b) exps
 isConst (Cast _ e) = isConst e
 isConst (Dot l r) = isConst l && isConst r
-isConst (Call Def {defMods = mods} _ pars) = 
+isConst (Call Def {defMods = mods, defBody = b} _ pars) = 
 	(DefModStruct `elem` mods  &&  DefModConstructor `elem` mods && all (isConst . snd) pars)
 	|| (DefModObject `elem` mods && null pars)
 	|| (DefModStub `elem` mods  &&  DefModGlobalVal `elem` mods)
+	|| (DefModStatic `elem` mods  &&  DefModField `elem` mods && isNop b)
 isConst (As _) = True
 isConst (Is _) = True
 isConst (CastDot _) = True
+isConst Nop = True
 isConst _ = False
 
 
@@ -1443,20 +1472,21 @@ tryExprCall env strictClass call@(D.Call name pars gens) = call'''
 	where
 		pars' = evalState (mapM (\ (n, e) ->  expr e >>= (\ ee -> return (n, FirstTry e ee))) (fromMaybe [] pars)) env
 		self = fromMaybe (envSelf env) strictClass
-		call' :: Exp
-		call' = fromMaybe (ExpDError errorString call) $ findCall
+		call' :: (Maybe Class, Exp)
+		call' = fromMaybe (Nothing, ExpDError errorString call) $ findCall
 		call'' :: Exp
 		call'' = case call' of
-			Call{} -> (resolveDef strictClass . correctCall) call'
-			_ -> call'
+			(cl, cc@Call{}) -> (resolveDef strictClass cl . correctCall) cc
+			_ -> snd call'
 			where
-				resolveDef Nothing c@(Call d _ _)
+				resolveDef Nothing cl c@(Call d _ _)
 					| DefModConstructor `elem` defMods d = c
 					| DefModObject `elem` defMods d = c
 					| DefModLocal `elem` defMods d = c
 					| DefModStub `elem` defMods d = c
+					| isJust cl = Dot (callRef $ objectDef $ fromJust cl) c
 					| otherwise = Dot (Self (envSelf env)) c
-				resolveDef _ c = c
+				resolveDef _ _ c = c
 
 		call''' = case pars of
 			Just [] -> case exprDataType call'' of
@@ -1466,7 +1496,7 @@ tryExprCall env strictClass call@(D.Call name pars gens) = call'''
 			_ -> call''
 
 		pars'' :: [(Def, Exp)]
-		pars'' = case call' of
+		pars'' = case snd call' of
 			Call _ _ r -> r
 		pars''' :: [(Def, Exp)]
 		pars''' = (map (correctCallPar env gens') pars'')
@@ -1530,7 +1560,7 @@ tryExprCall env strictClass call@(D.Call name pars gens) = call'''
 					tryDetermine c (a, b@TPMap{}) = tryDetermine c (a, dtpw b)
 					tryDetermine _ _ = Nothing
 					dtpw tp = TPClass TPMGeneric (dataTypeGenerics env tp) (dataTypeClass env tp) 
-			in case call' of
+			in case snd call' of
 				(Call Def{defGenerics = Just defGens} _ _) -> 
 					M.fromList $ ddefGenerics defGens ++ dclassGenerics
 				_ -> M.fromList dclassGenerics 
@@ -1539,7 +1569,7 @@ tryExprCall env strictClass call@(D.Call name pars gens) = call'''
 		errorString = "Could find reference for call " ++ callStr ++ "\n" ++
 			maybe "" (\cl -> "strict in class " ++ show cl ++ "\n") strictClass ++
 			(if detailedReferenceError then "in defs:\n" ++
-			(strs "\n" . map (ind . showDef False)) (allDefs)  else "")
+			(strs "\n" . map (ind . showDef False. snd)) (allDefs)  else "")
 			where callStr = name ++ maybe "" (\ps -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) ps) ++ ")" ) pars
 
 		correctCall :: Exp -> Exp
@@ -1547,27 +1577,28 @@ tryExprCall env strictClass call@(D.Call name pars gens) = call'''
 			where
 				doImplicitConversation (dd, e) = (dd, implicitConvertsion env (replaceGenerics gens'' $ defType dd) e)
 
-		allDefs :: [Def]
+		allDefs :: [(Maybe Class, Def)]
 		allDefs = maybe allDefsInEnv allDefsInStrictClass strictClass
 			where 
+			non f = map (\d -> (Nothing, d)) f
 			clRef = dataTypeClassRef env (fromJust strictClass)
 			allDefsInStrictClass _ = 
-				allDefsInClass clRef 
-				++ allDefsInObject clRef
-			allDefsInEnv = envVals env 
-				++ allDefsInClass (dataTypeClassRef env $ envSelf env) 
-				++ allDefsInObject (dataTypeClassRef env $ envSelf env) 
-				++ concatMap classStaticDefs (envObjectIndex env)
-				++ objects 
+				non (allDefsInClass clRef)
+				++ non (allDefsInObject clRef)
+			allDefsInEnv = non(envVals env)
+				++ non (allDefsInClass (dataTypeClassRef env $ envSelf env) )
+				++ non (allDefsInObject (dataTypeClassRef env $ envSelf env) )
+				++ concatMap (\cl -> map (\d -> (Just cl, d)) $ classStaticDefs cl) (envObjectIndex env)
+				++ non objects 
 			objects = if isNothing pars then (map (objectDef . snd) . M.toList) (envIndex env) else []
 		
-		findCall :: Maybe Exp
-		findCall = listToMaybe $ (mapMaybe fit . filter (\d -> defName d == name)) allDefs
+		findCall :: Maybe (Maybe Class, Exp)
+		findCall = listToMaybe $ (mapMaybe fit . filter ((== name) . defName . snd)) allDefs
 			where
-				fit :: Def -> Maybe Exp
-				fit d
+				fit :: (Maybe Class, Def) -> Maybe (Maybe Class, Exp)
+				fit (cl, d)
 					| length pars' == length (defPars d) = 
-							if checkParameters pars' (defPars d) then Just $ def' d else Nothing
+							if checkParameters pars' (defPars d) then Just $ (cl, def' d) else Nothing
 					| otherwise = Nothing
 
 				def' d = Call d (resolveTp d) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars'

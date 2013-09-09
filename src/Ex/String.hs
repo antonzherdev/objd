@@ -1,6 +1,11 @@
-module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp', cap, MathTp(..), BoolTp(..), tryCon, zipWithIndex) where
+module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp', cap, MathTp(..), BoolTp(..), tryCon, zipWithIndex, startsWith) where
 
 import           Data.Char
+
+startsWith :: (Eq a) => [a] -> [a] -> Bool
+startsWith [] _ = True
+startsWith (a:as) (b:bs) = a == b && startsWith as bs
+startsWith _ _ = False
 
 zipWithIndex :: [a] -> [(a, Int)]
 zipWithIndex = doZip 0

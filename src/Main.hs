@@ -10,7 +10,6 @@ import Control.Arrow
 import System.Directory (doesDirectoryExist, getDirectoryContents)
 import System.FilePath
 
-
 {- main::IO()
 main = putStr "dsa" -}
 debug :: [String]
