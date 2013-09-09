@@ -77,13 +77,14 @@ typeInstanceFun :: C.Fun
 typeInstanceFun = C.Fun C.InstanceFun (C.TPSimple "ODClassType*" []) "type" []		
 
 classExtends :: D.Class -> C.Extends
-classExtends cl = addTraits $ maybe (C.Extends "NSObject" []) ext (D.extendsClass $ D.classExtends cl)
+classExtends cl = addTraits cl $ maybe (C.Extends "NSObject" []) ext (D.extendsClass $ D.classExtends cl)
 	where
 		ext (D.ExtendsClass (ccl, _) _)
 			| D.ClassModTrait `elem` D.classMods ccl = C.Extends "NSObject" [D.className ccl]
 			| D.className ccl == "ODObject" = C.Extends "NSObject" []
 			| otherwise = C.Extends (D.className ccl) []
-		addTraits (C.Extends cls protocols) = C.Extends cls $ protocols ++ map (D.className . fst) (D.extendsTraits $ D.classExtends cl)
+addTraits :: D.Class -> C.Extends -> C.Extends		
+addTraits cl (C.Extends cls protocols) = C.Extends cls $ protocols ++ map (D.className . fst) (D.extendsTraits $ D.classExtends cl)
 
 
 staticGetterFun :: D.Def -> C.Fun
@@ -155,7 +156,8 @@ genProtocol cl =
 	C.Protocol {
 		C.interfaceName = D.className cl,
 		C.interfaceFuns = intefaceFuns $ D.classDefs cl,
-		C.interfaceExtends = C.Extends ((cn . D.className . D.extendsClassClass . fromMaybe (error $ "No class extends for " ++ D.className cl) . D.extendsClass) $ D.classExtends cl) []
+		C.interfaceExtends = addTraits cl $ 
+			C.Extends ((cn . D.className . D.extendsClassClass . fromMaybe (error $ "No class extends for " ++ D.className cl) . D.extendsClass) $ D.classExtends cl) []
 	}
 	where
 		cn n = if n == "ODObject" then "NSObject" else n
