@@ -4,7 +4,7 @@ module ObjD.Link (
 	link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
-	classDefs, classGenerics, classExtends, classMods
+	classDefs, classGenerics, classExtends, classMods, classFile, classPackage
 )where
 
 import 			 Control.Arrow
@@ -24,14 +24,22 @@ type Package = [String]
 data File = File {fileName :: String, filePackage :: Package, fileImports :: [File], fileClasses :: [Class], globalDefs :: [Def]}
 instance Eq File where
 	File {fileName = a, filePackage = appp} == File {fileName = b, filePackage = bp} = a == b && appp == bp
-
+coreFakeFile :: File
+coreFakeFile = File "fake.od" ["core"] [] [] []
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - CLASS 
  -----------------------------------------------------------------------------------------------------------------------------------------}
-data Class = Class {className :: String, _classGenerics :: [Class], _classExtends :: Extends, _classMods :: [ClassMod], _classDefs :: [Def]}
+data Class = Class {_classFile :: File, _classPackage :: Package, className :: String
+	, _classGenerics :: [Class], _classExtends :: Extends, _classMods :: [ClassMod], _classDefs :: [Def]}
 	| Generic {className :: String, _classExtends :: Extends}
 	| ClassError {className :: String, classErrorText :: String}
 
+classFile :: Class -> Maybe File
+classFile Class{_classFile = file} = Just file
+classFile _ = Nothing
+classPackage :: Class -> Package
+classPackage Class{_classPackage = pack} = pack
+classPackage _ = []
 classGenerics :: Class -> [Class]
 classGenerics Class{_classGenerics = r} = r
 classGenerics _ = []
@@ -64,7 +72,7 @@ instance Show Class where
 			(unlines . map ind . concatMap (lines . show)) (classDefs cl)  ++
 		"}"
 		where
-			tp cl@Class{} = strs' " " $ classMods cl
+			tp Class{} = strs' " " $ classMods cl
 			tp Generic{} = "generic"
 			sConstr c = maybe "" (\cc -> "(" ++ (strs ", " . map defName . defPars) cc ++ ")") (classConstructor c)
 instance Show ClassMod where
@@ -352,7 +360,7 @@ linkFile files (D.File name package stms) = fl
 	where
 		fl :: File
 		fl = File {fileName = name, fileImports = imports,
-			fileClasses =(map (linkClass (cidx, glidx)) . filter isCls) stms, globalDefs = gldefs, filePackage = package'}
+			fileClasses =(map (linkClass (cidx, glidx, fl, package')) . filter isCls) stms, globalDefs = gldefs, filePackage = package'}
 		isCls s = D.isClass s || D.isStub s || D.isEnum s || D.isType s
 		cidx = M.fromList $ (map (idx className) . concatMap fileClasses . (fl : ) . (++ kernelFiles ++ packageFiles) ) imports
 		glidx = concatMap globalDefs (fl : imports ++ kernelFiles)
@@ -379,8 +387,8 @@ linkFile files (D.File name package stms) = fl
 baseClassExtends :: ClassIndex -> ExtendsClass
 baseClassExtends cidx = ExtendsClass (classFind cidx "ODObject", []) []
 
-linkClass :: (ClassIndex, DefIndex) -> D.FileStm -> Class
-linkClass (ocidx, glidx) cl = self
+linkClass :: (ClassIndex, DefIndex, File, Package) -> D.FileStm -> Class
+linkClass (ocidx, glidx, file, package) cl = self
 	where
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
 		env = Env selfType cidx glidx []
@@ -390,6 +398,8 @@ linkClass (ocidx, glidx) cl = self
 			_ -> False
 		self = case cl of
 			D.Class{} -> Class {
+				_classFile = file,
+				_classPackage = package,
 				_classMods = mapMaybe clsMod (D.classMods cl), 
 				className = D.className cl, 
 				_classExtends = if D.className cl == "ODObject" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
@@ -400,6 +410,8 @@ linkClass (ocidx, glidx) cl = self
 				_classGenerics = generics
 			}
 			D.Enum{} -> Class {
+				_classFile = file,
+				_classPackage = package,
 				_classMods = [ClassModEnum], 
 				className = D.className cl, 
 				_classExtends = Extends (Just $ ExtendsClass 
@@ -412,6 +424,8 @@ linkClass (ocidx, glidx) cl = self
 				_classGenerics = generics
 			}
 			D.Type{} -> Class {
+				_classFile = file,
+				_classPackage = package,
 				_classMods = [ClassModType, ClassModStub], 
 				className = D.className cl, 
 				_classExtends = Extends (Just $ ExtendsClass (linkExtendsRef env (D.typeDef cl)) []) [], 
@@ -700,7 +714,9 @@ dataTypeClassRef env tp = let
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
 dataTypeClass _ (TPObject _ c) = Class { _classMods = [ClassModObject], className = className c, _classExtends = extendsNothing, 
-	_classDefs = allDefsInObject (c, M.empty), _classGenerics = []}
+	_classDefs = allDefsInObject (c, M.empty), _classGenerics = [], 
+	_classFile = fromMaybe (error $ "No class file for class " ++ className c) $ classFile c,
+	_classPackage = classPackage c}
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
 dataTypeClass env (TPArr _ _) = classFind (envIndex env) "CNSeq"
 dataTypeClass env (TPEArr _ _) = classFind (envIndex env) "CNPArray"
@@ -720,7 +736,8 @@ dataTypeClass env (TPFloatNumber 8) = classFind (envIndex env) "ODFloat8"
 dataTypeClass env (TPFloatNumber 0) = classFind (envIndex env) "ODFloat"
 dataTypeClass env TPAny = classFind (envIndex env) "ODAny"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("CNTuple" ++ show (length a))
-dataTypeClass _ (TPFun stp dtp) = Class { _classMods = [], className = "", _classExtends = extendsNothing, 
+dataTypeClass _ (TPFun stp dtp) = Class { _classMods = [], className = "", _classExtends = extendsNothing,
+	_classPackage = ["core"], _classFile = coreFakeFile, 
 	_classDefs = [apply], _classGenerics = []}
 	where
 		sourceTypes = case stp of
