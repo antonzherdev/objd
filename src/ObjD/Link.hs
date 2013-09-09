@@ -50,6 +50,8 @@ classExtends _ = extendsNothing
 classDefs :: Class -> [Def]
 classDefs Class{_classDefs = r} = r
 classDefs _ = []
+classStaticDefs :: Class -> [Def]
+classStaticDefs = filter (isStatic) . classDefs
 classMods :: Class -> [ClassMod]
 classMods Class{_classMods = r} = r
 classMods _ = []
@@ -387,7 +389,7 @@ linkFile files (D.File name package stms) = fl
 		getFileWithName f = find ((== f) . fileName) files
 		gldefs = (map gldef . filter D.isStubDef) stms
 		gldef (D.StubDef d@D.Def{D.defMods = mods}) = 
-			(linkDef False env d){defMods = DefModStub : mapMaybe md' mods}
+			(linkDef False env d){defMods = DefModStatic : DefModStub : mapMaybe md' mods}
 			where
 				env = Env{envSelf = TPVoid, envIndex = cidx, envObjectIndex = glidx,  envVals = []}
 				md' D.DefModVal = Just DefModGlobalVal
@@ -1555,7 +1557,7 @@ tryExprCall env strictClass call@(D.Call name pars gens) = call'''
 			allDefsInEnv = envVals env 
 				++ allDefsInClass (dataTypeClassRef env $ envSelf env) 
 				++ allDefsInObject (dataTypeClassRef env $ envSelf env) 
-				++ concatMap classDefs (envObjectIndex env)
+				++ concatMap classStaticDefs (envObjectIndex env)
 				++ objects 
 			objects = if isNothing pars then (map (objectDef . snd) . M.toList) (envIndex env) else []
 		
