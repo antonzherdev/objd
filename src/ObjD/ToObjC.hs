@@ -954,9 +954,9 @@ equals True (D.TPClass D.TPMClass _ cl, e1) (_, e2)
 equals True (_, e1) (_, e2) = C.Call e1 "isEqual" [("", e2)] []
 
 addObjectToArray :: D.DataType -> C.Exp -> C.Exp -> C.Exp
-addObjectToArray tp a obj = C.Call a "arrayByAdding" [("object", maybeVal (tp, D.wrapGeneric tp) obj)] []
+addObjectToArray tp a obj = C.Call a "arrayByAdding" [("item", maybeVal (tp, D.wrapGeneric tp) obj)] []
 removeObjectFromArray :: D.DataType -> C.Exp -> C.Exp -> C.Exp
-removeObjectFromArray tp a obj = C.Call a "arrayByRemoving" [("object", maybeVal (tp, D.wrapGeneric tp) obj)] []
+removeObjectFromArray tp a obj = C.Call a "arrayByRemoving" [("item", maybeVal (tp, D.wrapGeneric tp) obj)] []
 
 addKVToMap :: Env -> C.Exp -> D.Exp -> C.Exp
 addKVToMap env a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tExp env v), ("forKey", tExp env k)] []
