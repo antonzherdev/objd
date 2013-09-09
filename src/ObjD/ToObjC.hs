@@ -58,7 +58,7 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes} =
 {- Interface -}
 
 stmToInterface :: D.Class -> C.FileStm
-stmToInterface (cl@D.Class {D.className = name, D.classDefs = defs}) =
+stmToInterface cl =
 	C.Interface {
 		C.interfaceName = name,
 		C.interfaceExtends = classExtends cl,
@@ -67,6 +67,8 @@ stmToInterface (cl@D.Class {D.className = name, D.classDefs = defs}) =
 			++ intefaceFuns defs ++ staticGetters
 	}
 	where 
+		name = D.className cl
+		defs = D.classDefs cl
 		constrFuns = fromMaybe [] $ fmap (\constr -> [createFun name constr, initFun constr]) (D.classConstructor cl)
 		staticGetters = (map staticGetterFun .filter (\f -> 
 			(D.DefModPrivate `notElem` D.defMods f) && D.isField f && D.isStatic f)) defs
@@ -149,11 +151,11 @@ stm2Fun D.Def{D.defName = name, D.defPars = pars, D.defType = tp, D.defMods = mo
 		par (D.Def{D.defName = nm, D.defType = ttp}) = C.FunPar nm (showDataType ttp) nm
 
 genProtocol :: D.Class -> C.FileStm
-genProtocol (D.Class {D.className = name, D.classDefs = defs, D.classExtends = exts}) =
+genProtocol cl =
 	C.Protocol {
-		C.interfaceName = name,
-		C.interfaceFuns = intefaceFuns defs,
-		C.interfaceExtends = C.Extends ((cn . D.className . D.extendsClassClass . fromJust . D.extendsClass) exts) []
+		C.interfaceName = D.className cl,
+		C.interfaceFuns = intefaceFuns $ D.classDefs cl,
+		C.interfaceExtends = C.Extends ((cn . D.className . D.extendsClassClass . fromJust . D.extendsClass) $ D.classExtends cl) []
 	}
 	where
 		cn n = if n == "ODObject" then "NSObject" else n
@@ -162,7 +164,7 @@ genProtocol (D.Class {D.className = name, D.classDefs = defs, D.classExtends = e
 {- Implementation -}
 
 stmToImpl :: D.Class -> C.FileStm
-stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
+stmToImpl cl =
 	C.Implementation {
 		C.implName = clsName,
 		C.implFields = map (implField env) implFields,
@@ -172,9 +174,10 @@ stmToImpl cl@D.Class {D.className = clsName, D.classDefs = clDefs} =
 		C.implStaticFields = map (implField env) staticFields
 	}
 	where
+		clsName = D.className cl
 		env = Env cl False D.TPVoid
 		defs :: [D.Def]
-		defs = nub $ clDefs ++ traitDefs
+		defs = nub $ D.classDefs cl ++ traitDefs
 		
 		traitDefs :: [D.Def]
 		traitDefs = allInParentTraits cl
@@ -246,10 +249,11 @@ equalFun :: C.Fun
 equalFun = C.Fun C.InstanceFun (C.TPSimple "BOOL" []) "isEqual" [(C.FunPar "" (C.TPSimple "id" []) "other")]
 
 equalsIsPosible :: D.Class -> Bool
-equalsIsPosible D.Class {D.classDefs = defs} = 
+equalsIsPosible cl = 
 	(null $ filter ( (D.DefModMutable `elem` ). D.defMods) defs)
 	|| (not $ null $ filter ( isVal . D.defMods) defs)
 	where
+		defs = D.classDefs cl
 		isVal mods = (D.DefModField `elem` mods) && (D.DefModMutable `notElem` mods) && (D.DefModStatic `notElem` mods)
 
 copyImpls :: [C.ImplFun]
@@ -339,10 +343,12 @@ implFuns env = map stm2ImplFun . filter D.isDef
 		
 {- Struct -}
 genStruct :: D.Class -> ([C.FileStm], [C.FileStm])
-genStruct cl@D.Class {D.className = name, D.classDefs = clDefs} = 
+genStruct cl = 
 	([C.Struct name fields', con, eq, hash, description] ++ map def' defs ++  map def' staticFields ++ [wrapClass, C.EmptyLine], 
 		map defImpl' defs ++ map staticFieldImpl' staticFields ++ [wrapImpl, C.EmptyLine])
 	where
+		name = D.className cl
+		clDefs = D.classDefs cl
 		defs = filter D.isDef clDefs
 		env = Env cl False D.TPVoid
 		fields = filter (\d -> not (D.isStatic d) && D.isField d) clDefs
@@ -536,7 +542,7 @@ enumValuesFun :: C.Fun
 enumValuesFun = C.Fun C.ObjectFun (C.TPSimple "NSArray*" []) "values" []
 
 genEnumInterface :: D.Class -> [C.FileStm]
-genEnumInterface cl@D.Class {D.className = name, D.classDefs = defs} = [
+genEnumInterface cl = [
 	C.Interface {
 		C.interfaceName = name,
 		C.interfaceExtends = classExtends cl,
@@ -544,7 +550,8 @@ genEnumInterface cl@D.Class {D.className = name, D.classDefs = defs} = [
 		C.interfaceFuns = intefaceFuns defs' ++ map (enumItemGetterFun name) (D.enumItems cl) ++ [enumValuesFun]
 	}]
 	where 
-		defs' = filter ((/= "values") . D.defName) defs
+		name = D.className cl
+		defs' = filter ((/= "values") . D.defName) $ D.classDefs cl
 	
 enumItemGetterFun :: String -> D.Def -> C.Fun
 enumItemGetterFun name D.Def{D.defName = itemName} = C.Fun C.ObjectFun (C.TPSimple (name ++ "*") []) itemName []
@@ -581,9 +588,7 @@ procImports :: D.File -> ([C.FileStm], [C.FileStm])
 procImports D.File{D.fileImports = imps, D.fileClasses = classes} = (h, m)
 	where 
 		filePossibleWeakImport D.File{D.fileClasses = cls} = all classPosibleWeakImport cls
-		classPosibleWeakImport cl@D.Class{D.classMods = mods} = 
-				D.ClassModStruct `notElem` mods && not (hasExtends cl)
-		classPosibleWeakImport _ = False
+		classPosibleWeakImport cl = D.ClassModStruct `notElem` D.classMods cl && not (hasExtends cl)
 		hasExtends cl = cl `elem` extends
 		extends = (map fst . concatMap (D.extendsRefs . D.classExtends)) classes
 		cImport D.File{D.fileName = fn} = C.Import (fn ++ ".h")

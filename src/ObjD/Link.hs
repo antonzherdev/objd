@@ -3,7 +3,8 @@ module ObjD.Link (
 	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef,
 	link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
-	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias
+	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
+	classDefs, classGenerics, classExtends, classMods
 )where
 
 import 			 Control.Arrow
@@ -27,11 +28,24 @@ instance Eq File where
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - CLASS 
  -----------------------------------------------------------------------------------------------------------------------------------------}
-data Class = Class { classMods :: [ClassMod], className :: String, classExtends :: Extends
-		, classDefs :: [Def], classGenerics :: [Class]}
-	| Generic {className :: String, classDefs :: [Def], classExtends :: Extends, classGenerics :: [Class]}
-	| ClassError {className :: String, classErrorText :: String, classDefs :: [Def], classExtends :: Extends
-		, classGenerics :: [Class]}
+data Class = Class {className :: String, _classGenerics :: [Class], _classExtends :: Extends, _classMods :: [ClassMod], _classDefs :: [Def]}
+	| Generic {className :: String, _classExtends :: Extends}
+	| ClassError {className :: String, classErrorText :: String}
+
+classGenerics :: Class -> [Class]
+classGenerics Class{_classGenerics = r} = r
+classGenerics _ = []
+classExtends :: Class -> Extends
+classExtends Class{_classExtends = r} = r
+classExtends Generic{_classExtends = r} = r
+classExtends _ = extendsNothing
+classDefs :: Class -> [Def]
+classDefs Class{_classDefs = r} = r
+classDefs _ = []
+classMods :: Class -> [ClassMod]
+classMods Class{_classMods = r} = r
+classMods _ = []
+
 
 data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType deriving (Eq)
 
@@ -43,14 +57,14 @@ type Generics = M.Map String DataType
 type ClassRef = (Class, Generics)
 
 instance Show Class where
-	show Generic{className = name, classExtends = ext} =  name ++ " " ++ show ext
-	show ClassError{className = name, classErrorText = er} = name ++ ": " ++ er
+	show (Generic name ext) =  name ++ " " ++ show ext
+	show (ClassError name er) = name ++ ": " ++ er
 	show cl =
 		tp cl ++ " " ++ className cl ++ sConstr cl ++ " " ++ show (classExtends cl) ++ " {\n" ++
 			(unlines . map ind . concatMap (lines . show)) (classDefs cl)  ++
 		"}"
 		where
-			tp Class{classMods = mods} = strs' " " mods
+			tp cl@Class{} = strs' " " $ classMods cl
 			tp Generic{} = "generic"
 			sConstr c = maybe "" (\cc -> "(" ++ (strs ", " . map defName . defPars) cc ++ ")") (classConstructor c)
 instance Show ClassMod where
@@ -76,8 +90,6 @@ instance Eq Class where
 isCoreFile :: File -> Bool
 isCoreFile File{filePackage = (x : _)} = x == "core"
 isCoreFile _ = False
-classError :: String -> String -> Class
-classError name err = ClassError { className = name, classErrorText = err, classDefs = [], classExtends = extendsNothing, classGenerics = []}
 classConstructor :: Class -> Maybe Def 
 classConstructor Generic{} = Nothing
 classConstructor cl = (listToMaybe . filter isConstructor . classDefs) cl
@@ -88,23 +100,17 @@ isGeneric :: Class -> Bool
 isGeneric (Generic {}) = True
 isGeneric _ = False
 isStruct :: Class -> Bool
-isStruct (Class {classMods = mods}) = ClassModStruct `elem` mods
-isStruct _ = False
+isStruct = (ClassModStruct `elem` ) . classMods
 isType :: Class -> Bool
-isType (Class {classMods = mods}) = ClassModType `elem` mods
-isType _ = False
+isType = (ClassModType `elem` ) . classMods
 isTrait :: Class -> Bool
-isTrait (Class {classMods = mods}) = ClassModTrait `elem` mods
-isTrait _ = False
+isTrait = (ClassModTrait `elem` ) . classMods
 isStub :: Class -> Bool
-isStub (Class {classMods = mods}) = ClassModStub `elem` mods
-isStub _ = False
+isStub = (ClassModStub `elem` ) . classMods
 isRealClass :: Class -> Bool
-isRealClass (Class {classMods = mods}) = ClassModStub `notElem` mods
-isRealClass _ = False
+isRealClass = (ClassModStub `notElem` ) . classMods
 isEnum :: Class -> Bool
-isEnum (Class {classMods = mods}) = ClassModEnum `elem` mods
-isEnum _ = False
+isEnum = (ClassModEnum `elem` ) . classMods
 classFields :: Class -> [Def]
 classFields = filter isField . classDefs
 
@@ -124,7 +130,7 @@ superClasses = map fst . extendsRefs . classExtends
 replaceGenerics :: Generics -> DataType -> DataType
 replaceGenerics gns = mapDataType f
 	where 
-		f (TPClass TPMGeneric _ (Generic g _ _ _)) = M.lookup g gns
+		f (TPClass TPMGeneric _ (Generic g _)) = M.lookup g gns
 		f _ = Nothing
 
 objectDef :: Class -> Def
@@ -243,7 +249,7 @@ isEnumItem = (DefModEnumItem `elem` ) . defMods
 isConstructor :: Def -> Bool
 isConstructor = (DefModConstructor `elem` ) . defMods
 enumItems :: Class -> [Def]
-enumItems Class{classDefs = defs} = filter isEnumItem defs
+enumItems = filter isEnumItem . classDefs
 instance Eq Def where
 	a == b = defName a == defName b && length (defPars a) == length (defPars b) && all eqPar (zip (defPars a)(defPars b)) && (isStatic a == isStatic b)
 
@@ -384,33 +390,33 @@ linkClass (ocidx, glidx) cl = self
 			_ -> False
 		self = case cl of
 			D.Class{} -> Class {
-				classMods = mapMaybe clsMod (D.classMods cl), 
+				_classMods = mapMaybe clsMod (D.classMods cl), 
 				className = D.className cl, 
-				classExtends = if D.className cl == "ODObject" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
-				classDefs = 
+				_classExtends = if D.className cl == "ODObject" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
+				_classDefs = 
 					if isObject then map (\d -> d{defMods = DefModStatic : defMods d}) $ fields ++ defs ++ [typeField] 
 					else fields ++ defs ++ [constr constrPars, typeField] 
 				{-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
-				classGenerics = generics
+				_classGenerics = generics
 			}
 			D.Enum{} -> Class {
-				classMods = [ClassModEnum], 
+				_classMods = [ClassModEnum], 
 				className = D.className cl, 
-				classExtends = Extends (Just $ ExtendsClass 
+				_classExtends = Extends (Just $ ExtendsClass 
 					(classFind cidx "ODEnum", [TPClass TPMEnum [] self])  
 					[(enumOrdinal, callLocalVal "ordinal" uint), (enumName, callLocalVal "name" TPString)]) [], 
-				classDefs =  enumConstr: 
+				_classDefs =  enumConstr: 
 					snd (mapAccumL enumItem 0 (D.enumItems cl)) ++ fields ++ defs ++ [Def{
 					defName = "values", defType = TPArr 0 (TPClass TPMEnum [] self), defBody = Nop,
 					defMods = [DefModStatic], defPars = [], defGenerics = Nothing}],
-				classGenerics = generics
+				_classGenerics = generics
 			}
 			D.Type{} -> Class {
-				classMods = [ClassModType, ClassModStub], 
+				_classMods = [ClassModType, ClassModStub], 
 				className = D.className cl, 
-				classExtends = Extends (Just $ ExtendsClass (linkExtendsRef env (D.typeDef cl)) []) [], 
-				classDefs = [constructorForType], 
-				classGenerics = generics
+				_classExtends = Extends (Just $ ExtendsClass (linkExtendsRef env (D.typeDef cl)) []) [], 
+				_classDefs = [constructorForType], 
+				_classGenerics = generics
 			}
 		enumOrdinal = Def "ordinal" [] uint Nop [] Nothing
 		enumName = Def "name" [] TPString Nop [] Nothing
@@ -500,7 +506,7 @@ linkExtendsRef :: Env -> D.ExtendsRef -> ExtendsRef
 linkExtendsRef env (ecls, gens) = (classFind (envIndex env) ecls, map (dataType (envIndex env)) gens) 
 
 linkGeneric :: Env -> D.Generic -> Class
-linkGeneric env (D.Generic name ext) = Generic name [] (maybe (Extends (Just $ baseClassExtends (envIndex env) ) [] ) (linkExtends env []) ext) []
+linkGeneric env (D.Generic name ext) = Generic name (maybe (Extends (Just $ baseClassExtends (envIndex env) ) [] ) (linkExtends env []) ext)
 
 linkField :: Bool -> D.ClassStm -> State Env [Def]
 linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
@@ -598,7 +604,7 @@ envSelfClass env = dataTypeClass env $ envSelf env
 idxFind :: M.Map String a -> String -> Maybe a
 idxFind idxx k = M.lookup k idxx
 classFind :: ClassIndex -> String -> Class
-classFind cidx name = fromMaybe (classError name ("Class " ++ name ++ " not found") ) $ idxFind cidx name
+classFind cidx name = fromMaybe (ClassError name ("Class " ++ name ++ " not found") ) $ idxFind cidx name
 
 {------------------------------------------------------------------------------------------------------------------------------ 
  - DataType 
@@ -693,8 +699,8 @@ dataTypeClassRef env tp = let
 
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
-dataTypeClass _ (TPObject _ c) = Class { classMods = [ClassModObject], className = className c, classExtends = extendsNothing, 
-	classDefs = allDefsInObject (c, M.empty), classGenerics = []}
+dataTypeClass _ (TPObject _ c) = Class { _classMods = [ClassModObject], className = className c, _classExtends = extendsNothing, 
+	_classDefs = allDefsInObject (c, M.empty), _classGenerics = []}
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
 dataTypeClass env (TPArr _ _) = classFind (envIndex env) "CNSeq"
 dataTypeClass env (TPEArr _ _) = classFind (envIndex env) "CNPArray"
@@ -714,15 +720,15 @@ dataTypeClass env (TPFloatNumber 8) = classFind (envIndex env) "ODFloat8"
 dataTypeClass env (TPFloatNumber 0) = classFind (envIndex env) "ODFloat"
 dataTypeClass env TPAny = classFind (envIndex env) "ODAny"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("CNTuple" ++ show (length a))
-dataTypeClass _ (TPFun stp dtp) = Class { classMods = [], className = "", classExtends = extendsNothing, 
-	classDefs = [apply], classGenerics = []}
+dataTypeClass _ (TPFun stp dtp) = Class { _classMods = [], className = "", _classExtends = extendsNothing, 
+	_classDefs = [apply], _classGenerics = []}
 	where
 		sourceTypes = case stp of
 			TPVoid -> []
 			TPTuple tps -> tps
 			tp -> [tp]
 		apply = Def {defName = "apply", defPars = map (localVal "") sourceTypes, defType = dtp, defBody = Nop, defMods = [DefModApplyLambda], defGenerics = Nothing}
-dataTypeClass _ x = classError (show x) ("No dataTypeClass for " ++ show x)
+dataTypeClass _ x = ClassError (show x) ("No dataTypeClass for " ++ show x)
 
 dataTypeClassName :: DataType -> String
 dataTypeClassName (TPClass _ _ c ) = className c
@@ -857,7 +863,7 @@ getDataType env tp e = maybe (exprDataType e) (dataType (envIndex env)) tp
 
 
 tpGeneric :: DataType
-tpGeneric = TPClass TPMGeneric [] (Generic "?" [] extendsNothing [])
+tpGeneric = TPClass TPMGeneric [] (Generic "?" extendsNothing)
 
 objectType :: DataType -> DataType
 objectType (TPClass t _ cl) = TPObject t cl
@@ -1620,12 +1626,12 @@ implicitConvertsion env dtp ex = let stp = exprDataType ex
 		conv _ _ = ex
 
 		classConversion c (TPGenericWrap g) e = classConversion c g e
-		classConversion (TPClass _ _ cls@Class{classDefs = defs}) sc e =
+		classConversion (TPClass _ _ cls) sc e =
 			maybe e wrapWithApply $
 			listToMaybe $ filter(\d -> 
 					(defName d == "apply") 
 					&& (DefModStatic `elem` defMods d) 
-					&& checkApplyPars (defPars d) ) defs
+					&& checkApplyPars (defPars d) ) (classDefs cls)
 			where
 				checkApplyPars [Def{defType = tp}] = isInstanceOfTp env tp sc
 				checkApplyPars _ = False
@@ -1657,7 +1663,7 @@ checkErrorsInFile File{fileName = name, fileClasses = classes} =
 checkErrorsInClass :: Class -> [Error]
 checkErrorsInClass e@ClassError{} = [Error (show e)]
 checkErrorsInClass Generic{} = []
-checkErrorsInClass Class{className = name, classExtends = extends, classGenerics = gens, classDefs = defs} = 
+checkErrorsInClass Class{className = name, _classExtends = extends, _classGenerics = gens, _classDefs = defs} = 
 	map (ErrorParent $"class " ++ name) (
 		checkErrorsInExtends extends
 		++ concatMap checkErrorsInClass gens
