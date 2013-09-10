@@ -1,6 +1,6 @@
 module ObjD.Struct (
 	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, EnumItem(..), CallPar, DefMod(..), 
-	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), ExtendsRef, ExtendsClass(..), CaseCondition(..), CaseItem,
+	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), ExtendsRef, ExtendsClass(..), CaseCondition(..), CaseItem, FuncOpTp(..),
 	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum, isStatic, isType
 ) where
 import           Ex.String
@@ -81,6 +81,7 @@ data Exp = Nop
 	| Dot Exp Exp
 	| Set (Maybe MathTp) Exp Exp
 	| MathOp MathTp Exp Exp
+	| FuncOp FuncOpTp Exp Exp
 	| PlusPlus Exp
 	| MinusMinus Exp
 	| Call String (Maybe [CallPar]) [DataType]
@@ -99,6 +100,7 @@ type CallPar = (Maybe String, Exp)
 
 type CaseItem = (CaseCondition, Exp)
 data CaseCondition = CaseUnapply (Maybe String) String [CaseCondition] | CaseAny | CaseVal String | CaseType CaseCondition DataType
+data FuncOpTp = FuncOpBind | FuncOpClue | FuncOpClone
 
 data DataType = DataType String [DataType] 
 	| DataTypeArr Int DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType] 
@@ -156,6 +158,7 @@ instance Show Exp where
 	show (BoolOp t l r) = showOp l (show t) r
 	show (MathOp t l r) = showOp l (show t) r
 	show (PlusPlus e) = show e ++ "++"
+	show (FuncOp tp l r) = showOp l (show tp) r
 	show (MinusMinus e) = show e ++ "--"
 	show (Call n Nothing gens) = n ++ showGens gens
 	show (Call n (Just pars) gens) = n ++ showGens gens ++ "(" ++ strs ", " (map showPar pars) ++ ")"
@@ -187,4 +190,9 @@ instance Show CaseCondition where
 	show CaseAny = "_"
 	show (CaseVal s) = s
 	show (CaseType cond tp) = show cond ++ " : " ++ show tp
+
+instance Show FuncOpTp where
+	show FuncOpBind = ">>"
+	show FuncOpClone = "*|*"
+	show FuncOpClue = "**"
 	

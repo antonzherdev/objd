@@ -333,14 +333,15 @@ pExp = do
 	sps
 	return o
 	where
-		
-		pOp0 = pOp1 `chainl1` (pBoolOp "||" Or)
-		pOp1 = pOp2 `chainl1` (pBoolOp "&&" And)
-		pOp2 = pOp3 `chainl1` pCompareOp
-		pOp3 = pOp4 `chainl1` pSetOp
-		pOp4 = pOp5 `chainl1` (mathOp '+' Plus <|> mathOp '-' Minus)
-		pOp5 = pOp6 `chainl1` (mathOp '*' Mul <|> mathOp '/' Div)
-		pOp6 = 
+		pOp0 = pOp1 `chainl1` (funcOp "*|*" FuncOpClone <|> funcOp "**" FuncOpClue)
+		pOp1 = pOp10 `chainl1` (funcOp ">>" FuncOpBind)
+		pOp10 = pOp11 `chainl1` (pBoolOp "||" Or)
+		pOp11 = pOp12 `chainl1` (pBoolOp "&&" And)
+		pOp12 = pOp13 `chainl1` pCompareOp
+		pOp13 = pOp14 `chainl1` pSetOp
+		pOp14 = pOp15 `chainl1` (mathOp '+' Plus <|> mathOp '-' Minus)
+		pOp15 = pOp16 `chainl1` (mathOp '*' Mul <|> mathOp '/' Div)
+		pOp16 = 
 			(do
 				charSps '!'	
 				e <- pTerm
@@ -365,6 +366,10 @@ pExp = do
 			notFollowedBy $ (char '=' <|> char s <|> char '>')
 			sps
 			return $ MathOp t)
+		funcOp s t = try(do 
+			string s
+			sps
+			return $ FuncOp t)
 		postFix o = try(do
 			string "++"
 			sps
@@ -717,7 +722,10 @@ pCallPar = do
 	return (name, e)
 
 pCompareOp :: Parser (Exp -> Exp -> Exp)
-pCompareOp =  pBoolOp "==" Eq <|> pBoolOp "!=" NotEq <|> pBoolOp ">=" MoreEq <|> pBoolOp ">" More  <|> pBoolOp "<=" LessEq <|> pBoolOp "<" Less
+pCompareOp =  pBoolOp "==" Eq <|> pBoolOp "!=" NotEq <|> pBoolOp ">=" MoreEq <|> pBoolOp "<=" LessEq <|> pBoolOp "<" Less <|> (try $ do
+	r <- pBoolOp ">" More  
+	notFollowedBy $ char '>'
+	return r)
 
 pBoolOp :: String -> BoolTp -> Parser (Exp -> Exp -> Exp)
 pBoolOp s t = do 

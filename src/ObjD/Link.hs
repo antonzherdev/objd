@@ -64,7 +64,6 @@ data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | C
 
 type ExtendsRef = (Class, [DataType])
 data Extends = Extends {extendsClass :: Maybe ExtendsClass, extendsTraits :: [ExtendsRef]}
-type CallPar = (Def, Exp)
 data ExtendsClass = ExtendsClass ExtendsRef [CallPar]
 type Generics = M.Map String DataType
 type ClassRef = (Class, Generics)
@@ -769,16 +768,20 @@ dataTypeClass env (TPFloatNumber 8) = classFind (envIndex env) "ODFloat8"
 dataTypeClass env (TPFloatNumber 0) = classFind (envIndex env) "ODFloat"
 dataTypeClass env TPAny = classFind (envIndex env) "ODAny"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("CNTuple" ++ show (length a))
-dataTypeClass _ (TPFun stp dtp) = Class { _classMods = [], className = "", _classExtends = extendsNothing,
+dataTypeClass _ f@TPFun{} = Class { _classMods = [], className = "", _classExtends = extendsNothing,
 	_classPackage = ["core"], _classFile = coreFakeFile, 
-	_classDefs = [apply], _classGenerics = []}
+	_classDefs = [applyLambdaDef f], _classGenerics = []}
+	where
+		
+dataTypeClass _ x = ClassError (show x) ("No dataTypeClass for " ++ show x)
+
+applyLambdaDef :: DataType -> Def
+applyLambdaDef (TPFun stp dtp) = Def {defName = "apply", defPars = map (localVal "") sourceTypes, defType = dtp, defBody = Nop, defMods = [DefModApplyLambda], defGenerics = Nothing}
 	where
 		sourceTypes = case stp of
 			TPVoid -> []
 			TPTuple tps -> tps
 			tp -> [tp]
-		apply = Def {defName = "apply", defPars = map (localVal "") sourceTypes, defType = dtp, defBody = Nop, defMods = [DefModApplyLambda], defGenerics = Nothing}
-dataTypeClass _ x = ClassError (show x) ("No dataTypeClass for " ++ show x)
 
 dataTypeClassName :: DataType -> String
 dataTypeClassName (TPClass _ _ c ) = className c
@@ -972,7 +975,8 @@ data Exp = Nop
 	| Break
 	| LambdaCall Exp
 	| StringBuild [(String, Exp)] String
-	
+type CallPar = (Def, Exp)	
+
 instance Show Exp where
 	show (Braces exps) = "{\n"  ++ strs "\n" (map (ind . show) exps) ++ "\n}"
 	show (If cond t Nop) = "if(" ++ show cond ++ ") " ++ show t
@@ -1022,6 +1026,9 @@ instance Show Exp where
 
 callRef :: Def -> Exp
 callRef d = Call d (defType d) []
+
+call :: Def -> [CallPar] -> Exp
+call d pars = Call d (defType d) pars
 
 showCallPars :: [CallPar] -> String
 showCallPars [] = ""
@@ -1285,6 +1292,55 @@ expr c@D.Case{} = linkCase c
 expr s@D.StringBuild {} = do
 	env <- get 
 	return $ linkStringBuild env s
+expr ex@(D.FuncOp tp l r) = do
+	env <- get
+	l' <- expr l
+	r' <- expr r
+	let 
+		ltp = exprDataType l'
+		lInputType = case ltp of 
+			TPFun ret _ -> Right ret
+			_ -> Left $ "Left is not function but " ++ show ltp ++ " in " ++ show l'
+		lOutputType = case ltp of 
+			TPFun _ ret -> Right ret
+			_ -> Left $ "Left is not function but " ++ show ltp ++ " in " ++ show l'
+		rInputTypeShouldBe = case tp of
+			D.FuncOpBind -> lOutputType
+	r'' <- case exprDataType r' of
+		TPFun{} -> return r'
+		_ -> case rInputTypeShouldBe of
+			Left _ -> return r'
+			Right ritp -> do
+				modify $ envAddVals $ [localVal "_" ritp]
+				rr <- expr r
+				put env
+				return $ Lambda [("_", ritp)] rr (exprDataType rr)
+	let 
+		rtp = exprDataType r''
+		rInputType = case rtp of 
+			TPFun ret _ -> Right ret
+			_ -> Left $ "Right is not function but " ++ show rtp ++ " in " ++ show r'
+		rOutputType = case rtp of 
+			TPFun _ ret -> Right ret
+			_ -> Left $ "Right is not function but " ++ show rtp ++ " in " ++ show r'
+		f p = do
+			li <- lInputType
+			return $ Dot l' $ call (applyLambdaDef ltp) [(localVal "" li, p)]
+		g p = do 
+			ri <- rInputType
+			return $ Dot r' $ call (applyLambdaDef rtp) [(localVal "" ri, p)]
+		bind :: Either String Exp
+		bind = do
+			li <- lInputType 
+			ro <- rOutputType
+			ff <- f $ callRef $ localVal "x" li
+			c <- g ff
+			return $ Lambda [("x", li)] (maybeAddReturn env ro c) ro
+		compile = case tp of
+			D.FuncOpBind -> bind
+	return $ case compile of
+		Left err -> ExpDError err ex
+		Right e -> e
 {- expr x = error $ "No expr for " ++ show x -}
 
 {------------------------------------------------------------------------------------------------------------------------------ 
@@ -1454,8 +1510,8 @@ exprCall _ (Just (TPUnknown t)) e = ExpDError t e
 exprCall env (Just _) (D.Call "as" Nothing [tp]) = As $ dataType (envIndex env) tp
 exprCall env (Just _) (D.Call "is" Nothing [tp]) = Is $ dataType (envIndex env) tp
 exprCall env (Just _) (D.Call "cast" Nothing [tp]) = CastDot $ dataType (envIndex env) tp
-exprCall env strictClass call@(D.Call name pars gens) = 
-	case tryExprCall env strictClass call of
+exprCall env strictClass cll@(D.Call name pars gens) = 
+	case tryExprCall env strictClass cll of
 		err@ExpDError{} -> if isNothing pars then err else
 			case tryExprCall env strictClass (D.Call name Nothing gens) of
 				ExpDError es _ -> ExpLError es err
@@ -1468,12 +1524,12 @@ exprCall _ _ err = ExpDError "It is not call" err
 
 tryExprCall :: Env-> Maybe DataType -> D.Exp -> Exp
 tryExprCall _ (Just (TPUnknown t)) e = ExpDError t e
-tryExprCall env strictClass call@(D.Call name pars gens) = call'''
+tryExprCall env strictClass cll@(D.Call name pars gens) = call'''
 	where
 		pars' = evalState (mapM (\ (n, e) ->  expr e >>= (\ ee -> return (n, FirstTry e ee))) (fromMaybe [] pars)) env
 		self = fromMaybe (envSelf env) strictClass
 		call' :: (Maybe Class, Exp)
-		call' = fromMaybe (Nothing, ExpDError errorString call) $ findCall
+		call' = fromMaybe (Nothing, ExpDError errorString cll) $ findCall
 		call'' :: Exp
 		call'' = case call' of
 			(cl, cc@Call{}) -> (resolveDef strictClass cl . correctCall) cc
@@ -1539,7 +1595,7 @@ tryExprCall env strictClass call@(D.Call name pars gens) = call'''
 					determineByPars = (listToMaybe . mapMaybe ( (defType *** (exprDataType >>> unwrapGeneric))>>> tryDetermine g) ) rpars
 					determineBySelfType :: Maybe DataType
 					determineBySelfType = tryDetermine g (selfType, self)
-					errorText = "Could not determine generic type for " ++ show g ++ " in " ++ show call 
+					errorText = "Could not determine generic type for " ++ show g ++ " in " ++ show cll 
 					tryDetermine :: Class -> (DataType, DataType) -> Maybe DataType
 					tryDetermine c (TPClass TPMGeneric _ gg, tp) = if c == gg then Just (wrapGeneric tp) else Nothing
 					tryDetermine c (TPArr _ a, TPArr _ a') = tryDetermine c (a, a')
