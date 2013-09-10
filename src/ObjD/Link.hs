@@ -1292,7 +1292,14 @@ expr c@D.Case{} = linkCase c
 expr s@D.StringBuild {} = do
 	env <- get 
 	return $ linkStringBuild env s
-expr ex@(D.FuncOp tp l r) = do
+expr ex@D.FuncOp{} = linkFuncOp ex
+-- expr x = error $ "No expr for " ++ show x
+
+{------------------------------------------------------------------------------------------------------------------------------ 
+ - Functional Compositions >> *|* **
+ ------------------------------------------------------------------------------------------------------------------------------}
+linkFuncOp :: D.Exp -> State Env Exp
+linkFuncOp ex@(D.FuncOp tp l r)  = do
 	env <- get
 	l' <- expr l
 	r' <- expr r
@@ -1305,7 +1312,9 @@ expr ex@(D.FuncOp tp l r) = do
 			TPFun _ ret -> Right ret
 			_ -> Left $ "Left is not function but " ++ show ltp ++ " in " ++ show l'
 		rInputTypeShouldBe = case tp of
-			D.FuncOpBind -> lOutputType
+			D.FuncOpBind -> lOutputType >>= \t -> case t of
+				TPOption o -> return $ unwrapGeneric o
+				_ -> return $ t
 	r'' <- case exprDataType r' of
 		TPFun{} -> return r'
 		_ -> case rInputTypeShouldBe of
@@ -1319,16 +1328,16 @@ expr ex@(D.FuncOp tp l r) = do
 		rtp = exprDataType r''
 		rInputType = case rtp of 
 			TPFun ret _ -> Right ret
-			_ -> Left $ "Right is not function but " ++ show rtp ++ " in " ++ show r'
+			_ -> Left $ "Right is not function but " ++ show rtp ++ " in " ++ show r''
 		rOutputType = case rtp of 
 			TPFun _ ret -> Right ret
-			_ -> Left $ "Right is not function but " ++ show rtp ++ " in " ++ show r'
+			_ -> Left $ "Right is not function but " ++ show rtp ++ " in " ++ show r''
 		f p = do
 			lInputType
 			return $ Dot l' $ call (applyLambdaDef ltp) [p]
 		g p = do 
 			rInputType
-			return $ Dot r' $ call (applyLambdaDef rtp) [p]
+			return $ Dot r'' $ call (applyLambdaDef rtp) [p]
 		bind :: Either String Exp
 		bind = do
 			li <- lInputType 
@@ -1362,8 +1371,6 @@ expr ex@(D.FuncOp tp l r) = do
 	return $ case compile of
 		Left err -> ExpDError err ex
 		Right e -> e
-{- expr x = error $ "No expr for " ++ show x -}
-
 {------------------------------------------------------------------------------------------------------------------------------ 
  - String build
  ------------------------------------------------------------------------------------------------------------------------------}
