@@ -177,7 +177,7 @@ stmToImpl cl =
 	}
 	where
 		clsName = D.className cl
-		env = Env cl False D.TPVoid
+		env = Env cl False D.TPVoid False False
 		defs :: [D.Def]
 		defs = nub $ D.classDefs cl ++ traitDefs
 		
@@ -308,13 +308,21 @@ implInitialize env@Env{envClass = cl} = let
 
 
 
+declareWeakSelf :: Env -> [C.Stm] -> [C.Stm]
+declareWeakSelf env stms = if need then (C.Var (C.tp $ (D.className $ envClass env) ++ "*") "_weakSelf" C.Self ["__weak"]) : stms else stms
+	where
+		need = isJust $ C.forStms ((\_ -> Nothing), (isWeakSelf) ) stms
+		isWeakSelf e@(C.Ref "_weakSelf") = Just e
+		isWeakSelf _ = Nothing
+
 implInit :: Env -> D.Def -> C.ImplFun
 implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
 			[C.Set Nothing C.Self (superInit $ D.extendsClass $ D.classExtends cl)]
-			++ implInitFields (filter hasField constrPars) (filter hasInit (D.classDefs cl))
+			++ declareWeakSelf env' (implInitFields (filter hasField constrPars) (filter hasInit (D.classDefs cl)))
 			++ [C.Stm C.Nop, C.Return C.Self]
 			)
 	where
+		env' = env{envInit = True}
 		hasInit D.Def{D.defBody = D.Nop} = False
 		hasInit d = D.isField d && not (D.isStatic d)
 
@@ -322,12 +330,12 @@ implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFu
 
 		superInit Nothing = C.Call C.Super "init" [] []
 		superInit (Just (D.ExtendsClass _ [])) = C.Call C.Super "init" [] []
-		superInit (Just (D.ExtendsClass _ pars)) = C.Call C.Super "initWith" (map (D.defName *** tExp env) pars) []
+		superInit (Just (D.ExtendsClass _ pars)) = C.Call C.Super "initWith" (map (D.defName *** tExp env') pars) []
 
 		implInitFields :: [D.Def] -> [D.Def] -> [C.Stm]
 		implInitFields [] [] = []
-		implInitFields co fields = [C.If C.Self (map implConstrField co ++ map (implInitField env) fields) []]
-		implConstrField d@D.Def{D.defName = name, D.defType = tp} = C.Set Nothing (C.Ref $ fieldName env d) (implRight tp) 
+		implInitFields co fields = [C.If C.Self (map implConstrField co ++ map (implInitField env') fields) []]
+		implConstrField d@D.Def{D.defName = name, D.defType = tp} = C.Set Nothing (C.Ref $ fieldName env' d) (implRight tp) 
 			where
 				implRight D.TPClass{} = retain $ C.Ref name
 				implRight _ = C.Ref name
@@ -352,7 +360,7 @@ genStruct cl =
 		name = D.className cl
 		clDefs = D.classDefs cl
 		defs = filter D.isDef clDefs
-		env = Env cl False D.TPVoid
+		env = Env cl False D.TPVoid False False
 		fields = filter (\d -> not (D.isStatic d) && D.isField d) clDefs
 		staticFields = filter (\d -> (D.isStatic d) && D.isField d) clDefs
 		fields' = map toField fields
@@ -569,7 +577,7 @@ genEnumImpl cl@D.Class {D.className = clsName} = [
 		C.implStaticFields = map stField items ++ [C.ImplField valuesVarName (C.TPSimple "NSArray*" []) [] C.Nop] 
 	}]
 	where
-		env = Env  cl False D.TPVoid
+		env = Env  cl False D.TPVoid False False
 		valuesVarName =  "_" ++ clsName ++ "_values"
 		items = D.enumItems cl
 		defs = filter ((/= "values") . D.defName) $ D.classDefs cl
@@ -697,8 +705,10 @@ castGeneric dexp e = case D.exprDataType dexp of
 	D.TPGenericWrap c@D.TPTuple{} -> C.Cast (showDataType c) e
 	_ -> e
 
-data Env = Env{envClass :: D.Class, envCStruct :: Bool, envDataType :: D.DataType}
+data Env = Env{envClass :: D.Class, envCStruct :: Bool, envDataType :: D.DataType, envWeakSelf :: Bool, envInit :: Bool}
 
+selfCall :: Env -> C.Exp
+selfCall env = if envWeakSelf env then C.Ref "_weakSelf" else C.Self
 
 tExp :: Env -> D.Exp -> C.Exp
 tExp _ (D.IntConst i) = C.IntConst i
@@ -739,11 +749,11 @@ tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call d@D.Def {D.defName 
 	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
 	| otherwise = C.CCall (C.Ref $ structDefName (D.className c) d) (C.Ref "self" : (map snd . tPars env) pars)
 tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name} _ pars)) 
-	| D.DefModField `elem` mods && null pars && D.DefModSuper `notElem` mods = C.Ref $ fieldName env d
-	| D.DefModField `elem` mods && D.DefModSuper `notElem` mods = C.CCall (C.Ref $ fieldName env d) ((map snd . tPars env) pars)
+	| D.DefModField `elem` mods && null pars && D.DefModSuper `notElem` mods && not (envWeakSelf env) = C.Ref $ fieldName env d
+	| D.DefModField `elem` mods && D.DefModSuper `notElem` mods && not (envWeakSelf env) = C.CCall (C.Ref $ fieldName env d) ((map snd . tPars env) pars)
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className $ D.tpClass stp) name (tPars env pars) []
-	| D.DefModField `elem` mods && null pars = C.Dot C.Self $ C.Ref name
-	| otherwise = C.Call C.Self name (tPars env pars) []
+	| D.DefModField `elem` mods && null pars = C.Dot (selfCall env) $ C.Ref name
+	| otherwise = C.Call (selfCall env) name (tPars env pars) []
 tExp env d@(D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModStatic `elem` mods && isStubObject = 
 		if D.DefModField `elem` mods then C.Ref name
@@ -808,7 +818,7 @@ tExp env (D.Lambda pars e rtp) =
 		unwrapPar ::(String, D.DataType) -> C.Stm
 		unwrapPar (name, D.TPGenericWrap tp) = C.Var (showDataType tp) name (maybeVal (D.TPGenericWrap tp, tp) $ C.Ref $ name ++ "_") []
 	in
-	C.Lambda (map par' pars) (unwrapPars ++ tStm env{envDataType = rtp} [] e) (showDataType rtp)
+	C.Lambda (map par' pars) (unwrapPars ++ tStm env{envDataType = rtp, envWeakSelf = envInit env} [] e) (showDataType rtp)
 tExp env (D.Arr exps) = C.Arr $ map (tExpToType env D.tpGeneric) exps
 tExp env (D.Map exps) = C.Map $ map (tExpToType env D.tpGeneric *** tExpToType env D.tpGeneric) exps
 tExp env (D.Tuple exps) = C.CCall (C.Ref $ "tuple" ++ if length exps == 2 then "" else show (length exps) ) $ map (tExpToType env D.tpGeneric) exps

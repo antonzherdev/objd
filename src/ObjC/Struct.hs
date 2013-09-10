@@ -1,9 +1,11 @@
 module ObjC.Struct ( Property(..), PropertyModifier(..),FileStm(..), ImplSynthesize(..), ImplFun(..), Fun(..), FunType(..), FunPar(..),
-  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..), DataType(..), Extends(..), tp
+  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..), DataType(..), Extends(..), tp, forExp, forStm, forStms
 ) where
 
 import           Ex.String
 import 			 Data.Decimal
+import           Control.Monad
+import 			 Control.Arrow
 
 data FileStm =
 	Import String | ImportLib String | EmptyLine 
@@ -61,6 +63,24 @@ data Stm =
 	| Var{varType :: DataType, varName :: String, varExp :: Exp, varMods :: [String]}
 	| Break
 
+forStms :: MonadPlus m => (Stm -> m a, Exp -> m a) -> [Stm] -> m a 	
+forStms f s = msum $ map (forStm f) s 
+
+forStm :: MonadPlus m => (Stm -> m a, Exp -> m a) -> Stm -> m a
+forStm f@(fs, _) ee = mplus (go ee) (fs ee)
+	where
+		mmsum = msum . map (forStm f)
+		mfore = forExp f 
+		go (If e l r) = mfore e `mplus` mmsum l `mplus` mmsum r
+		go (While e l) = mfore e `mplus` mmsum l
+		go (Do e l) = mfore e `mplus` mmsum l
+		go (Set _ l r) = mfore l `mplus` mfore r
+		go (Return l) = mfore l
+		go (Throw l) = mfore l
+		go (Stm l) = mfore l
+		go (Var _ _ l _) = mfore l
+		go _ = mzero
+		
 data Exp =
 	Self | Super
 	| Call {callInst :: Exp, callName :: String, callPars :: [(String, Exp)], callVargs :: [Exp]}
@@ -92,7 +112,34 @@ data Exp =
 	| EArrConst String String [Exp]
 	| ProtocolRef Exp
 	| GetPointer Exp
-
+forExp :: MonadPlus m => (Stm -> m a, Exp -> m a) -> Exp -> m a
+forExp f@(_, fe) ee = mplus (go ee) (fe ee)
+	where	
+		mmsum = msum . map (forExp f)
+		mfor = forExp f 
+		go (Call inst _ pars vargs) = msum (map (mfor. snd) pars) `mplus` mfor inst `mplus` mmsum vargs
+		go (CCall inst exps) = mfor inst `mplus` mmsum exps
+		go (Arr exps) = mmsum exps
+		go (EArr exps) = mmsum exps
+		go (EArrConst _ _ exps) = mmsum exps
+		go (Map exps) = msum $ map (forExp f *** forExp f >>> uncurry mplus) exps
+		go (ObjCConst e) = mfor e
+		go (PlusPlus e) = mfor e
+		go (MinusMinus e) = mfor e
+		go (Not e) = mfor e
+		go (Negative e) = mfor e
+		go (ProtocolRef e) = mfor e
+		go (GetPointer e) = mfor e
+		go (Cast _ e) = mfor e
+		go (ShortCast _ e) = mfor e
+		go (BoolOp _ l r) = mfor l `mplus` mfor r
+		go (MathOp _ l r) = mfor l `mplus` mfor r
+		go (Dot l r) = mfor l `mplus` mfor r
+		go (Index l r) = mfor l `mplus` mfor r
+		go (InlineIf e l r) = mfor e `mplus` mfor l `mplus` mfor r
+		go (Lambda _ s _) = msum $ map (forStm f) s
+		go _ = mzero
+	
 showStms :: [Stm] -> String
 showStms = unlines . stms
 stms :: [Stm] -> [String]
@@ -158,7 +205,7 @@ instance Show FileStm where
 		showSynthenize (ImplSynthesize name var) = "@synthesize " ++ name ++ " = " ++ var ++ ";"
 		showImplFuns = unlines . map show
 		showStField (ImplField nm tpp mods Nop) = "static " ++  (strs " " mods) `tryCon` " " ++ showDecl tpp nm ++  ";"
-		showStField (ImplField nm tpp mods e) = strs "\n" $ ["static " ++  (strs " " mods) `tryCon` " " ++ showDecl tpp nm ++ " = "] `glue` (expLines e `app` ";")
+		showStField (ImplField nm tpp mods e) = strs "\n" $ ["static " ++  (strs " " mods) `tryCon` " " ++ showDecl tpp nm ++ " = "] `glue` (expLines e `appp` ";")
 	show (ClassDecl name) = "@class " ++ name ++ ";"
 	show (ProtocolDecl name) = "@protocol " ++ name ++ ";"
 instance Show Extends where
@@ -213,8 +260,8 @@ mapLast f a = init a ++ [f $ last a]
 appendLast :: String -> [String] -> [String]
 appendLast s [] = [s]
 appendLast s r = mapLast (++ s) r
-app :: [String] -> String -> [String]
-a `app` b = appendLast b a
+appp :: [String] -> String -> [String]
+a `appp` b = appendLast b a
 glue :: [String] -> [String] -> [String]
 [] `glue` [] = []
 [] `glue` b = b
@@ -223,7 +270,7 @@ a `glue` b = init a ++ [last a ++ head b] ++ tail b
 glueAll :: String -> [[String]] -> [String]
 glueAll _ [] = []
 glueAll _ [x] = x
-glueAll s (a:b:xs) = glueAll s $ ((a `app` s) `glue` b):xs
+glueAll s (a:b:xs) = glueAll s $ ((a `appp` s) `glue` b):xs
 
 multiLineIf :: Stm -> [String]
 multiLineIf (If cond t f) = ["if(" ++ show cond ++ ") {" ] ++ stms t ++ ["} else {"] ++ stms f ++ ["}"]
@@ -238,25 +285,25 @@ stmLines i@(If _ _ [If{}]) = multiLineIf i
 stmLines (If cond [t] [f]) = (["if(" ++ show cond ++ ") " ] `glue` stmLines t) ++ (["else "] `glue` stmLines f)
 stmLines i@If{} = multiLineIf i
 
-stmLines (Set Nothing l r) = (expLines l `app` " = ") `glue` (expLines r `app` ";")
-stmLines (Set (Just tpp) l r) = (expLines l `app` (" " ++ show tpp ++ "= ")) `glue` (expLines r `app` ";")
+stmLines (Set Nothing l r) = (expLines l `appp` " = ") `glue` (expLines r `appp` ";")
+stmLines (Set (Just tpp) l r) = (expLines l `appp` (" " ++ show tpp ++ "= ")) `glue` (expLines r `appp` ";")
 stmLines (Stm Nop) = [""]
 stmLines (Stm e) = appendLast ";" $ expLines e
-stmLines (Return e) = ["return "] `glue` (expLines e `app` ";")
-stmLines (Throw e) = ["@throw "] `glue` (expLines e `app` ";")
+stmLines (Return e) = ["return "] `glue` (expLines e `appp` ";")
+stmLines (Throw e) = ["@throw "] `glue` (expLines e `appp` ";")
 stmLines (Var tpp name Nop mods) = [(unwords . map (++ " ")) mods ++ showDecl tpp name ++ ";"]
-stmLines (Var tpp name e mods) = [(unwords . map (++ " ")) mods ++ showDecl tpp name ++ " = "] `glue` (expLines e `app` ";")
+stmLines (Var tpp name e mods) = [(unwords . map (++ " ")) mods ++ showDecl tpp name ++ " = "] `glue` (expLines e `appp` ";")
 stmLines (Break) = ["break;"]
 
 expLines :: Exp -> [String]
 expLines Self = ["self"]
 expLines Super = ["super"]
-expLines (Call inst name pars vargs) = ["["] `glue` (expLines inst `app` (" " ++ kw name)) `glue` pars' `glue` (vargs'  `app` "]")
+expLines (Call inst name pars vargs) = ["["] `glue` (expLines inst `appp` (" " ++ kw name)) `glue` pars' `glue` (vargs'  `appp` "]")
 	where 
 		pars' = (mapFirst cap . glueAll " " . map (\(nm, e) -> [kw nm ++ ":"] `glue` expLines e)) pars
 		vargs' = (glueAll "" . map varg') vargs
 		varg' = ([", "] `glue` ) . expLines
-expLines (CCall name pars) = (expLines name `app` "(") `glue` (pars' `app` ")")
+expLines (CCall name pars) = (expLines name `appp` "(") `glue` (pars' `appp` ")")
 	where pars' = (glueAll ", " . map expLines) pars
 expLines (Ref name) = [kw name]
 expLines (IntConst i) = [show i]
@@ -290,23 +337,23 @@ expLines (MathOp t l r) = [mbb l ++ " " ++ show t ++ " " ++ mbb r]
 		needb Mul Plus = True
 		needb Mul Minus = True
 		needb _ _ = False
-expLines (Dot l r) = (expLines l `app` ".") `glue` expLines r
+expLines (Dot l r) = (expLines l `appp` ".") `glue` expLines r
 expLines (PlusPlus e) = appendLast "++" (expLines e)
 expLines (MinusMinus e) = appendLast "--" (expLines e)
-expLines (InlineIf c t f) = ["(("] `glue` (expLines c `app` ") ? ") `glue` (expLines t `app` " : ") `glue` (expLines f `app` ")") 
-expLines (Index e i) = (expLines e `app` "[") `glue` (expLines i `app` "]")
+expLines (InlineIf c t f) = ["(("] `glue` (expLines c `appp` ") ? ") `glue` (expLines t `appp` " : ") `glue` (expLines f `appp` ")") 
+expLines (Index e i) = (expLines e `appp` "[") `glue` (expLines i `appp` "]")
 expLines (Arr e) = ["(@[" ++ strs' ", " e ++ "])"]
 expLines (EArr e) = ["{" ++ strs' ", " e ++ "}"]
-expLines (EArrConst name tp e) = ["[ " ++ name ++ "(" ++ (if null tp then "" else tp ++ ", ") ++ show (length e) ++ ") {" ++ strs' ", " e ++ "}]"]
+expLines (EArrConst name tpp e) = ["[ " ++ name ++ "(" ++ (if null tpp then "" else tpp ++ ", ") ++ show (length e) ++ ") {" ++ strs' ", " e ++ "}]"]
 expLines (Map e) = ["(@{" ++ (strs ", " . map(\(k, v) -> show k ++ " : " ++ show v) ) e ++ "})"]
 expLines (ObjCConst e) = ["@" ++ show e]
 expLines (Lambda pars e rtp) = ["^" ++ show rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]
 	where showPar(name, tpp) = showDecl tpp (kw name)
-expLines (Not e) = ["!("] `glue` (expLines e `app` ")")
+expLines (Not e) = ["!("] `glue` (expLines e `appp` ")")
 expLines (Negative e) = ["-"] `glue` expLines e
-expLines (Cast tpp e) =  ["((" ++ show tpp ++ ")("] `glue` (expLines e `app` "))")
+expLines (Cast tpp e) =  ["((" ++ show tpp ++ ")("] `glue` (expLines e `appp` "))")
 expLines (ShortCast tpp e) =  ["(" ++ show tpp ++ ")"] `glue` expLines e
 expLines (ProtocolRef e) =  ["@protocol(" ++ show e ++ ")"]
 expLines (GetPointer e) =  ["&(" ++ show e ++ ")"]
-expLines (Error s) = ["<#ERROR: "] `glue` (lines s `app` "#>")
+expLines (Error s) = ["<#ERROR: "] `glue` (lines s `appp` "#>")
 expLines Nop = []
