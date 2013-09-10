@@ -1027,8 +1027,8 @@ instance Show Exp where
 callRef :: Def -> Exp
 callRef d = Call d (defType d) []
 
-call :: Def -> [CallPar] -> Exp
-call d pars = Call d (defType d) pars
+call :: Def -> [Exp] -> Exp
+call d pars = Call d (defType d) $ zip (defPars d) pars
 
 showCallPars :: [CallPar] -> String
 showCallPars [] = ""
@@ -1325,17 +1325,37 @@ expr ex@(D.FuncOp tp l r) = do
 			_ -> Left $ "Right is not function but " ++ show rtp ++ " in " ++ show r'
 		f p = do
 			li <- lInputType
-			return $ Dot l' $ call (applyLambdaDef ltp) [(localVal "" li, p)]
+			return $ Dot l' $ call (applyLambdaDef ltp) [p]
 		g p = do 
 			ri <- rInputType
-			return $ Dot r' $ call (applyLambdaDef rtp) [(localVal "" ri, p)]
+			return $ Dot r' $ call (applyLambdaDef rtp) [p]
 		bind :: Either String Exp
 		bind = do
 			li <- lInputType 
+			lo <- lOutputType 
+			ri <- rInputType
 			ro <- rOutputType
 			ff <- f $ callRef $ localVal "x" li
-			c <- g ff
-			return $ Lambda [("x", li)] (maybeAddReturn env ro c) ro
+			let 
+				lambda c = Lambda [("x", li)] (maybeAddReturn env ro c) ro
+				dotCall = do
+					c <- g ff
+					return $ lambda c
+				optClass = dataTypeClass env lo 
+				mapDef = maybe (Left "map in option didn't find") Right $ find ( (== "map") . defName) $ classDefs optClass 
+				optCall = do
+					m <- mapDef
+					gg <- g $ callRef $ localVal "_" $ wrapGeneric ri
+					let c = Dot ff $ call m [Lambda 
+						[("_", wrapGeneric ri)] 
+						(maybeAddReturn env (wrapGeneric ro) gg)
+						(wrapGeneric ro)]
+					return $ lambda c
+			case (lo, ri) of
+				(TPOption _, TPOption _) -> dotCall
+				(TPOption _, _) -> optCall
+				_ -> dotCall
+			
 		compile = case tp of
 			D.FuncOpBind -> bind
 	return $ case compile of
