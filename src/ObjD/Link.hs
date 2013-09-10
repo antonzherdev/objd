@@ -1315,6 +1315,7 @@ linkFuncOp ex@(D.FuncOp tp l r)  = do
 			D.FuncOpBind -> lOutputType >>= \t -> case t of
 				TPOption o -> return $ unwrapGeneric o
 				_ -> return $ t
+			D.FuncOpClone -> lInputType
 	r'' <- case exprDataType r' of
 		TPFun{} -> return r'
 		_ -> case rInputTypeShouldBe of
@@ -1338,36 +1339,48 @@ linkFuncOp ex@(D.FuncOp tp l r)  = do
 		g p = do 
 			rInputType
 			return $ Dot r'' $ call (applyLambdaDef rtp) [p]
-		bind :: Either String Exp
-		bind = do
+		compile = do
 			li <- lInputType 
 			lo <- lOutputType 
 			ri <- rInputType
 			ro <- rOutputType
-			ff <- f $ callRef $ localVal "_" li
-			let 
-				lambda c o = Lambda [("_", li)] (maybeAddReturn env o c) o
-				dotCall = do
-					c <- g ff
-					return $ lambda c ro
-				optClass = dataTypeClass env lo 
-				mapDef = maybe (Left "map in option didn't find") Right $ find ( (== "map") . defName) $ classDefs optClass 
-				forDef = maybe (Left "for in option didn't find") Right $ find ( (== "for") . defName) $ classDefs optClass 
-				optCall = do
-					m <- if ro == TPVoid then forDef else mapDef
-					gg <- g $ callRef $ localVal "_" $ wrapGeneric ri
-					let c = Dot ff $ call m [Lambda 
-						[("_", wrapGeneric ri)] 
-						(maybeAddReturn env (wrapGeneric ro) gg)
-						(wrapGeneric ro)]
-					return $ lambda c  (if ro == TPVoid then TPVoid else TPOption $ wrapGeneric ro)
-			case (lo, ri) of
-				(TPOption _, TPOption _) -> dotCall
-				(TPOption _, _) -> optCall
-				_ -> dotCall
-			
-		compile = case tp of
-			D.FuncOpBind -> bind
+			let
+				lambda o c = Lambda [("_", li)] (maybeAddReturn env o c) o
+				bind :: Either String Exp
+				bind = do
+					ff <- f $ callRef $ localVal "_" li
+					let 		
+						dotCall = do
+							c <- g ff
+							return $ lambda ro c
+						optClass = dataTypeClass env lo 
+						mapDef = maybe (Left "map in option didn't find") Right $ find ( (== "map") . defName) $ classDefs optClass 
+						forDef = maybe (Left "for in option didn't find") Right $ find ( (== "for") . defName) $ classDefs optClass 
+						optCall = do
+							m <- if ro == TPVoid then forDef else mapDef
+							gg <- g $ callRef $ localVal "_" $ wrapGeneric ri
+							let c = Dot ff $ call m [Lambda 
+								[("_", wrapGeneric ri)] 
+								(maybeAddReturn env (wrapGeneric ro) gg)
+								(wrapGeneric ro)]
+							return $ lambda (if ro == TPVoid then TPVoid else TPOption $ wrapGeneric ro) c
+					case (lo, ri) of
+						(TPOption _, TPOption _) -> dotCall
+						(TPOption _, _) -> optCall
+						_ -> dotCall
+				clone :: Either String Exp
+				clone = do
+					ff <- f $ callRef $ localVal "_" li
+					gg <- g $ callRef $ localVal "_" li
+					case (lo, ro) of
+						(TPVoid, TPVoid) -> return $ lambda TPVoid $ Braces [ff, gg]
+						(TPVoid, _) -> return $ lambda ro $ Braces [ff, maybeAddReturn env ro gg]
+						(_, TPVoid) -> return $ lambda lo $ Braces [gg, maybeAddReturn env lo ff]
+						_ -> return $ lambda (TPTuple [lo, ro]) $ Tuple [ff, gg]
+					
+			case tp of
+				D.FuncOpBind -> bind
+				D.FuncOpClone -> clone
 	return $ case compile of
 		Left err -> ExpDError err ex
 		Right e -> e

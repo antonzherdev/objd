@@ -157,12 +157,14 @@ instance Show DataType where
 	show (TPArr 0 s) = s ++ "[]"
 	show (TPArr n s) = s ++ "[" ++ show n ++ "]"
 	show (TPSimple s pr) = s ++ "<" ++ strs ", " pr ++ ">"
+	show (TPBlock TPBlock{} t) = "id(^)" ++ "(" ++ strs' ", " t ++ ")"
 	show (TPBlock d t) = show d ++ "(^)" ++ "(" ++ strs' ", " t ++ ")"
 
 showDecl ::  DataType -> String ->String
 showDecl (TPArr 0 tpp) name = tpp ++ " " ++ name ++ "[]"
 showDecl (TPArr n tpp) name = tpp ++ " " ++ name ++ "[" ++ show n ++ "]"
 showDecl tpp@TPSimple{} name = show tpp ++ " " ++ name
+showDecl (TPBlock TPBlock{} t) name = "id(^" ++ name ++ ")" ++ "(" ++ strs' ", " t ++ ")"
 showDecl (TPBlock d t) name = show d ++ "(^" ++ name ++ ")" ++ "(" ++ strs' ", " t ++ ")"
 
 instance Show FileStm where
@@ -347,8 +349,12 @@ expLines (EArr e) = ["{" ++ strs' ", " e ++ "}"]
 expLines (EArrConst name tpp e) = ["[ " ++ name ++ "(" ++ (if null tpp then "" else tpp ++ ", ") ++ show (length e) ++ ") {" ++ strs' ", " e ++ "}]"]
 expLines (Map e) = ["(@{" ++ (strs ", " . map(\(k, v) -> show k ++ " : " ++ show v) ) e ++ "})"]
 expLines (ObjCConst e) = ["@" ++ show e]
-expLines (Lambda pars e rtp) = ["^" ++ show rtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]
-	where showPar(name, tpp) = showDecl tpp (kw name)
+expLines (Lambda pars e rtp) = ["^" ++ showRtp ++ "(" ++ strs ", " (map showPar pars) ++ ") {"] ++ stms e ++ ["}"]
+	where 
+		showPar(name, tpp) = showDecl tpp (kw name)
+		showRtp = case rtp of
+			TPBlock{} -> "id"
+			_ -> show rtp
 expLines (Not e) = ["!("] `glue` (expLines e `appp` ")")
 expLines (Negative e) = ["-"] `glue` expLines e
 expLines (Cast tpp e) =  ["((" ++ show tpp ++ ")("] `glue` (expLines e `appp` "))")

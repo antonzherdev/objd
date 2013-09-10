@@ -363,7 +363,7 @@ pExp = do
 			return $ Set (Just t))
 		mathOp s t = try(do 
 			char s
-			notFollowedBy $ (char '=' <|> char s <|> char '>')
+			notFollowedBy $ oneOf $ s : "=>*|"
 			sps
 			return $ MathOp t)
 		funcOp s t = try(do 
