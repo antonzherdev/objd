@@ -1131,7 +1131,7 @@ exprDataType (MathOp _ l r) = case(unwrapGeneric $ exprDataType l, unwrapGeneric
 exprDataType (PlusPlus e) = exprDataType e
 exprDataType (MinusMinus e) = exprDataType e
 exprDataType (Dot _ b) = exprDataType b
-exprDataType (Set _ a _) = exprDataType a
+exprDataType Set{} = TPVoid
 exprDataType (Self s) = s
 exprDataType (Super s) = s
 exprDataType (Call _ t _) = t
@@ -1324,10 +1324,10 @@ expr ex@(D.FuncOp tp l r) = do
 			TPFun _ ret -> Right ret
 			_ -> Left $ "Right is not function but " ++ show rtp ++ " in " ++ show r'
 		f p = do
-			li <- lInputType
+			lInputType
 			return $ Dot l' $ call (applyLambdaDef ltp) [p]
 		g p = do 
-			ri <- rInputType
+			rInputType
 			return $ Dot r' $ call (applyLambdaDef rtp) [p]
 		bind :: Either String Exp
 		bind = do
@@ -1335,22 +1335,23 @@ expr ex@(D.FuncOp tp l r) = do
 			lo <- lOutputType 
 			ri <- rInputType
 			ro <- rOutputType
-			ff <- f $ callRef $ localVal "x" li
+			ff <- f $ callRef $ localVal "_" li
 			let 
-				lambda c = Lambda [("x", li)] (maybeAddReturn env ro c) ro
+				lambda c o = Lambda [("_", li)] (maybeAddReturn env o c) o
 				dotCall = do
 					c <- g ff
-					return $ lambda c
+					return $ lambda c ro
 				optClass = dataTypeClass env lo 
 				mapDef = maybe (Left "map in option didn't find") Right $ find ( (== "map") . defName) $ classDefs optClass 
+				forDef = maybe (Left "for in option didn't find") Right $ find ( (== "for") . defName) $ classDefs optClass 
 				optCall = do
-					m <- mapDef
+					m <- if ro == TPVoid then forDef else mapDef
 					gg <- g $ callRef $ localVal "_" $ wrapGeneric ri
 					let c = Dot ff $ call m [Lambda 
 						[("_", wrapGeneric ri)] 
 						(maybeAddReturn env (wrapGeneric ro) gg)
 						(wrapGeneric ro)]
-					return $ lambda c
+					return $ lambda c  (if ro == TPVoid then TPVoid else TPOption $ wrapGeneric ro)
 			case (lo, ri) of
 				(TPOption _, TPOption _) -> dotCall
 				(TPOption _, _) -> optCall
