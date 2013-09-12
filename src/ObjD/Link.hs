@@ -1753,6 +1753,7 @@ implicitConvertsion env dtp ex = let stp = exprDataType ex
 	in 
 		case ex of
 			Braces _ -> maybeAddReturn env dtp ex
+			If cond l r -> If cond (implicitConvertsion env dtp l) (implicitConvertsion env dtp r)
 			_ -> if stp == dtp then ex else conv stp dtp
 	where 
 		conv (TPGenericWrap s) d = conv s d
