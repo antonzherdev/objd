@@ -2,9 +2,11 @@ module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), DataType(..), Exp(..), CImport(..), 
 	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef, CallPar, Package(..),
 	Import(..), link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
-	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
+	classConstructor, classFields, checkErrors, dataTypeClassName, dataTypeClassNameWithPrefix,
+	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
-	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop
+	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
+	fileNameWithPrefix
 )where
 
 import 			 Control.Arrow
@@ -20,15 +22,19 @@ detailedReferenceError :: Bool
 detailedReferenceError = False
 
 type Sources = [File]
-data Package = Package {packageName :: [String], packageObject :: Maybe Class }
+data Package = Package {packageName :: [String], packageObject :: Maybe Class, packagePrefix :: String}
 instance Eq Package where
 	a == b = packageName a == packageName b
+
 data File = File {fileName :: String, filePackage :: Package, fileImports :: [Import], fileClasses :: [Class]}
 data Import = ImportClass {importClass :: Class} | ImportObjectDefs {importClass :: Class} deriving (Eq)
 instance Eq File where
 	File {fileName = a, filePackage = appp} == File {fileName = b, filePackage = bp} = a == b && appp == bp
 coreFakeFile :: File
-coreFakeFile = File "fake.od" (Package ["core"] Nothing) [] []
+coreFakeFile = File "fake.od" (Package ["core"] Nothing "") [] []
+fileNameWithPrefix :: File -> String
+fileNameWithPrefix f = packagePrefix (filePackage f) ++ fileName f
+
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - CLASS 
  -----------------------------------------------------------------------------------------------------------------------------------------}
@@ -43,7 +49,7 @@ classFile Class{_classFile = file} = Just file
 classFile _ = Nothing
 classPackage :: Class -> Package
 classPackage Class{_classPackage = pack} = pack
-classPackage _ = Package [] Nothing
+classPackage _ = Package [] Nothing ""
 classGenerics :: Class -> [Class]
 classGenerics Class{_classGenerics = r} = r
 classGenerics _ = []
@@ -62,6 +68,8 @@ classMods _ = []
 classImports :: Class -> [Import]
 classImports Class{_classImports = r} = r
 classImports _ = []
+classNameWithPrefix :: Class -> String
+classNameWithPrefix cl = packagePrefix (classPackage cl) ++ className cl
 
 data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType  deriving (Eq)
 
@@ -103,7 +111,7 @@ instance Eq Class where
 	a == b = className a == className b
 
 isCoreFile :: File -> Bool
-isCoreFile File{filePackage = Package (x : _) _} = x == "core"
+isCoreFile File{filePackage = Package (x : _) _ _} = x == "core"
 isCoreFile _ = False
 classConstructor :: Class -> Maybe Def 
 classConstructor Generic{} = Nothing
@@ -245,6 +253,9 @@ isInstanceOfTp env target cl
 
 findDefWithName :: String -> Class -> Maybe Def
 findDefWithName name cl = find ((name ==) . defName) $ classDefs cl
+
+findValWithName :: String -> Class -> Maybe Def
+findValWithName name cl = find (\d -> name == defName d && DefModField `elem` defMods d && null (defPars d)) $ classDefs cl
 	
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - Def 
@@ -378,7 +389,14 @@ linkFile files (D.File name package stms) = fl
 		glidx cl = importObjectDefs cl
 		package' = case package of
 			[] -> error $ "Empty package for file " ++ name
-			_ -> Package package packObj
+			_ -> Package package packObj packPref
+
+		packPref :: String
+		packPref = fromMaybe "" $ do 
+			o <- packObj
+			p <- findValWithName "prefix" o
+			(extractStringConst . defBody) p
+		packObj :: Maybe Class
 		packObj = find (\cl -> last package == className cl && ClassModObject `elem` classMods cl) 
 			. concatMap fileClasses 
 			. filter ((== init package) . packageName . filePackage) $ files
@@ -764,7 +782,7 @@ dataTypeClass env (TPFloatNumber 0) = classFind (envIndex env) "ODFloat"
 dataTypeClass env TPAny = classFind (envIndex env) "ODAny"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("CNTuple" ++ show (length a))
 dataTypeClass _ f@TPFun{} = Class { _classMods = [], className = "", _classExtends = extendsNothing,
-	_classPackage = Package ["core"] Nothing, _classFile = coreFakeFile, 
+	_classPackage = Package ["core"] Nothing "", _classFile = coreFakeFile, 
 	_classDefs = [applyLambdaDef f], _classGenerics = [], _classImports = []}
 	where
 		
@@ -789,6 +807,19 @@ dataTypeClassName TPAny = "ODAny"
 dataTypeClassName (TPTuple [_, _]) = "CNTuple"
 dataTypeClassName (TPTuple a) = "CNTuple" ++ show (length a)
 dataTypeClassName x = error ("No dataTypeClassName for " ++ show x)
+
+
+dataTypeClassNameWithPrefix :: DataType -> String
+dataTypeClassNameWithPrefix (TPClass _ _ c ) = classNameWithPrefix c
+dataTypeClassNameWithPrefix (TPObject _ c) = classNameWithPrefix c
+dataTypeClassNameWithPrefix (TPGenericWrap c) = dataTypeClassNameWithPrefix c
+dataTypeClassNameWithPrefix (TPArr _ _) = "CNArray"
+dataTypeClassNameWithPrefix (TPOption _) = "CNOption"
+dataTypeClassNameWithPrefix (TPMap _ _) = "CNMap"
+dataTypeClassNameWithPrefix TPAny = "ODAny"
+dataTypeClassNameWithPrefix (TPTuple [_, _]) = "CNTuple"
+dataTypeClassNameWithPrefix (TPTuple a) = "CNTuple" ++ show (length a)
+dataTypeClassNameWithPrefix x = error ("No dataTypeClassNameWithPrefix for " ++ show x)
 
 resolveTypeAlias :: DataType -> DataType
 resolveTypeAlias tp@(TPClass TPMType _ c) = fromMaybe (TPUnknown $ "No super type for type " ++ className c) $ superType tp
@@ -1018,6 +1049,10 @@ instance Show Exp where
 	show (Break) = "break"
 	show (LambdaCall e) = show e ++ "()"
 	show (StringBuild pars lastS) = "\"" ++ join (map (\(prev, e) -> prev ++ "$" ++ show e) pars) ++ lastS ++ "\""
+
+extractStringConst :: Exp -> Maybe String
+extractStringConst (StringConst s) = Just s
+extractStringConst _ = Nothing
 
 callRef :: Def -> Exp
 callRef d = Call d (defType d) []

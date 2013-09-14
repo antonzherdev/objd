@@ -16,9 +16,10 @@ import qualified ObjD.Link   as D
 arc :: Bool
 arc = True
 
-toObjC :: D.File -> ([C.FileStm], [C.FileStm])
-toObjC f@D.File{D.fileName = name, D.fileClasses = classes} = 
+toObjC :: D.File -> ((String, [C.FileStm]), (String, [C.FileStm]))
+toObjC f@D.File{D.fileClasses = classes} = 
 	let 
+		name = D.fileNameWithPrefix f
 		isClass c = D.isRealClass c && not (D.isStruct c) && not (D.isTrait c) && not (D.isEnum c)
 		cls = filter isClass classes
 		isStruct c = D.isRealClass c && D.isStruct c
@@ -33,13 +34,13 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes} =
 			++ fst dImports' 
 			++ [C.EmptyLine] 
 			++ map classDecl (cls ++ enums) 
-			++ map (C.ProtocolDecl . D.className) (filter D.isTrait classes) 
+			++ map (C.ProtocolDecl . D.classNameWithPrefix) (filter D.isTrait classes) 
 			++ map structDecl structs
 			++ [C.EmptyLine] 
 			++ concatMap (fst . gen) classes
 		
-		structDecl c = C.TypeDefStruct (D.className c) (D.className c)
-		classDecl c = C.ClassDecl $ D.className c
+		structDecl c = C.TypeDefStruct (D.classNameWithPrefix c) (D.classNameWithPrefix c)
+		classDecl c = C.ClassDecl $ D.classNameWithPrefix c
 
 		m = let
 				 impls = concatMap (snd . gen) classes
@@ -52,7 +53,8 @@ toObjC f@D.File{D.fileName = name, D.fileClasses = classes} =
 			| D.isEnum c = (genEnumInterface c, genEnumImpl c)
 			| isTrait c = ([genProtocol c], [])
 			| otherwise = ([], [])
-	in (h, m)
+
+	in ((name ++ ".h", h), (name ++ ".m", m))
 
 
 {- Interface -}
@@ -67,7 +69,7 @@ stmToInterface cl =
 			++ intefaceFuns defs ++ staticGetters
 	}
 	where 
-		name = D.className cl
+		name = D.classNameWithPrefix cl
 		defs = D.classDefs cl
 		constrFuns = fromMaybe [] $ fmap (\constr -> [createFun name constr, initFun constr]) (D.classConstructor cl)
 		staticGetters = (map staticGetterFun .filter (\f -> 
@@ -80,11 +82,11 @@ classExtends :: D.Class -> C.Extends
 classExtends cl = addTraits cl $ maybe (C.Extends "NSObject" []) ext (D.extendsClass $ D.classExtends cl)
 	where
 		ext (D.ExtendsClass (ccl, _) _)
-			| D.ClassModTrait `elem` D.classMods ccl = C.Extends "NSObject" [D.className ccl]
+			| D.ClassModTrait `elem` D.classMods ccl = C.Extends "NSObject" [D.classNameWithPrefix ccl]
 			| D.className ccl == "ODObject" = C.Extends "NSObject" []
-			| otherwise = C.Extends (D.className ccl) []
+			| otherwise = C.Extends (D.classNameWithPrefix ccl) []
 addTraits :: D.Class -> C.Extends -> C.Extends		
-addTraits cl (C.Extends cls protocols) = C.Extends cls $ protocols ++ map (D.className . fst) (D.extendsTraits $ D.classExtends cl)
+addTraits cl (C.Extends cls protocols) = C.Extends cls $ protocols ++ map (D.classNameWithPrefix . fst) (D.extendsTraits $ D.classExtends cl)
 
 
 staticGetterFun :: D.Def -> C.Fun
@@ -154,10 +156,10 @@ stm2Fun D.Def{D.defName = name, D.defPars = pars, D.defType = tp, D.defMods = mo
 genProtocol :: D.Class -> C.FileStm
 genProtocol cl =
 	C.Protocol {
-		C.interfaceName = D.className cl,
+		C.interfaceName = D.classNameWithPrefix cl,
 		C.interfaceFuns = intefaceFuns $ D.classDefs cl,
 		C.interfaceExtends = addTraits cl $ 
-			C.Extends ((cn . D.className . D.extendsClassClass . fromMaybe (error $ "No class extends for " ++ D.className cl) . D.extendsClass) $ D.classExtends cl) []
+			C.Extends ((cn . D.classNameWithPrefix . D.extendsClassClass . fromMaybe (error $ "No class extends for " ++ D.classNameWithPrefix cl) . D.extendsClass) $ D.classExtends cl) []
 	}
 	where
 		cn n = if n == "ODObject" then "NSObject" else n
@@ -176,7 +178,7 @@ stmToImpl cl =
 		C.implStaticFields = map (implField env) staticFields
 	}
 	where
-		clsName = D.className cl
+		clsName = D.classNameWithPrefix cl
 		env = Env cl False D.TPVoid False False
 		defs :: [D.Def]
 		defs = nub $ D.classDefs cl ++ traitDefs
@@ -210,12 +212,12 @@ stmToImpl cl =
 		reloadedEqualCall :: D.Def -> C.Stm
 		reloadedEqualCall D.Def{D.defPars = [D.Def{D.defType = tp, D.defName = parName}]} = case tp of
 			D.TPClass D.TPMTrait _ _ ->
-				C.If (C.Call (C.Ref "other") "conformsTo" [("protocol", C.ProtocolRef (C.Ref $ D.dataTypeClassName tp))] []) [
-					C.Return $ C.Call C.Self "isEqualTo" [(parName, C.Cast (C.TPSimple "id" [D.dataTypeClassName tp]) (C.Ref "other") )] []
+				C.If (C.Call (C.Ref "other") "conformsTo" [("protocol", C.ProtocolRef (C.Ref $ D.dataTypeClassNameWithPrefix tp))] []) [
+					C.Return $ C.Call C.Self "isEqualTo" [(parName, C.Cast (C.TPSimple "id" [D.dataTypeClassNameWithPrefix tp]) (C.Ref "other") )] []
 				] []
 			_ ->
-				C.If (C.Call (C.Ref "other") "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName tp) "class" [] [])] []) [
-					C.Return $ C.Call C.Self "isEqualTo" [(parName, C.Cast (C.TPSimple ((D.dataTypeClassName tp) ++ "*") []) (C.Ref "other") )] []
+				C.If (C.Call (C.Ref "other") "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix tp) "class" [] [])] []) [
+					C.Return $ C.Call C.Self "isEqualTo" [(parName, C.Cast (C.TPSimple ((D.dataTypeClassNameWithPrefix tp) ++ "*") []) (C.Ref "other") )] []
 				] []
 		reloadedEqualCall d = C.Stm $ C.Error $ "Incorrect equal def " ++ show d
 
@@ -234,7 +236,7 @@ fieldName env def
 	| otherwise = '_' : D.defName def
 
 staticName :: Env -> String -> String
-staticName env name = '_' : D.className (envClass env) ++ "_" ++ name
+staticName env name = '_' : D.classNameWithPrefix (envClass env) ++ "_" ++ name
 
 
 equalPrelude :: String -> Bool -> [C.Stm]
@@ -271,7 +273,7 @@ implField env d@D.Def{D.defType = tp, D.defMods = mods, D.defBody = e} =
 
 implCreate :: D.Class -> D.Def -> C.ImplFun
 implCreate cl constr@D.Def{D.defPars = constrPars} = let 
-		clsName = D.className cl
+		clsName = D.classNameWithPrefix cl
 		pars D.Def{D.defName = name} = (name, C.Ref name)
 	in C.ImplFun (createFun clsName constr) [C.Return $
 		autorelease $ C.Call (C.Call (C.Ref clsName) "alloc" [] []) (if null constrPars then "init" else "initWith") (map pars constrPars) []
@@ -302,14 +304,14 @@ implInitialize env@Env{envClass = cl} = let
 	hasInitialize D.Def{D.defBody = D.Nop} = False
 	hasInitialize d@D.Def{D.defBody = b} = not (D.isConst b) && D.isField d && D.isStatic d
 	typeInit = C.Set Nothing (C.Ref $ staticName env "type") $ 
-		C.Call (C.Ref "ODClassType") "classTypeWith" [("cls", C.Call (C.Ref $ D.className cl) "class" [] [])] []
+		C.Call (C.Ref "ODClassType") "classTypeWith" [("cls", C.Call (C.Ref $ D.classNameWithPrefix cl) "class" [] [])] []
 	in C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
 			((C.Stm $ C.Call C.Super "initialize" [] []) : typeInit : map (implInitField env) fields))
 
 
 
 declareWeakSelf :: Env -> [C.Stm] -> [C.Stm]
-declareWeakSelf env stms = if need then (C.Var (C.tp $ (D.className $ envClass env) ++ "*") "_weakSelf" C.Self ["__weak"]) : stms else stms
+declareWeakSelf env stms = if need then (C.Var (C.tp $ (D.classNameWithPrefix $ envClass env) ++ "*") "_weakSelf" C.Self ["__weak"]) : stms else stms
 	where
 		need = isJust $ C.forStms ((\_ -> Nothing), (isWeakSelf) ) stms
 		isWeakSelf e@(C.Ref "_weakSelf") = Just e
@@ -357,7 +359,7 @@ genStruct cl =
 	([C.Struct name fields', con, eq, hash, description] ++ map def' defs ++  map def' staticFields ++ [wrapClass, C.EmptyLine], 
 		map defImpl' defs ++ map staticFieldImpl' staticFields ++ [wrapImpl, C.EmptyLine])
 	where
-		name = D.className cl
+		name = D.classNameWithPrefix cl
 		clDefs = D.classDefs cl
 		defs = filter D.isDef clDefs
 		env = Env cl False D.TPVoid False False
@@ -491,7 +493,7 @@ hashCall :: D.DataType -> C.Exp -> C.Exp
 hashCall tp ref = 
 	case tp of
 		D.TPClass D.TPMEnum _ _ -> C.Call ref "ordinal" [] []
-		D.TPClass D.TPMStruct _ scl -> C.CCall (C.Ref $ D.className scl ++ "Hash") [ref]
+		D.TPClass D.TPMStruct _ scl -> C.CCall (C.Ref $ D.classNameWithPrefix scl ++ "Hash") [ref]
 		D.TPFloatNumber{} -> C.CCall (C.Ref $ show tp ++ "Hash") [ref]
 		D.TPNumber{} -> ref
 		D.TPBool -> ref
@@ -532,7 +534,7 @@ descriptionFun start fields =
 			(expressionForTp tp $ C.Dot C.Self (C.Ref nm)) )
 			where
 				expressionForTp rtp ref= (case rtp of
-					D.TPClass D.TPMStruct _ scl -> [C.CCall (C.Ref $ D.className scl ++ "Description") [ref]]
+					D.TPClass D.TPMStruct _ scl -> [C.CCall (C.Ref $ D.classNameWithPrefix scl ++ "Description") [ref]]
 					D.TPEArr n etp -> concatMap (\j -> expressionForTp etp $ C.Index ref (C.IntConst j)) [0..n - 1]
 					_ -> [ref]
 					)
@@ -560,14 +562,14 @@ genEnumInterface cl = [
 		C.interfaceFuns = intefaceFuns defs' ++ map (enumItemGetterFun name) (D.enumItems cl) ++ [enumValuesFun]
 	}]
 	where 
-		name = D.className cl
+		name = D.classNameWithPrefix cl
 		defs' = filter ((/= "values") . D.defName) $ D.classDefs cl
 	
 enumItemGetterFun :: String -> D.Def -> C.Fun
 enumItemGetterFun name D.Def{D.defName = itemName} = C.Fun C.ObjectFun (C.TPSimple (name ++ "*") []) itemName []
 
 genEnumImpl :: D.Class -> [C.FileStm]
-genEnumImpl cl@D.Class {D.className = clsName} = [
+genEnumImpl cl@D.Class {} = [
 	C.Implementation {
 		C.implName = clsName,
 		C.implFields = (map (implField env) . filter needProperty) defs,
@@ -577,6 +579,7 @@ genEnumImpl cl@D.Class {D.className = clsName} = [
 		C.implStaticFields = map stField items ++ [C.ImplField valuesVarName (C.TPSimple "NSArray*" []) [] C.Nop] 
 	}]
 	where
+		clsName = D.classNameWithPrefix cl
 		env = Env  cl False D.TPVoid False False
 		valuesVarName =  "_" ++ clsName ++ "_values"
 		items = D.enumItems cl
@@ -642,11 +645,11 @@ procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
 		h = map cImport hardImportFiles ++ mapMaybe decl weekImportClasses
 		m = map cImport weekImportFiles
 
-		cImport D.File{D.fileName = fn} = C.Import (fn ++ ".h")
+		cImport f = C.Import (D.fileNameWithPrefix f ++ ".h")
 		decl cl 
 			| isStubObject cl = Nothing
-			| D.isTrait cl =  Just $ C.ProtocolDecl . D.className $ cl
-			| otherwise = Just $ C.ClassDecl . D.className $ cl
+			| D.isTrait cl =  Just $ C.ProtocolDecl . D.classNameWithPrefix $ cl
+			| otherwise = Just $ C.ClassDecl . D.classNameWithPrefix $ cl
 
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - DataType 
@@ -670,13 +673,13 @@ showDataType (D.TPFloatNumber 0) = C.TPSimple "CGFloat" []
 showDataType D.TPString = C.TPSimple "NSString*" []
 showDataType D.TPBool = C.TPSimple "BOOL" []
 showDataType D.TPAny = idTp
-showDataType (D.TPClass D.TPMStruct _ c) = C.TPSimple (D.className c) []
+showDataType (D.TPClass D.TPMStruct _ c) = C.TPSimple (D.classNameWithPrefix c) []
 showDataType tp@(D.TPClass D.TPMType _ _) = showDataType $ fromMaybe (error "Not found super type for type") $ D.superType tp
 showDataType (D.TPClass D.TPMClass _ c) 
 	| D.className c == "ODObject" = C.TPSimple "NSObject*" []
-	| otherwise = C.TPSimple (D.className c ++ "*") []
-showDataType (D.TPClass D.TPMEnum _ c) = C.TPSimple (D.className c ++ "*") []
-showDataType (D.TPClass D.TPMTrait _ c) = C.TPSimple "id" [D.className c]
+	| otherwise = C.TPSimple (D.classNameWithPrefix c ++ "*") []
+showDataType (D.TPClass D.TPMEnum _ c) = C.TPSimple (D.classNameWithPrefix c ++ "*") []
+showDataType (D.TPClass D.TPMTrait _ c) = C.TPSimple "id" [D.classNameWithPrefix c]
 showDataType (D.TPClass{}) = idTp
 showDataType (D.TPSelf) = idTp
 showDataType (D.TPTuple _) = C.TPSimple "CNTuple*" []
@@ -747,11 +750,11 @@ tExp env (D.MinusMinus e) = C.MinusMinus (tExp env e)
 
 tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call d@D.Def {D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
-	| otherwise = C.CCall (C.Ref $ structDefName (D.className c) d) (C.Ref "self" : (map snd . tPars env) pars)
+	| otherwise = C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) d) (C.Ref "self" : (map snd . tPars env) pars)
 tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name} _ pars)) 
 	| D.DefModField `elem` mods && null pars && D.DefModSuper `notElem` mods && not (envWeakSelf env) = C.Ref $ fieldName env d
 	| D.DefModField `elem` mods && D.DefModSuper `notElem` mods && not (envWeakSelf env) = C.CCall (C.Ref $ fieldName env d) ((map snd . tPars env) pars)
-	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.className $ D.tpClass stp) name (tPars env pars) []
+	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.classNameWithPrefix $ D.tpClass stp) name (tPars env pars) []
 	| D.DefModField `elem` mods && null pars = C.Dot (selfCall env) $ C.Ref name
 	| otherwise = C.Call (selfCall env) name (tPars env pars) []
 tExp env d@(D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars)) 
@@ -767,8 +770,8 @@ tExp env d@(D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars)
 			castGeneric d $ C.Dot (tExpTo env ltp l) $ C.CCall (C.Ref name) ((map snd . tPars env) pars)
 	| D.DefModConstructor `elem` mods = callConstructor env (D.exprDataType d) pars
 	| D.DefModStruct `elem` mods = case ltp  of
-		(D.TPClass D.TPMStruct _ c) -> structCall (D.className c) (tExpTo env ltp l)
-		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.className c) dd) ((map snd . tPars env) pars)
+		(D.TPClass D.TPMStruct _ c) -> structCall (D.classNameWithPrefix c) (tExpTo env ltp l)
+		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) dd) ((map snd . tPars env) pars)
 		tp -> structCall (show tp) (tExpTo env ltp l)
 	| otherwise = castGeneric d $ C.Call (tExp env l) name (tPars env pars ) []
 	where
@@ -777,8 +780,8 @@ tExp env d@(D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars)
 		 isStubObject = case ltp of
 		 	D.TPObject _  cl -> D.ClassModStub `elem` D.classMods cl && D.ClassModObject `elem` D.classMods cl
 		 	_ -> False
-tExp env (D.Dot l (D.Is dtp)) = C.Call (tExp env l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
-tExp env (D.Dot l (D.As dtp)) = C.Call (tExp env l) "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassName dtp) "class" [] [])] []
+tExp env (D.Dot l (D.Is dtp)) = C.Call (tExp env l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] [])] []
+tExp env (D.Dot l (D.As dtp)) = C.Call (tExp env l) "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] [])] []
 tExp env (D.Dot l (D.CastDot dtp)) = C.Cast (showDataType dtp) (tExp env l)
 tExp env (D.Dot l (D.Cast tp c)) = C.Cast (showDataType tp) (tExp env (D.Dot l c))
 tExp env (D.Dot l (D.LambdaCall c)) = C.CCall (tExp env (D.Dot l c)) [] 
@@ -793,7 +796,7 @@ tExp env (D.Call d@D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ p
 	| D.DefModLocal `elem` mods && null pars = C.Ref name
 	| D.DefModConstructor `elem` mods = callConstructor env tp pars
 	| D.DefModGlobalVal `elem` mods = C.Ref name
-	| D.DefModObject `elem` mods = C.Ref name
+	| D.DefModObject `elem` mods = C.Ref $ D.dataTypeClassNameWithPrefix tp
 	| otherwise = C.CCall (C.Ref name) (map snd . tPars env $ pars)
 tExp env (D.If cond t f) = C.InlineIf (tExpTo env D.TPBool cond) (tExp env t) (tExp env f)
 tExp env ee@(D.Index e i) = case D.exprDataType e of
@@ -947,7 +950,7 @@ equals False (_, e1) (D.TPNil, e2) = C.BoolOp NotEq e1 e2
 equals False s1@(_, _) s2@(_, _) = C.Not $ equals True s1 s2
 
 equals True (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp Eq e1 e2
-equals True (D.TPClass D.TPMStruct _ c, e1) (_, e2) = C.CCall (C.Ref (D.className c ++ "Eq")) [e1, e2]
+equals True (D.TPClass D.TPMStruct _ c, e1) (_, e2) = C.CCall (C.Ref (D.classNameWithPrefix c ++ "Eq")) [e1, e2]
 equals True (D.TPGenericWrap{}, e1) (D.TPGenericWrap{}, e2) = C.Call e1 "isEqual" [("", e2)] []
 equals True (stp@(D.TPGenericWrap stp'), e1) (dtp, e2) = equals True (stp', maybeVal (stp, dtp) e1) (dtp, e2)
 equals True (stp, e1) (dtp@(D.TPGenericWrap dtp'), e2) = equals True (stp, e1) (dtp', maybeVal (stp, dtp) e2)
@@ -973,7 +976,7 @@ addKVToMap env a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tEx
 
 callConstructor :: Env -> D.DataType -> [(D.Def, D.Exp)] -> C.Exp
 callConstructor env tp pars = let
-	name = D.dataTypeClassName $ D.resolveTypeAlias tp
+	name = D.dataTypeClassNameWithPrefix $ D.resolveTypeAlias tp
 	in case tp of 
 		D.TPClass D.TPMStruct _ _ -> 
 			if envCStruct env then C.EArr ((map snd. tPars env) pars) else C.CCall 
@@ -1011,8 +1014,8 @@ maybeVal (stp, dtp) e = let
 	tp _ = TPNoMatter
 	fnm = ("num" ++ ) . dataTypeSuffix
 	in case (tp stp, tp dtp) of
-		(TPStruct, TPGen) -> C.CCall (C.Ref "wrap") [C.Ref $ D.className $ D.tpClass stp, e]
-		(TPGen, TPStruct) -> C.CCall (C.Ref "uwrap") [C.Ref $ D.className $ D.tpClass dtp, e]
+		(TPStruct, TPGen) -> C.CCall (C.Ref "wrap") [C.Ref $ D.classNameWithPrefix $ D.tpClass stp, e]
+		(TPGen, TPStruct) -> C.CCall (C.Ref "uwrap") [C.Ref $ D.classNameWithPrefix $ D.tpClass dtp, e]
 		(TPNum, TPGen) -> case e of
 			C.IntConst _ -> C.ObjCConst e
 			_ -> C.CCall (C.Ref $ fnm stp) [e]

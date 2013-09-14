@@ -37,23 +37,23 @@ main =
 					putStrLn $ "= Linked " ++ path
 					print f)
 				return linked
-			compiledFiles :: IO [(FilePath, ([C.FileStm], [C.FileStm]))]
+			compiledFiles :: IO [(FilePath, ((String, [C.FileStm]), (String, [C.FileStm])))]
 			compiledFiles = liftM (map (second toObjC) . filter (containsRealStatement . snd)) linkedFiles
 			containsRealStatement :: L.File -> Bool
 			containsRealStatement L.File{L.fileClasses = clss} = any (not . L.isStub) clss
-			textFiles :: IO [(FilePath, (String, String))]
+			textFiles :: IO [(FilePath, ((String, String), (String, String)))]
 			textFiles = liftM (map (second (toText *** toText))) compiledFiles
-			toText :: [C.FileStm] -> String
-			toText = unlines . map show
+			toText :: (String, [C.FileStm]) -> (String, String)
+			toText = second (unlines . map show)
 			write :: String -> String -> String -> IO ()
 			write _ _ [] = return ()
-			write ext path txt = writeFile (replaceExtension path ext) txt 
+			write nm path txt = writeFile (replaceFileName path nm) txt 
 			in do
 				txtFS <- textFiles
-				forM_ txtFS (\(path, (h, m)) -> do
+				forM_ txtFS (\(path, ((hnm, h), (mnm, m)) ) -> do
 					{-putStrLn ("File: " ++ path)-}
-					write ".h" path h
-					write ".m" path m)
+					write hnm path h
+					write mnm path m)
 				
 
 parseFiles :: [(FilePath, String)] -> IO [(FilePath, D.File)]
