@@ -20,13 +20,15 @@ detailedReferenceError :: Bool
 detailedReferenceError = False
 
 type Sources = [File]
-type Package = [String]
+data Package = Package {packageName :: [String], packageObject :: Maybe Class }
+instance Eq Package where
+	a == b = packageName a == packageName b
 data File = File {fileName :: String, filePackage :: Package, fileImports :: [Import], fileClasses :: [Class]}
 data Import = ImportClass {importClass :: Class} | ImportObjectDefs {importClass :: Class} deriving (Eq)
 instance Eq File where
 	File {fileName = a, filePackage = appp} == File {fileName = b, filePackage = bp} = a == b && appp == bp
 coreFakeFile :: File
-coreFakeFile = File "fake.od" ["core"] [] []
+coreFakeFile = File "fake.od" (Package ["core"] Nothing) [] []
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - CLASS 
  -----------------------------------------------------------------------------------------------------------------------------------------}
@@ -40,7 +42,7 @@ classFile Class{_classFile = file} = Just file
 classFile _ = Nothing
 classPackage :: Class -> Package
 classPackage Class{_classPackage = pack} = pack
-classPackage _ = []
+classPackage _ = Package [] Nothing
 classGenerics :: Class -> [Class]
 classGenerics Class{_classGenerics = r} = r
 classGenerics _ = []
@@ -101,7 +103,7 @@ instance Eq Class where
 	a == b = className a == className b
 
 isCoreFile :: File -> Bool
-isCoreFile File{filePackage = (x : _)} = x == "core"
+isCoreFile File{filePackage = Package (x : _) _} = x == "core"
 isCoreFile _ = False
 classConstructor :: Class -> Maybe Def 
 classConstructor Generic{} = Nothing
@@ -130,6 +132,9 @@ isEnum = (ClassModEnum `elem` ) . classMods
 classFields :: Class -> [Def]
 classFields = filter isField . classDefs
 
+classPackageName :: Class -> [String]
+classPackageName = packageName . classPackage
+
 extendsNothing :: Extends
 extendsNothing = Extends Nothing []
 
@@ -155,7 +160,6 @@ objectDef cl = Def {defName = className cl, defPars = [], defType = TPObject (re
 
 replaceGenericsInDef :: Generics -> Def -> Def
 replaceGenericsInDef gens d = d {defType = replaceGenerics gens (defType d), defPars = map (replaceGenericsInDef gens) (defPars d) }
-		
 
 allDefsInClass :: ClassRef -> [Def]
 allDefsInClass (cl, gens) = 
@@ -375,7 +379,10 @@ linkFile files (D.File name package stms) = fl
 		glidx = importObjectDefs ++ glObjects
 		package' = case package of
 			[] -> error $ "Empty package for file " ++ name
-			_ -> package
+			_ -> Package package packObj
+		packObj = find (\cl -> last package == className cl && ClassModObject `elem` classMods cl) 
+			. concatMap fileClasses 
+			. filter ((== init package) . packageName . filePackage) $ files
 
 		importClasses = mapMaybe impcl imports
 			where
@@ -391,19 +398,19 @@ linkFile files (D.File name package stms) = fl
 				processImport :: D.FileStm -> [Import]
 				processImport (D.Import imp)  
 					| last imp == "_" = let s = init imp
-						in (map ImportClass . filter (startsWith s . classPackage)) allClasses 
+						in (map ImportClass . filter (startsWith s . classPackageName)) allClasses 
 							++ (map ImportObjectDefs . classesWithName) s
 					| otherwise = map ImportClass $ classesWithName imp
-				classesWithName imp = filter (\c -> className c == last imp && classPackage c == init imp) allClasses
+				classesWithName imp = filter (\c -> className c == last imp && classPackageName c == init imp) allClasses
 
-		packageFiles = filter (\f -> f /= fl && package == filePackage f) files
+		packageFiles = filter (\f -> f /= fl && package == (packageName . filePackage) f) files
 		
 		allClasses = concatMap fileClasses . filter (/= fl) $ files
 
 
 		
 		kernelFiles :: [File]
-		kernelFiles = filter ((== "core") . head . filePackage ) files 
+		kernelFiles = filter ((== "core") . head . packageName . filePackage ) files 
 		
 		glObjects = case gldefs of 
 			[] -> []
@@ -770,7 +777,7 @@ dataTypeClass env (TPFloatNumber 0) = classFind (envIndex env) "ODFloat"
 dataTypeClass env TPAny = classFind (envIndex env) "ODAny"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("CNTuple" ++ show (length a))
 dataTypeClass _ f@TPFun{} = Class { _classMods = [], className = "", _classExtends = extendsNothing,
-	_classPackage = ["core"], _classFile = coreFakeFile, 
+	_classPackage = Package ["core"] Nothing, _classFile = coreFakeFile, 
 	_classDefs = [applyLambdaDef f], _classGenerics = []}
 	where
 		
