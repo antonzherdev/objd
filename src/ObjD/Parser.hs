@@ -47,7 +47,7 @@ parseStatement :: String -> Either ParseError FileStm
 parseStatement = parse pStatement "ObjD"
 
 pStatement :: Parser FileStm
-pStatement = pTypeStm <|> pImport <|> pStub <|> pClass <|> pEnum
+pStatement = pTypeStm <|> pImport <|> pClass <|> pEnum
 
 wsps :: Parser String
 wsps = many (char ' ' <|> char '\t') <?> ""
@@ -122,16 +122,6 @@ brackets = between (charSps '(') (spsChar ')')
 
 stringSps :: String -> Parser String
 stringSps s = string s >> sps
-
-pStub :: Parser FileStm
-pStub = do
-	def <- try (do
-		string "stub"
-		sps
-		pDef <|> pDecl
-		)
-	sps
-	return $ StubDef def
 
 pTypeStm :: Parser FileStm
 pTypeStm = do
@@ -279,7 +269,7 @@ pImport = do
 	
 
 pStm :: Parser ClassStm
-pStm = pDef <|> pDecl <?> "Class statement"
+pStm = pDef <|> pDecl <|> (pImport >>= \(Import name) -> return $ ClassImport name) <?> "Class statement"
 	
 pDef :: Parser ClassStm
 pDef = do

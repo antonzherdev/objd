@@ -1,10 +1,10 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), DataType(..), Exp(..), CImport(..), 
-	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef, CallPar,
+	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef, CallPar, Package(..),
 	Import(..), link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
-	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGlobalDefObject, isGeneric, isNop
+	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop
 )where
 
 import 			 Control.Arrow
@@ -33,7 +33,8 @@ coreFakeFile = File "fake.od" (Package ["core"] Nothing) [] []
  - CLASS 
  -----------------------------------------------------------------------------------------------------------------------------------------}
 data Class = Class {_classFile :: File, _classPackage :: Package, className :: String
-	, _classGenerics :: [Class], _classExtends :: Extends, _classMods :: [ClassMod], _classDefs :: [Def]}
+	, _classGenerics :: [Class], _classExtends :: Extends, _classMods :: [ClassMod], _classDefs :: [Def]
+	, _classImports :: [Import]}
 	| Generic {className :: String, _classExtends :: Extends}
 	| ClassError {className :: String, classErrorText :: String}
 
@@ -58,11 +59,11 @@ classStaticDefs = filter (isStatic) . classDefs
 classMods :: Class -> [ClassMod]
 classMods Class{_classMods = r} = r
 classMods _ = []
-globalDefsObject :: File -> [Def] -> Class
-globalDefsObject fl defs = Class{_classFile = fl, _classPackage = filePackage fl, className = "_GlobalDefs", _classGenerics = [],
-	_classExtends = extendsNothing, _classMods = [ClassModStub, ClassModObject, ClassGlobalDefObject], _classDefs = defs}
+classImports :: Class -> [Import]
+classImports Class{_classImports = r} = r
+classImports _ = []
 
-data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType | ClassGlobalDefObject deriving (Eq)
+data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType  deriving (Eq)
 
 type ExtendsRef = (Class, [DataType])
 data Extends = Extends {extendsClass :: Maybe ExtendsClass, extendsTraits :: [ExtendsRef]}
@@ -83,7 +84,6 @@ instance Show Class where
 			sConstr c = maybe "" (\cc -> "(" ++ (strs ", " . map defName . defPars) cc ++ ")") (classConstructor c)
 instance Show ClassMod where
 	show ClassModStub = "stub"
-	show ClassGlobalDefObject = "glObject"
 	show ClassModStruct = "struct"
 	show ClassModTrait = "trait"
 	show ClassModEnum = "enum"
@@ -122,8 +122,6 @@ isTrait :: Class -> Bool
 isTrait = (ClassModTrait `elem` ) . classMods
 isStub :: Class -> Bool
 isStub = (ClassModStub `elem` ) . classMods
-isGlobalDefObject :: Class -> Bool
-isGlobalDefObject = (ClassGlobalDefObject `elem` ) . classMods
 
 isRealClass :: Class -> Bool
 isRealClass = (ClassModStub `notElem` ) . classMods
@@ -371,12 +369,13 @@ linkFile :: [File] -> D.File -> File
 linkFile files (D.File name package stms) = fl
 	where
 		fl :: File
-		fl = File {fileName = name, fileImports = imports,
-			fileClasses = classes ++ glObjects, filePackage = package'}
-		classes = (map (linkClass (cidx, glidx, fl, package')) . filter isCls) stms
+		fl = File {fileName = name, fileImports = thisFileImports,
+			fileClasses = classes, filePackage = package'}
+		classes = (map linkCl . filter isCls) stms
+		linkCl cl = linkClass (cidx cl, glidx cl, fl, package', clImports cl) cl
 		isCls s = D.isClass s || D.isStub s || D.isEnum s || D.isType s
-		cidx = M.fromList . map (idx className) $ classes ++ importClasses ++ (concatMap fileClasses $ kernelFiles ++ packageFiles)
-		glidx = importObjectDefs ++ glObjects
+		cidx cl =  M.fromList . map (idx className) $ classes ++ importClasses cl ++ (concatMap fileClasses $ kernelFiles ++ packageFiles)
+		glidx cl = importObjectDefs cl
 		package' = case package of
 			[] -> error $ "Empty package for file " ++ name
 			_ -> Package package packObj
@@ -384,50 +383,54 @@ linkFile files (D.File name package stms) = fl
 			. concatMap fileClasses 
 			. filter ((== init package) . packageName . filePackage) $ files
 
-		importClasses = mapMaybe impcl imports
+		importClasses cl = mapMaybe impcl (imports cl)
 			where
-				impcl (ImportClass cl)= Just cl
+				impcl (ImportClass c)= Just c
 				impcl _ = Nothing
-		importObjectDefs = mapMaybe impcl imports
+		importObjectDefs cl = mapMaybe impcl (imports cl)
 			where
-				impcl (ImportObjectDefs cl)= Just cl
+				impcl (ImportObjectDefs c)= Just c
 				impcl _ = Nothing
-		imports :: [Import]
-		imports = nub $ concatMap processImport . filter D.isImport $ stms
+		imports :: D.FileStm -> [Import]
+		imports cl = nub (clImports cl ++ thisFileImports ++ packObjImports)
+
+		packObjImports = maybe [] classImports packObj
+
+		thisFileImports :: [Import]
+		thisFileImports = concatMap processImport . filter D.isImport $ stms
 			where
-				processImport :: D.FileStm -> [Import]
-				processImport (D.Import imp)  
-					| last imp == "_" = let s = init imp
-						in (map ImportClass . filter (startsWith s . classPackageName)) allClasses 
-							++ (map ImportObjectDefs . classesWithName) s
-					| otherwise = map ImportClass $ classesWithName imp
-				classesWithName imp = filter (\c -> className c == last imp && classPackageName c == init imp) allClasses
+				processImport (D.Import imp) = linkImport allFiles imp
 
 		packageFiles = filter (\f -> f /= fl && package == (packageName . filePackage) f) files
 		
-		allClasses = concatMap fileClasses . filter (/= fl) $ files
-
-
+		allFiles = filter (/= fl) $ files
 		
 		kernelFiles :: [File]
 		kernelFiles = filter ((== "core") . head . packageName . filePackage ) files 
 		
-		glObjects = case gldefs of 
-			[] -> []
-			_ -> [globalDefsObject fl gldefs]
-		gldefs = (map gldef . filter D.isStubDef) stms
-		gldef (D.StubDef d@D.Def{D.defMods = mods}) = 
-			(linkDef False env d){defMods = DefModStatic : DefModStub : mapMaybe md' mods}
+		clImports :: D.FileStm -> [Import]
+		clImports cl = concatMap (\(D.ClassImport inn) -> linkImport files inn) . filter D.isClassImport $ classBody cl
 			where
-				env = Env{envSelf = TPVoid, envIndex = cidx, envObjectIndex = glidx,  envVals = []}
-				md' D.DefModVal = Just DefModGlobalVal
-				md' _ = Nothing
+				classBody D.Class{} = D.classBody cl
+				classBody D.Enum{} = D.classBody cl
+				classBody _ = []
+	
+
+linkImport :: [File] -> [String] -> [Import]
+linkImport files name
+	| last name == "_" = let s = init name
+		in (map ImportClass . filter (startsWith s . classPackageName)) allClasses 
+			++ (map ImportObjectDefs . classesWithName) s
+	| otherwise = map ImportClass $ classesWithName name
+	where
+		allClasses = concatMap fileClasses files
+		classesWithName imp = filter (\c -> className c == last imp && classPackageName c == init imp) allClasses
 
 baseClassExtends :: ClassIndex -> ExtendsClass
 baseClassExtends cidx = ExtendsClass (classFind cidx "ODObject", []) []
 
-linkClass :: (ClassIndex, ObjectIndex, File, Package) -> D.FileStm -> Class
-linkClass (ocidx, glidx, file, package) cl = self
+linkClass :: (ClassIndex, ObjectIndex, File, Package, [Import]) -> D.FileStm -> Class
+linkClass (ocidx, glidx, file, package, clImports) cl = self
 	where
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
 		env = Env selfType cidx glidx []
@@ -446,7 +449,8 @@ linkClass (ocidx, glidx, file, package) cl = self
 					if isObject then map (\d -> d{defMods = DefModStatic : defMods d}) $ fields ++ defs ++ [typeField] 
 					else fields ++ defs ++ [constr constrPars, typeField] 
 				{-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
-				_classGenerics = generics
+				_classGenerics = generics,
+				_classImports = clImports
 			}
 			D.Enum{} -> Class {
 				_classFile = file,
@@ -460,7 +464,8 @@ linkClass (ocidx, glidx, file, package) cl = self
 					snd (mapAccumL enumItem 0 (D.enumItems cl)) ++ fields ++ defs ++ [Def{
 					defName = "values", defType = TPArr 0 (TPClass TPMEnum [] self), defBody = Nop,
 					defMods = [DefModStatic], defPars = [], defGenerics = Nothing}],
-				_classGenerics = generics
+				_classGenerics = generics,
+				_classImports = clImports
 			}
 			D.Type{} -> Class {
 				_classFile = file,
@@ -469,7 +474,8 @@ linkClass (ocidx, glidx, file, package) cl = self
 				className = D.className cl, 
 				_classExtends = Extends (Just $ ExtendsClass (linkExtendsRef env (D.typeDef cl)) []) [], 
 				_classDefs = [constructorForType], 
-				_classGenerics = generics
+				_classGenerics = generics,
+				_classImports = []
 			}
 		enumOrdinal = Def "ordinal" [] uint Nop [] Nothing
 		enumName = Def "name" [] TPString Nop [] Nothing
@@ -519,31 +525,12 @@ linkClass (ocidx, glidx, file, package) cl = self
 				parClassExtends = fromJust $ extendsClass $ classExtends $ self
 				parConstructor = fromJust $ classConstructor $ extendsClassClass $ parClassExtends
 				parConstructor' = replaceGenericsInDef parGenerics parConstructor
-
 		typeField :: Def 
 		typeField = Def{defMods = [DefModField, DefModStatic, DefModSpecial] ++ [DefModStruct | selfIsStruct], defName = "type", defType = TPClass TPMType [selfType] (classFind cidx typeName), 
 			defBody = Nop, 
 			defGenerics = Nothing, defPars = []}
 			where 
 				typeName = if selfIsStruct then "PType" else "ClassType"
-	
-		{-unapply :: Def
-		unapply = Def{defMods = [DefModDef, DefModStatic] ++ [DefModStruct | selfIsStruct], defName = "unapply", defType = unapplyTp, 
-			defBody = Return True unapplyRet, defGenerics = Nothing, defPars = [par]}
-			where
-				par = localVal (D.className cl) selfType
-				unapplyTp = TPOption $ case constrPars of
-					[] -> TPNil
-					[x] -> wrapGeneric $ defType x
-					xs -> TPTuple $ map (wrapGeneric . defType) xs
-				unapplyRet :: Exp
-				unapplyRet = case constrPars of
-					[] -> Some Nil
-					[x] -> Some $ Dot (callRef par) (callRef x) 
-					xs -> Some $ Tuple $ map (\x -> Dot (callRef par) (callRef x)) xs
-		hasUnapply :: Bool
-		hasUnapply = any ( ("unapply" == ). D.defName) (D.classBody cl)-}
-
 linkExtends :: Env -> [Def] -> D.Extends -> Extends
 linkExtends env constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
 	let 
@@ -754,7 +741,7 @@ dataTypeClassRef env tp = let
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
 dataTypeClass _ (TPObject _ c) = Class { _classMods = [ClassModObject], className = className c, _classExtends = extendsNothing, 
-	_classDefs = allDefsInObject (c, M.empty), _classGenerics = [], 
+	_classDefs = allDefsInObject (c, M.empty), _classGenerics = [], _classImports = [],
 	_classFile = fromMaybe (error $ "No class file for class " ++ className c) $ classFile c,
 	_classPackage = classPackage c}
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
@@ -778,7 +765,7 @@ dataTypeClass env TPAny = classFind (envIndex env) "ODAny"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("CNTuple" ++ show (length a))
 dataTypeClass _ f@TPFun{} = Class { _classMods = [], className = "", _classExtends = extendsNothing,
 	_classPackage = Package ["core"] Nothing, _classFile = coreFakeFile, 
-	_classDefs = [applyLambdaDef f], _classGenerics = []}
+	_classDefs = [applyLambdaDef f], _classGenerics = [], _classImports = []}
 	where
 		
 dataTypeClass _ x = ClassError (show x) ("No dataTypeClass for " ++ show x)

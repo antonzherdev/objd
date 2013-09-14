@@ -1,7 +1,7 @@
 module ObjD.Struct (
 	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, EnumItem(..), CallPar, DefMod(..), 
 	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), ExtendsRef, ExtendsClass(..), CaseCondition(..), CaseItem, FuncOpTp(..),
-	isStubDef, isClass, isImport, stmName, isDef, isDecl, isStub, isEnum, isStatic, isType
+	isClass, isImport, isDef, isDecl, isStub, isEnum, isStatic, isType, isClassImport
 ) where
 import           Ex.String
 import 			 Data.Decimal
@@ -16,7 +16,6 @@ data FileStm =
 	Import [String]
 	| Class {classMods :: [ClassMod], className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, classBody :: [ClassStm]
 		, classGenerics :: [Generic] }
-	| StubDef {stubDef :: ClassStm}
 	| Enum {className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, enumItems :: [EnumItem], classBody :: [ClassStm]
 		, classGenerics :: [Generic] }
 	| Type {className :: String, classGenerics :: [Generic], typeDef :: ExtendsRef}
@@ -32,9 +31,6 @@ isStub _ = False
 isImport :: FileStm -> Bool
 isImport Import{} = True
 isImport _ = False
-isStubDef :: FileStm -> Bool
-isStubDef (StubDef {}) = True
-isStubDef _ = False
 isType :: FileStm -> Bool
 isType (Type {}) = True
 isType _ = False
@@ -48,17 +44,22 @@ data ExtendsClass = ExtendsClass ExtendsRef [CallPar]
 type ExtendsRef =  (String, [DataType])
 
 data ClassStm = Def {defMods :: [DefMod],  defName :: String, defGenerics :: [Generic], defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
-stmName :: ClassStm -> String
-stmName (Def _ name _ [] _ _) = name
-stmName (Def _ name _ pars _ _) = name ++ " " ++ unwords (map parName pars)
+	| ClassImport [String]
 
 data DefMod = DefModPrivate | DefModProtected | DefModMutable | DefModVal | DefModStatic | DefModWeak | DefModDelegate | DefModLazy deriving (Eq)
 isDef :: ClassStm -> Bool
-isDef = (DefModVal `notElem`) . defMods
+isDef d@Def{} = (DefModVal `notElem`) . defMods $ d
+isDef _ =  False
 isDecl :: ClassStm -> Bool
-isDecl = (DefModVal `elem`) . defMods
+isDecl d@Def{} = (DefModVal `elem`) . defMods $ d
+isDecl _ =  False
 isStatic :: ClassStm -> Bool
-isStatic = (DefModStatic `elem`) . defMods
+isStatic d@Def{} = (DefModStatic `elem`) . defMods $ d
+isStatic _ =  False
+isClassImport :: ClassStm -> Bool
+isClassImport ClassImport{} = True
+isClassImport _ =  False
+
 
 data EnumItem = EnumItem{enumItemName :: String, enumItemPars :: [CallPar]}
 
@@ -115,7 +116,6 @@ instance Show FileStm where
 			tp = (if ClassModStub `elem` mods then "stub " else "") ++ (if ClassModStruct `elem` mods then "struct" else "class")
 	show (Enum{className = name, classFields = fields, classBody = body}) = "enum " ++ name ++  "(" ++ strs' ", " fields ++ ")" ++ showClassBody body
 	show (Type{className = name, typeDef = (td, _)}) = "type " ++ name ++  " = " ++ td
-	show (StubDef d) = "stub " ++ show d
 	show (Import names) = "import " ++ strs "." names
 	
 showClassBody :: [ClassStm] -> String
@@ -124,6 +124,7 @@ showClassBody stms = " {\n" ++ (unlines . map ( ind . show )) stms ++ "\n}"
 instance Show ClassStm where
 	show (Def{defName = name, defRetType = Just dataType}) = name ++ " : " ++ show dataType
 	show (Def{defName = name, defRetType = Nothing}) = name
+	show (ClassImport name) = "import " ++ strs' "." name
  	
 instance Show DataType where
 	show (DataType s []) = s
