@@ -420,7 +420,7 @@ linkImport :: [File] -> [String] -> [Import]
 linkImport files name
 	| last name == "_" = let s = init name
 		in (map ImportClass . filter (startsWith s . classPackageName)) allClasses 
-			++ (map ImportObjectDefs . classesWithName) s
+			++ (concatMap (\c -> ImportObjectDefs c : classImports c ) . classesWithName) s
 	| otherwise = map ImportClass $ classesWithName name
 	where
 		allClasses = concatMap fileClasses files
