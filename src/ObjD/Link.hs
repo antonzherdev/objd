@@ -69,7 +69,7 @@ classImports :: Class -> [Import]
 classImports Class{_classImports = r} = r
 classImports _ = []
 classNameWithPrefix :: Class -> String
-classNameWithPrefix cl = packagePrefix (classPackage cl) ++ className cl
+classNameWithPrefix cl = packagePrefix (classPackage cl) ++ cap (className cl)
 
 data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType  deriving (Eq)
 
