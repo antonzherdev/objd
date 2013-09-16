@@ -581,7 +581,7 @@ linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.de
 			DefModField : translateMods mods ++ [DefModStruct | str], defName = name, defType = tp'', 
 			defBody = i', defGenerics = Nothing, defPars = []}
 		isLazy = D.DefModLazy `elem` mods
-		lazyClass = classFind (envIndex env) "CNLazy"
+		lazyClass = classFind (envIndex env) "Lazy"
 		lazyGet = fromJust $ findDefWithName "get" lazyClass
 		lazyConstr = fromJust $ classConstructor lazyClass
 		lazyTp = TPClass TPMClass [wrapGeneric tp''] lazyClass
@@ -763,11 +763,11 @@ dataTypeClass _ (TPObject _ c) = Class { _classMods = [ClassModObject], classNam
 	_classFile = fromMaybe (error $ "No class file for class " ++ className c) $ classFile c,
 	_classPackage = classPackage c}
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
-dataTypeClass env (TPArr _ _) = classFind (envIndex env) "CNSeq"
-dataTypeClass env (TPEArr _ _) = classFind (envIndex env) "CNPArray"
-dataTypeClass env (TPOption _) = classFind (envIndex env) "CNOption"
-dataTypeClass env (TPMap _ _) = classFind(envIndex env) "CNMap"
-dataTypeClass env (TPTuple [_, _]) = classFind (envIndex env) "CNTuple"
+dataTypeClass env (TPArr _ _) = classFind (envIndex env) "Seq"
+dataTypeClass env (TPEArr _ _) = classFind (envIndex env) "PArray"
+dataTypeClass env (TPOption _) = classFind (envIndex env) "Option"
+dataTypeClass env (TPMap _ _) = classFind(envIndex env) "Map"
+dataTypeClass env (TPTuple [_, _]) = classFind (envIndex env) "Tuple"
 dataTypeClass env (TPNumber False 1) = classFind (envIndex env) "ODByte"
 dataTypeClass env (TPNumber True 1) = classFind (envIndex env) "ODUByte"
 dataTypeClass env (TPNumber False 0) = classFind (envIndex env) "ODInt"
@@ -780,7 +780,7 @@ dataTypeClass env (TPFloatNumber 4) = classFind (envIndex env) "ODFloat4"
 dataTypeClass env (TPFloatNumber 8) = classFind (envIndex env) "ODFloat8"
 dataTypeClass env (TPFloatNumber 0) = classFind (envIndex env) "ODFloat"
 dataTypeClass env TPAny = classFind (envIndex env) "ODAny"
-dataTypeClass env (TPTuple a) = classFind (envIndex env) ("CNTuple" ++ show (length a))
+dataTypeClass env (TPTuple a) = classFind (envIndex env) ("Tuple" ++ show (length a))
 dataTypeClass _ f@TPFun{} = Class { _classMods = [], className = "", _classExtends = extendsNothing,
 	_classPackage = Package ["core"] Nothing "", _classFile = coreFakeFile, 
 	_classDefs = [applyLambdaDef f], _classGenerics = [], _classImports = []}
@@ -800,12 +800,12 @@ dataTypeClassName :: DataType -> String
 dataTypeClassName (TPClass _ _ c ) = className c
 dataTypeClassName (TPObject _ c) = className c
 dataTypeClassName (TPGenericWrap c) = dataTypeClassName c
-dataTypeClassName (TPArr _ _) = "CNArray"
-dataTypeClassName (TPOption _) = "CNOption"
-dataTypeClassName (TPMap _ _) = "CNMap"
+dataTypeClassName (TPArr _ _) = "Array"
+dataTypeClassName (TPOption _) = "Option"
+dataTypeClassName (TPMap _ _) = "Map"
 dataTypeClassName TPAny = "ODAny"
-dataTypeClassName (TPTuple [_, _]) = "CNTuple"
-dataTypeClassName (TPTuple a) = "CNTuple" ++ show (length a)
+dataTypeClassName (TPTuple [_, _]) = "Tuple"
+dataTypeClassName (TPTuple a) = "Tuple" ++ show (length a)
 dataTypeClassName x = error ("No dataTypeClassName for " ++ show x)
 
 
@@ -1807,7 +1807,7 @@ implicitConvertsion env dtp ex = let stp = exprDataType ex
 		conv (TPArr _ _) (TPArr _ adtp) = case ex of
 			Arr exps -> Arr $ map (implicitConvertsion env adtp) exps
 			_ -> ex
-		conv (TPArr _ _) (TPClass _ [d] Class{className = "CNPArray"}) = Cast (TPEArr 0 (unwrapGeneric d)) ex
+		conv (TPArr _ _) (TPClass _ [d] Class{className = "PArray"}) = Cast (TPEArr 0 (unwrapGeneric d)) ex
 		conv TPClass{} TPVoidRef = Cast dtp ex
 		conv sc dc@TPClass{} = if sc /= dc then classConversion dc sc ex else ex
 		conv _ _ = ex
