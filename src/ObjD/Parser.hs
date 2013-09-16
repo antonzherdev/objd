@@ -125,7 +125,7 @@ stringSps s = string s >> sps
 
 pTypeStm :: Parser FileStm
 pTypeStm = do
-	try(string "type")
+	try(string "typedef")
 	sps1
 	name <- ident
 	sps
