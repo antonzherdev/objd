@@ -1356,6 +1356,8 @@ linkFuncOp ex@(D.FuncOp tp l r)  = do
 				put env
 				return $ Lambda [("_", ritp)] rr (exprDataType rr)
 	let 
+		ldef = localVal "__l" (exprDataType l')
+		rdef = localVal "__r" (exprDataType r'')
 		rtp = exprDataType r''
 		rInputType = case rtp of 
 			TPFun ret _ -> Right ret
@@ -1365,10 +1367,10 @@ linkFuncOp ex@(D.FuncOp tp l r)  = do
 			_ -> Left $ "Right is not function but " ++ show rtp ++ " in " ++ show r''
 		f p = do
 			lInputType
-			return $ Dot l' $ call (applyLambdaDef ltp) [p]
+			return $ Dot (callRef ldef) $ call (applyLambdaDef ltp) [p]
 		g p = do 
 			rInputType
-			return $ Dot r'' $ call (applyLambdaDef rtp) [p]
+			return $ Dot (callRef rdef) $ call (applyLambdaDef rtp) [p]
 		compile = do
 			li <- lInputType 
 			lo <- lOutputType 
@@ -1413,7 +1415,12 @@ linkFuncOp ex@(D.FuncOp tp l r)  = do
 				D.FuncOpClone -> clone
 	return $ case compile of
 		Left err -> ExpDError err ex
-		Right e -> e
+		Right e -> 
+			Braces [
+				Val ldef{defBody = implicitConvertsion env ltp l'},
+				Val rdef{defBody = implicitConvertsion env rtp r''},
+				e
+			]
 {------------------------------------------------------------------------------------------------------------------------------ 
  - String build
  ------------------------------------------------------------------------------------------------------------------------------}
