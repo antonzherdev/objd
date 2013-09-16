@@ -933,6 +933,8 @@ tStm env parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = 
 		isLambda _ = []
 		setsInLambda (D.Lambda _ lambdaExpr _) = D.forExp isSet lambdaExpr
 		isSet ee@(D.Set _ (D.Call d _ _) _) = if D.defName d == D.defName def then Just ee else Nothing
+		isSet ee@(D.PlusPlus (D.Call d _ _)) = if D.defName d == D.defName def then Just ee else Nothing
+		isSet ee@(D.MinusMinus (D.Call d _ _)) = if D.defName d == D.defName def then Just ee else Nothing
 		isSet _ = Nothing
 tStm env _ (D.Throw e) = [C.Throw $ tExp env e]
 tStm _ _ D.Break = [C.Break]
