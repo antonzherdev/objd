@@ -544,7 +544,8 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 				parConstructor = fromJust $ classConstructor $ extendsClassClass $ parClassExtends
 				parConstructor' = replaceGenericsInDef parGenerics parConstructor
 		typeField :: Def 
-		typeField = Def{defMods = [DefModField, DefModStatic, DefModSpecial] ++ [DefModStruct | selfIsStruct], defName = "type", defType = TPClass TPMType [selfType] (classFind cidx typeName), 
+		typeField = Def{defMods = [DefModField, DefModStatic, DefModSpecial] ++ [DefModStruct | selfIsStruct], defName = "type", 
+			defType = TPClass TPMClass [selfType] (classFind cidx typeName), 
 			defBody = Nop, 
 			defGenerics = Nothing, defPars = []}
 			where 
