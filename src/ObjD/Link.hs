@@ -445,7 +445,7 @@ linkImport files name
 		classesWithName imp = filter (\c -> className c == last imp && classPackageName c == init imp) allClasses
 
 baseClassExtends :: ClassIndex -> ExtendsClass
-baseClassExtends cidx = ExtendsClass (classFind cidx "ODObject", []) []
+baseClassExtends cidx = ExtendsClass (classFind cidx "Object", []) []
 
 linkClass :: (ClassIndex, ObjectIndex, File, Package, [Import]) -> D.FileStm -> Class
 linkClass (ocidx, glidx, file, package, clImports) cl = self
@@ -462,7 +462,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 				_classPackage = package,
 				_classMods = mapMaybe clsMod (D.classMods cl), 
 				className = D.className cl, 
-				_classExtends = if D.className cl == "ODObject" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
+				_classExtends = if D.className cl == "Object" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
 				_classDefs = 
 					if isObject then map (\d -> d{defMods = DefModStatic : defMods d}) $ fields ++ defs ++ [typeField] 
 					else fields ++ defs ++ [constr constrPars, typeField] 
@@ -476,7 +476,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 				_classMods = [ClassModEnum], 
 				className = D.className cl, 
 				_classExtends = Extends (Just $ ExtendsClass 
-					(classFind cidx "ODEnum", [TPClass TPMEnum [] self])  
+					(classFind cidx "Enum", [TPClass TPMEnum [] self])  
 					[(enumOrdinal, callLocalVal "ordinal" uint), (enumName, callLocalVal "name" TPString)]) [], 
 				_classDefs =  enumConstr: 
 					snd (mapAccumL enumItem 0 (D.enumItems cl)) ++ fields ++ defs ++ [Def{
@@ -768,18 +768,18 @@ dataTypeClass env (TPEArr _ _) = classFind (envIndex env) "PArray"
 dataTypeClass env (TPOption _) = classFind (envIndex env) "Option"
 dataTypeClass env (TPMap _ _) = classFind(envIndex env) "Map"
 dataTypeClass env (TPTuple [_, _]) = classFind (envIndex env) "Tuple"
-dataTypeClass env (TPNumber False 1) = classFind (envIndex env) "ODByte"
-dataTypeClass env (TPNumber True 1) = classFind (envIndex env) "ODUByte"
-dataTypeClass env (TPNumber False 0) = classFind (envIndex env) "ODInt"
-dataTypeClass env (TPNumber True 0) = classFind (envIndex env) "ODUInt"
-dataTypeClass env (TPNumber False 4) = classFind (envIndex env) "ODInt4"
-dataTypeClass env (TPNumber True 4) = classFind (envIndex env) "ODUInt4"
-dataTypeClass env (TPNumber False 8) = classFind (envIndex env) "ODInt8"
-dataTypeClass env (TPNumber True 8) = classFind (envIndex env) "ODUInt8"
-dataTypeClass env (TPFloatNumber 4) = classFind (envIndex env) "ODFloat4"
-dataTypeClass env (TPFloatNumber 8) = classFind (envIndex env) "ODFloat8"
-dataTypeClass env (TPFloatNumber 0) = classFind (envIndex env) "ODFloat"
-dataTypeClass env TPAny = classFind (envIndex env) "ODAny"
+dataTypeClass env (TPNumber False 1) = classFind (envIndex env) "Byte"
+dataTypeClass env (TPNumber True 1) = classFind (envIndex env) "UByte"
+dataTypeClass env (TPNumber False 0) = classFind (envIndex env) "Int"
+dataTypeClass env (TPNumber True 0) = classFind (envIndex env) "UInt"
+dataTypeClass env (TPNumber False 4) = classFind (envIndex env) "Int4"
+dataTypeClass env (TPNumber True 4) = classFind (envIndex env) "UInt4"
+dataTypeClass env (TPNumber False 8) = classFind (envIndex env) "Int8"
+dataTypeClass env (TPNumber True 8) = classFind (envIndex env) "UInt8"
+dataTypeClass env (TPFloatNumber 4) = classFind (envIndex env) "Float4"
+dataTypeClass env (TPFloatNumber 8) = classFind (envIndex env) "Float8"
+dataTypeClass env (TPFloatNumber 0) = classFind (envIndex env) "Float"
+dataTypeClass env TPAny = classFind (envIndex env) "Any"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("Tuple" ++ show (length a))
 dataTypeClass _ f@TPFun{} = Class { _classMods = [], className = "", _classExtends = extendsNothing,
 	_classPackage = Package ["core"] Nothing "", _classFile = coreFakeFile, 
@@ -803,7 +803,7 @@ dataTypeClassName (TPGenericWrap c) = dataTypeClassName c
 dataTypeClassName (TPArr _ _) = "Array"
 dataTypeClassName (TPOption _) = "Option"
 dataTypeClassName (TPMap _ _) = "Map"
-dataTypeClassName TPAny = "ODAny"
+dataTypeClassName TPAny = "Any"
 dataTypeClassName (TPTuple [_, _]) = "Tuple"
 dataTypeClassName (TPTuple a) = "Tuple" ++ show (length a)
 dataTypeClassName x = error ("No dataTypeClassName for " ++ show x)
@@ -847,27 +847,27 @@ unwrapGeneric g = g
 dataType :: ClassIndex -> D.DataType -> DataType
 dataType cidx (D.DataType name gens) = case name of
 	"byte" -> byte
-	"ODByte" -> TPGenericWrap byte
+	"Byte" -> TPGenericWrap byte
 	"ubyte" -> ubyte
-	"ODUByte" -> TPGenericWrap ubyte
+	"UByte" -> TPGenericWrap ubyte
 	"int" -> int
-	"ODInt" -> TPGenericWrap int
+	"Int" -> TPGenericWrap int
 	"uint" -> uint
-	"ODUInt" -> TPGenericWrap uint
+	"UInt" -> TPGenericWrap uint
 	"int4" -> int4
-	"ODInt4" -> TPGenericWrap int4
+	"Int4" -> TPGenericWrap int4
 	"uint4" -> uint4
-	"ODUInt4" -> TPGenericWrap uint4
+	"UInt4" -> TPGenericWrap uint4
 	"int8" -> int8
-	"ODInt8" -> TPGenericWrap int8
+	"Int8" -> TPGenericWrap int8
 	"uint8" -> uint8
-	"ODUInt8" -> TPGenericWrap uint8
+	"UInt8" -> TPGenericWrap uint8
 	"float4" -> float4
-	"ODFloat4" -> TPGenericWrap float4
+	"Float4" -> TPGenericWrap float4
 	"float8" -> float8
-	"ODFloat8" -> TPGenericWrap float8
+	"Float8" -> TPGenericWrap float8
 	"float" -> float
-	"ODFloat" -> TPGenericWrap float
+	"Float" -> TPGenericWrap float
 	"void" -> TPVoid
 	"string" -> TPString
 	"bool" -> TPBool
@@ -1678,7 +1678,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = call'''
 						where
 							gg'' = map snd $ M.toList $ fromMaybe M.empty $ upGenericsToClass cl (cl', buildGenerics cl' gg')
 					tryDetermine c (cl@(TPClass _ _ _), TPObject m cl') = 
-						tryDetermine c (cl, TPClass TPMClass [TPClass m [] cl'] (classFind (envIndex env) "ODClass"))
+						tryDetermine c (cl, TPClass TPMClass [TPClass m [] cl'] (classFind (envIndex env) "Class"))
 					tryDetermine c (TPFun a b, TPFun a' b') = listToMaybe $ catMaybes [tryDetermine c (a, a'), tryDetermine c (b, b')]
 					tryDetermine c (TPGenericWrap a, TPGenericWrap b) = tryDetermine c (a, b)
 					tryDetermine c (TPGenericWrap a, b) = tryDetermine c (a, b)

@@ -83,7 +83,7 @@ classExtends cl = addTraits cl $ maybe (C.Extends "NSObject" []) ext (D.extendsC
 	where
 		ext (D.ExtendsClass (ccl, _) _)
 			| D.ClassModTrait `elem` D.classMods ccl = C.Extends "NSObject" [D.classNameWithPrefix ccl]
-			| D.className ccl == "ODObject" = C.Extends "NSObject" []
+			| D.className ccl == "Object" = C.Extends "NSObject" []
 			| otherwise = C.Extends (D.classNameWithPrefix ccl) []
 addTraits :: D.Class -> C.Extends -> C.Extends		
 addTraits cl (C.Extends cls protocols) = C.Extends cls $ protocols ++ map (D.classNameWithPrefix . fst) (D.extendsTraits $ D.classExtends cl)
@@ -676,7 +676,7 @@ showDataType D.TPAny = idTp
 showDataType (D.TPClass D.TPMStruct _ c) = C.TPSimple (D.classNameWithPrefix c) []
 showDataType tp@(D.TPClass D.TPMType _ _) = showDataType $ fromMaybe (error "Not found super type for type") $ D.superType tp
 showDataType (D.TPClass D.TPMClass _ c) 
-	| D.className c == "ODObject" = C.TPSimple "NSObject*" []
+	| D.className c == "Object" = C.TPSimple "NSObject*" []
 	| otherwise = C.TPSimple (D.classNameWithPrefix c ++ "*") []
 showDataType (D.TPClass D.TPMEnum _ c) = C.TPSimple (D.classNameWithPrefix c ++ "*") []
 showDataType (D.TPClass D.TPMTrait _ c) = C.TPSimple "id" [D.classNameWithPrefix c]
