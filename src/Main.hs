@@ -7,14 +7,12 @@ import ObjD.Struct as D
 import ObjC.Struct as C
 import Control.Monad
 import Control.Arrow
-import System.Directory (doesDirectoryExist, getDirectoryContents, getModificationTime)
+import System.Directory (doesDirectoryExist, getDirectoryContents)
+import System.IO
 import System.FilePath
 
 {- main::IO()
 main = putStr "dsa" -}
-checkDate :: Bool
-checkDate = False
-
 debug :: [String]
 debug = []
 main::IO()
@@ -50,11 +48,15 @@ main =
 			write _ _ [] = return ()
 			write nm path txt = let fn =  replaceFileName path nm 
 				in do
-					modTime1 <- getModificationTime path
-					modTime2 <- getModificationTime fn
-					when(modTime1 > modTime2) $ do
+					e <- testFileEq fn txt
+					when(not e) $ do
 						print $ "Writing " ++ fn
 						writeFile fn txt
+			testFileEq :: String -> String -> IO Bool
+			testFileEq fn txt = withFile fn ReadMode $ \h -> checkFile (lines txt) h
+			checkFile :: [String] -> Handle -> IO Bool
+			checkFile (x:xs) h = hIsEOF h >>= \eof -> if eof then return False else (hGetLine h >>= \l -> if l == x then checkFile xs h else return False)
+			checkFile _ h = hIsEOF h
 			in do
 				txtFS <- textFiles
 				forM_ txtFS (\(path, ((hnm, h), (mnm, m)) ) -> do
