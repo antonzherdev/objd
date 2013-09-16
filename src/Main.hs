@@ -7,11 +7,14 @@ import ObjD.Struct as D
 import ObjC.Struct as C
 import Control.Monad
 import Control.Arrow
-import System.Directory (doesDirectoryExist, getDirectoryContents)
+import System.Directory (doesDirectoryExist, getDirectoryContents, getModificationTime)
 import System.FilePath
 
 {- main::IO()
 main = putStr "dsa" -}
+checkDate :: Bool
+checkDate = False
+
 debug :: [String]
 debug = []
 main::IO()
@@ -20,8 +23,6 @@ main =
 		root = "/Users/antonzherdev/dev/trains3d/Trains3D/"
 	in do 
 		putStrLn $ "Root: " ++ root
-		t <- odFiles root
-		print t
 		files <- readOdFiles root 
 		putStrLn $ "Found " ++ show (length files) ++ " files"
 		let 
@@ -47,7 +48,13 @@ main =
 			toText = second (unlines . map show)
 			write :: String -> String -> String -> IO ()
 			write _ _ [] = return ()
-			write nm path txt = writeFile (replaceFileName path nm) txt 
+			write nm path txt = let fn =  replaceFileName path nm 
+				in do
+					modTime1 <- getModificationTime path
+					modTime2 <- getModificationTime fn
+					when(modTime1 > modTime2) $ do
+						print $ "Writing " ++ fn
+						writeFile fn txt
 			in do
 				txtFS <- textFiles
 				forM_ txtFS (\(path, ((hnm, h), (mnm, m)) ) -> do
