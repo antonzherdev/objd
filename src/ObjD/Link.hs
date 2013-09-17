@@ -1570,6 +1570,23 @@ linkCase (D.Case mainExpr items) = do
 				caseEnv' = caseEnvAddDef ret caseEnv
 			put caseEnv'
 			return $ Set Nothing (callRef ret) (callRef val)
+		linkCaseCond  (D.CaseType cond tp) = do
+			caseEnv <- get
+			let 
+				oldVal = caseEnvCurrentVal caseEnv
+				env = caseEnvEnv caseEnv
+				tp' = dataType (envIndex env) tp 
+				val = case cond of
+					D.CaseVal name -> localVal name tp'
+					_ -> localVal (caseEnvVal caseEnv) tp'
+				caseEnv' = caseEnv {caseEnvCurrentVal = val, caseEnvValNum = caseEnvValNum caseEnv + 1}
+			put caseEnv'
+			cond' <- linkCaseCond cond
+			modify (\e -> e{caseEnvCurrentVal = oldVal})
+			let ok = case cond of
+					D.CaseVal _ -> Set Nothing (callRef val) $ Dot (callRef oldVal) (CastDot tp')
+					_ -> cond'
+			return $ If (Dot (callRef oldVal) (Is tp')) ok notOk
 	items' <- mapM linkCaseItem items
 	env <- get
 	let _result' = _result {defType = fromMaybe (TPUnknown "No common type for case") $  listToMaybe $ reduceTypes env $ map snd items'}

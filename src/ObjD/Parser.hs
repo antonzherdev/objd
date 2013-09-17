@@ -528,6 +528,7 @@ pString = do
 		extract :: ((Int, String), Maybe Exp) -> (String, Exp)
 		extract = cutString *** fromMaybe (error "Error in string parsing")
 		cutString :: (Int, String) -> String
+		cutString (_, "") = ""
 		cutString (partStart, str) = let
 			stringLines = lines str
 			maybeDrop n s
@@ -541,9 +542,14 @@ pString = do
 		pPart :: Parser ((Int, String), Maybe Exp)
 		pPart = do
 			p <- getPosition
-			str <- pStringPart 
-			e <- optionMaybe pStringExp
-			return ((sourceColumn p, str), e)
+			((do 
+				e <- pStringExp
+				return ((sourceColumn p, ""), Just e)
+				) <|> (do
+				str <- pStringPart 
+				e <- optionMaybe pStringExp
+				return ((sourceColumn p, str), e)
+				))
 		pStringExp :: Parser Exp
 		pStringExp = try (char '$' >> notFollowedBy (try(string "else") <|> try(string "endif")) ) >> (pIfString <|> pCall <|> brackets pExp)
 		pIfString :: Parser Exp
@@ -625,9 +631,7 @@ pCaseCondition = unapplyItem <|> typeItem
 		typeItem = do
 			cond <- anyItem <|> valItem
 			sps
-			tp <- optionMaybe $ do
-				charSps ':'
-				pDataType False
+			tp <- optionMaybe $ pDataType True
 			return $ maybe cond (\t -> CaseType cond t) tp
 		anyItem = try $ do
 			char '_'
