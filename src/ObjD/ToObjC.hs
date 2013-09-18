@@ -181,17 +181,8 @@ stmToImpl cl =
 		clsName = D.classNameWithPrefix cl
 		env = Env cl False D.TPVoid False False
 		defs :: [D.Def]
-		defs = nub $ D.classDefs cl ++ traitDefs
-		
-		traitDefs :: [D.Def]
-		traitDefs = allInParentTraits cl
-			where 
-				allInParentTraits cll = concatMap (traitDefsRec . fst) ((D.extendsRefs . D.classExtends) cll)
-				traitDefsRec cll 
-					| D.isTrait cll = filter ( (D.DefModAbstract `notElem`). D.defMods) (D.classDefs cll) ++ allInParentTraits cll
-					| otherwise = []
+		defs = D.classDefsWithTraits cl
 					
-
 		constrFuns = fromMaybe [] $ fmap (\constr -> [implCreate cl constr, implInit env constr]) (D.classConstructor cl)
 		implFields = filter needField defs
 		needField f = D.isField f && not (D.isStatic f)
@@ -606,7 +597,7 @@ procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
 		procClasses = concatMap procClass classes
 		procClass :: D.Class -> [(D.Class, Bool)]
 		procClass cl = procExtends (D.classExtends cl) 
-			++ concatMap procDef (D.classDefs cl)
+			++ concatMap procDef (D.classDefsWithTraits cl)
 		procDef :: D.Def -> [(D.Class, Bool)]
 		procDef def = procDataType (D.defType def) ++ procExp (D.defBody def) ++ concatMap procDef (D.defPars def)
 		procExtends :: D.Extends -> [(D.Class, Bool)]

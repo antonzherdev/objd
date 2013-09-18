@@ -6,7 +6,7 @@ module ObjD.Link (
 	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
-	fileNameWithPrefix
+	fileNameWithPrefix, classDefsWithTraits
 )where
 
 import 			 Control.Arrow
@@ -256,6 +256,16 @@ findDefWithName name cl = find ((name ==) . defName) $ classDefs cl
 
 findValWithName :: String -> Class -> Maybe Def
 findValWithName name cl = find (\d -> name == defName d && DefModField `elem` defMods d && null (defPars d)) $ classDefs cl
+
+classDefsWithTraits :: Class -> [Def]
+classDefsWithTraits cl = nub $ classDefs cl ++ traitDefs
+	where		
+		traitDefs :: [Def]
+		traitDefs = allInParentTraits cl		
+		allInParentTraits cll = concatMap (traitDefsRec . fst) ((extendsRefs . classExtends) cll)
+		traitDefsRec cll 
+			| isTrait cll = filter ( (DefModAbstract `notElem`). defMods) (classDefs cll) ++ allInParentTraits cll
+			| otherwise = []
 	
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - Def 
