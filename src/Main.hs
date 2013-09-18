@@ -7,7 +7,7 @@ import ObjD.Struct as D
 import ObjC.Struct as C
 import Control.Monad
 import Control.Arrow
-import System.Directory (doesDirectoryExist, getDirectoryContents)
+import System.Directory (doesDirectoryExist, getDirectoryContents, doesFileExist)
 import System.IO
 import System.FilePath
 
@@ -55,7 +55,8 @@ main =
 						print $ "Writing " ++ fn
 						writeFile fn txt
 			testFileEq :: String -> String -> IO Bool
-			testFileEq fn txt = withFile fn ReadMode $ \h -> checkFile (lines txt) h
+			testFileEq fn txt = doesFileExist fn >>= \e ->
+				if e then withFile fn ReadMode $ \h -> checkFile (lines txt) h else return False
 			checkFile :: [String] -> Handle -> IO Bool
 			checkFile (x:xs) h = hIsEOF h >>= \eof -> if eof then return False else (hGetLine h >>= \l -> if l == x then checkFile xs h else return False)
 			checkFile _ h = hIsEOF h
