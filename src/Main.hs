@@ -29,9 +29,11 @@ main =
 			linkedFiles :: IO [(FilePath, L.File)]
 			linkedFiles = do
 				fs <- parsedFiles
-				let linked = (uncurry zip . second L.link. unzip) fs
-				let errors = checkErrors $ map snd linked 
-				forM_ errors (\e -> print e)
+				let 
+					linked = (uncurry zip . second L.link. unzip) fs
+					errors =  unlines $ map show $ checkErrors $ map snd linked 
+					check = if null errors then return () else error errors
+				check
 				forM_ (filter ((`elem` debug). L.fileName . snd) linked) (\(path, f) -> do
 					putStrLn $ "= Linked " ++ path
 					print f)
@@ -63,6 +65,7 @@ main =
 					{-putStrLn ("File: " ++ path)-}
 					write hnm path h
 					write mnm path m)
+
 				
 
 parseFiles :: [(FilePath, String)] -> IO [(FilePath, D.File)]

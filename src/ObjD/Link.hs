@@ -1501,7 +1501,7 @@ linkCase (D.Case mainExpr items) = do
 				valTp = defType val
 				env = caseEnvEnv caseEnv
 				valCl = dataTypeClass env valTp
-				constr = fromMaybe (error $ "No constructor") $ classConstructor valCl
+				constr = classConstructor valCl
 
 				linkPar :: (Def, D.CaseCondition) -> State CaseEnv [Exp]
 				linkPar (_, D.CaseAny) = return []
@@ -1518,7 +1518,7 @@ linkCase (D.Case mainExpr items) = do
 					e' <- get
 					put e'{caseEnvCurrentVal = val}
 					return $ (Val $ newVal{defBody = Dot (callRef val) (callRef d)}) : [cond']
-			pars' <- mapM linkPar $ zip (defPars constr) pars
+			pars' <- mapM linkPar $ zip (maybe [] defPars constr) pars
 			return $ Braces $ join pars'
 
 		linkCaseCond (D.CaseUnapply _ ref pars) = do
