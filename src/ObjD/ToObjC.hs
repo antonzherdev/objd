@@ -59,6 +59,10 @@ toObjC f@D.File{D.fileClasses = classes} =
 
 {- Interface -}
 
+funName :: D.Def -> String
+funName D.Def{D.defName = "init", D.defPars = []} = "_init"
+funName D.Def{D.defName = d} = d
+
 stmToInterface :: D.Class -> C.FileStm
 stmToInterface cl =
 	C.Interface {
@@ -144,11 +148,11 @@ intefaceFuns :: [D.Def] -> [C.Fun]
 intefaceFuns = map stm2Fun . filter (\v -> D.DefModPrivate `notElem` D.defMods v && D.isDef v)
 
 stm2Fun :: D.Def -> C.Fun
-stm2Fun D.Def{D.defName = name, D.defPars = pars, D.defType = tp, D.defMods = mods} =
+stm2Fun d@D.Def{D.defPars = pars, D.defType = tp, D.defMods = mods} =
 	C.Fun {
 		C.funType = if D.DefModStatic `elem` mods then C.ObjectFun else C.InstanceFun, 
 		C.funReturnType = showDataType tp, 
-		C.funName = name, 
+		C.funName = funName d, 
 		C.funPars = map par pars}
 	where
 		par (D.Def{D.defName = nm, D.defType = ttp}) = C.FunPar nm (showDataType ttp) nm
@@ -319,15 +323,17 @@ implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFu
 		hasInit D.Def{D.defBody = D.Nop} = False
 		hasInit d = D.isField d && not (D.isStatic d)
 
-		hasField f= any ((D.defName f == ) . D.defName) (D.classDefs cl)
+		hasField f = any ((D.defName f == ) . D.defName) (D.classDefs cl)
 
 		superInit Nothing = C.Call C.Super "init" [] []
 		superInit (Just (D.ExtendsClass _ [])) = C.Call C.Super "init" [] []
 		superInit (Just (D.ExtendsClass _ pars)) = C.Call C.Super "initWith" (map (D.defName *** tExp env') pars) []
 
+		callInit = if isJust (D.classInitDef cl) then [C.Stm $ C.Call C.Self "_init" [] []] else []
+
 		implInitFields :: [D.Def] -> [D.Def] -> [C.Stm]
 		implInitFields [] [] = []
-		implInitFields co fields = [C.If C.Self (map implConstrField co ++ map (implInitField env') fields) []]
+		implInitFields co fields = [C.If C.Self (map implConstrField co ++ map (implInitField env') fields ++ callInit) []]
 		implConstrField d@D.Def{D.defName = name, D.defType = tp} = C.Set Nothing (C.Ref $ fieldName env' d) (implRight tp) 
 			where
 				implRight D.TPClass{} = retain $ C.Ref name
@@ -764,7 +770,7 @@ tExp env d@(D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars)
 		(D.TPClass D.TPMStruct _ c) -> structCall (D.classNameWithPrefix c) (tExpTo env ltp l)
 		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) dd) ((map snd . tPars env) pars)
 		tp -> structCall (show tp) (tExpTo env ltp l)
-	| otherwise = castGeneric d $ C.Call (tExp env l) name (tPars env pars ) []
+	| otherwise = castGeneric d $ C.Call (tExp env l) (funName dd) (tPars env pars ) []
 	where
 		 structCall c self = C.CCall (C.Ref $ structDefName c dd) (self : (map snd . tPars env) pars)
 		 ltp = D.unwrapGeneric $ D.exprDataType l

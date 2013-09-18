@@ -6,7 +6,7 @@ module ObjD.Link (
 	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
-	fileNameWithPrefix, classDefsWithTraits
+	fileNameWithPrefix, classDefsWithTraits, classInitDef
 )where
 
 import 			 Control.Arrow
@@ -252,6 +252,9 @@ isInstanceOfTp env target cl
 	| target == cl = True
 	| otherwise = isInstanceOf (dataTypeClass env target) (dataTypeClass env cl)
 
+classInitDef :: Class -> Maybe Def
+classInitDef cl = find (\d -> "init" == defName d && null (defPars d)) $ classDefs cl
+
 findDefWithName :: String -> Class -> Maybe Def
 findDefWithName name cl = find ((name ==) . defName) $ classDefs cl
 
@@ -298,7 +301,8 @@ eqPar (x, y) = defName x == defName y
 
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModProtected | DefModGlobalVal | DefModWeak
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
-	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper | DefModInline deriving (Eq, Ord)
+	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper | DefModInline 
+	deriving (Eq, Ord)
 instance Show DefMod where
 	show DefModStatic = "static"
 	show DefModMutable = "var"
@@ -367,7 +371,7 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModApplyLambda = 'd'
 		ch DefModSuper = 'r'
 		ch DefModInline = 'i'
-
+		
 
 dataTypePars :: DataType -> [Def]
 dataTypePars (TPFun (TPTuple pars) _) = map (localVal "") pars
@@ -629,8 +633,9 @@ translateMods = mapMaybe m
 		m _ = Nothing
 		
 linkDef :: Bool -> Env -> D.ClassStm -> Def
-linkDef str env ccc =  evalState (stateDef ccc) env'
+linkDef str env ccc = def
 	where 
+		def = evalState (stateDef ccc) env'
 		env' = envAddClasses generics' env
 		generics' = map (linkGeneric env) (D.defGenerics ccc)
 		cl = envSelfClass env
