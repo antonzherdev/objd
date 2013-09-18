@@ -17,6 +17,7 @@ import           Data.Decimal
 import           Data.List
 import           Ex.String
 import qualified ObjD.Struct         as D
+import           Data.Char
 
 detailedReferenceError :: Bool
 detailedReferenceError = False
@@ -376,6 +377,16 @@ dataTypePars _ = []
 
 idx :: (a -> k) -> a -> (k, a)
 idx f a = (f a, a)
+
+literalDefName :: String -> String
+literalDefName "" = ""
+literalDefName nam = nmRec False nam
+	where
+		mbCap True s = cap s
+		mbCap False s = s
+		nmm = M.fromList [('+', "add"), ('-', "sub"), ('*', "mul"), ('/', "div")]
+		nmRec ncap (x:xs) = maybe ( (if ncap then  toUpper x else x ): nmRec False xs) (\s -> mbCap ncap s ++ nmRec True xs) $ M.lookup x nmm
+		nmRec _ _ = ""
 
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - Link 
@@ -1250,8 +1261,18 @@ expr (D.BoolOp tp a b) = do
 	return $ BoolOp tp aa bb
 expr (D.MathOp tp a b) = do
 	aa <- expr a
-	bb <- expr b
-	return $ MathOp tp aa bb
+	env <- get
+	let 
+		ltp = exprDataType aa
+		math = expr b >>= return . MathOp tp aa
+		callOp = return $ Dot aa $ exprCall env (Just ltp) $ D.Call (literalDefName $ show tp) (Just [(Nothing, b)]) []
+	case unwrapGeneric ltp of
+		TPNumber{} -> math
+		TPFloatNumber{} -> math
+		TPString{} -> math
+		TPArr{} -> math
+		TPEArr{} -> math
+		_ -> callOp 
 expr d@(D.Dot a b) = do
 	env <- get
 	aa <- case a of
@@ -1335,6 +1356,7 @@ expr s@D.StringBuild {} = do
 	return $ linkStringBuild env s
 expr ex@D.FuncOp{} = linkFuncOp ex
 -- expr x = error $ "No expr for " ++ show x
+
 
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Functional Compositions >> *|* **
