@@ -568,7 +568,7 @@ pString = do
 				pEndIfString
 				return b
 		pEndIfString :: Parser Exp
-		pEndIfString = try (string "$endif") >> return Nop
+		pEndIfString = try (string "$endif") >> return (StringConst "")
 
 
 		pEscape :: Parser Char
