@@ -1295,7 +1295,12 @@ expr (D.Set tp a b) = do
 	aa <- expr a
 	bb <- expr b
 	env <- get
-	return $ Set tp aa (implicitConvertsion env (exprDataType aa) bb)
+	let 
+		ertp = case (exprDataType aa) of
+			TPArr _ t -> t
+			TPEArr _ t -> t
+			t -> t
+	return $ Set tp aa (implicitConvertsion env ertp bb)
 expr (D.PlusPlus e) = do
 	aa <- expr e
 	return $ PlusPlus aa
