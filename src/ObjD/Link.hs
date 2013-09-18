@@ -321,6 +321,8 @@ instance Show DefMod where
 	show DefModSpecial = "special"
 	show DefModStruct = "struct"
 	show DefModInline = "inline"
+	show DefModSuper = "super"
+	show DefModApplyLambda = "applyLambda"
 data DefGenerics = DefGenerics{defGenericsClasses :: [Class], defGenericsSelfType :: DataType}
 
 data CImport = CImportLib String | CImportUser String

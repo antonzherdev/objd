@@ -33,10 +33,10 @@ main =
 					linked = (uncurry zip . second L.link. unzip) fs
 					errors =  unlines $ map show $ checkErrors $ map snd linked 
 					check = if null errors then return () else error errors
-				check
 				forM_ (filter ((`elem` debug). L.fileName . snd) linked) (\(path, f) -> do
 					putStrLn $ "= Linked " ++ path
 					print f)
+				check
 				return linked
 			compiledFiles :: IO [(FilePath, ((String, [C.FileStm]), (String, [C.FileStm])))]
 			compiledFiles = liftM (map (second toObjC) . filter (containsRealStatement . snd)) linkedFiles
