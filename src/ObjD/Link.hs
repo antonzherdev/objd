@@ -604,6 +604,7 @@ linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.de
 				TPArr n atp -> TPEArr n $ unwrapGeneric atp 
 				_ -> tp' 
 			else tp'
+		gtp = wrapGeneric tp''
 		i' = implicitConvertsion env tp'' i
 		def = Def{defMods = 
 			DefModField : translateMods mods ++ [DefModStruct | str], defName = name, defType = tp'', 
@@ -612,14 +613,14 @@ linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.de
 		lazyClass = classFind (envIndex env) "Lazy"
 		lazyGet = fromJust $ findDefWithName "get" lazyClass
 		lazyConstr = fromJust $ classConstructor lazyClass
-		lazyTp = TPClass TPMClass [wrapGeneric tp''] lazyClass
+		lazyTp = TPClass TPMClass [gtp] lazyClass
 		defLazy = Def{defMods = [DefModField, DefModPrivate] ++ [DefModStatic | D.DefModStatic `elem` mods], defName = "_lazy_" ++ name, 
 			defType = lazyTp, 
-			defBody = Dot (callRef (objectDef lazyClass)) (Call lazyConstr lazyTp [(head $ defPars lazyConstr, Lambda [] (Return True i') tp'')]), 
+			defBody = Dot (callRef (objectDef lazyClass)) (Call lazyConstr lazyTp [(head $ defPars lazyConstr, Lambda [] (Return True i') gtp)]), 
 			defGenerics = Nothing, defPars = []}
 		defLazyGet = Def{defMods = DefModInline : DefModDef : translateMods mods, defName = name, 
 			defType = tp'', 
-			defBody = Return True $ Dot (callRef defLazy) (Call lazyGet tp'' []), defGenerics = Nothing, defPars = []}
+			defBody = Return True $ Dot (callRef defLazy) (Call lazyGet gtp []), defGenerics = Nothing, defPars = []}
 		in return $ if isLazy then [defLazyGet, defLazy] else [def]
 
 		
