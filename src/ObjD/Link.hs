@@ -1669,7 +1669,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = call'''
 		pars' = evalState (mapM (\ (n, e) ->  expr e >>= (\ ee -> return (n, FirstTry e ee))) (fromMaybe [] pars)) env
 		self = fromMaybe (envSelf env) strictClass
 		call' :: (Maybe Class, Exp)
-		call' = fromMaybe (Nothing, ExpDError errorString cll) $ findCall
+		call' = fromMaybe (Nothing, ExpDError errorString cll) $ mplus (listToMaybe $ findCall True) (listToMaybe $ findCall False)
 		call'' :: Exp
 		call'' = case call' of
 			(cl, cc@Call{}) -> (resolveDef strictClass cl . correctCall) cc
@@ -1788,8 +1788,8 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = call'''
 				++ non objects 
 			objects = if isNothing pars then (map (objectDef . snd) . M.toList) (envIndex env) else []
 		
-		findCall :: Maybe (Maybe Class, Exp)
-		findCall = listToMaybe $ (mapMaybe fit . filter ((== name) . defName . snd)) allDefs
+		findCall :: Bool -> [(Maybe Class, Exp)]
+		findCall hard = (mapMaybe fit . filter ((== name) . defName . snd)) allDefs
 			where
 				fit :: (Maybe Class, Def) -> Maybe (Maybe Class, Exp)
 				fit (cl, d)
@@ -1808,8 +1808,9 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = call'''
 				checkParameters :: [(Maybe String, Exp)] -> [Def] -> Bool
 				checkParameters cp dp = all (checkParameter) $ zip cp dp
 				checkParameter :: ((Maybe String, Exp), Def) -> Bool
-				checkParameter ((Just cn, _), Def{defName = dn}) = cn == dn
-				checkParameter _ = True
+				checkParameter ((Just cn, e), Def{defName = dn, defType = tp}) = cn == dn && checkDataType tp (exprDataType e)
+				checkParameter ((_, e), Def{defType = tp}) = checkDataType tp (exprDataType e)
+				checkDataType dtp tp = if hard then isInstanceOfTp env dtp tp else True
 
 
 
