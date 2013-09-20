@@ -810,6 +810,7 @@ dataTypeClass env (TPFloatNumber 4) = classFind (envIndex env) "Float4"
 dataTypeClass env (TPFloatNumber 8) = classFind (envIndex env) "Float8"
 dataTypeClass env (TPFloatNumber 0) = classFind (envIndex env) "Float"
 dataTypeClass env TPChar = classFind (envIndex env) "Char"
+dataTypeClass env TPString = classFind (envIndex env) "String"
 dataTypeClass env TPAny = classFind (envIndex env) "Any"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("Tuple" ++ show (length a))
 dataTypeClass _ f@TPFun{} = Class { _classMods = [], className = "", _classExtends = extendsNothing,
