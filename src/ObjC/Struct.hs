@@ -315,8 +315,8 @@ expLines (BoolConst False) = ["NO"]
 expLines (FloatConst i) = [show i]
 expLines (StringConst s) = case lines s of
 		[] -> ["@\"\""]
-		[x] -> ['@' : '"' : x ++ "\""]
-		x:xs -> ('@' : '"' : x ++ "\\n\"") : map (\line -> ind $ '"' : line ++ "\\n\"" ) (init xs) ++ [ind $ '"' : last xs ++ "\""]
+		[x] -> ['@' : '"' : escape x ++ "\""]
+		x:xs -> ('@' : '"' : escape x ++ "\\n\"") : map (\line -> ind $ '"' : escape line ++ "\\n\"" ) (init xs) ++ [ind $ '"' : escape (last xs) ++ "\""]
 expLines (BoolOp t l r) = [mbb l ++ " " ++ show t ++ " " ++ mbb r]
 	where 
 		mbb :: Exp -> String
@@ -363,3 +363,10 @@ expLines (ProtocolRef e) =  ["@protocol(" ++ show e ++ ")"]
 expLines (GetPointer e) =  ["&(" ++ show e ++ ")"]
 expLines (Error s) = ["<#ERROR: "] `glue` (lines s `appp` "#>")
 expLines Nop = []
+
+
+escape :: String -> String
+escape "" = ""
+escape ('\\' : xs) = "\\\\" ++ escape xs
+escape ('\"' : xs) = "\\\"" ++ escape xs
+escape (x : xs) = x : escape xs
