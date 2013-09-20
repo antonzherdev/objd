@@ -1869,7 +1869,7 @@ implicitConvertsion env dtp ex = let stp = exprDataType ex
 		conv TPFun{} _ = LambdaCall ex
 		conv TPOption{} TPOption{} = ex
 		conv TPNil (TPOption tp) = None tp
-		conv _ (TPOption _) = Opt ex
+		conv tp t@(TPOption _) = if isInstanceOfTp env t tp then ex else Opt ex
 		conv _ (TPClass TPMGeneric _ _) = ex
 		conv (TPNumber _ _) TPString = Cast TPString ex
 		conv (TPFloatNumber _ ) TPString = Cast TPString ex
