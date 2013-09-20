@@ -238,12 +238,9 @@ pDecl' mtf = do
 		sps
 		return Def{defName = name, defRetType = dataType, defMods = DefModVal : [DefModMutable| mut] ++ mods, defBody = def, defGenerics = [], defPars = []}
 	where
-		mutableType = do
-			v <- try var <|> val
-			sps1
-			return v
-		val = try(string "val") >> return False
-		var = try(string "var") >> return True
+		mutableType = var <|> val
+		val = try(string "val" >> sps1)  >> return False
+		var = try(string "var" >> sps1) >> return True
 		oExp = option Nop (do
 			char '='
 			sps
