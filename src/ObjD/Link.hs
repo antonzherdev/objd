@@ -701,7 +701,7 @@ classFind cidx name = fromMaybe (ClassError name ("Class " ++ name ++ " not foun
 
 data DataType = TPNumber Bool Int | TPFloatNumber Int | TPString | TPVoid 
 	| TPClass {tpMod :: DataTypeMod, tpGenerics :: [DataType], tpClass :: Class}
-	| TPEArr Int DataType | TPAny
+	| TPEArr Int DataType | TPAny | TPChar
 	| TPArr Int DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf | TPUnknown String 
 	| TPMap DataType DataType
 	| TPOption DataType | TPGenericWrap DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
@@ -809,6 +809,7 @@ dataTypeClass env (TPNumber True 8) = classFind (envIndex env) "UInt8"
 dataTypeClass env (TPFloatNumber 4) = classFind (envIndex env) "Float4"
 dataTypeClass env (TPFloatNumber 8) = classFind (envIndex env) "Float8"
 dataTypeClass env (TPFloatNumber 0) = classFind (envIndex env) "Float"
+dataTypeClass env TPChar = classFind (envIndex env) "Char"
 dataTypeClass env TPAny = classFind (envIndex env) "Any"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("Tuple" ++ show (length a))
 dataTypeClass _ f@TPFun{} = Class { _classMods = [], className = "", _classExtends = extendsNothing,
@@ -898,6 +899,8 @@ dataType cidx (D.DataType name gens) = case name of
 	"Float8" -> TPGenericWrap float8
 	"float" -> float
 	"Float" -> TPGenericWrap float
+	"char" -> TPChar
+	"Char" -> TPGenericWrap TPChar
 	"void" -> TPVoid
 	"string" -> TPString
 	"bool" -> TPBool
@@ -939,6 +942,7 @@ instance Show DataType where
 	show (TPFloatNumber 8) = "float8"
 	show TPVoid = "void"
 	show TPString = "string"
+	show TPChar = "char"
 	show TPBool = "bool"
 	show TPSelf = "self"
 	show TPNil = "nil"

@@ -689,6 +689,7 @@ showDataType (D.TPGenericWrap D.TPNumber{}) = idTp
 showDataType (D.TPGenericWrap D.TPFloatNumber{}) = idTp
 showDataType (D.TPGenericWrap D.TPBool) = idTp
 showDataType (D.TPGenericWrap c) = showDataType c
+showDataType D.TPChar = C.TPSimple "unichar" []
 showDataType tp = C.TPSimple (show tp) []
 
 {- Exp -}
@@ -997,6 +998,7 @@ dataTypeSuffix (D.TPNumber True 0) = "ui"
 dataTypeSuffix (D.TPNumber False 8) = "i8"
 dataTypeSuffix (D.TPNumber True 8) = "ui8"
 dataTypeSuffix D.TPBool = "b"
+dataTypeSuffix D.TPChar = "s"
 dataTypeSuffix (D.TPFloatNumber 0) = "f"
 dataTypeSuffix (D.TPFloatNumber 4) = "f4"
 dataTypeSuffix (D.TPFloatNumber 8) = "f8"
@@ -1008,6 +1010,7 @@ maybeVal (stp, dtp) e = let
 	tp (D.TPClass D.TPMGeneric _ _) = TPGen
 	tp (D.TPClass D.TPMStruct _ _) = TPStruct
 	tp D.TPNumber{} = TPNum
+	tp D.TPChar{} = TPNum
 	tp D.TPFloatNumber{} = TPFloat
 	tp D.TPBool{} = TPBool
 	tp _ = TPNoMatter
