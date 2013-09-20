@@ -494,6 +494,7 @@ hashCall tp ref =
 		D.TPFloatNumber{} -> C.CCall (C.Ref $ show tp ++ "Hash") [ref]
 		D.TPNumber{} -> ref
 		D.TPBool -> ref
+		D.TPChar -> ref
 		D.TPEArr n atp -> arrHash atp n 0 C.Nop
 		_ -> C.Call ref "hash" [] []
 	where	
@@ -509,6 +510,7 @@ stringFormatForType :: D.DataType -> String
 stringFormatForType (D.TPNumber _ 8) = "%li"
 stringFormatForType (D.TPNumber _ 0) = "%li"
 stringFormatForType (D.TPNumber _ _)= "%d"
+stringFormatForType (D.TPChar)= "%d"
 stringFormatForType (D.TPFloatNumber _) = "%f"
 stringFormatForType D.TPBool = "%d"
 stringFormatForType D.TPVoidRef = "%p"
@@ -688,6 +690,7 @@ showDataType (D.TPGenericWrap (D.TPClass D.TPMStruct _ _)) = idTp
 showDataType (D.TPGenericWrap D.TPNumber{}) = idTp
 showDataType (D.TPGenericWrap D.TPFloatNumber{}) = idTp
 showDataType (D.TPGenericWrap D.TPBool) = idTp
+showDataType (D.TPGenericWrap D.TPChar) = idTp
 showDataType (D.TPGenericWrap c) = showDataType c
 showDataType D.TPChar = C.TPSimple "unichar" []
 showDataType tp = C.TPSimple (show tp) []
@@ -944,6 +947,7 @@ equals False (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.Boo
 equals False (D.TPClass D.TPMClass _ cl, e1) (_, e2) 
 	| not (equalsIsPosible cl) = C.BoolOp NotEq e1 e2
 equals False (D.TPNumber{}, e1) (_, e2) = C.BoolOp NotEq e1 e2
+equals False (D.TPChar, e1) (_, e2) = C.BoolOp NotEq e1 e2
 equals False (D.TPBool, e1) (_, e2) = C.BoolOp NotEq e1 e2
 equals False (D.TPNil, e1) (_, e2) = C.BoolOp NotEq e1 e2
 equals False (_, e1) (D.TPNil, e2) = C.BoolOp NotEq e1 e2
@@ -958,6 +962,7 @@ equals True (D.TPFloatNumber 0, e1) (_, e2) = C.CCall (C.Ref "eqf") [e1, e2]
 equals True (D.TPFloatNumber 4, e1) (_, e2) = C.CCall (C.Ref "eqf4") [e1, e2]
 equals True (D.TPFloatNumber 8, e1) (_, e2) = C.CCall (C.Ref "eqf8") [e1, e2]
 equals True (D.TPNumber{}, e1) (_, e2) = C.BoolOp Eq e1 e2
+equals True (D.TPChar, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPBool, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPNil, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPEArr _ _, e1) (_, e2) = C.BoolOp Eq e1 e2

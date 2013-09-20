@@ -913,6 +913,7 @@ dataType cidx (D.DataType name gens) = case name of
 dataType cidx (D.DataTypeArr m tp) = case tp' of
 		TPClass TPMStruct _ _ ->arrr'
 		TPNumber _ _ -> earr
+		TPChar -> earr
 		TPFloatNumber _  -> earr
 		TPBool -> earr
 		TPVoid -> earr
