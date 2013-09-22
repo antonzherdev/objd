@@ -336,6 +336,7 @@ expLines (MathOp t l r) = [mbb l ++ " " ++ show t ++ " " ++ mbb r]
 		mbb e = show e
 		needb Div Plus = True
 		needb Div Minus = True
+		needb Div Mul = True
 		needb Mul Plus = True
 		needb Mul Minus = True
 		needb _ _ = False
