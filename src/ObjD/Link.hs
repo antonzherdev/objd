@@ -1406,7 +1406,8 @@ linkFuncOp ex@(D.FuncOp tp l r)  = do
 				modify $ envAddVals $ [localVal "_" ritp]
 				rr <- expr r
 				put env
-				return $ Lambda [("_", ritp)] rr (exprDataType rr)
+				let etp = exprDataType rr
+				return $ Lambda [("_", ritp)] (maybeAddReturn env etp rr) etp
 	let 
 		ldef = localVal "__l" (exprDataType l')
 		rdef = localVal "__r" (exprDataType r'')
