@@ -1,4 +1,4 @@
-module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp', cap, MathTp(..), BoolTp(..), tryCon, zipWithIndex, startsWith) where
+module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp', cap, MathTp(..), BoolTp(..), tryCon, zipWithIndex, startsWith, lines2) where
 
 import           Data.Char
 
@@ -24,6 +24,22 @@ strs = mkString id
 
 strs' :: (Show a) => String -> [a] -> String
 strs' = mkString show
+
+break2 :: (a -> Bool) -> [a] -> ([a],Maybe [a])
+break2 _ xs@[]           =  (xs, Nothing)
+break2 p xs@(x:xs')
+           | p x        =  ([], Just xs)
+           | otherwise  =  let (ys,zs) = break2 p xs' in (x:ys, zs)
+
+lines2 :: String -> [String]
+lines2 s = 
+	let 
+		(l, s') = break2 (== '\n') s
+		ss = case s' of
+			Nothing -> []
+			Just "" -> [""]
+			Just (_:s'') -> lines2 s''
+		in  l : ss
 
 class (Show a) => MultiLineShow a where
 	multiLineShow :: a -> [String]

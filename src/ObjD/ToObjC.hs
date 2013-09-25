@@ -783,8 +783,8 @@ tExp env d@(D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars)
 		 	_ -> False
 tExp env (D.Dot l (D.Is dtp)) = C.Call (tExp env l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] [])] []
 tExp env (D.Dot l (D.As dtp)) = case dtp of
-	D.TPClass D.TPMTrait _ _ -> C.Call (tExp env l) "asKindOf" [("protocol", C.ProtocolRef $ C.Ref $ D.dataTypeClassNameWithPrefix dtp)] []
-	_ -> C.Call (tExp env l) "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] [])] []
+	D.TPClass D.TPMTrait _ _ -> C.Call (C.Ref "ODObject") "asKindOf" [("Protocol", C.ProtocolRef $ C.Ref $ D.dataTypeClassNameWithPrefix dtp), ("object", tExp env l)] []
+	_ -> C.Call (C.Ref "ODObject") "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] []), ("object", tExp env l)] []
 tExp env (D.Dot l (D.CastDot dtp)) = C.Cast (showDataType dtp) (tExp env l)
 tExp env (D.Dot l (D.Cast tp c)) = C.Cast (showDataType tp) (tExp env (D.Dot l c))
 tExp env (D.Dot l (D.LambdaCall c)) = C.CCall (tExp env (D.Dot l c)) [] 

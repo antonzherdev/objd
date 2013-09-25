@@ -527,7 +527,7 @@ pString = do
 		cutString :: (Int, String) -> String
 		cutString (_, "") = ""
 		cutString (partStart, str) = let
-			stringLines = lines str
+			stringLines = lines2 str
 			maybeDrop n s
 				| n <= 0 = s
 				| otherwise = dropWhile isSpace (take n s) ++ drop n s
@@ -566,10 +566,8 @@ pString = do
 				return b
 		pEndIfString :: Parser Exp
 		pEndIfString = try (string "$endif") >> return (StringConst "")
-
-
 		pEscape :: Parser Char
-		pEscape = char '\\' >> anyChar
+		pEscape = char '\\' >> ((char 'n' >> return '\n') <|> (char 't' >> return '\t') <|> anyChar )
 	ret <- pStringParts
 	char '"'
 	sps

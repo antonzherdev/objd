@@ -313,10 +313,10 @@ expLines Nil = ["nil"]
 expLines (BoolConst True) = ["YES"]
 expLines (BoolConst False) = ["NO"]
 expLines (FloatConst i) = [show i]
-expLines (StringConst s) = case lines s of
+expLines (StringConst s) = case lines2 s of
 		[] -> ["@\"\""]
 		[x] -> ['@' : '"' : escape x ++ "\""]
-		x:xs -> ('@' : '"' : escape x ++ "\\n\"") : map (\line -> ind $ '"' : escape line ++ "\\n\"" ) (init xs) ++ [ind $ '"' : escape (last xs) ++ "\""]
+		x:xs -> ('@' : '"' : escape x ++ "\\n\"") : map (\line -> ind $ '"' : escape line ++ "\\n\"" ) (init xs) ++ [ind $ '"' : escape (last xs) ++ "\"" | not $ null $ last xs]
 expLines (BoolOp t l r) = [mbb l ++ " " ++ show t ++ " " ++ mbb r]
 	where 
 		mbb :: Exp -> String
