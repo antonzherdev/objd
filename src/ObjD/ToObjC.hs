@@ -707,6 +707,9 @@ castGeneric dexp e = case D.exprDataType dexp of
 	D.TPGenericWrap c@(D.TPClass D.TPMClass _ _) -> C.Cast (showDataType c) e
 	D.TPGenericWrap c@(D.TPClass D.TPMEnum _ _) -> C.Cast (showDataType c) e
 	D.TPGenericWrap c@D.TPTuple{} -> C.Cast (showDataType c) e
+	D.TPGenericWrap c@D.TPArr{} -> C.Cast (showDataType c) e
+	D.TPGenericWrap c@D.TPEArr{} -> C.Cast (showDataType c) e
+	D.TPGenericWrap c@D.TPMap{} -> C.Cast (showDataType c) e
 	_ -> e
 
 data Env = Env{envClass :: D.Class, envCStruct :: Bool, envDataType :: D.DataType, envWeakSelf :: Bool, envInit :: Bool}
@@ -738,9 +741,6 @@ tExp env (D.MathOp t l r) = let
 			D.TPGenericWrap tt -> tt
 			tt -> tt
 	in case ltp of
-		D.TPEArr _ _ -> addObjectToArray rtp l' r'
-		D.TPArr _ _ -> addObjectToArray rtp l' r'
-		D.TPMap _ _ -> addKVToMap env l' r
 		D.TPString -> case rtp of
 			D.TPString -> C.Call l' "stringByAppending" [("string", r')] []
 			_ -> C.Call l' "stringByAppending" [("format",  C.StringConst $ stringFormatForType rtp)] [maybeVal (D.exprDataType r, rtp) r']
@@ -912,15 +912,7 @@ tStm v _ (D.Set (Just t) l r) = let
 		ltp = D.exprDataType l
 		rtp = D.exprDataType r
 		set = [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
-	in case ltp of
-		D.TPEArr _ _ ->  case t of
-			Plus -> [C.Set Nothing l' (addObjectToArray rtp l' r')]
-			Minus -> [C.Set Nothing l' (removeObjectFromArray rtp l' r')]
-		D.TPArr _ _ ->  case t of
-			Plus -> [C.Set Nothing l' (addObjectToArray rtp l' r')]
-			Minus -> [C.Set Nothing l' (removeObjectFromArray rtp l' r')]
-		D.TPMap _ _ -> [C.Set Nothing l' (addKVToMap v l' r)]
-		_ -> set
+		in set
 tStm v _ (D.Set tp l r) = [C.Set tp (tExp v l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp v r))]
 tStm Env{envDataType = D.TPVoid} _ (D.Return True _) = [C.Return C.Nop]
 tStm env@Env{envDataType = D.TPVoid} _ (D.Return _ e) = [C.Stm $ tExp env{envCStruct = False} e]
@@ -972,14 +964,6 @@ equals True (_, e1) (D.TPNil, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPClass D.TPMClass _ cl, e1) (_, e2) 
 	| not (equalsIsPosible cl) = C.BoolOp Eq e1 e2
 equals True (_, e1) (_, e2) = C.Call e1 "isEqual" [("", e2)] []
-
-addObjectToArray :: D.DataType -> C.Exp -> C.Exp -> C.Exp
-addObjectToArray tp a obj = C.Call a "arrayByAdding" [("item", maybeVal (tp, D.wrapGeneric tp) obj)] []
-removeObjectFromArray :: D.DataType -> C.Exp -> C.Exp -> C.Exp
-removeObjectFromArray tp a obj = C.Call a "arrayByRemoving" [("item", maybeVal (tp, D.wrapGeneric tp) obj)] []
-
-addKVToMap :: Env -> C.Exp -> D.Exp -> C.Exp
-addKVToMap env a (D.Tuple [k, v]) = C.Call a "dictionaryByAdding" [("value", tExp env v), ("forKey", tExp env k)] []
 
 callConstructor :: Env -> D.DataType -> [(D.Def, D.Exp)] -> C.Exp
 callConstructor env tp pars = let

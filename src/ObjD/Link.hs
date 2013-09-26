@@ -1284,8 +1284,6 @@ expr (D.MathOp tp a b) = do
 		TPNumber{} -> math
 		TPFloatNumber{} -> math
 		TPString{} -> math
-		TPArr{} -> math
-		TPEArr{} -> math
 		_ -> callOp 
 expr d@(D.Dot a b) = do
 	env <- get
@@ -1302,14 +1300,16 @@ expr d@(D.Dot a b) = do
 				_ -> Dot aa bb
 expr (D.Set tp a b) = do
 	aa <- expr a
-	bb <- expr b
 	env <- get
 	let 
-		ertp = case (exprDataType aa) of
-			TPArr _ t -> t
-			TPEArr _ t -> t
-			t -> t
-	return $ Set tp aa (implicitConvertsion env ertp bb)
+		ltp = exprDataType aa
+		math = expr b >>= return . Set tp aa . implicitConvertsion env ltp
+		callOp = return $ Set Nothing aa $ Dot aa $ exprCall env (Just ltp) $ D.Call (literalDefName $ show $ fromJust tp) (Just [(Nothing, b)]) []
+	case unwrapGeneric ltp of
+		TPNumber{} -> math
+		TPFloatNumber{} -> math
+		TPString{} -> math
+		_ -> if isJust tp then callOp else math
 expr (D.PlusPlus e) = do
 	aa <- expr e
 	return $ PlusPlus aa
