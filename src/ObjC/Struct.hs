@@ -1,5 +1,5 @@
 module ObjC.Struct ( Property(..), PropertyModifier(..),FileStm(..), ImplSynthesize(..), ImplFun(..), Fun(..), FunType(..), FunPar(..),
-  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..), DataType(..), Extends(..), tp, forExp, forStm, forStms
+  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..), DataType(..), Extends(..), tp, forExp, forStm, forStms, cfun
 ) where
 
 import           Ex.String
@@ -22,6 +22,8 @@ data FileStm =
 	| CFun {cfunMods :: [CFunMod], cfunReturnType :: DataType, cfunName :: String, cfunPars :: [CFunPar], cfunExps :: [Stm]}
 	| ClassDecl String
 	| ProtocolDecl String
+cfun :: FileStm -> [Stm] -> FileStm
+cfun decl s = CFun{cfunMods = cfunMods decl, cfunReturnType = cfunReturnType decl, cfunName = cfunName decl, cfunPars = cfunPars decl, cfunExps = s}
 data Extends = Extends String [String]
 data Property = Property {propertyName :: String, propertyType :: DataType, propertyModifiers :: [PropertyModifier]}
 

@@ -353,8 +353,8 @@ implFuns env = map stm2ImplFun . filter D.isDef
 {- Struct -}
 genStruct :: D.Class -> ([C.FileStm], [C.FileStm])
 genStruct cl = 
-	([C.Struct name fields', con, eq, hash, description] ++ map def' defs ++  map def' staticFields ++ [wrapClass, C.EmptyLine], 
-		map defImpl' defs ++ map staticFieldImpl' staticFields ++ [wrapImpl, C.EmptyLine])
+	([C.Struct name fields', con, eq, hash, descriptionDecl] ++ map def' defs ++  map def' staticFields ++ [wrapClass, C.EmptyLine], 
+		[description] ++ map defImpl' defs ++ map staticFieldImpl' staticFields ++ [wrapImpl, C.EmptyLine])
 	where
 		name = D.classNameWithPrefix cl
 		clDefs = D.classDefs cl
@@ -376,10 +376,10 @@ genStruct cl =
 			C.cfunPars = [C.CFunPar (C.TPSimple name []) "self"], 
 			C.cfunExps = hashFun fields
 		}
-		description = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple "NSString*" [], C.cfunName = name ++ "Description", 
-			C.cfunPars = [C.CFunPar (C.TPSimple name []) "self"], 
-			C.cfunExps = descriptionFun descStart fields
+		descriptionDecl = C.CFunDecl{C.cfunMods = [], C.cfunReturnType = C.TPSimple "NSString*" [], C.cfunName = name ++ "Description", 
+			C.cfunPars = [C.CFunPar (C.TPSimple name []) "self"]
 		}
+		description = C.cfun descriptionDecl $ descriptionFun descStart fields
 		descStart = C.Call (C.Ref "NSMutableString") "stringWith" [("string", C.StringConst $ "<" ++ name ++ ": ")] []
 		toPar D.Def{D.defName = n, D.defType = tp}= C.CFunPar (showDataType tp) n
 		
