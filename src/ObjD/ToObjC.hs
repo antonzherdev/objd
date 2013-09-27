@@ -183,7 +183,7 @@ stmToImpl cl =
 	}
 	where
 		clsName = D.classNameWithPrefix cl
-		env = Env cl False D.TPVoid False False
+		env = Env cl 0 D.TPVoid False False
 		defs :: [D.Def]
 		defs = D.classDefsWithTraits cl
 					
@@ -264,7 +264,7 @@ synthesize env d@D.Def{D.defName = x} = C.ImplSynthesize x $ fieldName env d
 implField :: Env -> D.Def -> C.ImplField
 implField env d@D.Def{D.defType = tp, D.defMods = mods, D.defBody = e} = 
 	C.ImplField (fieldName env d) (showDataType tp) ["__weak" | D.DefModWeak `elem` mods] $ 
-		if D.DefModStatic `elem` mods && D.isConst e then tExpTo env{envCStruct = True} tp e else C.Nop
+		if D.DefModStatic `elem` mods && D.isConst e then tExpTo env{envCStruct = 1} tp e else C.Nop
 
 implCreate :: D.Class -> D.Def -> C.ImplFun
 implCreate cl constr@D.Def{D.defPars = constrPars} = let 
@@ -359,7 +359,7 @@ genStruct cl =
 		name = D.classNameWithPrefix cl
 		clDefs = D.classDefs cl
 		defs = filter D.isDef clDefs
-		env = Env cl False D.TPVoid False False
+		env = Env cl 0 D.TPVoid False False
 		fields = filter (\d -> not (D.isStatic d) && D.isField d) clDefs
 		staticFields = filter (\d -> (D.isStatic d) && D.isField d) clDefs
 		fields' = map toField fields
@@ -430,7 +430,7 @@ genStruct cl =
 						C.Return $ C.CCall (C.Ref "wrap") [C.Ref name, C.Index (C.Cast (C.tp $ name ++ "*") $ C.Ref "data") (C.Ref "i")]
 						] idTp)
 					] []
-				buildExp _ ee = tExpTo env{envCStruct = True} tp ee
+				buildExp _ ee = tExpTo env{envCStruct = 1} tp ee
 		wrapImpl = C.Implementation {
 			C.implName = wrapName,
 			C.implFields = [C.ImplField "_value" selfTp [] C.Nop],
@@ -579,7 +579,7 @@ genEnumImpl cl@D.Class {} = [
 	}]
 	where
 		clsName = D.classNameWithPrefix cl
-		env = Env  cl False D.TPVoid False False
+		env = Env  cl 0 D.TPVoid False False
 		valuesVarName =  "_" ++ clsName ++ "_values"
 		items = D.enumItems cl
 		defs = filter ((/= "values") . D.defName) $ D.classDefs cl
@@ -712,7 +712,7 @@ castGeneric dexp e = case D.exprDataType dexp of
 	D.TPGenericWrap c@D.TPMap{} -> C.Cast (showDataType c) e
 	_ -> e
 
-data Env = Env{envClass :: D.Class, envCStruct :: Bool, envDataType :: D.DataType, envWeakSelf :: Bool, envInit :: Bool}
+data Env = Env{envClass :: D.Class, envCStruct :: Int, envDataType :: D.DataType, envWeakSelf :: Bool, envInit :: Bool}
 
 selfCall :: Env -> C.Exp
 selfCall env = if envWeakSelf env then C.Ref "_weakSelf" else C.Self
@@ -842,7 +842,9 @@ tExp env (D.Cast dtp e) = let
 		cast = C.Cast (showDataType dtp) e'
 		e' = (tExpTo env stp' e)
 		voidRefStructCast = C.CCall (C.Ref "voidRef") [e']
-		ear etp exps = C.ShortCast (C.TPArr 0 $ show $ showDataType $ D.unwrapGeneric etp) $ C.EArr $ map (tExp env) exps
+		sear exps = C.EArr $ map (tExp env) exps
+		ear etp exps = if envCStruct env == 2 then sear exps
+			else C.ShortCast (C.TPArr 0 $ show $ showDataType $ D.unwrapGeneric etp) $ sear exps
 	in case (stp', D.unwrapGeneric dtp) of
 		(D.TPNumber{}, D.TPString) -> toString $ stringFormatForType stp
 		(D.TPFloatNumber{}, D.TPString) -> toString $ stringFormatForType stp
@@ -915,8 +917,8 @@ tStm v _ (D.Set (Just t) l r) = let
 		in set
 tStm v _ (D.Set tp l r) = [C.Set tp (tExp v l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp v r))]
 tStm Env{envDataType = D.TPVoid} _ (D.Return True _) = [C.Return C.Nop]
-tStm env@Env{envDataType = D.TPVoid} _ (D.Return _ e) = [C.Stm $ tExp env{envCStruct = False} e]
-tStm env@Env{envDataType = tp}  _ (D.Return _ e) = [C.Return $ tExpToType env{envCStruct = False} tp e]
+tStm env@Env{envDataType = D.TPVoid} _ (D.Return _ e) = [C.Stm $ tExp env{envCStruct = 0} e]
+tStm env@Env{envDataType = tp}  _ (D.Return _ e) = [C.Return $ tExpToType env{envCStruct = 0} tp e]
 tStm env parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = e, D.defMods = mods}) = 
 	[C.Var (showDataType tp) name (tExpToType env tp e) ["__block" | needBlock]]
 	where 
@@ -968,11 +970,12 @@ equals True (_, e1) (_, e2) = C.Call e1 "isEqual" [("", e2)] []
 callConstructor :: Env -> D.DataType -> [(D.Def, D.Exp)] -> C.Exp
 callConstructor env tp pars = let
 	name = D.dataTypeClassNameWithPrefix $ D.resolveTypeAlias tp
+	earr env' = C.EArr ((map snd. tPars env') pars) 
 	in case tp of 
 		D.TPClass D.TPMStruct _ _ -> 
-			if envCStruct env then C.EArr ((map snd. tPars env) pars) else C.CCall 
-				(C.Ref (name++ "Make"))
-				((map snd. tPars env) pars)
+			if envCStruct env == 1 then C.ShortCast (showDataType tp) $ earr env{envCStruct = 2}
+			else if envCStruct env == 2 then earr env
+			else C.CCall (C.Ref (name++ "Make")) ((map snd. tPars env) pars)
 	 	_ -> C.Call 
 				(C.Ref name) 
 				(createFunName $ name ++ if null pars then "" else "With") 
