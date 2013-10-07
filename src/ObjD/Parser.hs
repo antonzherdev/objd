@@ -490,16 +490,13 @@ pTerm = do
 pCall :: Parser Exp
 pCall = do
 	name <- ident
-	wsps
 	gens <- pGensRef
-	wsps
 	pars <- optionMaybe (do
-		charSps '('
+		try $ wsps >> charSps '('
 		ps <- pCallPar `sepBy` charSps ','
 		char ')' <?> "Function call close bracket"
 		return ps) 
-	wsps
-	postLambda <- liftM (fmap (\l -> (Nothing, l))) $ optionMaybe pPostLambda
+	postLambda <- liftM (fmap (\l -> (Nothing, l))) $ optionMaybe $ try (wsps >> pPostLambda)
 	let parsList = fromMaybe [] pars ++ maybeToList postLambda
 	return $ Call name (if null parsList && isNothing pars then Nothing else Just parsList) gens
 
@@ -576,9 +573,10 @@ pString = do
 
 pGensRef :: Parser [DataType]
 pGensRef = option [] $ try $ do
+	wsps
 	charSps '<'
 	r <- pType False `sepBy` charSps ','
-	charSps '>'
+	char '>'
 	return r
 
 
