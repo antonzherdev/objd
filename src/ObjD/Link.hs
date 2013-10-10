@@ -1284,6 +1284,7 @@ expr (D.MathOp tp a b) = do
 		TPNumber{} -> math
 		TPFloatNumber{} -> math
 		TPString{} -> math
+		TPVoidRef{} -> math
 		_ -> callOp 
 expr d@(D.Dot a b) = do
 	env <- get
