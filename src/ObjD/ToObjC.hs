@@ -705,6 +705,7 @@ tExpTo env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
 castGeneric :: D.Exp -> C.Exp -> C.Exp
 castGeneric dexp e = case D.exprDataType dexp of
 	D.TPGenericWrap c@(D.TPClass D.TPMClass _ _) -> C.Cast (showDataType c) e
+	D.TPGenericWrap c@(D.TPClass D.TPMTrait _ _) -> C.Cast (showDataType c) e
 	D.TPGenericWrap c@(D.TPClass D.TPMEnum _ _) -> C.Cast (showDataType c) e
 	D.TPGenericWrap c@D.TPTuple{} -> C.Cast (showDataType c) e
 	D.TPGenericWrap c@D.TPArr{} -> C.Cast (showDataType c) e
