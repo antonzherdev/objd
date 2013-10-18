@@ -491,7 +491,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 				className = D.className cl, 
 				_classExtends = if D.className cl == "Object" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
 				_classDefs = 
-					if isObject then map (\d -> d{defMods = DefModStatic : defMods d}) $ fields ++ defs ++ [typeField] 
+					if isObject then fields ++ defs ++ [typeField] 
 					else fields ++ defs ++ [constr constrPars, typeField] 
 				{-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
 				_classGenerics = generics,
@@ -535,14 +535,14 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
 			_ -> False
 		isStaticDecl d = isObject || D.isStatic d
-		fields =  join $ mapM (evalState . linkField selfIsStruct) (filter (isStaticDecl) decls) staticEnv ++
-			mapM (evalState . linkField selfIsStruct) (filter (not . isStaticDecl) decls) env
+		fields =  join $ mapM (evalState . linkField (isObject, selfIsStruct)) (filter (isStaticDecl) decls) staticEnv ++
+			mapM (evalState . linkField (isObject, selfIsStruct)) (filter (not . isStaticDecl) decls) env
 		decls = filter (not . containsInSuper) (D.classFields cl) ++ filter D.isDecl (D.classBody cl)
 		containsInSuper D.Def {D.defName = name} =  case superClass self of
 			Nothing -> False
 			Just super -> any (\d -> DefModField `elem` defMods d && defName d == name) $ classDefs super
 
-		defs = map (\ def -> linkDef selfIsStruct (envForDef def) def) . filter D.isDef $ D.classBody cl
+		defs = map (\ def -> linkDef (isObject, selfIsStruct) (envForDef def) def) . filter D.isDef $ D.classBody cl
 		envForDef def = if isStaticDecl def then staticEnv else env
 		enumConstr = constr (enumAdditionalDefs ++ constrPars)
 		constr :: [Def] -> Def
@@ -594,8 +594,8 @@ linkExtendsRef env (ecls, gens) = (classFind (envIndex env) ecls, map (dataType 
 linkGeneric :: Env -> D.Generic -> Class
 linkGeneric env (D.Generic name ext) = Generic name (maybe (Extends (Just $ baseClassExtends (envIndex env) ) [] ) (linkExtends env []) ext)
 
-linkField :: Bool -> D.ClassStm -> State Env [Def]
-linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
+linkField :: (Bool, Bool) -> D.ClassStm -> State Env [Def]
+linkField (obj, str) D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
 	i <- expr e
 	env <- get
 	let 
@@ -607,18 +607,18 @@ linkField str D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.de
 		gtp = wrapGeneric tp''
 		i' = implicitConvertsion env tp'' i
 		def = Def{defMods = 
-			DefModField : translateMods mods ++ [DefModStruct | str], defName = name, defType = tp'', 
+			DefModField : translateMods mods ++ [DefModStruct | str] ++ [DefModStatic | obj], defName = name, defType = tp'', 
 			defBody = i', defGenerics = Nothing, defPars = []}
 		isLazy = D.DefModLazy `elem` mods
 		lazyClass = classFind (envIndex env) "Lazy"
 		lazyGet = fromJust $ findDefWithName "get" lazyClass
 		lazyConstr = fromJust $ classConstructor lazyClass
 		lazyTp = TPClass TPMClass [gtp] lazyClass
-		defLazy = Def{defMods = [DefModField, DefModPrivate] ++ [DefModStatic | D.DefModStatic `elem` mods], defName = "_lazy_" ++ name, 
+		defLazy = Def{defMods = [DefModField, DefModPrivate] ++ [DefModStatic | D.DefModStatic `elem` mods || obj], defName = "_lazy_" ++ name, 
 			defType = lazyTp, 
 			defBody = Dot (callRef (objectDef lazyClass)) (Call lazyConstr lazyTp [(head $ defPars lazyConstr, Lambda [] (Return True i') gtp)]), 
 			defGenerics = Nothing, defPars = []}
-		defLazyGet = Def{defMods = DefModInline : DefModDef : translateMods mods, defName = name, 
+		defLazyGet = Def{defMods = DefModInline : DefModDef : translateMods mods ++ [DefModStatic | obj], defName = name, 
 			defType = tp'', 
 			defBody = Return True $ Dot (callRef defLazy) (Call lazyGet gtp []), defGenerics = Nothing, defPars = []}
 		in return $ if isLazy then [defLazyGet, defLazy] else [def]
@@ -635,8 +635,8 @@ translateMods = mapMaybe m
 		m D.DefModWeak = Just DefModWeak
 		m _ = Nothing
 		
-linkDef :: Bool -> Env -> D.ClassStm -> Def
-linkDef str env ccc = def
+linkDef :: (Bool, Bool) -> Env -> D.ClassStm -> Def
+linkDef (obj, str) env ccc = def
 	where 
 		def = evalState (stateDef ccc) env'
 		env' = envAddClasses generics' env
@@ -660,7 +660,7 @@ linkDef str env ccc = def
 				 needWrapRetType = fromMaybe False $ fmap (isTpGeneric . defType) overrideDef
 				 in 
 				(case body of
-					D.Nop -> return Def {defMods = DefModDef : DefModAbstract : mods' ++ [DefModStruct | str], defName = name, defGenerics = defGenerics',
+					D.Nop -> return Def {defMods = DefModDef : DefModAbstract : mods' ++ [DefModStruct | str] ++ [DefModStatic | obj], defName = name, defGenerics = defGenerics',
 							defPars = pars',
 							defType = dataType (envIndex env') (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
 					_   -> do 
@@ -669,7 +669,7 @@ linkDef str env ccc = def
 						put env'
 						let tp' = unwrapGeneric $ getDataType env' tp b
 						let tp'' = if needWrapRetType then wrapGeneric tp' else tp'
-						return Def {defMods = DefModDef : mods' ++ [DefModStruct | str], defName = name, defGenerics = defGenerics',
+						return Def {defMods = DefModDef : mods' ++ [DefModStruct | str] ++ [DefModStatic | obj], defName = name, defGenerics = defGenerics',
 							defPars = pars',
 							defType = tp'', defBody = maybeAddReturn env tp'' b})
 
