@@ -277,9 +277,11 @@ glueAll _ [x] = x
 glueAll s (a:b:xs) = glueAll s $ ((a `appp` s) `glue` b):xs
 
 multiLineIf :: Stm -> [String]
+multiLineIf (If cond t []) = ["if(" ++ show cond ++ ") {" ] ++ stms t ++ ["}"]
 multiLineIf (If cond t f) = ["if(" ++ show cond ++ ") {" ] ++ stms t ++ ["} else {"] ++ stms f ++ ["}"]
 
 stmLines :: Stm -> [String]
+stmLines i@(If _ [If _ _ _] _) = multiLineIf i
 stmLines (If cond [t] []) = ["if(" ++ show cond ++ ") " ] `glue` stmLines t
 stmLines (If cond t []) = ["if(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
 stmLines (While cond t) = ["while(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
