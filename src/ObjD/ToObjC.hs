@@ -319,7 +319,7 @@ implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFu
 			++ [C.Stm C.Nop, C.Return C.Self]
 			)
 	where
-		env' = env{envInit = True}
+		env' = env{envNeedWeakSelf = True}
 		hasInit D.Def{D.defBody = D.Nop} = False
 		hasInit d = D.isField d && not (D.isStatic d)
 
@@ -327,7 +327,7 @@ implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFu
 
 		superInit Nothing = C.Call C.Super "init" [] []
 		superInit (Just (D.ExtendsClass _ [])) = C.Call C.Super "init" [] []
-		superInit (Just (D.ExtendsClass _ pars)) = C.Call C.Super "initWith" (map (D.defName *** tExp env') pars) []
+		superInit (Just (D.ExtendsClass _ pars)) = C.Call C.Super "initWith" (map (D.defName *** tExp env) pars) []
 
 		callInit = if isJust (D.classInitDef cl) then [C.Stm $ C.Call C.Self "_init" [] []] else []
 
@@ -347,8 +347,8 @@ implFuns env = map stm2ImplFun . filter D.isDef
 	where
 		stm2ImplFun def@D.Def {D.defName = name, D.defBody = db, D.defMods = mods, D.defType = tp}
 			| D.DefModAbstract `elem` mods = C.ImplFun (stm2Fun def) [C.Throw $ C.StringConst $ "Method " ++ name++ " is abstract"]
-			| otherwise = C.ImplFun (stm2Fun def) (tStm (env{envDataType = tp}) [] db)
-		
+			| otherwise = C.ImplFun (stm2Fun def) (declareWeakSelf env $ tStm (env{envDataType = tp}) [] db)
+			
 		
 {- Struct -}
 genStruct :: D.Class -> ([C.FileStm], [C.FileStm])
@@ -696,8 +696,8 @@ showDataType D.TPChar = C.TPSimple "unichar" []
 showDataType tp = C.TPSimple (show tp) []
 
 {- Exp -}
-tPars :: Env -> [(D.Def, D.Exp)] -> [(String, C.Exp)]
-tPars env = map (\(d, e) -> (D.defName d, maybeVal (D.exprDataType e, D.defType d) $ tExp env e))
+tPars :: Env -> D.Def -> [(D.Def, D.Exp)] -> [(String, C.Exp)]
+tPars env _ = map (\(d, e) -> (D.defName d, maybeVal (D.exprDataType e, D.defType d) $ tExp env e))
 
 tExpTo :: Env -> D.DataType -> D.Exp -> C.Exp 
 tExpTo env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
@@ -713,7 +713,11 @@ castGeneric dexp e = case D.exprDataType dexp of
 	D.TPGenericWrap c@D.TPMap{} -> C.Cast (showDataType c) e
 	_ -> e
 
-data Env = Env{envClass :: D.Class, envCStruct :: Int, envDataType :: D.DataType, envWeakSelf :: Bool, envInit :: Bool}
+data Env = Env{envClass :: D.Class, envCStruct :: Int, envDataType :: D.DataType, envWeakSelf :: Bool, envNeedWeakSelf :: Bool}
+envModSelfDot :: Env -> D.Exp -> Env
+envModSelfDot env (D.Dot (D.Self _) _) = env{envNeedWeakSelf = True}
+envModSelfDot env _ = env
+
 
 selfCall :: Env -> C.Exp
 selfCall env = if envWeakSelf env then C.Ref "_weakSelf" else C.Self
@@ -752,32 +756,38 @@ tExp env (D.MinusMinus e) = C.MinusMinus (tExp env e)
 
 tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call d@D.Def {D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
-	| otherwise = C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) d) (C.Ref "self" : (map snd . tPars env) pars)
+	| otherwise = C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) d) (C.Ref "self" : (map snd . tPars env d) pars)
+
 tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name} _ pars)) 
-	| D.DefModField `elem` mods && null pars && D.DefModSuper `notElem` mods && not (envWeakSelf env) = C.Ref $ fieldName env d
-	| D.DefModField `elem` mods && D.DefModSuper `notElem` mods && not (envWeakSelf env) = C.CCall (C.Ref $ fieldName env d) ((map snd . tPars env) pars)
-	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.classNameWithPrefix $ D.tpClass stp) name (tPars env pars) []
-	| D.DefModField `elem` mods && null pars = C.Dot (selfCall env) $ C.Ref name
-	| otherwise = C.Call (selfCall env) name (tPars env pars) []
+	| D.DefModField `elem` mods && null pars && D.DefModSuper `notElem` mods && not (envWeakSelf env) = C.Ref $ fieldName env' d
+	| D.DefModField `elem` mods && D.DefModSuper `notElem` mods && not (envWeakSelf env) = 
+		C.CCall (C.Ref $ fieldName env' d) ((map snd . tPars env' d) pars)
+	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.classNameWithPrefix $ D.tpClass stp) name (tPars env' d pars) []
+	| D.DefModField `elem` mods && null pars = C.Dot (selfCall env') $ C.Ref name
+	| otherwise = C.Call (selfCall env') name (tPars env' d pars) [] 
+	where 
+		env' = env{envNeedWeakSelf = True}
+		
 tExp env d@(D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModStatic `elem` mods && isStubObject = 
 		if D.DefModField `elem` mods then C.Ref name
-		else C.CCall (C.Ref $ name) ((map snd . tPars env) pars)
-	| D.DefModApplyLambda `elem` mods = C.CCall (tExp env l) ((map snd . tPars env) pars) 
+		else C.CCall (C.Ref $ name) ((map snd . tPars env' dd) pars)
+	| D.DefModApplyLambda `elem` mods = C.CCall (tExp env' l) ((map snd . tPars env' dd) pars) 
 	| D.DefModField `elem` mods && null pars && 
 		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
-			castGeneric d $ C.Dot (tExpTo env ltp l) (C.Ref name)
+			castGeneric d $ C.Dot (tExpTo env' ltp l) (C.Ref name)
 	| D.DefModField `elem` mods && 
 		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
-			castGeneric d $ C.Dot (tExpTo env ltp l) $ C.CCall (C.Ref name) ((map snd . tPars env) pars)
-	| D.DefModConstructor `elem` mods = callConstructor env (D.exprDataType d) pars
+			castGeneric d $ C.Dot (tExpTo env' ltp l) $ C.CCall (C.Ref name) ((map snd . tPars env' dd) pars)
+	| D.DefModConstructor `elem` mods = callConstructor env' dd pars
 	| D.DefModStruct `elem` mods = case ltp  of
-		(D.TPClass D.TPMStruct _ c) -> structCall (D.classNameWithPrefix c) (tExpTo env ltp l)
-		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) dd) ((map snd . tPars env) pars)
-		tp -> structCall (show tp) (tExpTo env ltp l)
-	| otherwise = castGeneric d $ C.Call (tExp env l) (funName dd) (tPars env pars ) []
+		(D.TPClass D.TPMStruct _ c) -> structCall (D.classNameWithPrefix c) (tExpTo env' ltp l)
+		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) dd) ((map snd . tPars env' dd) pars)
+		tp -> structCall (show tp) (tExpTo env' ltp l)
+	| otherwise = castGeneric d $ C.Call (tExp env' l) (funName dd) (tPars env' dd pars) []
 	where
-		 structCall c self = C.CCall (C.Ref $ structDefName c dd) (self : (map snd . tPars env) pars)
+		 env' = envModSelfDot env l
+		 structCall c self = C.CCall (C.Ref $ structDefName c dd) (self : (map snd . tPars env dd) pars)
 		 ltp = D.unwrapGeneric $ D.exprDataType l
 		 isStubObject = case ltp of
 		 	D.TPObject _  cl -> D.ClassModStub `elem` D.classMods cl && D.ClassModObject `elem` D.classMods cl
@@ -788,7 +798,7 @@ tExp env (D.Dot l (D.As dtp)) = case dtp of
 	_ -> C.Call (C.Ref "ODObject") "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] []), ("object", tExp env l)] []
 tExp env (D.Dot l (D.CastDot dtp)) = C.Cast (showDataType dtp) (tExp env l)
 tExp env (D.Dot l (D.Cast tp c)) = C.Cast (showDataType tp) (tExp env (D.Dot l c))
-tExp env (D.Dot l (D.LambdaCall c)) = C.CCall (tExp env (D.Dot l c)) [] 
+tExp env (D.Dot l (D.LambdaCall c)) = C.CCall (tExp (envModSelfDot env l) (D.Dot l c)) [] 
 
 
 tExp _ (D.Self _) = C.Self
@@ -798,10 +808,10 @@ tExp env (D.Call d@D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ p
 	| D.DefModField `elem` mods = C.Ref $ fieldName env d
 	| D.DefModEnumItem `elem` mods = C.Ref $ fieldName env d
 	| D.DefModLocal `elem` mods && null pars = C.Ref name
-	| D.DefModConstructor `elem` mods = callConstructor env tp pars
+	| D.DefModConstructor `elem` mods = callConstructor env d pars
 	| D.DefModGlobalVal `elem` mods = C.Ref name
 	| D.DefModObject `elem` mods = C.Ref $ D.dataTypeClassNameWithPrefix tp
-	| otherwise = C.CCall (C.Ref name) (map snd . tPars env $ pars)
+	| otherwise = C.CCall (C.Ref name) (map snd . tPars env d $ pars)
 tExp env (D.If cond t f) = C.InlineIf (tExpTo env D.TPBool cond) (tExp env t) (tExp env f)
 tExp env ee@(D.Index e i) = case D.exprDataType e of
 	D.TPObject D.TPMEnum _ -> castGeneric ee $ C.Index (C.Call (tExp env e)  "values" [] []) (tExp env i)
@@ -825,7 +835,7 @@ tExp env (D.Lambda pars e rtp) =
 		unwrapPar ::(String, D.DataType) -> C.Stm
 		unwrapPar (name, D.TPGenericWrap tp) = C.Var (showDataType tp) name (maybeVal (D.TPGenericWrap tp, tp) $ C.Ref $ name ++ "_") []
 	in
-	C.Lambda (map par' pars) (unwrapPars ++ tStm env{envDataType = rtp, envWeakSelf = envInit env} [] e) (showDataType rtp)
+	C.Lambda (map par' pars) (unwrapPars ++ tStm env{envDataType = rtp, envWeakSelf = envNeedWeakSelf env} [] e) (showDataType rtp)
 tExp env (D.Arr exps) = C.Arr $ map (tExpToType env D.tpGeneric) exps
 tExp env (D.Map exps) = C.Map $ map (tExpToType env D.tpGeneric *** tExpToType env D.tpGeneric) exps
 tExp env (D.Tuple exps) = C.CCall (C.Ref $ "tuple" ++ if length exps == 2 then "" else show (length exps) ) $ map (tExpToType env D.tpGeneric) exps
@@ -909,14 +919,13 @@ tStm v _ (D.If cond t f) = [C.If (tExpTo v D.TPBool cond) (tStm v [] t) (tStm v 
 tStm v _ (D.While cond t) = [C.While (tExpTo v D.TPBool cond) (tStm v [] t)]
 tStm v _ (D.Do cond t) = [C.Do (tExpTo v D.TPBool cond) (tStm v [] t)]
 
-tStm v _ (D.Set (Just t) l r) = let 
-		l' = tExp v l
-		r' = tExp v r
-		ltp = D.exprDataType l
-		rtp = D.exprDataType r
-		set = [C.Set (Just t) l' (maybeVal (rtp, ltp) r')]
-		in set
-tStm v _ (D.Set tp l r) = [C.Set tp (tExp v l) (maybeVal (D.exprDataType r, D.exprDataType l) (tExp v r))]
+tStm env _ (D.Set tp l r) = let 
+	env' = envModSelfDot env l
+	l' = tExp env' l
+	r' = tExp env' r
+	ltp = D.exprDataType l
+	rtp = D.exprDataType r
+	in [C.Set tp l' (maybeVal (rtp, ltp) r')]
 tStm Env{envDataType = D.TPVoid} _ (D.Return True _) = [C.Return C.Nop]
 tStm env@Env{envDataType = D.TPVoid} _ (D.Return _ e) = [C.Stm $ tExp env{envCStruct = 0} e]
 tStm env@Env{envDataType = tp}  _ (D.Return _ e) = [C.Return $ tExpToType env{envCStruct = 0} tp e]
@@ -968,19 +977,19 @@ equals True (D.TPClass D.TPMClass _ cl, e1) (_, e2)
 	| not (equalsIsPosible cl) = C.BoolOp Eq e1 e2
 equals True (_, e1) (_, e2) = C.Call e1 "isEqual" [("", e2)] []
 
-callConstructor :: Env -> D.DataType -> [(D.Def, D.Exp)] -> C.Exp
-callConstructor env tp pars = let
+callConstructor :: Env -> D.Def -> [(D.Def, D.Exp)] -> C.Exp
+callConstructor env d@D.Def{D.defType = tp} pars = let
 	name = D.dataTypeClassNameWithPrefix $ D.resolveTypeAlias tp
-	earr env' = C.EArr ((map snd. tPars env') pars) 
+	earr env' = C.EArr ((map snd. tPars env' d) pars) 
 	in case tp of 
 		D.TPClass D.TPMStruct _ _ -> 
 			if envCStruct env == 1 then C.ShortCast (showDataType tp) $ earr env{envCStruct = 2}
 			else if envCStruct env == 2 then earr env
-			else C.CCall (C.Ref (name++ "Make")) ((map snd. tPars env) pars)
+			else C.CCall (C.Ref (name++ "Make")) ((map snd. tPars env d) pars)
 	 	_ -> C.Call 
 				(C.Ref name) 
 				(createFunName $ name ++ if null pars then "" else "With") 
-				(tPars env pars)
+				(tPars env d pars)
 				[]
 
 dataTypeSuffix :: D.DataType -> String
