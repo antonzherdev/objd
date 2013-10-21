@@ -1351,7 +1351,7 @@ expr (D.Val name tp body mods) = do
 	env <- get 
 	body' <- expr body
 	let tp' = unwrapGeneric $ maybe (exprDataType body') (dataType $ envIndex env) tp
-	let mods' = DefModLocal : [DefModMutable | D.DefModMutable `elem` mods]
+	let mods' = DefModLocal : [DefModMutable | D.DefModMutable `elem` mods] ++ [DefModWeak | D.DefModWeak `elem` mods] 
 	let def' = Def{defName = name, defType = tp', defMods = mods', defPars = [], 
 		defBody = implicitConvertsion env tp' body', 
 		defGenerics = Nothing}

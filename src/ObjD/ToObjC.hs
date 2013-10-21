@@ -925,7 +925,7 @@ tStm Env{envDataType = D.TPVoid} _ (D.Return True _) = [C.Return C.Nop]
 tStm env@Env{envDataType = D.TPVoid} _ (D.Return _ e) = [C.Stm $ tExp env{envCStruct = 0} e]
 tStm env@Env{envDataType = tp}  _ (D.Return _ e) = [C.Return $ tExpToType env{envCStruct = 0} tp e]
 tStm env parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = e, D.defMods = mods}) = 
-	[C.Var (showDataType tp) name (tExpToType env tp e) ["__block" | needBlock]]
+	[C.Var (showDataType tp) name (tExpToType env tp e) (["__block" | needBlock] ++ ["__weak" | isWeak])]
 	where 
 		needBlock = D.DefModMutable `elem` mods && existsSetInLambda
 		existsSetInLambda = any (isJust . setsInLambda) parLambdas
@@ -933,6 +933,7 @@ tStm env parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = 
 		parLambdas = D.forExp isLambda (D.Braces parexps)
 		isLambda ee@D.Lambda{} = [ee]
 		isLambda _ = []
+		isWeak = D.DefModWeak `elem` mods
 		setsInLambda (D.Lambda _ lambdaExpr _) = D.forExp isSet lambdaExpr
 		isSet ee@(D.Set _ (D.Call d _ _) _) = if D.defName d == D.defName def then Just ee else Nothing
 		isSet ee@(D.PlusPlus (D.Call d _ _)) = if D.defName d == D.defName def then Just ee else Nothing

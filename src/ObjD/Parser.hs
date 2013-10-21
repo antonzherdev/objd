@@ -423,9 +423,10 @@ pTerm = do
 				_ -> Tuple exps
 		pVal = do
 			mods <- try $ do
+				mm <- many (string "weak" >> sps1 >> return DefModWeak)
 				m <- (try (string "val") >> return [] ) <|> (string "var" >> return [DefModMutable])
 				sps1
-				return m
+				return $ m ++ mm
 			name <- ident
 			sps
 			tp <- optionMaybe (pDataType False)
