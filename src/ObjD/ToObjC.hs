@@ -772,33 +772,36 @@ tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name}
 	where 
 		env' = env{envNeedWeakSelf = True}
 		
-tExp env d@(D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars)) 
+tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars))
 	| D.DefModStatic `elem` mods && isStubObject = 
 		if D.DefModField `elem` mods then C.Ref name
 		else C.CCall (C.Ref $ name) ((map snd . tPars env dd) pars)
-	| D.DefModApplyLambda `elem` mods = C.CCall (tExp env l) ((map snd . tPars env dd) pars) 
+	| D.DefModApplyLambda `elem` mods = C.CCall (castGeneric l $ tExp env l) ((map snd . tPars env dd) pars) 
 	| D.DefModField `elem` mods && null pars && 
 		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
-			castGeneric d $ C.Dot (tExpTo env ltp l) (C.Ref name)
+			C.Dot (castGeneric l $ tExpTo env ltp l) (C.Ref name)
 	| D.DefModField `elem` mods && 
 		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
-			castGeneric d $ C.Dot (tExpTo env ltp l) $ C.CCall (C.Ref name) ((map snd . tPars env dd) pars)
+			C.Dot (castGeneric l $ tExpTo env ltp l) $ C.CCall (C.Ref name) ((map snd . tPars env dd) pars)
 	| D.DefModConstructor `elem` mods = callConstructor env dd pars
 	| D.DefModStruct `elem` mods = case ltp  of
-		(D.TPClass D.TPMStruct _ c) -> structCall (D.classNameWithPrefix c) (tExpTo env ltp l)
+		(D.TPClass D.TPMStruct _ c) -> structCall (D.classNameWithPrefix c) (castGeneric l $ tExpTo env ltp l)
 		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) dd) ((map snd . tPars env dd) pars)
-		tp -> structCall (show tp) (tExpTo env ltp l)
-	| otherwise = castGeneric d $ C.Call (tExp env l) (funName dd) (tPars env dd pars) []
+		tp -> structCall (show tp) (castGeneric l $ tExpTo env ltp l)
+	| otherwise = C.Call (castGeneric l $ tExp env l) (funName dd) (tPars env dd pars) []
 	where
 		 structCall c self = C.CCall (C.Ref $ structDefName c dd) (self : (map snd . tPars env dd) pars)
 		 ltp = D.unwrapGeneric $ D.exprDataType l
 		 isStubObject = case ltp of
 		 	D.TPObject _  cl -> D.ClassModStub `elem` D.classMods cl && D.ClassModObject `elem` D.classMods cl
 		 	_ -> False
-tExp env (D.Dot l (D.Is dtp)) = C.Call (tExp env l) "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] [])] []
+tExp env (D.Dot l (D.Is dtp)) = C.Call (castGeneric l $ tExp env l) "isKindOf" 
+	[("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] [])] []
 tExp env (D.Dot l (D.As dtp)) = case dtp of
-	D.TPClass D.TPMTrait _ _ -> C.Call (C.Ref "ODObject") "asKindOf" [("Protocol", C.ProtocolRef $ C.Ref $ D.dataTypeClassNameWithPrefix dtp), ("object", tExp env l)] []
-	_ -> C.Call (C.Ref "ODObject") "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] []), ("object", tExp env l)] []
+	D.TPClass D.TPMTrait _ _ -> C.Call (C.Ref "ODObject") "asKindOf" 
+		[("Protocol", C.ProtocolRef $ C.Ref $ D.dataTypeClassNameWithPrefix dtp), ("object", castGeneric l $ tExp env l)] []
+	_ -> C.Call (C.Ref "ODObject") "asKindOf" 
+		[("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] []), ("object", castGeneric l $ tExp env l)] []
 tExp env (D.Dot l (D.CastDot dtp)) = C.Cast (showDataType dtp) (tExp env l)
 tExp env (D.Dot l (D.Cast tp c)) = C.Cast (showDataType tp) (tExp env (D.Dot l c))
 tExp env (D.Dot l (D.LambdaCall c)) = C.CCall (tExp env (D.Dot l c)) [] 
@@ -816,11 +819,11 @@ tExp env (D.Call d@D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ p
 	| D.DefModObject `elem` mods = C.Ref $ D.dataTypeClassNameWithPrefix tp
 	| otherwise = C.CCall (C.Ref name) (map snd . tPars env d $ pars)
 tExp env (D.If cond t f) = C.InlineIf (tExpTo env D.TPBool cond) (tExp env t) (tExp env f)
-tExp env ee@(D.Index e i) = case D.exprDataType e of
-	D.TPObject D.TPMEnum _ -> castGeneric ee $ C.Index (C.Call (tExp env e)  "values" [] []) (tExp env i)
-	D.TPMap k _ -> castGeneric ee $ C.Call (tExp env e) "apply" [("key", tExpTo env k i)] []
-	D.TPArr _ _ -> castGeneric ee $ C.Call (tExp env e) "apply" [("index", tExpTo env D.uint i)] []
-	_ -> castGeneric ee $ C.Index (tExp env e) (tExp env i)
+tExp env (D.Index e i) = case D.exprDataType e of
+	D.TPObject D.TPMEnum _ -> C.Index (C.Call (tExp env e)  "values" [] []) (tExp env i)
+	D.TPMap k _ -> C.Call (tExp env e) "apply" [("key", tExpTo env k i)] []
+	D.TPArr _ _ -> C.Call (tExp env e) "apply" [("index", tExpTo env D.uint i)] []
+	_ -> C.Index (tExp env e) (tExp env i)
 tExp env (D.Lambda pars e rtp) = 
 	let 
 		isNeedUnwrap :: D.DataType -> Bool

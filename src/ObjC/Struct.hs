@@ -281,13 +281,12 @@ multiLineIf (If cond t []) = ["if(" ++ show cond ++ ") {" ] ++ stms t ++ ["}"]
 multiLineIf (If cond t f) = ["if(" ++ show cond ++ ") {" ] ++ stms t ++ ["} else {"] ++ stms f ++ ["}"]
 
 stmLines :: Stm -> [String]
-stmLines i@(If _ [If _ _ _] _) = multiLineIf i
+stmLines i@(If _ [If {}] _) = multiLineIf i
+stmLines i@(If _ _ [If{}]) = multiLineIf i
 stmLines (If cond [t] []) = ["if(" ++ show cond ++ ") " ] `glue` stmLines t
 stmLines (If cond t []) = ["if(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
 stmLines (While cond t) = ["while(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
 stmLines (Do cond t) = ["do {"] ++ stms t ++ ["} while(" ++ show cond ++ ");"]
-stmLines i@(If _ [If{}] _) = multiLineIf i
-stmLines i@(If _ _ [If{}]) = multiLineIf i
 stmLines (If cond [t] [f]) = (["if(" ++ show cond ++ ") " ] `glue` stmLines t) ++ (["else "] `glue` stmLines f)
 stmLines i@If{} = multiLineIf i
 
