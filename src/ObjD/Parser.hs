@@ -251,7 +251,7 @@ pMod = do
 	v <- (try(string "private") >> return DefModPrivate) <|> (try(string "protected") >> return DefModProtected)
 		<|> (try(string "static") >> return DefModStatic) 
 		<|> (try(string "weak") >> return DefModWeak) <|> (try(string "delegate") >> return DefModDelegate)
-		<|> (try(string "lazy") >> return DefModLazy)
+		<|> (try(string "lazy") >> return DefModLazy) <|> (try(string "pure") >> return DefModPure)
 	sps1
 	return v
 

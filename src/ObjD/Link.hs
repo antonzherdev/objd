@@ -6,7 +6,7 @@ module ObjD.Link (
 	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
-	fileNameWithPrefix, classDefsWithTraits, classInitDef
+	fileNameWithPrefix, classDefsWithTraits, classInitDef, isPure
 )where
 
 import 			 Control.Arrow
@@ -291,6 +291,8 @@ isEnumItem :: Def -> Bool
 isEnumItem = (DefModEnumItem `elem` ) . defMods
 isConstructor :: Def -> Bool
 isConstructor = (DefModConstructor `elem` ) . defMods
+isPure :: Def -> Bool
+isPure = (DefModPure `elem` ) . defMods
 enumItems :: Class -> [Def]
 enumItems = filter isEnumItem . classDefs
 instance Eq Def where
@@ -302,6 +304,7 @@ eqPar (x, y) = defName x == defName y
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModProtected | DefModGlobalVal | DefModWeak
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
 	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper | DefModInline 
+	| DefModPure
 	deriving (Eq, Ord)
 instance Show DefMod where
 	show DefModStatic = "static"
@@ -323,6 +326,7 @@ instance Show DefMod where
 	show DefModInline = "inline"
 	show DefModSuper = "super"
 	show DefModApplyLambda = "applyLambda"
+	show DefModPure = "pure"
 data DefGenerics = DefGenerics{defGenericsClasses :: [Class], defGenericsSelfType :: DataType}
 
 data CImport = CImportLib String | CImportUser String
@@ -360,6 +364,7 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModPrivate = 'p'
 		ch DefModProtected = 'q'
 		ch DefModWeak = 'w'
+		ch DefModPure = 'u'
 		ch DefModConstructor = 'c'
 		ch DefModStub = 'b'
 		ch DefModGlobalVal = 'g'
@@ -633,6 +638,7 @@ translateMods = mapMaybe m
 		m D.DefModPrivate = Just DefModPrivate
 		m D.DefModProtected = Just DefModProtected
 		m D.DefModWeak = Just DefModWeak
+		m D.DefModPure = Just DefModPure
 		m _ = Nothing
 		
 linkDef :: (Bool, Bool) -> Env -> D.ClassStm -> Def

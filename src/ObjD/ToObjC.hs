@@ -697,7 +697,9 @@ showDataType tp = C.TPSimple (show tp) []
 
 {- Exp -}
 tPars :: Env -> D.Def -> [(D.Def, D.Exp)] -> [(String, C.Exp)]
-tPars env _ = map (\(d, e) -> (D.defName d, maybeVal (D.exprDataType e, D.defType d) $ tExp env e))
+tPars env d = 
+	let env' = if D.isPure d then env{envNeedWeakSelf = False} else env
+	in map (\(d, e) -> (D.defName d, maybeVal (D.exprDataType e, D.defType d) $ tExp env' e))
 
 tExpTo :: Env -> D.DataType -> D.Exp -> C.Exp 
 tExpTo env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)

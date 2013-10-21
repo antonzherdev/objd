@@ -46,7 +46,7 @@ type ExtendsRef =  (String, [DataType])
 data ClassStm = Def {defMods :: [DefMod],  defName :: String, defGenerics :: [Generic], defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
 	| ClassImport [String]
 
-data DefMod = DefModPrivate | DefModProtected | DefModMutable | DefModVal | DefModStatic | DefModWeak | DefModDelegate | DefModLazy deriving (Eq)
+data DefMod = DefModPrivate | DefModProtected | DefModMutable | DefModVal | DefModStatic | DefModWeak | DefModDelegate | DefModLazy | DefModPure deriving (Eq)
 isDef :: ClassStm -> Bool
 isDef d@Def{} = (DefModVal `notElem`) . defMods $ d
 isDef _ =  False
