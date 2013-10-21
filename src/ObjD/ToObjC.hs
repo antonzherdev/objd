@@ -697,9 +697,7 @@ showDataType tp = C.TPSimple (show tp) []
 
 {- Exp -}
 tPars :: Env -> D.Def -> [(D.Def, D.Exp)] -> [(String, C.Exp)]
-tPars env d = 
-	let env' = if D.isPure d then env{envNeedWeakSelf = False} else env
-	in map (\(d, e) -> (D.defName d, maybeVal (D.exprDataType e, D.defType d) $ tExp env' e))
+tPars env _ = map (\(d, e) -> (D.defName d, maybeVal (D.exprDataType e, D.defType d) $ tExp env e))
 
 tExpTo :: Env -> D.DataType -> D.Exp -> C.Exp 
 tExpTo env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
@@ -716,9 +714,6 @@ castGeneric dexp e = case D.exprDataType dexp of
 	_ -> e
 
 data Env = Env{envClass :: D.Class, envCStruct :: Int, envDataType :: D.DataType, envWeakSelf :: Bool, envNeedWeakSelf :: Bool}
-envModSelfDot :: Env -> D.Exp -> Env
-envModSelfDot env (D.Dot (D.Self _) _) = env{envNeedWeakSelf = True}
-envModSelfDot env _ = env
 
 
 selfCall :: Env -> C.Exp
@@ -773,22 +768,21 @@ tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name}
 tExp env d@(D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModStatic `elem` mods && isStubObject = 
 		if D.DefModField `elem` mods then C.Ref name
-		else C.CCall (C.Ref $ name) ((map snd . tPars env' dd) pars)
-	| D.DefModApplyLambda `elem` mods = C.CCall (tExp env' l) ((map snd . tPars env' dd) pars) 
+		else C.CCall (C.Ref $ name) ((map snd . tPars env dd) pars)
+	| D.DefModApplyLambda `elem` mods = C.CCall (tExp env l) ((map snd . tPars env dd) pars) 
 	| D.DefModField `elem` mods && null pars && 
 		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
-			castGeneric d $ C.Dot (tExpTo env' ltp l) (C.Ref name)
+			castGeneric d $ C.Dot (tExpTo env ltp l) (C.Ref name)
 	| D.DefModField `elem` mods && 
 		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
-			castGeneric d $ C.Dot (tExpTo env' ltp l) $ C.CCall (C.Ref name) ((map snd . tPars env' dd) pars)
-	| D.DefModConstructor `elem` mods = callConstructor env' dd pars
+			castGeneric d $ C.Dot (tExpTo env ltp l) $ C.CCall (C.Ref name) ((map snd . tPars env dd) pars)
+	| D.DefModConstructor `elem` mods = callConstructor env dd pars
 	| D.DefModStruct `elem` mods = case ltp  of
-		(D.TPClass D.TPMStruct _ c) -> structCall (D.classNameWithPrefix c) (tExpTo env' ltp l)
-		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) dd) ((map snd . tPars env' dd) pars)
-		tp -> structCall (show tp) (tExpTo env' ltp l)
-	| otherwise = castGeneric d $ C.Call (tExp env' l) (funName dd) (tPars env' dd pars) []
+		(D.TPClass D.TPMStruct _ c) -> structCall (D.classNameWithPrefix c) (tExpTo env ltp l)
+		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) dd) ((map snd . tPars env dd) pars)
+		tp -> structCall (show tp) (tExpTo env ltp l)
+	| otherwise = castGeneric d $ C.Call (tExp env l) (funName dd) (tPars env dd pars) []
 	where
-		 env' = envModSelfDot env l
 		 structCall c self = C.CCall (C.Ref $ structDefName c dd) (self : (map snd . tPars env dd) pars)
 		 ltp = D.unwrapGeneric $ D.exprDataType l
 		 isStubObject = case ltp of
@@ -800,7 +794,7 @@ tExp env (D.Dot l (D.As dtp)) = case dtp of
 	_ -> C.Call (C.Ref "ODObject") "asKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] []), ("object", tExp env l)] []
 tExp env (D.Dot l (D.CastDot dtp)) = C.Cast (showDataType dtp) (tExp env l)
 tExp env (D.Dot l (D.Cast tp c)) = C.Cast (showDataType tp) (tExp env (D.Dot l c))
-tExp env (D.Dot l (D.LambdaCall c)) = C.CCall (tExp (envModSelfDot env l) (D.Dot l c)) [] 
+tExp env (D.Dot l (D.LambdaCall c)) = C.CCall (tExp env (D.Dot l c)) [] 
 
 
 tExp _ (D.Self _) = C.Self
@@ -922,9 +916,8 @@ tStm v _ (D.While cond t) = [C.While (tExpTo v D.TPBool cond) (tStm v [] t)]
 tStm v _ (D.Do cond t) = [C.Do (tExpTo v D.TPBool cond) (tStm v [] t)]
 
 tStm env _ (D.Set tp l r) = let 
-	env' = envModSelfDot env l
-	l' = tExp env' l
-	r' = tExp env' r
+	l' = tExp env l
+	r' = tExp env r
 	ltp = D.exprDataType l
 	rtp = D.exprDataType r
 	in [C.Set tp l' (maybeVal (rtp, ltp) r')]
