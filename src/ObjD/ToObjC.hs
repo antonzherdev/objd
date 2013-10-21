@@ -507,9 +507,12 @@ hashCall tp ref =
 
 
 stringFormatForType :: D.DataType -> String
-stringFormatForType (D.TPNumber _ 8) = "%li"
-stringFormatForType (D.TPNumber _ 0) = "%li"
-stringFormatForType (D.TPNumber _ _)= "%d"
+stringFormatForType (D.TPNumber False 8) = "%ld"
+stringFormatForType (D.TPNumber True 8) = "%lu"
+stringFormatForType (D.TPNumber False 0) = "%ld"
+stringFormatForType (D.TPNumber True 0) = "%lu"
+stringFormatForType (D.TPNumber False _)= "%d"
+stringFormatForType (D.TPNumber True _)= "%u"
 stringFormatForType (D.TPChar)= "%d"
 stringFormatForType (D.TPFloatNumber _) = "%f"
 stringFormatForType D.TPBool = "%d"
@@ -517,6 +520,14 @@ stringFormatForType D.TPVoidRef = "%p"
 stringFormatForType (D.TPEArr n tp)  = "[" ++ strs ", " (replicate n (stringFormatForType tp)) ++ "]"
 stringFormatForType _ = "%@"
 
+stringExpressionsForTp :: D.DataType -> C.Exp -> [C.Exp]
+stringExpressionsForTp rtp ref = (case rtp of
+			D.TPClass D.TPMStruct _ scl -> [C.CCall (C.Ref $ D.classNameWithPrefix scl ++ "Description") [ref]]
+			D.TPEArr n etp -> concatMap (\j -> stringExpressionsForTp etp $ C.Index ref (C.IntConst j)) [0..n - 1]
+			D.TPNumber False 0 -> [C.ShortCast (C.TPSimple "long" []) ref]
+			D.TPNumber True 0 -> [C.ShortCast (C.TPSimple "unsigned long" []) ref]
+			_ -> [ref]
+			)
 
 descriptionFun :: C.Exp -> [D.Def] -> [C.Stm]
 descriptionFun start fields = 
@@ -530,13 +541,9 @@ descriptionFun start fields =
 		append :: Int -> D.Def -> (Int, C.Stm)
 		append i D.Def{D.defName = nm, D.defType = tp} = (i + 1, C.Stm $ C.Call (C.Ref "description") "append" 
 			[("format", C.StringConst $ (if i > 0 then ", " else "") ++ nm ++ "="  ++ stringFormatForType tp)]
-			(expressionForTp tp $ C.Dot C.Self (C.Ref nm)) )
+			(stringExpressionsForTp tp $ C.Dot C.Self (C.Ref nm)) )
 			where
-				expressionForTp rtp ref= (case rtp of
-					D.TPClass D.TPMStruct _ scl -> [C.CCall (C.Ref $ D.classNameWithPrefix scl ++ "Description") [ref]]
-					D.TPEArr n etp -> concatMap (\j -> expressionForTp etp $ C.Index ref (C.IntConst j)) [0..n - 1]
-					_ -> [ref]
-					)
+				
 		
 		
 
@@ -845,7 +852,7 @@ tExp env (D.Negative e) = C.Negative (tExp env e)
 tExp env (D.Cast dtp e) = let 
 		stp = D.exprDataType e
 		stp' = D.unwrapGeneric stp
-		toString format = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] [tExpTo env stp e]
+		toString format = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] (stringExpressionsForTp stp $ tExpTo env stp e)
 		cast = C.Cast (showDataType dtp) e'
 		e' = (tExpTo env stp' e)
 		voidRefStructCast = C.CCall (C.Ref "voidRef") [e']
@@ -886,7 +893,8 @@ tExp env (D.Cast dtp e) = let
 tExp env (D.StringBuild pars lastString) = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] pars'
 	where
 		format = concatMap (\(prev, e) -> prev ++ stringFormatForType (D.exprDataType e) ) pars ++ lastString
-		pars' = map (tExp env . snd) pars
+		pars' = concatMap (par' . snd) pars
+		par' expr = stringExpressionsForTp (D.exprDataType expr) $ tExp env expr
 tExp _ e@D.ExpDError{} = C.Error $ show e
 tExp _ e@D.ExpLError{} = C.Error $ show e
 tExp _ D.Nop = C.Nop
