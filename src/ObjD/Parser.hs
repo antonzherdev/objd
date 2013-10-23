@@ -529,9 +529,11 @@ pString = do
 			maybeDrop n s
 				| n <= 0 = s
 				| otherwise = dropWhile isSpace (take n s) ++ drop n s
-			in strs "\n" $
-				 maybeDrop (startPos - partStart - 1) (head stringLines) 
-				 : map (maybeDrop (startPos - 1)) (tail stringLines)
+			in case stringLines of
+				[] -> ""
+				_ -> strs "\n" $
+					 maybeDrop (startPos - partStart - 1) (head stringLines) 
+					 : map (maybeDrop (startPos - 1)) (tail stringLines)
 		pStringPart :: Parser String
 		pStringPart = many1 (pEscape <|> noneOf "\"$")
 		pPart :: Parser ((Int, String), Maybe Exp)
@@ -554,7 +556,7 @@ pString = do
 			char ')'
 			t <- pStringParts
 			f <- pElseString <|> pEndIfString
-			return $ If cond t f
+			return $ If cond (trimN t) (trimN f)
 		pElseString :: Parser Exp 
 		pElseString = do
 			try $ string "$else"
@@ -562,6 +564,13 @@ pString = do
 				b <- pStringParts
 				pEndIfString
 				return b
+		trimN :: Exp -> Exp
+		trimN (StringConst s) = StringConst (sTrimN s)
+		trimN (StringBuild [] s) = StringBuild [] (sTrimN s)
+		trimN (StringBuild ((x, e):es) s) = StringBuild ((sStartTrimN x, e) : es) (sTrimN s)
+		sStartTrimN = dropWhile (== '\n')
+		sEndTrimN = reverse . dropWhile (== '\n') . reverse
+		sTrimN = sStartTrimN . sEndTrimN
 		pEndIfString :: Parser Exp
 		pEndIfString = try (string "$endif") >> return (StringConst "")
 		pEscape :: Parser Char

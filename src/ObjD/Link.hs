@@ -1491,7 +1491,11 @@ linkStringBuild env (D.StringBuild pars lastString) =
 		processPart :: String -> (String, D.Exp) -> (String, (Exp, String))
 		processPart next (prev, e) = (modPrev e prev, (compile prev e next, modNext e next))
 		modPrev :: D.Exp -> String -> String
-		modPrev (D.Call "when" (Just [_]) _) s = (reverse . tail . dropWhile ( /= '\n') . reverse) s
+		modPrev (D.Call "when" (Just [_]) _) "" = ""
+		modPrev (D.Call "when" (Just [_]) _) s = (edrp . dropWhile ( /= '\n') . reverse) s
+			where
+				edrp "" = ""
+				edrp ssss = reverse $ tail ssss
 		modPrev _ s = s
 		modNext :: D.Exp -> String -> String
 		modNext _ s = s
