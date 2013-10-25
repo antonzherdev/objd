@@ -113,7 +113,8 @@ data Exp =
 	| ShortCast DataType Exp
 	| EArrConst String String [Exp]
 	| ProtocolRef Exp
-	| GetPointer Exp
+	| GetRef Exp
+	| RefUp Exp
 forExp :: MonadPlus m => (Stm -> m a, Exp -> m a) -> Exp -> m a
 forExp f@(_, fe) ee = mplus (go ee) (fe ee)
 	where	
@@ -131,7 +132,8 @@ forExp f@(_, fe) ee = mplus (go ee) (fe ee)
 		go (Not e) = mfor e
 		go (Negative e) = mfor e
 		go (ProtocolRef e) = mfor e
-		go (GetPointer e) = mfor e
+		go (GetRef e) = mfor e
+		go (RefUp e) = mfor e
 		go (Cast _ e) = mfor e
 		go (ShortCast _ e) = mfor e
 		go (BoolOp _ l r) = mfor l `mplus` mfor r
@@ -364,7 +366,8 @@ expLines (Negative e) = ["-"] `glue` expLines e
 expLines (Cast tpp e) =  ["((" ++ show tpp ++ ")("] `glue` (expLines e `appp` "))")
 expLines (ShortCast tpp e) =  ["(" ++ show tpp ++ ")"] `glue` expLines e
 expLines (ProtocolRef e) =  ["@protocol(" ++ show e ++ ")"]
-expLines (GetPointer e) =  ["&(" ++ show e ++ ")"]
+expLines (GetRef e) =  ["&(" ++ show e ++ ")"]
+expLines (RefUp e) =  ["*(" ++ show e ++ ")"]
 expLines (Error s) = ["<#ERROR: "] `glue` (lines s `appp` "#>")
 expLines Nop = []
 

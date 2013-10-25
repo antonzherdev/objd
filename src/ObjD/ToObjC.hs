@@ -802,8 +802,8 @@ tExp env (D.Dot l (D.As dtp)) = case dtp of
 		[("Protocol", C.ProtocolRef $ C.Ref $ D.dataTypeClassNameWithPrefix dtp), ("object", castGeneric l $ tExp env l)] []
 	_ -> C.Call (C.Ref "ODObject") "asKindOf" 
 		[("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] []), ("object", castGeneric l $ tExp env l)] []
-tExp env (D.Dot l (D.CastDot dtp)) = C.Cast (showDataType dtp) (tExp env l)
-tExp env (D.Dot l (D.Cast tp c)) = C.Cast (showDataType tp) (tExp env (D.Dot l c))
+tExp env (D.Dot l (D.CastDot dtp)) = tExp env (D.Cast dtp l)
+tExp env (D.Dot l (D.Cast dtp c)) = tExp env (D.Cast dtp (D.Dot l c))
 tExp env (D.Dot l (D.LambdaCall c)) = C.CCall (tExp env (D.Dot l c)) [] 
 
 
@@ -887,6 +887,8 @@ tExp env (D.Cast dtp e) = let
 		(D.TPNumber{}, D.TPVoidRef) -> voidRefStructCast
 		(D.TPFloatNumber{}, D.TPVoidRef) -> voidRefStructCast
 		(D.TPClass D.TPMStruct _ _, D.TPVoidRef) -> voidRefStructCast
+		(D.TPVoidRef, _) -> case showDataType dtp of 
+			C.TPSimple t a -> C.RefUp $ C.Cast (C.TPSimple (t ++ "*") a)  e'
 		(D.TPArr _ etp, D.TPVoidRef) ->
 			case e of
 				D.Arr exps -> ear etp exps
