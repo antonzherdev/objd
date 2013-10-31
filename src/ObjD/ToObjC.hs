@@ -893,6 +893,8 @@ tExp env (D.Cast dtp e) = let
 			case e of
 				D.Arr exps -> ear etp exps
 				_ -> cast
+		(D.TPAny, dd@D.TPNumber{}) -> C.CCall (C.Ref $ "unum" ++ dataTypeSuffix dd) [e']
+		(D.TPAny, dd@D.TPFloatNumber{}) -> C.CCall (C.Ref $ "unum" ++ dataTypeSuffix dd) [e']
 		_ -> cast 
 
 tExp env (D.StringBuild pars lastString) = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] pars'
