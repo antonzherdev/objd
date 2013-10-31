@@ -1866,6 +1866,10 @@ correctCallPar _ _ e = e
 
 implicitConvertsion :: Env -> DataType -> Exp -> Exp
 implicitConvertsion _ (TPMap _ _) (Arr []) = Map []
+implicitConvertsion env (TPMap k v) (Arr exps) = Map $ map tup exps
+	where
+		tup (Tuple [ke, ve]) = (implicitConvertsion env k ke, implicitConvertsion env v ve)
+		tup e = (ExpLError "Not tuple in map" e, ExpLError "Not tuple in map" e)
 implicitConvertsion _ _ Nop = Nop
 implicitConvertsion env dtp ex = let stp = exprDataType ex
 	in 
