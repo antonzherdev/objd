@@ -698,6 +698,7 @@ showDataType (D.TPGenericWrap D.TPNumber{}) = idTp
 showDataType (D.TPGenericWrap D.TPFloatNumber{}) = idTp
 showDataType (D.TPGenericWrap D.TPBool) = idTp
 showDataType (D.TPGenericWrap D.TPChar) = idTp
+showDataType (D.TPGenericWrap D.TPVoid) = idTp
 showDataType (D.TPGenericWrap c) = showDataType c
 showDataType D.TPChar = C.TPSimple "unichar" []
 showDataType tp = C.TPSimple (show tp) []

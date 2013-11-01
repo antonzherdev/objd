@@ -874,7 +874,6 @@ dataTypeGenerics env (TPGenericWrap g) = dataTypeGenerics env g
 dataTypeGenerics _ _ = []
 
 wrapGeneric :: DataType -> DataType
-wrapGeneric TPVoid = TPVoid
 wrapGeneric g@(TPClass TPMGeneric _ _) = g
 wrapGeneric g@TPGenericWrap{} = g
 wrapGeneric g = TPGenericWrap g
