@@ -6,7 +6,7 @@ module ObjD.Link (
 	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
-	fileNameWithPrefix, classDefsWithTraits, classInitDef, isPure
+	fileNameWithPrefix, classDefsWithTraits, classInitDef, isPure, isError
 )where
 
 import 			 Control.Arrow
@@ -483,8 +483,8 @@ linkClass :: (ClassIndex, ObjectIndex, File, Package, [Import]) -> D.FileStm -> 
 linkClass (ocidx, glidx, file, package, clImports) cl = self
 	where
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
-		env = Env selfType cidx glidx []
-		staticEnv = Env (TPObject (refDataTypeMod self) self) ocidx glidx []
+		env = Env selfType cidx glidx [] False
+		staticEnv = Env (TPObject (refDataTypeMod self) self) ocidx glidx [] False
 		isObject = case cl of
 			D.Class{} -> D.ClassModObject `elem` D.classMods cl
 			_ -> False
@@ -645,9 +645,10 @@ linkDef :: (Bool, Bool) -> Env -> D.ClassStm -> Def
 linkDef (obj, str) env ccc = def
 	where 
 		def = evalState (stateDef ccc) env'
-		env' = envAddClasses generics' env
+		env' = addEnvInit $ envAddClasses generics' env
 		generics' = map (linkGeneric env) (D.defGenerics ccc)
 		cl = envSelfClass env
+		addEnvInit e = if D.defName ccc == "init" then e {envInit = True} else e
 		stateDef:: D.ClassStm -> State Env Def
 		stateDef D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = 
 			let 
@@ -688,7 +689,7 @@ linkDefPars cidx = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> localVal
 
 type ClassIndex = M.Map String Class
 type ObjectIndex = [Class]
-data Env = Env{envSelf :: DataType, envIndex :: ClassIndex, envObjectIndex :: ObjectIndex, envVals :: [Def]}
+data Env = Env{envSelf :: DataType, envIndex :: ClassIndex, envObjectIndex :: ObjectIndex, envVals :: [Def], envInit :: Bool}
 envAddVals :: [Def] -> Env -> Env 
 envAddVals newVals env@Env{envVals = vals} = env{envVals = vals ++ newVals}
 envAddClasses :: [Class] -> Env -> Env 
@@ -1181,6 +1182,12 @@ isConst (CastDot _) = True
 isConst Nop = True
 isConst _ = False
 
+isError :: Exp -> Bool
+isError ExpDError{} = True
+isError ExpLError{} = True
+isError ExpError{} = True
+isError _ = False
+
 
 exprDataType :: Exp -> DataType
 exprDataType (If _ _ Nop) = TPVoid
@@ -1309,13 +1316,33 @@ expr (D.Set tp a b) = do
 	env <- get
 	let 
 		ltp = exprDataType aa
-		math = expr b >>= return . Set tp aa . implicitConvertsion env ltp
-		callOp = return $ Set Nothing aa $ Dot aa $ exprCall env (Just ltp) $ D.Call (literalDefName $ show $ fromJust tp) (Just [(Nothing, b)]) []
-	case unwrapGeneric ltp of
-		TPNumber{} -> math
-		TPFloatNumber{} -> math
-		TPString{} -> math
-		_ -> if isJust tp then callOp else math
+		simpleSet = if isNothing tp then Set Nothing aa math
+			else case unwrapGeneric ltp of
+				TPNumber{} -> Set tp aa math
+				TPFloatNumber{} -> Set tp aa math
+				TPString{} -> Set tp aa math
+				_ -> Set Nothing aa callOp
+
+		math = implicitConvertsion env ltp $ evalState (expr b) env
+		callOp = Dot aa $ exprCall env (Just ltp) $ D.Call (literalDefName $ show $ fromJust tp) (Just [(Nothing, b)]) []
+		lcall = case aa of
+				Dot _ c@(Call {}) -> Just c
+				c@Call {} -> Just c
+				_ -> Nothing
+		isSelfSet = case aa of 
+			Dot Self{} _ -> True
+			_ -> False
+		bToProcCall = if isJust tp then D.MathOp (fromJust tp) a b else b
+		in 
+			if isNothing lcall then expr b >>= \ r -> return $ Set tp (ExpLError "Left is not def" aa) r
+			else case fromJust lcall of
+				Call ldef _ [] -> 
+					if DefModMutable `elem` defMods ldef then return simpleSet 
+					else if envInit env && isSelfSet then return simpleSet
+					else case aa of
+						Dot ref _ -> return $ Dot ref $ exprCall env (Just $ exprDataType ref) $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
+						_ -> return $ exprCall env Nothing $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
+				_ -> expr b >>= \ r -> return $ Set tp (ExpLError "Unassinable left" aa) r
 expr (D.PlusPlus e) = do
 	aa <- expr e
 	return $ PlusPlus aa
