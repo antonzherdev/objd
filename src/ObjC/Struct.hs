@@ -10,7 +10,7 @@ import 			 Control.Arrow
 data FileStm =
 	Import String | ImportLib String | EmptyLine 
 	| Interface { interfaceName :: String, interfaceExtends :: Extends, interfaceProperties :: [Property], interfaceFuns :: [Fun] }
-	| Protocol { interfaceName :: String, interfaceExtends :: Extends, interfaceFuns :: [Fun] }
+	| Protocol { interfaceName :: String, interfaceExtends :: Extends, interfaceProperties :: [Property], interfaceFuns :: [Fun] }
 	| Implementation {implName :: String
 		, implFields :: [ImplField]
 		, implSynthesizes :: [ImplSynthesize]
@@ -188,8 +188,9 @@ instance Show FileStm where
 		 ++ (unlines' . map show) properties
 		 ++ (unlines  . map (( ++ ";") . show)) funs
 		 ++ "@end\n\n"
-	show (Protocol name (Extends cl trs) funs) =
+	show (Protocol name (Extends cl trs) properties funs) =
 		"@protocol " ++ name ++ "<" ++ cl ++ unwords (map (", " ++ ) trs) ++ ">\n"
+		++ (unlines' . map show) properties
 		 ++ (unlines  . map (( ++ ";") . show)) funs
 		 ++ "@end\n\n"
 	show Implementation{implName = iName, implFields = fields, implSynthesizes = synzs, implFuns = funs, implStaticFields = stFields} =
@@ -344,6 +345,7 @@ expLines (MathOp t l r) = [mbb l ++ " " ++ show t ++ " " ++ mbb r]
 		needb Div Mul = True
 		needb Mul Plus = True
 		needb Mul Minus = True
+		needb Minus Minus = True
 		needb _ _ = False
 expLines (Dot l r) = (expLines l `appp` ".") `glue` expLines r
 expLines (PlusPlus e) = appendLast "++" (expLines e)

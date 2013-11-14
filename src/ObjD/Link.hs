@@ -6,7 +6,7 @@ module ObjD.Link (
 	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
-	fileNameWithPrefix, classDefsWithTraits, classInitDef, isPure, isError
+	fileNameWithPrefix, classDefsWithTraits, traitsDefs, classInitDef, isPure, isError
 )where
 
 import 			 Control.Arrow
@@ -262,10 +262,11 @@ findValWithName :: String -> Class -> Maybe Def
 findValWithName name cl = find (\d -> name == defName d && DefModField `elem` defMods d && null (defPars d)) $ classDefs cl
 
 classDefsWithTraits :: Class -> [Def]
-classDefsWithTraits cl = nub $ classDefs cl ++ traitDefs
-	where		
-		traitDefs :: [Def]
-		traitDefs = allInParentTraits cl		
+classDefsWithTraits cl = nub $ classDefs cl ++ traitsDefs cl
+			
+traitsDefs :: Class -> [Def]
+traitsDefs cl = allInParentTraits cl		
+	where
 		allInParentTraits cll = concatMap (traitDefsRec . fst) ((extendsRefs . classExtends) cll)
 		traitDefsRec cll 
 			| isTrait cll = filter ( (DefModAbstract `notElem`). defMods) (classDefs cll) ++ allInParentTraits cll

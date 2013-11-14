@@ -161,11 +161,13 @@ genProtocol :: D.Class -> C.FileStm
 genProtocol cl =
 	C.Protocol {
 		C.interfaceName = D.classNameWithPrefix cl,
-		C.interfaceFuns = intefaceFuns $ D.classDefs cl,
+		C.interfaceFuns = intefaceFuns defs,
+		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs,
 		C.interfaceExtends = addTraits cl $ 
 			C.Extends ((cn . D.classNameWithPrefix . D.extendsClassClass . fromMaybe (error $ "No class extends for " ++ D.classNameWithPrefix cl) . D.extendsClass) $ D.classExtends cl) []
 	}
 	where
+		defs =  D.classDefs cl
 		cn n = if n == "ODObject" then "NSObject" else n
 
 
