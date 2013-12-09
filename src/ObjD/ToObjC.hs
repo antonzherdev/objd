@@ -810,7 +810,7 @@ tExp env (D.Dot l (D.Cast dtp c)) = tExp env (D.Cast dtp (D.Dot l c))
 tExp env (D.Dot l (D.LambdaCall c)) = C.CCall (tExp env (D.Dot l c)) [] 
 
 
-tExp _ (D.Self _) = C.Self
+tExp env (D.Self _) = selfCall env
 tExp _ (D.Super _) = C.Super
 tExp env (D.LambdaCall e) = C.CCall (tExp env e) []
 tExp env (D.Call d@D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
