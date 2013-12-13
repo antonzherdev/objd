@@ -1909,7 +1909,7 @@ implicitConvertsion env dtp ex = let stp = exprDataType ex
 		conv s (TPGenericWrap d) = conv s d
 		conv TPFun{} TPFun{} = ex
 		conv _ f@(TPFun _ fdtp) = Lambda (lambdaImplicitParameters f) (maybeAddReturn env fdtp ex) fdtp
-		conv TPFun{} _ = LambdaCall ex
+		{-conv TPFun{} _ = LambdaCall ex-}
 		conv TPOption{} TPOption{} = ex
 		conv TPNil (TPOption tp) = None tp
 		conv tp t@(TPOption _) = if isInstanceOfTp env t tp then ex else Opt ex
