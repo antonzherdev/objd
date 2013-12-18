@@ -511,12 +511,12 @@ pString = do
 	pos <- getPosition
 	let 
 		startPos = sourceColumn pos
-		pStringParts :: Parser Exp
-		pStringParts = do 
+		pStringParts :: Bool -> Parser Exp
+		pStringParts cutFirst = do 
 			parts <- many pPart
 			return $ case parts of
 				[] -> StringConst ""
-				[(part, Nothing)] -> StringConst $ cutString part
+				[(part, Nothing)] -> StringConst $ if cutFirst then cutString part else snd part
 				_ -> case last parts of
 					(lastPart, Nothing) -> StringBuild (map extract $ init parts) (cutString lastPart)
 					_ -> StringBuild (map extract parts) ""
@@ -554,14 +554,14 @@ pString = do
 			try$ string "if" >> sps >> charSps '('
 			cond <- pExp
 			char ')'
-			t <- pStringParts
+			t <- pStringParts True
 			f <- pElseString <|> pEndIfString
 			return $ If cond (trimN t) (trimN f)
 		pElseString :: Parser Exp 
 		pElseString = do
 			try $ string "$else"
 			pIfString <|> do 
-				b <- pStringParts
+				b <- pStringParts True
 				pEndIfString
 				return b
 		trimN :: Exp -> Exp
@@ -575,7 +575,7 @@ pString = do
 		pEndIfString = try (string "$endif") >> return (StringConst "")
 		pEscape :: Parser Char
 		pEscape = char '\\' >> ((char 'n' >> return '\n') <|> (char 't' >> return '\t') <|> anyChar )
-	ret <- pStringParts
+	ret <- pStringParts False
 	char '"'
 	sps
 	return ret

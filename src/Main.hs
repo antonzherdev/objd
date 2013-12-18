@@ -67,8 +67,6 @@ main =
 					write hnm path h
 					write mnm path m)
 
-				
-
 parseFiles :: [(FilePath, String)] -> IO [(FilePath, D.File)]
 parseFiles = mapM parse
 	where
