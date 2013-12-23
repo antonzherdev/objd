@@ -4,7 +4,6 @@ module ObjD.Parser(
 
 import 			 Ex.String
 import           Control.Monad
-import           Data.Char
 import           Data.Maybe
 import           ObjD.Struct
 import           Data.Decimal
@@ -511,12 +510,12 @@ pString = do
 	pos <- getPosition
 	let 
 		startPos = sourceColumn pos
-		pStringParts :: Bool -> Parser Exp
-		pStringParts cutFirst = do 
+		pStringParts :: Parser Exp
+		pStringParts = do 
 			parts <- many pPart
 			return $ case parts of
 				[] -> StringConst ""
-				[(part, Nothing)] -> StringConst $ if cutFirst then cutString part else snd part
+				[(part, Nothing)] -> StringConst $ cutString part
 				_ -> case last parts of
 					(lastPart, Nothing) -> StringBuild (map extract $ init parts) (cutString lastPart)
 					_ -> StringBuild (map extract parts) ""
@@ -528,7 +527,7 @@ pString = do
 			stringLines = lines2 str
 			maybeDrop n s
 				| n <= 0 = s
-				| otherwise = dropWhile isSpace (take n s) ++ drop n s
+				| otherwise = dropWhile (== ' ') (take n s) ++ drop n s
 			in case stringLines of
 				[] -> ""
 				_ -> strs "\n" $
@@ -554,14 +553,14 @@ pString = do
 			try$ string "if" >> sps >> charSps '('
 			cond <- pExp
 			char ')'
-			t <- pStringParts True
+			t <- pStringParts
 			f <- pElseString <|> pEndIfString
 			return $ If cond (trimN t) (trimN f)
 		pElseString :: Parser Exp 
 		pElseString = do
 			try $ string "$else"
 			pIfString <|> do 
-				b <- pStringParts True
+				b <- pStringParts
 				pEndIfString
 				return b
 		trimN :: Exp -> Exp
@@ -575,7 +574,7 @@ pString = do
 		pEndIfString = try (string "$endif") >> return (StringConst "")
 		pEscape :: Parser Char
 		pEscape = char '\\' >> ((char 'n' >> return '\n') <|> (char 't' >> return '\t') <|> anyChar )
-	ret <- pStringParts False
+	ret <- pStringParts
 	char '"'
 	sps
 	return ret

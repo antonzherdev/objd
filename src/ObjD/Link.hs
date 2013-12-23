@@ -6,7 +6,7 @@ module ObjD.Link (
 	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
-	fileNameWithPrefix, classDefsWithTraits, traitsDefs, classInitDef, isPure, isError
+	fileNameWithPrefix, classDefsWithTraits, traitsDefs, classInitDef, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait
 )where
 
 import 			 Control.Arrow
@@ -749,6 +749,20 @@ isTpFun _ = False
 isTpGeneric :: DataType -> Bool
 isTpGeneric (TPClass TPMGeneric _ _) = True
 isTpGeneric _ = False
+isTpClass :: DataType -> Bool
+isTpClass (TPClass TPMClass _ _) = True
+isTpClass _ = False
+isTpEnum :: DataType -> Bool
+isTpEnum (TPClass TPMEnum _ _) = True
+isTpEnum _ = False
+isTpTrait :: DataType -> Bool
+isTpTrait (TPClass TPMTrait _ _) = True
+isTpTrait _ = False
+isTpStruct :: DataType -> Bool
+isTpStruct (TPClass TPMStruct _ _) = True
+isTpStruct _ = False
+
+
 
 forDataType :: MonadPlus m => (DataType -> m a) -> DataType -> m a
 forDataType f tp = mplus (go tp) (f tp)

@@ -365,7 +365,8 @@ genStruct cl =
 		fields = filter (\d -> not (D.isStatic d) && D.isField d) clDefs
 		staticFields = filter (\d -> (D.isStatic d) && D.isField d) clDefs
 		fields' = map toField fields
-		toField D.Def{D.defName = n, D.defType = tp, D.defMods = mods} = C.ImplField n (showDataType tp) ["__weak" | D.DefModWeak `elem` mods] C.Nop
+		toField D.Def{D.defName = n, D.defType = tp, D.defMods = mods} = C.ImplField n (showDataType tp) 
+				(["__weak" | D.DefModWeak `elem` mods] ++ ["__unsafe_unretained" | D.isTpClass tp || D.isTpEnum tp || D.isTpTrait tp] ) C.Nop
 		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple name [], 
 			C.cfunName = name ++ "Make", C.cfunPars = map toPar fields, C.cfunExps = 
 				[C.Return $ C.ShortCast selfTp $ C.EArr $ map toEArr fields]
