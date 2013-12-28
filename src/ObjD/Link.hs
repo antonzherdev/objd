@@ -42,7 +42,7 @@ fileNameWithPrefix f = packagePrefix (filePackage f) ++ fileName f
 data Class = Class {_classFile :: File, _classPackage :: Package, className :: String
 	, _classGenerics :: [Class], _classExtends :: Extends, _classMods :: [ClassMod], _classDefs :: [Def]
 	, _classImports :: [Import]}
-	| Generic {className :: String, _classExtends :: Extends}
+	| Generic {className :: String, _classExtendsRef :: [ExtendsRef]}
 	| ClassError {className :: String, classErrorText :: String}
 
 classFile :: Class -> Maybe File
@@ -56,7 +56,7 @@ classGenerics Class{_classGenerics = r} = r
 classGenerics _ = []
 classExtends :: Class -> Extends
 classExtends Class{_classExtends = r} = r
-classExtends Generic{_classExtends = r} = r
+classExtends Generic{_classExtendsRef = r} = Extends Nothing r
 classExtends _ = extendsNothing
 classDefs :: Class -> [Def]
 classDefs Class{_classDefs = r} = r
@@ -81,7 +81,11 @@ type Generics = M.Map String DataType
 type ClassRef = (Class, Generics)
 
 instance Show Class where
-	show (Generic name ext) =  name ++ " " ++ show ext
+	show (Generic name ext) = name ++ extString
+		where
+			extString = case filter ( (/= "Object") . className . fst) ext of
+				[] -> ""
+				genExtendsRefs -> " extends " ++ strs " with " (map showExtendsRef genExtendsRefs)
 	show (ClassError name er) = name ++ ": " ++ er
 	show cl =
 		tp cl ++ " " ++ className cl ++ sConstr cl ++ " " ++ show (classExtends cl) ++ " {\n" ++
@@ -97,6 +101,7 @@ instance Show ClassMod where
 	show ClassModTrait = "trait"
 	show ClassModEnum = "enum"
 	show ClassModObject = "object"
+	show ClassModType = "type"
 			
 instance Show Extends where
 	show (Extends Nothing []) = ""
@@ -236,6 +241,7 @@ superType (TPObject _ cl) = fmap superTypeForExtClass $ (extendsClass . classExt
 		superTypeForExtClass :: ExtendsClass -> DataType
 		superTypeForExtClass (ExtendsClass (extCl, _) _) = 
 			TPObject (refDataTypeMod extCl) extCl
+superType _ = Nothing
 
 isInstanceOf :: Class -> Class -> Bool
 isInstanceOf target cl 
@@ -598,7 +604,12 @@ linkExtendsRef :: Env -> D.ExtendsRef -> ExtendsRef
 linkExtendsRef env (ecls, gens) = (classFind (envIndex env) ecls, map (dataType (envIndex env)) gens) 
 
 linkGeneric :: Env -> D.Generic -> Class
-linkGeneric env (D.Generic name ext) = Generic name (maybe (Extends (Just $ baseClassExtends (envIndex env) ) [] ) (linkExtends env []) ext)
+linkGeneric env (D.Generic name ext) = Generic{className = name,
+	_classExtendsRef = (classFind (envIndex env) "Object", []) : map (linkExtendsRef env) genExtendsRefs}
+	where 
+		genExtendsRefs = case ext of
+			Nothing -> []
+			Just (D.Extends (D.ExtendsClass firstExtends []) nextExtends) -> firstExtends : nextExtends
 
 linkField :: (Bool, Bool) -> D.ClassStm -> State Env [Def]
 linkField (obj, str) D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
@@ -999,7 +1010,7 @@ getDataType env tp e = maybe (exprDataType e) (dataType (envIndex env)) tp
 
 
 tpGeneric :: DataType
-tpGeneric = TPClass TPMGeneric [] (Generic "?" extendsNothing)
+tpGeneric = TPClass TPMGeneric [] (Generic "?" [])
 
 objectType :: DataType -> DataType
 objectType (TPClass t _ cl) = TPObject t cl
@@ -1369,7 +1380,7 @@ expr D.Self = do
 	return $ Self $ envSelf env
 expr D.Super = do
 	env <- get
-	return $ Super $ fromMaybe (error "No super data type") $ superType $ envSelf env
+	return $ Super $ fromMaybe (error $ "No super data type for " ++ show (envSelf env)) $ superType $ envSelf env
 expr r@D.Call{} = get >>= (\env -> return $ exprCall env Nothing r)
 expr (D.Index e i) = do
 	e' <- expr e
@@ -1729,7 +1740,8 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = call'''
 		pars' = evalState (mapM (\ (n, e) ->  expr e >>= (\ ee -> return (n, FirstTry e ee))) (fromMaybe [] pars)) env
 		self = fromMaybe (envSelf env) strictClass
 		call' :: (Maybe Class, Exp)
-		call' = fromMaybe (Nothing, ExpDError errorString cll) $ mplus (listToMaybe $ findCall True) (listToMaybe $ findCall False)
+		call' = fromMaybe (Nothing, ExpDError errorString cll) $ listToMaybe $ mplus (findCall True) (findCall False)
+		{- call' = fromMaybe (Nothing, ExpDError errorString cll) $ listToMaybe $ findCall False-}
 		call'' :: Exp
 		call'' = case call' of
 			(cl, cc@Call{}) -> (resolveDef strictClass cl . correctCall) cc

@@ -1,5 +1,6 @@
 module Main where
 
+import Data.Maybe
 import ObjD.ToObjC
 import ObjD.Parser
 import ObjD.Link as L
@@ -11,14 +12,17 @@ import System.Directory (doesDirectoryExist, getDirectoryContents, doesFileExist
 import System.IO
 import System.FilePath
 
-{- main::IO()
-main = putStr "dsa" -}
 debug :: [String]
 debug = []
+
 main::IO()
 main = 
 	let
 		root = "/Users/antonzherdev/dev/trains3d/Trains3D/"
+		
+		debugFile = Nothing --Just "/Users/antonzherdev/dev/debug.txt"
+		fullDebug = False --True
+		debugLinkedText = False
 	in do 
 		putStrLn $ "Root: " ++ root
 		files <- readOdFiles root 
@@ -33,10 +37,13 @@ main =
 					linked = (uncurry zip . second L.link. unzip) fs
 					errors =  unlines $ map show $ checkErrors $ map snd linked 
 					check = if null errors then return () else error errors
-				forM_ (filter ((`elem` debug). L.fileName . snd) linked) (\(path, f) -> do
+				debugFileHandle <- if isJust debugFile then fmap Just $ openFile (fromJust debugFile) WriteMode else return Nothing
+				forM_ (filter ((\f -> f `elem` debug || fullDebug). L.fileName . snd) linked) (\(path, f) -> do
 					putStrLn $ "= Linked " ++ path
-					print f)
+					when(debugLinkedText) $ print f
+					when(isJust debugFileHandle) $ hPrint (fromJust debugFileHandle) f)
 				check
+				when(isJust debugFile) $ hClose $ fromJust debugFileHandle
 				return linked
 			compiledFiles :: IO [(FilePath, ((String, [C.FileStm]), (String, [C.FileStm])))]
 			compiledFiles = liftM (map (second toObjC) . filter (containsRealStatement . snd)) linkedFiles
@@ -66,6 +73,7 @@ main =
 					{-putStrLn ("File: " ++ path)-}
 					write hnm path h
 					write mnm path m)
+				putStrLn "Finished"
 
 parseFiles :: [(FilePath, String)] -> IO [(FilePath, D.File)]
 parseFiles = mapM parse
