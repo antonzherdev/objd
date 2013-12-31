@@ -20,9 +20,12 @@ main =
 	let
 		root = "/Users/antonzherdev/dev/trains3d/Trains3D/"
 		
-		debugFile = Nothing --Just "/Users/antonzherdev/dev/debug.txt"
-		fullDebug = False --True
-		debugLinkedText = False
+		debugFile = Nothing 
+		-- debugFile = Just "/Users/antonzherdev/dev/debug.txt"
+		fullDebug = False 
+		--fullDebug = True
+		debugLinkedText = True 
+		--debugLinkedText = False
 	in do 
 		putStrLn $ "Root: " ++ root
 		files <- readOdFiles root 
