@@ -18,7 +18,8 @@ debug = []
 main::IO()
 main = 
 	let
-		root = "/Users/antonzherdev/dev/trains3d/Trains3D/"
+		root = "./"
+		-- root = "/Users/antonzherdev/dev/trains3d/Trains3D/"
 		
 		debugFile = Nothing 
 		-- debugFile = Just "/Users/antonzherdev/dev/debug.txt"

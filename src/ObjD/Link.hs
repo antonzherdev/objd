@@ -260,6 +260,22 @@ isInstanceOfTp env cl target
 	| target == cl = True
 	| otherwise = dataTypeClass env cl `isInstanceOf` dataTypeClass env target
 
+isInstanceOfCheck :: Env -> DataType -> DataType -> Bool
+isInstanceOfCheck env l (TPGenericWrap r)  = isInstanceOfCheck env l r
+isInstanceOfCheck env (TPGenericWrap l) r = isInstanceOfCheck env l r
+isInstanceOfCheck env l@(TPClass TPMType _ _) r = isInstanceOfCheck env (fromJust $ superType l) r
+isInstanceOfCheck env l r@(TPClass TPMType _ _) = isInstanceOfCheck env l (fromJust $ superType r)
+isInstanceOfCheck _ _ TPUnknown{} = True
+isInstanceOfCheck _ _ TPAny = True
+isInstanceOfCheck _ _ TPAnyGeneric = True
+isInstanceOfCheck _ TPNil _  = True
+isInstanceOfCheck env l (TPSelf r)  = dataTypeClass env l `isInstanceOf` r
+isInstanceOfCheck env cl target  
+	| target == cl = True
+	| otherwise =  dataTypeClass env cl `isInstanceOf` dataTypeClass env target
+
+
+
 classInitDef :: Class -> Maybe Def
 classInitDef cl = find (\d -> "init" == defName d && null (defPars d)) $ classDefs cl
 
@@ -823,7 +839,7 @@ dataTypeClassRef env tp = let
 
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
-dataTypeClass _ (TPObject _ c) = Class { _classMods = [ClassModObject], className = className c, _classExtends = extendsNothing, 
+dataTypeClass env (TPObject _ c) = Class { _classMods = [ClassModObject], className = className c, _classExtends = Extends (Just $ baseClassExtends (envIndex env)) [], 
 	_classDefs = allDefsInObject (c, M.empty), _classGenerics = [], _classImports = [],
 	_classFile = fromMaybe (error $ "No class file for class " ++ className c) $ classFile c,
 	_classPackage = classPackage c}
@@ -848,7 +864,7 @@ dataTypeClass env TPChar = classFind (envIndex env) "Char"
 dataTypeClass env TPString = classFind (envIndex env) "String"
 dataTypeClass env TPAny = classFind (envIndex env) "Any"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("Tuple" ++ show (length a))
-dataTypeClass _ f@TPFun{} = Class { _classMods = [], className = "", _classExtends = extendsNothing,
+dataTypeClass env f@TPFun{} = Class { _classMods = [], className = "", _classExtends =  Extends (Just $ baseClassExtends (envIndex env)) [],
 	_classPackage = Package ["core"] Nothing "", _classFile = coreFakeFile, 
 	_classDefs = [applyLambdaDef f], _classGenerics = [], _classImports = []}
 	where
@@ -1718,6 +1734,7 @@ linkCase (D.Case mainExpr items) = do
  - Calling 
  ------------------------------------------------------------------------------------------------------------------------------}
 
+
 exprCall :: Env-> Maybe DataType -> D.Exp -> Exp
 exprCall _ (Just (TPUnknown t)) e = ExpDError t e
 exprCall env (Just _) (D.Call "as" Nothing [tp]) = As $ dataType env tp
@@ -1758,33 +1775,22 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 				resolveDef _ _ c = c
 
 
-		checkedCall = case call'' of
+		{-checkedCall = case call'' of
 			(Call d tp cpars) ->
 				Call d tp (map (checkPar d) cpars)
 			_ -> call''
 			where 
-				isInstanceOfCheck l (TPGenericWrap r)  = l `isInstanceOfCheck` r
-				isInstanceOfCheck (TPGenericWrap l) r = l `isInstanceOfCheck` r
-				isInstanceOfCheck _ TPUnknown{} = True
-				isInstanceOfCheck _ TPAny = True
-				isInstanceOfCheck _ TPAnyGeneric = True
-				isInstanceOfCheck TPNil _  = True
-				isInstanceOfCheck l (TPSelf r)  = dataTypeClass env l `isInstanceOf` r
-				isInstanceOfCheck cl target  
-					| target == cl = True
-					| otherwise =  dataTypeClass env cl `isInstanceOf` dataTypeClass env target
-
 				checkPar _ par@(Def{defType = dtp, defName = dname}, e) = 
 					let tp = (exprDataType e)
-					in if tp `isInstanceOfCheck` dtp then par else (fst par, 
+					in if isInstanceOfCheck env tp dtp then par else (fst par, 
 						ExpLError (show tp ++ " is not instance of " ++ show dtp ++ " in parameter \"" ++ dname ++ "\"") call'')
-
+-}
 		maybeLambdaCall = case pars of
 			Just [] -> case exprDataType call'' of
-				t@(TPFun TPVoid _) -> LambdaCall (Cast t checkedCall)
-				TPGenericWrap t@(TPFun TPVoid _) -> LambdaCall (Cast t checkedCall)
-				_ -> checkedCall
-			_ -> checkedCall
+				t@(TPFun TPVoid _) -> LambdaCall (Cast t call'')
+				TPGenericWrap t@(TPFun TPVoid _) -> LambdaCall (Cast t call'')
+				_ -> call''
+			_ -> call''
 
 		
 
@@ -1943,59 +1949,65 @@ correctCallPar _ _ e = e
  -----------------------------------------------------------------------------------------------------------------------------------------}
 
 implicitConvertsion :: Env -> DataType -> Exp -> Exp
-implicitConvertsion _ (TPMap _ _) (Arr []) = Map []
-implicitConvertsion env (TPMap k v) (Arr exps) = Map $ map tup exps
-	where
-		tup (Tuple [ke, ve]) = (implicitConvertsion env k ke, implicitConvertsion env v ve)
-		tup e = (ExpLError "Not tuple in map" e, ExpLError "Not tuple in map" e)
 implicitConvertsion _ _ Nop = Nop
-implicitConvertsion env dtp ex = let stp = exprDataType ex
-	in 
-		case ex of
-			Braces _ -> maybeAddReturn env dtp ex
-			If cond l r -> If cond (implicitConvertsion env dtp l) (implicitConvertsion env dtp r)
-			_ -> if stp == dtp then ex else conv stp dtp
-	where 
-		conv (TPGenericWrap s) d = conv s d
-		conv s (TPGenericWrap d) = conv s d
-		conv TPFun{} TPFun{} = ex
-		conv _ f@(TPFun _ fdtp) = Lambda (lambdaImplicitParameters f) (maybeAddReturn env fdtp ex) fdtp
-		{-conv TPFun{} _ = LambdaCall ex-}
-		conv TPOption{} TPOption{} = ex
-		conv TPNil (TPOption tp) = None tp
-		conv tp t@(TPOption _) = if isInstanceOfTp env tp t then ex else Opt ex
-		conv _ (TPClass TPMGeneric _ _) = ex
-		conv (TPNumber _ _) TPString = Cast TPString ex
-		conv (TPFloatNumber _ ) TPString = Cast TPString ex
-		conv (TPNumber s1 l1) d@(TPNumber s2 l2) = if s1 /= s2 || l1 /= l2 then Cast d ex else ex
-		conv (TPFloatNumber l1) d@(TPFloatNumber l2) = if l1 /= l2 then Cast d ex else ex
-		conv TPFloatNumber{} d@TPNumber{} = Cast d ex
-		conv TPNumber{} d@TPFloatNumber{} = Cast d ex
-		conv (TPArr _ _) d@(TPEArr _ _) = Cast d ex
-		conv (TPTuple _) (TPTuple dtps) = case ex of
-			Tuple exps -> Tuple $ zipWith (implicitConvertsion env) dtps exps
-			_ -> ex
-		conv (TPArr _ _) (TPArr _ adtp) = case ex of
-			Arr exps -> Arr $ map (implicitConvertsion env adtp) exps
-			_ -> ex
-		conv (TPArr _ _) (TPClass _ [d] Class{className = "PArray"}) = Cast (TPEArr 0 (unwrapGeneric d)) ex
-		conv TPClass{} TPVoidRef = Cast dtp ex
-		conv sc dc@TPClass{} = if isInstanceOfTp env sc dc then ex else classConversion dc sc ex
-		conv _ _ = ex
-
-		classConversion c (TPGenericWrap g) e = classConversion c g e
-		classConversion (TPClass _ _ cls) sc e =
-			maybe e wrapWithApply $
-			listToMaybe $ filter(\d -> 
-					(defName d == "apply") 
-					&& (DefModStatic `elem` defMods d) 
-					&& checkApplyPars (defPars d) ) (classDefs cls)
+implicitConvertsion _ TPVoid expression = expression
+implicitConvertsion env destinationType expression = if isInstanceOfCheck env (exprDataType theResult) destinationType then theResult 
+		else ExpLError ("Could not convert " ++ show (exprDataType theResult) ++ " to " ++ show destinationType) theResult
+	where
+		theResult = implicitConvertsion' destinationType expression
+		implicitConvertsion' (TPMap _ _) (Arr []) = Map []
+		implicitConvertsion' (TPMap k v) (Arr exps) = Map $ map tup exps
 			where
-				checkApplyPars [Def{defType = tp}] = isInstanceOfTp env sc tp
-				checkApplyPars _ = False
-				od = objectDef cls
-				wrapWithApply apply@Def{defPars = [par]} = Dot (Call od (defType od) []) (Call apply dtp [(par, e)])
-		classConversion t sc _ = ExpLError (show t ++ " from " ++ show sc) ex
+				tup (Tuple [ke, ve]) = (implicitConvertsion env k ke, implicitConvertsion env v ve)
+				tup e = (ExpLError "Not tuple in map" e, ExpLError "Not tuple in map" e)
+		implicitConvertsion' _ Nop = Nop
+		implicitConvertsion' dtp ex = let stp = exprDataType ex
+			in 
+				case ex of
+					Braces _ -> maybeAddReturn env dtp ex
+					If cond l r -> If cond (implicitConvertsion env dtp l) (implicitConvertsion env dtp r)
+					_ -> if stp == dtp then ex else conv stp dtp
+			where
+				conv (TPGenericWrap s) d = conv s d
+				conv s (TPGenericWrap d) = conv s d
+				conv TPFun{} TPFun{} = ex
+				conv _ f@(TPFun _ fdtp) = Lambda (lambdaImplicitParameters f) (maybeAddReturn env fdtp ex) fdtp
+				{-conv TPFun{} _ = LambdaCall ex-}
+				conv TPOption{} TPOption{} = ex
+				conv TPNil (TPOption tp) = None tp
+				conv tp t@(TPOption _) = if isInstanceOfTp env tp t then ex else Opt ex
+				conv _ (TPClass TPMGeneric _ _) = ex
+				conv (TPNumber _ _) TPString = Cast TPString ex
+				conv (TPFloatNumber _ ) TPString = Cast TPString ex
+				conv (TPNumber s1 l1) d@(TPNumber s2 l2) = if s1 /= s2 || l1 /= l2 then Cast d ex else ex
+				conv (TPFloatNumber l1) d@(TPFloatNumber l2) = if l1 /= l2 then Cast d ex else ex
+				conv TPFloatNumber{} d@TPNumber{} = Cast d ex
+				conv TPNumber{} d@TPFloatNumber{} = Cast d ex
+				conv (TPArr _ _) d@(TPEArr _ _) = Cast d ex
+				conv (TPTuple _) (TPTuple dtps) = case ex of
+					Tuple exps -> Tuple $ zipWith (implicitConvertsion env) dtps exps
+					_ -> ex
+				conv (TPArr _ _) (TPArr _ adtp) = case ex of
+					Arr exps -> Arr $ map (implicitConvertsion env adtp) exps
+					_ -> ex
+				conv (TPArr _ _) (TPClass _ [d] Class{className = "PArray"}) = Cast (TPEArr 0 (unwrapGeneric d)) ex
+				conv _ TPVoidRef = Cast dtp ex
+				conv sc dc@TPClass{} = if isInstanceOfTp env sc dc then ex else classConversion dc sc ex
+				conv _ _ = ex
+
+				classConversion c (TPGenericWrap g) e = classConversion c g e
+				classConversion (TPClass _ _ cls) sc e =
+					maybe e wrapWithApply $
+					listToMaybe $ filter(\d -> 
+							(defName d == "apply") 
+							&& (DefModStatic `elem` defMods d) 
+							&& checkApplyPars (defPars d) ) (classDefs cls)
+					where
+						checkApplyPars [Def{defType = tp}] = isInstanceOfTp env sc tp
+						checkApplyPars _ = False
+						od = objectDef cls
+						wrapWithApply apply@Def{defPars = [par]} = Dot (Call od (defType od) []) (Call apply dtp [(par, e)])
+				classConversion t sc _ = ExpLError (show t ++ " from " ++ show sc) ex
 
 lambdaImplicitParameters :: DataType -> [(String, DataType)]
 lambdaImplicitParameters (TPFun TPVoid _) = []
