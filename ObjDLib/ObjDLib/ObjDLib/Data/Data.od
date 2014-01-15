@@ -1,0 +1,43 @@
+package core.chain
+
+import core.chain.Memory._
+
+
+class PArray<T>(stride : uint, wrap : (VoidRef, uint) -> T, count : uint, length : uint, bytes : VoidRef, copied : bool) extends Seq<T> {
+    static def apply<T>(stride : uint, wrap : (VoidRef, uint) -> T, count : uint, copyBytes : VoidRef) : PArray<T> = {
+        val len =  count * stride
+        PArray<T>(stride, wrap, count, len, copy(copyBytes, count * stride), true)
+    }
+
+    def iterator : Iterator<T> = PArrayIterator<T>(self)
+
+    def apply(index : uint) : T =
+        if(index >= count) nil
+        else wrap(bytes, index)
+
+    def dealloc {
+        if(copied) free(bytes)
+    }
+
+    def unsafeApply(index : uint) : T = wrap(bytes, index)
+
+    def forRef(each : VoidRef -> void) {
+        var b = bytes
+        var i = 0
+        while(i < count) {
+            each(b)
+            i++
+            b = b + stride
+        }
+    }
+}
+
+class PArrayIterator<T>(array : PArray<T>) extends Iterator<T> {
+    private var i = 0
+    def hasNext : bool = i < array.count
+    def next : T = {
+        val ret = array.unsafeApply(i)
+        i++
+        ret
+    }
+}

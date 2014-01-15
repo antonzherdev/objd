@@ -1,0 +1,29 @@
+package core.chain
+
+class Range(start : int, end : int, step : int) extends Seq<int> {
+    val count : uint =
+        if(step > 0) if(start <= end) (end - start)/step + 1 else 0
+        else if(step < 0) if(start >= end) (end - start)/step + 1 else 0
+        else 1
+    def apply(index : uint) : Int =
+        if(index >= count) throw "Incorrect index"
+        else start + step*index
+    def iterator : Iterator<int> = RangeIterator(start, end, step)
+
+    def set(step : int) : Range = Range(start, end, step)
+    def isEmpty : bool =
+        if(step > 0) start > end
+        else if(step < 0) start < end
+        else false
+    static def apply(i : int) : Range = Range(i, i, 1)
+}
+
+class RangeIterator(start : int, end : int, step : int) extends Iterator<int> {
+    private var i = start
+    def hasNext = (step > 0 && i <= end) || (step < 0 && i >= end)
+    def next : int = {
+        val ret = i
+        i += step
+        ret
+    }
+}

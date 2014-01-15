@@ -1,0 +1,64 @@
+package core.chain
+
+stub class Chain<A> extends Iterable<A> {
+    static pure def chainWith<T>(collection:Traversable<T>) : Chain<T>
+
+    pure def filter(: A -> bool) : Chain<A>
+    pure def map<B>(: A -> B) : Chain<B>
+    pure def flatMap<B>(: A -> Traversable<B>) : Chain<B>
+    pure def filterCast<B>( : ClassType<B>) : Chain<B>
+
+    pure def combinations : Chain<(A, A)>
+    pure def uncombinations<B>(self : Chain<(B, B)>) : Chain<B>
+    pure def neighbors : Chain<(A, A)>
+    pure def neighborsRing : Chain<(A, A)>
+    pure def mul<B>(: Traversable<B>) : Chain<(A,B)>
+
+    pure def group<K>(by : A -> K) : Chain<(K, [A])>
+    pure def group<K, B>(by : A -> K, map : A -> B) : Chain<(K, [B])>
+    pure def group<K, C extends Traversable<K>>(by : A -> K, withBuilder : () -> Builder<A, C>) : Chain<(K, C<A>)>
+    pure def group<B, K, C extends Traversable<K>>(by : A -> K, map : A -> B, withBuilder : () -> Builder<B, C>) : Chain<(K, C<B>)>
+    pure def group<K, V>(by : A -> K, fold : (V, A) -> V, withStart : () -> V) : Chain<(K, V)>
+
+    pure def zip<B>(a: Iterable<B>) : Chain<(A, B)>
+    pure def zip<B, X>(a : Iterable<B>, by : (A, B) -> X) : Chain<X>
+    pure def zip3<B, C>(a: Iterable<B>, b : Iterable<C>) : Chain<(A, B, C)>
+    pure def zip3<B, C, X>(a : Iterable<B>, b : Iterable<C>, by : (A, B, C) -> X) : Chain<X>
+
+    pure def join<K, V1, V2>(self : Chain<(K, V1)>, chain : Iterable<(K, V2)>) : Chain<K, (V1, V2)>
+
+    pure def prepend(: Iterable<A>) : Chain<A>
+    pure def append(: Iterable<A>) : Chain<A>
+    pure def exclude(: Iterable<A>) : Chain<A>
+    pure def intersect(: Iterable<A>) : Chain<A>
+
+    pure def reverse : Chain<A>
+    pure def distinct : Chain<A>
+    pure def sort<B extends Comparable<B>> (self : Chain<B>) : Chain<A>
+    pure def sortDesc<B extends Comparable<B>> (self : Chain<B>) : Chain<A>
+    pure def sort(:(A, A) -> int) : Chain<A>
+    pure def sortBy : SortBuilder<A>
+
+    pure def fold<B>(start : B, by : (B, A) -> B) : B
+    pure def count : uint
+    pure def for(each: A -> void)
+    pure def head : A
+    pure def headOpt : A?
+    pure def top(numbers: int) : Chain<A>
+    pure def randomItem : A?
+    pure def find(where: A -> bool) : A?
+    pure def exists(where: A -> bool) : bool
+    pure def all(confirm: A -> bool) : bool
+    pure def isEmpty : bool
+    pure def gap<B extends Comparable<B>> (self : Chain<B>) : (A, A)?
+    pure def min<B extends Comparable<B>> (self : Chain<B>) : A?
+    pure def max<B extends Comparable<B>> (self : Chain<B>) : A?
+    pure def toStringWith(start : string, delimiter : string, end : string) : string
+    pure def toStringWith(delimiter : string) : string
+
+    pure def toArray : [A]
+    pure def toSet : Set<A>
+    pure def toTreeSet<B extends Comparable<B>>(self : Chain<B>) : TreeSet<A>
+    pure def toMap<K, V>(self : Chain<(K, V)>) : [K : V]
+    pure def charsToString(self : Chain<char>) : string
+}

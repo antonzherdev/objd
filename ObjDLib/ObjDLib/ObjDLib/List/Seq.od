@@ -1,0 +1,116 @@
+package core.chain
+
+import core.math._
+
+trait Seq<T> extends Iterable<T> {
+    def apply(index : uint) : T = {
+        val i = iterator
+        var n = index
+        while(i.hasNext) {
+            if(n == 0) return i.next
+            i.next
+            n--
+        }
+        throw "Incorrect index"
+    }
+
+    def opt(index : uint) : T? =
+        if(index >= count) nil
+        else apply(index)
+
+    def randomItem : T? = {
+        val c = count
+        if(c == 0) nil
+        else if(c == 1) head
+        else apply(UInt.rnd(count - 1))
+    }
+
+    def toSet : Set<T> = convertWith<Set<T>>(HashSetBuilder<T>())
+    def add(item : T) : Seq<T> = {
+        val builder = ArrayBuilder<T>()
+        builder.appendAll(self)
+        builder.append(item)
+        builder.build
+    }
+
+    def add(seq : Seq<T>) : Seq<T> = {
+        val builder = ArrayBuilder<T>()
+        builder.appendAll(self)
+        builder.appendAll(seq)
+        builder.build
+    }
+
+    def sub(item : T) : Seq<T> = {
+        chain.filter(_ != item).toArray
+    }
+
+    def isEqualTo(seq : Seq<T>) : bool = {
+        if(self.count != seq.count) return false
+        val ia = self.iterator
+        val ib = seq.iterator
+        while(ia.hasNext && ib.hasNext) {
+            if(ia.next != ib.next) return false
+        }
+        true
+    }
+
+    def isEmpty : bool = count == 0
+
+    def head : T = apply(0)
+    def headOpt : T? = opt(0)
+    def tail : Seq<T> = {
+        val builder = ArrayBuilder<T>()
+        val i = iterator
+        if(i.hasNext) {
+            i.next
+            while(i.hasNext) {
+                builder.append(i.next)
+            }
+        }
+        builder.build
+    }
+}
+
+trait MutableSeq<T> extends Seq<T> with MutableIterable<T> {
+    def remove(index : uint) {
+        val i = mutableIterator
+        var j = index
+        while(i.hasNext) {
+            i.next
+            if(j == 0) {
+                i.remove
+                break
+            }
+            j--
+        }
+    }
+}
+
+class ArrayBuilder<T> extends Builder<T, Array<T>> {
+    val array = MutableArray<T>()
+
+    def append(item : T) {
+        array.append(item)
+    }
+
+    def build : Array<T> = array
+}
+
+class IndexFunSeq<T>(count : uint, f : uint -> T) extends Seq<T> {
+    def apply(index : uint) : T =
+        if(index >= count) throw "Incorrect index"
+        else f(index)
+
+    def iterator : Iterator<T> = IndexFunSeqIterator<T>(count, f)
+}
+
+class IndexFunSeqIterator<T>(count : uint, f : uint -> T) extends Iterator<T> {
+    var i : uint = 0
+    def hasNext = i < count
+
+    def next : T = {
+        val ret = f(i)
+        i++
+        ret
+    }
+}

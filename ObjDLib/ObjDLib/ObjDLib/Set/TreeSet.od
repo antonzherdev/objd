@@ -1,0 +1,59 @@
+package core.chain
+
+class TreeSet<T>(map : TreeMap<T, Object>) extends Set<T> {
+    def higherThan(item : T) : T? = map.higherKeyThan(item)
+    def lowerThan(item : T) : T? = map.lowerKeyThan(item)
+
+    def count : uint = map.count
+    def iterator = map.keys.iterator
+    def iteratorHigherThan(item : T) = map.keys.iteratorHigherThan(item)
+
+    def head : T = map.firstKey.get
+    def headOpt : T? = map.firstKey
+    def last : T? = map.lastKey
+    def contains(item : T) : bool = map.contains(key = item)
+}
+
+class ImTreeSet<T>(map : TreeMap<T, Object>) extends TreeSet<T>(map)
+
+class TreeSetBuilder<T>(comparator : (T, T) -> int) extends Builder<T, TreeSet<T>> {
+    static def apply<T extends Comparable<T>> = TreeSetBuilder<T>((a : T, b : T) -> a.compare(b))
+    private val set = MTreeSet<T>(comparator)
+    def append(item : T) {
+        set.append(item)
+    }
+    def build : TreeSet<T> = set
+}
+
+
+class MTreeSet<T>(mmap : MTreeMap<T, Object>) extends TreeSet<T>(mmap) with MutableSet<T> {
+    static def apply<T>(comparator : (T, T) -> int) : MTreeSet<T> = {
+        MTreeSet<T>(MTreeMap<T, Object>(comparator))
+    }
+
+    static def apply<T> = MTreeSet<T>(MTreeMap<T, Object>())
+    private static val obj = NSObject()
+    def mutableIterator = mmap.keys.mutableIterator
+//    def between(a : T, b : T) : [T]
+
+    def append(item : T) {
+        mmap.set(item, obj)
+    }
+
+    def remove(item : T) : bool = mmap.removeFor(key = item).isDefined
+
+
+    def clear {
+        mmap.clear
+    }
+
+    def addAll(objects : Traversable<T>) {
+        objects.for(append(item = _))
+    }
+
+    def reorder : MTreeSet<T> = {
+        val ret = MTreeSet<T>(MTreeMap<T, Object>(mmap.comparator))
+        ret.addAll(self)
+        ret
+    }
+}

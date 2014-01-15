@@ -1,0 +1,18 @@
+package core.chain
+
+stub struct VoidRef {
+    static def apply(i : int) : VoidRef
+
+    def add(shift : int) : VoidRef
+}
+
+stub object Memory {
+    def sizeof(bytes : VoidRef) : uint
+    def copy(bytes : VoidRef, size : uint) : VoidRef
+    def memcpy(ref : VoidRef, bytes : VoidRef, size : uint)
+    def malloc(size : uint) : VoidRef
+    def calloc(num : uint, size : uint) : VoidRef
+    def free(bytes : VoidRef) : void
+    def setui4(ref : VoidRef, value : uint4)
+    def setf4(ref : VoidRef, value : float4)
+}

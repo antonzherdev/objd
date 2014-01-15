@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="CIDR_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$/.idea">
+      <sourceFolder url="file://$MODULE_DIR$/.idea" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/ObjDLib">
+      <sourceFolder url="file://$MODULE_DIR$/ObjDLib" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/ObjDLib.xcworkspace">
+      <sourceFolder url="file://$MODULE_DIR$/ObjDLib.xcworkspace" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/ObjDLib/ObjDLib.xcodeproj">
+      <sourceFolder url="file://$MODULE_DIR$/ObjDLib/ObjDLib.xcodeproj" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
+

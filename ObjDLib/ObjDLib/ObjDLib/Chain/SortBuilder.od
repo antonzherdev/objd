@@ -1,0 +1,29 @@
+package core.chain
+
+class SortBuilder<A>(chain : Chain<A>) {
+    private val functions = MutableArray<(A, A) -> int>()
+
+    def asc<B extends Comparable<B>>(by : A -> B) : SortBuilder<A> = {
+        functions.append((x : A, y : A) -> by(x).compare(by(y)))
+        self
+    }
+    def desc<B extends Comparable<B>>(by : A -> B) : SortBuilder<A> = {
+        functions.append((x : A, y : A) -> by(y).compare(by(x)))
+        self
+    }
+    def and(f : (A, A) -> int) : SortBuilder<A> = {
+        functions.append(f)
+        self
+    }
+    def endSort : Chain<A> = {
+        chain.sort((x, y) -> {
+            var ret = 0
+            val i = functions.iterator
+            while(ret == 0 && i.hasNext) {
+                val f = i.next
+                ret = f(x, y)
+            }
+            ret
+        })
+    }
+}

@@ -1,0 +1,126 @@
+package core.lang
+
+stub class Object {
+    def is<T> : bool
+    def as<T> : T?
+    def is<T>(type : Type<T>) : bool
+    def as<T>(type : Type<T>) : T?
+    def cast<T> : T
+    def description : string
+    def hash : uint
+    static def type : Type<self>
+    static def class : Class
+}
+
+
+
+stub trait Number {
+}
+
+stub trait Comparable<T> {
+    def compare(to : T) : int
+}
+
+stub struct Void
+
+stub struct Byte extends Comparable<byte> with Number {
+    def compare(to : byte) : byte
+    def range : Range
+    def to(: byte) : Range
+    def between(from : byte, to : byte) : bool
+    def abs : byte
+}
+
+
+stub struct Int extends Comparable<int>  with Number {
+    def compare(to : int) : int
+    def range : Range
+    def to(: int) : Range
+    def between( : int, : int) : bool
+    def abs : int
+}
+
+stub struct Int4 extends Comparable<int4> with Number {
+    def compare(to : int4) : int4
+    def range : Range
+    def to(: int4) : Range
+    def between( : int4, : int4) : bool
+    def abs : int4
+}
+
+
+stub struct UInt extends Comparable<uint>  with Number {
+    def compare(to : uint) : int
+    def range : Range
+    def to(: uint) : Range
+    def between( : uint, : uint) : bool
+    static def rnd : uint
+    static def rnd(max : uint) : uint
+
+    def max(b : uint) : uint
+    def min(b : uint) : uint
+}
+
+stub struct UInt4 extends Comparable<uint4> with Number {
+    def compare(to : uint4) : int
+    def range : Range
+    def to(: uint4) : Range
+    def between( : uint4, : uint4) : bool
+}
+
+stub struct Float extends Comparable<float> with Number {
+    static val max : float
+    static val min : float
+
+    def compare(to : float) : int
+    def between( : float, : float) : bool
+    def abs : float
+
+    def noise(percents : float) : float
+    static def rnd : float
+    static def rnd(min : float, max : float) : float
+
+    def max(b : float) : float
+    def min(b : float) : float
+    def round : int
+    def fraction : float
+}
+
+stub struct Float4 extends Comparable<float4> with Number {
+    static val max : float4
+    static val min : float4
+
+    def compare(to : float4) : int
+    def between( : float4, : float4) : bool
+    def abs : float4
+    def noise(percents : float4) : float4
+
+    def max(b : float4) : float4
+    def min(b : float4) : float4
+    def round : int
+
+    static def rnd : float4
+    static def rnd(min : float4, max : float4) : float4
+    def fraction : float4
+}
+
+stub struct Float8 extends Comparable<float8> with Number {
+    static val max : float8
+    static val min : float8
+
+    def compare(to : float8) : int
+    def between( : float8, : float8) : bool
+    def abs : float8
+    def noise(percents : float8) : float8
+
+    def max(b : float8) : float8
+    def min(b : float8) : float8
+    def round : int
+
+    static def rnd : float8
+    static def rnd(min : float8, max : float8) : float8
+    def fraction : float8
+}
+
+
+

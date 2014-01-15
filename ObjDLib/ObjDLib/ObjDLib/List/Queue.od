@@ -1,0 +1,47 @@
+package core.chain
+
+class Queue<T>(in : List<T>, out : List<T>) extends Seq<T> {
+    static def apply<T> : Queue<T> = empty
+    private static val empty : Queue<any> = Queue<any>(List<any>(), List<any>())
+
+    def iterator : Iterator<T> = QueueIterator<T>(in, out)
+    def isEmpty = in.isEmpty && out.isEmpty
+    def count = in.count + out.count
+    def apply(index : uint) : T =
+        if(index < out.count) out(index)
+        else if(index < out.count + in.count) in(in.count - index + out.count)
+        else throw "Incorrect index=$index"
+
+    def enqueue(item : T) : Queue<T> =
+        if(isEmpty) Queue<T>(List<T>(), List(item))
+        else Queue<T>(List(item, in), out)
+
+    def dequeue : (T?, Queue<T>) =
+        if(!out.isEmpty) (out.headOpt, Queue<T>(in, out.tail))
+        else if(in.isEmpty) (Option.none<T>, self)
+        else {
+            val rev = in.reverse
+            (rev.headOpt, Queue<T>(List<T>(), rev.tail))
+        }
+}
+
+class QueueIterator<T>(in : List<T>, out : List<T>) extends Iterator<T> {
+    private var i = in.iterator
+    private var isIn = true
+    def hasNext =
+        if(i.hasNext) true
+        else if(isIn) {
+            isIn = false
+            i = out.reverse.iterator
+            i.hasNext
+        }
+        else false
+
+    def next : T = {
+        if(!i.hasNext && isIn) {
+            isIn = false
+            i = out.reverse.iterator
+        }
+        i.next
+    }
+}

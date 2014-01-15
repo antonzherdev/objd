@@ -1,0 +1,9 @@
+package core.lang
+
+stub class Enum(ordinal : uint, name : string) {
+    def description : string = name
+
+    def hash : uint = ordinal
+
+    static def values : [self]
+}

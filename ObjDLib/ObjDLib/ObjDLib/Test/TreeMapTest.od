@@ -1,0 +1,28 @@
+package core.chain
+
+import com.antonzherdev.test._
+
+class TreeMapTest extends TestCase {
+    def testMain {
+        val map = MTreeMap<int, string>()
+        assertEquals(0, map.count)
+        assertTrue(map.opt(0).isEmpty)
+
+        map.set(0, "test")
+        assertEquals("test", map[0])
+
+        val tests : [int] = [-10, -20, -30, 10, 20, -15, 20, 0, 11, 13, -18]
+        tests.for(i -> map.set(i, "test" + i))
+        assertEquals(tests.chain.distinct.count, map.count)
+        tests.chain.distinct.for(i -> assertEquals("test" + i, map[i]))
+
+        assertEquals([-30, -20, -18, -15, -10, 0, 10, 11, 13, 20], map.keys.chain.toArray)
+
+        tests.chain.distinct.for(i -> {
+            assertEquals("test" + i, map[i])
+            map.removeFor(key = i)
+            assertTrue(map.opt(i).isEmpty)
+        })
+        assertEquals(0, map.count)
+    }
+}

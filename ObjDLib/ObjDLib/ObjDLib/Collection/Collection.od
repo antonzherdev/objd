@@ -1,0 +1,167 @@
+package core.chain
+
+trait Iterator<T> {
+   def hasNext : bool
+   def next : T
+}
+
+trait MutableIterator<T> extends Iterator<T> {
+    def remove
+}
+
+trait Builder<T, C extends Traversable<T>> {
+    def append(item : T)
+    def build : C
+    def appendAll(items : Traversable<T>) {
+        items.for(append(_))
+    }
+}
+
+
+trait Traversable<T> {
+    def for(each : T -> void) {
+        go(item -> {
+            each(item)
+            true
+        })
+    }
+
+    def go(on : T -> bool) : bool
+
+    def chain : Chain<T> = {
+        Chain.chainWith<T>(self)
+    }
+
+    def find(where : T -> bool) : T? = {
+        var ret : T? = nil
+        go{x ->
+            if(where(x)) {
+                ret = x
+                false
+            } else true
+        }
+        ret
+    }
+
+    def exists(where : T -> bool) : bool = {
+        var ret = false
+        go{x ->
+            if(where(x)) {
+                ret = true
+                false
+            } else true
+        }
+        ret
+    }
+
+    def all(confirm : T -> bool) : bool = {
+        var ret = true
+        go{x ->
+            if(!confirm(x)) {
+                ret = false
+                false
+            } else true
+        }
+        ret
+    }
+
+    def head : T = {
+        var ret : T
+        go{on ->
+            ret = on
+            false
+        }
+        if(ret == nil) throw "Traversable is empty"
+        ret
+    }
+
+    def headOpt : T? = {
+        var ret : T
+        go{on ->
+            ret = on
+            false
+        }
+        ret
+    }
+
+    def convertWith<C extends Traversable<T>>(builder : Builder<T, C>) : C = {
+        for(x -> builder.append(x))
+        builder.build
+    }
+}
+
+trait MutableTraversable<T> extends Traversable<T> {
+    def append(item : T)
+    def remove(item : T)
+    def clear
+}
+
+trait Iterable<T> extends Traversable<T> {
+    pure def count : uint = {
+        val i = iterator
+        var n : uint = 0
+        while(i.hasNext) {
+            i.next
+            n++
+        }
+        n
+    }
+    pure def iterator : Iterator<T>
+
+    pure def head : T = iterator.next
+    pure def headOpt : T? = if(isEmpty) nil else head
+    pure def isEmpty : bool = !iterator.hasNext
+
+    pure def chain : Chain<T> = {
+        Chain.chainWith<T>(self)
+    }
+    pure def for(each : T -> void) {
+        val i = iterator
+        while(i.hasNext) each(i.next)
+    }
+    pure def go(on : T -> bool) : bool = {
+        val i = iterator
+        while(i.hasNext) if(!on(i.next)) return false
+        true
+    }
+
+    def contains(item : T) : bool = {
+        val i = iterator
+        while(i.hasNext) if(i.next == i) return true
+        false
+    }
+
+    def description : string = {
+        chain.toStringWith(start = "[", delimiter = ", ", end = "]")
+    }
+
+    def hash : uint = {
+        var ret : uint = 13
+        val i = iterator
+        while(i.hasNext) {
+            ret = ret*31 + i.next.hash
+        }
+        ret
+    }
+}
+
+trait MutableIterable<T> extends Iterable<T> with MutableTraversable<T> {
+    def mutableIterator : MutableIterator<T>
+
+    def remove(item : T) {
+        val i = mutableIterator
+        while(i.hasNext) {
+            if(i.next == item) i.remove
+        }
+    }
+}
+
+class IterableF<T>(iteratorF : () -> Iterator<T>) extends Iterable<T> {
+    def iterator = iteratorF()
+}
+
+class EmptyIterator<T> extends Iterator<T> {
+    static val instance = EmptyIterator<any>()
+    def hasNext : bool = false
+    def next : T = throw "Iterator is empty"
+}

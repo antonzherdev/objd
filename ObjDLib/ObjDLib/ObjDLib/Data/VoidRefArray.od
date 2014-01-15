@@ -1,0 +1,20 @@
+package core.chain
+
+import core.chain.Memory._
+
+stub struct VoidRefArray(length : uint, bytes : VoidRef)
+{
+    static def apply(length : uint) : VoidRefArray = VoidRefArray(length, calloc(length, 1))
+    static def apply(tp: PType<_>, count : uint) : VoidRefArray = VoidRefArray(tp.size * count)
+
+    def write(tp : any, item : any) : VoidRefArray
+
+    def write(uInt4 : uint4) :VoidRefArray
+
+    def free {
+        free(bytes)
+    }
+
+    def add(bytes : uint) : VoidRefArray
+    def sub(bytes : uint) : VoidRefArray
+}

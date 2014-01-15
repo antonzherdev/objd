@@ -1,0 +1,14 @@
+package core.os
+
+stub class Bundle {
+    static def fileNameFor(resource : string) : string
+    static def readToString(resource : string) : string
+}
+
+stub class Directory {
+    static def sandbox : string
+}
+
+stub class Locale {
+    static def preferredLanguages : [string]
+}

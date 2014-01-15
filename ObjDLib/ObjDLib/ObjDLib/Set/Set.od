@@ -1,0 +1,14 @@
+package core.chain
+
+trait Set<T> extends Iterable<T> {}
+
+trait MutableSet<T> extends Set<T> with MutableIterable<T> {}
+
+class HashSetBuilder<T> extends Builder<T, HashSet<T>> {
+    val set = MutableHashSet<T>()
+
+    def append(item : T) {
+        set.append(item)
+    }
+    def build : HashSet<T> = set
+}

@@ -1,0 +1,44 @@
+package core.chain
+
+class Tuple<A, B>(a : A, b : B) extends Comparable<Tuple<A, B>> {
+    def compare<AC extends Comparable<A>, BC extends Comparable<B>>(to : Tuple<AC, BC>) : int = {
+        val r = to.a.compare(a)
+        if(r == 0) -to.b.compare(b) else -r
+    }
+
+    def description = "($a, $b)"
+    static def unapply<A, B>(tuple : Tuple<A, B>) : Tuple<A, B>? = tuple
+}
+
+class Tuple3<A, B, C>(a : A, b : B, c : C) extends Comparable<Tuple3<A, B, C>> {
+    def compare<AC extends Comparable<A>, BC extends Comparable<B>, CC extends Comparable<C>>(to : Tuple3<AC, BC, CC>) : int = {
+        var r = to.a.compare(a)
+        if(r == 0) {
+            r = to.b.compare(b)
+            if(r == 0) -to.c.compare(c) else -r
+        } else -r
+    }
+
+    def description = "($a, $b, $c)"
+    static def unapply<A, B, C>(tuple : Tuple3<A, B, C>) : Tuple3<A, B, C>? = tuple
+}
+
+class Tuple4<A, B, C, D>(a : A, b : B, c : C, d : D) extends Comparable<Tuple3<A, B, C, D>> {
+    def compare<AC extends Comparable<A>
+        , BC extends Comparable<B>
+        , CC extends Comparable<C>
+        , DC extends Comparable<D>
+    >(to : Tuple4<AC, BC, CC, DC>) : int = {
+        var r = to.a.compare(a)
+        if(r == 0) {
+            r = to.b.compare(b)
+            if(r == 0) {
+                r = to.c.compare(c)
+                if(r == 0) -to.d.compare(d) else -r
+            } else -r
+        } else -r
+    }
+
+    def description = "($a, $b, $c, $d)"
+    static def unapply<A, B, C, D>(tuple : Tuple4<A, B, C, D>) : Tuple3<A, B, C, D>? = tuple
+}

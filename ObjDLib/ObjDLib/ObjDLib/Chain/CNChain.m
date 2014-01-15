@@ -1,0 +1,454 @@
+#import "CNChain.h"
+#import "CNSourceLink.h"
+#import "CNFilterLink.h"
+#import "CNMapLink.h"
+#import "CNAppendLink.h"
+#import "CNPrependLink.h"
+#import "CNMulLink.h"
+#import "CNReverseLink.h"
+#import "CNOption.h"
+#import "CNFlatMapLink.h"
+#import "CNDistinctLink.h"
+#import "CNTreeMap.h"
+#import "CNNeighboursLink.h"
+#import "CNCombinationsLink.h"
+#import "CNUncombinationsLink.h"
+#import "CNGroupByLink.h"
+#import "CNSortLink.h"
+#import "CNSortBuilder.h"
+#import "CNZipLink.h"
+#import "CNTreeSet.h"
+#import "CNTopLink.h"
+
+
+@implementation CNChain {
+    id<CNChainLink> _link;
+    CNChain* _previous;
+}
+
+- (id)initWithLink:(id <CNChainLink>)link previous:(CNChain *)previous {
+    self = [super init];
+    if (self) {
+        _link = link;
+        _previous = previous;
+    }
+
+    return self;
+}
+
++ (id)chainWithLink:(id <CNChainLink>)link previous:(CNChain *)previous {
+    return [[self alloc] initWithLink:link previous:previous];
+}
+
+- (CNYield *)buildYield:(CNYield *)yield {
+    if(_previous == nil ) return [_link buildYield:yield];
+    return [_previous buildYield:[_link buildYield:yield]];
+}
+
+
++ (CNChain*)chainWithCollection:(id)collection {
+    return [CNChain chainWithLink:[CNSourceLink linkWithCollection:collection] previous:nil];
+}
+
+- (NSArray *)toArray {
+    __block id ret;
+    CNYield *yield = [CNYield alloc];
+    __weak CNYield * wy = yield;
+    yield = [yield initWithBegin:^CNYieldResult(NSUInteger size) {
+        ret = [NSMutableArray arrayWithCapacity:size];
+        return cnYieldContinue;
+    } yield:^CNYieldResult(id item) {
+        [ret addObject:item];
+        return cnYieldContinue;
+    } end:nil all:^CNYieldResult(id collection) {
+        if([collection isKindOfClass:[NSArray class]]) {
+            ret = collection;
+            return cnYieldContinue;
+        }
+        return [CNYield yieldAll:collection byItemsTo:wy];
+    }];
+    [self apply:yield];
+    return ret;
+}
+
+- (NSSet *)toSet {
+    __block id ret;
+    CNYield *yield = [CNYield alloc];
+    __weak CNYield * wy = yield;
+    yield = [yield initWithBegin:^CNYieldResult(NSUInteger size) {
+        ret = [NSMutableSet setWithCapacity:size];
+        return cnYieldContinue;
+    } yield:^CNYieldResult(id item) {
+        [ret addObject:item];
+        return cnYieldContinue;
+    } end:nil all:^CNYieldResult(id collection) {
+        if ([collection isKindOfClass:[NSSet class]]) {
+            ret = collection;
+            return cnYieldContinue;
+        }
+        return [CNYield yieldAll:collection byItemsTo:wy];
+    }];
+    [self apply:yield];
+    return ret;
+}
+
+- (id)foldStart:(id)start by:(cnF2)by {
+    __block id ret = start;
+    CNYield *yield = [CNYield alloc];
+    yield = [yield initWithBegin:nil yield:^CNYieldResult(id item) {
+        ret = by(ret, item);
+        return cnYieldContinue;
+    } end:nil all:nil];
+    [self apply:yield];
+    return ret;
+}
+
+- (id )findWhere:(cnPredicate)predicate {
+    __block id ret = [CNOption none];
+    CNYield *yield = [CNYield alloc];
+    yield = [yield initWithBegin:nil yield:^CNYieldResult(id item) {
+        if(predicate(item)) {
+            ret = [CNSome someWithValue:item];
+            return cnYieldBreak;
+        }
+        return cnYieldContinue;
+    } end:nil all:nil];
+    [self apply:yield];
+    return ret;
+}
+
+
+- (CNChain *)filter:(cnPredicate)predicate {
+    return [self link:[CNFilterLink linkWithPredicate:predicate selectivity:0]];
+}
+
+- (CNChain *)filter:(cnPredicate)predicate selectivity:(double)selectivity {
+    return [self link:[CNFilterLink linkWithPredicate:predicate selectivity:selectivity]];
+}
+
+- (CNChain *)filterCast:(ODType *)type {
+    return [self filter:^BOOL(id x) {
+        return [x isKindOfClass:[type cls]];
+    }];
+}
+
+- (CNChain *)map:(cnF)f {
+    return [self link:[CNMapLink linkWithF:f]];
+}
+
+- (CNChain *)flatMap:(cnF)f {
+    return [self link:[CNFlatMapLink linkWithF:f factor:2]];
+}
+
+- (CNChain *)flatMap:(cnF)f factor:(double)factor {
+    return [self link:[CNFlatMapLink linkWithF:f factor:factor]];
+}
+
+
+- (CNChain *)neighbors {
+    return [self link:[CNNeighboursLink linkWithRing:NO]];
+}
+
+- (CNChain *)neighborsRing {
+    return [self link:[CNNeighboursLink linkWithRing:YES]];
+}
+
+
+- (CNChain *)combinations {
+    return [self link:[CNCombinationsLink link]];
+}
+
+- (CNChain *)uncombinations {
+    return [self link:[CNUncombinationsLink link]];
+}
+
+- (CNChain *)groupBy:(cnF)by fold:(cnF2)fold withStart:(cnF0)start {
+    return [self link:[CNGroupByLink linkWithBy:by fold:fold withStart:start factor:0.5 mutableMode:NO mapAfter:nil]];
+}
+
+- (CNChain *)groupBy:(cnF)by withBuilder:(cnF0)builder {
+    return [self link:[CNGroupByLink linkWithBy:by fold:^id(id r, id x) {
+        [r appendItem:x];
+        return r;
+    } withStart:builder factor:0.5 mutableMode:YES mapAfter:^id(id x) {
+        return [x build];
+    }]];
+}
+
+- (CNChain *)groupBy:(cnF)by map:(cnF)f withBuilder:(cnF0)builder {
+    return [self link:[CNGroupByLink linkWithBy:by fold:^id(id r, id x) {
+        [r appendItem:f(x)];
+        return r;
+    } withStart:builder factor:0.5 mutableMode:YES mapAfter:^id(id x) {
+        return [x build];
+    }]];
+}
+
+
+- (CNChain *)groupBy:(cnF)by map:(cnF)f {
+    return [self groupBy:by map: f withBuilder:^id {
+        return [CNArrayBuilder arrayBuilder];
+    }];
+}
+
+- (CNChain *)groupBy:(cnF)by {
+    return [self groupBy:by withBuilder:^id {
+        return [CNArrayBuilder arrayBuilder];
+    }];
+}
+
+- (CNChain *)zipA:(id <CNIterable>)a {
+    return [self zipA:a by:^id(id x, id y) {
+        return tuple(x, y);
+    }];
+}
+
+
+- (CNChain *)zipA:(id <CNIterable>)a by:(id (^)(id, id))by {
+    return [self link:[CNZipLink linkWithA:a by:by]];
+}
+
+- (CNChain *)zip3A:(id <CNIterable>)a b:(id <CNIterable>)b {
+    return [self zip3A:a b:b by:^id(id x, id y, id z) {
+        return tuple3(x, y, z);
+    }];
+}
+
+
+- (CNChain *)zip3A:(id <CNIterable>)a b:(id <CNIterable>)b by:(cnF3)by {
+    return [self link:[CNZip3Link linkWithA:a b:b by:by]];
+}
+
+- (CNChain *)append:(id)collection {
+    return [self link:[CNAppendLink linkWithCollection:collection]];
+}
+
+- (CNChain *)prepend:(id)collection {
+    return [self link:[CNPrependLink linkWithCollection:collection]];
+}
+
+- (CNChain *)exclude:(id)collection {
+    id col = cnResolveCollection(collection);
+    return [self filter:^BOOL(id x) {
+        return ![col containsObject:x];
+    }];
+}
+
+- (CNChain *)intersect:(id)collection {
+    id col = cnResolveCollection(collection);
+    return [self filter:^BOOL(id x) {
+        return [col containsObject:x];
+    }];
+}
+
+
+- (CNChain *)mul:(id)collection {
+    return [self link:[CNMulLink linkWithCollection:collection]];
+}
+
+- (CNChain *)reverse {
+    return [self link:[CNReverseLink link]];
+}
+
+- (CNChain *)sort {
+    return [self sort:^NSInteger(id x, id y) {
+        return [x compareTo:y];
+    }];
+}
+
+- (CNChain *)sort:(cnCompare)comparator {
+    return [self link:[CNSortLink linkWithComparator:comparator]];
+}
+
+- (CNChain *)sortDesc {
+    return [self sort:^NSInteger(id x, id y) {
+        return -[x compareTo:y];
+    }];
+}
+
+- (void)forEach:(cnP)p {
+    [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
+        p(item);
+        return cnYieldContinue;
+    } end:nil all:nil]];
+}
+
+- (BOOL)goOn:(BOOL(^)(id))on {
+    return [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
+        return on(item) ? cnYieldContinue : cnYieldBreak;
+    } end:nil all:nil]] == cnYieldContinue;
+}
+
+- (CNChain *)chain {
+    return self;
+}
+
+
+- (id)head {
+    __block id ret = nil;
+    [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
+        ret = item;
+        return cnYieldBreak;
+    } end:nil all:nil]];
+    if(ret == nil) @throw @"Chain is empty";
+    return ret;
+}
+
+- (id)headOpt {
+    __block id ret = [CNOption none];
+    [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
+        ret = [CNSome someWithValue:item];
+        return cnYieldBreak;
+    } end:nil all:nil]];
+    return ret;
+}
+
+- (id)convertWithBuilder:(id <CNBuilder>)builder {
+    [self forEach:^void(id x) {
+        [builder appendItem:x];
+    }];
+    return [builder build];
+}
+
+- (id)randomItem {
+    NSArray *array = [self toArray];
+    if(array.count == 0) {
+        return [CNOption none];
+    }
+    NSUInteger n = oduIntRndMax(array.count - 1);
+    return [CNSome someWithValue:[array objectAtIndex:n]];
+}
+
+- (NSUInteger)count {
+    __block NSUInteger ret = 0;
+    [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
+        ret++;
+        return cnYieldContinue;
+    } end:nil all:nil]];
+    return ret;
+}
+
+
+- (CNYieldResult)apply:(CNYield *)yield {
+    CNYield *y = [self buildYield:yield];
+    CNYieldResult result = [y beginYieldWithSize:0];
+    return [y endYieldWithResult:result];
+}
+
+- (CNChain*)link:(id <CNChainLink>)link {
+    return [CNChain chainWithLink:link previous:_link == nil ? nil : self];
+}
+
+- (id)min {
+    __block id min = nil;
+    [self forEach:^(id x) {
+        if(min == nil || [x compareTo:min] < 0 ) min = x;
+    }];
+    return [CNOption applyValue:min];
+}
+
+- (id)max {
+    __block id max = nil;
+    [self forEach:^(id x) {
+        if(max == nil || [x compareTo:max] > 0 ) max = x;
+    }];
+    return [CNOption applyValue:max];
+}
+
+- (NSDictionary *)toMap {
+    return [self toMutableMap];
+}
+
+- (NSMutableDictionary *)toMutableMap {
+    __block NSMutableDictionary* ret;
+    CNYield *yield = [CNYield alloc];
+    yield = [yield initWithBegin:^CNYieldResult(NSUInteger size) {
+        ret = [NSMutableDictionary dictionaryWithCapacity:size];
+        return cnYieldContinue;
+    } yield:^CNYieldResult(CNTuple* item) {
+        [ret setObject:item.b forKey:item.a];
+        return cnYieldContinue;
+    } end:nil all:nil];
+    [self apply:yield];
+    return ret;
+}
+
+- (CNChain *)distinct {
+    return [self link:[CNDistinctLink linkWithSelectivity:1.0]];
+}
+
+- (CNChain *)distinctWithSelectivity:(double)selectivity {
+    return [self link:[CNDistinctLink linkWithSelectivity:selectivity]];
+}
+
+- (CNSortBuilder *)sortBy {
+    return [CNSortBuilder sortBuilderWithChain:self];
+}
+
+- (NSString *)toStringWithDelimiter:(NSString *)delimiter {
+    return [self toStringWithStart:@"" delimiter:delimiter end:@""];
+}
+
+
+- (NSString *)toStringWithStart:(NSString *)start delimiter:(NSString *)delimiter end:(NSString *)end {
+    NSMutableString * s = [NSMutableString stringWithString:start];
+    __block BOOL first = YES;
+    [self forEach:^(id x) {
+        if(first) first = NO;
+        else [s appendString:delimiter];
+
+        [s appendFormat:@"%@", x];
+    }];
+    [s appendString:end];
+    return s;
+}
+
+- (NSString *)charsToString {
+    NSMutableString * s = [NSMutableString string];
+    [self forEach:^(id x) {
+        [s appendFormat:@"%C", [x unsignedShortValue] ];
+    }];
+    return s;
+}
+
+- (BOOL)existsWhere:(BOOL (^)(id))f {
+    __block BOOL ret = NO;
+    CNYield *yield = [CNYield alloc];
+    yield = [yield initWithBegin:nil yield:^CNYieldResult(id item) {
+        if(f(item)) {
+            ret = YES;
+            return cnYieldBreak;
+        }
+        return cnYieldContinue;
+    } end:nil all:nil];
+    [self apply:yield];
+    return ret;
+}
+
+- (BOOL)allConfirm:(BOOL (^)(id))f {
+    __block BOOL ret = YES;
+    CNYield *yield = [CNYield alloc];
+    yield = [yield initWithBegin:nil yield:^CNYieldResult(id item) {
+        if(!f(item)) {
+            ret = NO;
+            return cnYieldBreak;
+        }
+        return cnYieldContinue;
+    } end:nil all:nil];
+    [self apply:yield];
+    return ret;
+}
+
+- (CNTreeSet *)toTreeSet {
+    return [self convertWithBuilder:[CNTreeSetBuilder apply]];
+}
+
+- (CNChain *)topNumbers:(NSUInteger)numbers {
+    return [self link:[CNTopLink linkWithNumbers:numbers]];
+}
+@end
+
+id cnResolveCollection(id collection) {
+    if([collection isKindOfClass:[CNChain class]]) return [collection toArray];
+    return collection;
+}

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>EF7837B9-F963-4E47-9D1E-3BF6C30AB525</string>
+	<key>IDESourceControlProjectName</key>
+	<string>ObjDLib</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>DE09CCD4-D919-4231-A1CB-651F3B7C189A</key>
+		<string>https://github.com/antonzherdev/objd.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>ObjDLib/ObjDLib.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>DE09CCD4-D919-4231-A1CB-651F3B7C189A</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/antonzherdev/objd.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>DE09CCD4-D919-4231-A1CB-651F3B7C189A</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>DE09CCD4-D919-4231-A1CB-651F3B7C189A</string>
+			<key>IDESourceControlWCCName</key>
+			<string>objd</string>
+		</dict>
+	</array>
+</dict>
+</plist>

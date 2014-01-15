@@ -1,0 +1,21 @@
+package core.lang
+
+
+stub struct Class{}
+
+stub class Type<T> {
+    def cls : Class
+    def name : string
+    def description = name + ".type"
+
+    def hash : uint = self.cast<uint>
+    def isEqualTo(other : Type<T>) = self == other
+}
+
+stub class ClassType<T>(cls : Class) extends Type<T> {
+    def name : string = NSGeneric.NSStringFromClass(cls)
+}
+
+stub class PType<T>(cls : Class, name : string, size : uint, wrap : (VoidRef, uint) -> T) extends Type<T>
+
+

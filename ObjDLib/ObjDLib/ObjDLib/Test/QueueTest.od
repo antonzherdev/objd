@@ -1,0 +1,32 @@
+package core.chain
+
+import com.antonzherdev.test._
+
+class QueueTest extends TestCase {
+    def testDeque {
+        var q = Queue<int>()
+        assertTrue(q.isEmpty)
+        assertEquals(0, q.count)
+
+        q = q.enqueue(1)
+        assertTrue(!q.isEmpty)
+        assertEquals(1, q.count)
+        q = q.enqueue(2)
+        assertEquals(2, q.count)
+        q = q.enqueue(3)
+        assertEquals(3, q.count)
+
+        var p = q.dequeue
+        q = p.b
+        assertEquals(1, p.a.get)
+        assertEquals(2, q.count)
+        p = q.dequeue
+        q = p.b
+        assertEquals(2, p.a.get)
+        assertEquals(1, q.count)
+        p = q.dequeue
+        q = p.b
+        assertEquals(3, p.a.get)
+        assertEquals(0, q.count)
+    }
+}
