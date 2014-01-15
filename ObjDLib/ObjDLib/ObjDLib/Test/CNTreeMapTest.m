@@ -30,15 +30,15 @@ static ODClassType* _CNTreeMapTest_type;
     [self assertEqualsA:@"test" b:[map applyKey:@0]];
     id<CNSeq> tests = (@[@-10, @-20, @-30, @10, @20, @-15, @20, @0, @11, @13, @-18]);
     [tests forEach:^void(id i) {
-        [map setKey:i value:[@"test" stringByAppendingFormat:@"%ld", (long) unumi(i)]];
+        [map setKey:i value:[@"test" stringByAppendingFormat:@"%ld", unumi(i)]];
     }];
     [self assertEqualsA:numui([[[tests chain] distinct] count]) b:numui([map count])];
     [[[tests chain] distinct] forEach:^void(id i) {
-        [self assertEqualsA:[@"test" stringByAppendingFormat:@"%ld", (long) unumi(i)] b:[map applyKey:i]];
+        [self assertEqualsA:[@"test" stringByAppendingFormat:@"%ld", unumi(i)] b:[map applyKey:i]];
     }];
     [self assertEqualsA:(@[@-30, @-20, @-18, @-15, @-10, @0, @10, @11, @13, @20]) b:[[map.keys chain] toArray]];
     [[[tests chain] distinct] forEach:^void(id i) {
-        [self assertEqualsA:[@"test" stringByAppendingFormat:@"%ld", (long) unumi(i)] b:[map applyKey:i]];
+        [self assertEqualsA:[@"test" stringByAppendingFormat:@"%ld", unumi(i)] b:[map applyKey:i]];
         [map removeForKey:i];
         [self assertTrueValue:[[map optKey:i] isEmpty]];
     }];
