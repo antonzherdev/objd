@@ -1,0 +1,515 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="16c5eed2-cb4a-4f08-a71b-4cbfdd50beda" name="Default" comment="" />
+    <ignored path="ObjDLib.iws" />
+    <ignored path=".idea/workspace.xml" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ChangesViewManager" flattened_view="true" show_ignored="false" />
+  <component name="CreatePatchCommitExecutor">
+    <option name="PATCH_PATH" value="" />
+  </component>
+  <component name="DaemonCodeAnalyzer">
+    <disable_hints />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="macos_x86_64" />
+  <component name="FavoritesManager">
+    <favorites_list name="ObjDLib" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf />
+  </component>
+  <component name="FindManager">
+    <FindUsagesManager>
+      <setting name="OPEN_NEW_TAB" value="false" />
+    </FindUsagesManager>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="GitLogSettings">
+    <option name="myDateState">
+      <MyDateState />
+    </option>
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="changedFiles">
+      <list>
+        <option value="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/chain.h" />
+        <option value="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TestCase.od" />
+        <option value="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.h" />
+        <option value="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.m" />
+        <option value="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/ODObject.h" />
+        <option value="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNTreeMapTest.m" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="width" value="1440" />
+    <option name="height" value="900" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <OptionsSetting value="true" id="Add" />
+    <OptionsSetting value="true" id="Remove" />
+    <OptionsSetting value="true" id="Checkout" />
+    <OptionsSetting value="true" id="Update" />
+    <OptionsSetting value="true" id="Status" />
+    <OptionsSetting value="true" id="Edit" />
+    <ConfirmationsSetting value="2" id="Add" />
+    <ConfirmationsSetting value="0" id="Remove" />
+  </component>
+  <component name="ProjectReloadState">
+    <option name="STATE" value="0" />
+  </component>
+  <component name="ProjectView">
+    <navigator currentView="ProjectPane" proportions="" version="1" splitterProportion="0.5">
+      <flattenPackages />
+      <showMembers />
+      <showModules />
+      <showLibraryContents />
+      <hideEmptyPackages />
+      <abbreviatePackageNames />
+      <autoscrollToSource />
+      <autoscrollFromSource />
+      <sortByType />
+    </navigator>
+    <panes>
+      <pane id="Cidr.FilesView" />
+      <pane id="ProjectPane">
+        <subPane>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeRootNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Products" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeRootNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeRootNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="String" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeRootNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Platform" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeRootNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Platform" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Apple" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeRootNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Platform" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Apple" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Mac" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeRootNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Platform" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Apple" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="iOS" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeRootNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Chain" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeRootNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Frameworks" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeRootNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ObjDLib" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Frameworks" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Other Frameworks" />
+              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
+            </PATH_ELEMENT>
+          </PATH>
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="options.splitter.main.proportions" value="0.3" />
+    <property name="recentsLimit" value="5" />
+    <property name="options.lastSelected" value="project.propVCSSupport.Mappings" />
+    <property name="restartRequiresConfirmation" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/ObjDLib/ObjDLib/XML" />
+    <property name="FullScreen" value="true" />
+    <property name="OBJC.PRESERVED_TARGET_SELECTION" value="ObjDLibOSXTests" />
+    <property name="options.splitter.details.proportions" value="0.2" />
+    <property name="options.searchVisible" value="true" />
+  </component>
+  <component name="RunManager" selected="XCTest/Kiwi.OSX tests">
+    <configuration default="true" type="AppleRunConfiguration" factoryName="Application" PROJECT_NAME="ObjDLib" TARGET_NAME="ObjDLib" CONFIG_NAME="Debug" PASS_PARENT_ENVS="FALSE" MAKE_ACTIVE="TRUE" WAIT_FOR="FALSE">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="OCUnitRunConfiguration" factoryName="XCTest/Kiwi" PROJECT_NAME="ObjDLib" TARGET_NAME="ObjDLibTests" CONFIG_NAME="Debug" PASS_PARENT_ENVS="FALSE" TEST_MODE="SUITE_TEST">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="OCGoogleTestRunConfigurationType" factoryName="Google Test" PASS_PARENT_ENVS="FALSE" TEST_MODE="SUITE_TEST">
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="OSX tests" type="OCUnitRunConfiguration" factoryName="XCTest/Kiwi" SCHEME_NAME="OSX tests" PROJECT_NAME="ObjDLib" TARGET_NAME="ObjDLibOSXTests" CONFIG_NAME="Debug" WORKING_DIR="" PASS_PARENT_ENVS="FALSE" TEST_MODE="SUITE_TEST">
+      <envs />
+      <RunnerSettings RunnerId="AppRunner" />
+      <ConfigurationWrapper RunnerId="AppRunner" />
+      <method />
+    </configuration>
+    <configuration default="false" name="iOS tests" type="OCUnitRunConfiguration" factoryName="XCTest/Kiwi" SCHEME_NAME="iOS tests" PROJECT_NAME="ObjDLib" TARGET_NAME="ObjDLibiOSTests" CONFIG_NAME="Debug" WORKING_DIR="" PASS_PARENT_ENVS="FALSE" TEST_MODE="SUITE_TEST">
+      <envs />
+      <RunnerSettings RunnerId="AppRunner" />
+      <ConfigurationWrapper RunnerId="AppRunner" />
+      <method />
+    </configuration>
+    <list size="2">
+      <item index="0" class="java.lang.String" itemvalue="XCTest/Kiwi.OSX tests" />
+      <item index="1" class="java.lang.String" itemvalue="XCTest/Kiwi.iOS tests" />
+    </list>
+  </component>
+  <component name="ShelveChangesManager" show_recycled="false" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="16c5eed2-cb4a-4f08-a71b-4cbfdd50beda" name="Default" comment="" />
+      <created>1389782844250</created>
+      <updated>1389782844250</updated>
+    </task>
+    <task id="LOCAL-00001" summary="lib">
+      <created>1389785679166</created>
+      <updated>1389785679166</updated>
+    </task>
+    <task id="LOCAL-00002" summary="lib">
+      <created>1389786364688</created>
+      <updated>1389786364688</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
+    <servers />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="0" y="0" width="1440" height="900" extended-state="0" />
+    <editor active="false" />
+    <layout>
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32969698" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Changes" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32848486" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.23570925" sideWeight="0.67151517" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32969698" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+    </layout>
+    <layout-to-restore>
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32889965" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.4" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="9" side_tool="true" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32969698" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.23570925" sideWeight="0.6" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32969698" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+    </layout-to-restore>
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
+    <option name="myTodoPanelSettings">
+      <TodoPanelSettings />
+    </option>
+    <MESSAGE value="lib" />
+    <option name="LAST_COMMIT_MESSAGE" value="lib" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <option name="time" value="2" />
+    </breakpoint-manager>
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="1" column="0" selection-start="17" selection-end="17" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="285" />
+      </provider>
+    </entry>
+    <entry file="file:///Applications/Xcode.app/Contents/Developer/Library/Frameworks/XCTest.framework/Headers/XCTestAssertions.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="86" column="29" selection-start="4875" selection-end="4896" vertical-scroll-proportion="0.0" vertical-offset="1075" max-vertical-offset="2925" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.m">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="19" column="17" selection-start="309" selection-end="309" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="780">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNQueueTest.m">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="17" column="23" selection-start="271" selection-end="271" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1275">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/ODType.m">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1890">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/chain.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="5" selection-start="4" selection-end="5" vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="525">
+          <folding>
+            <element signature="e#0#19#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/objd.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="3" column="14" selection-start="85" selection-end="85" vertical-scroll-proportion="-1.8" vertical-offset="0" max-vertical-offset="165">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/ODObject.m">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="6" column="13" selection-start="132" selection-end="132" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1305">
+          <folding>
+            <element signature="e#0#20#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Map/CNTreeMap.m">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="65" column="1" selection-start="1509" selection-end="1509" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="27360">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/5.0/include/float.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1950">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Library/Caches/appCode20/DerivedData/ObjDLib-5c489215/Build/Intermediates/ObjDLib.build/Debug/ObjDLibOSXTests.build/Script-0224A3F81886AC2400E49BD2.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="1" column="0" selection-start="10" selection-end="10" vertical-scroll-proportion="0.018820576" vertical-offset="0" max-vertical-offset="797">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNTreeMapTest.m">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="1" column="16" selection-start="33" selection-end="33" vertical-scroll-proportion="0.02851711" vertical-offset="0" max-vertical-offset="1260">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNTreeMapTest.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="526">
+          <folding>
+            <element signature="e#0#20#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNTypes.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="8" selection-start="8" selection-end="8" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="2175">
+          <folding>
+            <element signature="e#0#19#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/ODObject.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="3" column="30" selection-start="99" selection-end="99" vertical-scroll-proportion="-4.8441067" vertical-offset="2593" max-vertical-offset="3315">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/System/Library/Frameworks/CoreGraphics.framework/Headers/CGBase.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="244" column="21" selection-start="7009" selection-end="7012" vertical-scroll-proportion="7.3053894" vertical-offset="0" max-vertical-offset="4245">
+          <folding>
+            <element signature="e#130#150#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>
+
