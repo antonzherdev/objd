@@ -301,10 +301,15 @@ implInitialize env@Env{envClass = cl} = let
 	fields = filter hasInitialize (D.classFields cl)
 	hasInitialize D.Def{D.defBody = D.Nop} = False
 	hasInitialize d@D.Def{D.defBody = b} = not (D.isConst b) && D.isField d && D.isStatic d
+	selfClass = C.Call (C.Ref $ D.classNameWithPrefix cl) "class" [] []
 	typeInit = C.Set Nothing (C.Ref $ staticName env "type") $ 
-		C.Call (C.Ref "ODClassType") "classTypeWith" [("cls", C.Call (C.Ref $ D.classNameWithPrefix cl) "class" [] [])] []
+		C.Call (C.Ref "ODClassType") "classTypeWith" [("cls", selfClass)] []
 	in C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
-			((C.Stm $ C.Call C.Super "initialize" [] []) : typeInit : map (implInitField env) fields))
+			(C.Stm $ C.Call C.Super "initialize" [] []) : [C.If (C.BoolOp Eq C.Self selfClass)
+				(typeInit : map (implInitField env) fields)
+				[]
+				])
+				
 
 
 
