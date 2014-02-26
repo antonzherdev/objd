@@ -1157,6 +1157,8 @@ callLocalVal name tp = Call (localVal name tp) tp []
 
 maybeAddReturn :: Env -> DataType -> Exp -> Exp
 maybeAddReturn _ TPVoid e = e
+maybeAddReturn _ (TPGenericWrap TPVoid) (Braces es)  = Braces (es ++ [Return False Nil]) 
+maybeAddReturn _ (TPGenericWrap TPVoid) e  = Braces (e : [Return False Nil]) 
 maybeAddReturn env tp e = addReturn env True tp e
 
 addReturn :: Env -> Bool -> DataType -> Exp -> Exp
@@ -1971,6 +1973,10 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 			where
 				conv (TPGenericWrap s) d = conv s d
 				conv s (TPGenericWrap d) = conv s d
+				conv (TPFun _ (TPGenericWrap _)) (TPFun _ (TPGenericWrap _)) = ex
+				conv (TPFun _ _) (TPFun _ fdtp@(TPGenericWrap _)) = case ex of
+					Lambda lambdaPars le _ -> Lambda lambdaPars  (maybeAddReturn env fdtp le) fdtp
+					_ -> ex
 				conv TPFun{} TPFun{} = ex
 				conv _ f@(TPFun _ fdtp) = Lambda (lambdaImplicitParameters f) (maybeAddReturn env fdtp ex) fdtp
 				{-conv TPFun{} _ = LambdaCall ex-}

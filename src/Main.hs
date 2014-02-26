@@ -19,7 +19,7 @@ main::IO()
 main = 
 	let
 		root = "./"
-		-- root = "/Users/antonzherdev/dev/trains3d/Trains3D/"
+		--root = "/Users/antonzherdev/dev/trains3d/Trains3D/"
 		
 		debugFile = Nothing 
 		-- debugFile = Just "/Users/antonzherdev/dev/debug.txt"
