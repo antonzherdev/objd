@@ -3,6 +3,518 @@
 	{
 		"selected_items":
 		[
+			[
+				"exp",
+				"expression"
+			],
+			[
+				"TPV",
+				"TPVoid"
+			],
+			[
+				"ext",
+				"extendsClass"
+			],
+			[
+				"TPMT",
+				"TPMType"
+			],
+			[
+				"the",
+				"theResult"
+			],
+			[
+				"isIn",
+				"isInstanceOfCheck"
+			],
+			[
+				"instanceOf",
+				"isInstanceOfTp"
+			],
+			[
+				"data",
+				"dataTypeClass"
+			],
+			[
+				"env",
+				"envSelf"
+			],
+			[
+				"Ge",
+				"Generic"
+			],
+			[
+				"ex",
+				"extends"
+			],
+			[
+				"TPN",
+				"TPNil"
+			],
+			[
+				"TPA",
+				"TPAny"
+			],
+			[
+				"Exp",
+				"ExpLError"
+			],
+			[
+				"defT",
+				"defRetType"
+			],
+			[
+				"cal",
+				"call"
+			],
+			[
+				"next",
+				"nextExtends"
+			],
+			[
+				"envI",
+				"envIndex"
+			],
+			[
+				"_classE",
+				"_classExtendsRef"
+			],
+			[
+				"deb",
+				"debugFileHandle"
+			],
+			[
+				"ma",
+				"math"
+			],
+			[
+				"isNo",
+				"isNothing"
+			],
+			[
+				"dataT",
+				"dataTypeSuffix"
+			],
+			[
+				"drop",
+				"dropWhile"
+			],
+			[
+				"expr",
+				"exprDataType"
+			],
+			[
+				"pM",
+				"pMod"
+			],
+			[
+				"DefModP",
+				"DefModPure"
+			],
+			[
+				"cfu",
+				"cfunMods"
+			],
+			[
+				"lin",
+				"linesRec"
+			],
+			[
+				"Pro",
+				"ProtocolRef"
+			],
+			[
+				"sps",
+				"sps1"
+			],
+			[
+				"sp",
+				"sps1"
+			],
+			[
+				"TPC",
+				"TPChar"
+			],
+			[
+				"unw",
+				"unwrapGeneric"
+			],
+			[
+				"Fa",
+				"False"
+			],
+			[
+				"Data",
+				"DataType"
+			],
+			[
+				"is",
+				"isInstanceOf"
+			],
+			[
+				"DefM",
+				"DefModPrivate"
+			],
+			[
+				"def",
+				"defName"
+			],
+			[
+				"from",
+				"fromList"
+			],
+			[
+				"err",
+				"errors"
+			],
+			[
+				"loca",
+				"localVal"
+			],
+			[
+				"mo",
+				"modTime2"
+			],
+			[
+				"mod",
+				"modTime1"
+			],
+			[
+				"wh",
+				"when"
+			],
+			[
+				"call",
+				"callRef"
+			],
+			[
+				"Minu",
+				"MinusMinus"
+			],
+			[
+				"Plus",
+				"PlusPlus"
+			],
+			[
+				"fileName",
+				"fileNameWithPrefix"
+			],
+			[
+				"pack",
+				"packagePrefix"
+			],
+			[
+				"Not",
+				"Nothing"
+			],
+			[
+				"Ex",
+				"Exp"
+			],
+			[
+				"packa",
+				"packageObject"
+			],
+			[
+				"pa",
+				"packageName"
+			],
+			[
+				"No",
+				"Nothing"
+			],
+			[
+				"ClassMod",
+				"ClassModObject"
+			],
+			[
+				"addR",
+				"maybeAddReturn	Env -> DataType -> Exp -> Exp"
+			],
+			[
+				"la",
+				"lambda"
+			],
+			[
+				"var",
+				"vargs"
+			],
+			[
+				"Lam",
+				"Lambda"
+			],
+			[
+				"maybe",
+				"maybeAddReturn	Env -> DataType -> Exp -> Exp"
+			],
+			[
+				"TPO",
+				"TPOption"
+			],
+			[
+				"addRe",
+				"maybeAddReturn	Env -> DataType -> Exp -> Exp"
+			],
+			[
+				"lam",
+				"lambdaImplicitParameters	DataType -> [(String, DataType)]"
+			],
+			[
+				"lamb",
+				"lambdaImplicitParameters	DataType -> [(String, DataType)]"
+			],
+			[
+				"EXp",
+				"ExpDError"
+			],
+			[
+				"comp",
+				"compile"
+			],
+			[
+				"cha",
+				"Char"
+			],
+			[
+				"FuncOp",
+				"FuncOpTp"
+			],
+			[
+				"Func",
+				"FuncOpBind"
+			],
+			[
+				"object",
+				"objectDef	Class -> Def"
+			],
+			[
+				"isT",
+				"isType	Class -> Bool"
+			],
+			[
+				"Extends",
+				"ExtendsRef	"
+			],
+			[
+				"proc",
+				"procPars"
+			],
+			[
+				"classE",
+				"classExtends"
+			],
+			[
+				"extends",
+				"extendsRefs	Extends -> [ExtendsRef]"
+			],
+			[
+				"Import",
+				"ImportClass"
+			],
+			[
+				"isSt",
+				"isStub	Class -> Bool"
+			],
+			[
+				"exte",
+				"extendsNothing	Extends"
+			],
+			[
+				"Exte",
+				"Extends	"
+			],
+			[
+				"ClassE",
+				"classExtends"
+			],
+			[
+				"classM",
+				"classMods"
+			],
+			[
+				"DefModVa",
+				"DefModGlobalVal"
+			],
+			[
+				"imp",
+				"imports"
+			],
+			[
+				"pEx",
+				"pExport"
+			],
+			[
+				"La",
+				"Lambda"
+			],
+			[
+				"class",
+				"classConstructor	Class -> Maybe Def"
+			],
+			[
+				"laz",
+				"lazyClass"
+			],
+			[
+				"classF",
+				"classFind	ClassIndex -> String -> Class"
+			],
+			[
+				"Boo",
+				"Bool"
+			],
+			[
+				"Str",
+				"StringConst"
+			],
+			[
+				"tE",
+				"tExpTo	Env -> D.DataType -> D.Exp -> C.Exp"
+			],
+			[
+				"Insta",
+				"InstanceFun"
+			],
+			[
+				"concat",
+				"concatMap	(a -> [b]) -> [a] -> [b]"
+			],
+			[
+				"las",
+				"last	[a] -> a"
+			],
+			[
+				"mapAcc",
+				"mapAccumL	(acc -> x -> (acc, y)) -> acc -> [x] -> (acc, [y])"
+			],
+			[
+				"pStringP",
+				"pStringParts"
+			],
+			[
+				"par",
+				"parts"
+			],
+			[
+				"last",
+				"lastString"
+			],
+			[
+				"String",
+				"StringBuild"
+			],
+			[
+				"Par",
+				"Parser	"
+			],
+			[
+				"opt",
+				"optionMaybe	Stream s m t => ParsecT s u m a -> ParsecT s u m (Maybe a)"
+			],
+			[
+				"any",
+				"anyChar	Stream s m Char => ParsecT s u m Char"
+			],
+			[
+				"bra",
+				"brackets	Parser a -> Parser a"
+			],
+			[
+				"DefModS",
+				"DefModStatic"
+			],
+			[
+				"envC",
+				"envClass"
+			],
+			[
+				"staticF",
+				"staticFieldName"
+			],
+			[
+				"Stri",
+				"String	"
+			],
+			[
+				"caseEnv",
+				"caseEnvVal"
+			],
+			[
+				"isI",
+				"isInstanceOf"
+			],
+			[
+				"to",
+				"toList	Map k a -> [(k, a)]"
+			],
+			[
+				"ref",
+				"refDataType	Class -> [DataType] -> DataType"
+			],
+			[
+				"supe",
+				"superClasses	Class -> [Class]"
+			],
+			[
+				"item",
+				"itemExpr"
+			],
+			[
+				"case",
+				"caseEnv"
+			],
+			[
+				"unapp",
+				"unapply2"
+			],
+			[
+				"obje",
+				"objectDef	Class -> Def"
+			],
+			[
+				"dataTy",
+				"dataTypeClass	Env -> DataType -> Class"
+			],
+			[
+				"allC",
+				"allDefsInObject	ClassRef -> [Def]"
+			],
+			[
+				"ClasM",
+				"ClassModTrait"
+			],
+			[
+				"self",
+				"selfType"
+			],
+			[
+				"local",
+				"localVal	String -> DataType -> Def"
+			],
+			[
+				"envAdd",
+				"envAddVals	[Def] -> Env -> Env"
+			],
+			[
+				"Bool",
+				"BoolOp"
+			],
+			[
+				"mapM",
+				"mapM	Monad m => (a -> m b) -> [a] -> m [b]"
+			],
+			[
+				"Case",
+				"CaseCondition	"
+			],
+			[
+				"whe",
+				"when	Monad m => Bool -> m () -> m ()"
+			],
+			[
+				"may",
+				"Maybe	a"
+			]
 		]
 	},
 	"buffers":
@@ -11,11 +523,51 @@
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 0.0,
+		"height": 87.0,
 		"selected_items":
 		[
+			[
+				"Chec",
+				"SublimeHaskell: Check"
+			],
+			[
+				"Ch",
+				"SublimeHaskell: Check"
+			],
+			[
+				"che",
+				"SublimeHaskell: Check"
+			],
+			[
+				"ch",
+				"SublimeHaskell: Check"
+			],
+			[
+				"Che",
+				"SublimeHaskell: Check"
+			],
+			[
+				"Check",
+				"SublimeHaskell: Check"
+			],
+			[
+				"chek",
+				"SublimeHaskell: Check"
+			],
+			[
+				"Lint",
+				"SublimeHaskell: Lint"
+			],
+			[
+				"config",
+				"SublimeHaskell: Configure"
+			],
+			[
+				"Conf",
+				"SublimeHaskell: Configure"
+			]
 		],
-		"width": 0.0
+		"width": 449.0
 	},
 	"console":
 	{
@@ -32,23 +584,192 @@
 	},
 	"file_history":
 	[
+		"/Users/antonzherdev/dev/ObjD/src/ObjC/Struct.hs",
+		"/Users/antonzherdev/dev/ObjD/src/ObjD/Parser.hs",
+		"/Users/antonzherdev/dev/ObjD/src/ObjD/ToObjC.hs",
+		"/Users/antonzherdev/dev/lib/akka-master/akka-actor/src/main/scala/akka/actor/ActorRef.scala",
+		"/Users/antonzherdev/Downloads/cocos2d-iphone-7263cfdabeabb5949d6a9247a3d768dc38f26191/cocos2d/Platforms/Mac/CCDirectorMac.h",
+		"/Users/antonzherdev/Downloads/cocos2d-iphone-7263cfdabeabb5949d6a9247a3d768dc38f26191/cocos2d/Platforms/Mac/CCDirectorMac.m",
+		"/Users/antonzherdev/Downloads/cocos2d-iphone-7263cfdabeabb5949d6a9247a3d768dc38f26191/cocos2d/Platforms/iOS/CCGLView.h",
+		"/Users/antonzherdev/dev/ObjD/src/Main.hs",
+		"/Users/antonzherdev/Downloads/cocos2d-iphone-7263cfdabeabb5949d6a9247a3d768dc38f26191/cocos2d/Platforms/iOS/CCES2Renderer.m",
+		"/Users/antonzherdev/Downloads/cocos2d-iphone-7263cfdabeabb5949d6a9247a3d768dc38f26191/cocos2d/Platforms/iOS/CCES2Renderer.h",
+		"/Users/antonzherdev/Downloads/cocos2d-iphone-7263cfdabeabb5949d6a9247a3d768dc38f26191/cocos2d/Platforms/iOS/CCDirectorIOS.m",
+		"/Users/antonzherdev/Downloads/cocos2d-iphone-7263cfdabeabb5949d6a9247a3d768dc38f26191/cocos2d/Platforms/iOS/CCGLView.m",
+		"/Users/antonzherdev/dev/ObjD/src/ObjD/Link.hs",
+		"/Users/antonzherdev/Downloads/a.crash",
+		"/Users/antonzherdev/dev/ObjD/README.md",
+		"/Users/antonzherdev/dev/ObjD/src/ObjD/Struct.hs",
+		"/Users/antonzherdev/Documents/Dev Story habr.html",
+		"/Users/antonzherdev/bin/itmspmd.sh",
+		"/Users/antonzherdev/dev/ObjD/src/    def toSet ",
+		"/Users/antonzherdev/dev/ObjD/src/Index.od",
+		"/Users/antonzherdev/dev/ObjD/src/SortBuilder.od",
+		"/Users/antonzherdev/dev/ObjD/src/    val root ",
+		"/Users/antonzherdev/Documents/test.html",
+		"/Users/antonzherdev/Documents/Lines in gamedev.html",
+		"/Users/antonzherdev/dev/ObjD/src/Ex/String.hs",
+		"/Users/antonzherdev/dev/ObjD/src/    def struct r(local t ",
+		"/Users/antonzherdev/dev/ObjD/src/EGBillboard.od",
+		"/Users/antonzherdev/dev/ObjD/src/TRLevelMenuView.od",
+		"/Users/antonzherdev/dev/ObjD/src/EGStandardShaderSystem.od",
+		"/Users/antonzherdev/dev/ObjD/src/TRLevel.od",
+		"/Users/antonzherdev/dev/ObjD/src/        return <to>EGVertexBuffer\\EGVertexBuffer#C.class\\.<dt>apply(stride = 8.cast<uint))\\EGVertexBuffer#C\\.<d>set(data = [0, 0, 0, 0, 1, <l>l\\float\\, <l>b\\float\\, 0, <l>w\\int\\, 0, 0, 0, 1, <l>r\\float\\, <l>b\\float\\, 0, <l>w\\int\\, <l>h\\int\\, 0, 0, 1, <l>r\\float\\, <l>t\\float\\, 0, 0, <l>h\\int\\, 0, 0, 1, <l>l\\float\\, <l>t\\float\\, 0].cast<*Could not find generic type for T extends ODObject in self EGVertexBuffer#C for call <d>set(data = First try",
+		"/Users/antonzherdev/dev/ObjD/src/EGContext.od",
+		"/Users/antonzherdev/dev/ObjD/src/EGFigure.od",
+		"/Users/antonzherdev/dev/ObjD/src/CNCollection.od",
+		"/Users/antonzherdev/dev/ObjD/src/CNTreeSet.od",
+		"/Users/antonzherdev/Library/Application Support/Sublime Text 2/Packages/SublimeHaskell/SublimeHaskell.sublime-settings",
+		"/Users/antonzherdev/Library/Application Support/Sublime Text 2/Packages/User/SublimeHaskell.sublime-settings",
+		"/Users/antonzherdev/Library/Application Support/Sublime Text 2/Packages/Default/Preferences.sublime-settings",
+		"/Users/antonzherdev/Library/Application Support/Sublime Text 2/Packages/User/Preferences.sublime-settings"
 	],
 	"find":
 	{
-		"height": 0.0
+		"height": 35.0
 	},
 	"find_in_files":
 	{
 		"height": 0.0,
 		"where_history":
 		[
+			"",
+			"class=\"kw\""
 		]
 	},
 	"find_state":
 	{
-		"case_sensitive": false,
+		"case_sensitive": true,
 		"find_history":
 		[
+			"Eq",
+			"initialize",
+			"displayL",
+			"re",
+			"pixelFormat_",
+			"GL_DEPTH_COMPONENT",
+			"layer",
+			"resizeFromLayer",
+			"renderbufferStorage",
+			"EAGL",
+			"context_",
+			"presentRen",
+			"context_",
+			"msaaFramebuffer",
+			"glRenderbufferStorage",
+			"defaultFramebuffer_",
+			"defaultFramebuffer",
+			"defaultBuffer",
+			"drawScene",
+			"mainLoop",
+			"threadMainLoop",
+			"displayLink",
+			"distplay",
+			"h2",
+			"</p>",
+			"<p>",
+			", ",
+			"h2",
+			"h3",
+			"<a href=",
+			" a href=",
+			" <a href=",
+			" <a href",
+			" class=\"western\"",
+			"C.Proper",
+			"Retain",
+			"'/'",
+			"/",
+			"isInstanceOfTp",
+			"implicitCo",
+			"dataTypeClass",
+			"TPFun",
+			"extendsNothing",
+			"dataTypeClass",
+			"implicitConvertsion",
+			"TPNumbe",
+			"TPInt",
+			"findCall",
+			"TPEArr",
+			"linkField",
+			"TPEArr",
+			"TPArr",
+			"TPArra",
+			"dataType",
+			"TPSelf",
+			"None",
+			"TPAnyGeneric",
+			"TPAny\nTPAny",
+			"TPAny",
+			"isInstanceOf",
+			"} ",
+			"isInstanceOf",
+			"isIn",
+			"TPClass",
+			"isInstanceOfTp",
+			"dataType",
+			"No class found",
+			"dataTypeClass",
+			"isInstance",
+			"getDataType",
+			"linkDef",
+			"exprDataType",
+			"Call",
+			"exprDataType",
+			"Generic",
+			"findCall",
+			"ExtendsRef",
+			"baseClassExtends",
+			"D.Extend",
+			"_classExtends",
+			"Extends",
+			"Generic",
+			"objectType",
+			"linkExtends",
+			"objectType",
+			"No object type",
+			"No data",
+			"No data ",
+			"objectType",
+			"superType",
+			"open",
+			"findCall",
+			"pCase",
+			"case",
+			"procImports",
+			"isTpClass",
+			"isClass",
+			"getStruct",
+			"struct",
+			"StringConst",
+			"pEscape",
+			"StringBui",
+			"String",
+			"StringCon",
+			"\\",
+			"\\n",
+			"\\",
+			"mce-text",
+			"Opon",
+			"LambdaCall",
+			"TPFun",
+			"LambdaCall",
+			"Call",
+			"WeakSelf",
+			"envNeedWeakSelf",
+			"weak",
+			"color",
+			"style=\"color:#a08000\"",
+			"style=\"color:#0080a0\"",
+			"style=\"color:maroon\"",
+			"style=\"color:#2060a0\"",
+			".links",
+			"Ask",
+			"ask ",
+			"disq",
+			"Protoc",
+			"classDefsW",
+			"trait"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -56,10 +777,25 @@
 		"regex": false,
 		"replace_history":
 		[
+			"h4",
+			"",
+			"\\n",
+			"<a target=\"_blank\" href=",
+			"<a target=\"_blank\" href",
+			"",
+			"text",
+			"class=\"tp\"",
+			"class=\"num\"",
+			"class=\"fn\"",
+			"class=\"kw\"",
+			"`appp`",
+			"tpp",
+			"dataType env",
+			"\""
 		],
 		"reverse": false,
-		"show_context": true,
-		"use_buffer2": true,
+		"show_context": false,
+		"use_buffer2": false,
 		"whole_word": false,
 		"wrap": true
 	},
@@ -102,9 +838,25 @@
 		]
 	},
 	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 238.0
+	},
+	"output.find_results":
+	{
+		"height": 100.0
+	},
+	"output.haskell_error_checker":
+	{
+		"height": 236.0
+	},
+	"output.haskell_sublime_load":
+	{
+		"height": 25.0
+	},
 	"replace":
 	{
-		"height": 0.0
+		"height": 64.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -112,6 +864,10 @@
 		"height": 0.0,
 		"selected_items":
 		[
+			[
+				"",
+				"src/ObjD/Parser.hs"
+			]
 		],
 		"width": 0.0
 	},
