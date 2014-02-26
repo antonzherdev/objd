@@ -120,19 +120,22 @@ fieldToProperty D.Def{D.defName = name, D.defMods = mods, D.defType = tp} = C.Pr
 		
 idTp :: C.DataType
 idTp = C.TPSimple "id" []
+instancetypeTp :: C.DataType
+instancetypeTp = C.TPSimple "instancetype" []
+
 voidTp :: C.DataType
 voidTp = C.TPSimple "void" []
 
 initFun :: D.Def -> C.Fun
-initFun D.Def{D.defPars = []} = C.Fun C.InstanceFun idTp "init" []
-initFun D.Def{D.defPars = decls} = C.Fun C.InstanceFun idTp "initWith" (map funPar decls)
+initFun D.Def{D.defPars = []} = C.Fun C.InstanceFun instancetypeTp "init" []
+initFun D.Def{D.defPars = decls} = C.Fun C.InstanceFun instancetypeTp "initWith" (map funPar decls)
 
 funPar :: D.Def -> C.FunPar
 funPar D.Def {D.defName = name, D.defType = dataType} = C.FunPar name (showDataType dataType) name
 
 createFun :: String -> D.Def -> C.Fun
-createFun clsName D.Def{D.defPars = []} = C.Fun C.ObjectFun idTp (createFunName clsName) []
-createFun clsName D.Def{D.defPars = decls} = C.Fun C.ObjectFun idTp (createFunName clsName ++ "With") (map funPar decls)
+createFun clsName D.Def{D.defPars = []} = C.Fun C.ObjectFun instancetypeTp (createFunName clsName) []
+createFun clsName D.Def{D.defPars = decls} = C.Fun C.ObjectFun instancetypeTp (createFunName clsName ++ "With") (map funPar decls)
 
 createFunName :: String -> String
 createFunName (x1:x2:xs)
