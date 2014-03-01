@@ -312,7 +312,11 @@ expLines (Call inst name pars vargs) = ["["] `glue` (expLines inst `appp` (" " +
 		vargs' = (glueAll "" . map varg') vargs
 		varg' = ([", "] `glue` ) . expLines
 expLines (CCall name pars) = (expLines name `appp` "(") `glue` (pars' `appp` ")")
-	where pars' = (glueAll ", " . map expLines) pars
+	where 
+		pars' = (glueAll ", " . map par) pars
+		par ee = 
+			let ls = expLines ee
+			in if any (any (== ',')) ls then (["("] `glue` (ls `appp` ")")) else ls
 expLines (Ref name) = [kw name]
 expLines (IntConst i) = [show i]
 expLines Nil = ["nil"]
