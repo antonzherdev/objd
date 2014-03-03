@@ -346,6 +346,7 @@ implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFu
 		implInitFields co fields = [C.If C.Self (map implConstrField co ++ map (implInitField env') fields ++ callInit) []]
 		implConstrField d@D.Def{D.defName = name, D.defType = tp} = C.Set Nothing (C.Ref $ fieldName env' d) (implRight tp) 
 			where
+				implRight D.TPFun{} = C.Call (C.Ref name) "copy" [] []
 				implRight D.TPClass{} = retain $ C.Ref name
 				implRight _ = C.Ref name
 

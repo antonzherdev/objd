@@ -1977,6 +1977,9 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 				conv (TPFun _ _) (TPFun _ fdtp@(TPGenericWrap _)) = case ex of
 					Lambda lambdaPars le _ -> Lambda lambdaPars  (maybeAddReturn env fdtp le) fdtp
 					_ -> ex
+				conv (TPFun _ stp) (TPFun _ TPVoid) = if stp == TPVoid then ex else  case ex of
+					Lambda lambdaPars le _ -> Lambda lambdaPars  (maybeAddReturn env TPVoid le) TPVoid
+					_ -> ex
 				conv TPFun{} TPFun{} = ex
 				conv _ f@(TPFun _ fdtp) = Lambda (lambdaImplicitParameters f) (maybeAddReturn env fdtp ex) fdtp
 				{-conv TPFun{} _ = LambdaCall ex-}
