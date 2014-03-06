@@ -642,7 +642,8 @@ procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
 		procExp :: D.Exp -> [(D.Class, Bool)] 
 		procExp = D.forExp f
 			where
-				f (D.Dot l _) = procDataType $ (D.exprDataType l)
+				f (D.Dot l _) = procDataType $ D.exprDataType l
+				f (D.BoolOp _ l _) = procDataType $ D.exprDataType l
 				f _ = []
 		retCl :: D.Class -> [(D.Class, Bool)] 
 		retCl cl
@@ -863,7 +864,7 @@ tExp env (D.Opt e) = let tp = D.exprDataType e
 tExp env (D.Some e) = let tp = D.exprDataType e
 	in C.Call (C.Ref "CNOption") "some" [("value", maybeVal (tp, D.TPGenericWrap tp) (tExp env e))] []
 tExp _ (D.None _) = C.Call (C.Ref "CNOption") "none" [] []
-tExp env (D.Not e) = C.Not (tExp env e)
+tExp env (D.Not e) = C.Not (tExpTo env D.TPBool e)
 tExp env (D.Negative e) = C.Negative (tExp env e)
 tExp env (D.Cast dtp e) = let 
 		stp = D.exprDataType e
