@@ -160,6 +160,11 @@ superClass = fmap extendsClassClass . extendsClass . classExtends
 superClasses :: Class -> [Class]
 superClasses = map fst . extendsRefs . classExtends
 
+allSuperClasses :: Class -> [Class]
+allSuperClasses cl = 
+	let scls = superClasses cl 
+	in scls ++ concatMap allSuperClasses scls  
+
 replaceGenerics :: Generics -> DataType -> DataType
 replaceGenerics gns = mapDataType f
 	where 
@@ -261,6 +266,8 @@ isInstanceOfTp env cl target
 	| otherwise = dataTypeClass env cl `isInstanceOf` dataTypeClass env target
 
 isInstanceOfCheck :: Env -> DataType -> DataType -> Bool
+isInstanceOfCheck env (TPSelf l) r = isInstanceOfCheck env (refDataType l []) r
+isInstanceOfCheck env l (TPSelf r) = isInstanceOfCheck env l (refDataType r [])
 isInstanceOfCheck env l (TPGenericWrap r)  = isInstanceOfCheck env l r
 isInstanceOfCheck env (TPGenericWrap l) r = isInstanceOfCheck env l r
 isInstanceOfCheck env l@(TPClass TPMType _ _) r = isInstanceOfCheck env (fromJust $ superType l) r
@@ -269,7 +276,6 @@ isInstanceOfCheck _ _ TPUnknown{} = True
 isInstanceOfCheck _ _ TPAny = True
 isInstanceOfCheck _ _ TPAnyGeneric = True
 isInstanceOfCheck _ TPNil _  = True
-isInstanceOfCheck env l (TPSelf r)  = dataTypeClass env l `isInstanceOf` r
 isInstanceOfCheck env cl target  
 	| target == cl = True
 	| otherwise =  dataTypeClass env cl `isInstanceOf` dataTypeClass env target
@@ -691,10 +697,18 @@ linkDef (obj, str) env ccc = def
 				 	Def{defName = dn, defType = dtp} : _ -> if dn == "self" then dtp else envSelf env
 				 mods' = translateMods mods
 				 overrideDef :: Maybe Def
-				 overrideDef = listToMaybe $ mapMaybe findThisDef (superClasses cl)
+				 overrideDef = listToMaybe $ mapMaybe findThisDef (allSuperClasses cl)
 				 findThisDef c = find eqDef (classDefs c) 
 				 eqDef d = defName d == name && length (defPars d) == length opars && all eqPar (zip (defPars d) pars)
-				 needWrapRetType = fromMaybe False $ fmap (isTpGeneric . defType) overrideDef
+				 overrideTp = fmap defType overrideDef
+				 needWrapRetType = maybe False isTpGeneric overrideTp
+				 mapOverrideType rtp = 
+				 	let rtp' = if needWrapRetType then wrapGeneric rtp else rtp
+				 	in case overrideTp of
+				 		Just otp -> 
+				 			if isInstanceOfTp env' rtp' otp then (if isJust tp || (null opars && name == "apply") then rtp' else otp) else
+				 				TPUnknown $ "Could not choose correct datatype for override " ++ show rtp' ++ " is not instance of " ++ show otp
+				 		_ -> rtp'
 				 in 
 				(case body of
 					D.Nop -> return Def {defMods = DefModDef : DefModAbstract : mods' ++ [DefModStruct | str] ++ [DefModStatic | obj], defName = name, defGenerics = defGenerics',
@@ -705,7 +719,7 @@ linkDef (obj, str) env ccc = def
 						b <- expr body
 						put env'
 						let tp' = unwrapGeneric $ getDataType env' tp b
-						let tp'' = if needWrapRetType then wrapGeneric tp' else tp'
+						let tp'' = mapOverrideType tp'
 						return Def {defMods = DefModDef : mods' ++ [DefModStruct | str] ++ [DefModStatic | obj], defName = name, defGenerics = defGenerics',
 							defPars = pars',
 							defType = tp'', defBody = maybeAddReturn env tp'' b})
@@ -844,10 +858,11 @@ dataTypeClass env (TPObject _ c) = Class { _classMods = [ClassModObject], classN
 	_classFile = fromMaybe (error $ "No class file for class " ++ className c) $ classFile c,
 	_classPackage = classPackage c}
 dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
-dataTypeClass env (TPArr _ _) = classFind (envIndex env) "Seq"
+dataTypeClass _ (TPSelf c) = c
+dataTypeClass env (TPArr _ _) = classFind (envIndex env) "ImSeq"
 dataTypeClass env (TPEArr _ _) = classFind (envIndex env) "PArray"
 dataTypeClass env (TPOption _) = classFind (envIndex env) "Option"
-dataTypeClass env (TPMap _ _) = classFind(envIndex env) "Map"
+dataTypeClass env (TPMap _ _) = classFind(envIndex env) "ImMap"
 dataTypeClass env (TPTuple [_, _]) = classFind (envIndex env) "Tuple"
 dataTypeClass env (TPNumber False 1) = classFind (envIndex env) "Byte"
 dataTypeClass env (TPNumber True 1) = classFind (envIndex env) "UByte"

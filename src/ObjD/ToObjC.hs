@@ -674,10 +674,10 @@ procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
  - DataType 
  -----------------------------------------------------------------------------------------------------------------------------------------}
 showDataType :: D.DataType -> C.DataType
-showDataType (D.TPEArr 0 _) = C.TPSimple "id<CNSeq>" []
+showDataType (D.TPEArr 0 _) = C.TPSimple "id<CNImSeq>" []
 showDataType (D.TPEArr n tp) = C.TPArr n $ show $ showDataType tp
-showDataType (D.TPArr _ _) = C.TPSimple "id<CNSeq>" []
-showDataType (D.TPMap _ _)  = C.TPSimple "id<CNMap>" []
+showDataType (D.TPArr _ _) = C.TPSimple "id<CNImSeq>" []
+showDataType (D.TPMap _ _)  = C.TPSimple "id<CNImMap>" []
 showDataType (D.TPNumber False 1) = C.TPSimple "char" []
 showDataType (D.TPNumber True 1) = C.TPSimple "unsigned char" []
 showDataType (D.TPNumber False 4) = C.TPSimple "int" []
