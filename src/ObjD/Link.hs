@@ -1161,7 +1161,11 @@ maybeAddReturn :: Env -> DataType -> Exp -> Exp
 maybeAddReturn _ TPVoid e = e
 maybeAddReturn _ (TPGenericWrap TPVoid) (Braces es)  = Braces (es ++ [Return False Nil]) 
 maybeAddReturn _ (TPGenericWrap TPVoid) e  = Braces (e : [Return False Nil]) 
-maybeAddReturn env tp e = addReturn env True tp e
+maybeAddReturn env tp e  = case exprDataType e of
+	TPVoid -> case e of
+		Braces es -> Braces (es ++ [Return False Nil]) 
+		_ -> Braces (e : [Return False Nil]) 
+	_ -> addReturn env True tp e
 
 addReturn :: Env -> Bool -> DataType -> Exp -> Exp
 addReturn env hard tp (If cond t f) = If cond (addReturn env hard tp t) (addReturn env hard tp f)
