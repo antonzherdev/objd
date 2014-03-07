@@ -209,8 +209,8 @@ instance Show FileStm where
 		
 		showSynthenizes = unlines . map showSynthenize
 		showStFields = unlines . map showStField
-		showSynthenize (ImplSynthesize name "") = "@synthesize " ++ name ++ ";"
-		showSynthenize (ImplSynthesize name var) = "@synthesize " ++ name ++ " = " ++ var ++ ";"
+		showSynthenize (ImplSynthesize name "") = "@synthesize " ++ kw name ++ ";"
+		showSynthenize (ImplSynthesize name var) = "@synthesize " ++ kw name ++ " = " ++ kw var ++ ";"
 		showImplFuns = unlines . map show
 		showStField (ImplField nm tpp mods Nop) = "static " ++  (strs " " mods) `tryCon` " " ++ showDecl tpp nm ++  ";"
 		showStField (ImplField nm tpp mods e) = strs "\n" $ ["static " ++  (strs " " mods) `tryCon` " " ++ showDecl tpp nm ++ " = "] `glue` (expLines e `appp` ";")
