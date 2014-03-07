@@ -97,6 +97,7 @@ data Exp = Nop
 	| Break
 	| Return Exp
 	| Case Exp [CaseItem]
+	| Synchronized Exp Exp
 type CallPar = (Maybe String, Exp)
 
 type CaseItem = (CaseCondition, Exp)

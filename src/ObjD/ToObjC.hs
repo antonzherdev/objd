@@ -942,6 +942,7 @@ tStm v _ (D.Braces xs) = concatMap (tStm v xs) xs
 
 tStm v _ (D.If cond t f) = [C.If (tExpTo v D.TPBool cond) (tStm v [] t) (tStm v [] f)]
 tStm v _ (D.While cond t) = [C.While (tExpTo v D.TPBool cond) (tStm v [] t)]
+tStm v _ (D.Synchronized ref b) = [C.Synchronized (tExp v ref) (tStm v [] b)]
 tStm v _ (D.Do cond t) = [C.Do (tExpTo v D.TPBool cond) (tStm v [] t)]
 
 tStm env _ (D.Set tp l r) = let 

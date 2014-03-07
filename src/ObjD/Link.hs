@@ -1053,6 +1053,7 @@ data Exp = Nop
 	| Braces [Exp]
 	| If Exp Exp Exp
 	| While Exp Exp
+	| Synchronized Exp Exp
 	| Do Exp Exp
 	| Self DataType
 	| Super DataType
@@ -1095,6 +1096,7 @@ instance Show Exp where
 	show (If cond t Nop) = "if(" ++ show cond ++ ") " ++ show t
 	show (If cond t f) = "if(" ++ show cond ++ ") " ++ show t ++ "\nelse " ++ show f
 	show (While cond e) = "while(" ++ show cond ++ ") " ++ show e
+	show (Synchronized cond e) = "synchronized(" ++ show cond ++ ") " ++ show e
 	show (Do cond e) = "do" ++ show e ++ " while(" ++ show cond ++ ")"
 	show Nop = ""
 	show (Self c) = "<" ++ show c ++ ">self"
@@ -1163,6 +1165,7 @@ maybeAddReturn env tp e = addReturn env True tp e
 
 addReturn :: Env -> Bool -> DataType -> Exp -> Exp
 addReturn env hard tp (If cond t f) = If cond (addReturn env hard tp t) (addReturn env hard tp f)
+addReturn env hard tp (Synchronized r b) = Synchronized r (addReturn env hard tp b)
 addReturn _ True _ e@(Braces []) = ExpLError "Return empty braces" e
 addReturn env True tp (Braces es) = Braces $ map (addReturn env False tp) (init es) ++ [addReturn env True tp (last es)]
 addReturn _ True _ Nop = ExpLError "Return NOP" Nop
@@ -1184,6 +1187,7 @@ forExp f ee = mplus (go ee) (f ee)
 		go (BoolOp _ l r) = mplus (forExp f l) (forExp f r)
 		go (MathOp _ l r) = mplus (forExp f l) (forExp f r)
 		go (While l r) = mplus (forExp f l) (forExp f r)
+		go (Synchronized l r) = mplus (forExp f l) (forExp f r)
 		go (Do l r) = mplus (forExp f l) (forExp f r)
 		go (Set _ l r) = mplus (forExp f l) (forExp f r)
 		go (Dot l r) = mplus (forExp f l) (forExp f r)
@@ -1240,6 +1244,7 @@ exprDataType :: Exp -> DataType
 exprDataType (If _ _ Nop) = TPVoid
 exprDataType (If _ t _) = exprDataType t
 exprDataType (While _ _) = TPVoid
+exprDataType (Synchronized _ r) = exprDataType r
 exprDataType (Do _ _) = TPVoid
 exprDataType (Braces []) = TPVoid
 exprDataType (Braces es) = exprDataType $ last es
@@ -1311,7 +1316,11 @@ expr (D.If cond t f) = do
 expr (D.While cond t) = do
 	c <- expr cond
 	tt <- expr t
-	return $ While c tt 
+	return $ While c tt
+expr (D.Synchronized cond t) = do
+	c <- expr cond
+	tt <- expr t
+	return $ Synchronized c tt  
 expr (D.Do cond t) = do
 	c <- expr cond
 	tt <- expr t

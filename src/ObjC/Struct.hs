@@ -64,6 +64,7 @@ data Stm =
 	| Throw Exp
 	| Var{varType :: DataType, varName :: String, varExp :: Exp, varMods :: [String]}
 	| Break
+	| Synchronized Exp [Stm]
 
 forStms :: MonadPlus m => (Stm -> m a, Exp -> m a) -> [Stm] -> m a 	
 forStms f s = msum $ map (forStm f) s 
@@ -302,6 +303,7 @@ stmLines (Throw e) = ["@throw "] `glue` (expLines e `appp` ";")
 stmLines (Var tpp name Nop mods) = [(unwords . map (++ " ")) mods ++ showDecl tpp name ++ ";"]
 stmLines (Var tpp name e mods) = [(unwords . map (++ " ")) mods ++ showDecl tpp name ++ " = "] `glue` (expLines e `appp` ";")
 stmLines (Break) = ["break;"]
+stmLines (Synchronized r s) = ["@synchronized(" ++ show r ++ ") {"] ++ stms s ++ ["}"]
 
 expLines :: Exp -> [String]
 expLines Self = ["self"]

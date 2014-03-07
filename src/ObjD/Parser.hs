@@ -384,7 +384,7 @@ pTerm = do
 		return e
 	where
 		pTerm' = pCase <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> try(pNumConst) <|> pBreak <|> pReturn <|>
-			pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pWhile <|> pDo <|> pSelf <|> pSuper <|> pNil <|> pCall  <?> "Expression"
+			pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pWhile <|> pSync <|> pDo <|> pSelf <|> pSuper <|> pNil <|> pCall  <?> "Expression"
 
 		pMinus = do
 			charSps '-'
@@ -459,6 +459,17 @@ pTerm = do
 			e <- option Nop (try(string "else") >> sps >> pExp)
 			sps
 			return $ If cond i e
+		pSync = do
+			try $ do 
+				string "synchronized"
+				sps
+				charSps '('
+			cond <- pExp
+			sps
+			charSps ')' <?> "Closing while bracket"
+			e <- pExp
+			sps
+			return $ Synchronized cond e	
 		pWhile = do
 			try $ do 
 				string "while"
