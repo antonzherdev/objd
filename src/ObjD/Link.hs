@@ -6,7 +6,7 @@ module ObjD.Link (
 	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
-	fileNameWithPrefix, classDefsWithTraits, traitsDefs, classInitDef, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait
+	fileNameWithPrefix, classDefsWithTraits, classInitDef, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait
 )where
 
 import 			 Control.Arrow
@@ -292,16 +292,24 @@ findValWithName :: String -> Class -> Maybe Def
 findValWithName name cl = find (\d -> name == defName d && DefModField `elem` defMods d && null (defPars d)) $ classDefs cl
 
 classDefsWithTraits :: Class -> [Def]
-classDefsWithTraits cl = nub $ classDefs cl ++ traitsDefs cl
-			
-traitsDefs :: Class -> [Def]
-traitsDefs cl = allInParentTraits cl		
-	where
-		allInParentTraits cll = concatMap (traitDefsRec . fst) ((extendsRefs . classExtends) cll)
-		traitDefsRec cll 
-			| isTrait cll = filter ( (DefModAbstract `notElem`). defMods) (classDefs cll) ++ allInParentTraits cll
-			| otherwise = []
-	
+classDefsWithTraits cl = classDefs cl ++ notOverloadedTraitDefs
+	where	
+		notOverloadedTraitDefs = filter (\def -> not $ any (== def) notAbstractClassDefs) notAbstractTraitDefs
+		--notOverloadedTraitDefs = notAbstractTraitDefs
+		notAbstractTraitDefs = notAbstractDefs True
+		notAbstractClassDefs = notAbstractDefs False
+		notAbstractDefs trait = (filter ( (DefModAbstract `notElem`). defMods) . map fst . filter (\t -> trait == snd t)) allDefsWithLine
+		allDefsWithLine :: [(Def, Bool)]
+		allDefsWithLine = allDefsWithLine' False True cl
+		allDefsWithLine' :: Bool -> Bool -> Class -> [(Def, Bool)] -- (Def, traitLine - True/classLine - False)
+		allDefsWithLine' currentLine traitLine cll = 
+			map (\def -> (def, currentLine)) (classDefs cll) 
+			++ concatMap nextRec ((extendsRefs . classExtends) cll)
+			where
+				nextRec :: ExtendsRef -> [(Def, Bool)]
+				nextRec (nextClass, _) = 
+					let line = traitLine && isTrait nextClass
+					in allDefsWithLine' line line nextClass
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - Def 
  -----------------------------------------------------------------------------------------------------------------------------------------}
@@ -576,7 +584,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 		decls = filter (not . containsInSuper) (D.classFields cl) ++ filter D.isDecl (D.classBody cl)
 		containsInSuper D.Def {D.defName = name} =  case superClass self of
 			Nothing -> False
-			Just super -> any (\d -> DefModField `elem` defMods d && defName d == name) $ classDefs super
+			Just super -> any (\d -> DefModField `elem` defMods d && defName d == name) $ allDefsInClass (super, M.empty)
 
 		defs = map (\ def -> linkDef (isObject, selfIsStruct) (envForDef def) def) . filter D.isDef $ D.classBody cl
 		envForDef def = if isStaticDecl def then staticEnv else env

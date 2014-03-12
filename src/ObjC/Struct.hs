@@ -1,5 +1,5 @@
 module ObjC.Struct ( Property(..), PropertyModifier(..),FileStm(..), ImplSynthesize(..), ImplFun(..), Fun(..), FunType(..), FunPar(..),
-  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..), DataType(..), Extends(..), tp, forExp, forStm, forStms, cfun
+  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..), DataType(..), Extends(..), tp, forExp, forStm, forStms, cfun, Visibility(..)
 ) where
 
 import           Ex.String
@@ -9,7 +9,7 @@ import 			 Control.Arrow
 
 data FileStm =
 	Import String | ImportLib String | EmptyLine 
-	| Interface { interfaceName :: String, interfaceExtends :: Extends, interfaceProperties :: [Property], interfaceFuns :: [Fun] }
+	| Interface { interfaceName :: String, interfaceExtends :: Extends, interfaceProperties :: [Property], interfaceFuns :: [Fun], interfaceFields :: InterfaceFields}
 	| Protocol { interfaceName :: String, interfaceExtends :: Extends, interfaceProperties :: [Property], interfaceFuns :: [Fun] }
 	| Implementation {implName :: String
 		, implFields :: [ImplField]
@@ -22,6 +22,8 @@ data FileStm =
 	| CFun {cfunMods :: [CFunMod], cfunReturnType :: DataType, cfunName :: String, cfunPars :: [CFunPar], cfunExps :: [Stm]}
 	| ClassDecl String
 	| ProtocolDecl String
+data Visibility = Public | Private | Protected | Package
+type InterfaceFields = [(Visibility, [ImplField])]
 cfun :: FileStm -> [Stm] -> FileStm
 cfun decl s = CFun{cfunMods = cfunMods decl, cfunReturnType = cfunReturnType decl, cfunName = cfunName decl, cfunPars = cfunPars decl, cfunExps = s}
 data Extends = Extends String [String]
@@ -66,11 +68,11 @@ data Stm =
 	| Break
 	| Synchronized Exp [Stm]
 
-forStms :: MonadPlus m => (Stm -> m a, Exp -> m a) -> [Stm] -> m a 	
+forStms :: MonadPlus m => (Stm -> Bool, Stm -> m a, Exp -> Bool, Exp -> m a) -> [Stm] -> m a 	
 forStms f s = msum $ map (forStm f) s 
 
-forStm :: MonadPlus m => (Stm -> m a, Exp -> m a) -> Stm -> m a
-forStm f@(fs, _) ee = mplus (go ee) (fs ee)
+forStm :: MonadPlus m => (Stm -> Bool, Stm -> m a, Exp -> Bool, Exp -> m a) -> Stm -> m a
+forStm f@(cs, fs, _, _) ee = mplus (fs ee) $ if cs ee then (go ee) else mzero
 	where
 		mmsum = msum . map (forStm f)
 		mfore = forExp f 
@@ -97,6 +99,7 @@ data Exp =
 	| BoolOp BoolTp Exp Exp 
 	| MathOp MathTp Exp Exp 
 	| Dot Exp Exp
+	| Arrow Exp Exp
 	| PlusPlus Exp
 	| MinusMinus Exp
 	| Nop
@@ -116,8 +119,8 @@ data Exp =
 	| ProtocolRef Exp
 	| GetRef Exp
 	| RefUp Exp
-forExp :: MonadPlus m => (Stm -> m a, Exp -> m a) -> Exp -> m a
-forExp f@(_, fe) ee = mplus (go ee) (fe ee)
+forExp :: MonadPlus m => (Stm -> Bool, Stm -> m a, Exp -> Bool, Exp -> m a) -> Exp -> m a
+forExp f@(_, _, ce, fe) ee = mplus (fe ee) $ if ce ee then (go ee) else mzero
 	where	
 		mmsum = msum . map (forExp f)
 		mfor = forExp f 
@@ -140,6 +143,7 @@ forExp f@(_, fe) ee = mplus (go ee) (fe ee)
 		go (BoolOp _ l r) = mfor l `mplus` mfor r
 		go (MathOp _ l r) = mfor l `mplus` mfor r
 		go (Dot l r) = mfor l `mplus` mfor r
+		go (Arrow l r) = mfor l `mplus` mfor r
 		go (Index l r) = mfor l `mplus` mfor r
 		go (InlineIf e l r) = mfor e `mplus` mfor l `mplus` mfor r
 		go (Lambda _ s _) = msum $ map (forStm f) s
@@ -152,6 +156,7 @@ stms = map ind . concatMap stmLines
 unlines' :: [String] -> String
 unlines' [] = ""
 unlines' a = unlines a ++ "\n"
+
 kw :: String -> String
 kw "switch" = "aSwitch"
 kw "default" = "aDefault"
@@ -185,11 +190,16 @@ instance Show FileStm where
 	show (CFun mods ret name pars exps) = strs " " (map show mods ++ [show ret]) ++ " " ++ name ++ "(" ++ (strs ", " . map show) pars ++ ") {\n" ++
 			showStms exps ++
 		"}"
-	show (Interface name extends properties funs) =
-		"@interface " ++ name ++ " : " ++ show extends ++ "\n"
+	show (Interface name extends properties funs intFields) =
+		"@interface " ++ name ++ " : " ++ show extends ++ 
+		showFields (filter (not . null . snd) intFields)
 		 ++ (unlines' . map show) properties
 		 ++ (unlines  . map (( ++ ";") . show)) funs
 		 ++ "@end\n\n"
+		 where
+		 	showFields [] = "\n"
+		 	showFields fields = " {\n" ++ unlines (map showVisibilitySection fields) ++ "}\n"
+		 	showVisibilitySection (visibility, fields) = show visibility ++ "\n" ++ mkString (ind . show) "\n" fields 
 	show (Protocol name (Extends cl trs) properties funs) =
 		"@protocol " ++ name ++ "<" ++ cl ++ unwords (map (", " ++ ) trs) ++ ">\n"
 		++ (unlines' . map show) properties
@@ -246,6 +256,11 @@ instance Show FunType where
 instance Show Property where
 	show (Property name tpp mods) = "@property (" ++ strs' ", " mods ++ ") " ++ showDecl tpp (kw name) ++ ";"
 
+instance Show Visibility where
+	show Public = "@public"
+	show Private = "@private"
+	show Protected = "@protected"
+	show Package = "@package"
 
 instance Show PropertyModifier where
 	show ReadOnly = "readonly"
@@ -355,6 +370,7 @@ expLines (MathOp t l r) = [mbb l ++ " " ++ show t ++ " " ++ mbb r]
 		needb Minus Minus = True
 		needb _ _ = False
 expLines (Dot l r) = (expLines l `appp` ".") `glue` expLines r
+expLines (Arrow l r) = (expLines l `appp` "->") `glue` expLines r
 expLines (PlusPlus e) = appendLast "++" (expLines e)
 expLines (MinusMinus e) = appendLast "--" (expLines e)
 expLines (InlineIf c t f) = ["(("] `glue` (expLines c `appp` ") ? ") `glue` (expLines t `appp` " : ") `glue` (expLines f `appp` ")") 

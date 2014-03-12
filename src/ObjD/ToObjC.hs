@@ -70,11 +70,15 @@ stmToInterface cl =
 		C.interfaceExtends = classExtends cl,
 		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs,
 		C.interfaceFuns = constrFuns ++ [typeInstanceFun]
-			++ intefaceFuns defs ++ staticGetters
+			++ intefaceFuns defs ++ staticGetters,
+		C.interfaceFields = [(C.Private, map (implField env) implFields)]
 	}
 	where 
+		env = Env cl 0 D.TPVoid False False
 		name = D.classNameWithPrefix cl
 		defs = D.classDefs cl
+		implFields = filter needField (D.classDefsWithTraits cl)
+		needField f = D.isField f && not (D.isStatic f)
 		constrFuns = fromMaybe [] $ fmap (\constr -> [createFun name constr, initFun constr]) (D.classConstructor cl)
 		staticGetters = (map staticGetterFun .filter (\f -> 
 			(D.DefModPrivate `notElem` D.defMods f) && D.isField f && D.isStatic f)) defs
@@ -180,7 +184,7 @@ stmToImpl :: D.Class -> C.FileStm
 stmToImpl cl =
 	C.Implementation {
 		C.implName = clsName,
-		C.implFields = map (implField env) implFields,
+		C.implFields = [],
 		C.implSynthesizes = (map (synthesize env) . filter needProperty) implFields,
 		C.implFuns = nub $ constrFuns ++ [implInitialize env] ++ dealoc env 
 			++ implFuns env defs ++ [instanceType] ++ staticGetters ++ copyImpls ++ (if equalsIsPosible cl then [equal, hash] else []) ++ [description],
@@ -314,14 +318,6 @@ implInitialize env@Env{envClass = cl} = let
 				
 
 
-
-declareWeakSelf :: Env -> [C.Stm] -> [C.Stm]
-declareWeakSelf env stms = if need then (C.Var (C.tp $ (D.classNameWithPrefix $ envClass env) ++ "*") "_weakSelf" C.Self ["__weak"]) : stms else stms
-	where
-		need = isJust $ C.forStms ((\_ -> Nothing), (isWeakSelf) ) stms
-		isWeakSelf e@(C.Ref "_weakSelf") = Just e
-		isWeakSelf _ = Nothing
-
 implInit :: Env -> D.Def -> C.ImplFun
 implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
 			[C.Set Nothing C.Self (superInit $ D.extendsClass $ D.classExtends cl)]
@@ -408,7 +404,8 @@ genStruct cl =
 			C.interfaceName = wrapName,
 			C.interfaceExtends = C.Extends "NSObject" [],
 			C.interfaceProperties = [C.Property "value" selfTp [C.ReadOnly, C.NonAtomic]],
-			C.interfaceFuns = [wrapFun, initWrapFun]
+			C.interfaceFuns = [wrapFun, initWrapFun],
+			C.interfaceFields = []
 		}
 		defImpl' d@D.Def{D.defType = tp, D.defBody = e, D.defPars = pars, D.defMods = mods} = C.CFun{C.cfunMods = [], 
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name d,
@@ -577,7 +574,8 @@ genEnumInterface cl = [
 		C.interfaceName = name,
 		C.interfaceExtends = classExtends cl,
 		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs',
-		C.interfaceFuns = intefaceFuns defs' ++ map (enumItemGetterFun name) (D.enumItems cl) ++ [enumValuesFun]
+		C.interfaceFuns = intefaceFuns defs' ++ map (enumItemGetterFun name) (D.enumItems cl) ++ [enumValuesFun],
+		C.interfaceFields = []
 	}]
 	where 
 		name = D.classNameWithPrefix cl
@@ -737,9 +735,25 @@ castGeneric dexp e = case D.exprDataType dexp of
 
 data Env = Env{envClass :: D.Class, envCStruct :: Int, envDataType :: D.DataType, envWeakSelf :: Bool, envNeedWeakSelf :: Bool}
 
+declareWeakSelf :: Env -> [C.Stm] -> [C.Stm]
+declareWeakSelf env stms = if hasWeakSelf True stms then (C.Var (C.tp $ (D.classNameWithPrefix $ envClass env) ++ "*") "_weakSelf" C.Self ["__weak"]) : stms else stms
+
+hasWeakSelf :: Bool -> [C.Stm] -> Bool
+hasWeakSelf goToLambda stms = isJust $ C.forStms ((\_ -> True), (\_ -> Nothing), if goToLambda then (\_ -> True) else blockLambda, isWeakSelf) stms
+	where
+		isWeakSelf e@(C.Ref "_self") = Just e
+		isWeakSelf _ = Nothing
+		blockLambda C.Lambda{} = False
+		blockLambda _ = True
 
 selfCall :: Env -> C.Exp
-selfCall env = if envWeakSelf env then C.Ref "_weakSelf" else C.Self
+selfCall env = if envWeakSelf env then C.Ref "_self" else C.Self
+
+selfGetField :: Env -> String -> C.Exp
+selfGetField env field = if envWeakSelf env then C.Arrow (C.Ref "_self") (C.Ref $ "_" ++ field) else C.Dot C.Self (C.Ref field)
+
+setSelf :: Env -> [C.Stm] -> [C.Stm]
+setSelf env stm = if hasWeakSelf False stm then [(C.Var (C.tp $ (D.classNameWithPrefix $ envClass env) ++ "*") "_self" (C.Ref "_weakSelf") [])] ++ stm else stm
 
 tExp :: Env -> D.Exp -> C.Exp
 tExp _ (D.IntConst i) = C.IntConst i
@@ -782,7 +796,7 @@ tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name}
 	| D.DefModField `elem` mods && D.DefModSuper `notElem` mods && not (envWeakSelf env) = 
 		C.CCall (C.Ref $ fieldName env' d) ((map snd . tPars env' d) pars)
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.classNameWithPrefix $ D.tpClass stp) name (tPars env' d pars) []
-	| D.DefModField `elem` mods && null pars = C.Dot (selfCall env') $ C.Ref name
+	| D.DefModField `elem` mods && null pars = selfGetField env' name
 	| otherwise = C.Call (selfCall env') name (tPars env' d pars) [] 
 	where 
 		env' = env{envNeedWeakSelf = True}
@@ -855,8 +869,9 @@ tExp env (D.Lambda pars e rtp) =
 		unwrapPars = (map unwrapPar. filter (isNeedUnwrap . snd)) pars
 		unwrapPar ::(String, D.DataType) -> C.Stm
 		unwrapPar (name, D.TPGenericWrap tp) = C.Var (showDataType tp) name (maybeVal (D.TPGenericWrap tp, tp) $ C.Ref $ name ++ "_") []
+		stm = tStm env{envDataType = rtp, envWeakSelf = envNeedWeakSelf env} [] e
 	in
-	C.Lambda (map par' pars) (unwrapPars ++ tStm env{envDataType = rtp, envWeakSelf = envNeedWeakSelf env} [] e) (showDataType rtp)
+	C.Lambda (map par' pars) (unwrapPars ++ setSelf env stm) (showDataType rtp)
 tExp env (D.Arr exps) = C.Arr $ map (tExpToType env D.tpGeneric) exps
 tExp env (D.Map exps) = C.Map $ map (tExpToType env D.tpGeneric *** tExpToType env D.tpGeneric) exps
 tExp env (D.Tuple exps) = C.CCall (C.Ref $ "tuple" ++ if length exps == 2 then "" else show (length exps) ) $ map (tExpToType env D.tpGeneric) exps
@@ -926,7 +941,7 @@ tExp env (D.Braces [x]) = tExp env x
 tExp env e@(D.Braces _) = 
 	let 
 		rtp = D.exprDataType e
-		lambda = C.Lambda [] (tStm env{envDataType = rtp} [] e) (showDataType rtp)
+		lambda = C.Lambda [] (setSelf env $ tStm env{envDataType = rtp} [] e) (showDataType rtp)
 	in C.CCall lambda []
 
 tExp _ x = C.Error $ "No tExp for " ++ show x
