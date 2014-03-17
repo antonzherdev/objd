@@ -321,7 +321,7 @@ implInitialize env@Env{envClass = cl} = let
 implInit :: Env -> D.Def -> C.ImplFun
 implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
 			[C.Set Nothing C.Self (superInit $ D.extendsClass $ D.classExtends cl)]
-			++ declareWeakSelf env' (implInitFields (filter hasField constrPars) (filter hasInit (D.classDefs cl)))
+			++ declareWeakSelf env' (implInitFields (filter hasField constrPars) (filter hasInit (D.classDefsWithTraits cl)))
 			++ [C.Stm C.Nop, C.Return C.Self]
 			)
 	where
