@@ -603,10 +603,11 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 		constrPar :: D.ClassStm -> (Def, Maybe Exp)
 		constrPar D.Def{D.defName = name, D.defRetType = Just tp, D.defBody = b} = let
 			tp' = dataType env tp
+			env' = envAddVals (map fst constrPars) env
 			in (localVal name $ dataType env tp,
 				case b of
 					D.Nop -> Nothing
-					_ -> Just $ implicitConvertsion env tp' $ expr env b)
+					_ -> Just $ implicitConvertsion env tp' $ expr env' b)
 		generics = map (linkGeneric env) (D.classGenerics cl) 
 		
 		
@@ -775,7 +776,7 @@ linkDefPars :: Env -> [D.Par] -> [(Def, Maybe Exp)]
 --linkDefPars _ _ | trace ("linkDefPars: ") False = undefined
 linkDefPars env pars = let 
 	pars' = map linkPar pars 
-	-- env' = envAddVals pars' env
+	--env' = envAddVals (map fst pars') env
 	linkPar D.Par { D.parName = pnm, D.parType  = ttt, D.parDefault = pd} = let 
 		tp = maybe (exprDataType defaultExp) (dataType env) ttt
 		defaultExp = implicitConvertsion env tp $ expr env pd
