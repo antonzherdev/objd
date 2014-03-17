@@ -762,8 +762,9 @@ linkDefPars :: Env -> [D.Par] -> [(Def, Maybe Exp)]
 linkDefPars env pars = let 
 	pars' = map linkPar pars 
 	-- env' = envAddVals pars' env
-	linkPar D.Par { D.parName = pnm, D.parType  = ttt, D.parDefault = pd} = 
-		let tp = dataType env ttt
+	linkPar D.Par { D.parName = pnm, D.parType  = ttt, D.parDefault = pd} = let 
+		tp = maybe (exprDataType defaultExp) (dataType env) ttt
+		defaultExp = implicitConvertsion env tp $ expr env pd
 		in (Def {
 			defName = pnm, defPars = [], 
 			defType = tp, 
@@ -771,7 +772,7 @@ linkDefPars env pars = let
 			defMods = [DefModLocal], defGenerics = Nothing}, 
 			case pd of
 				D.Nop -> Nothing
-				_ -> Just $ implicitConvertsion env tp $ expr env pd)
+				_ -> Just $ defaultExp)
 	in pars'
 
 {------------------------------------------------------------------------------------------------------------------------------ 

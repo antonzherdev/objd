@@ -307,15 +307,21 @@ pDefPars :: Parser [Par]
 pDefPars = option [] (brackets (option [] (pDefPar `sepBy` charSps ',')))
 
 pDefPar :: Parser Par
-pDefPar = do
-	name <- option "" ident
+pDefPar = (do
+	name <- ident
 	sps
-	tp <- pDataType False
+	tp <- optionMaybe $ pDataType False
 	dp <- option Nop (do
 		sps
 		charSps '='
 		pExp)
-	return $ Par name tp dp
+	return $ Par name tp dp) <|> (do
+		tp <- pDataType False
+		dp <- option Nop (do
+			sps
+			charSps '='
+			pExp)
+		return $ Par "" (Just tp) dp)
 
 pExp :: Parser Exp
 pExp = do

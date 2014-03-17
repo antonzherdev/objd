@@ -63,7 +63,7 @@ isClassImport _ =  False
 
 data EnumItem = EnumItem{enumItemName :: String, enumItemPars :: [CallPar]}
 
-data Par = Par { parName :: String, parType :: DataType, parDefault :: Exp }
+data Par = Par { parName :: String, parType :: Maybe DataType, parDefault :: Exp }
 
 data Exp = Nop 
 	| IntConst Int 
