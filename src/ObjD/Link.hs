@@ -1424,10 +1424,10 @@ exprDataType (LambdaCall e) = case unwrapGeneric $ exprDataType e of
 {- exprDataType x = error $ "No exprDataType for " ++ show x -}
 
 expr :: Env -> D.Exp -> Exp
-expr env (D.If cond t f) = If (expr env cond) (expr env t) (expr env f)
-expr env (D.While cond t) = While (expr env cond) (expr env t)
+expr env (D.If cond t f) = If (implicitConvertsion env TPBool $ expr env cond) (expr env t) (expr env f)
+expr env (D.While cond t) = While (implicitConvertsion env TPBool $ expr env cond) (expr env t)
 expr env (D.Synchronized cond t) = Synchronized (expr env cond) (expr env t)
-expr env (D.Do cond t) = Do (expr env cond) (expr env t)
+expr env (D.Do cond t) = Do (implicitConvertsion env TPBool $ expr env cond) (expr env t)
 expr _ (D.Braces []) = Nop
 expr env (D.Braces es) = Braces $ bracesRec env es
 	where
