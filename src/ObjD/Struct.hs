@@ -63,7 +63,7 @@ isClassImport _ =  False
 
 data EnumItem = EnumItem{enumItemName :: String, enumItemPars :: [CallPar]}
 
-data Par = Par { parName :: String, parType :: DataType }
+data Par = Par { parName :: String, parType :: DataType, parDefault :: Exp }
 
 data Exp = Nop 
 	| IntConst Int 
@@ -98,16 +98,17 @@ data Exp = Nop
 	| Return Exp
 	| Case Exp [CaseItem]
 	| Synchronized Exp Exp
+	deriving (Eq)
 type CallPar = (Maybe String, Exp)
 
 type CaseItem = (CaseCondition, Exp)
-data CaseCondition = CaseUnapply (Maybe String) String [CaseCondition] | CaseAny | CaseVal String | CaseType CaseCondition DataType
-data FuncOpTp = FuncOpBind | FuncOpClue | FuncOpClone
+data CaseCondition = CaseUnapply (Maybe String) String [CaseCondition] | CaseAny | CaseVal String | CaseType CaseCondition DataType deriving (Eq)
+data FuncOpTp = FuncOpBind | FuncOpClue | FuncOpClone deriving (Eq)
 
 data DataType = DataType String [DataType] 
 	| DataTypeArr Int DataType | DataTypeFun DataType DataType | DataTypeTuple [DataType] 
 	| DataTypeMap DataType DataType 
-	| DataTypeOption DataType
+	| DataTypeOption DataType deriving (Eq)
 
 
 instance Show FileStm where

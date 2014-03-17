@@ -18,6 +18,7 @@ import           Data.List
 import           Ex.String
 import qualified ObjD.Struct         as D
 import           Data.Char
+--import Debug.Trace
 
 detailedReferenceError :: Bool
 detailedReferenceError = False
@@ -586,7 +587,9 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 			Nothing -> False
 			Just super -> any (\d -> DefModField `elem` defMods d && defName d == name) $ allDefsInClass (super, M.empty)
 
-		defs = map (\ def -> linkDef (isObject, selfIsStruct) (envForDef def) def) . filter D.isDef $ D.classBody cl
+		defs = concatMap (\ def -> 
+			linkDef (envForDef def) def ([DefModStruct | selfIsStruct] ++ [DefModStatic | isObject])) 
+			. filter D.isDef $ D.classBody cl
 		envForDef def = if isStaticDecl def then staticEnv else env
 		enumConstr = constr (enumAdditionalDefs ++ constrPars)
 		constr :: [Def] -> Def
@@ -685,55 +688,91 @@ translateMods = mapMaybe m
 		m D.DefModPure = Just DefModPure
 		m _ = Nothing
 		
-linkDef :: (Bool, Bool) -> Env -> D.ClassStm -> Def
-linkDef (obj, str) env ccc = def
+linkDef :: Env -> D.ClassStm -> [DefMod] -> [Def]
+--linkDef _ D.Def{D.defName = name} _ | trace ("linkDef: " ++ name) False = undefined
+linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body, D.defGenerics = generics} additionalMods = 
+	resolveDefPar env' mainDef pars'
 	where 
-		def = evalState (stateDef ccc) env'
 		env' = addEnvInit $ envAddClasses generics' env
-		generics' = map (linkGeneric env) (D.defGenerics ccc)
+		generics' = map (linkGeneric env) generics
 		cl = envSelfClass env
-		addEnvInit e = if D.defName ccc == "init" then e {envInit = True} else e
-		stateDef:: D.ClassStm -> State Env Def
-		stateDef D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body} = 
-			let 
-				 pars = linkDefPars env' opars
-				 pars' = case pars of
-				 	[] -> []
-				 	x@Def{defName = dn} : xs -> if dn == "self" then xs else x:xs
-				 defGenerics' = Just $ DefGenerics generics' $ case pars of
-				 	[] -> envSelf env
-				 	Def{defName = dn, defType = dtp} : _ -> if dn == "self" then dtp else envSelf env
-				 mods' = translateMods mods
-				 overrideDef :: Maybe Def
-				 overrideDef = listToMaybe $ mapMaybe findThisDef (allSuperClasses cl)
-				 findThisDef c = find eqDef (classDefs c) 
-				 eqDef d = defName d == name && length (defPars d) == length opars && all eqPar (zip (defPars d) pars)
-				 overrideTp = fmap defType overrideDef
-				 needWrapRetType = maybe False isTpGeneric overrideTp
-				 mapOverrideType rtp = 
-				 	let rtp' = if needWrapRetType then wrapGeneric rtp else rtp
-				 	in case overrideTp of
-				 		Just otp -> 
-				 			if isInstanceOfTp env' rtp' otp then (if isJust tp || (null opars && name == "apply") then rtp' else otp) else
-				 				TPUnknown $ "Could not choose correct datatype for override " ++ show rtp' ++ " is not instance of " ++ show otp
-				 		_ -> rtp'
-				 in 
-				(case body of
-					D.Nop -> return Def {defMods = DefModDef : DefModAbstract : mods' ++ [DefModStruct | str] ++ [DefModStatic | obj], defName = name, defGenerics = defGenerics',
-							defPars = pars',
-							defType = dataType env' (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
-					_   -> do 
-						modify $ envAddVals pars'
-						b <- expr body
-						put env'
-						let tp' = unwrapGeneric $ getDataType env' tp b
-						let tp'' = mapOverrideType tp'
-						return Def {defMods = DefModDef : mods' ++ [DefModStruct | str] ++ [DefModStatic | obj], defName = name, defGenerics = defGenerics',
-							defPars = pars',
-							defType = tp'', defBody = maybeAddReturn env tp'' b})
+		addEnvInit e = if name == "init" then e {envInit = True} else e
+		
+		pars = linkDefPars env'' opars
+		pars' = case pars of
+		 	[] -> []
+		 	x@(Def{defName = dn}, _) : xs -> if dn == "self" then xs else x:xs
+		defGenerics' = Just $ DefGenerics generics' $ case pars of
+		 	[] -> envSelf env
+		 	(Def{defName = dn, defType = dtp}, _) : _ -> if dn == "self" then dtp else envSelf env
+		mods' = translateMods mods
+		overrideDef :: Maybe Def
+		overrideDef = listToMaybe $ mapMaybe findThisDef (allSuperClasses cl)
+		findThisDef c = find eqDef (classDefs c) 
+		eqDef d = defName d == name && length (defPars d) == length opars && all eqPar (zip (defPars d) parDefs)
+		overrideTp = fmap defType overrideDef
+		needWrapRetType = maybe False isTpGeneric overrideTp
+		mapOverrideType rtp = 
+			let rtp' = if needWrapRetType then wrapGeneric rtp else rtp
+		 	in case overrideTp of
+		 		Just otp -> 
+		 			if isInstanceOfTp env' rtp' otp then (if isJust tp || (null opars && name == "apply") then rtp' else otp) else
+		 				TPUnknown $ "Could not choose correct datatype for override " ++ show rtp' ++ " is not instance of " ++ show otp
+		 		_ -> rtp'
+		parDefs = map fst pars'
+		env'' = envAddVals parDefs env'
+		mainDef = (case body of
+			D.Nop -> Def {defMods = DefModDef : DefModAbstract : mods' ++ additionalMods, defName = name, defGenerics = defGenerics',
+					defPars = map fst pars',
+					defType = dataType env' (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
+			_   -> 
+				let 
+					b = evalState (expr body) env''
+					tp' = unwrapGeneric $ getDataType env' tp b
+					tp'' = mapOverrideType tp'
+				in Def {defMods = DefModDef : mods' ++ additionalMods, defName = name, defGenerics = defGenerics',
+					defPars = parDefs,
+					defType = tp'', defBody = maybeAddReturn env tp'' b})
 
-linkDefPars :: Env -> [D.Par] -> [Def]
-linkDefPars env = map (\D.Par { D.parName = pnm, D.parType  = ttt } -> localVal pnm (dataType env ttt))
+resolveDefPar :: Env -> Def -> [(Def, Maybe Exp)] -> [Def]
+--resolveDefPar _ Def{defName = dn} _ | trace ("resolveDefPar: " ++ dn) False = undefined
+resolveDefPar env mainDef parameters = parRec True parameters []
+	where
+		parRec :: Bool -> [(Def, Maybe Exp)] -> [(Def, Maybe Exp)]  -> [Def]
+		--parRec _ ((Def{defName = name}):_) _ | trace ("parRec: " ++ name) False = undefined
+		--parRec _ [] _ | trace ("parRec: []") False = undefined
+		parRec True [] _ = [mainDef]
+		parRec False [] recPars = [makeDef $ reverse recPars]
+		parRec isMainDef ((par, defaultExp):xs) recPars = 
+			parRec isMainDef xs ((par, Nothing):recPars) 
+			++ case defaultExp of 
+				Nothing -> []
+				_ -> parRec False xs ((par, defaultExp):recPars)
+		makeDef :: [(Def, Maybe Exp)] -> Def
+		makeDef pars =  
+			mainDef {defMods = filter (/= DefModAbstract) (defMods mainDef),
+					defPars = (map fst . filter ( isNothing . snd)) pars,
+					defBody = maybeAddReturn env (defType mainDef) $ Dot (Self (envSelf env)) $ call mainDef (map expCallPar pars)} 
+		expCallPar :: (Def, Maybe Exp) -> Exp
+		expCallPar (d, Nothing) = callRef d
+		expCallPar (_, Just b) = b
+
+linkDefPars :: Env -> [D.Par] -> [(Def, Maybe Exp)]
+--linkDefPars _ _ | trace ("linkDefPars: ") False = undefined
+linkDefPars env pars = let 
+	pars' = map linkPar pars 
+	-- env' = envAddVals pars' env
+	linkPar D.Par { D.parName = pnm, D.parType  = ttt, D.parDefault = pd} = 
+		let tp = dataType env ttt
+		in (Def {
+			defName = pnm, defPars = [], 
+			defType = tp, 
+			defBody = Nop, 
+			defMods = [DefModLocal], defGenerics = Nothing}, 
+			case pd of
+				D.Nop -> Nothing
+				_ -> Just $ implicitConvertsion env tp $ evalState (expr pd) env)
+	in pars'
 
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Env 
@@ -1112,6 +1151,7 @@ data Exp = Nop
 	| Break
 	| LambdaCall Exp
 	| StringBuild [(String, Exp)] String
+	deriving(Eq)
 type CallPar = (Def, Exp)	
 
 instance Show Exp where

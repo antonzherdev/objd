@@ -311,7 +311,11 @@ pDefPar = do
 	name <- option "" ident
 	sps
 	tp <- pDataType False
-	return $ Par name tp
+	dp <- option Nop (do
+		sps
+		charSps '='
+		pExp)
+	return $ Par name tp dp
 
 pExp :: Parser Exp
 pExp = do

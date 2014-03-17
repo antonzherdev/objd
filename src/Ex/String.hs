@@ -62,8 +62,8 @@ tryCon "" _ = ""
 tryCon a b = a ++ b
 
 
-data MathTp = Plus | Minus | Mul | Div
-data BoolTp = Eq | NotEq | More | MoreEq | Less | LessEq | And | Or
+data MathTp = Plus | Minus | Mul | Div deriving (Eq)
+data BoolTp = Eq | NotEq | More | MoreEq | Less | LessEq | And | Or deriving (Eq)
 instance Show MathTp where
 	show Plus = "+"
 	show Minus = "-"
