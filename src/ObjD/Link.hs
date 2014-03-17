@@ -537,7 +537,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 				_classExtends = if D.className cl == "Object" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
 				_classDefs = 
 					if isObject then fields ++ defs ++ [typeField] 
-					else fields ++ defs ++ [constr constrPars, typeField] 
+					else fields ++ defs ++ constr constrPars ++ [typeField] 
 				{-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
 				_classGenerics = generics,
 				_classImports = clImports
@@ -550,7 +550,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 				_classExtends = Extends (Just $ ExtendsClass 
 					(classFind cidx "Enum", [TPClass TPMEnum [] self])  
 					[(enumOrdinal, callLocalVal "ordinal" uint), (enumName, callLocalVal "name" TPString)]) [], 
-				_classDefs =  enumConstr: 
+				_classDefs =  enumConstr ++
 					snd (mapAccumL enumItem 0 (D.enumItems cl)) ++ fields ++ defs ++ [Def{
 					defName = "values", defType = TPArr 0 (TPClass TPMEnum [] self), defBody = Nop,
 					defMods = [DefModStatic], defPars = [], defGenerics = Nothing}],
@@ -569,13 +569,13 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 			}
 		enumOrdinal = Def "ordinal" [] uint Nop [] Nothing
 		enumName = Def "name" [] TPString Nop [] Nothing
-		enumAdditionalDefs = [enumOrdinal, enumName]
+		enumAdditionalDefs = [(enumOrdinal, Nothing), (enumName, Nothing)]
 		selfType = refDataType self (map (TPClass TPMGeneric []) generics)
 		clsMod D.ClassModStruct = Just ClassModStruct
 		clsMod D.ClassModStub = Just ClassModStub
 		clsMod D.ClassModTrait = Just ClassModTrait
 		clsMod D.ClassModObject = Just ClassModObject
-		extends = fmap (linkExtends env constrPars) (D.classExtends cl) 
+		extends = fmap (linkExtends env (map fst constrPars)) (D.classExtends cl) 
 		selfIsStruct = case cl of
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
 			_ -> False
@@ -583,7 +583,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 		fields :: [Def]
 		fields =  concatMap (linkField staticEnv (isObject, selfIsStruct)) (filter (isStaticDecl) decls)  ++
 			concatMap (linkField env (isObject, selfIsStruct)) (filter (not . isStaticDecl) decls)
-		decls = filter (not . containsInSuper) (D.classFields cl) ++ filter D.isDecl (D.classBody cl)
+		decls = (map (\d -> d{D.defBody = D.Nop}) . filter (not . containsInSuper) )(D.classFields cl) ++ filter D.isDecl (D.classBody cl)
 		containsInSuper D.Def {D.defName = name} =  case superClass self of
 			Nothing -> False
 			Just super -> any (\d -> DefModField `elem` defMods d && defName d == name) $ allDefsInClass (super, M.empty)
@@ -593,11 +593,20 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 			. filter D.isDef $ D.classBody cl
 		envForDef def = if isStaticDecl def then staticEnv else env
 		enumConstr = constr (enumAdditionalDefs ++ constrPars)
-		constr :: [Def] -> Def
-		constr pars = Def{defName = "apply", defMods = [DefModStatic, DefModConstructor] ++ [DefModStruct | selfIsStruct], defBody = Nop,
-			defPars = pars, defType = selfType, defGenerics = Just $ DefGenerics generics selfType}
+		constr :: [(Def, Maybe Exp)] -> [Def]
+		constr pars = let
+			mainDef = Def{defName = "apply", defMods = [DefModStatic, DefModConstructor] ++ [DefModStruct | selfIsStruct], defBody = Nop,
+				defPars = map fst pars, defType = selfType, defGenerics = Just $ DefGenerics generics selfType}
+			in resolveDefPar env mainDef pars 
+		constrPars :: [(Def, Maybe Exp)]
 		constrPars = map constrPar (D.classFields cl)
-		constrPar D.Def{D.defName = name, D.defRetType = Just tp} = localVal name $ dataType env tp
+		constrPar :: D.ClassStm -> (Def, Maybe Exp)
+		constrPar D.Def{D.defName = name, D.defRetType = Just tp, D.defBody = b} = let
+			tp' = dataType env tp
+			in (localVal name $ dataType env tp,
+				case b of
+					D.Nop -> Nothing
+					_ -> Just $ implicitConvertsion env tp' $ expr env b)
 		generics = map (linkGeneric env) (D.classGenerics cl) 
 		
 		
@@ -750,9 +759,14 @@ resolveDefPar env mainDef parameters = parRec True parameters []
 				_ -> parRec False xs ((par, defaultExp):recPars)
 		makeDef :: [(Def, Maybe Exp)] -> Def
 		makeDef pars =  
-			mainDef {defMods = filter (/= DefModAbstract) (defMods mainDef),
+			let 
+				callMainDef = call mainDef (map expCallPar pars)
+				callMainDef' = maybeAddReturn env (defType mainDef) $ 
+					if DefModConstructor `elem` defMods mainDef then callMainDef 
+					else Dot (Self (envSelf env)) $ callMainDef
+				in mainDef {defMods = (map (\m -> if m == DefModConstructor then DefModDef else m) . filter (\m -> m /= DefModAbstract) ) (defMods mainDef),
 					defPars = (map fst . filter ( isNothing . snd)) pars,
-					defBody = maybeAddReturn env (defType mainDef) $ Dot (Self (envSelf env)) $ call mainDef (map expCallPar pars)} 
+					defBody = callMainDef'}  
 		expCallPar :: (Def, Maybe Exp) -> Exp
 		expCallPar (d, Nothing) = callRef d
 		expCallPar (_, Just b) = b
