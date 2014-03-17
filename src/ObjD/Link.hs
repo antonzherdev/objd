@@ -580,8 +580,9 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
 			_ -> False
 		isStaticDecl d = isObject || D.isStatic d
-		fields =  join $ mapM (evalState . linkField (isObject, selfIsStruct)) (filter (isStaticDecl) decls) staticEnv ++
-			mapM (evalState . linkField (isObject, selfIsStruct)) (filter (not . isStaticDecl) decls) env
+		fields :: [Def]
+		fields =  concatMap (linkField staticEnv (isObject, selfIsStruct)) (filter (isStaticDecl) decls)  ++
+			concatMap (linkField env (isObject, selfIsStruct)) (filter (not . isStaticDecl) decls)
 		decls = filter (not . containsInSuper) (D.classFields cl) ++ filter D.isDecl (D.classBody cl)
 		containsInSuper D.Def {D.defName = name} =  case superClass self of
 			Nothing -> False
@@ -629,7 +630,7 @@ linkExtends env constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs
 	let 
 		env' = env {envVals = constrPars, envSelf = objectType $ envSelf env}
 		superCall = D.Dot D.Super $ D.Call "apply" (Just $ pars) gens
-		superCall' = evalState (expr superCall) env'
+		superCall' = expr env' superCall
 		superCallPars = case superCall' of
 			Dot _ (Call _ _ pars') -> pars'
 			err -> [(unknownDef, err)]
@@ -646,11 +647,10 @@ linkGeneric env (D.Generic name ext) = Generic{className = name,
 			Nothing -> []
 			Just (D.Extends (D.ExtendsClass firstExtends []) nextExtends) -> firstExtends : nextExtends
 
-linkField :: (Bool, Bool) -> D.ClassStm -> State Env [Def]
-linkField (obj, _isStruct) D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = do
-	i <- expr e
-	env <- get
+linkField :: Env -> (Bool, Bool) -> D.ClassStm -> [Def]
+linkField env (obj, _isStruct) D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = 
 	let 
+		i = expr env e
 		tp' = unwrapGeneric $ getDataType env tp i
 		tp'' = if _isStruct then case tp' of
 				TPArr n atp -> TPEArr n $ unwrapGeneric atp 
@@ -673,7 +673,7 @@ linkField (obj, _isStruct) D.Def {D.defMods = mods, D.defName = name, D.defRetTy
 		defLazyGet = Def{defMods = DefModInline : DefModDef : translateMods mods ++ [DefModStatic | obj], defName = name, 
 			defType = tp'', 
 			defBody = Return True $ Dot (callRef defLazy) (Call lazyGet gtp []), defGenerics = Nothing, defPars = []}
-		in return $ if isLazy then [defLazyGet, defLazy] else [def]
+		in if isLazy then [defLazyGet, defLazy] else [def]
 
 		
 
@@ -727,7 +727,7 @@ linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRe
 					defType = dataType env' (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
 			_   -> 
 				let 
-					b = evalState (expr body) env''
+					b = expr env'' body
 					tp' = unwrapGeneric $ getDataType env' tp b
 					tp'' = mapOverrideType tp'
 				in Def {defMods = DefModDef : mods' ++ additionalMods, defName = name, defGenerics = defGenerics',
@@ -771,7 +771,7 @@ linkDefPars env pars = let
 			defMods = [DefModLocal], defGenerics = Nothing}, 
 			case pd of
 				D.Nop -> Nothing
-				_ -> Just $ implicitConvertsion env tp $ evalState (expr pd) env)
+				_ -> Just $ implicitConvertsion env tp $ expr env pd)
 	in pars'
 
 {------------------------------------------------------------------------------------------------------------------------------ 
@@ -1374,70 +1374,50 @@ exprDataType (LambdaCall e) = case unwrapGeneric $ exprDataType e of
 	t -> t
 {- exprDataType x = error $ "No exprDataType for " ++ show x -}
 
-expr :: D.Exp -> State Env Exp
-expr (D.If cond t f) = do
-	c <- expr cond
-	tt <- expr t
-	ff <- expr f
-	return $ If c tt ff
-expr (D.While cond t) = do
-	c <- expr cond
-	tt <- expr t
-	return $ While c tt
-expr (D.Synchronized cond t) = do
-	c <- expr cond
-	tt <- expr t
-	return $ Synchronized c tt  
-expr (D.Do cond t) = do
-	c <- expr cond
-	tt <- expr t
-	return $ Do c tt 
-expr (D.Braces []) = return Nop
-expr (D.Braces es) = do
-	env <- get
-	f <- mapM expr es
-	put env
-	return $ Braces f
-expr D.Nop = return Nop
-expr (D.IntConst i) = return $ IntConst i
-expr (D.StringConst i) = return $ StringConst i
-expr D.Nil = return Nil
-expr (D.BoolConst i) = return $ BoolConst i
-expr (D.FloatConst s) = return $ FloatConst s
-expr (D.BoolOp tp a b) = do
-	aa <- expr a
-	bb <- expr b
-	return $ BoolOp tp aa bb
-expr (D.MathOp tp a b) = do
-	aa <- expr a
-	env <- get
+expr :: Env -> D.Exp -> Exp
+expr env (D.If cond t f) = If (expr env cond) (expr env t) (expr env f)
+expr env (D.While cond t) = While (expr env cond) (expr env t)
+expr env (D.Synchronized cond t) = Synchronized (expr env cond) (expr env t)
+expr env (D.Do cond t) = Do (expr env cond) (expr env t)
+expr _ (D.Braces []) = Nop
+expr env (D.Braces es) = Braces $ bracesRec env es
+	where
+		bracesRec _ [] = []
+		bracesRec env' (x:xs) = case expr env' x of
+			x'@(Val d) -> x':(bracesRec (envAddVals [d] env') xs)
+			x' -> x':(bracesRec env' xs)
+expr _ D.Nop = Nop
+expr _ (D.IntConst i) = IntConst i
+expr _ (D.StringConst i) = StringConst i
+expr _ D.Nil = Nil
+expr _ (D.BoolConst i) = BoolConst i
+expr _ (D.FloatConst s) = FloatConst s
+expr env (D.BoolOp tp a b) = BoolOp tp (expr env a) (expr env b)
+expr env (D.MathOp tp a b) = 
 	let 
+		aa = expr env a
 		ltp = exprDataType aa
-		math = expr b >>= return . MathOp tp aa
-		callOp = return $ Dot aa $ exprCall env (Just ltp) $ D.Call (literalDefName $ show tp) (Just [(Nothing, b)]) []
-	case unwrapGeneric ltp of
+		math = MathOp tp aa (expr env b)
+		callOp =  Dot aa $ exprCall env (Just ltp) $ D.Call (literalDefName $ show tp) (Just [(Nothing, b)]) []
+	in case unwrapGeneric ltp of
 		TPNumber{} -> math
 		TPFloatNumber{} -> math
 		TPString{} -> math
 		TPVoidRef{} -> math
 		_ -> callOp 
-expr d@(D.Dot a b) = do
-	env <- get
-	aa <- case a of
-		D.Call {} -> return $ exprCall env Nothing a
-		_ -> expr a
-	case aa of
-		ExpDError s _ -> return $ ExpDError s d
-		_ -> do
-			bb <- return $ exprCall env (Just $ exprDataType aa)  b
-			put env
-			return $ case bb of
-				Dot l r -> Dot (Dot aa l) r
-				_ -> Dot aa bb
-expr (D.Set tp a b) = do
-	aa <- expr a
-	env <- get
+expr env d@(D.Dot a b) = let
+	aa = case a of
+		D.Call {} -> exprCall env Nothing a
+		_ -> expr env a
+	bb = exprCall env (Just $ exprDataType aa)  b
+	in case aa of
+		ExpDError s _ -> ExpDError s d
+		_ -> case bb of
+			Dot l r -> Dot (Dot aa l) r
+			_ -> Dot aa bb
+expr env (D.Set tp a b) = 
 	let 
+		aa = expr env a
 		ltp = exprDataType aa
 		simpleSet = if isNothing tp then Set Nothing aa math
 			else case unwrapGeneric ltp of
@@ -1446,7 +1426,7 @@ expr (D.Set tp a b) = do
 				TPString{} -> Set tp aa math
 				_ -> Set Nothing aa callOp
 
-		math = implicitConvertsion env ltp $ evalState (expr b) env
+		math = implicitConvertsion env ltp $ expr env b 
 		callOp = Dot aa $ exprCall env (Just ltp) $ D.Call (literalDefName $ show $ fromJust tp) (Just [(Nothing, b)]) []
 		lcall = case aa of
 				Dot _ c@(Call {}) -> Just c
@@ -1456,92 +1436,66 @@ expr (D.Set tp a b) = do
 			Dot Self{} _ -> True
 			_ -> False
 		bToProcCall = if isJust tp then D.MathOp (fromJust tp) a b else b
-		in 
-			if isNothing lcall then expr b >>= \ r -> return $ Set tp (ExpLError "Left is not def" aa) r
-			else case fromJust lcall of
-				Call ldef _ [] -> 
-					if DefModMutable `elem` defMods ldef then return simpleSet 
-					else if envInit env && isSelfSet then return simpleSet
-					else case aa of
-						Dot ref _ -> return $ Dot ref $ exprCall env (Just $ exprDataType ref) $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
-						_ -> return $ exprCall env Nothing $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
-				_ -> expr b >>= \ r -> return $ Set tp (ExpLError "Unassinable left" aa) r
-expr (D.PlusPlus e) = do
-	aa <- expr e
-	return $ PlusPlus aa
-expr (D.MinusMinus e) = do
-	aa <- expr e
-	return $ MinusMinus aa
-expr D.Self = do
-	env <- get
-	return $ Self $ envSelf env
-expr D.Super = do
-	env <- get
-	return $ Super $ fromMaybe (error $ "No super data type for " ++ show (envSelf env)) $ superType $ envSelf env
-expr r@D.Call{} = get >>= (\env -> return $ exprCall env Nothing r)
-expr (D.Index e i) = do
-	e' <- expr e
-	let obf = expr $ D.Dot e (D.Call "apply" (Just [(Nothing, i)]) [])
-	case exprDataType e' of
+	in if isNothing lcall then Set tp (ExpLError "Left is not def" aa) $ expr env b
+		else case fromJust lcall of
+			Call ldef _ [] -> 
+				if DefModMutable `elem` defMods ldef then simpleSet 
+				else if envInit env && isSelfSet then simpleSet
+				else case aa of
+					Dot ref _ ->  Dot ref $ exprCall env (Just $ exprDataType ref) $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
+					_ -> exprCall env Nothing $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
+			_ -> Set tp (ExpLError "Unassinable left" aa) (expr env b)
+expr env (D.PlusPlus e) = PlusPlus (expr env e)
+expr env (D.MinusMinus e) = MinusMinus (expr env e)
+expr env D.Self = Self $ envSelf env
+expr env D.Super = Super $ fromMaybe (error $ "No super data type for " ++ show (envSelf env)) $ superType $ envSelf env
+expr env r@D.Call{} = exprCall env Nothing r
+expr env (D.Index e i) = let
+	e' = expr env e
+	obf = expr env $ D.Dot e (D.Call "apply" (Just [(Nothing, i)]) [])
+	in case exprDataType e' of
 		TPClass{} -> obf
 		(TPGenericWrap TPClass{}) -> obf
-		_ -> expr i >>= \i' -> return $ Index e' i'
-expr l@(D.Lambda pars e) = if all (isJust.snd) pars then (do
-	env <- get
-	let pars' = map (second (dataType env . fromJust)) pars
-	modify $ envAddVals (map (uncurry localVal) pars')
-	e' <- expr e
-	put env
-	let tp = exprDataType e'
-	return $ Lambda pars' (maybeAddReturn env tp e') tp)
-	else return $ ExpDError "Not all types are defined in lambda" l
+		_ -> Index e' $ expr env i 
+expr env l@(D.Lambda pars e) = 
+	if all (isJust.snd) pars then 
+		let 
+			pars' = map (second (dataType env . fromJust)) pars
+			env' =  envAddVals (map (uncurry localVal) pars') env
+			e' = expr env' e
+			tp = exprDataType e'
+		in Lambda pars' (maybeAddReturn env tp e') tp
+	else ExpDError "Not all types are defined in lambda" l
 
-expr (D.Val name tp body mods) = do
-	env <- get 
-	body' <- expr body
-	let tp' = unwrapGeneric $ maybe (exprDataType body') (dataType env) tp
-	let mods' = DefModLocal : [DefModMutable | D.DefModMutable `elem` mods] ++ [DefModWeak | D.DefModWeak `elem` mods] 
-	let def' = Def{defName = name, defType = tp', defMods = mods', defPars = [], 
+expr env (D.Val name tp body mods) = let
+	body' = expr env body
+	tp' = unwrapGeneric $ maybe (exprDataType body') (dataType env) tp
+	mods' = DefModLocal : [DefModMutable | D.DefModMutable `elem` mods] ++ [DefModWeak | D.DefModWeak `elem` mods] 
+	def' = Def{defName = name, defType = tp', defMods = mods', defPars = [], 
 		defBody = implicitConvertsion env tp' body', 
 		defGenerics = Nothing}
-	modify $ envAddVals [def']
-	return $ Val def'
-expr (D.Arr items) = do
-	items' <- mapM expr items
-	return $ Arr items'
-expr (D.Tuple items) = do
-	items' <- mapM expr items
-	return $ Tuple items'
-expr (D.Throw e) = do
-	e' <- expr e
-	return $ Throw e'
-expr (D.Return e) = do
-	e' <- expr e
-	return $ Return True e'
-expr (D.Not e) = do
-	e' <- expr e
-	return $ Not e'
-expr (D.Negative e) = do
-	e' <- expr e
-	return $ Negative e'
-expr D.Break = return Break
-expr c@D.Case{} = linkCase c
-expr s@D.StringBuild {} = do
-	env <- get 
-	return $ linkStringBuild env s
-expr ex@D.FuncOp{} = linkFuncOp ex
+	in Val def'
+expr env (D.Arr items) = Arr $ map (expr env) items
+expr env (D.Tuple items) = Tuple $ map (expr env) items
+expr env (D.Throw e) = Throw (expr env e)
+expr env (D.Return e) = Return  True (expr env e)
+expr env (D.Not e) = Not (expr env e)
+expr env (D.Negative e) = Negative (expr env e)
+expr _ D.Break = Break
+expr env c@D.Case{} = linkCase env c
+expr env s@D.StringBuild {} = linkStringBuild env s
+expr env ex@D.FuncOp{} = linkFuncOp env ex
 -- expr x = error $ "No expr for " ++ show x
 
 
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Functional Compositions >> *|* **
  ------------------------------------------------------------------------------------------------------------------------------}
-linkFuncOp :: D.Exp -> State Env Exp
-linkFuncOp ex@(D.FuncOp tp l r)  = do
-	env <- get
-	l' <- expr l
-	r' <- expr r
+linkFuncOp :: Env -> D.Exp -> Exp
+linkFuncOp env ex@(D.FuncOp tp l r)  = 
 	let 
+		l' = expr env l
+		r' = expr env r
 		ltp = exprDataType l'
 		lInputType = case ltp of 
 			TPFun ret _ -> Right ret
@@ -1554,17 +1508,15 @@ linkFuncOp ex@(D.FuncOp tp l r)  = do
 				TPOption o -> return $ unwrapGeneric o
 				_ -> return $ t
 			D.FuncOpClone -> lInputType
-	r'' <- case exprDataType r' of
-		TPFun{} -> return r'
-		_ -> case rInputTypeShouldBe of
-			Left _ -> return r'
-			Right ritp -> do
-				modify $ envAddVals $ [localVal "_" ritp]
-				rr <- expr r
-				put env
-				let etp = exprDataType rr
-				return $ Lambda [("_", ritp)] (maybeAddReturn env etp rr) etp
-	let 
+		r'' = case exprDataType r' of
+			TPFun{} -> r'
+			_ -> case rInputTypeShouldBe of
+				Left _ -> r'
+				Right ritp -> 
+					let 
+						rr = expr (envAddVals [localVal "_" ritp] env) r
+						etp = exprDataType rr
+					in Lambda [("_", ritp)] (maybeAddReturn env etp rr) etp 
 		ldef = localVal "__l" (exprDataType l')
 		rdef = localVal "__r" (exprDataType r'')
 		rtp = exprDataType r''
@@ -1580,6 +1532,7 @@ linkFuncOp ex@(D.FuncOp tp l r)  = do
 		g p = do 
 			rInputType
 			return $ Dot (callRef rdef) $ call (applyLambdaDef rtp) [p]
+		compile :: Either String Exp
 		compile = do
 			li <- lInputType 
 			lo <- lOutputType 
@@ -1622,7 +1575,7 @@ linkFuncOp ex@(D.FuncOp tp l r)  = do
 			case tp of
 				D.FuncOpBind -> bind
 				D.FuncOpClone -> clone
-	return $ case compile of
+	in case compile of
 		Left err -> ExpDError err ex
 		Right e -> 
 			Braces [
@@ -1650,10 +1603,10 @@ linkStringBuild env (D.StringBuild pars lastString) =
 		modNext _ s = s
 		compile :: String -> D.Exp -> String -> Exp
 		compile prev (D.Call "when" (Just [(_, e)]) _) _ = 
-			If (evalState (expr e) env) 
+			If (expr env e) 
 				(StringConst $ '\n':(reverse . takeWhile ( /= '\n') . reverse) prev) 
 				(StringConst "")
-		compile _ e _ = evalState (expr e) env
+		compile _ e _ = expr env e
 		accumr :: (String, [(Exp, String)])
 		accumr = mapAccumR processPart lastString pars
 		accuml :: (String, [(String, Exp)])
@@ -1673,34 +1626,31 @@ caseEnvIncVal env = env {caseEnvValNum = caseEnvValNum env + 1}
 caseEnvAddDef :: Def -> CaseEnv -> CaseEnv
 caseEnvAddDef d env = env {caseEnvDefs = caseEnvDefs env ++ [d]}
 
-linkCase :: D.Exp -> State Env Exp
-linkCase (D.Case mainExpr items) = do
-	mainExpr' <- expr mainExpr
+linkCase :: Env -> D.Exp -> Exp
+linkCase env (D.Case mainExpr items) = 
 	let 
+		mainExpr' = expr env mainExpr
 		_case = (localVal "__case__" (exprDataType mainExpr')) {defBody = mainExpr'}
 	 	_incomplete = (localVal "__incomplete__" TPBool) {defBody = BoolConst True}
 	 	_ok = (localVal "__ok__" TPBool) {defBody = BoolConst True}
 	 	notOk = Set Nothing (callRef _ok) (BoolConst False)
 	 	isOk = callRef _ok
 		_result = (localVal "__result__" TPVoid)
-		caseEnvVal env = "__case" ++ show (caseEnvValNum env) ++ "__"
-		linkCaseItem :: D.CaseItem -> State Env (Exp, DataType)
-		linkCaseItem (cond, e) = do
-			env <- get
+		caseEnvVal caseEnv = "__case" ++ show (caseEnvValNum caseEnv) ++ "__"
+		linkCaseItem :: D.CaseItem -> (Exp, DataType)
+		linkCaseItem (cond, e) = 
 			let 
 				(ex, caseEnv) = runState (linkCaseCond cond) $ CaseEvn env _case 1 []
 				caseDefs = caseEnvDefs caseEnv
 				vars = map Val caseDefs
-			modify (envAddVals caseDefs)
-			itemExpr <- expr e
-			put env
-			let
+				env' = envAddVals caseDefs env
+				itemExpr = expr env' e
 				setResultTo to = Set Nothing (callRef _result) to
 				setResult = case itemExpr of
 					Braces exprs -> init exprs ++ [setResultTo $ last exprs]
 					ee -> [setResultTo ee]
 
-			return $ (If (callRef _incomplete) (Braces $ 
+			in  (If (callRef _incomplete) (Braces $ 
 				Val _ok : vars ++ [
 					ex, 
 					If isOk (Braces $ setResult ++ [Set Nothing (callRef _incomplete) (BoolConst False)])
@@ -1711,8 +1661,8 @@ linkCase (D.Case mainExpr items) = do
 			let
 				val = caseEnvCurrentVal caseEnv
 				valTp = defType val
-				env = caseEnvEnv caseEnv
-				valCl = dataTypeClass env valTp
+				env' = caseEnvEnv caseEnv
+				valCl = dataTypeClass env' valTp
 				constr = classConstructor valCl
 
 				linkPar :: (Def, D.CaseCondition) -> State CaseEnv [Exp]
@@ -1737,9 +1687,9 @@ linkCase (D.Case mainExpr items) = do
 			caseEnv <- get
 			let 
 				val = caseEnvCurrentVal caseEnv
-				env = caseEnvEnv caseEnv
-				tp = dataType env $ D.DataType ref []
-				cl = dataTypeClass env tp
+				env' = caseEnvEnv caseEnv
+				tp = dataType env' $ D.DataType ref []
+				cl = dataTypeClass env' tp
 				newValOpt = localVal  ("__caseOpt" ++ show (caseEnvValNum caseEnv) ++ "__") newTpOpt
 				newTpOpt = maybe (TPUnknown "Not found unapply") defType unapply
 				newVal = localVal  (caseEnvVal caseEnv) newTp
@@ -1765,7 +1715,7 @@ linkCase (D.Case mainExpr items) = do
 				parsTypeIs dtp def = case defPars def of
 					[x] -> defType x == dtp
 					_ -> False
-				callFromValOpt fname = Dot (callRef newValOpt) (exprCall env (Just newTpOpt) (D.Call fname Nothing []))
+				callFromValOpt fname = Dot (callRef newValOpt) (exprCall env' (Just newTpOpt) (D.Call fname Nothing []))
 				
 				caseEnv' = caseEnv {caseEnvCurrentVal = newVal, caseEnvValNum = caseEnvValNum caseEnv + 1}
 			put caseEnv'
@@ -1786,8 +1736,8 @@ linkCase (D.Case mainExpr items) = do
 			caseEnv <- get
 			let 
 				oldVal = caseEnvCurrentVal caseEnv
-				env = caseEnvEnv caseEnv
-				tp' = dataType env tp 
+				env' = caseEnvEnv caseEnv
+				tp' = dataType env' tp 
 				val = case cond of
 					D.CaseVal name -> localVal name tp'
 					_ -> localVal (caseEnvVal caseEnv) tp'
@@ -1799,10 +1749,9 @@ linkCase (D.Case mainExpr items) = do
 					D.CaseVal _ -> Set Nothing (callRef val) $ Dot (callRef oldVal) (CastDot tp')
 					_ -> cond'
 			return $ If (Dot (callRef oldVal) (Is tp')) ok notOk
-	items' <- mapM linkCaseItem items
-	env <- get
-	let _result' = _result {defType = fromMaybe (TPUnknown "No common type for case") $  listToMaybe $ reduceTypes env $ map snd items'}
-	return $ Braces $ [
+		items' = map linkCaseItem items
+		_result' = _result {defType = fromMaybe (TPUnknown "No common type for case") $  listToMaybe $ reduceTypes env $ map snd items'}
+	in Braces $ [
 		Val _case, Val _incomplete, Val _result'] 
 		++ map fst items' 
 		++ [If (callRef _incomplete) (Throw $ StringConst "Case incomplete") Nop, 
@@ -1835,7 +1784,7 @@ tryExprCall :: Env-> Maybe DataType -> D.Exp -> Exp
 tryExprCall _ (Just (TPUnknown t)) e = ExpDError t e
 tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 	where
-		pars' = evalState (mapM (\ (n, e) ->  expr e >>= (\ ee -> return (n, FirstTry e ee))) (fromMaybe [] pars)) env
+		pars' = map (second (\e -> FirstTry e (expr env e))) (fromMaybe [] pars) 
 		self = fromMaybe (envSelf env) strictClass
 		call' :: (Maybe Class, Exp)
 		call' = fromMaybe (Nothing, ExpDError errorString cll) $ listToMaybe $ mplus (findCall True) (findCall False)
@@ -2015,7 +1964,7 @@ correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, ExpDError _ (D.Lambda 
 		stps tp = [tp]
 		env' = envAddVals (map (uncurry localVal) lpars') env
 		dtp' = replaceGenerics gens dtp
-		expr' = maybeAddReturn env dtp $ implicitConvertsion env dtp' $ evalState (expr lambdaExpr) env'
+		expr' = maybeAddReturn env dtp $ implicitConvertsion env dtp' $ expr env' lambdaExpr
 		tp' = if containsGeneric dtp then wrapGeneric (exprDataType expr') else dtp
 		containsGeneric = fromMaybe False . forDataType (\t -> case t of
 			TPClass TPMGeneric _ _ -> Just True
