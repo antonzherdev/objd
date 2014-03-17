@@ -2080,13 +2080,15 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 				conv _ _ = ex
 
 				classConversion c (TPGenericWrap _ g) e = classConversion c g e
-				classConversion (TPClass _ _ cls) sc e =
+				classConversion (TPClass _ gens cls) sc e =
 					maybe e wrapWithApply $
-					listToMaybe $ filter(\d -> 
+						find(checkApplyPars . defPars ).
+						map (replaceGenericsInDef gens') .
+						filter(\d -> 
 							(defName d == "apply") 
-							&& (DefModStatic `elem` defMods d) 
-							&& checkApplyPars (defPars d) ) (classDefs cls)
+							&& (DefModStatic `elem` defMods d)) $ (classDefs cls)
 					where
+						gens' = buildGenerics cls gens
 						checkApplyPars [Def{defType = tp}] = isInstanceOfTp env sc tp
 						checkApplyPars _ = False
 						od = objectDef cls
