@@ -633,7 +633,7 @@ procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
 		procExtendsRef :: D.ExtendsRef -> [(D.Class, Bool)] 
 		procExtendsRef (cl, _) = [(cl, True) | needRetCl cl] 
 		procDataType :: D.DataType -> [(D.Class, Bool)] 
-		procDataType (D.TPGenericWrap cl) = procDataType cl
+		procDataType (D.TPGenericWrap _ cl) = procDataType cl
 		procDataType (D.TPClass _ _ cl) = retCl cl
 		procDataType (D.TPObject _ cl) = retCl cl
 		procDataType _ = []
@@ -706,13 +706,13 @@ showDataType (D.TPOption _) = idTp
 showDataType (D.TPFun D.TPVoid d) = C.TPBlock (showDataType d) []
 showDataType (D.TPFun (D.TPTuple ss) d) = C.TPBlock (showDataType d) (map showDataType ss)
 showDataType (D.TPFun s d) = C.TPBlock (showDataType d) [showDataType s]
-showDataType (D.TPGenericWrap (D.TPClass D.TPMStruct _ _)) = idTp
-showDataType (D.TPGenericWrap D.TPNumber{}) = idTp
-showDataType (D.TPGenericWrap D.TPFloatNumber{}) = idTp
-showDataType (D.TPGenericWrap D.TPBool) = idTp
-showDataType (D.TPGenericWrap D.TPChar) = idTp
-showDataType (D.TPGenericWrap D.TPVoid) = idTp
-showDataType (D.TPGenericWrap c) = showDataType c
+showDataType (D.TPGenericWrap _ (D.TPClass D.TPMStruct _ _)) = idTp
+showDataType (D.TPGenericWrap _ D.TPNumber{}) = idTp
+showDataType (D.TPGenericWrap _ D.TPFloatNumber{}) = idTp
+showDataType (D.TPGenericWrap _ D.TPBool) = idTp
+showDataType (D.TPGenericWrap _ D.TPChar) = idTp
+showDataType (D.TPGenericWrap _ D.TPVoid) = idTp
+showDataType (D.TPGenericWrap _ c) = showDataType c
 showDataType D.TPChar = C.TPSimple "unichar" []
 showDataType tp = C.TPSimple (show tp) []
 
@@ -725,13 +725,13 @@ tExpTo env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
 
 castGeneric :: D.Exp -> C.Exp -> C.Exp
 castGeneric dexp e = case D.exprDataType dexp of
-	D.TPGenericWrap c@(D.TPClass D.TPMClass _ _) -> C.Cast (showDataType c) e
-	D.TPGenericWrap c@(D.TPClass D.TPMTrait _ _) -> C.Cast (showDataType c) e
-	D.TPGenericWrap c@(D.TPClass D.TPMEnum _ _) -> C.Cast (showDataType c) e
-	D.TPGenericWrap c@D.TPTuple{} -> C.Cast (showDataType c) e
-	D.TPGenericWrap c@D.TPArr{} -> C.Cast (showDataType c) e
-	D.TPGenericWrap c@D.TPEArr{} -> C.Cast (showDataType c) e
-	D.TPGenericWrap c@D.TPMap{} -> C.Cast (showDataType c) e
+	D.TPGenericWrap _ c@(D.TPClass D.TPMClass _ _) -> C.Cast (showDataType c) e
+	D.TPGenericWrap _ c@(D.TPClass D.TPMTrait _ _) -> C.Cast (showDataType c) e
+	D.TPGenericWrap _ c@(D.TPClass D.TPMEnum _ _) -> C.Cast (showDataType c) e
+	D.TPGenericWrap _ c@D.TPTuple{} -> C.Cast (showDataType c) e
+	D.TPGenericWrap _ c@D.TPArr{} -> C.Cast (showDataType c) e
+	D.TPGenericWrap _ c@D.TPEArr{} -> C.Cast (showDataType c) e
+	D.TPGenericWrap _ c@D.TPMap{} -> C.Cast (showDataType c) e
 	_ -> e
 
 data Env = Env{envClass :: D.Class, envCStruct :: Int, envDataType :: D.DataType, envWeakSelf :: Bool, envNeedWeakSelf :: Bool}
@@ -774,10 +774,10 @@ tExp env (D.MathOp t l r) = let
 		l' = tExp env l
 		r' = tExp env r
 		ltp = case D.exprDataType l of
-			D.TPGenericWrap tt -> tt
+			D.TPGenericWrap _ tt -> tt
 			tt -> tt
 		rtp = case D.exprDataType r of
-			D.TPGenericWrap tt -> tt
+			D.TPGenericWrap _ tt -> tt
 			tt -> tt
 	in case ltp of
 		D.TPString -> case rtp of
@@ -869,7 +869,7 @@ tExp env (D.Lambda pars e rtp) =
 		unwrapPars :: [C.Stm]
 		unwrapPars = (map unwrapPar. filter (isNeedUnwrap . snd)) pars
 		unwrapPar ::(String, D.DataType) -> C.Stm
-		unwrapPar (name, D.TPGenericWrap tp) = C.Var (showDataType tp) name (maybeVal (D.TPGenericWrap tp, tp) $ C.Ref $ name ++ "_") []
+		unwrapPar (name, D.TPGenericWrap gw tp) = C.Var (showDataType tp) name (maybeVal (D.TPGenericWrap gw tp, tp) $ C.Ref $ name ++ "_") []
 		stm = tStm env{envDataType = rtp, envWeakSelf = envNeedWeakSelf env} [] e
 	in
 	C.Lambda (map par' pars) (unwrapPars ++ setSelf env stm) (showDataType rtp)
@@ -877,9 +877,9 @@ tExp env (D.Arr exps) = C.Arr $ map (tExpToType env D.tpGeneric) exps
 tExp env (D.Map exps) = C.Map $ map (tExpToType env D.tpGeneric *** tExpToType env D.tpGeneric) exps
 tExp env (D.Tuple exps) = C.CCall (C.Ref $ "tuple" ++ if length exps == 2 then "" else show (length exps) ) $ map (tExpToType env D.tpGeneric) exps
 tExp env (D.Opt e) = let tp = D.exprDataType e
-	in C.Call (C.Ref "CNOption") "apply" [("value", maybeVal (tp, D.TPGenericWrap tp) (tExp env e))] []
+	in C.Call (C.Ref "CNOption") "apply" [("value", maybeVal (tp, D.wrapGeneric tp) (tExp env e))] []
 tExp env (D.Some e) = let tp = D.exprDataType e
-	in C.Call (C.Ref "CNOption") "some" [("value", maybeVal (tp, D.TPGenericWrap tp) (tExp env e))] []
+	in C.Call (C.Ref "CNOption") "some" [("value", maybeVal (tp, D.wrapGeneric tp) (tExp env e))] []
 tExp _ (D.None _) = C.Call (C.Ref "CNOption") "none" [] []
 tExp env (D.Not e) = C.Not (tExpTo env D.TPBool e)
 tExp env (D.Negative e) = C.Negative (tExp env e)
@@ -1003,10 +1003,10 @@ equals False (_, e1) (D.TPNil, e2) = C.BoolOp NotEq e1 e2
 equals False s1@(_, _) s2@(_, _) = C.Not $ equals True s1 s2
 
 equals True (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp Eq e1 e2
-equals True (D.TPClass D.TPMStruct _ c, e1) (_, e2) = C.CCall (C.Ref (D.classNameWithPrefix c ++ "Eq")) [e1, e2]
+equals True (dtp@(D.TPClass D.TPMStruct _ c), e1) (stp, e2) = C.CCall (C.Ref (D.classNameWithPrefix c ++ "Eq")) [e1, maybeVal (stp, dtp) e2]
 equals True (D.TPGenericWrap{}, e1) (D.TPGenericWrap{}, e2) = C.Call e1 "isEqual" [("", e2)] []
-equals True (stp@(D.TPGenericWrap stp'), e1) (dtp, e2) = equals True (stp', maybeVal (stp, dtp) e1) (dtp, e2)
-equals True (stp, e1) (dtp@(D.TPGenericWrap dtp'), e2) = equals True (stp, e1) (dtp', maybeVal (stp, dtp) e2)
+equals True (stp@(D.TPGenericWrap _ stp'), e1) (dtp, e2) = equals True (stp', maybeVal (stp, dtp) e1) (dtp, e2)
+equals True (stp, e1) (dtp@(D.TPGenericWrap _ dtp'), e2) = equals True (stp, e1) (dtp', maybeVal (stp, dtp) e2)
 equals True (D.TPFloatNumber 0, e1) (_, e2) = C.CCall (C.Ref "eqf") [e1, e2]
 equals True (D.TPFloatNumber 4, e1) (_, e2) = C.CCall (C.Ref "eqf4") [e1, e2]
 equals True (D.TPFloatNumber 8, e1) (_, e2) = C.CCall (C.Ref "eqf8") [e1, e2]

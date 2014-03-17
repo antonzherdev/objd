@@ -1,6 +1,7 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), DataType(..), Exp(..), CImport(..), 
 	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef, CallPar, Package(..),
+	WrapReason(..),
 	Import(..), link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, dataTypeClassNameWithPrefix,
 	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
@@ -18,7 +19,7 @@ import           Data.List
 import           Ex.String
 import qualified ObjD.Struct         as D
 import           Data.Char
---import Debug.Trace
+-- import Debug.Trace
 
 detailedReferenceError :: Bool
 detailedReferenceError = False
@@ -166,18 +167,30 @@ allSuperClasses cl =
 	let scls = superClasses cl 
 	in scls ++ concatMap allSuperClasses scls  
 
-replaceGenerics :: Generics -> DataType -> DataType
-replaceGenerics gns = mapDataType f
+replaceGenerics :: Bool -> Generics -> DataType -> DataType
+replaceGenerics blk gns tp = mapDataType f tp
 	where 
-		f (TPClass TPMGeneric _ (Generic g _)) = M.lookup g gns
+		f (TPClass TPMGeneric _ (Generic g _)) = fmap wrapBlock $ M.lookup g gns
+		f w@(TPGenericWrap reasons _) = if WrapReasonBlock `elem` reasons then Just w else Nothing
 		f _ = Nothing
+		wrapBlock w@(TPGenericWrap reasons e) 
+			| blk = if WrapReasonBlock `elem` reasons then w else TPGenericWrap (WrapReasonBlock:reasons) e
+		wrapBlock e 
+			| blk = TPGenericWrap [WrapReasonBlock] e
+		wrapBlock e = e
+unblockGenerics :: DataType -> DataType
+unblockGenerics tp = mapDataType f tp
+	where
+		f (TPGenericWrap [WrapReasonBlock] e) = Just (mapDataType f e)
+		f (TPGenericWrap reasons e) = if WrapReasonBlock `elem` reasons then Just (TPGenericWrap (filter (/= WrapReasonBlock) reasons) (mapDataType f e)) else Nothing
+		f _ = Nothing 
 
 objectDef :: Class -> Def
 objectDef cl = Def {defName = className cl, defPars = [], defType = TPObject (refDataTypeMod cl) cl, defBody = Nop, 
 				defMods = [DefModStatic, DefModObject], defGenerics = Nothing}
 
 replaceGenericsInDef :: Generics -> Def -> Def
-replaceGenericsInDef gens d = d {defType = replaceGenerics gens (defType d), defPars = map (replaceGenericsInDef gens) (defPars d) }
+replaceGenericsInDef gens d = d {defType =  replaceGenerics False gens (defType d), defPars = map (replaceGenericsInDef gens) (defPars d) }
 
 allDefsInClass :: ClassRef -> [Def]
 allDefsInClass (cl, gens) = 
@@ -215,25 +228,35 @@ buildGenericsForSelf :: Class -> Generics
 buildGenericsForSelf cl = M.fromList $ map (\g -> (className g, refDataType g []) ) $ classGenerics cl
 
 
+superGenericsList :: Generics -> ExtendsRef -> [DataType]
+superGenericsList gens (_, extGens) = map (wrapGeneric . replaceGenerics True gens) extGens
+
 superGenerics :: Generics -> ExtendsRef -> Generics
-superGenerics gens (cl, extGens) = buildGenerics cl $ map (wrapGeneric .replaceGenerics gens) extGens
+superGenerics gens (cl, extGens) = buildGenerics cl $ map (wrapGeneric . replaceGenerics True gens) extGens
 
 superClassRef :: ClassRef -> ExtendsRef -> ClassRef
-superClassRef (_, gens) (cl, extGens) = (cl, buildGenerics cl $ map (wrapGeneric .replaceGenerics gens) extGens)
+superClassRef (_, gens) (cl, extGens) = (cl, buildGenerics cl $ map (wrapGeneric . replaceGenerics True gens) extGens)
 
 
-upGenericsToClass :: Class -> ClassRef -> Maybe Generics
+upGenericsToClass :: Class -> (Class, [DataType]) -> Maybe [DataType]
 upGenericsToClass destinationClass (cl, gens) 
 	| destinationClass == cl = Just gens
 	| otherwise = listToMaybe $ mapMaybe mapRef $ extendsRefs (classExtends cl)
 		where
-			mapRef ref@(ccl, _)= upGenericsToClass destinationClass (ccl, superGenerics gens ref)
+			mapRef ref@(ccl, _)= upGenericsToClass destinationClass (ccl, superGenericsList (buildGenerics cl gens) ref)
 extendsClassClass :: ExtendsClass -> Class
 extendsClassClass (ExtendsClass (cl, _) _) = cl
 
 extendsClassRef :: ExtendsClass -> ExtendsRef
 extendsClassRef (ExtendsClass ref _) = ref
 
+superDataType :: Env -> DataType -> ExtendsRef -> DataType
+superDataType _ (TPClass _ gens cl) extRef@(extCl, _) = 
+	TPClass (refDataTypeMod extCl) (superGenericsList (buildGenerics cl gens) extRef) extCl
+superDataType _ (TPObject _ _) (extCl, _) = TPObject (refDataTypeMod extCl) extCl
+superDataType env tp extRef@(extCl, _) = TPClass (refDataTypeMod extCl) 
+	(superGenericsList (buildGenerics (dataTypeClass env tp) (dataTypeGenerics env tp)) extRef)  extCl
+-- superDataType _ _ = TPVoid
 
 superType :: DataType -> Maybe DataType
 superType (TPClass _ gens cl) = fmap superTypeForExtClass $ (extendsClass . classExtends) cl 
@@ -262,24 +285,31 @@ commonClassRef rr1@(cl, _ ) rr2@(cl2, _)
 	| otherwise = concatMap (commonClassRef rr1 . superClassRef rr2) $ extendsRefs (classExtends cl)
 
 isInstanceOfTp :: Env -> DataType -> DataType -> Bool
+isInstanceOfTp env (TPSelf l) r = isInstanceOfTp env (refDataType l []) r
+isInstanceOfTp env l (TPSelf r) = isInstanceOfTp env l (refDataType r [])
+isInstanceOfTp env l (TPGenericWrap _ r)  = isInstanceOfTp env l r
+isInstanceOfTp env (TPGenericWrap _ l) r = isInstanceOfTp env l r
+isInstanceOfTp env l@(TPClass TPMType _ _) r = isInstanceOfTp env (fromJust $ superType l) r
+isInstanceOfTp env l r@(TPClass TPMType _ _) = isInstanceOfTp env l (fromJust $ superType r)
+isInstanceOfTp _ _ TPAny = True
+isInstanceOfTp _ _ TPNil = True
+isInstanceOfTp _ TPNil _ = True
+isInstanceOfTp _ TPAnyGeneric _ = True
+isInstanceOfTp _ _ TPAnyGeneric = True
+isInstanceOfTp _ _ TPUnknown{} = True
+isInstanceOfTp _ TPVoid (TPClass TPMGeneric _ _) = True
+isInstanceOfTp env cl (TPClass TPMGeneric _ t) = dataTypeClass env cl `isInstanceOf` t
 isInstanceOfTp env cl target
 	| target == cl = True
-	| otherwise = dataTypeClass env cl `isInstanceOf` dataTypeClass env target
+	-- | trace (show cl ++ " isInstanceOfTp " ++ show target ++ " / " ++ className (dataTypeClass env cl) ++ " isInstanceOf " ++ className (dataTypeClass env target)) False = undefined
+	| dataTypeClass env cl == dataTypeClass env target = 
+		all (\(clg, tg) -> isInstanceOfTp env clg tg ) $ zip (dataTypeGenerics env cl) (dataTypeGenerics env target)
+	-- | otherwise =  dataTypeClass env cl `isInstanceOf` dataTypeClass env target
+	| otherwise = any (\extendsRef -> isInstanceOfTp env (superDataType env cl extendsRef) target) $ extendsRefs (classExtends $ dataTypeClass env cl)
+		
 
 isInstanceOfCheck :: Env -> DataType -> DataType -> Bool
-isInstanceOfCheck env (TPSelf l) r = isInstanceOfCheck env (refDataType l []) r
-isInstanceOfCheck env l (TPSelf r) = isInstanceOfCheck env l (refDataType r [])
-isInstanceOfCheck env l (TPGenericWrap r)  = isInstanceOfCheck env l r
-isInstanceOfCheck env (TPGenericWrap l) r = isInstanceOfCheck env l r
-isInstanceOfCheck env l@(TPClass TPMType _ _) r = isInstanceOfCheck env (fromJust $ superType l) r
-isInstanceOfCheck env l r@(TPClass TPMType _ _) = isInstanceOfCheck env l (fromJust $ superType r)
-isInstanceOfCheck _ _ TPUnknown{} = True
-isInstanceOfCheck _ _ TPAny = True
-isInstanceOfCheck _ _ TPAnyGeneric = True
-isInstanceOfCheck _ TPNil _  = True
-isInstanceOfCheck env cl target  
-	| target == cl = True
-	| otherwise =  dataTypeClass env cl `isInstanceOf` dataTypeClass env target
+isInstanceOfCheck env l r = isInstanceOfTp env l r
 
 
 
@@ -738,7 +768,7 @@ linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRe
 			_   -> 
 				let 
 					b = expr env'' body
-					tp' = unwrapGeneric $ getDataType env' tp b
+					tp' = unblockGenerics $ unwrapGeneric $ getDataType env' tp b
 					tp'' = mapOverrideType tp'
 				in Def {defMods = DefModDef : mods' ++ additionalMods, defName = name, defGenerics = defGenerics',
 					defPars = parDefs,
@@ -818,9 +848,10 @@ data DataType = TPNumber Bool Int | TPFloatNumber Int | TPString | TPVoid
 	| TPEArr Int DataType | TPAny | TPChar
 	| TPArr Int DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf Class | TPUnknown String 
 	| TPMap DataType DataType
-	| TPOption DataType | TPGenericWrap DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
+	| TPOption DataType | TPGenericWrap [WrapReason] DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
 	| TPAnyGeneric | TPVoidRef
 	deriving (Eq)
+data WrapReason = WrapReasonUp | WrapReasonBlock deriving(Eq) 
 data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric | TPMType deriving (Eq)
 
 byte :: DataType
@@ -878,7 +909,7 @@ forDataType f tp = mplus (go tp) (f tp)
 		go (TPEArr _ a) = forDataType f a
 		go (TPFun a b) = mplus (forDataType f a) (forDataType f b)
 		go (TPMap a b) = mplus (forDataType f a) (forDataType f b)
-		go (TPGenericWrap a) = forDataType f a
+		go (TPGenericWrap _ a) = forDataType f a
 		go (TPOption a) = forDataType f a
 		go (TPTuple a) =  msum $ map (forDataType f) a
 		go _ = mzero
@@ -892,7 +923,7 @@ mapDataType f tp = fromMaybe (go tp) (f tp)
 		go (TPEArr m a) = TPEArr m (mapDataType f a)
 		go (TPFun a b) = TPFun (mapDataType f a) (mapDataType f b)
 		go (TPMap a b) = TPMap (mapDataType f a) (mapDataType f b)
-		go (TPGenericWrap a) = TPGenericWrap (mapDataType f a)
+		go (TPGenericWrap t a) = TPGenericWrap t (mapDataType f a)
 		go (TPOption a) = TPOption (mapDataType f a)
 		go (TPTuple a) = TPTuple (map (mapDataType f) a)
 		go _ = tp
@@ -920,7 +951,7 @@ dataTypeClass env (TPObject _ c) = Class { _classMods = [ClassModObject], classN
 	_classDefs = allDefsInObject (c, M.empty), _classGenerics = [], _classImports = [],
 	_classFile = fromMaybe (error $ "No class file for class " ++ className c) $ classFile c,
 	_classPackage = classPackage c}
-dataTypeClass env (TPGenericWrap c) = dataTypeClass env c
+dataTypeClass env (TPGenericWrap _ c) = dataTypeClass env c
 dataTypeClass _ (TPSelf c) = c
 dataTypeClass env (TPArr _ _) = classFind (envIndex env) "ImSeq"
 dataTypeClass env (TPEArr _ _) = classFind (envIndex env) "PArray"
@@ -961,7 +992,7 @@ applyLambdaDef (TPFun stp dtp) = Def {defName = "apply", defPars = map (localVal
 dataTypeClassName :: DataType -> String
 dataTypeClassName (TPClass _ _ c ) = className c
 dataTypeClassName (TPObject _ c) = className c
-dataTypeClassName (TPGenericWrap c) = dataTypeClassName c
+dataTypeClassName (TPGenericWrap _ c) = dataTypeClassName c
 dataTypeClassName (TPArr _ _) = "Array"
 dataTypeClassName (TPOption _) = "Option"
 dataTypeClassName (TPMap _ _) = "Map"
@@ -974,7 +1005,7 @@ dataTypeClassName x = error ("No dataTypeClassName for " ++ show x)
 dataTypeClassNameWithPrefix :: DataType -> String
 dataTypeClassNameWithPrefix (TPClass _ _ c ) = classNameWithPrefix c
 dataTypeClassNameWithPrefix (TPObject _ c) = classNameWithPrefix c
-dataTypeClassNameWithPrefix (TPGenericWrap c) = dataTypeClassNameWithPrefix c
+dataTypeClassNameWithPrefix (TPGenericWrap _ c) = dataTypeClassNameWithPrefix c
 dataTypeClassNameWithPrefix (TPArr _ _) = "CNArray"
 dataTypeClassNameWithPrefix (TPOption _) = "CNOption"
 dataTypeClassNameWithPrefix (TPMap _ _) = "CNMap"
@@ -994,43 +1025,43 @@ dataTypeGenerics _ (TPEArr _ g) = [g]
 dataTypeGenerics _ (TPMap k v) = [k, v]
 dataTypeGenerics _ (TPOption v) = [v]
 dataTypeGenerics _ (TPTuple a) = a
-dataTypeGenerics env (TPGenericWrap g) = dataTypeGenerics env g
+dataTypeGenerics env (TPGenericWrap _ g) = dataTypeGenerics env g
 dataTypeGenerics _ _ = []
 
 wrapGeneric :: DataType -> DataType
 wrapGeneric g@(TPClass TPMGeneric _ _) = g
 wrapGeneric g@TPGenericWrap{} = g
-wrapGeneric g = TPGenericWrap g
+wrapGeneric g = TPGenericWrap [WrapReasonUp] g
 unwrapGeneric :: DataType -> DataType
-unwrapGeneric (TPGenericWrap g)= g
+unwrapGeneric (TPGenericWrap _ g)= g
 unwrapGeneric g = g
 
 dataType :: Env -> D.DataType -> DataType
 dataType env (D.DataType name gens) = case name of
 	"byte" -> byte
-	"Byte" -> TPGenericWrap byte
+	"Byte" -> wrapGeneric byte
 	"ubyte" -> ubyte
-	"UByte" -> TPGenericWrap ubyte
+	"UByte" -> wrapGeneric ubyte
 	"int" -> int
-	"Int" -> TPGenericWrap int
+	"Int" -> wrapGeneric int
 	"uint" -> uint
-	"UInt" -> TPGenericWrap uint
+	"UInt" -> wrapGeneric uint
 	"int4" -> int4
-	"Int4" -> TPGenericWrap int4
+	"Int4" -> wrapGeneric int4
 	"uint4" -> uint4
-	"UInt4" -> TPGenericWrap uint4
+	"UInt4" -> wrapGeneric uint4
 	"int8" -> int8
-	"Int8" -> TPGenericWrap int8
+	"Int8" -> wrapGeneric int8
 	"uint8" -> uint8
-	"UInt8" -> TPGenericWrap uint8
+	"UInt8" -> wrapGeneric uint8
 	"float4" -> float4
-	"Float4" -> TPGenericWrap float4
+	"Float4" -> wrapGeneric float4
 	"float8" -> float8
-	"Float8" -> TPGenericWrap float8
+	"Float8" -> wrapGeneric float8
 	"float" -> float
-	"Float" -> TPGenericWrap float
+	"Float" -> wrapGeneric float
 	"char" -> TPChar
-	"Char" -> TPGenericWrap TPChar
+	"Char" -> wrapGeneric TPChar
 	"void" -> TPVoid
 	"string" -> TPString
 	"bool" -> TPBool
@@ -1085,7 +1116,9 @@ instance Show DataType where
 	show (TPClass t [] c) = className c ++ show t
 	show (TPObject t c) = className c ++ show t ++ ".class"
 	show (TPClass t gens c) = className c ++ show t ++ "<" ++ strs' ", " gens ++ ">"
-	show (TPGenericWrap c) = '^' : show c
+	show (TPGenericWrap [WrapReasonUp] c) = '^' : show c
+	show (TPGenericWrap [WrapReasonBlock] c) = '§' : show c ++ "§"
+	show (TPGenericWrap _ c) = "§^" ++ show c ++ "§"
 	show (TPArr 0 t) = "[" ++ show t ++ "]"
 	show (TPArr s r) = show r ++ "[" ++ show s ++ "]"
 	show (TPEArr s r) = "*" ++ show r ++ "[" ++ show s ++ "]"
@@ -1238,8 +1271,8 @@ callLocalVal name tp = Call (localVal name tp) tp []
 
 maybeAddReturn :: Env -> DataType -> Exp -> Exp
 maybeAddReturn _ TPVoid e = e
-maybeAddReturn _ (TPGenericWrap TPVoid) (Braces es)  = Braces (es ++ [Return False Nil]) 
-maybeAddReturn _ (TPGenericWrap TPVoid) e  = Braces (e : [Return False Nil]) 
+maybeAddReturn _ (TPGenericWrap _ TPVoid) (Braces es)  = Braces (es ++ [Return False Nil]) 
+maybeAddReturn _ (TPGenericWrap _ TPVoid) e  = Braces (e : [Return False Nil]) 
 maybeAddReturn env tp e  = case exprDataType e of
 	TPVoid -> case e of
 		Braces es -> Braces (es ++ [Return False Nil]) 
@@ -1355,7 +1388,7 @@ exprDataType (Index e i) = resolve $ exprDataType e
 		resolve (TPEArr _ t) = t
 		resolve (TPMap _ v) = v
 		resolve (TPObject TPMEnum c) = TPClass TPMEnum [] c
-		resolve (TPGenericWrap t) = resolve t
+		resolve (TPGenericWrap _ t) = resolve t
 		resolve t = TPUnknown $ show t ++ " is not array " ++ show e ++ "[" ++ show i ++ "]"
 exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 	where 
@@ -1365,8 +1398,8 @@ exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 exprDataType e@(ExpDError _ _) = TPUnknown $ show e
 exprDataType e@(ExpError _) = TPUnknown $ show e
 exprDataType e@(ExpLError _ _) = TPUnknown $ show e
-exprDataType (Arr []) = TPArr 0 TPVoid
-exprDataType (Map []) = TPMap TPVoid TPVoid
+exprDataType (Arr []) = TPArr 0 TPNil
+exprDataType (Map []) = TPMap TPNil TPNil
 exprDataType (Arr exps) = TPArr (length exps) $ wrapGeneric $ exprDataType $ head exps
 exprDataType (Map exps) = let (k, v) = ((exprDataType >>> wrapGeneric) *** (exprDataType >>> wrapGeneric)) $ head exps 
 	in TPMap k v
@@ -1471,7 +1504,7 @@ expr env (D.Index e i) = let
 	obf = expr env $ D.Dot e (D.Call "apply" (Just [(Nothing, i)]) [])
 	in case exprDataType e' of
 		TPClass{} -> obf
-		(TPGenericWrap TPClass{}) -> obf
+		(TPGenericWrap _ TPClass{}) -> obf
 		_ -> Index e' $ expr env i 
 expr env l@(D.Lambda pars e) = 
 	if all (isJust.snd) pars then 
@@ -1832,7 +1865,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 		maybeLambdaCall = case pars of
 			Just [] -> case exprDataType call'' of
 				t@(TPFun TPVoid _) -> LambdaCall (Cast t call'')
-				TPGenericWrap t@(TPFun TPVoid _) -> LambdaCall (Cast t call'')
+				TPGenericWrap _ t@(TPFun TPVoid _) -> LambdaCall (Cast t call'')
 				_ -> call''
 			_ -> call''
 
@@ -1892,13 +1925,13 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 					tryDetermine c (TPClass _ gg cl, TPClass _ gg' cl') = 
 						listToMaybe $ mapMaybe (tryDetermine c) (zip gg gg'')
 						where
-							gg'' = map snd $ M.toList $ fromMaybe M.empty $ upGenericsToClass cl (cl', buildGenerics cl' gg')
+							gg'' = fromMaybe [] $ upGenericsToClass cl (cl', gg')
 					tryDetermine c (cl@(TPClass _ _ _), TPObject m cl') = 
 						tryDetermine c (cl, TPClass TPMClass [TPClass m [] cl'] (classFind (envIndex env) "Class"))
 					tryDetermine c (TPFun a b, TPFun a' b') = listToMaybe $ catMaybes [tryDetermine c (a, a'), tryDetermine c (b, b')]
-					tryDetermine c (TPGenericWrap a, TPGenericWrap b) = tryDetermine c (a, b)
-					tryDetermine c (TPGenericWrap a, b) = tryDetermine c (a, b)
-					tryDetermine c (a, TPGenericWrap b) = tryDetermine c (a, b)
+					tryDetermine c (TPGenericWrap _  a, TPGenericWrap _ b) = tryDetermine c (a, b)
+					tryDetermine c (TPGenericWrap _ a, b) = tryDetermine c (a, b)
+					tryDetermine c (a, TPGenericWrap _ b) = tryDetermine c (a, b)
 					tryDetermine c (a, b@TPArr{}) = tryDetermine c (a, dtpw b)
 					tryDetermine c (a, b@TPMap{}) = tryDetermine c (a, dtpw b)
 					tryDetermine _ _ = Nothing
@@ -1916,9 +1949,9 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 			where callStr = name ++ maybe "" (\ps -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) ps) ++ ")" ) pars
 
 		correctCall :: Exp -> Exp
-		correctCall (Call d tp _) = Call d (replaceGenerics gens'' tp) (map doImplicitConversation pars''')
+		correctCall (Call d tp _) = Call d (replaceGenerics True gens'' tp) (map doImplicitConversation pars''')
 			where
-				doImplicitConversation (dd, e) = (dd, implicitConvertsion env (replaceGenerics gens'' $ defType dd) e)
+				doImplicitConversation (dd, e) = (dd, implicitConvertsion env (replaceGenerics True gens'' $ defType dd) e)
 
 		allDefs :: [(Maybe Class, Def)]
 		allDefs = maybe allDefsInEnv allDefsInStrictClass strictClass
@@ -1974,12 +2007,12 @@ correctCallPar _ _ (d@Def{defType = (TPFun _ (TPClass TPMGeneric _ _) )}, Lambda
 correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, ExpDError _ (D.Lambda lambdaPars lambdaExpr)) = (d, Lambda lpars' expr' tp')
 	where
 		lpars' :: [(String, DataType)]
-		lpars' = map (second (replaceGenerics gens)) $ zip (map fst lambdaPars) (stps stp)
+		lpars' = map (second (replaceGenerics True gens)) $ zip (map fst lambdaPars) (stps stp)
 		stps :: DataType -> [DataType]
 		stps (TPTuple tps) = tps
 		stps tp = [tp]
 		env' = envAddVals (map (uncurry localVal) lpars') env
-		dtp' = replaceGenerics gens dtp
+		dtp' = replaceGenerics True gens dtp
 		expr' = maybeAddReturn env dtp $ implicitConvertsion env dtp' $ expr env' lambdaExpr
 		tp' = if containsGeneric dtp then wrapGeneric (exprDataType expr') else dtp
 		containsGeneric = fromMaybe False . forDataType (\t -> case t of
@@ -2012,10 +2045,10 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 					If cond l r -> If cond (implicitConvertsion env dtp l) (implicitConvertsion env dtp r)
 					_ -> if stp == dtp then ex else conv stp dtp
 			where
-				conv (TPGenericWrap s) d = conv s d
-				conv s (TPGenericWrap d) = conv s d
-				conv (TPFun _ (TPGenericWrap _)) (TPFun _ (TPGenericWrap _)) = ex
-				conv (TPFun _ _) (TPFun _ fdtp@(TPGenericWrap _)) = case ex of
+				conv (TPGenericWrap _ s) d = conv s d
+				conv s (TPGenericWrap _ d) = conv s d
+				conv (TPFun _ (TPGenericWrap _ _)) (TPFun _ (TPGenericWrap _ _)) = ex
+				conv (TPFun _ _) (TPFun _ fdtp@(TPGenericWrap _ _)) = case ex of
 					Lambda lambdaPars le _ -> Lambda lambdaPars  (maybeAddReturn env fdtp le) fdtp
 					_ -> ex
 				conv (TPFun _ stp) (TPFun _ TPVoid) = if stp == TPVoid then ex else  case ex of
@@ -2046,7 +2079,7 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 				conv sc dc@TPClass{} = if isInstanceOfTp env sc dc then ex else classConversion dc sc ex
 				conv _ _ = ex
 
-				classConversion c (TPGenericWrap g) e = classConversion c g e
+				classConversion c (TPGenericWrap _ g) e = classConversion c g e
 				classConversion (TPClass _ _ cls) sc e =
 					maybe e wrapWithApply $
 					listToMaybe $ filter(\d -> 
