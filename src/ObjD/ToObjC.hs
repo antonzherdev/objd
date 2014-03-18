@@ -770,8 +770,11 @@ tExp _ (D.BoolConst i) = C.BoolConst i
 tExp _ (D.FloatConst i) = C.FloatConst i
 tExp env (D.BoolOp Eq l r) = equals True (D.exprDataType l, tExp env l) (D.exprDataType r, tExp env r) 
 tExp env (D.BoolOp NotEq l r) = equals False (D.exprDataType l, tExp env l) (D.exprDataType r, tExp env r) 
-tExp env (D.BoolOp t l r) = C.BoolOp t (tExpTo env tp l) (tExpTo env tp r)
+tExp env (D.BoolOp t l r) = C.BoolOp (t' t) (tExpTo env tp l) (tExpTo env tp r)
 	where
+		t' ExactEq = Eq
+		t' ExactNotEq = NotEq
+		t' tt = tt
 		tp = ttp t
 		ttp And = D.TPBool
 		ttp Or = D.TPBool

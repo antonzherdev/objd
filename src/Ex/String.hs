@@ -63,7 +63,7 @@ tryCon a b = a ++ b
 
 
 data MathTp = Plus | Minus | Mul | Div deriving (Eq)
-data BoolTp = Eq | NotEq | More | MoreEq | Less | LessEq | And | Or deriving (Eq)
+data BoolTp = Eq | NotEq | More | MoreEq | Less | LessEq | And | Or | ExactEq | ExactNotEq deriving (Eq)
 instance Show MathTp where
 	show Plus = "+"
 	show Minus = "-"
@@ -71,6 +71,8 @@ instance Show MathTp where
 	show Div = "/"
 instance Show BoolTp where
 	show Eq = "=="
+	show ExactEq = "==="
+	show ExactNotEq = "!=="
 	show NotEq = "!="
 	show More = ">"
 	show MoreEq = ">="

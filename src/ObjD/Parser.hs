@@ -744,7 +744,7 @@ pCallPar = do
 	return (name, e)
 
 pCompareOp :: Parser (Exp -> Exp -> Exp)
-pCompareOp =  pBoolOp "==" Eq <|> pBoolOp "!=" NotEq <|> pBoolOp ">=" MoreEq <|> pBoolOp "<=" LessEq <|> pBoolOp "<" Less <|> (try $ do
+pCompareOp = try (pBoolOp "===" ExactEq) <|> try (pBoolOp "!==" ExactNotEq) <|> pBoolOp "==" Eq <|> pBoolOp "!=" NotEq <|> pBoolOp ">=" MoreEq <|> pBoolOp "<=" LessEq <|> pBoolOp "<" Less <|> (try $ do
 	r <- pBoolOp ">" More  
 	notFollowedBy $ char '>'
 	return r)
