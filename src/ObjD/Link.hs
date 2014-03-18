@@ -7,7 +7,7 @@ module ObjD.Link (
 	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
-	fileNameWithPrefix, classDefsWithTraits, classInitDef, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait
+	fileNameWithPrefix, classDefsWithTraits, classInitDef, classContainsInit, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait
 )where
 
 import 			 Control.Arrow
@@ -312,6 +312,8 @@ isInstanceOfCheck :: Env -> DataType -> DataType -> Bool
 isInstanceOfCheck env l r = isInstanceOfTp env l r
 
 
+classContainsInit :: Class -> Bool 
+classContainsInit cl = isJust (classInitDef cl) || any classContainsInit (superClasses cl) 
 
 classInitDef :: Class -> Maybe Def
 classInitDef cl = find (\d -> "init" == defName d && null (defPars d)) $ classDefs cl
@@ -736,7 +738,8 @@ linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRe
 		env' = addEnvInit $ envAddClasses generics' env
 		generics' = map (linkGeneric env) generics
 		cl = envSelfClass env
-		addEnvInit e = if name == "init" then e {envInit = True} else e
+		isInit = name == "init" && null opars
+		addEnvInit e = if isInit then e {envInit = True} else e
 		
 		pars = linkDefPars env'' opars
 		pars' = case pars of
@@ -770,9 +773,18 @@ linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRe
 					b = expr env'' body
 					tp' = unblockGenerics $ unwrapGeneric $ getDataType env' tp b
 					tp'' = mapOverrideType tp'
+					superInitDef :: Maybe Def
+					superInitDef = join $ fmap classInitDef $ superClass (envSelfClass env)
+					callSuperInit :: Exp
+					callSuperInit = Dot (Super $ fromJust $ superType $ envSelf env) $ call (fromJust superInitDef) []
+					addSuperInit e
+						| isInit && isJust superInitDef = case e of
+							Braces es -> Braces $ callSuperInit : es
+							_ -> Braces [callSuperInit, e]
+						| otherwise = e
 				in Def {defMods = DefModDef : mods' ++ additionalMods, defName = name, defGenerics = defGenerics',
 					defPars = parDefs,
-					defType = tp'', defBody = maybeAddReturn env tp'' b})
+					defType = tp'', defBody = addSuperInit $ maybeAddReturn env tp'' b})
 
 resolveDefPar :: Env -> Def -> [(Def, Maybe Exp)] -> [Def]
 --resolveDefPar _ Def{defName = dn} _ | trace ("resolveDefPar: " ++ dn) False = undefined
