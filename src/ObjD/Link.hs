@@ -1489,7 +1489,7 @@ expr env (D.If cond t f) = If (implicitConvertsion env TPBool $ expr env cond) (
 expr env (D.While cond t) = While (implicitConvertsion env TPBool $ expr env cond) (expr env t)
 expr env (D.Synchronized cond t) = Synchronized (expr env cond) (expr env t)
 expr env (D.Do cond t) = Do (implicitConvertsion env TPBool $ expr env cond) (expr env t)
-expr env (D.Weak e) = Weak (expr env e)
+expr env (D.Weak e) = insertWeak (expr env e)
 expr _ (D.Braces []) = Nop
 expr env (D.Braces es) = Braces $ bracesRec env es
 	where
@@ -2084,12 +2084,15 @@ correctCallPar _ _ e = checkCallParOnWeak e
 
 checkCallParOnWeak :: (Def, Exp) -> (Def, Exp)
 checkCallParOnWeak (d@Def{defMods = mods}, e) = 
-	if DefModWeak `elem` mods then (d, mapExp insertWeak e)
+	if DefModWeak `elem` mods then (d, insertWeak e)
 	else (d, e)
-	where
-		insertWeak (Lambda p1 ee p2) = Just $ Lambda p1 (Weak ee) p2
-		insertWeak _ = Nothing
 checkCallParOnWeak p = p
+
+insertWeak :: Exp -> Exp
+insertWeak e = mapExp f e
+	where
+		f (Lambda p1 ee p2) = Just $ Lambda p1 (Weak ee) p2
+		f _ = Nothing
 
 
 {-----------------------------------------------------------------------------------------------------------------------------------------
