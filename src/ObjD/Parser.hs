@@ -307,6 +307,7 @@ pDefPars = option [] (brackets (option [] (pDefPar `sepBy` charSps ',')))
 
 pDefPar :: Parser Par
 pDefPar = (do
+	mods <- many $ try (string "weak" >> sps1) >> return ParModWeak
 	name <- ident
 	sps
 	tp <- optionMaybe $ pDataType False
@@ -314,13 +315,14 @@ pDefPar = (do
 		sps
 		charSps '='
 		pExp)
-	return $ Par name tp dp) <|> (do
+	return $ Par mods name tp dp) <|> (do
+		mods <- many $ try (string "weak" >> sps1) >> return ParModWeak
 		tp <- pDataType False
 		dp <- option Nop (do
 			sps
 			charSps '='
 			pExp)
-		return $ Par "" (Just tp) dp)
+		return $ Par mods "" (Just tp) dp)
 
 pExp :: Parser Exp
 pExp = do
@@ -392,7 +394,7 @@ pTerm = do
 		sps
 		return e
 	where
-		pTerm' = pCase <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> try(pNumConst) <|> pBreak <|> pReturn <|>
+		pTerm' = pCase <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> pWeak <|> try(pNumConst) <|> pBreak <|> pReturn <|>
 			pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pWhile <|> pSync <|> pDo <|> pSelf <|> pSuper <|> pNil <|> pCall  <?> "Expression"
 
 		pMinus = do
@@ -429,6 +431,10 @@ pTerm = do
 			return $ case exps of
 				[e] -> e
 				_ -> Tuple exps
+		pWeak = do 
+			try $ string "weak" >> sps1
+			e <- pExp
+			return $ Weak e
 		pVal = do
 			mods <- try $ do
 				mm <- many (string "weak" >> sps1 >> return DefModWeak)

@@ -646,7 +646,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 		constrPar D.Def{D.defName = name, D.defRetType = Just tp, D.defBody = b} = let
 			tp' = dataType env tp
 			env' = envAddVals (map fst constrPars) env
-			in (localVal name $ dataType env tp,
+			in (Def name [] (dataType env tp) Nop [DefModLocal, DefModWeak] Nothing,
 				case b of
 					D.Nop -> Nothing
 					_ -> Just $ implicitConvertsion env tp' $ expr env' b)
@@ -720,7 +720,7 @@ linkField env (obj, _isStruct) D.Def {D.defMods = mods, D.defName = name, D.defR
 		lazyTp = TPClass TPMClass [gtp] lazyClass
 		defLazy = Def{defMods = [DefModField, DefModPrivate] ++ [DefModStatic | D.DefModStatic `elem` mods || obj], defName = "_lazy_" ++ name, 
 			defType = lazyTp, 
-			defBody = Dot (callRef (objectDef lazyClass)) (Call lazyConstr lazyTp [(head $ defPars lazyConstr, Lambda [] (Return True i') gtp)]), 
+			defBody = Dot (callRef (objectDef lazyClass)) $ Call lazyConstr lazyTp [(head $ defPars lazyConstr, Lambda [] (Return True (Weak i')) gtp)], 
 			defGenerics = Nothing, defPars = []}
 		defLazyGet = Def{defMods = DefModInline : DefModDef : translateMods mods ++ [DefModStatic | obj], defName = name, 
 			defType = tp'', 
@@ -829,14 +829,15 @@ linkDefPars :: Env -> [D.Par] -> [(Def, Maybe Exp)]
 linkDefPars env pars = let 
 	pars' = map linkPar pars 
 	--env' = envAddVals (map fst pars') env
-	linkPar D.Par { D.parName = pnm, D.parType  = ttt, D.parDefault = pd} = let 
+	parMod D.ParModWeak = DefModWeak
+	linkPar D.Par {D.parMods = mods, D.parName = pnm, D.parType  = ttt, D.parDefault = pd} = let 
 		tp = maybe (exprDataType defaultExp) (dataType env) ttt
 		defaultExp = implicitConvertsion env tp $ expr env pd
 		in (Def {
 			defName = pnm, defPars = [], 
 			defType = tp, 
 			defBody = Nop, 
-			defMods = [DefModLocal], defGenerics = Nothing}, 
+			defMods = DefModLocal : map parMod mods, defGenerics = Nothing}, 
 			case pd of
 				D.Nop -> Nothing
 				_ -> Just $ defaultExp)
@@ -1186,6 +1187,7 @@ data Exp = Nop
 	| Braces [Exp]
 	| If Exp Exp Exp
 	| While Exp Exp
+	| Weak Exp
 	| Synchronized Exp Exp
 	| Do Exp Exp
 	| Self DataType
@@ -1230,6 +1232,7 @@ instance Show Exp where
 	show (If cond t Nop) = "if(" ++ show cond ++ ") " ++ show t
 	show (If cond t f) = "if(" ++ show cond ++ ") " ++ show t ++ "\nelse " ++ show f
 	show (While cond e) = "while(" ++ show cond ++ ") " ++ show e
+	show (Weak e) = "weak " ++ show e
 	show (Synchronized cond e) = "synchronized(" ++ show cond ++ ") " ++ show e
 	show (Do cond e) = "do" ++ show e ++ " while(" ++ show cond ++ ")"
 	show Nop = ""
@@ -1302,6 +1305,7 @@ maybeAddReturn env tp e  = case exprDataType e of
 	_ -> addReturn env True tp e
 
 addReturn :: Env -> Bool -> DataType -> Exp -> Exp
+addReturn env hard tp (Weak e) = Weak (addReturn env hard tp e)
 addReturn env hard tp (If cond t f) = If cond (addReturn env hard tp t) (addReturn env hard tp f)
 addReturn env hard tp (Synchronized r b) = Synchronized r (addReturn env hard tp b)
 addReturn _ True _ e@(Braces []) = ExpLError "Return empty braces" e
@@ -1325,6 +1329,7 @@ forExp f ee = mplus (go ee) (f ee)
 		go (BoolOp _ l r) = mplus (forExp f l) (forExp f r)
 		go (MathOp _ l r) = mplus (forExp f l) (forExp f r)
 		go (While l r) = mplus (forExp f l) (forExp f r)
+		go (Weak e) =forExp f e
 		go (Synchronized l r) = mplus (forExp f l) (forExp f r)
 		go (Do l r) = mplus (forExp f l) (forExp f r)
 		go (Set _ l r) = mplus (forExp f l) (forExp f r)
@@ -1343,6 +1348,39 @@ forExp f ee = mplus (go ee) (f ee)
 		go (FirstTry _ e) = forExp f e
 		go (Val d) = forExp f (defBody d)
 		go _ = mzero
+
+mapExp :: (Exp -> Maybe Exp) -> Exp -> Exp
+mapExp f ee = fromMaybe (go ee) (f ee)
+	where
+		go (Braces es) = Braces $ map (mapExp f) es
+		go (StringBuild pars p) = StringBuild (map (second (mapExp f)) pars) p
+		go (Arr es) = Arr $ map (mapExp f) es
+		go (Tuple es) = Tuple $ map (mapExp f) es
+		go (Map es) = Map $ map (mapExp f *** mapExp f) es
+		go (Call p1 p2 pars) = Call p1 p2 $ map (second $ mapExp f) pars
+		go (If cond te fe) =  If (mapExp f cond) (mapExp f te) (mapExp f fe)
+		go (BoolOp tp l r) = BoolOp tp (mapExp f l) (mapExp f r)
+		go (MathOp tp l r) = MathOp tp (mapExp f l) (mapExp f r)
+		go (While l r) = While (mapExp f l) (mapExp f r)
+		go (Weak e) = Weak $ mapExp f e
+		go (Synchronized l r) = Synchronized (mapExp f l) (mapExp f r)
+		go (Do l r) = Do (mapExp f l) (mapExp f r)
+		go (Set t l r) = Set t (mapExp f l) (mapExp f r)
+		go (Dot l r) = Dot (mapExp f l) (mapExp f r)
+		go (Index l r) = Index (mapExp f l) (mapExp f r)
+		go (PlusPlus e) = PlusPlus $ mapExp f e
+		go (MinusMinus e) = MinusMinus $ mapExp f e
+		go (Return p e) = Return p $ mapExp f e
+		go (Opt e) = Opt $ mapExp f e
+		go (Cast t e) = Cast t $ mapExp f e
+		go (Some e) = Some $ mapExp f e
+		go (Throw e) = Throw $ mapExp f e
+		go (Not e) = Not $ mapExp f e
+		go (Negative e) = Negative $ mapExp f e
+		go (Lambda p1 e p2) = Lambda p1 (mapExp f e) p2
+		go (FirstTry p e) = FirstTry p $ mapExp f e
+		go (Val d) = Val d{defBody = mapExp f (defBody d)}
+		go e = e
 
 isNop :: Exp -> Bool
 isNop Nop = True
@@ -1382,6 +1420,7 @@ exprDataType :: Exp -> DataType
 exprDataType (If _ _ Nop) = TPVoid
 exprDataType (If _ t _) = exprDataType t
 exprDataType (While _ _) = TPVoid
+exprDataType (Weak e) = exprDataType e
 exprDataType (Synchronized _ r) = exprDataType r
 exprDataType (Do _ _) = TPVoid
 exprDataType (Braces []) = TPVoid
@@ -1450,6 +1489,7 @@ expr env (D.If cond t f) = If (implicitConvertsion env TPBool $ expr env cond) (
 expr env (D.While cond t) = While (implicitConvertsion env TPBool $ expr env cond) (expr env t)
 expr env (D.Synchronized cond t) = Synchronized (expr env cond) (expr env t)
 expr env (D.Do cond t) = Do (implicitConvertsion env TPBool $ expr env cond) (expr env t)
+expr env (D.Weak e) = Weak (expr env e)
 expr _ (D.Braces []) = Nop
 expr env (D.Braces es) = Braces $ bracesRec env es
 	where
@@ -2021,12 +2061,12 @@ correctCallPar :: Env -> Generics -> (Def, Exp) -> (Def, Exp)
 correctCallPar env gens (d@Def{defType = (TPFun _ _)}, FirstTry _ e'@Lambda{}) = correctCallPar env gens (d, e')
 correctCallPar env gens (d@Def{defType = (TPFun _ _)}, FirstTry D.Lambda{} e') = correctCallPar env gens (d, e')
 correctCallPar env gens (d@Def{defType = tp@(TPFun _ _)}, FirstTry e e')
-	| isTpFun (exprDataType e') = (d, e')
+	| isTpFun (exprDataType e') = checkCallParOnWeak (d, e')
 	| otherwise = correctCallPar env gens (d, ExpDError "" $ 
 		D.Lambda (map (\(n, _) -> (n, Nothing)) $ lambdaImplicitParameters tp) e)
 correctCallPar env gens (d, FirstTry _ e) = correctCallPar env gens (d, e)
-correctCallPar _ _ (d@Def{defType = (TPFun _ (TPClass TPMGeneric _ _) )}, Lambda lpars e dtp) = (d, Lambda lpars e dtp)
-correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, ExpDError _ (D.Lambda lambdaPars lambdaExpr)) = (d, Lambda lpars' expr' tp')
+correctCallPar _ _ (d@Def{defType = (TPFun _ (TPClass TPMGeneric _ _) )}, Lambda lpars e dtp) = checkCallParOnWeak (d, Lambda lpars e dtp)
+correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, ExpDError _ (D.Lambda lambdaPars lambdaExpr)) = checkCallParOnWeak (d, Lambda lpars' expr' tp')
 	where
 		lpars' :: [(String, DataType)]
 		lpars' = map (second (replaceGenerics True gens)) $ zip (map fst lambdaPars) (stps stp)
@@ -2040,7 +2080,16 @@ correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, ExpDError _ (D.Lambda 
 		containsGeneric = fromMaybe False . forDataType (\t -> case t of
 			TPClass TPMGeneric _ _ -> Just True
 			_ -> Nothing)
-correctCallPar _ _ e = e
+correctCallPar _ _ e = checkCallParOnWeak e
+
+checkCallParOnWeak :: (Def, Exp) -> (Def, Exp)
+checkCallParOnWeak (d@Def{defMods = mods}, e) = 
+	if DefModWeak `elem` mods then (d, mapExp insertWeak e)
+	else (d, e)
+	where
+		insertWeak (Lambda p1 ee p2) = Just $ Lambda p1 (Weak ee) p2
+		insertWeak _ = Nothing
+checkCallParOnWeak p = p
 
 
 {-----------------------------------------------------------------------------------------------------------------------------------------

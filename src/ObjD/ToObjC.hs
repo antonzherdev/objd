@@ -74,7 +74,7 @@ stmToInterface cl =
 		C.interfaceFields = [(C.Private, map (implField env) implFields)]
 	}
 	where 
-		env = Env cl 0 D.TPVoid False False
+		env = Env cl 0 D.TPVoid False
 		name = D.classNameWithPrefix cl
 		defs = D.classDefs cl
 		implFields = filter needField (D.classDefsWithTraits cl)
@@ -192,7 +192,7 @@ stmToImpl cl =
 	}
 	where
 		clsName = D.classNameWithPrefix cl
-		env = Env cl 0 D.TPVoid False False
+		env = Env cl 0 D.TPVoid False
 		defs :: [D.Def]
 		defs = D.classDefsWithTraits cl
 					
@@ -321,11 +321,10 @@ implInitialize env@Env{envClass = cl} = let
 implInit :: Env -> D.Def -> C.ImplFun
 implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
 			[C.Set Nothing C.Self (superInit $ D.extendsClass $ D.classExtends cl)]
-			++ declareWeakSelf env' (implInitFields (filter hasField constrPars) (filter hasInit (D.classDefsWithTraits cl)))
+			++ declareWeakSelf env (implInitFields (filter hasField constrPars) (filter hasInit (D.classDefsWithTraits cl)))
 			++ [C.Stm C.Nop, C.Return C.Self]
 			)
 	where
-		env' = env{envNeedWeakSelf = True}
 		hasInit D.Def{D.defBody = D.Nop} = False
 		hasInit d = D.isField d && not (D.isStatic d)
 
@@ -346,8 +345,8 @@ implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFu
 
 		implInitFields :: [D.Def] -> [D.Def] -> [C.Stm]
 		implInitFields [] [] = []
-		implInitFields co fields = [C.If C.Self (map implConstrField co ++ map (implInitField env') fields ++ callInit) []]
-		implConstrField d@D.Def{D.defName = name, D.defType = tp} = C.Set Nothing (C.Ref $ fieldName env' d) (implRight tp) 
+		implInitFields co fields = [C.If C.Self (map implConstrField co ++ map (implInitField env) fields ++ callInit) []]
+		implConstrField d@D.Def{D.defName = name, D.defType = tp} = C.Set Nothing (C.Ref $ fieldName env d) (implRight tp) 
 			where
 				implRight D.TPFun{} = C.Call (C.Ref name) "copy" [] []
 				implRight D.TPClass{} = retain $ C.Ref name
@@ -373,7 +372,7 @@ genStruct cl =
 		name = D.classNameWithPrefix cl
 		clDefs = D.classDefs cl
 		defs = filter D.isDef clDefs
-		env = Env cl 0 D.TPVoid False False
+		env = Env cl 0 D.TPVoid False
 		fields = filter (\d -> not (D.isStatic d) && D.isField d) clDefs
 		staticFields = filter (\d -> (D.isStatic d) && D.isField d) clDefs
 		fields' = map toField fields
@@ -603,7 +602,7 @@ genEnumImpl cl@D.Class {} = [
 	}]
 	where
 		clsName = D.classNameWithPrefix cl
-		env = Env  cl 0 D.TPVoid False False
+		env = Env  cl 0 D.TPVoid False
 		valuesVarName =  "_" ++ clsName ++ "_values"
 		items = D.enumItems cl
 		defs = filter ((/= "values") . D.defName) $ D.classDefs cl
@@ -741,7 +740,7 @@ castGeneric dexp e = case D.exprDataType dexp of
 	D.TPGenericWrap _ c@D.TPMap{} -> C.Cast (showDataType c) e
 	_ -> e
 
-data Env = Env{envClass :: D.Class, envCStruct :: Int, envDataType :: D.DataType, envWeakSelf :: Bool, envNeedWeakSelf :: Bool}
+data Env = Env{envClass :: D.Class, envCStruct :: Int, envDataType :: D.DataType, envWeakSelf :: Bool}
 
 declareWeakSelf :: Env -> [C.Stm] -> [C.Stm]
 declareWeakSelf env stms = if hasWeakSelf True stms then (C.Var (C.tp $ (D.classNameWithPrefix $ envClass env) ++ "*") "_weakSelf" C.Self ["__weak"]) : stms else stms
@@ -800,14 +799,13 @@ tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call d@D.Def {D.defName 
 	| otherwise = C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) d) (C.Ref "self" : (map snd . tPars env d) pars)
 
 tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name} _ pars)) 
-	| D.DefModField `elem` mods && null pars && D.DefModSuper `notElem` mods && not (envWeakSelf env) = C.Ref $ fieldName env' d
-	| D.DefModField `elem` mods && D.DefModSuper `notElem` mods && not (envWeakSelf env) = 
-		C.CCall (C.Ref $ fieldName env' d) ((map snd . tPars env' d) pars)
-	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.classNameWithPrefix $ D.tpClass stp) name (tPars env' d pars) []
-	| D.DefModField `elem` mods && null pars = selfGetField env' name
-	| otherwise = C.Call (selfCall env') name (tPars env' d pars) [] 
-	where 
-		env' = env{envNeedWeakSelf = True}
+	| D.DefModField `elem` mods && null pars && D.DefModSuper `notElem` mods && (not (envWeakSelf env) || D.DefModStatic `elem` mods) = 
+		C.Ref $ fieldName env d
+	| D.DefModField `elem` mods && D.DefModSuper `notElem` mods && not ((envWeakSelf env) || D.DefModStatic `elem` mods) = 
+		C.CCall (C.Ref $ fieldName env d) ((map snd . tPars env d) pars)
+	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.classNameWithPrefix $ D.tpClass stp) name (tPars env d pars) []
+	| D.DefModField `elem` mods && null pars = selfGetField env name
+	| otherwise = C.Call (selfCall env) name (tPars env d pars) [] 
 		
 tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars))
 	| D.DefModStatic `elem` mods && isStubObject = 
@@ -877,9 +875,10 @@ tExp env (D.Lambda pars e rtp) =
 		unwrapPars = (map unwrapPar. filter (isNeedUnwrap . snd)) pars
 		unwrapPar ::(String, D.DataType) -> C.Stm
 		unwrapPar (name, D.TPGenericWrap gw tp) = C.Var (showDataType tp) name (maybeVal (D.TPGenericWrap gw tp, tp) $ C.Ref $ name ++ "_") []
-		stm = tStm env{envDataType = rtp, envWeakSelf = envNeedWeakSelf env} [] e
+		stm = tStm env{envDataType = rtp} [] e
 	in
 	C.Lambda (map par' pars) (unwrapPars ++ setSelf env stm) (showDataType rtp)
+tExp env (D.Weak expr) = tExp env{envWeakSelf = True} expr
 tExp env (D.Arr exps) = C.Arr $ map (tExpToType env D.tpGeneric) exps
 tExp env (D.Map exps) = C.Map $ map (tExpToType env D.tpGeneric *** tExpToType env D.tpGeneric) exps
 tExp env (D.Tuple exps) = C.CCall (C.Ref $ "tuple" ++ if length exps == 2 then "" else show (length exps) ) $ map (tExpToType env D.tpGeneric) exps
@@ -995,7 +994,7 @@ tStm env parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = 
 		isSet _ = Nothing
 tStm env _ (D.Throw e) = [C.Throw $ tExp env e]
 tStm _ _ D.Break = [C.Break]
-
+tStm env pe (D.Weak expr) = tStm env{envWeakSelf = True} pe expr
 tStm env _ x = [C.Stm $ tExp env x]
 
 equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp

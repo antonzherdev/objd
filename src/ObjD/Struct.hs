@@ -1,6 +1,6 @@
 module ObjD.Struct (
 	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, EnumItem(..), CallPar, DefMod(..), 
-	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), ExtendsRef, ExtendsClass(..), CaseCondition(..), CaseItem, FuncOpTp(..),
+	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), ExtendsRef, ExtendsClass(..), CaseCondition(..), CaseItem, FuncOpTp(..), ParMod(..),
 	isClass, isImport, isDef, isDecl, isStub, isEnum, isStatic, isType, isClassImport
 ) where
 import           Ex.String
@@ -63,7 +63,8 @@ isClassImport _ =  False
 
 data EnumItem = EnumItem{enumItemName :: String, enumItemPars :: [CallPar]}
 
-data Par = Par { parName :: String, parType :: Maybe DataType, parDefault :: Exp }
+data Par = Par {parMods :: [ParMod], parName :: String, parType :: Maybe DataType, parDefault :: Exp }
+data ParMod = ParModWeak
 
 data Exp = Nop 
 	| IntConst Int 
@@ -98,6 +99,7 @@ data Exp = Nop
 	| Return Exp
 	| Case Exp [CaseItem]
 	| Synchronized Exp Exp
+	| Weak Exp
 	deriving (Eq)
 type CallPar = (Maybe String, Exp)
 
