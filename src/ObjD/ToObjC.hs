@@ -335,10 +335,14 @@ implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFu
 		superInit (Just (D.ExtendsClass _ [])) = C.Call C.Super "init" [] []
 		superInit (Just (D.ExtendsClass _ pars)) = C.Call C.Super "initWith" (map (D.defName *** tExp env) pars) []
 
+
 		selfClass = C.Call (C.Ref $ D.classNameWithPrefix cl) "class" [] []
-		callInit = if D.classContainsInit cl then 
-			[C.If (C.BoolOp Eq ( C.Call C.Self "class" [] []) selfClass)
-				[C.Stm $ C.Call C.Self "_init" [] []] []] else []
+		call_init = [C.Stm $ C.Call C.Self "_init" [] []]
+		callInit = 
+			if (not $ D.isAbstract cl) && D.classContainsInit cl then 
+				if D.isFinal cl then call_init
+				else [C.If (C.BoolOp Eq ( C.Call C.Self "class" [] []) selfClass) call_init []] 
+			else []
 
 		implInitFields :: [D.Def] -> [D.Def] -> [C.Stm]
 		implInitFields [] [] = []

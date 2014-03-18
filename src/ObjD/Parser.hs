@@ -140,8 +140,7 @@ pTypeStm = do
 
 pClass :: Parser FileStm
 pClass = do
-	stub <- option [] $ (try (string "stub")) >> return [ClassModStub]
-	sps
+	mods <- many $ (try (stringSps "stub") >> return ClassModStub) <|> (try (stringSps "abstract") >> return ClassModAbstract) <|> (try (stringSps "final") >> return ClassModFinal)
 	struct <- (string "class" >> return []) <|> (string "struct" >> return [ClassModStruct]) <|> (string "trait" >> return [ClassModTrait]) <|> (string "object" >> return [ClassModObject])
 	sps
 	name <- ident
@@ -154,7 +153,7 @@ pClass = do
 	sps
 	body <- pClassBody
 	sps
-	return Class {classMods = stub ++ struct, className = name, classFields = fields, classExtends = extends, classBody = body, classGenerics = generics}
+	return Class {classMods = mods ++ struct, className = name, classFields = fields, classExtends = extends, classBody = body, classGenerics = generics}
 
 pEnum :: Parser FileStm
 pEnum = do

@@ -7,7 +7,8 @@ module ObjD.Link (
 	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
-	fileNameWithPrefix, classDefsWithTraits, classInitDef, classContainsInit, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait
+	fileNameWithPrefix, classDefsWithTraits, classInitDef, classContainsInit, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait,
+	isAbstract, isFinal
 )where
 
 import 			 Control.Arrow
@@ -74,7 +75,7 @@ classImports _ = []
 classNameWithPrefix :: Class -> String
 classNameWithPrefix cl = packagePrefix (classPackage cl) ++ cap (className cl)
 
-data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType  deriving (Eq)
+data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType | ClassModAbstract | ClassModFinal deriving (Eq)
 
 type ExtendsRef = (Class, [DataType])
 data Extends = Extends {extendsClass :: Maybe ExtendsClass, extendsTraits :: [ExtendsRef]}
@@ -104,6 +105,8 @@ instance Show ClassMod where
 	show ClassModEnum = "enum"
 	show ClassModObject = "object"
 	show ClassModType = "type"
+	show ClassModAbstract = "abstract"
+	show ClassModFinal = "final"
 			
 instance Show Extends where
 	show (Extends Nothing []) = ""
@@ -138,6 +141,11 @@ isTrait :: Class -> Bool
 isTrait = (ClassModTrait `elem` ) . classMods
 isStub :: Class -> Bool
 isStub = (ClassModStub `elem` ) . classMods
+isFinal :: Class -> Bool
+isFinal = (ClassModFinal `elem` ) . classMods
+isAbstract :: Class -> Bool
+isAbstract = (ClassModAbstract `elem` ) . classMods
+
 
 isRealClass :: Class -> Bool
 isRealClass = (ClassModStub `notElem` ) . classMods
@@ -607,6 +615,8 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 		clsMod D.ClassModStub = Just ClassModStub
 		clsMod D.ClassModTrait = Just ClassModTrait
 		clsMod D.ClassModObject = Just ClassModObject
+		clsMod D.ClassModAbstract = Just ClassModAbstract
+		clsMod D.ClassModFinal = Just ClassModFinal
 		extends = fmap (linkExtends env (map fst constrPars)) (D.classExtends cl) 
 		selfIsStruct = case cl of
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
@@ -2149,7 +2159,12 @@ checkErrorsInExtendsClass (ExtendsClass ref pars) =
 	++ concatMap (checkErrorsInExp . snd) pars
 
 checkErrorsInExtendsRef :: ExtendsRef -> [Error]
-checkErrorsInExtendsRef (_, tps) = concatMap checkErrorsInDataType tps
+checkErrorsInExtendsRef (cl, tps) = concatMap checkErrorsInDataType tps ++ checkExtendsFinal cl
+
+checkExtendsFinal :: Class -> [Error]
+checkExtendsFinal Class{_classMods = mods}
+	| ClassModFinal `elem` mods = [Error "Inherits the final class"]
+checkExtendsFinal _ = []
 
 checkErrorsInDef :: Def -> [Error]
 checkErrorsInDef Def {defName = name, defPars = pars, defType = tp, defBody = body, defGenerics = gens} =
@@ -2175,7 +2190,7 @@ checkErrorsInExp :: Exp -> [Error]
 checkErrorsInExp = forExp f
 	where 
 		f (Self tp) = checkErrorsInDataType tp
-		f (Call _ tp _) = checkErrorsInDataType tp
+		f e@(Call _ tp _) = checkErrorsInDataType tp ++ checkCallAbstractConstructor e
 		f (Lambda pars _ ret) = checkErrorsInDataType ret ++ concatMap (checkErrorsInDataType . snd) pars
 		f (Val Def{defType = tp}) = checkErrorsInDataType tp
 		f (ExpDError t e) = [Error (show e ++ ": " ++ t)]
@@ -2184,3 +2199,8 @@ checkErrorsInExp = forExp f
 		f e@FirstTry{} = [Error ("First try in out " ++ show e)]
 		f (None tp) = checkErrorsInDataType tp
 		f _ = []
+
+checkCallAbstractConstructor :: Exp -> [Error]
+checkCallAbstractConstructor (Call Def{defMods = dMods} (TPClass _ _ Class{_classMods = clMods}) _)
+	| (DefModConstructor `elem` dMods) && (ClassModAbstract `elem` clMods) = [Error "Using abstract class"]
+checkCallAbstractConstructor _ = []	
