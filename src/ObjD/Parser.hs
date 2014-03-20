@@ -737,6 +737,7 @@ pCallPar = do
 		r <- ident
 		sps
 		char '='
+		notFollowedBy $ char '='
 		sps
 		return r
 	e <- pExp
