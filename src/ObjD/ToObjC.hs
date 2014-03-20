@@ -337,14 +337,16 @@ implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFu
 
 		selfClass = C.Call (C.Ref $ D.classNameWithPrefix cl) "class" [] []
 		call_init = [C.Stm $ C.Call C.Self "_init" [] []]
+		needCall_init = (not $ D.isAbstract cl) && D.classContainsInit cl
 		callInit = 
-			if (not $ D.isAbstract cl) && D.classContainsInit cl then 
+			if needCall_init then 
 				if D.isFinal cl then call_init
 				else [C.If (C.BoolOp Eq ( C.Call C.Self "class" [] []) selfClass) call_init []] 
 			else []
 
 		implInitFields :: [D.Def] -> [D.Def] -> [C.Stm]
-		implInitFields [] [] = []
+		implInitFields [] [] 
+			| not needCall_init = []
 		implInitFields co fields = [C.If C.Self (map implConstrField co ++ map (implInitField env) fields ++ callInit) []]
 		implConstrField d@D.Def{D.defName = name, D.defType = tp} = C.Set Nothing (C.Ref $ fieldName env d) (implRight tp) 
 			where
