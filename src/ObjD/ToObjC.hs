@@ -953,7 +953,7 @@ tExp env e@(D.Braces _) =
 		rtp = D.exprDataType e
 		lambda = C.Lambda [] (setSelf env $ tStm env{envDataType = rtp} [] e) (showDataType rtp)
 	in C.CCall lambda []
-
+tExp env (D.Return _ e) = tExp env e
 tExp _ x = C.Error $ "No tExp for " ++ show x
 
 tExpToType :: Env -> D.DataType -> D.Exp -> C.Exp
