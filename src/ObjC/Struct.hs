@@ -79,6 +79,7 @@ forStm f@(cs, fs, _, _) ee = mplus (fs ee) $ if cs ee then (go ee) else mzero
 		go (If e l r) = mfore e `mplus` mmsum l `mplus` mmsum r
 		go (While e l) = mfore e `mplus` mmsum l
 		go (Do e l) = mfore e `mplus` mmsum l
+		go (Synchronized e l) = mfore e `mplus` mmsum l
 		go (Set _ l r) = mfore l `mplus` mfore r
 		go (Return l) = mfore l
 		go (Throw l) = mfore l
