@@ -61,6 +61,7 @@ toObjC f@D.File{D.fileClasses = classes} =
 
 funName :: D.Def -> String
 funName D.Def{D.defName = "init", D.defPars = []} = "_init"
+funName D.Def{D.defName = "isEqual"} = "_isEqual"
 funName D.Def{D.defName = d} = d
 
 stmToInterface :: D.Class -> C.FileStm
@@ -204,7 +205,7 @@ stmToImpl cl =
 		staticGetters = (map staticGetter . filter((D.DefModPrivate `notElem`) . D.defMods)) staticFields
 		staticGetter f = C.ImplFun (staticGetterFun f) [C.Return $ C.Ref $ fieldName env f]
 
-		reloadedEquals = filter ( ("isEqualTo" == ). D.defName) defs
+		reloadedEquals = filter ( ("isEqual" == ). D.defName) defs
 		equal :: C.ImplFun
 		equal 
 			| null reloadedEquals = C.ImplFun equalFun (equalPrelude clsName (not (null equalFields)) ++ equalsFun C.Self (C.Ref "o") equalFields)
@@ -217,11 +218,11 @@ stmToImpl cl =
 		reloadedEqualCall D.Def{D.defPars = [D.Def{D.defType = tp, D.defName = parName}]} = case tp of
 			D.TPClass D.TPMTrait _ _ ->
 				C.If (C.Call (C.Ref "other") "conformsTo" [("protocol", C.ProtocolRef (C.Ref $ D.dataTypeClassNameWithPrefix tp))] []) [
-					C.Return $ C.Call C.Self "isEqualTo" [(parName, C.Cast (C.TPSimple "id" [D.dataTypeClassNameWithPrefix tp]) (C.Ref "other") )] []
+					C.Return $ C.Call C.Self "_isEqual" [(parName, C.Cast (C.TPSimple "id" [D.dataTypeClassNameWithPrefix tp]) (C.Ref "other") )] []
 				] []
 			_ ->
 				C.If (C.Call (C.Ref "other") "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix tp) "class" [] [])] []) [
-					C.Return $ C.Call C.Self "isEqualTo" [(parName, C.Cast (C.TPSimple ((D.dataTypeClassNameWithPrefix tp) ++ "*") []) (C.Ref "other") )] []
+					C.Return $ C.Call C.Self "_isEqual" [(parName, C.Cast (C.TPSimple ((D.dataTypeClassNameWithPrefix tp) ++ "*") []) (C.Ref "other") )] []
 				] []
 		reloadedEqualCall d = C.Stm $ C.Error $ "Incorrect equal def " ++ show d
 
