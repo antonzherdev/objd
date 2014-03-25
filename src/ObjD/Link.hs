@@ -2204,21 +2204,12 @@ checkErrorsInFile File{fileName = name, fileClasses = classes} =
 checkErrorsInClass :: Class -> [Error]
 checkErrorsInClass e@ClassError{} = [Error (show e)]
 checkErrorsInClass Generic{} = []
-checkErrorsInClass cl@Class{className = name, _classExtends = extends, _classGenerics = gens, _classDefs = defs} = 
+checkErrorsInClass Class{className = name, _classExtends = extends, _classGenerics = gens, _classDefs = defs} = 
 	map (ErrorParent $ "class " ++ name) (
 		checkErrorsInExtends extends
-		++ checkErrorsInCaseClass cl
 		++ concatMap checkErrorsInClass gens
 		++ concatMap checkErrorsInDef defs
 	)
-
-checkErrorsInCaseClass :: Class -> [Error]
-checkErrorsInCaseClass cl
-	| isCaseClass cl = 
-		map (\d -> Error $ "Var " ++  defName d ++ " in case class")  
-		. filter ((DefModMutable `elem`) . defMods) 
-		$ classDefsWithTraits cl
-	| otherwise = [] 
 
 checkErrorsInExtends :: Extends -> [Error]
 checkErrorsInExtends (Extends cls traits) =
