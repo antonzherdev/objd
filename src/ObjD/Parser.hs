@@ -140,7 +140,7 @@ pTypeStm = do
 
 pClass :: Parser FileStm
 pClass = do
-	mods <- many $ (try (stringSps "stub") >> return ClassModStub) <|> (try (stringSps "abstract") >> return ClassModAbstract) <|> (try (stringSps "final") >> return ClassModFinal)
+	mods <- many $ (try (stringSps "stub") >> return ClassModStub) <|> (try (stringSps "abstract") >> return ClassModAbstract) <|> (try (stringSps "final") >> return ClassModFinal) <|> (try (stringSps "case") >> return ClassModCase)
 	struct <- (string "class" >> return []) <|> (string "struct" >> return [ClassModStruct]) <|> (string "trait" >> return [ClassModTrait]) <|> (string "object" >> return [ClassModObject])
 	sps
 	name <- ident

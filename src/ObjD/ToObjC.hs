@@ -188,7 +188,8 @@ stmToImpl cl =
 		C.implFields = [],
 		C.implSynthesizes = (map (synthesize env) . filter needProperty) implFields,
 		C.implFuns = nub $ constrFuns ++ [implInitialize env] ++ dealoc env 
-			++ implFuns env defs ++ [instanceType] ++ staticGetters ++ copyImpls ++ (if equalsIsPosible cl then [equal, hash] else []) ++ [description],
+			++ implFuns env defs ++ [instanceType] ++ staticGetters ++ copyImpls 
+			++ [equal | D.needIsEqualForClass cl] ++ [hash | D.needHashForClass cl] ++ [description],
 		C.implStaticFields = map (implField env) staticFields
 	}
 	where
@@ -226,7 +227,7 @@ stmToImpl cl =
 				] []
 		reloadedEqualCall d = C.Stm $ C.Error $ "Incorrect equal def " ++ show d
 
-		equalFields = maybe [] (D.defPars) $ D.classConstructor cl
+		equalFields = D.classFieldsForEquals cl
 		
  		hash = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSUInteger" []) "hash" []) (hashFun equalFields)
  		description = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSString*" []) "description" []) 
@@ -256,14 +257,6 @@ equalPrelude clsName o = [
 
 equalFun :: C.Fun
 equalFun = C.Fun C.InstanceFun (C.TPSimple "BOOL" []) "isEqual" [(C.FunPar "" (C.TPSimple "id" []) "other")]
-
-equalsIsPosible :: D.Class -> Bool
-equalsIsPosible cl = 
-	(null $ filter ( (D.DefModMutable `elem` ). D.defMods) defs)
-	|| (not $ null $ filter ( isVal . D.defMods) defs)
-	where
-		defs = D.classDefs cl
-		isVal mods = (D.DefModField `elem` mods) && (D.DefModMutable `notElem` mods) && (D.DefModStatic `notElem` mods)
 
 copyImpls :: [C.ImplFun]
 copyImpls = [C.ImplFun (C.Fun C.InstanceFun idTp "copyWith" [C.FunPar "zone" (C.TPSimple "NSZone*" []) "zone"]) [C.Return C.Self]]
@@ -1005,8 +998,6 @@ tStm env _ x = [C.Stm $ tExp env x]
 
 equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp
 equals False (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp NotEq e1 e2
-equals False (D.TPClass D.TPMClass _ cl, e1) (_, e2) 
-	| not (equalsIsPosible cl) = C.BoolOp NotEq e1 e2
 equals False (D.TPNumber{}, e1) (_, e2) = C.BoolOp NotEq e1 e2
 equals False (D.TPChar, e1) (_, e2) = C.BoolOp NotEq e1 e2
 equals False (D.TPBool, e1) (_, e2) = C.BoolOp NotEq e1 e2
@@ -1028,8 +1019,6 @@ equals True (D.TPBool, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPNil, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPEArr _ _, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (_, e1) (D.TPNil, e2) = C.BoolOp Eq e1 e2
-equals True (D.TPClass D.TPMClass _ cl, e1) (_, e2) 
-	| not (equalsIsPosible cl) = C.BoolOp Eq e1 e2
 equals True (_, e1) (_, e2) = C.Call e1 "isEqual" [("", e2)] []
 
 callConstructor :: Env -> D.Def -> [(D.Def, D.Exp)] -> C.Exp

@@ -8,7 +8,7 @@ module ObjD.Link (
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
 	fileNameWithPrefix, classDefsWithTraits, classInitDef, classContainsInit, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait,
-	isAbstract, isFinal
+	isAbstract, isFinal, isCaseClass, classFieldsForEquals, needHashForClass, needIsEqualForClass
 )where
 
 import 			 Control.Arrow
@@ -74,8 +74,14 @@ classImports Class{_classImports = r} = r
 classImports _ = []
 classNameWithPrefix :: Class -> String
 classNameWithPrefix cl = packagePrefix (classPackage cl) ++ cap (className cl)
+classFieldsForEquals :: Class -> [Def]
+classFieldsForEquals cl = maybe [] defPars $ classConstructor cl
+needIsEqualForClass :: Class -> Bool
+needIsEqualForClass cl = ClassModCase `elem` classMods cl || any ( ("isEqual" == ). defName) (classDefs cl)
+needHashForClass :: Class -> Bool
+needHashForClass cl = ClassModCase `elem` classMods cl && (not $ any ( ("hash" == ). defName) (classDefs cl))
 
-data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType | ClassModAbstract | ClassModFinal deriving (Eq)
+data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType | ClassModAbstract | ClassModFinal | ClassModCase deriving (Eq)
 
 type ExtendsRef = (Class, [DataType])
 data Extends = Extends {extendsClass :: Maybe ExtendsClass, extendsTraits :: [ExtendsRef]}
@@ -107,6 +113,7 @@ instance Show ClassMod where
 	show ClassModType = "type"
 	show ClassModAbstract = "abstract"
 	show ClassModFinal = "final"
+	show ClassModCase = "case"
 			
 instance Show Extends where
 	show (Extends Nothing []) = ""
@@ -143,6 +150,8 @@ isStub :: Class -> Bool
 isStub = (ClassModStub `elem` ) . classMods
 isFinal :: Class -> Bool
 isFinal = (ClassModFinal `elem` ) . classMods
+isCaseClass :: Class -> Bool
+isCaseClass = (ClassModCase `elem` ) . classMods
 isAbstract :: Class -> Bool
 isAbstract = (ClassModAbstract `elem` ) . classMods
 
@@ -572,7 +581,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 			D.Class{} -> Class {
 				_classFile = file,
 				_classPackage = package,
-				_classMods = mapMaybe clsMod (D.classMods cl), 
+				_classMods = concatMap clsMod (D.classMods cl), 
 				className = D.className cl, 
 				_classExtends = if D.className cl == "Object" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
 				_classDefs = 
@@ -611,12 +620,14 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 		enumName = Def "name" [] TPString Nop [] Nothing
 		enumAdditionalDefs = [(enumOrdinal, Nothing), (enumName, Nothing)]
 		selfType = refDataType self (map (TPClass TPMGeneric []) generics)
-		clsMod D.ClassModStruct = Just ClassModStruct
-		clsMod D.ClassModStub = Just ClassModStub
-		clsMod D.ClassModTrait = Just ClassModTrait
-		clsMod D.ClassModObject = Just ClassModObject
-		clsMod D.ClassModAbstract = Just ClassModAbstract
-		clsMod D.ClassModFinal = Just ClassModFinal
+		clsMod D.ClassModStruct = [ClassModStruct]
+		clsMod D.ClassModStub = [ClassModStub]
+		clsMod D.ClassModTrait =  [ClassModTrait]
+		clsMod D.ClassModObject = [ClassModObject]
+		clsMod D.ClassModAbstract = [ClassModAbstract]
+		clsMod D.ClassModFinal = [ClassModFinal]
+		clsMod D.ClassModCase = [ClassModFinal, ClassModCase]
+		clsMod _ = []
 		extends = fmap (linkExtends env (map fst constrPars)) (D.classExtends cl) 
 		selfIsStruct = case cl of
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
@@ -2193,12 +2204,21 @@ checkErrorsInFile File{fileName = name, fileClasses = classes} =
 checkErrorsInClass :: Class -> [Error]
 checkErrorsInClass e@ClassError{} = [Error (show e)]
 checkErrorsInClass Generic{} = []
-checkErrorsInClass Class{className = name, _classExtends = extends, _classGenerics = gens, _classDefs = defs} = 
-	map (ErrorParent $"class " ++ name) (
+checkErrorsInClass cl@Class{className = name, _classExtends = extends, _classGenerics = gens, _classDefs = defs} = 
+	map (ErrorParent $ "class " ++ name) (
 		checkErrorsInExtends extends
+		++ checkErrorsInCaseClass cl
 		++ concatMap checkErrorsInClass gens
 		++ concatMap checkErrorsInDef defs
 	)
+
+checkErrorsInCaseClass :: Class -> [Error]
+checkErrorsInCaseClass cl
+	| isCaseClass cl = 
+		map (\d -> Error $ "Var " ++  defName d ++ " in case class")  
+		. filter ((DefModMutable `elem`) . defMods) 
+		$ classDefsWithTraits cl
+	| otherwise = [] 
 
 checkErrorsInExtends :: Extends -> [Error]
 checkErrorsInExtends (Extends cls traits) =
