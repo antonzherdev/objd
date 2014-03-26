@@ -8,7 +8,7 @@ module ObjD.Link (
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
 	fileNameWithPrefix, classDefsWithTraits, classInitDef, classContainsInit, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait,
-	isAbstract, isFinal, isCaseClass, classFieldsForEquals, needHashForClass, needIsEqualForClass
+	isAbstract, isFinal, isCaseClass, classFieldsForEquals, needHashForClass, needIsEqualForClass, isGenericWrap
 )where
 
 import 			 Control.Arrow
@@ -328,6 +328,9 @@ isInstanceOfTp env cl target
 isInstanceOfCheck :: Env -> DataType -> DataType -> Bool
 isInstanceOfCheck env l r = isInstanceOfTp env l r
 
+baseDataType :: Env -> DataType
+baseDataType env = TPClass TPMClass [] $ classFind (envIndex env) "Object"
+
 commonSuperDataType :: Env -> DataType -> DataType -> DataType
 commonSuperDataType env (TPGenericWrap _ a) b = commonSuperDataType env a b
 commonSuperDataType env a (TPGenericWrap _ b) = commonSuperDataType env a b
@@ -337,9 +340,13 @@ commonSuperDataType _ TPThrow a = a
 commonSuperDataType _ a TPNil = a
 commonSuperDataType _ a TPAny = a
 commonSuperDataType _ a TPThrow = a
+commonSuperDataType _ TPNumber{} f@TPFloatNumber{} = f
+commonSuperDataType _ f@TPFloatNumber{} TPNumber{} = f
+commonSuperDataType _ (TPNumber as an) (TPNumber bs bn) = TPNumber (as || bs) (max an bn)
+commonSuperDataType _ (TPFloatNumber an) (TPFloatNumber bn) = TPFloatNumber (max an bn)
 commonSuperDataType _ TPVoid TPVoid = TPVoid
-commonSuperDataType env _ TPVoid = TPClass TPMClass [] $ classFind (envIndex env) "Object"
-commonSuperDataType env TPVoid _ = TPClass TPMClass [] $ classFind (envIndex env) "Object"
+commonSuperDataType env _ TPVoid = baseDataType env
+commonSuperDataType env TPVoid _ = baseDataType env
 commonSuperDataType env a b 
 	| a == b = a
 	| dataTypeClass env a == dataTypeClass env b = mapDataTypeGenerics (map (\(ag, bg) -> wrapGeneric $ commonSuperDataType env ag bg) . zip (dataTypeGenerics env a) ) b
@@ -685,7 +692,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 			in (Def name [] (dataType env tp) Nop [DefModLocal, DefModWeak] Nothing,
 				case b of
 					D.Nop -> Nothing
-					_ -> Just $ implicitConvertsion env tp' $ expr env' b)
+					_ -> Just $ exprTo env' tp' b)
 		generics = map (linkGeneric env) (D.classGenerics cl) 
 		
 		
@@ -738,14 +745,14 @@ linkGeneric env (D.Generic name ext) = Generic{className = name,
 linkField :: Env -> (Bool, Bool) -> D.ClassStm -> [Def]
 linkField env (obj, _isStruct) D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = 
 	let 
-		i = expr env e
+		i = exprToSome env e
+		i' = implicitConvertsion env tp'' i
 		tp' = unwrapGeneric $ getDataType env tp i
 		tp'' = if _isStruct then case tp' of
 				TPArr n atp -> TPEArr n $ unwrapGeneric atp 
 				_ -> tp' 
 			else tp'
 		gtp = wrapGeneric tp''
-		i' = implicitConvertsion env tp'' i
 		def = Def{defMods = 
 			DefModField : translateMods mods ++ [DefModStruct | _isStruct] ++ [DefModStatic | obj], defName = name, defType = tp'', 
 			defBody = i', defGenerics = Nothing, defPars = []}
@@ -816,7 +823,9 @@ linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRe
 					defType = dataType env' (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
 			_   -> 
 				let 
-					b = expr env'' body
+					b = case tp of
+						Just (D.DataType "void" []) -> expr env'' body
+						_ -> exprToSome env'' body
 					tp' = unblockGenerics $ unwrapGeneric $ getDataType env' tp b
 					tp'' = mapOverrideType tp'
 					superInitDef :: Maybe Def
@@ -867,11 +876,12 @@ linkDefPars env pars = let
 	--env' = envAddVals (map fst pars') env
 	parMod D.ParModWeak = DefModWeak
 	linkPar D.Par {D.parMods = mods, D.parName = pnm, D.parType  = ttt, D.parDefault = pd} = let 
-		tp = maybe (exprDataType defaultExp) (dataType env) ttt
-		defaultExp = implicitConvertsion env tp $ expr env pd
+		tp = fmap (dataType env) ttt
+		tp' = fromMaybe (exprDataType defaultExp) tp
+		defaultExp = if isJust tp then exprTo env (fromJust tp) pd else exprToSome env pd
 		in (Def {
 			defName = pnm, defPars = [], 
-			defType = tp, 
+			defType = tp', 
 			defBody = Nop, 
 			defMods = DefModLocal : map parMod mods, defGenerics = Nothing}, 
 			case pd of
@@ -1105,6 +1115,9 @@ dataTypeGenerics _ (TPTuple a) = a
 dataTypeGenerics env (TPGenericWrap _ g) = dataTypeGenerics env g
 dataTypeGenerics _ _ = []
 
+isGenericWrap :: DataType -> Bool
+isGenericWrap TPGenericWrap{} = True
+isGenericWrap _ = False
 wrapGeneric :: DataType -> DataType
 wrapGeneric g@(TPClass TPMGeneric _ _) = g
 wrapGeneric g@TPGenericWrap{} = g
@@ -1536,29 +1549,42 @@ exprDataType (LambdaCall e) = case unwrapGeneric $ exprDataType e of
 
 maybeCast :: DataType -> Exp -> Exp
 maybeCast _ e@Throw{} = e
+maybeCast _ e@(Braces []) = e
+maybeCast tp (If c t f) = If c (maybeCast tp t) (maybeCast tp f) 
+maybeCast tp (Braces x) = Braces $ (init x) ++ [maybeCast tp $ last x]
+maybeCast _ Nil = Nil
 maybeCast tp e 
-	| tp == exprDataType e = e
+	| unwrapGeneric tp == unwrapGeneric (exprDataType e) = e
 	| otherwise = Cast tp e
 
+exprTo :: Env -> DataType -> D.Exp -> Exp
+exprTo env tp e = implicitConvertsion env tp $ expr env{envTp = tp} e
+
+exprToSome :: Env ->D.Exp -> Exp
+exprToSome env e =  expr env{envTp = baseDataType env} e
+
+
 expr :: Env -> D.Exp -> Exp
-expr env (D.If cond t D.Nop) = If (implicitConvertsion env TPBool $ expr env cond) (expr env t) Nop
-expr env (D.If cond t f) = 
-	let 
+expr env (D.If cond t D.Nop) = If (exprTo env TPBool cond) (expr env t) Nop
+expr env (D.If cond t f)
+	| envTp env == TPVoid = If (exprTo env TPBool cond) (expr env t) (expr env f)
+	| otherwise = let 
 		t' = expr env t
 		f' = expr env f
 		dt = exprDataType t'
 		df = exprDataType f'
 		retTp = commonSuperDataType env dt df
-	in If (implicitConvertsion env TPBool $ expr env cond) (maybeCast retTp t') (maybeCast retTp f')
-expr env (D.While cond t) = While (implicitConvertsion env TPBool $ expr env cond) (expr env t)
-expr env (D.Synchronized cond t) = Synchronized (expr env cond) (expr env t)
-expr env (D.Do cond t) = Do (implicitConvertsion env TPBool $ expr env cond) (expr env t)
+	in If (expr env cond) (maybeCast retTp t') (maybeCast retTp f')
+expr env (D.While cond t) = While (exprTo env TPBool cond) (expr env{envTp = TPVoid} t)
+expr env (D.Synchronized cond t) = Synchronized (exprToSome env cond) (expr env t)
+expr env (D.Do cond t) = Do (exprTo env TPBool cond) (expr env{envTp = TPVoid} t)
 expr env (D.Weak e) = insertWeak (expr env e)
 expr _ (D.Braces []) = Nop
 expr env (D.Braces es) = Braces $ bracesRec env es
 	where
 		bracesRec _ [] = []
-		bracesRec env' (x:xs) = case expr env' x of
+		bracesRec env' [x] = [expr env' x]
+		bracesRec env' (x:xs) = case expr env'{envTp = TPVoid} x of
 			x'@(Val d) -> x':(bracesRec (envAddVals [d] env') xs)
 			x' -> x':(bracesRec env' xs)
 expr _ D.Nop = Nop
@@ -1567,12 +1593,12 @@ expr _ (D.StringConst i) = StringConst i
 expr _ D.Nil = Nil
 expr _ (D.BoolConst i) = BoolConst i
 expr _ (D.FloatConst s) = FloatConst s
-expr env (D.BoolOp tp a b) = BoolOp tp (expr env a) (expr env b)
+expr env (D.BoolOp tp a b) = BoolOp tp (exprToSome env a) (exprToSome env b)
 expr env (D.MathOp tp a b) = 
 	let 
-		aa = expr env a
+		aa = exprToSome env a
 		ltp = exprDataType aa
-		math = MathOp tp aa (expr env b)
+		math = MathOp tp aa (exprToSome env b)
 		callOp =  Dot aa $ exprCall env (Just ltp) $ D.Call (literalDefName $ show tp) (Just [(Nothing, b)]) []
 	in case unwrapGeneric ltp of
 		TPNumber{} -> math
@@ -1583,7 +1609,7 @@ expr env (D.MathOp tp a b) =
 expr env d@(D.Dot a b) = let
 	aa = case a of
 		D.Call {} -> exprCall env Nothing a
-		_ -> expr env a
+		_ -> exprToSome env a
 	bb = exprCall env (Just $ exprDataType aa)  b
 	in case aa of
 		ExpDError s _ -> ExpDError s d
@@ -1592,7 +1618,7 @@ expr env d@(D.Dot a b) = let
 			_ -> Dot aa bb
 expr env (D.Set tp a b) = 
 	let 
-		aa = expr env a
+		aa = exprToSome env a
 		ltp = exprDataType aa
 		simpleSet = if isNothing tp then Set Nothing aa math
 			else case unwrapGeneric ltp of
@@ -1601,7 +1627,7 @@ expr env (D.Set tp a b) =
 				TPString{} -> Set tp aa math
 				_ -> Set Nothing aa callOp
 
-		math = implicitConvertsion env ltp $ expr env b 
+		math = exprTo env ltp b 
 		callOp = Dot aa $ exprCall env (Just ltp) $ D.Call (literalDefName $ show $ fromJust tp) (Just [(Nothing, b)]) []
 		lcall = case aa of
 				Dot _ c@(Call {}) -> Just c
@@ -1620,13 +1646,13 @@ expr env (D.Set tp a b) =
 					Dot ref _ ->  Dot ref $ exprCall env (Just $ exprDataType ref) $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
 					_ -> exprCall env Nothing $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
 			_ -> Set tp (ExpLError "Unassinable left" aa) (expr env b)
-expr env (D.PlusPlus e) = PlusPlus (expr env e)
-expr env (D.MinusMinus e) = MinusMinus (expr env e)
+expr env (D.PlusPlus e) = PlusPlus (exprToSome env e)
+expr env (D.MinusMinus e) = MinusMinus (exprToSome env e)
 expr env D.Self = Self $ envSelf env
 expr env D.Super = Super $ fromMaybe (error $ "No super data type for " ++ show (envSelf env)) $ superType $ envSelf env
 expr env r@D.Call{} = exprCall env Nothing r
 expr env (D.Index e i) = let
-	e' = expr env e
+	e' = exprToSome env e
 	obf = expr env $ D.Dot e (D.Call "apply" (Just [(Nothing, i)]) [])
 	in case exprDataType e' of
 		TPClass{} -> obf
@@ -1643,11 +1669,12 @@ expr env l@(D.Lambda pars e) =
 	else ExpDError "Not all types are defined in lambda" l
 
 expr env (D.Val name tp body mods) = let
-	body' = expr env body
-	tp' = unwrapGeneric $ maybe (exprDataType body') (dataType env) tp
+	tp' = fmap (dataType env) tp
+	body' = expr env{envTp = fromMaybe (baseDataType env) tp'} body
+	tp'' = unwrapGeneric $ fromMaybe (exprDataType body') tp'
 	mods' = DefModLocal : [DefModMutable | D.DefModMutable `elem` mods] ++ [DefModWeak | D.DefModWeak `elem` mods] 
-	def' = Def{defName = name, defType = tp', defMods = mods', defPars = [], 
-		defBody = implicitConvertsion env tp' body', 
+	def' = Def{defName = name, defType = tp'', defMods = mods', defPars = [], 
+		defBody = if isJust tp then implicitConvertsion env tp'' body' else body', 
 		defGenerics = Nothing}
 	in Val def'
 expr _ (D.Arr []) = Arr []
@@ -1966,7 +1993,7 @@ tryExprCall :: Env-> Maybe DataType -> D.Exp -> Exp
 tryExprCall _ (Just (TPUnknown t)) e = ExpDError t e
 tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 	where
-		pars' = map (second (\e -> FirstTry e (expr env e))) (fromMaybe [] pars) 
+		pars' = map (second (\e -> FirstTry e (exprToSome env e))) (fromMaybe [] pars) 
 		self = fromMaybe (envSelf env) strictClass
 		call' :: (Maybe Class, Exp)
 		call' = fromMaybe (Nothing, ExpDError errorString cll) $ listToMaybe $ mplus (findCall True) (findCall False)
@@ -1997,8 +2024,8 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 -}
 		maybeLambdaCall = case pars of
 			Just [] -> case exprDataType call'' of
-				t@(TPFun TPVoid _) -> LambdaCall (Cast t call'')
-				TPGenericWrap _ t@(TPFun TPVoid _) -> LambdaCall (maybeCast t call'')
+				(TPFun TPVoid _) -> LambdaCall call''
+				TPGenericWrap _ (TPFun TPVoid _) -> LambdaCall call''
 				_ -> call''
 			_ -> call''
 
@@ -2146,7 +2173,7 @@ correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, ExpDError _ (D.Lambda 
 		stps tp = [tp]
 		env' = envAddVals (map (uncurry localVal) lpars') env
 		dtp' = replaceGenerics True gens dtp
-		expr' = maybeAddReturn env dtp $ implicitConvertsion env dtp' $ expr env' lambdaExpr
+		expr' = if dtp' == TPVoid then expr env' lambdaExpr else maybeAddReturn env dtp' $ expr env'{envTp = dtp'} lambdaExpr
 		tp' = if containsGeneric dtp then wrapGeneric (exprDataType expr') else dtp
 		containsGeneric = fromMaybe False . forDataType (\t -> case t of
 			TPClass TPMGeneric _ _ -> Just True

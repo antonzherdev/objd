@@ -837,12 +837,13 @@ tExp env (D.Dot l (D.As dtp)) = case dtp of
 		[("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] []), ("object", castGeneric l $ tExp env l)] []
 tExp env (D.Dot l (D.CastDot dtp)) = tExp env (D.Cast dtp l)
 tExp env (D.Dot l (D.Cast dtp c)) = tExp env (D.Cast dtp (D.Dot l c))
-tExp env (D.Dot l (D.LambdaCall c)) = C.CCall (tExp env (D.Dot l c)) [] 
-
-
+tExp env (D.Dot l (D.LambdaCall c)) = tExp env (D.LambdaCall $ D.Dot l c)
 tExp env (D.Self _) = selfCall env
 tExp _ (D.Super _) = C.Super
-tExp env (D.LambdaCall e) = C.CCall (tExp env e) []
+tExp env (D.LambdaCall e) = let 
+		tp = D.exprDataType e
+		e' = tExp env e 
+	in C.CCall (if D.isGenericWrap tp then C.Cast (showDataType tp) e' else e') []
 tExp env (D.Call d@D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
 	| D.DefModField `elem` mods = C.Ref $ fieldName env d
 	| D.DefModEnumItem `elem` mods = C.Ref $ fieldName env d
