@@ -758,6 +758,13 @@ setSelf :: Env -> [C.Stm] -> [C.Stm]
 setSelf env stm = if hasWeakSelf False stm then [(C.Var (C.tp $ (D.classNameWithPrefix $ envClass env) ++ "*") "_self" (C.Ref "_weakSelf") [])] ++ stm else stm
 
 tExp :: Env -> D.Exp -> C.Exp
+tExp env (D.Dot l (D.Call (D.Def{D.defName = "im"}) _ [])) 
+	| isExp = tExp env l
+	where isExp = case D.exprDataType l of
+		D.TPClass _ _ D.Class{D.className = "MArray"} -> True
+		_ -> False
+
+
 tExp _ (D.IntConst i) = C.IntConst i
 tExp _ (D.StringConst i) = C.StringConst i
 tExp _ (D.Nil) = C.Nil
@@ -993,10 +1000,20 @@ tStm env parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = 
 		isSet _ = Nothing
 tStm env _ (D.Throw e) = [C.Throw $ tExp env e]
 tStm _ _ D.Break = [C.Break]
+tStm _ _ D.Continue = [C.Continue]
 tStm env pe (D.Weak expr) = tStm env{envWeakSelf = True} pe expr
-tStm env _ x@(D.Dot l (D.Call (D.Def{D.defName = "for"}) _ [(_, D.Lambda [(cycleVar, cycleTp)] cycleBody _)])) = case D.exprDataType l of
-	D.TPArr _ _ -> [C.ForIn (showDataType cycleTp) cycleVar (tExp env l) (tStm env [] cycleBody)]
-	_ -> [C.Stm $ tExp env x]
+tStm env _ x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar, cycleTp)] cycleBody _)])) 
+	| dn == "for" || dn == "go" =
+		case D.exprDataType l of
+			D.TPArr _ _ -> [C.ForIn (showDataType cycleTp) cycleVar (tExp env l) (tStm env [] ((if dn == "go" then processGo else id) cycleBody) )]
+			_ -> [C.Stm $ tExp env x]
+	where
+		processGo :: D.Exp -> D.Exp
+		processGo e = D.mapExp procGo e 
+		procGo (D.Return _ (D.BoolConst True)) = Just D.Continue
+		procGo (D.Return _ (D.BoolConst False)) = Just D.Break
+		procGo (D.Return _ e) = Just $ D.If e D.Continue D.Break
+		procGo _ = Nothing
 tStm env _ x = [C.Stm $ tExp env x]
 
 equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp

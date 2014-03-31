@@ -65,7 +65,7 @@ data Stm =
 	| Return Exp
 	| Throw Exp
 	| Var{varType :: DataType, varName :: String, varExp :: Exp, varMods :: [String]}
-	| Break
+	| Break | Continue
 	| Synchronized Exp [Stm]
 	| ForIn DataType String Exp [Stm]
 
@@ -323,6 +323,7 @@ stmLines (Throw e) = ["@throw "] `glue` (expLines e `appp` ";")
 stmLines (Var tpp name Nop mods) = [(unwords . map (++ " ")) mods ++ showDecl tpp name ++ ";"]
 stmLines (Var tpp name e mods) = [(unwords . map (++ " ")) mods ++ showDecl tpp name ++ " = "] `glue` (expLines e `appp` ";")
 stmLines (Break) = ["break;"]
+stmLines (Continue) = ["continue;"]
 stmLines (Synchronized r s) = ["@synchronized(" ++ show r ++ ") {"] ++ stms s ++ ["}"]
 
 expLines :: Exp -> [String]

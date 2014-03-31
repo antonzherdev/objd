@@ -8,7 +8,7 @@ module ObjD.Link (
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
 	fileNameWithPrefix, classDefsWithTraits, classInitDef, classContainsInit, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait,
-	isAbstract, isFinal, isCaseClass, classFieldsForEquals, needHashForClass, needIsEqualForClass, isGenericWrap
+	isAbstract, isFinal, isCaseClass, classFieldsForEquals, needHashForClass, needIsEqualForClass, isGenericWrap, mapExp
 )where
 
 import 			 Control.Arrow
@@ -1284,6 +1284,7 @@ data Exp = Nop
 	| Is DataType
 	| CastDot DataType
 	| Break
+	| Continue
 	| LambdaCall Exp
 	| StringBuild [(String, Exp)] String
 	deriving(Eq)
@@ -1335,6 +1336,7 @@ instance Show Exp where
 	show (Is tp) = "is<" ++ show tp ++ ">"
 	show (CastDot tp) = "cast<" ++ show tp ++ ">"
 	show (Break) = "break"
+	show (Break) = "continue"
 	show (LambdaCall e) = show e ++ "()"
 	show (StringBuild pars lastS) = "\"" ++ join (map (\(prev, e) -> prev ++ "$" ++ show e) pars) ++ lastS ++ "\""
 
