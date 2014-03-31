@@ -675,7 +675,7 @@ procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
 showDataType :: D.DataType -> C.DataType
 showDataType (D.TPEArr 0 _) = C.TPSimple "id<CNImSeq>" []
 showDataType (D.TPEArr n tp) = C.TPArr n $ show $ showDataType tp
-showDataType (D.TPArr _ _) = C.TPSimple "id<CNImSeq>" []
+showDataType (D.TPArr _ _) = C.TPSimple "NSArray*" []
 showDataType (D.TPMap _ _)  = C.TPSimple "id<CNImMap>" []
 showDataType (D.TPNumber False 1) = C.TPSimple "char" []
 showDataType (D.TPNumber True 1) = C.TPSimple "unsigned char" []
@@ -994,6 +994,9 @@ tStm env parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = 
 tStm env _ (D.Throw e) = [C.Throw $ tExp env e]
 tStm _ _ D.Break = [C.Break]
 tStm env pe (D.Weak expr) = tStm env{envWeakSelf = True} pe expr
+tStm env _ x@(D.Dot l (D.Call (D.Def{D.defName = "for"}) _ [(_, D.Lambda [(cycleVar, cycleTp)] cycleBody _)])) = case D.exprDataType l of
+	D.TPArr _ _ -> [C.ForIn (showDataType cycleTp) cycleVar (tExp env l) (tStm env [] cycleBody)]
+	_ -> [C.Stm $ tExp env x]
 tStm env _ x = [C.Stm $ tExp env x]
 
 equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp

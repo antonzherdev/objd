@@ -67,6 +67,7 @@ data Stm =
 	| Var{varType :: DataType, varName :: String, varExp :: Exp, varMods :: [String]}
 	| Break
 	| Synchronized Exp [Stm]
+	| ForIn DataType String Exp [Stm]
 
 forStms :: MonadPlus m => (Stm -> Bool, Stm -> m a, Exp -> Bool, Exp -> m a) -> [Stm] -> m a 	
 forStms f s = msum $ map (forStm f) s 
@@ -85,6 +86,7 @@ forStm f@(cs, fs, _, _) ee = mplus (fs ee) $ if cs ee then (go ee) else mzero
 		go (Throw l) = mfore l
 		go (Stm l) = mfore l
 		go (Var _ _ l _) = mfore l
+		go (ForIn _ _ e s) = mfore e `mplus` mmsum s
 		go _ = mzero
 		
 data Exp =
@@ -307,6 +309,7 @@ stmLines i@(If _ _ [If{}]) = multiLineIf i
 stmLines (If cond [t] []) = ["if(" ++ show cond ++ ") " ] `glue` stmLines t
 stmLines (If cond t []) = ["if(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
 stmLines (While cond t) = ["while(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
+stmLines (ForIn t name e s) = ["for(" ++ showDecl t name ++ " in " ++ show e ++ ") {"] ++ stms s ++ ["}"]
 stmLines (Do cond t) = ["do {"] ++ stms t ++ ["} while(" ++ show cond ++ ");"]
 stmLines (If cond [t] [f]) = (["if(" ++ show cond ++ ") " ] `glue` stmLines t) ++ (["else "] `glue` stmLines f)
 stmLines i@If{} = multiLineIf i

@@ -1039,7 +1039,7 @@ dataTypeClass env (TPObject _ c) = Class { _classMods = [ClassModObject], classN
 	_classPackage = classPackage c}
 dataTypeClass env (TPGenericWrap _ c) = dataTypeClass env c
 dataTypeClass _ (TPSelf c) = c
-dataTypeClass env (TPArr _ _) = classFind (envIndex env) "ImSeq"
+dataTypeClass env (TPArr _ _) = classFind (envIndex env) "ImArray"
 dataTypeClass env (TPEArr _ _) = classFind (envIndex env) "PArray"
 dataTypeClass env (TPOption _) = classFind (envIndex env) "Option"
 dataTypeClass env (TPMap _ _) = classFind(envIndex env) "ImMap"
