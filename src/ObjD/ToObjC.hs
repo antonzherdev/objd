@@ -702,7 +702,9 @@ showDataType (D.TPClass D.TPMEnum _ c) = C.TPSimple (D.classNameWithPrefix c ++ 
 showDataType (D.TPClass D.TPMTrait _ c) = C.TPSimple "id" [D.classNameWithPrefix c]
 showDataType (D.TPClass{}) = idTp
 showDataType (D.TPSelf _) = idTp
-showDataType (D.TPTuple _) = C.TPSimple "CNTuple*" []
+showDataType (D.TPTuple items) 
+	| length items > 2 = C.TPSimple ("CNTuple" ++ show (length items) ++ "*") []
+	| otherwise = C.TPSimple "CNTuple*" []
 showDataType (D.TPOption _) = idTp
 showDataType (D.TPFun D.TPVoid d) = C.TPBlock (showDataType d) []
 showDataType (D.TPFun (D.TPTuple ss) d) = C.TPBlock (showDataType d) (map showDataType ss)
