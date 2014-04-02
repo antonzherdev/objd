@@ -408,8 +408,8 @@ localVal :: String -> DataType -> Def
 localVal name tp = Def name [] tp Nop [DefModLocal] Nothing
 localValE :: String -> DataType -> Exp -> Def
 localValE name tp e = Def name [] tp e [DefModLocal] Nothing
-{- tmpVal :: Env -> DataType -> Exp -> Def
-tmpVal env tp e = Def ("__tmp" ++ envVarSuffix env) [] tp e [DefModLocal] Nothing -}
+tmpVal :: Env -> DataType -> Exp -> Def
+tmpVal env tp e = Def ("__tmp" ++ envVarSuffix env) [] tp e [DefModLocal] Nothing 
 isStatic :: Def -> Bool
 isStatic = (DefModStatic `elem` ). defMods
 isDef :: Def -> Bool
@@ -1682,6 +1682,17 @@ expr env d@(D.NullDot a b) = let
 			_ -> case bb of
 				Dot l r -> Dot (NullDot aa l) r
 				_ -> NullDot aa bb
+expr env (D.Elvis l alt) = let
+	l' = expr env l
+	tp = case exprDataType l' of
+		TPOption t -> t
+		t -> TPUnknown ("Null safe operation for the non-nullable datatype " ++ show t)
+	tmp = tmpVal env tp l'
+	alt' = exprTo env tp alt
+	in Braces[
+		Val tmp,
+		If (BoolOp NotEq (callRef tmp) Nil) (callRef tmp) alt'
+	]
 expr env (D.Set tp a b) = 
 	let 
 		aa = exprToSome env a

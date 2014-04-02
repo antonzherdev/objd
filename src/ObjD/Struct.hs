@@ -82,6 +82,7 @@ data Exp = Nop
 	| BoolOp BoolTp Exp Exp
 	| Dot Exp Exp
 	| NullDot Exp Exp
+	| Elvis Exp Exp
 	| MapVal Exp
 	| Set (Maybe MathTp) Exp Exp
 	| MathOp MathTp Exp Exp
@@ -166,6 +167,7 @@ instance Show Exp where
 	show (Dot l r) = showOp' l "." r
 	show (NullDot l (MapVal r)) = showOp' l "?" r
 	show (NullDot l r) = showOp' l "?." r
+	show (Elvis l r) = showOp' l "?:" r
 	show (Set Nothing l r) = showOp l "=" r
 	show (Set (Just t) l r) = showOp l (show t ++ "=") r
 	show (BoolOp t l r) = showOp l (show t) r
