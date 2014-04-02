@@ -705,7 +705,7 @@ showDataType (D.TPSelf _) = idTp
 showDataType (D.TPTuple items) 
 	| length items > 2 = C.TPSimple ("CNTuple" ++ show (length items) ++ "*") []
 	| otherwise = C.TPSimple "CNTuple*" []
-showDataType (D.TPOption _) = idTp
+showDataType (D.TPOption tp) = showDataType tp
 showDataType (D.TPFun D.TPVoid d) = C.TPBlock (showDataType d) []
 showDataType (D.TPFun (D.TPTuple ss) d) = C.TPBlock (showDataType d) (map showDataType ss)
 showDataType (D.TPFun s d) = C.TPBlock (showDataType d) [showDataType s]
@@ -801,10 +801,11 @@ tExp env (D.PlusPlus e) = C.PlusPlus (tExp env e)
 tExp env (D.MinusMinus e) = C.MinusMinus (tExp env e)
 
 
+{- Dot -}
+tExp env (D.NullDot l r) = tExp env (D.Dot l r)
 tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call d@D.Def {D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
 	| otherwise = C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) d) (C.Ref "self" : (map snd . tPars env d) pars)
-
 tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name} _ pars)) 
 	| D.DefModField `elem` mods && null pars && D.DefModSuper `notElem` mods && (not (envWeakSelf env) || D.DefModStatic `elem` mods) = 
 		C.Ref $ fieldName env d
@@ -813,7 +814,6 @@ tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name}
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.classNameWithPrefix $ D.tpClass stp) name (tPars env d pars) []
 	| D.DefModField `elem` mods && null pars = selfGetField env name
 	| otherwise = C.Call (selfCall env) name (tPars env d pars) [] 
-		
 tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars))
 	| D.DefModStatic `elem` mods && isStubObject = 
 		if D.DefModField `elem` mods then C.Ref name
@@ -847,6 +847,9 @@ tExp env (D.Dot l (D.As dtp)) = case dtp of
 tExp env (D.Dot l (D.CastDot dtp)) = tExp env (D.Cast dtp l)
 tExp env (D.Dot l (D.Cast dtp c)) = tExp env (D.Cast dtp (D.Dot l c))
 tExp env (D.Dot l (D.LambdaCall c)) = tExp env (D.LambdaCall $ D.Dot l c)
+
+
+
 tExp env (D.Self _) = selfCall env
 tExp _ (D.Super _) = C.Super
 tExp env (D.LambdaCall e) = let 
@@ -890,11 +893,8 @@ tExp env (D.Weak expr) = tExp env{envWeakSelf = True} expr
 tExp env (D.Arr exps) = C.Arr $ map (tExpToType env D.tpGeneric) exps
 tExp env (D.Map exps) = C.Map $ map (tExpToType env D.tpGeneric *** tExpToType env D.tpGeneric) exps
 tExp env (D.Tuple exps) = C.CCall (C.Ref $ "tuple" ++ if length exps == 2 then "" else show (length exps) ) $ map (tExpToType env D.tpGeneric) exps
-tExp env (D.Opt e) = let tp = D.exprDataType e
-	in C.Call (C.Ref "CNOption") "apply" [("value", maybeVal (tp, D.wrapGeneric tp) (tExp env e))] []
-tExp env (D.Some e) = let tp = D.exprDataType e
-	in C.Call (C.Ref "CNOption") "some" [("value", maybeVal (tp, D.wrapGeneric tp) (tExp env e))] []
-tExp _ (D.None _) = C.Call (C.Ref "CNOption") "none" [] []
+tExp env (D.Some e) = tExpTo env (D.wrapGeneric $ D.exprDataType e) e
+tExp _ (D.None _) = C.Nil
 tExp env (D.Not e) = C.Not (tExpTo env D.TPBool e)
 tExp env (D.Negative e) = C.Negative (tExp env e)
 tExp env (D.Cast dtp e) = let 
@@ -958,6 +958,7 @@ tExp env e@(D.Braces _) =
 		rtp = D.exprDataType e
 		lambda = C.Lambda [] (setSelf env $ tStm env{envDataType = rtp} [] e) (showDataType rtp)
 	in C.CCall lambda []
+tExp env ee@(D.NonOpt e) = tExpTo env (D.exprDataType ee) e
 tExp env (D.Return _ e) = tExp env e
 tExp _ x = C.Error $ "No tExp for " ++ show x
 

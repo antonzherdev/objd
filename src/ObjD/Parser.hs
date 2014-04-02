@@ -367,14 +367,19 @@ pExp = do
 			string s
 			sps
 			return $ FuncOp t)
-		postFix o = try(do
-			string "++"
-			sps
-			return $ PlusPlus o) <|>
+		postFix o = 
 			try(do
-			string "--"
-			sps
-			return $ MinusMinus o) <|> 
+				string "++"
+				sps
+				return $ PlusPlus o) <|>
+			try(do
+				string "--"
+				sps
+				return $ MinusMinus o) <|>
+			try(do
+				string "?!"
+				sps
+				return $ NonOpt o) <|> 
 			try(do 
 				charSps '['
 				e <- pExp
@@ -386,6 +391,16 @@ pExp = do
 				e <- pTerm
 				sps
 				postFix $ Dot o e) <|>
+			try(do 
+				stringSps "?."
+				e <- pTerm
+				sps
+				postFix $ NullDot o e) <|>
+			try(do 
+				charSps '?'
+				e <- (pLambda <|> pTuple)
+				sps
+				postFix $ NullDot o (MapVal e)) <|>
 			(return o)
 
 pTerm :: Parser Exp
@@ -423,14 +438,6 @@ pTerm = do
 			sps
 			charSps ']'
 			return $ Arr exps
-		pTuple = do
-			charSps '('
-			exps <- pExp `sepBy1` charSps ','
-			sps
-			charSps ')'
-			return $ case exps of
-				[e] -> e
-				_ -> Tuple exps
 		pWeak = do 
 			try $ string "weak" >> sps1
 			e <- pExp
@@ -512,6 +519,16 @@ pTerm = do
 		pSelf = try(string "self") >> return Self
 		pSuper = try(string "super") >> return Super
 		pNil = try(string "nil") >> return Nil
+
+pTuple :: Parser Exp
+pTuple = do
+	charSps '('
+	exps <- pExp `sepBy1` charSps ','
+	sps
+	charSps ')'
+	return $ case exps of
+		[e] -> e
+		_ -> Tuple exps
 
 pCall :: Parser Exp
 pCall = do

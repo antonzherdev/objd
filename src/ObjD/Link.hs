@@ -307,13 +307,15 @@ isInstanceOfTp env (TPGenericWrap _ l) r = isInstanceOfTp env l r
 isInstanceOfTp env l@(TPClass TPMType _ _) r = isInstanceOfTp env (fromJust $ superType l) r
 isInstanceOfTp env l r@(TPClass TPMType _ _) = isInstanceOfTp env l (fromJust $ superType r)
 isInstanceOfTp _ _ TPAny = True
-isInstanceOfTp _ _ TPNil = True
 isInstanceOfTp _ _ TPThrow = True
-isInstanceOfTp _ TPNil _ = True
 isInstanceOfTp _ TPThrow _ = True
+isInstanceOfTp _ TPNil TPVoid = True
 isInstanceOfTp _ TPAnyGeneric _ = True
 isInstanceOfTp _ _ TPAnyGeneric = True
 isInstanceOfTp _ _ TPUnknown{} = True
+isInstanceOfTp env (TPOption a) (TPOption b) 
+	| a == b = True
+	| otherwise = isInstanceOfTp env a b
 isInstanceOfTp _ TPVoid (TPClass TPMGeneric _ _) = True
 isInstanceOfTp env cl (TPClass TPMGeneric _ t) = dataTypeClass env cl `isInstanceOf` t
 isInstanceOfTp env cl target
@@ -344,6 +346,7 @@ commonSuperDataType _ TPNumber{} f@TPFloatNumber{} = f
 commonSuperDataType _ f@TPFloatNumber{} TPNumber{} = f
 commonSuperDataType _ (TPNumber as an) (TPNumber bs bn) = TPNumber (as || bs) (max an bn)
 commonSuperDataType _ (TPFloatNumber an) (TPFloatNumber bn) = TPFloatNumber (max an bn)
+commonSuperDataType env (TPOption a) (TPOption b) = TPOption $ commonSuperDataType env a b
 commonSuperDataType _ TPVoid TPVoid = TPVoid
 commonSuperDataType env _ TPVoid = baseDataType env
 commonSuperDataType env TPVoid _ = baseDataType env
@@ -402,6 +405,10 @@ unknownDef :: Def
 unknownDef = Def "???" [] TPVoid Nop [] Nothing
 localVal :: String -> DataType -> Def
 localVal name tp = Def name [] tp Nop [DefModLocal] Nothing
+localValE :: String -> DataType -> Exp -> Def
+localValE name tp e = Def name [] tp e [DefModLocal] Nothing
+tmpVal :: Env -> DataType -> Exp -> Def
+tmpVal env tp e = Def ("__tmp" ++ envVarSuffix env) [] tp e [DefModLocal] Nothing 
 isStatic :: Def -> Bool
 isStatic = (DefModStatic `elem` ). defMods
 isDef :: Def -> Bool
@@ -604,8 +611,8 @@ linkClass :: (ClassIndex, ObjectIndex, File, Package, [Import]) -> D.FileStm -> 
 linkClass (ocidx, glidx, file, package, clImports) cl = self
 	where
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
-		env = Env selfType cidx glidx [] False TPVoid
-		staticEnv = Env (TPObject (refDataTypeMod self) self) ocidx glidx [] False TPVoid
+		env = Env selfType cidx glidx [] False TPVoid ""
+		staticEnv = Env (TPObject (refDataTypeMod self) self) ocidx glidx [] False TPVoid ""
 		isObject = case cl of
 			D.Class{} -> D.ClassModObject `elem` D.classMods cl
 			_ -> False
@@ -659,7 +666,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 		clsMod D.ClassModAbstract = [ClassModAbstract]
 		clsMod D.ClassModFinal = [ClassModFinal]
 		clsMod D.ClassModCase = [ClassModFinal, ClassModCase]
-		clsMod _ = []
+		-- clsMod _ = []
 		extends = fmap (linkExtends env (map fst constrPars)) (D.classExtends cl) 
 		selfIsStruct = case cl of
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
@@ -895,7 +902,7 @@ linkDefPars env pars = let
 
 type ClassIndex = M.Map String Class
 type ObjectIndex = [Class]
-data Env = Env{envSelf :: DataType, envIndex :: ClassIndex, envObjectIndex :: ObjectIndex, envVals :: [Def], envInit :: Bool, envTp :: DataType}
+data Env = Env{envSelf :: DataType, envIndex :: ClassIndex, envObjectIndex :: ObjectIndex, envVals :: [Def], envInit :: Bool, envTp :: DataType, envVarSuffix :: String}
 envAddVals :: [Def] -> Env -> Env 
 envAddVals newVals env@Env{envVals = vals} = env{envVals = vals ++ newVals}
 envAddClasses :: [Class] -> Env -> Env 
@@ -907,7 +914,6 @@ idxFind :: M.Map String a -> String -> Maybe a
 idxFind idxx k = M.lookup k idxx
 classFind :: ClassIndex -> String -> Class
 classFind cidx name = fromMaybe (ClassError name ("Class " ++ name ++ " not found") ) $ idxFind cidx name
-
 {------------------------------------------------------------------------------------------------------------------------------ 
  - DataType 
  ------------------------------------------------------------------------------------------------------------------------------}
@@ -968,6 +974,9 @@ isTpStruct :: DataType -> Bool
 isTpStruct (TPClass TPMStruct _ _) = True
 isTpStruct _ = False
 
+unoption :: DataType -> DataType
+unoption (TPOption o) = o
+unoption tp = TPUnknown $ show tp ++ " is not option"
 
 
 forDataType :: MonadPlus m => (DataType -> m a) -> DataType -> m a
@@ -1041,7 +1050,6 @@ dataTypeClass env (TPGenericWrap _ c) = dataTypeClass env c
 dataTypeClass _ (TPSelf c) = c
 dataTypeClass env (TPArr _ _) = classFind (envIndex env) "ImArray"
 dataTypeClass env (TPEArr _ _) = classFind (envIndex env) "PArray"
-dataTypeClass env (TPOption _) = classFind (envIndex env) "Option"
 dataTypeClass env (TPMap _ _) = classFind(envIndex env) "ImMap"
 dataTypeClass env (TPTuple [_, _]) = classFind (envIndex env) "Tuple"
 dataTypeClass env (TPNumber False 1) = classFind (envIndex env) "Byte"
@@ -1260,6 +1268,8 @@ data Exp = Nop
 	| PlusPlus Exp
 	| MinusMinus Exp
 	| Dot Exp Exp
+	| NullDot Exp Exp
+	| NonOpt Exp
 	| Set (Maybe MathTp) Exp Exp
 	| Call Def DataType [CallPar]
 	| Return Bool Exp
@@ -1273,7 +1283,6 @@ data Exp = Nop
 	| Arr [Exp]
 	| Map [(Exp, Exp)]
 	| Tuple [Exp]
-	| Opt Exp
 	| Some Exp
 	| None DataType
 	| Throw Exp
@@ -1309,6 +1318,7 @@ instance Show Exp where
 	show (PlusPlus e) = show e ++ "++"
 	show (MinusMinus e) = show e ++ "--"
 	show (Dot l r) = showOp' l "." r
+	show (NullDot l r) = showOp' l "?." r
 	show (Call dd tp pars) = defRefPrep dd ++ defName dd ++ showCallPars pars ++ "\\" ++ show tp ++ "\\" 
 	show (IntConst i) = show i
 	show (StringConst i) = show i
@@ -1324,7 +1334,6 @@ instance Show Exp where
 	show (Arr exps) = "["  ++ strs' ", " exps ++ "]"
 	show (Map exps) = "["  ++ strs' ", " exps ++ "]"
 	show (Tuple exps) = "("  ++ strs' ", " exps ++ ")"
-	show (Opt e) = "opt(" ++ show e ++ ")"
 	show (Some e) = "some(" ++ show e ++ ")"
 	show (None tp) = "none<" ++ show tp ++ ">" 
 	show (FirstTry _ e) = "First try: " ++ show e
@@ -1336,7 +1345,8 @@ instance Show Exp where
 	show (Is tp) = "is<" ++ show tp ++ ">"
 	show (CastDot tp) = "cast<" ++ show tp ++ ">"
 	show (Break) = "break"
-	show (Break) = "continue"
+	show (Continue) = "continue"
+	show (NonOpt e) = show e ++ "?!"
 	show (LambdaCall e) = show e ++ "()"
 	show (StringBuild pars lastS) = "\"" ++ join (map (\(prev, e) -> prev ++ "$" ++ show e) pars) ++ lastS ++ "\""
 
@@ -1373,7 +1383,7 @@ addReturn env hard tp (Weak e) = Weak (addReturn env hard tp e)
 addReturn env hard tp (If cond t f) = If cond (addReturn env hard tp t) (addReturn env hard tp f)
 addReturn env hard tp (Synchronized r b) = Synchronized r (addReturn env hard tp b)
 addReturn _ True _ e@(Braces []) = ExpLError "Return empty braces" e
-addReturn env True tp (Braces es) = Braces $ map (addReturn env False tp) (init es) ++ [addReturn env True tp (last es)]
+addReturn env hard tp (Braces es) = Braces $ map (addReturn env False tp) (init es) ++ [addReturn env hard tp (last es)]
 addReturn _ True _ Nop = ExpLError "Return NOP" Nop
 addReturn _ _ _ e@(Throw _) = e
 addReturn env _ tp (Return _ e) = Return True $ implicitConvertsion env tp e
@@ -1398,11 +1408,11 @@ forExp f ee = mplus (go ee) (f ee)
 		go (Do l r) = mplus (forExp f l) (forExp f r)
 		go (Set _ l r) = mplus (forExp f l) (forExp f r)
 		go (Dot l r) = mplus (forExp f l) (forExp f r)
+		go (NullDot l r) = mplus (forExp f l) (forExp f r)
 		go (Index l r) = mplus (forExp f l) (forExp f r)
 		go (PlusPlus e) = forExp f e
 		go (MinusMinus e) = forExp f e
 		go (Return _ e) = forExp f e
-		go (Opt e) = forExp f e
 		go (Cast _ e) = forExp f e
 		go (Some e) = forExp f e
 		go (Throw e) = forExp f e
@@ -1410,6 +1420,7 @@ forExp f ee = mplus (go ee) (f ee)
 		go (Negative e) = forExp f e
 		go (Lambda _ e _) = forExp f e
 		go (FirstTry _ e) = forExp f e
+		go (NonOpt e) = forExp f e
 		go (Val d) = forExp f (defBody d)
 		go _ = mzero
 
@@ -1431,11 +1442,11 @@ mapExp f ee = fromMaybe (go ee) (f ee)
 		go (Do l r) = Do (mapExp f l) (mapExp f r)
 		go (Set t l r) = Set t (mapExp f l) (mapExp f r)
 		go (Dot l r) = Dot (mapExp f l) (mapExp f r)
+		go (NullDot l r) = NullDot (mapExp f l) (mapExp f r)
 		go (Index l r) = Index (mapExp f l) (mapExp f r)
 		go (PlusPlus e) = PlusPlus $ mapExp f e
 		go (MinusMinus e) = MinusMinus $ mapExp f e
 		go (Return p e) = Return p $ mapExp f e
-		go (Opt e) = Opt $ mapExp f e
 		go (Cast t e) = Cast t $ mapExp f e
 		go (Some e) = Some $ mapExp f e
 		go (Throw e) = Throw $ mapExp f e
@@ -1443,6 +1454,7 @@ mapExp f ee = fromMaybe (go ee) (f ee)
 		go (Negative e) = Negative $ mapExp f e
 		go (Lambda p1 e p2) = Lambda p1 (mapExp f e) p2
 		go (FirstTry p e) = FirstTry p $ mapExp f e
+		go (NonOpt e) = NonOpt $ mapExp f e
 		go (Val d) = Val d{defBody = mapExp f (defBody d)}
 		go e = e
 
@@ -1462,6 +1474,7 @@ isConst (Arr exps) = all isConst exps
 isConst (Map exps) = all (\(a, b) -> isConst a && isConst b) exps
 isConst (Cast _ e) = isConst e
 isConst (Dot l r) = isConst l && isConst r
+isConst (NullDot l r) = isConst l && isConst r
 isConst (Call Def {defMods = mods, defBody = b} _ pars) = 
 	(DefModStruct `elem` mods  &&  DefModConstructor `elem` mods && all (isConst . snd) pars)
 	|| (DefModObject `elem` mods && null pars)
@@ -1470,6 +1483,7 @@ isConst (Call Def {defMods = mods, defBody = b} _ pars) =
 isConst (As _) = True
 isConst (Is _) = True
 isConst (CastDot _) = True
+isConst (NonOpt e) = isConst e
 isConst Nop = True
 isConst _ = False
 
@@ -1493,6 +1507,7 @@ exprDataType (Nop) = TPVoid
 exprDataType (IntConst _ ) = int
 exprDataType (StringConst _ ) = TPString
 exprDataType Nil = TPNil
+exprDataType (NonOpt e) = unoption $ exprDataType e
 exprDataType (BoolConst _ ) = TPBool
 exprDataType (FloatConst _) = float
 exprDataType (BoolOp {}) = TPBool
@@ -1501,6 +1516,10 @@ exprDataType (MathOp _ l r) = case(unwrapGeneric $ exprDataType l, unwrapGeneric
 	(lt, _) -> lt
 exprDataType (PlusPlus e) = exprDataType e
 exprDataType (MinusMinus e) = exprDataType e
+exprDataType (NullDot _ b) = case exprDataType b of
+	t@(TPOption _) -> t
+	TPVoid -> TPVoid
+	t -> TPOption t
 exprDataType (Dot _ b) = exprDataType b
 exprDataType Set{} = TPVoid
 exprDataType (Self s) = s
@@ -1531,8 +1550,7 @@ exprDataType (Map exps) = let (k, v) = ((exprDataType >>> wrapGeneric) *** (expr
 	in TPMap k v
 exprDataType (Tuple exps) = TPTuple $ map (wrapGeneric .exprDataType) exps
 exprDataType (Val Def{defType = tp}) = tp
-exprDataType (Opt v) = TPOption (exprDataType v)
-exprDataType (Some v) = TPOption (exprDataType v)
+exprDataType (Some v) = TPOption (wrapGeneric $ exprDataType v)
 exprDataType (None tp) = TPOption tp
 exprDataType (FirstTry _ e) = exprDataType e
 exprDataType (Throw _) = TPThrow
@@ -1582,19 +1600,21 @@ expr env (D.Synchronized cond t) = Synchronized (exprToSome env cond) (expr env 
 expr env (D.Do cond t) = Do (exprTo env TPBool cond) (expr env{envTp = TPVoid} t)
 expr env (D.Weak e) = insertWeak (expr env e)
 expr _ (D.Braces []) = Nop
-expr env (D.Braces es) = Braces $ bracesRec env es
+expr env (D.Braces es) = Braces $ bracesRec env 0 es
 	where
-		bracesRec _ [] = []
-		bracesRec env' [x] = [expr env' x]
-		bracesRec env' (x:xs) = case expr env'{envTp = TPVoid} x of
-			x'@(Val d) -> x':(bracesRec (envAddVals [d] env') xs)
-			x' -> x':(bracesRec env' xs)
+		bracesRec :: Env -> Int -> [D.Exp] -> [Exp]
+		bracesRec _  _ [] = []
+		bracesRec env' n [x] = [expr env'{envVarSuffix = envVarSuffix env ++ ('_' : show n)} x]
+		bracesRec env' n (x:xs) = case expr env'{envVarSuffix = envVarSuffix env ++ ('_' : show n), envTp = TPVoid} x of
+			x'@(Val d) -> x':(bracesRec (envAddVals [d] env') (n + 1) xs)
+			x' -> x':(bracesRec env' (n + 1) xs)
 expr _ D.Nop = Nop
 expr _ (D.IntConst i) = IntConst i
 expr _ (D.StringConst i) = StringConst i
 expr _ D.Nil = Nil
 expr _ (D.BoolConst i) = BoolConst i
 expr _ (D.FloatConst s) = FloatConst s
+expr env (D.NonOpt e) = NonOpt $ expr env e
 expr env (D.BoolOp tp a b) = BoolOp tp (exprToSome env a) (exprToSome env b)
 expr env (D.MathOp tp a b) = 
 	let 
@@ -1618,6 +1638,37 @@ expr env d@(D.Dot a b) = let
 		_ -> case bb of
 			Dot l r -> Dot (Dot aa l) r
 			_ -> Dot aa bb
+expr env d@(D.NullDot a b) = let
+	aa = case a of
+		D.Call {} -> exprCall env Nothing a
+		_ -> exprToSome env a
+	aTp = exprDataType aa
+	aTp' = unoption aTp
+	bb = case aTp of
+		TPOption tp -> exprCall env (Just tp) b
+		tp -> ExpDError ("Null safe operation for the non-nullable datatype " ++ show tp) b
+	mapVal e = Braces [
+				Val tmp,
+				If (BoolOp NotEq (callRef tmp) Nil) mapExpr' (Return True $ None aTp')
+			]
+			where
+				tmp :: Def
+				tmp = localValE mapVarName aTp' aa
+				mapVarName = case e of
+					D.Lambda [(name, _)] _ -> name 
+					_ -> "_"
+				mapExpr = case e of
+					D.Lambda _ le -> le
+					_ -> e
+				mapExpr' = expr (envAddVals [tmp] env) mapExpr
+				
+	in case aa of
+		ExpDError s _ -> ExpDError s d
+		_ -> case b of
+			D.MapVal e -> mapVal e
+			_ -> case bb of
+				Dot l r -> Dot (NullDot aa l) r
+				_ -> NullDot aa bb
 expr env (D.Set tp a b) = 
 	let 
 		aa = exprToSome env a
@@ -1633,6 +1684,7 @@ expr env (D.Set tp a b) =
 		callOp = Dot aa $ exprCall env (Just ltp) $ D.Call (literalDefName $ show $ fromJust tp) (Just [(Nothing, b)]) []
 		lcall = case aa of
 				Dot _ c@(Call {}) -> Just c
+				NullDot _ c@(Call {}) -> Just c
 				c@Call {} -> Just c
 				_ -> Nothing
 		isSelfSet = case aa of 
@@ -2186,7 +2238,6 @@ checkCallParOnWeak :: (Def, Exp) -> (Def, Exp)
 checkCallParOnWeak (d@Def{defMods = mods}, e) = 
 	if DefModWeak `elem` mods then (d, insertWeak e)
 	else (d, e)
-checkCallParOnWeak p = p
 
 insertWeak :: Exp -> Exp
 insertWeak e = mapExp f e
@@ -2232,9 +2283,11 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 				conv TPFun{} TPFun{} = ex
 				conv _ f@(TPFun _ fdtp) = Lambda (lambdaImplicitParameters f) (maybeAddReturn env fdtp ex) fdtp
 				{-conv TPFun{} _ = LambdaCall ex-}
-				conv TPOption{} TPOption{} = ex
-				conv TPNil (TPOption tp) = None tp
-				conv tp t@(TPOption _) = if isInstanceOfTp env tp t then ex else Opt ex
+				conv (TPOption a) (TPOption b) = conv a b
+				conv TPNil (TPOption tp) = None (wrapGeneric tp)
+				conv a (TPOption b) 
+					| a == b = Some ex
+					| otherwise = Some $ conv a b
 				conv _ (TPClass TPMGeneric _ _) = ex
 				conv (TPNumber _ _) TPString = Cast TPString ex
 				conv (TPFloatNumber _ ) TPString = Cast TPString ex
