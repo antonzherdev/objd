@@ -397,7 +397,7 @@ pExp = do
 				sps
 				postFix $ NullDot o e) <|>
 			try(do 
-				charSps '?'
+				stringSps "?>"
 				e <- (pLambda <|> pTuple)
 				sps
 				postFix $ NullDot o (MapVal e)) <|>
@@ -410,7 +410,7 @@ pTerm = do
 		return e
 	where
 		pTerm' = pCase <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> pWeak <|> try(pNumConst) <|> pBreak <|> pReturn <|>
-			pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pWhile <|> pSync <|> pDo <|> pSelf <|> pSuper <|> pNil <|> pCall  <?> "Expression"
+			pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pWhile <|> pTry <|> pSync <|> pDo <|> pSelf <|> pSuper <|> pNil <|> pVoid <|> pCall  <?> "Expression"
 
 		pMinus = do
 			charSps '-'
@@ -503,6 +503,14 @@ pTerm = do
 			e <- pExp
 			sps
 			return $ While cond e
+		pTry = do
+			e <- try $ do 
+				string "try"
+				pBraces <|> (sps1 >> pExp)
+			sps
+			stringSps "finally"
+			f <- pExp
+			return $ Try e f
 		pDo = do
 			try $ do 
 				string "do"
@@ -516,9 +524,10 @@ pTerm = do
 				sps
 				charSps ')'
 				return $ Do cond e
-		pSelf = try(string "self") >> return Self
-		pSuper = try(string "super") >> return Super
-		pNil = try(string "nil") >> return Nil
+		pSelf = try(string "self" >> notFollowedBy ident) >> return Self
+		pSuper = try(string "super" >> notFollowedBy ident) >> return Super
+		pNil = try(string "nil" >> notFollowedBy ident) >> return Nil
+		pVoid = try(string "void" >> notFollowedBy ident) >> return Void
 
 pTuple :: Parser Exp
 pTuple = do

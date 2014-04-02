@@ -67,6 +67,7 @@ data Stm =
 	| Var{varType :: DataType, varName :: String, varExp :: Exp, varMods :: [String]}
 	| Break | Continue
 	| Synchronized Exp [Stm]
+	| Try [Stm] [Stm]
 	| ForIn DataType String Exp [Stm]
 
 forStms :: MonadPlus m => (Stm -> Bool, Stm -> m a, Exp -> Bool, Exp -> m a) -> [Stm] -> m a 	
@@ -81,6 +82,7 @@ forStm f@(cs, fs, _, _) ee = mplus (fs ee) $ if cs ee then (go ee) else mzero
 		go (While e l) = mfore e `mplus` mmsum l
 		go (Do e l) = mfore e `mplus` mmsum l
 		go (Synchronized e l) = mfore e `mplus` mmsum l
+		go (Try e l) = mmsum e `mplus` mmsum l
 		go (Set _ l r) = mfore l `mplus` mfore r
 		go (Return l) = mfore l
 		go (Throw l) = mfore l
@@ -325,6 +327,7 @@ stmLines (Var tpp name e mods) = [(unwords . map (++ " ")) mods ++ showDecl tpp 
 stmLines (Break) = ["break;"]
 stmLines (Continue) = ["continue;"]
 stmLines (Synchronized r s) = ["@synchronized(" ++ show r ++ ") {"] ++ stms s ++ ["}"]
+stmLines (Try e f) = ["@try {"] ++ stms e ++ ["} @finally {"] ++ stms f ++ ["}"]
 
 expLines :: Exp -> [String]
 expLines Self = ["self"]

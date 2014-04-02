@@ -296,6 +296,7 @@ isInstanceOf cl target
 	| otherwise = any (\extendsRef -> fst extendsRef `isInstanceOf` target) $ extendsRefs (classExtends cl)
 
 isInstanceOfTp :: Env -> DataType -> DataType -> Bool
+isInstanceOfTp _ TPUnset{} _ = True
 isInstanceOfTp _ TPNumber{} TPNumber{} = True
 isInstanceOfTp _ TPNumber{} TPFloatNumber{} = True
 isInstanceOfTp _ TPFloatNumber{} TPNumber{} = True
@@ -407,8 +408,8 @@ localVal :: String -> DataType -> Def
 localVal name tp = Def name [] tp Nop [DefModLocal] Nothing
 localValE :: String -> DataType -> Exp -> Def
 localValE name tp e = Def name [] tp e [DefModLocal] Nothing
-tmpVal :: Env -> DataType -> Exp -> Def
-tmpVal env tp e = Def ("__tmp" ++ envVarSuffix env) [] tp e [DefModLocal] Nothing 
+{- tmpVal :: Env -> DataType -> Exp -> Def
+tmpVal env tp e = Def ("__tmp" ++ envVarSuffix env) [] tp e [DefModLocal] Nothing -}
 isStatic :: Def -> Bool
 isStatic = (DefModStatic `elem` ). defMods
 isDef :: Def -> Bool
@@ -924,7 +925,7 @@ data DataType = TPNumber Bool Int | TPFloatNumber Int | TPString | TPVoid
 	| TPArr Int DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf Class | TPUnknown String 
 	| TPMap DataType DataType
 	| TPOption DataType | TPGenericWrap [WrapReason] DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
-	| TPAnyGeneric | TPVoidRef
+	| TPAnyGeneric | TPVoidRef | TPUnset
 	deriving (Eq)
 data WrapReason = WrapReasonUp | WrapReasonBlock deriving(Eq) 
 data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric | TPMType deriving (Eq)
@@ -1226,6 +1227,7 @@ instance Show DataType where
 	show (TPFun s d) = show s ++ " -> " ++ show d
 	show (TPTuple tps) = "(" ++ strs' ", " tps ++ ")"
 	show (TPOption t) = show t ++ "?"
+	show TPUnset = "_unset"
 	show _ =  "UnknownTP"
 instance Show DataTypeMod where
 	show TPMClass = "#C"
@@ -1292,10 +1294,12 @@ data Exp = Nop
 	| As DataType
 	| Is DataType
 	| CastDot DataType
+	| Try Exp Exp
 	| Break
 	| Continue
 	| LambdaCall Exp
 	| StringBuild [(String, Exp)] String
+	| Void
 	deriving(Eq)
 type CallPar = (Def, Exp)	
 
@@ -1323,6 +1327,7 @@ instance Show Exp where
 	show (IntConst i) = show i
 	show (StringConst i) = show i
 	show Nil = "nil"
+	show Void = "void"
 	show (BoolConst i) = show i
 	show (FloatConst i) = show i
 	show (Index e i) = show e ++ "[" ++ show i ++ "]"
@@ -1348,6 +1353,7 @@ instance Show Exp where
 	show (Continue) = "continue"
 	show (NonOpt e) = show e ++ "?!"
 	show (LambdaCall e) = show e ++ "()"
+	show (Try e f) = "try " ++ show e ++ "\nfinally " ++ show f
 	show (StringBuild pars lastS) = "\"" ++ join (map (\(prev, e) -> prev ++ "$" ++ show e) pars) ++ lastS ++ "\""
 
 extractStringConst :: Exp -> Maybe String
@@ -1382,6 +1388,7 @@ addReturn :: Env -> Bool -> DataType -> Exp -> Exp
 addReturn env hard tp (Weak e) = Weak (addReturn env hard tp e)
 addReturn env hard tp (If cond t f) = If cond (addReturn env hard tp t) (addReturn env hard tp f)
 addReturn env hard tp (Synchronized r b) = Synchronized r (addReturn env hard tp b)
+addReturn env hard tp (Try e f) = Try (addReturn env hard tp e) f
 addReturn _ True _ e@(Braces []) = ExpLError "Return empty braces" e
 addReturn env hard tp (Braces es) = Braces $ map (addReturn env False tp) (init es) ++ [addReturn env hard tp (last es)]
 addReturn _ True _ Nop = ExpLError "Return NOP" Nop
@@ -1403,6 +1410,7 @@ forExp f ee = mplus (go ee) (f ee)
 		go (BoolOp _ l r) = mplus (forExp f l) (forExp f r)
 		go (MathOp _ l r) = mplus (forExp f l) (forExp f r)
 		go (While l r) = mplus (forExp f l) (forExp f r)
+		go (Try l r) = mplus (forExp f l) (forExp f r)
 		go (Weak e) =forExp f e
 		go (Synchronized l r) = mplus (forExp f l) (forExp f r)
 		go (Do l r) = mplus (forExp f l) (forExp f r)
@@ -1437,6 +1445,7 @@ mapExp f ee = fromMaybe (go ee) (f ee)
 		go (BoolOp tp l r) = BoolOp tp (mapExp f l) (mapExp f r)
 		go (MathOp tp l r) = MathOp tp (mapExp f l) (mapExp f r)
 		go (While l r) = While (mapExp f l) (mapExp f r)
+		go (Try l r) = Try (mapExp f l) (mapExp f r)
 		go (Weak e) = Weak $ mapExp f e
 		go (Synchronized l r) = Synchronized (mapExp f l) (mapExp f r)
 		go (Do l r) = Do (mapExp f l) (mapExp f r)
@@ -1498,6 +1507,7 @@ exprDataType :: Exp -> DataType
 exprDataType (If _ _ Nop) = TPVoid
 exprDataType (If _ t _) = exprDataType t
 exprDataType (While _ _) = TPVoid
+exprDataType (Try e _) = exprDataType e
 exprDataType (Weak e) = exprDataType e
 exprDataType (Synchronized _ r) = exprDataType r
 exprDataType (Do _ _) = TPVoid
@@ -1543,8 +1553,8 @@ exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
 exprDataType e@(ExpDError _ _) = TPUnknown $ show e
 exprDataType e@(ExpError _) = TPUnknown $ show e
 exprDataType e@(ExpLError _ _) = TPUnknown $ show e
-exprDataType (Arr []) = TPArr 0 TPNil
-exprDataType (Map []) = TPMap TPNil TPNil
+exprDataType (Arr []) = TPArr 0 TPUnset
+exprDataType (Map []) = TPMap TPUnset TPUnset
 exprDataType (Arr exps) = TPArr (length exps) $ wrapGeneric $ exprDataType $ head exps
 exprDataType (Map exps) = let (k, v) = ((exprDataType >>> wrapGeneric) *** (exprDataType >>> wrapGeneric)) $ head exps 
 	in TPMap k v
@@ -1565,6 +1575,7 @@ exprDataType StringBuild{} = TPString
 exprDataType (LambdaCall e) = case unwrapGeneric $ exprDataType e of
 	(TPFun _ d) -> d
 	t -> t
+exprDataType Void = TPVoid
 {- exprDataType x = error $ "No exprDataType for " ++ show x -}
 
 maybeCast :: DataType -> Exp -> Exp
@@ -1597,6 +1608,7 @@ expr env (D.If cond t f)
 	in If (expr env cond) (maybeCast retTp t') (maybeCast retTp f')
 expr env (D.While cond t) = While (exprTo env TPBool cond) (expr env{envTp = TPVoid} t)
 expr env (D.Synchronized cond t) = Synchronized (exprToSome env cond) (expr env t)
+expr env (D.Try e f) = Try (expr env e) (expr env f)
 expr env (D.Do cond t) = Do (exprTo env TPBool cond) (expr env{envTp = TPVoid} t)
 expr env (D.Weak e) = insertWeak (expr env e)
 expr _ (D.Braces []) = Nop
@@ -1609,6 +1621,7 @@ expr env (D.Braces es) = Braces $ bracesRec env 0 es
 			x'@(Val d) -> x':(bracesRec (envAddVals [d] env') (n + 1) xs)
 			x' -> x':(bracesRec env' (n + 1) xs)
 expr _ D.Nop = Nop
+expr _ D.Void = Void
 expr _ (D.IntConst i) = IntConst i
 expr _ (D.StringConst i) = StringConst i
 expr _ D.Nil = Nil

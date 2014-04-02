@@ -103,6 +103,8 @@ data Exp = Nop
 	| Case Exp [CaseItem]
 	| Synchronized Exp Exp
 	| Weak Exp
+	| Try Exp Exp
+	| Void
 	deriving (Eq)
 type CallPar = (Maybe String, Exp)
 
@@ -159,6 +161,7 @@ instance Show Exp where
 	show Self = "self"
 	show Super = "super"
 	show Nil = "nil"
+	show Void = "void"
 	show Break = "break"
 	show (Dot l r) = showOp' l "." r
 	show (NullDot l (MapVal r)) = showOp' l "?" r
@@ -190,6 +193,7 @@ instance Show Exp where
 	show(Case e items) = "case(" ++ show e ++ ") {\n"
 		++ (strs "\n" . map (ind . showCaseItem)) items ++ "\n}"
 	show (StringBuild pars lastS) = "\"" ++ concatMap (\(prev, e) -> prev ++ "$" ++ show e) pars ++ lastS ++ "\""
+	show (Try e f) = "try " ++ show e ++ "\nfinally" ++ show f
 
 showCaseItem :: (CaseCondition, Exp) -> String
 showCaseItem (cond, e) = show cond ++ " -> " ++ show e

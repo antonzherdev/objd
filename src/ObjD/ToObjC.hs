@@ -770,6 +770,7 @@ tExp env (D.Dot l (D.Call (D.Def{D.defName = "im"}) _ []))
 tExp _ (D.IntConst i) = C.IntConst i
 tExp _ (D.StringConst i) = C.StringConst i
 tExp _ (D.Nil) = C.Nil
+tExp _ (D.Void) = C.Nil
 tExp _ (D.BoolConst i) = C.BoolConst i
 tExp _ (D.FloatConst i) = C.FloatConst i
 tExp env (D.BoolOp Eq l r) = equals True (D.exprDataType l, tExp env l) (D.exprDataType r, tExp env r) 
@@ -1017,6 +1018,7 @@ tStm env _ x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar
 		procGo (D.Return _ (D.BoolConst False)) = Just D.Break
 		procGo (D.Return _ e) = Just $ D.If e D.Continue D.Break
 		procGo _ = Nothing
+tStm env _ (D.Try e f) = [C.Try (tStm env [] e) (tStm env [] f)]
 tStm env _ x = [C.Stm $ tExp env x]
 
 equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp
