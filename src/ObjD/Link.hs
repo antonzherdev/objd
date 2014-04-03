@@ -20,7 +20,7 @@ import           Data.List
 import           Ex.String
 import qualified ObjD.Struct         as D
 import           Data.Char
--- import Debug.Trace
+--import Debug.Trace
 
 detailedReferenceError :: Bool
 detailedReferenceError = False
@@ -320,6 +320,7 @@ isInstanceOfTp env (TPOption a) (TPOption b)
 	| otherwise = isInstanceOfTp env a b
 isInstanceOfTp _ TPVoid (TPClass TPMGeneric _ _) = True
 isInstanceOfTp env cl (TPClass TPMGeneric _ t) = dataTypeClass env cl `isInstanceOf` t
+isInstanceOfTp _ (TPClass _ _ _) (TPClass _ _ Class{className = "Object"}) = True
 isInstanceOfTp env cl target
 	| target == cl = True
 	-- | trace (show cl ++ " isInstanceOfTp " ++ show target ++ " / " ++ className (dataTypeClass env cl) ++ " isInstanceOf " ++ className (dataTypeClass env target)) False = undefined
@@ -335,42 +336,52 @@ isInstanceOfCheck env l r = isInstanceOfTp env l r
 baseDataType :: Env -> DataType
 baseDataType env = TPClass TPMClass [] $ classFind (envIndex env) "Object"
 
-commonSuperDataType :: Env -> DataType -> DataType -> DataType
+commonSuperDataType :: Env -> DataType -> DataType -> [DataType]
 -- commonSuperDataType _ a b | trace ("commonSuperDataType: " ++ show a ++ " and " ++ show b) False = undefined
 commonSuperDataType _ a b 
-	| a == b = a
+	| a == b = [a]
 commonSuperDataType env (TPGenericWrap _ a) b = commonSuperDataType env a b
 commonSuperDataType env a (TPGenericWrap _ b) = commonSuperDataType env a b
 commonSuperDataType env TPNil a = commonSuperDataType env a TPNil
-commonSuperDataType _ TPAny a = a
-commonSuperDataType _ TPThrow a = a
-commonSuperDataType _ a@(TPOption _) TPNil = a
-commonSuperDataType _ TPVoid TPNil = TPVoid
-commonSuperDataType _ a TPNil = TPOption a
-commonSuperDataType _ a TPAny = a
-commonSuperDataType _ a TPThrow = a
-commonSuperDataType _ TPNumber{} f@TPFloatNumber{} = f
-commonSuperDataType _ f@TPFloatNumber{} TPNumber{} = f
-commonSuperDataType _ (TPNumber as an) (TPNumber bs bn) = TPNumber (as || bs) (max an bn)
-commonSuperDataType _ (TPFloatNumber an) (TPFloatNumber bn) = TPFloatNumber (max an bn)
-commonSuperDataType env (TPOption a) (TPOption b) = TPOption $ commonSuperDataType env a b
-commonSuperDataType env a (TPOption b) = TPOption $ commonSuperDataType env a b
-commonSuperDataType env (TPOption a) b = TPOption $ commonSuperDataType env a b
-commonSuperDataType _ TPVoid TPVoid = TPVoid
-commonSuperDataType env _ TPVoid = baseDataType env
-commonSuperDataType env TPVoid _ = baseDataType env
+commonSuperDataType _ TPAny a = [a]
+commonSuperDataType _ TPThrow a = [a]
+commonSuperDataType _ a@(TPOption _) TPNil = [a]
+commonSuperDataType _ TPVoid TPNil = [TPVoid]
+commonSuperDataType _ a TPNil = [TPOption a]
+commonSuperDataType _ a TPAny = [a]
+commonSuperDataType _ a TPThrow = [a]
+commonSuperDataType _ TPNumber{} f@TPFloatNumber{} = [f]
+commonSuperDataType _ f@TPFloatNumber{} TPNumber{} = [f]
+commonSuperDataType _ (TPNumber as an) (TPNumber bs bn) = [TPNumber (as || bs) (max an bn)]
+commonSuperDataType _ (TPFloatNumber an) (TPFloatNumber bn) = [TPFloatNumber (max an bn)]
+commonSuperDataType env (TPOption a) (TPOption b) = map TPOption $ commonSuperDataType env a b
+commonSuperDataType env a (TPOption b) = map TPOption $ commonSuperDataType env a b
+commonSuperDataType env (TPOption a) b = map TPOption $ commonSuperDataType env a b
+commonSuperDataType env _ TPVoid = [baseDataType env]
+commonSuperDataType env TPVoid _ = [baseDataType env]
 commonSuperDataType env a b 
-	| a == b = a
-	| dataTypeClass env a == dataTypeClass env b = mapDataTypeGenerics (map (\(ag, bg) -> wrapGeneric $ commonSuperDataType env ag bg) . zip (dataTypeGenerics env a) ) b
-	| isInstanceOfTp env a b = b
-	| isInstanceOfTp env b a = a
-	| otherwise = case (superDataTypes env a, superDataTypes env b) of
-		([], _) -> TPUnknown $ "No common data type for " ++ show a ++ " and " ++ show b
-		(_, []) -> TPUnknown $ "No common data type for " ++ show a ++ " and " ++ show b
-		(at:_, bt:_) -> commonSuperDataType env at bt
+	| a == b = [a]
+	| dataTypeClass env a == dataTypeClass env b = 
+		[mapDataTypeGenerics (map (\(ag, bg) -> wrapGeneric $ head $ commonSuperDataType env ag bg) . zip (dataTypeGenerics env a) ) b]
+	| isInstanceOfTp env a b = [b]
+	| isInstanceOfTp env b a = [a]
+	| otherwise = 
+		let 
+			commons = nub $ concatMap (uncurry $ commonSuperDataType env) $ [(a', b) |a' <- superDataTypes env a] ++ [(a, b') |b' <- superDataTypes env b]
+			removeCommonCommons [] = []
+			removeCommonCommons (x:xs)
+				| any (\xx -> isInstanceOfTp env xx x) xs = removeCommonCommons xs
+				| otherwise = x:removeCommonCommons xs
+		in removeCommonCommons commons
+
+
+firstCommonSuperDataType :: Env -> DataType -> DataType -> DataType
+firstCommonSuperDataType env a b = case commonSuperDataType env a b of
+	[] -> TPUnknown $ "No common super data type for " ++ show a ++ " and " ++ show b
+	x:_ -> x
 
 reduceDataTypes :: Env -> [DataType] -> DataType
-reduceDataTypes env tps = foldl1 (commonSuperDataType env) tps		
+reduceDataTypes env tps = foldl1 (firstCommonSuperDataType env) tps		
 
 
 classContainsInit :: Class -> Bool 
@@ -1616,7 +1627,7 @@ expr env (D.If cond t f)
 		f' = expr env f
 		dt = exprDataType t'
 		df = exprDataType f'
-		retTp = commonSuperDataType env dt df
+		retTp = firstCommonSuperDataType env dt df
 	in If (expr env cond) (maybeCast retTp t') (maybeCast retTp f')
 expr env (D.While cond t) = While (exprTo env TPBool cond) (expr env{envTp = TPVoid} t)
 expr env (D.Synchronized cond t) = Synchronized (exprToSome env cond) (expr env t)
