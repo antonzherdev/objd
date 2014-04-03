@@ -296,6 +296,8 @@ isInstanceOf cl target
 	| otherwise = any (\extendsRef -> fst extendsRef `isInstanceOf` target) $ extendsRefs (classExtends cl)
 
 isInstanceOfTp :: Env -> DataType -> DataType -> Bool
+isInstanceOfTp _ cl target
+	| target == cl = True
 isInstanceOfTp _ TPUnset{} _ = True
 isInstanceOfTp _ TPNumber{} TPNumber{} = True
 isInstanceOfTp _ TPNumber{} TPFloatNumber{} = True
@@ -318,11 +320,12 @@ isInstanceOfTp _ _ TPUnknown{} = True
 isInstanceOfTp env (TPOption a) (TPOption b) 
 	| a == b = True
 	| otherwise = isInstanceOfTp env a b
+isInstanceOfTp env a (TPOption b)  = isInstanceOfTp env a b
 isInstanceOfTp _ TPVoid (TPClass TPMGeneric _ _) = True
+isInstanceOfTp _ TPNil (TPClass TPMGeneric _ _) = True
 isInstanceOfTp env cl (TPClass TPMGeneric _ t) = dataTypeClass env cl `isInstanceOf` t
 isInstanceOfTp _ (TPClass _ _ _) (TPClass _ _ Class{className = "Object"}) = True
 isInstanceOfTp env cl target
-	| target == cl = True
 	-- | trace (show cl ++ " isInstanceOfTp " ++ show target ++ " / " ++ className (dataTypeClass env cl) ++ " isInstanceOf " ++ className (dataTypeClass env target)) False = undefined
 	| dataTypeClass env cl == dataTypeClass env target = 
 		all (\(clg, tg) -> isInstanceOfTp env clg tg ) $ zip (dataTypeGenerics env cl) (dataTypeGenerics env target)
@@ -996,9 +999,28 @@ isTpStruct :: DataType -> Bool
 isTpStruct (TPClass TPMStruct _ _) = True
 isTpStruct _ = False
 
+unoptionHard :: DataType -> DataType
+unoptionHard TPVoid = TPVoid
+unoptionHard (TPOption o) = o
+unoptionHard (TPGenericWrap _ (TPOption o)) = o
+unoptionHard tp = TPUnknown $ show tp ++ " is not option"
+
 unoption :: DataType -> DataType
+unoption TPVoid = TPVoid
 unoption (TPOption o) = o
-unoption tp = TPUnknown $ show tp ++ " is not option"
+unoption (TPGenericWrap _ (TPOption o)) = o
+unoption tp = tp
+
+option :: DataType -> DataType
+option TPVoid = TPVoid
+option o@(TPOption _) = o
+option o@(TPGenericWrap _ (TPOption _)) = o
+option tp = TPOption $ wrapGeneric tp
+
+isOption :: DataType -> Bool
+isOption (TPOption _) = True
+isOption (TPGenericWrap _ (TPOption _)) = True
+isOption _ = False
 
 
 forDataType :: MonadPlus m => (DataType -> m a) -> DataType -> m a
@@ -1536,7 +1558,7 @@ exprDataType (Nop) = TPVoid
 exprDataType (IntConst _ ) = int
 exprDataType (StringConst _ ) = TPString
 exprDataType Nil = TPNil
-exprDataType (NonOpt e) = unoption $ exprDataType e
+exprDataType (NonOpt e) = unoptionHard $ exprDataType e
 exprDataType (BoolConst _ ) = TPBool
 exprDataType (FloatConst _) = float
 exprDataType (BoolOp {}) = TPBool
@@ -1579,13 +1601,8 @@ exprDataType (Map exps) = let (k, v) = ((exprDataType >>> wrapGeneric) *** (expr
 	in TPMap k v
 exprDataType (Tuple exps) = TPTuple $ map (wrapGeneric .exprDataType) exps
 exprDataType (Val Def{defType = tp}) = tp
-exprDataType (Some v) = case exprDataType v of
-	TPVoid -> TPVoid
-	TPOption a -> a
-	a -> TPOption (wrapGeneric $ a)
-exprDataType (None TPVoid) = TPVoid
-exprDataType (None tp@(TPOption _)) = tp
-exprDataType (None tp) = TPOption tp
+exprDataType (Some v) = option $ exprDataType v
+exprDataType (None tp) = option tp
 exprDataType (FirstTry _ e) = exprDataType e
 exprDataType (Throw _) = TPThrow
 exprDataType (Not _) = TPBool
@@ -1678,13 +1695,13 @@ expr env d@(D.NullDot a b) = let
 		D.Call {} -> exprCall env Nothing a
 		_ -> exprToSome env a
 	aTp = exprDataType aa
-	aTp' = unoption aTp
+	aTp' = unoptionHard aTp
 	bb = case aTp of
 		TPOption tp -> exprCall env (Just tp) b
 		tp -> ExpDError ("Null safe operation for the non-nullable datatype " ++ show tp) b
 	mapVal e = Braces [
 				Val tmp,
-				If (BoolOp NotEq (callRef tmp) Nil) (Some mapExpr') (None $ exprDataType mapExpr')
+				If (BoolOp NotEq (callRef tmp) Nil) (Some mapExpr') (None $ wrapGeneric $ unoption $ exprDataType mapExpr')
 			]
 			where
 				tmp :: Def
@@ -1709,11 +1726,14 @@ expr env (D.Elvis l alt) = let
 	tp = case exprDataType l' of
 		TPOption t -> t
 		t -> TPUnknown ("Null safe operation for the non-nullable datatype " ++ show t)
-	tmp = tmpVal env tp l'
-	alt' = exprTo env tp alt
+	tmp = tmpVal env castTp l'
+	alt' = expr env alt
+	altIsOption = isOption $ unwrapGeneric $ exprDataType alt' 
+	castTp = if altIsOption then option tp else tp
+	alt'' = implicitConvertsion env castTp alt'
 	in Braces[
 		Val tmp,
-		If (BoolOp NotEq (callRef tmp) Nil) (callRef tmp) alt'
+		If (BoolOp NotEq (callRef tmp) Nil) (callRef tmp) alt''
 	]
 expr env (D.Set tp a b) = 
 	let 
