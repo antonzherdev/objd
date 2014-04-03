@@ -105,7 +105,6 @@ data Exp = Nop
 	| Synchronized Exp Exp
 	| Weak Exp
 	| Try Exp Exp
-	| Void
 	deriving (Eq)
 type CallPar = (Maybe String, Exp)
 
@@ -162,7 +161,6 @@ instance Show Exp where
 	show Self = "self"
 	show Super = "super"
 	show Nil = "nil"
-	show Void = "void"
 	show Break = "break"
 	show (Dot l r) = showOp' l "." r
 	show (NullDot l (MapVal r)) = showOp' l "?" r

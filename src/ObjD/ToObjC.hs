@@ -770,7 +770,6 @@ tExp env (D.Dot l (D.Call (D.Def{D.defName = "im"}) _ []))
 tExp _ (D.IntConst i) = C.IntConst i
 tExp _ (D.StringConst i) = C.StringConst i
 tExp _ (D.Nil) = C.Nil
-tExp _ (D.Void) = C.Nil
 tExp _ (D.BoolConst i) = C.BoolConst i
 tExp _ (D.FloatConst i) = C.FloatConst i
 tExp env (D.BoolOp Eq l r) = equals True (D.exprDataType l, tExp env l) (D.exprDataType r, tExp env r) 

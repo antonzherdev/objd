@@ -420,7 +420,7 @@ pTerm = do
 		return e
 	where
 		pTerm' = pCase <|> pThrow <|> pLambda <|> pTuple <|> pString <|> pArr <|> pVal <|> pWeak <|> try(pNumConst) <|> pBreak <|> pReturn <|>
-			pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pWhile <|> pTry <|> pSync <|> pDo <|> pSelf <|> pSuper <|> pNil <|> pVoid <|> pCall  <?> "Expression"
+			pMinus <|> pBoolConst <|> pBraces <|> pIf <|> pWhile <|> pTry <|> pSync <|> pDo <|> pSelf <|> pSuper <|> pNil <|> pCall  <?> "Expression"
 
 		pMinus = do
 			charSps '-'
@@ -537,7 +537,6 @@ pTerm = do
 		pSelf = try(string "self" >> notFollowedBy ident) >> return Self
 		pSuper = try(string "super" >> notFollowedBy ident) >> return Super
 		pNil = try(string "nil" >> notFollowedBy ident) >> return Nil
-		pVoid = try(string "void" >> notFollowedBy ident) >> return Void
 
 pTuple :: Parser Exp
 pTuple = do

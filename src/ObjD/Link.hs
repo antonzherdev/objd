@@ -310,6 +310,7 @@ isInstanceOfTp env l r@(TPClass TPMType _ _) = isInstanceOfTp env l (fromJust $ 
 isInstanceOfTp _ _ TPAny = True
 isInstanceOfTp _ _ TPThrow = True
 isInstanceOfTp _ TPThrow _ = True
+isInstanceOfTp _ TPNil (TPOption _) = True
 isInstanceOfTp _ TPNil TPVoid = True
 isInstanceOfTp _ TPAnyGeneric _ = True
 isInstanceOfTp _ _ TPAnyGeneric = True
@@ -335,12 +336,17 @@ baseDataType :: Env -> DataType
 baseDataType env = TPClass TPMClass [] $ classFind (envIndex env) "Object"
 
 commonSuperDataType :: Env -> DataType -> DataType -> DataType
+-- commonSuperDataType _ a b | trace ("commonSuperDataType: " ++ show a ++ " and " ++ show b) False = undefined
+commonSuperDataType _ a b 
+	| a == b = a
 commonSuperDataType env (TPGenericWrap _ a) b = commonSuperDataType env a b
 commonSuperDataType env a (TPGenericWrap _ b) = commonSuperDataType env a b
-commonSuperDataType _ TPNil a = a
+commonSuperDataType env TPNil a = commonSuperDataType env a TPNil
 commonSuperDataType _ TPAny a = a
 commonSuperDataType _ TPThrow a = a
-commonSuperDataType _ a TPNil = a
+commonSuperDataType _ a@(TPOption _) TPNil = a
+commonSuperDataType _ TPVoid TPNil = TPVoid
+commonSuperDataType _ a TPNil = TPOption a
 commonSuperDataType _ a TPAny = a
 commonSuperDataType _ a TPThrow = a
 commonSuperDataType _ TPNumber{} f@TPFloatNumber{} = f
@@ -348,6 +354,8 @@ commonSuperDataType _ f@TPFloatNumber{} TPNumber{} = f
 commonSuperDataType _ (TPNumber as an) (TPNumber bs bn) = TPNumber (as || bs) (max an bn)
 commonSuperDataType _ (TPFloatNumber an) (TPFloatNumber bn) = TPFloatNumber (max an bn)
 commonSuperDataType env (TPOption a) (TPOption b) = TPOption $ commonSuperDataType env a b
+commonSuperDataType env a (TPOption b) = TPOption $ commonSuperDataType env a b
+commonSuperDataType env (TPOption a) b = TPOption $ commonSuperDataType env a b
 commonSuperDataType _ TPVoid TPVoid = TPVoid
 commonSuperDataType env _ TPVoid = baseDataType env
 commonSuperDataType env TPVoid _ = baseDataType env
@@ -609,6 +617,7 @@ baseClassExtends :: ClassIndex -> ExtendsClass
 baseClassExtends cidx = ExtendsClass (classFind cidx "Object", []) []
 
 linkClass :: (ClassIndex, ObjectIndex, File, Package, [Import]) -> D.FileStm -> Class
+--linkClass (_, _, _, _, _) D.Class{D.className = cls} | trace ("Class " ++ cls) False = undefined
 linkClass (ocidx, glidx, file, package, clImports) cl = self
 	where
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
@@ -751,6 +760,7 @@ linkGeneric env (D.Generic name ext) = Generic{className = name,
 			Just (D.Extends (D.ExtendsClass firstExtends []) nextExtends) -> firstExtends : nextExtends
 
 linkField :: Env -> (Bool, Bool) -> D.ClassStm -> [Def]
+--linkField _ _ D.Def{D.defName = nm} | trace ("Field " ++ nm) False = undefined
 linkField env (obj, _isStruct) D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = 
 	let 
 		i = exprToSome env e
@@ -792,7 +802,7 @@ translateMods = mapMaybe m
 		m _ = Nothing
 		
 linkDef :: Env -> D.ClassStm -> [DefMod] -> [Def]
---linkDef _ D.Def{D.defName = name} _ | trace ("linkDef: " ++ name) False = undefined
+--linkDef _ D.Def{D.defName = name} _ | trace ("Def " ++ name) False = undefined
 linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body, D.defGenerics = generics} additionalMods = 
 	resolveDefPar env' mainDef pars'
 	where 
@@ -1299,7 +1309,6 @@ data Exp = Nop
 	| Continue
 	| LambdaCall Exp
 	| StringBuild [(String, Exp)] String
-	| Void
 	deriving(Eq)
 type CallPar = (Def, Exp)	
 
@@ -1327,7 +1336,6 @@ instance Show Exp where
 	show (IntConst i) = show i
 	show (StringConst i) = show i
 	show Nil = "nil"
-	show Void = "void"
 	show (BoolConst i) = show i
 	show (FloatConst i) = show i
 	show (Index e i) = show e ++ "[" ++ show i ++ "]"
@@ -1560,7 +1568,12 @@ exprDataType (Map exps) = let (k, v) = ((exprDataType >>> wrapGeneric) *** (expr
 	in TPMap k v
 exprDataType (Tuple exps) = TPTuple $ map (wrapGeneric .exprDataType) exps
 exprDataType (Val Def{defType = tp}) = tp
-exprDataType (Some v) = TPOption (wrapGeneric $ exprDataType v)
+exprDataType (Some v) = case exprDataType v of
+	TPVoid -> TPVoid
+	TPOption a -> a
+	a -> TPOption (wrapGeneric $ a)
+exprDataType (None TPVoid) = TPVoid
+exprDataType (None tp@(TPOption _)) = tp
 exprDataType (None tp) = TPOption tp
 exprDataType (FirstTry _ e) = exprDataType e
 exprDataType (Throw _) = TPThrow
@@ -1575,7 +1588,6 @@ exprDataType StringBuild{} = TPString
 exprDataType (LambdaCall e) = case unwrapGeneric $ exprDataType e of
 	(TPFun _ d) -> d
 	t -> t
-exprDataType Void = TPVoid
 {- exprDataType x = error $ "No exprDataType for " ++ show x -}
 
 maybeCast :: DataType -> Exp -> Exp
@@ -1621,7 +1633,6 @@ expr env (D.Braces es) = Braces $ bracesRec env 0 es
 			x'@(Val d) -> x':(bracesRec (envAddVals [d] env') (n + 1) xs)
 			x' -> x':(bracesRec env' (n + 1) xs)
 expr _ D.Nop = Nop
-expr _ D.Void = Void
 expr _ (D.IntConst i) = IntConst i
 expr _ (D.StringConst i) = StringConst i
 expr _ D.Nil = Nil
@@ -1662,7 +1673,7 @@ expr env d@(D.NullDot a b) = let
 		tp -> ExpDError ("Null safe operation for the non-nullable datatype " ++ show tp) b
 	mapVal e = Braces [
 				Val tmp,
-				If (BoolOp NotEq (callRef tmp) Nil) mapExpr' (Return True $ None aTp')
+				If (BoolOp NotEq (callRef tmp) Nil) (Some mapExpr') (None $ exprDataType mapExpr')
 			]
 			where
 				tmp :: Def
