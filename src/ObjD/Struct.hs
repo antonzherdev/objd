@@ -193,7 +193,11 @@ instance Show Exp where
 	show(Case e items) = "case(" ++ show e ++ ") {\n"
 		++ (strs "\n" . map (ind . showCaseItem)) items ++ "\n}"
 	show (StringBuild pars lastS) = "\"" ++ concatMap (\(prev, e) -> prev ++ "$" ++ show e) pars ++ lastS ++ "\""
+	show (Synchronized e b) = "synchronized(" ++ show e ++ ") {\n" ++ show b ++ "\n}"
+	show (Weak e) = "weak " ++ show e
 	show (Try e f) = "try " ++ show e ++ "\nfinally" ++ show f
+	show (NonOpt e) = show e ++ "?!"
+	show (MapVal r) = "?>(" ++ show r ++ ")"
 
 showCaseItem :: (CaseCondition, Exp) -> String
 showCaseItem (cond, e) = show cond ++ " -> " ++ show e

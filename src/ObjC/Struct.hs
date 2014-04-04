@@ -64,6 +64,7 @@ data Stm =
 	| Stm Exp
 	| Return Exp
 	| Throw Exp
+	| Braces [Stm]
 	| Var{varType :: DataType, varName :: String, varExp :: Exp, varMods :: [String]}
 	| Break | Continue
 	| Synchronized Exp [Stm]
@@ -79,6 +80,7 @@ forStm f@(cs, fs, _, _) ee = mplus (fs ee) $ if cs ee then (go ee) else mzero
 		mmsum = msum . map (forStm f)
 		mfore = forExp f 
 		go (If e l r) = mfore e `mplus` mmsum l `mplus` mmsum r
+		go (Braces l) = mmsum l
 		go (While e l) = mfore e `mplus` mmsum l
 		go (Do e l) = mfore e `mplus` mmsum l
 		go (Synchronized e l) = mfore e `mplus` mmsum l
@@ -124,14 +126,17 @@ data Exp =
 	| ProtocolRef Exp
 	| GetRef Exp
 	| RefUp Exp
+	| ExpBraces [Stm]
 forExp :: MonadPlus m => (Stm -> Bool, Stm -> m a, Exp -> Bool, Exp -> m a) -> Exp -> m a
 forExp f@(_, _, ce, fe) ee = mplus (fe ee) $ if ce ee then (go ee) else mzero
 	where	
 		mmsum = msum . map (forExp f)
+		mssum = msum . map (forStm f)
 		mfor = forExp f 
 		go (Call inst _ pars vargs) = msum (map (mfor. snd) pars) `mplus` mfor inst `mplus` mmsum vargs
 		go (CCall inst exps) = mfor inst `mplus` mmsum exps
 		go (Arr exps) = mmsum exps
+		go (ExpBraces exps) = mssum exps
 		go (EArr exps) = mmsum exps
 		go (EArrConst _ _ exps) = mmsum exps
 		go (Map exps) = msum $ map (forExp f *** forExp f >>> uncurry mplus) exps
@@ -310,6 +315,9 @@ stmLines i@(If _ [If {}] _) = multiLineIf i
 stmLines i@(If _ _ [If{}]) = multiLineIf i
 stmLines (If cond [t] []) = ["if(" ++ show cond ++ ") " ] `glue` stmLines t
 stmLines (If cond t []) = ["if(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
+stmLines (Braces []) = []
+stmLines (Braces [t]) = stmLines t
+stmLines (Braces t) = ["{"] ++ stms t ++ ["}"]
 stmLines (While cond t) = ["while(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
 stmLines (ForIn t name e s) = ["for(" ++ showDecl t name ++ " in " ++ show e ++ ") {"] ++ stms s ++ ["}"]
 stmLines (Do cond t) = ["do {"] ++ stms t ++ ["} while(" ++ show cond ++ ");"]
@@ -330,6 +338,9 @@ stmLines (Synchronized r s) = ["@synchronized(" ++ show r ++ ") {"] ++ stms s ++
 stmLines (Try e f) = ["@try {"] ++ stms e ++ ["} @finally {"] ++ stms f ++ ["}"]
 
 expLines :: Exp -> [String]
+expLines (ExpBraces []) = []
+expLines (ExpBraces [t]) = stmLines t
+expLines (ExpBraces t) = ["({"] ++ stms t ++ ["})"]
 expLines Self = ["self"]
 expLines Super = ["super"]
 expLines (Call inst name pars vargs) = ["["] `glue` (expLines inst `appp` (" " ++ kw name)) `glue` pars' `glue` (vargs'  `appp` "]")

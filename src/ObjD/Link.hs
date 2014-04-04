@@ -1314,13 +1314,13 @@ data Exp = Nop
 	| MinusMinus Exp
 	| Dot Exp Exp
 	| NullDot Exp Exp
-	| NonOpt Exp
+	| NonOpt Bool Exp -- Need to check
 	| Set (Maybe MathTp) Exp Exp
 	| Call Def DataType [CallPar]
 	| Return Bool Exp
 	| Index Exp Exp
 	| Lambda [(String, DataType)] Exp DataType
-	| Val Def
+	| Val Bool Def -- Separate declaraion and initialization if true
 	| ExpDError String D.Exp 
 	| ExpLError String Exp 
 	| ExpError String 
@@ -1373,7 +1373,8 @@ instance Show Exp where
 	show (FloatConst i) = show i
 	show (Index e i) = show e ++ "[" ++ show i ++ "]"
 	show (Lambda pars e tp) = strs ", " (map (\(n, t) -> n ++ " : " ++ show t) pars) ++ " -> " ++ show tp ++ " = " ++ show e
-	show (Val d) = show d
+	show (Val False d) = show d
+	show (Val True d) = "val " ++ defName d ++ " : " ++ show (defType d) ++ "\n" ++ show (defBody d)
 	show (ExpDError s e) = "<#" ++ show e ++ ": " ++ (strs " " . lines) s ++ "#>"
 	show (ExpError s) = "<#" ++ (strs " " . lines) s ++ "#>"
 	show (ExpLError s e) = "<#" ++ show e ++ ": " ++ (strs " " . lines) s ++ "#>"
@@ -1392,7 +1393,7 @@ instance Show Exp where
 	show (CastDot tp) = "cast<" ++ show tp ++ ">"
 	show (Break) = "break"
 	show (Continue) = "continue"
-	show (NonOpt e) = show e ++ "?!"
+	show (NonOpt _ e) = show e ++ "?!"
 	show (LambdaCall e) = show e ++ "()"
 	show (Try e f) = "try " ++ show e ++ "\nfinally " ++ show f
 	show (StringBuild pars lastS) = "\"" ++ join (map (\(prev, e) -> prev ++ "$" ++ show e) pars) ++ lastS ++ "\""
@@ -1425,18 +1426,24 @@ maybeAddReturn env tp e  = case exprDataType e of
 		_ -> Braces (e : [Return False Nil]) 
 	_ -> addReturn env True tp e
 
-addReturn :: Env -> Bool -> DataType -> Exp -> Exp
-addReturn env hard tp (Weak e) = Weak (addReturn env hard tp e)
-addReturn env hard tp (If cond t f) = If cond (addReturn env hard tp t) (addReturn env hard tp f)
-addReturn env hard tp (Synchronized r b) = Synchronized r (addReturn env hard tp b)
-addReturn env hard tp (Try e f) = Try (addReturn env hard tp e) f
-addReturn _ True _ e@(Braces []) = ExpLError "Return empty braces" e
-addReturn env hard tp (Braces es) = Braces $ map (addReturn env False tp) (init es) ++ [addReturn env hard tp (last es)]
-addReturn _ True _ Nop = ExpLError "Return NOP" Nop
-addReturn _ _ _ e@(Throw _) = e
-addReturn env _ tp (Return _ e) = Return True $ implicitConvertsion env tp e
-addReturn env True tp e = Return False $ implicitConvertsion env tp e
-addReturn _ _ _ e = e
+addReturn :: Env -> Bool -> DataType -> Exp -> Exp 
+addReturn env hard tp ee = addReturnBy defBy hard ee
+	where
+		defBy h e = Return h $ implicitConvertsion env tp e
+
+
+addReturnBy :: (Bool -> Exp -> Exp) -> Bool -> Exp -> Exp
+addReturnBy by hard (Weak e) = Weak (addReturnBy by hard e)
+addReturnBy by hard (If cond t f) = If cond (addReturnBy by hard t) (addReturnBy by hard f)
+addReturnBy by hard (Synchronized r b) = Synchronized r (addReturnBy by hard b)
+addReturnBy by hard (Try e f) = Try (addReturnBy by hard e) f
+addReturnBy _ True e@(Braces []) = ExpLError "Return empty braces" e
+addReturnBy by hard (Braces es) = Braces $ map (addReturnBy by False) (init es) ++ [addReturnBy by hard (last es)]
+addReturnBy _ True Nop = ExpLError "Return NOP" Nop
+addReturnBy _ _ e@(Throw _) = e
+addReturnBy by _ (Return _ e) = by True e
+addReturnBy by True e = by False e
+addReturnBy _ _ e = e
 
 forExp :: MonadPlus m => (Exp -> m a) -> Exp -> m a
 forExp f ee = mplus (go ee) (f ee)
@@ -1469,8 +1476,8 @@ forExp f ee = mplus (go ee) (f ee)
 		go (Negative e) = forExp f e
 		go (Lambda _ e _) = forExp f e
 		go (FirstTry _ e) = forExp f e
-		go (NonOpt e) = forExp f e
-		go (Val d) = forExp f (defBody d)
+		go (NonOpt _ e) = forExp f e
+		go (Val _ d) = forExp f (defBody d)
 		go _ = mzero
 
 mapExp :: (Exp -> Maybe Exp) -> Exp -> Exp
@@ -1504,8 +1511,8 @@ mapExp f ee = fromMaybe (go ee) (f ee)
 		go (Negative e) = Negative $ mapExp f e
 		go (Lambda p1 e p2) = Lambda p1 (mapExp f e) p2
 		go (FirstTry p e) = FirstTry p $ mapExp f e
-		go (NonOpt e) = NonOpt $ mapExp f e
-		go (Val d) = Val d{defBody = mapExp f (defBody d)}
+		go (NonOpt c e) = NonOpt c $ mapExp f e
+		go (Val e d) = Val e d{defBody = mapExp f (defBody d)}
 		go e = e
 
 isNop :: Exp -> Bool
@@ -1533,9 +1540,14 @@ isConst (Call Def {defMods = mods, defBody = b} _ pars) =
 isConst (As _) = True
 isConst (Is _) = True
 isConst (CastDot _) = True
-isConst (NonOpt e) = isConst e
+isConst (NonOpt _ e) = isConst e
 isConst Nop = True
 isConst _ = False
+
+isSimpleExpression :: Exp -> Bool
+isSimpleExpression (If _ l r) = isSimpleExpression l && isSimpleExpression r
+isSimpleExpression (Braces _) = False
+isSimpleExpression _ = True
 
 isError :: Exp -> Bool
 isError ExpDError{} = True
@@ -1558,7 +1570,7 @@ exprDataType (Nop) = TPVoid
 exprDataType (IntConst _ ) = int
 exprDataType (StringConst _ ) = TPString
 exprDataType Nil = TPNil
-exprDataType (NonOpt e) = unoptionHard $ exprDataType e
+exprDataType (NonOpt _ e) = unwrapGeneric $ unoptionHard $ exprDataType e
 exprDataType (BoolConst _ ) = TPBool
 exprDataType (FloatConst _) = float
 exprDataType (BoolOp {}) = TPBool
@@ -1567,10 +1579,7 @@ exprDataType (MathOp _ l r) = case(unwrapGeneric $ exprDataType l, unwrapGeneric
 	(lt, _) -> lt
 exprDataType (PlusPlus e) = exprDataType e
 exprDataType (MinusMinus e) = exprDataType e
-exprDataType (NullDot _ b) = case exprDataType b of
-	t@(TPOption _) -> t
-	TPVoid -> TPVoid
-	t -> TPOption t
+exprDataType (NullDot _ b) = option $ exprDataType b 
 exprDataType (Dot _ b) = exprDataType b
 exprDataType Set{} = TPVoid
 exprDataType (Self s) = s
@@ -1600,7 +1609,7 @@ exprDataType (Arr exps) = TPArr (length exps) $ wrapGeneric $ exprDataType $ hea
 exprDataType (Map exps) = let (k, v) = ((exprDataType >>> wrapGeneric) *** (exprDataType >>> wrapGeneric)) $ head exps 
 	in TPMap k v
 exprDataType (Tuple exps) = TPTuple $ map (wrapGeneric .exprDataType) exps
-exprDataType (Val Def{defType = tp}) = tp
+exprDataType (Val _ Def{defType = tp}) = tp
 exprDataType (Some v) = option $ exprDataType v
 exprDataType (None tp) = option tp
 exprDataType (FirstTry _ e) = exprDataType e
@@ -1658,7 +1667,7 @@ expr env (D.Braces es) = Braces $ bracesRec env 0 es
 		bracesRec _  _ [] = []
 		bracesRec env' n [x] = [expr env'{envVarSuffix = envVarSuffix env ++ ('_' : show n)} x]
 		bracesRec env' n (x:xs) = case expr env'{envVarSuffix = envVarSuffix env ++ ('_' : show n), envTp = TPVoid} x of
-			x'@(Val d) -> x':(bracesRec (envAddVals [d] env') (n + 1) xs)
+			x'@(Val _ d) -> x':(bracesRec (envAddVals [d] env') (n + 1) xs)
 			x' -> x':(bracesRec env' (n + 1) xs)
 expr _ D.Nop = Nop
 expr _ (D.IntConst i) = IntConst i
@@ -1666,7 +1675,7 @@ expr _ (D.StringConst i) = StringConst i
 expr _ D.Nil = Nil
 expr _ (D.BoolConst i) = BoolConst i
 expr _ (D.FloatConst s) = FloatConst s
-expr env (D.NonOpt e) = NonOpt $ expr env e
+expr env (D.NonOpt e) = NonOpt True $ expr env e
 expr env (D.BoolOp tp a b) = BoolOp tp (exprToSome env a) (exprToSome env b)
 expr env (D.MathOp tp a b) = 
 	let 
@@ -1700,12 +1709,17 @@ expr env d@(D.NullDot a b) = let
 		TPOption tp -> exprCall env (Just tp) b
 		tp -> ExpDError ("Null safe operation for the non-nullable datatype " ++ show tp) b
 	mapVal e = Braces [
-				Val tmp,
-				If (BoolOp NotEq (callRef tmp) Nil) (Some mapExpr') (None $ wrapGeneric $ unoption $ exprDataType mapExpr')
+				declareVal tmp, 
+				(case unwrapGeneric $ envTp env of
+					TPVoid -> If (BoolOp NotEq (callRef tmp) Nil) 
+						mapExpr' Nop
+					_ -> If (BoolOp NotEq (callRef tmp) Nil) 
+						(implicitConvertsion env (option bTp) mapExpr')
+						(None $ wrapGeneric $ bTp))
 			]
 			where
 				tmp :: Def
-				tmp = localValE mapVarName aTp' aa
+				tmp = localValE mapVarName aTp' (NonOpt False aa)
 				mapVarName = case e of
 					D.Lambda [(name, _)] _ -> name 
 					_ -> "_"
@@ -1713,6 +1727,7 @@ expr env d@(D.NullDot a b) = let
 					D.Lambda _ le -> le
 					_ -> e
 				mapExpr' = expr (envAddVals [tmp] env) mapExpr
+				bTp = unoption $ exprDataType mapExpr'
 				
 	in case aa of
 		ExpDError s _ -> ExpDError s d
@@ -1726,15 +1741,32 @@ expr env (D.Elvis l alt) = let
 	tp = case exprDataType l' of
 		TPOption t -> t
 		t -> TPUnknown ("Null safe operation for the non-nullable datatype " ++ show t)
-	tmp = tmpVal env castTp l'
 	alt' = expr env alt
 	altIsOption = isOption $ unwrapGeneric $ exprDataType alt' 
 	castTp = if altIsOption then option tp else tp
 	alt'' = implicitConvertsion env castTp alt'
-	in Braces[
-		Val tmp,
-		If (BoolOp NotEq (callRef tmp) Nil) (callRef tmp) alt''
-	]
+	wrapStraight = if altIsOption then id else NonOpt False
+	in case (l, l') of
+		((D.NullDot dl dr), (NullDot dl' dr') ) -> 
+			let
+				l'' = Dot (NonOpt False dl') dr'
+				tmp = tmpVal env (exprDataType dl') dl'
+				isRef = case dl' of
+					Dot Self{} (Call d _ _) ->  DefModDef `notElem` defMods d
+					Call d _ _ ->  DefModDef `notElem` defMods d
+					_ -> False
+			in if isRef then If (BoolOp NotEq dl' Nil) (expr env (D.Dot (D.NonOpt dl) dr)) alt'' 
+				else Braces[
+					declareVal tmp,
+					If (BoolOp NotEq (callRef tmp) Nil) l'' alt''
+				]
+		_ ->
+			let 
+				tmp = tmpVal env (option tp) $ implicitConvertsion env (option tp) l'
+			in Braces[
+					declareVal tmp,
+					If (BoolOp NotEq (callRef tmp) Nil) (wrapStraight $ callRef tmp) alt''
+				]
 expr env (D.Set tp a b) = 
 	let 
 		aa = exprToSome env a
@@ -1783,7 +1815,10 @@ expr env l@(D.Lambda pars e) =
 		let 
 			pars' = map (second (dataType env . fromJust)) pars
 			env' =  envAddVals (map (uncurry localVal) pars') env
-			e' = expr env' e
+			mapEnvTp = case envTp env' of
+				TPFun _ d -> d
+				d -> d
+			e' = expr env'{envTp = mapEnvTp} e
 			tp = exprDataType e'
 		in Lambda pars' (maybeAddReturn env tp e') tp
 	else ExpDError "Not all types are defined in lambda" l
@@ -1796,7 +1831,7 @@ expr env (D.Val name tp body mods) = let
 	def' = Def{defName = name, defType = tp'', defMods = mods', defPars = [], 
 		defBody = if isJust tp then implicitConvertsion env tp'' body' else body', 
 		defGenerics = Nothing}
-	in Val def'
+	in declareVal def'
 expr _ (D.Arr []) = Arr []
 expr env (D.Arr [e]) = Arr [expr env e]
 expr env (D.Arr exprs) = 
@@ -1816,6 +1851,14 @@ expr env s@D.StringBuild {} = linkStringBuild env s
 expr env ex@D.FuncOp{} = linkFuncOp env ex
 -- expr x = error $ "No expr for " ++ show x
 
+declareVal :: Def -> Exp
+declareVal d 
+	| isSimpleExpression (defBody d) = Val False d
+	| otherwise = Val True mappedDef
+	where
+		mappedDef = d{defBody = mapExp replaceReturn (defBody d)}
+		replaceReturn (Return _ e) = Just $ Set Nothing (callRef mappedDef) e
+		replaceReturn _ = Nothing
 
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Functional Compositions >> *|* **
@@ -1908,8 +1951,8 @@ linkFuncOp env ex@(D.FuncOp tp l r)  =
 		Left err -> ExpDError err ex
 		Right e -> 
 			Braces [
-				Val ldef{defBody = implicitConvertsion env ltp l'},
-				Val rdef{defBody = implicitConvertsion env rtp r''},
+				declareVal ldef{defBody = implicitConvertsion env ltp l'},
+				declareVal rdef{defBody = implicitConvertsion env rtp r''},
 				e
 			]
 {------------------------------------------------------------------------------------------------------------------------------ 
@@ -1971,7 +2014,7 @@ linkCase env (D.Case mainExpr items) =
 			let 
 				(ex, caseEnv) = runState (linkCaseCond cond) $ CaseEvn env _case 1 []
 				caseDefs = caseEnvDefs caseEnv
-				vars = map Val caseDefs
+				vars = map declareVal caseDefs
 				env' = envAddVals caseDefs env
 				itemExpr = expr env' e
 				setResultTo to = Set Nothing (callRef _result) to
@@ -1980,7 +2023,7 @@ linkCase env (D.Case mainExpr items) =
 					ee -> [setResultTo ee]
 
 			in  (If (callRef _incomplete) (Braces $ 
-				Val _ok : vars ++ [
+				declareVal _ok : vars ++ [
 					ex, 
 					If isOk (Braces $ setResult ++ [Set Nothing (callRef _incomplete) (BoolConst False)])
 						Nop]) Nop, exprDataType itemExpr)
@@ -2008,7 +2051,7 @@ linkCase env (D.Case mainExpr items) =
 					cond' <- linkCaseCond cond
 					e' <- get
 					put e'{caseEnvCurrentVal = val}
-					return $ (Val $ newVal{defBody = Dot (callRef val) (callRef d)}) : [cond']
+					return $ (declareVal $ newVal{defBody = Dot (callRef val) (callRef d)}) : [cond']
 			pars' <- mapM linkPar $ zip (maybe [] defPars constr) pars
 			return $ Braces $ join pars'
 
@@ -2031,13 +2074,13 @@ linkCase env (D.Case mainExpr items) =
 				unapplyCall :: [Exp] -> Exp
 				unapplyCall next = maybe (buildIf next) (buildCall next) unapply
 				buildCall next f@Def{defType = ftp, defPars = [fpar]} = Braces $
-					[Val $ newValOpt{defBody = Dot (callRef (objectDef cl)) (Call f ftp [(fpar, maybeCast tp $ callRef val)])},
+					[declareVal $ newValOpt{defBody = Dot (callRef (objectDef cl)) (Call f ftp [(fpar, maybeCast tp $ callRef val)])},
 					If (callFromValOpt "isDefined") 
-						(Braces $ (Val $ newVal{defBody = callFromValOpt "get"}): next)
+						(Braces $ (declareVal $ newVal{defBody = callFromValOpt "get"}): next)
 						notOk 
 						]
 				buildIf next = If (Dot (callRef val) (Is tp)) (Braces $
-					(Val $  newVal{defBody = Dot (callRef val) (CastDot tp)}) : next)
+					(declareVal $  newVal{defBody = Dot (callRef val) (CastDot tp)}) : next)
 					notOk
 				unapply :: Maybe Def
 				unapply = find (parsTypeIs (defType val)) allUnappies
@@ -2081,7 +2124,7 @@ linkCase env (D.Case mainExpr items) =
 		items' = map linkCaseItem items
 		_result' = _result {defType = reduceDataTypes env $ map snd items'}
 	in Braces $ [
-		Val _case, Val _incomplete, Val _result'] 
+		declareVal _case, declareVal _incomplete, declareVal _result'] 
 		++ map fst items' 
 		++ [If (callRef _incomplete) (Throw $ StringConst "Case incomplete") Nop, 
 			callRef _result']
@@ -2291,9 +2334,9 @@ correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, ExpDError _ (D.Lambda 
 		stps :: DataType -> [DataType]
 		stps (TPTuple tps) = tps
 		stps tp = [tp]
-		env' = envAddVals (map (uncurry localVal) lpars') env
+		env' = envAddVals (map (uncurry localVal) lpars') $ env{envTp = dtp'}
 		dtp' = replaceGenerics True gens dtp
-		expr' = if dtp' == TPVoid then expr env' lambdaExpr else maybeAddReturn env dtp' $ expr env'{envTp = dtp'} lambdaExpr
+		expr' = if dtp' == TPVoid then expr env' lambdaExpr else maybeAddReturn env dtp' $ expr env' lambdaExpr
 		tp' = if containsGeneric dtp then wrapGeneric (exprDataType expr') else dtp
 		containsGeneric = fromMaybe False . forDataType (\t -> case t of
 			TPClass TPMGeneric _ _ -> Just True
@@ -2465,7 +2508,7 @@ checkErrorsInExp = forExp f
 		f (Self tp) = checkErrorsInDataType tp
 		f e@(Call _ tp _) = checkErrorsInDataType tp ++ checkCallAbstractConstructor e
 		f (Lambda pars _ ret) = checkErrorsInDataType ret ++ concatMap (checkErrorsInDataType . snd) pars
-		f (Val Def{defType = tp}) = checkErrorsInDataType tp
+		f (Val _ Def{defType = tp}) = checkErrorsInDataType tp
 		f (ExpDError t e) = [Error (show e ++ ": " ++ t)]
 		f (ExpLError t e) = [Error (show e ++ ": " ++ t)]
 		f (ExpError t) = [Error t]

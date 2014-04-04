@@ -355,7 +355,7 @@ implFuns env = map stm2ImplFun . filter D.isDef
 	where
 		stm2ImplFun def@D.Def {D.defName = name, D.defBody = db, D.defMods = mods, D.defType = tp}
 			| D.DefModAbstract `elem` mods = C.ImplFun (stm2Fun def) [C.Throw $ C.StringConst $ "Method " ++ name++ " is abstract"]
-			| otherwise = C.ImplFun (stm2Fun def) (declareWeakSelf env $ tStm (env{envDataType = tp}) [] db)
+			| otherwise = C.ImplFun (stm2Fun def) (declareWeakSelf env $ translate (env{envDataType = tp}) db)
 			
 		
 {- Struct -}
@@ -411,7 +411,7 @@ genStruct cl =
 		defImpl' d@D.Def{D.defType = tp, D.defBody = e, D.defPars = pars, D.defMods = mods} = C.CFun{C.cfunMods = [], 
 			C.cfunReturnType = showDataType tp, C.cfunName = structDefName name d,
 			C.cfunPars = if D.DefModStatic `notElem` mods then C.CFunPar (C.TPSimple name []) "self" : pars' else pars',
-			C.cfunExps = tStm (env {envDataType = tp}) [] e}
+			C.cfunExps = translate (env {envDataType = tp}) e}
 			where
 				pars' = map par' pars
 				par' D.Def{D.defName = nn, D.defType = tpp} = C.CFunPar (showDataType tpp) nn
@@ -637,6 +637,7 @@ procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
 		procDataType (D.TPGenericWrap _ cl) = procDataType cl
 		procDataType (D.TPClass _ _ cl) = retCl cl
 		procDataType (D.TPObject _ cl) = retCl cl
+		procDataType (D.TPOption cl) = procDataType cl
 		procDataType _ = []
 		procExp :: D.Exp -> [(D.Class, Bool)] 
 		procExp = D.forExp f
@@ -802,7 +803,7 @@ tExp env (D.MinusMinus e) = C.MinusMinus (tExp env e)
 
 
 {- Dot -}
-tExp env (D.NullDot l r) = tExp env (D.Dot l r)
+tExp env (D.NullDot l r) = tExpToType env (D.wrapGeneric $ D.exprDataType r) (D.Dot l r)
 tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call d@D.Def {D.defName = name, D.defMods = mods} _ pars)) 
 	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
 	| otherwise = C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) d) (C.Ref "self" : (map snd . tPars env d) pars)
@@ -886,7 +887,7 @@ tExp env (D.Lambda pars e rtp) =
 		unwrapPars = (map unwrapPar. filter (isNeedUnwrap . snd)) pars
 		unwrapPar ::(String, D.DataType) -> C.Stm
 		unwrapPar (name, D.TPGenericWrap gw tp) = C.Var (showDataType tp) name (maybeVal (D.TPGenericWrap gw tp, tp) $ C.Ref $ name ++ "_") []
-		stm = tStm env{envDataType = rtp} [] e
+		stm = translate env{envDataType = rtp} e
 	in
 	C.Lambda (map par' pars) (unwrapPars ++ setSelf env stm) (showDataType rtp)
 tExp env (D.Weak expr) = tExp env{envWeakSelf = True} expr
@@ -953,29 +954,48 @@ tExp _ D.Nop = C.Nop
 
 tExp _ (D.Braces []) = C.Nop
 tExp env (D.Braces [x]) = tExp env x
-tExp env e@(D.Braces _) = 
-	let 
-		rtp = D.exprDataType e
-		lambda = C.Lambda [] (setSelf env $ tStm env{envDataType = rtp} [] e) (showDataType rtp)
-	in C.CCall lambda []
-tExp env ee@(D.NonOpt e) = tExpTo env (D.exprDataType ee) e
+tExp env (D.Braces stms) = C.ExpBraces (translate env (D.Braces $ init stms) ++ [C.Stm (tExp env $ last stms)])
+tExp env ee@(D.NonOpt check e) = 
+	let tp = D.unwrapGeneric $ D.exprDataType ee
+	in 
+		if isElementary tp then 
+			if check then maybeVal (D.exprDataType e, tp) $ C.CCall (C.Ref "nonnil") [tExp env e]
+			else tExpTo env tp e
+		else
+			if check then C.Cast (showDataType tp) $ C.CCall (C.Ref "nonnil") [tExp env e]
+			else C.Cast (showDataType tp) $ tExpTo env tp e
 tExp env (D.Return _ e) = tExp env e
 tExp _ x = C.Error $ "No tExp for " ++ show x
 
+
+isElementary :: D.DataType -> Bool
+isElementary (D.TPClass D.TPMStruct _ _) = True
+isElementary D.TPNumber{} = True
+isElementary D.TPChar{} = True
+isElementary D.TPFloatNumber{} = True
+isElementary D.TPBool{} = True
+isElementary _ = False
+
 tExpToType :: Env -> D.DataType -> D.Exp -> C.Exp
 tExpToType env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
+
+translate :: Env -> D.Exp -> [C.Stm]
+translate env e = case tStm env [] e of
+	[C.Braces r] -> r
+	r -> r
 
 tStm :: Env -> [D.Exp] -> D.Exp -> [C.Stm]
 tStm _ _ (D.Nop) = []
 
 tStm _ _ (D.Braces []) = []
-tStm v _ (D.Braces [x]) = tStm v [] x
-tStm v _ (D.Braces xs) = concatMap (tStm v xs) xs
+tStm v _ (D.Braces [x]) = translate v x
+tStm v _ (D.Braces xs) = [C.Braces $ concatMap (tStm v xs) xs]
 
-tStm v _ (D.If cond t f) = [C.If (tExpTo v D.TPBool cond) (tStm v [] t) (tStm v [] f)]
-tStm v _ (D.While cond t) = [C.While (tExpTo v D.TPBool cond) (tStm v [] t)]
-tStm v _ (D.Synchronized ref b) = [C.Synchronized (tExp v ref) (tStm v [] b)]
-tStm v _ (D.Do cond t) = [C.Do (tExpTo v D.TPBool cond) (tStm v [] t)]
+tStm v _ (D.If cond t (D.None _)) = [C.If (tExpTo v D.TPBool cond) (translate v t) []]
+tStm v _ (D.If cond t f) = [C.If (tExpTo v D.TPBool cond) (translate v t) (translate v f)]
+tStm v _ (D.While cond t) = [C.While (tExpTo v D.TPBool cond) (translate v t)]
+tStm v _ (D.Synchronized ref b) = [C.Synchronized (tExp v ref) (translate v b)]
+tStm v _ (D.Do cond t) = [C.Do (tExpTo v D.TPBool cond) (translate v t)]
 
 tStm env _ (D.Set tp l r) = let 
 	l' = tExp env l
@@ -986,8 +1006,9 @@ tStm env _ (D.Set tp l r) = let
 tStm Env{envDataType = D.TPVoid} _ (D.Return True _) = [C.Return C.Nop]
 tStm env@Env{envDataType = D.TPVoid} _ (D.Return _ e) = [C.Stm $ tExp env{envCStruct = 0} e]
 tStm env@Env{envDataType = tp}  _ (D.Return _ e) = [C.Return $ tExpToType env{envCStruct = 0} tp e]
-tStm env parexps (D.Val def@D.Def{D.defName = name, D.defType = tp, D.defBody = e, D.defMods = mods}) = 
-	[C.Var (showDataType tp) name (tExpToType env tp e) (["__block" | needBlock] ++ ["__weak" | isWeak])]
+tStm env parexps (D.Val separate def@D.Def{D.defName = name, D.defType = tp, D.defBody = e, D.defMods = mods}) = 
+	[C.Var (showDataType tp) name (if separate then C.Nop else tExpToType env tp e) (["__block" | needBlock] ++ ["__weak" | isWeak])]
+	++ (if separate then translate env e else [])
 	where 
 		needBlock = D.DefModMutable `elem` mods && existsSetInLambda
 		existsSetInLambda = any (isJust . setsInLambda) parLambdas
@@ -1008,7 +1029,7 @@ tStm env pe (D.Weak expr) = tStm env{envWeakSelf = True} pe expr
 tStm env _ x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar, cycleTp)] cycleBody _)])) 
 	| dn == "for" || dn == "go" =
 		case D.exprDataType l of
-			D.TPArr _ _ -> [C.ForIn (showDataType cycleTp) cycleVar (tExp env l) (tStm env [] ((if dn == "go" then processGo else id) cycleBody) )]
+			D.TPArr _ _ -> [C.ForIn (showDataType cycleTp) cycleVar (tExp env l) (translate env ((if dn == "go" then processGo else id) cycleBody) )]
 			_ -> [C.Stm $ tExp env x]
 	where
 		processGo :: D.Exp -> D.Exp
@@ -1017,7 +1038,7 @@ tStm env _ x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar
 		procGo (D.Return _ (D.BoolConst False)) = Just D.Break
 		procGo (D.Return _ e) = Just $ D.If e D.Continue D.Break
 		procGo _ = Nothing
-tStm env _ (D.Try e f) = [C.Try (tStm env [] e) (tStm env [] f)]
+tStm env _ (D.Try e f) = [C.Try (translate env e) (translate env f)]
 tStm env _ x = [C.Stm $ tExp env x]
 
 equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp
@@ -1078,6 +1099,7 @@ dataTypeSuffix (D.TPFloatNumber 8) = "f8"
 data MaybeValTP = TPGen | TPNum | TPStruct | TPNoMatter | TPBool | TPFloat
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp
 maybeVal (stp, dtp) e = let 
+	tp D.TPOption{} = TPGen
 	tp D.TPGenericWrap{} = TPGen
 	tp (D.TPClass D.TPMGeneric _ _) = TPGen
 	tp (D.TPClass D.TPMStruct _ _) = TPStruct
