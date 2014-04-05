@@ -350,16 +350,16 @@ commonSuperDataType _ TPAny a = [a]
 commonSuperDataType _ TPThrow a = [a]
 commonSuperDataType _ a@(TPOption _) TPNil = [a]
 commonSuperDataType _ TPVoid TPNil = [TPVoid]
-commonSuperDataType _ a TPNil = [TPOption a]
+commonSuperDataType _ a TPNil = [option a]
 commonSuperDataType _ a TPAny = [a]
 commonSuperDataType _ a TPThrow = [a]
 commonSuperDataType _ TPNumber{} f@TPFloatNumber{} = [f]
 commonSuperDataType _ f@TPFloatNumber{} TPNumber{} = [f]
 commonSuperDataType _ (TPNumber as an) (TPNumber bs bn) = [TPNumber (as || bs) (max an bn)]
 commonSuperDataType _ (TPFloatNumber an) (TPFloatNumber bn) = [TPFloatNumber (max an bn)]
-commonSuperDataType env (TPOption a) (TPOption b) = map TPOption $ commonSuperDataType env a b
-commonSuperDataType env a (TPOption b) = map TPOption $ commonSuperDataType env a b
-commonSuperDataType env (TPOption a) b = map TPOption $ commonSuperDataType env a b
+commonSuperDataType env (TPOption a) (TPOption b) = map option $ commonSuperDataType env a b
+commonSuperDataType env a (TPOption b) = map option $ commonSuperDataType env a b
+commonSuperDataType env (TPOption a) b = map option $ commonSuperDataType env a b
 commonSuperDataType env _ TPVoid = [baseDataType env]
 commonSuperDataType env TPVoid _ = [baseDataType env]
 commonSuperDataType env a b 
@@ -1632,7 +1632,14 @@ maybeCast _ e@Throw{} = e
 maybeCast _ e@(Braces []) = e
 maybeCast tp (If c t f) = If c (maybeCast tp t) (maybeCast tp f) 
 maybeCast tp (Braces x) = Braces $ (init x) ++ [maybeCast tp $ last x]
+maybeCast TPNil e = e
+maybeCast (TPGenericWrap _ TPNil) e = e
 maybeCast _ Nil = Nil
+maybeCast (TPOption t) e = 
+	let tp = unwrapGeneric $ exprDataType e
+	in case tp of
+		TPOption r -> if unwrapGeneric r == unwrapGeneric t then e else Cast tp e
+		_ -> Some(e)
 maybeCast tp e 
 	| unwrapGeneric tp == unwrapGeneric (exprDataType e) = e
 	| otherwise = Cast tp e
@@ -1751,11 +1758,8 @@ expr env (D.Elvis l alt) = let
 			let
 				l'' = Dot (NonOpt False dl') dr'
 				tmp = tmpVal env (exprDataType dl') dl'
-				isRef = case dl' of
-					Dot Self{} (Call d _ _) ->  DefModDef `notElem` defMods d
-					Call d _ _ ->  DefModDef `notElem` defMods d
-					_ -> False
-			in if isRef then If (BoolOp NotEq dl' Nil) (expr env (D.Dot (D.NonOpt dl) dr)) alt'' 
+				
+			in if isReference dl' then If (BoolOp NotEq dl' Nil) (expr env (D.Dot (D.NonOpt dl) dr)) alt'' 
 				else Braces[
 					declareVal tmp,
 					If (BoolOp NotEq (callRef tmp) Nil) l'' alt''
@@ -1770,13 +1774,23 @@ expr env (D.Elvis l alt) = let
 expr env (D.Set tp a b) = 
 	let 
 		aa = exprToSome env a
-		ltp = exprDataType aa
-		simpleSet = if isNothing tp then Set Nothing aa math
+		ltp = case aa of
+			NullDot _ r -> exprDataType r
+			_ -> exprDataType aa
+		simpleSet = if isNothing tp then set Nothing aa math
 			else case unwrapGeneric ltp of
-				TPNumber{} -> Set tp aa math
-				TPFloatNumber{} -> Set tp aa math
-				TPString{} -> Set tp aa math
-				_ -> Set Nothing aa callOp
+				TPNumber{} -> set tp aa math
+				TPFloatNumber{} -> set tp aa math
+				TPString{} -> set tp aa math
+				_ -> set Nothing aa callOp
+
+		set tp' (NullDot dl dr) r = 
+			let 
+				tmp = tmpVal env (exprDataType dl) dl
+				ref = if isReference dl then dl else callRef tmp
+				f = If (BoolOp NotEq ref Nil) (Set tp' (Dot (NonOpt False ref) dr) r) Nop
+			in  if isReference dl then f else Braces [declareVal tmp, f]
+		set tp' l r = Set tp' l r
 
 		math = exprTo env ltp b 
 		callOp = Dot aa $ exprCall env (Just ltp) $ D.Call (literalDefName $ show $ fromJust tp) (Just [(Nothing, b)]) []
@@ -1789,13 +1803,15 @@ expr env (D.Set tp a b) =
 			Dot Self{} _ -> True
 			_ -> False
 		bToProcCall = if isJust tp then D.MathOp (fromJust tp) a b else b
+		callSet ldef ref = exprCall env (Just $ exprDataType ref) $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
 	in if isNothing lcall then Set tp (ExpLError "Left is not def" aa) $ expr env b
 		else case fromJust lcall of
 			Call ldef _ [] -> 
 				if DefModMutable `elem` defMods ldef then simpleSet 
 				else if envInit env && isSelfSet then simpleSet
 				else case aa of
-					Dot ref _ ->  Dot ref $ exprCall env (Just $ exprDataType ref) $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
+					Dot ref _ ->  Dot ref $ callSet ldef ref
+					NullDot ref _ ->  NullDot ref $ callSet ldef ref
 					_ -> exprCall env Nothing $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
 			_ -> Set tp (ExpLError "Unassinable left" aa) (expr env b)
 expr env (D.PlusPlus e) = PlusPlus (exprToSome env e)
@@ -1851,6 +1867,11 @@ expr env s@D.StringBuild {} = linkStringBuild env s
 expr env ex@D.FuncOp{} = linkFuncOp env ex
 -- expr x = error $ "No expr for " ++ show x
 
+isReference :: Exp -> Bool
+isReference e = case e of
+	Dot Self{} (Call d _ _) ->  DefModDef `notElem` defMods d
+	Call d _ _ ->  DefModDef `notElem` defMods d
+	_ -> False
 declareVal :: Def -> Exp
 declareVal d 
 	| isSimpleExpression (defBody d) = Val False d
