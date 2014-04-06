@@ -179,11 +179,6 @@ superClass = fmap extendsClassClass . extendsClass . classExtends
 superClasses :: Class -> [Class]
 superClasses = map fst . extendsRefs . classExtends
 
-allSuperClasses :: Class -> [Class]
-allSuperClasses cl = 
-	let scls = superClasses cl 
-	in scls ++ concatMap allSuperClasses scls  
-
 replaceGenerics :: Bool -> Generics -> DataType -> DataType
 replaceGenerics blk gns tp = mapDataType f tp
 	where 
@@ -212,11 +207,13 @@ replaceGenericsInDef gens d = d {defType =  replaceGenerics False gens (defType 
 allDefsInClass :: ClassRef -> [Def]
 allDefsInClass (cl, gens) = 
 	map (replaceGenericsInDef gens) notStaticDefs 
-	++ defsInParentClass (classExtends cl) 
+	++ allDefsInParentClass gens cl
 	where
 		notStaticDefs = filter (not . isStatic) (classDefs cl) 
-		defsInParentClass :: Extends -> [Def]
-		defsInParentClass extends = concatMap defsInExtends $ extendsRefs extends
+
+allDefsInParentClass :: Generics -> Class -> [Def]
+allDefsInParentClass gens cl = concatMap defsInExtends $ extendsRefs $ classExtends cl
+	where
 		defsInExtends :: ExtendsRef -> [Def]
 		defsInExtends extRef@(cll, _)= map addSuperMod $ allDefsInClass (cll, (superGenerics gens extRef))
 		addSuperMod d
@@ -830,13 +827,15 @@ linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRe
 		pars' = case pars of
 		 	[] -> []
 		 	x@(Def{defName = dn}, _) : xs -> if dn == "self" then xs else x:xs
+		{-pars'' = case overrideDef of
+			Nothing -> pars
+			Just tp -> -}
 		defGenerics' = Just $ DefGenerics generics' $ case pars of
 		 	[] -> envSelf env
 		 	(Def{defName = dn, defType = dtp}, _) : _ -> if dn == "self" then dtp else envSelf env
 		mods' = translateMods mods
 		overrideDef :: Maybe Def
-		overrideDef = listToMaybe $ mapMaybe findThisDef (allSuperClasses cl)
-		findThisDef c = find eqDef (classDefs c) 
+		overrideDef = find eqDef $ allDefsInParentClass (buildGenerics cl $ dataTypeGenerics env $ envSelf env) cl
 		eqDef d = defName d == name && length (defPars d) == length opars && all eqPar (zip (defPars d) parDefs)
 		overrideTp = fmap defType overrideDef
 		needWrapRetType = maybe False isTpGeneric overrideTp
@@ -1716,7 +1715,7 @@ expr env d@(D.NullDot a b) = let
 		TPOption tp -> exprCall env (Just tp) b
 		tp -> ExpDError ("Null safe operation for the non-nullable datatype " ++ show tp) b
 	mapVal e = Braces [
-				declareVal tmp, 
+				declareVal env tmp, 
 				(case unwrapGeneric $ envTp env of
 					TPVoid -> If (BoolOp NotEq (callRef tmp) Nil) 
 						mapExpr' Nop
@@ -1744,11 +1743,11 @@ expr env d@(D.NullDot a b) = let
 				Dot l r -> Dot (NullDot aa l) r
 				_ -> NullDot aa bb
 expr env (D.Elvis l alt) = let
-	l' = expr env l
+	l' = expr env{envVarSuffix = envVarSuffix env ++ "_e1"} l
 	tp = case exprDataType l' of
 		TPOption t -> t
 		t -> TPUnknown ("Null safe operation for the non-nullable datatype " ++ show t)
-	alt' = expr env alt
+	alt' = expr env{envVarSuffix = envVarSuffix env ++ "_e2"} alt
 	altIsOption = isOption $ unwrapGeneric $ exprDataType alt' 
 	castTp = if altIsOption then option tp else tp
 	alt'' = implicitConvertsion env castTp alt'
@@ -1761,14 +1760,14 @@ expr env (D.Elvis l alt) = let
 				
 			in if isReference dl' then If (BoolOp NotEq dl' Nil) (expr env (D.Dot (D.NonOpt dl) dr)) alt'' 
 				else Braces[
-					declareVal tmp,
+					declareVal env tmp,
 					If (BoolOp NotEq (callRef tmp) Nil) l'' alt''
 				]
 		_ ->
 			let 
 				tmp = tmpVal env (option tp) $ implicitConvertsion env (option tp) l'
 			in Braces[
-					declareVal tmp,
+					declareVal env tmp,
 					If (BoolOp NotEq (callRef tmp) Nil) (wrapStraight $ callRef tmp) alt''
 				]
 expr env (D.Set tp a b) = 
@@ -1789,7 +1788,7 @@ expr env (D.Set tp a b) =
 				tmp = tmpVal env (exprDataType dl) dl
 				ref = if isReference dl then dl else callRef tmp
 				f = If (BoolOp NotEq ref Nil) (Set tp' (Dot (NonOpt False ref) dr) r) Nop
-			in  if isReference dl then f else Braces [declareVal tmp, f]
+			in  if isReference dl then f else Braces [declareVal env tmp, f]
 		set tp' l r = Set tp' l r
 
 		math = exprTo env ltp b 
@@ -1847,7 +1846,7 @@ expr env (D.Val name tp body mods) = let
 	def' = Def{defName = name, defType = tp'', defMods = mods', defPars = [], 
 		defBody = if isJust tp then implicitConvertsion env tp'' body' else body', 
 		defGenerics = Nothing}
-	in declareVal def'
+	in declareVal env def'
 expr _ (D.Arr []) = Arr []
 expr env (D.Arr [e]) = Arr [expr env e]
 expr env (D.Arr exprs) = 
@@ -1872,12 +1871,12 @@ isReference e = case e of
 	Dot Self{} (Call d _ _) ->  DefModDef `notElem` defMods d
 	Call d _ _ ->  DefModDef `notElem` defMods d
 	_ -> False
-declareVal :: Def -> Exp
-declareVal d 
+declareVal :: Env -> Def -> Exp
+declareVal env d 
 	| isSimpleExpression (defBody d) = Val False d
 	| otherwise = Val True mappedDef
 	where
-		mappedDef = d{defBody = mapExp replaceReturn (defBody d)}
+		mappedDef = d{defBody = mapExp replaceReturn (addReturn env True (defType d) $  defBody d)}
 		replaceReturn (Return _ e) = Just $ Set Nothing (callRef mappedDef) e
 		replaceReturn _ = Nothing
 
@@ -1972,8 +1971,8 @@ linkFuncOp env ex@(D.FuncOp tp l r)  =
 		Left err -> ExpDError err ex
 		Right e -> 
 			Braces [
-				declareVal ldef{defBody = implicitConvertsion env ltp l'},
-				declareVal rdef{defBody = implicitConvertsion env rtp r''},
+				declareVal env ldef{defBody = implicitConvertsion env ltp l'},
+				declareVal env rdef{defBody = implicitConvertsion env rtp r''},
 				e
 			]
 {------------------------------------------------------------------------------------------------------------------------------ 
@@ -2035,7 +2034,7 @@ linkCase env (D.Case mainExpr items) =
 			let 
 				(ex, caseEnv) = runState (linkCaseCond cond) $ CaseEvn env _case 1 []
 				caseDefs = caseEnvDefs caseEnv
-				vars = map declareVal caseDefs
+				vars = map (declareVal env) caseDefs
 				env' = envAddVals caseDefs env
 				itemExpr = expr env' e
 				setResultTo to = Set Nothing (callRef _result) to
@@ -2044,7 +2043,7 @@ linkCase env (D.Case mainExpr items) =
 					ee -> [setResultTo ee]
 
 			in  (If (callRef _incomplete) (Braces $ 
-				declareVal _ok : vars ++ [
+				declareVal env _ok : vars ++ [
 					ex, 
 					If isOk (Braces $ setResult ++ [Set Nothing (callRef _incomplete) (BoolConst False)])
 						Nop]) Nop, exprDataType itemExpr)
@@ -2072,7 +2071,7 @@ linkCase env (D.Case mainExpr items) =
 					cond' <- linkCaseCond cond
 					e' <- get
 					put e'{caseEnvCurrentVal = val}
-					return $ (declareVal $ newVal{defBody = Dot (callRef val) (callRef d)}) : [cond']
+					return $ (declareVal env $ newVal{defBody = Dot (callRef val) (callRef d)}) : [cond']
 			pars' <- mapM linkPar $ zip (maybe [] defPars constr) pars
 			return $ Braces $ join pars'
 
@@ -2095,13 +2094,13 @@ linkCase env (D.Case mainExpr items) =
 				unapplyCall :: [Exp] -> Exp
 				unapplyCall next = maybe (buildIf next) (buildCall next) unapply
 				buildCall next f@Def{defType = ftp, defPars = [fpar]} = Braces $
-					[declareVal $ newValOpt{defBody = Dot (callRef (objectDef cl)) (Call f ftp [(fpar, maybeCast tp $ callRef val)])},
+					[declareVal env $ newValOpt{defBody = Dot (callRef (objectDef cl)) (Call f ftp [(fpar, maybeCast tp $ callRef val)])},
 					If (callFromValOpt "isDefined") 
-						(Braces $ (declareVal $ newVal{defBody = callFromValOpt "get"}): next)
+						(Braces $ (declareVal env $ newVal{defBody = callFromValOpt "get"}): next)
 						notOk 
 						]
 				buildIf next = If (Dot (callRef val) (Is tp)) (Braces $
-					(declareVal $  newVal{defBody = Dot (callRef val) (CastDot tp)}) : next)
+					(declareVal env $  newVal{defBody = Dot (callRef val) (CastDot tp)}) : next)
 					notOk
 				unapply :: Maybe Def
 				unapply = find (parsTypeIs (defType val)) allUnappies
@@ -2145,7 +2144,7 @@ linkCase env (D.Case mainExpr items) =
 		items' = map linkCaseItem items
 		_result' = _result {defType = reduceDataTypes env $ map snd items'}
 	in Braces $ [
-		declareVal _case, declareVal _incomplete, declareVal _result'] 
+		declareVal env _case, declareVal env _incomplete, declareVal env _result'] 
 		++ map fst items' 
 		++ [If (callRef _incomplete) (Throw $ StringConst "Case incomplete") Nop, 
 			callRef _result']
