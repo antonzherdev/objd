@@ -780,7 +780,7 @@ linkGeneric env (D.Generic name ext) = Generic{className = name,
 
 linkField :: Env -> (Bool, Bool) -> D.ClassStm -> [Def]
 --linkField _ _ D.Def{D.defName = nm} | trace ("Field " ++ nm) False = undefined
-linkField env (obj, _isStruct) D.Def {D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = 
+linkField env (obj, _isStruct) dd@D.Def{D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = 
 	let 
 		i = exprToSome env e
 		i' = implicitConvertsion env tp'' i
@@ -789,9 +789,11 @@ linkField env (obj, _isStruct) D.Def {D.defMods = mods, D.defName = name, D.defR
 				TPArr n atp -> TPEArr n $ unwrapGeneric atp 
 				_ -> tp' 
 			else tp'
+	
 		gtp = wrapGeneric tp''
 		def = Def{defMods = 
-			DefModField : translateMods mods ++ [DefModStruct | _isStruct] ++ [DefModStatic | obj], defName = name, defType = tp'', 
+			DefModField : translateMods mods ++ [DefModStruct | _isStruct] ++ [DefModStatic | obj] ++ checkOverrideMods mods (findOverridenDef env dd), 
+			defName = name, defType = tp'', 
 			defBody = i', defGenerics = Nothing, defPars = []}
 		isLazy = D.DefModLazy `elem` mods
 		lazyClass = classFind (envIndex env) "Lazy"
@@ -807,7 +809,21 @@ linkField env (obj, _isStruct) D.Def {D.defMods = mods, D.defName = name, D.defR
 			defBody = Return True $ Dot (callRef defLazy) (Call lazyGet gtp []), defGenerics = Nothing, defPars = []}
 		in if isLazy then [defLazyGet, defLazy] else [def]
 
-		
+findOverridenDef :: Env -> D.ClassStm -> Maybe Def
+findOverridenDef env D.Def{D.defName = name, D.defPars = opars} = find eqDef $ allDefsInParentClass (buildGenerics cl $ dataTypeGenerics env $ envSelf env) cl
+	where
+		cl = envSelfClass env
+		eqDef d = defName d == name && length (defPars d) == length opars' && all eqParameterNames (zip (defPars d) opars')
+		eqParameterNames (Def{defName = l}, D.Par{D.parName = r}) = l == r
+		filterSelfPar (D.Par{D.parName = "self"}:xs) = xs
+		filterSelfPar xs = xs
+		opars' = filterSelfPar opars
+
+checkOverrideMods :: [D.DefMod] -> Maybe Def -> [DefMod]
+checkOverrideMods mods (Just o) =
+	[DefModError "No override modifier" |  D.DefModOverride `notElem` mods] ++
+	[DefModError "Override final def" | DefModFinal `elem` defMods o] 
+checkOverrideMods mods Nothing = [DefModError "Override nothing" |  D.DefModOverride `elem` mods]		
 
 translateMods :: [D.DefMod] -> [DefMod]
 translateMods = mapMaybe m
@@ -824,18 +840,18 @@ translateMods = mapMaybe m
 		
 linkDef :: Env -> D.ClassStm -> [DefMod] -> [Def]
 -- linkDef env D.Def{D.defName = name} _ | trace ("Def " ++ show (envSelf env) ++ "." ++ name) False = undefined
-linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body, D.defGenerics = generics} additionalMods = 
+linkDef env dd@D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body, D.defGenerics = generics} additionalMods = 
 	resolveDefPar env' mainDef pars''
 	where 
 		env' = addEnvInit $ envAddClasses generics' env
 		generics' = map (linkGeneric env) generics
-		cl = envSelfClass env
 		isInit = name == "init" && null opars
 		addEnvInit e = if isInit then e {envInit = True} else e
 		
 		pars :: [(Def, Maybe Exp)]
 		pars = linkDefPars env'' opars
-			
+		
+		overrideDef = findOverridenDef env dd	
 		pars'' :: [(Def, Maybe Exp)]
 		pars'' = case overrideDef of
 			Nothing -> filterSelfPar pars
@@ -854,18 +870,8 @@ linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRe
 		defGenerics' = Just $ DefGenerics generics' $ case pars of
 		 	[] -> envSelf env
 		 	(Def{defName = dn, defType = dtp}, _) : _ -> if dn == "self" then dtp else envSelf env
-		mods' = translateMods mods ++ if isInit then [] else case overrideDef of
-			Just o -> [DefModError "No override modifier" |  D.DefModOverride `notElem` mods] ++
-					 [DefModError "Override final def" | DefModFinal `elem` defMods o] 
-			Nothing -> [DefModError "Override nothing" |  D.DefModOverride `elem` mods]
-		overrideDef :: Maybe Def
-		overrideDef = find eqDef $ allDefsInParentClass (buildGenerics cl $ dataTypeGenerics env $ envSelf env) cl
-		eqDef d = defName d == name && length (defPars d) == length opars' && all eqParameterNames (zip (defPars d) opars')
-			where
-				eqParameterNames (Def{defName = l}, D.Par{D.parName = r}) = l == r
-				filterSelfPar (D.Par{D.parName = "self"}:xs) = xs
-				filterSelfPar xs = xs
-				opars' = filterSelfPar opars
+		mods' = translateMods mods ++ if isInit then [] else checkOverrideMods mods overrideDef 
+		
 
 		overrideTp = fmap defType overrideDef
 		needWrapRetType = maybe False isTpGeneric overrideTp
