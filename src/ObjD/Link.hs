@@ -884,8 +884,12 @@ linkDef env dd@D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.de
 		 		_ -> rtp'
 		parDefs = map fst pars''
 		env'' = envAddVals parDefs env'
+		isSelfStub = case envSelf env of
+			TPClass _ _ cl -> isStub cl
+			TPObject _ cl -> isStub cl
 		mainDef = (case body of
-			D.Nop -> Def {defMods = DefModDef : DefModAbstract : mods' ++ additionalMods, defName = name, defGenerics = defGenerics',
+			D.Nop -> Def {defMods = DefModDef : mods' ++ [DefModAbstract | not isSelfStub] ++ additionalMods, 
+					defName = name, defGenerics = defGenerics',
 					defPars = parDefs,
 					defType = dataType env' (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
 			_   -> 
@@ -2514,12 +2518,28 @@ checkErrorsInFile File{fileName = name, fileClasses = classes} =
 checkErrorsInClass :: Class -> [Error]
 checkErrorsInClass e@ClassError{} = [Error (show e)]
 checkErrorsInClass Generic{} = []
-checkErrorsInClass Class{className = name, _classExtends = extends, _classGenerics = gens, _classDefs = defs} = 
+checkErrorsInClass cl@Class{className = name, _classExtends = extends, _classGenerics = gens, _classDefs = defs, _classMods = mods} = 
 	map (ErrorParent $ "class " ++ name) (
 		checkErrorsInExtends extends
 		++ concatMap checkErrorsInClass gens
 		++ concatMap checkErrorsInDef defs
+		++ if ClassModAbstract `notElem` mods && ClassModStub `notElem` mods && ClassModTrait `notElem` mods then 
+			checkAbstactFunctionsInClass cl else []
 	)
+
+checkAbstactFunctionsInClass :: Class -> [Error]
+--checkAbstactFunctionsInClass cl | trace ("checkAbstactFunctionsInClass : " ++ className cl) False = undefined
+checkAbstactFunctionsInClass cl = 
+	let 
+		allDefsIn cll = filter ((DefModStatic `notElem` ) . defMods) (classDefs cll) ++ concatMap (allDefsIn . fst)  (extendsRefs $ classExtends cll)
+		allDefs = allDefsIn cl
+		abstactDefs = filter ((DefModAbstract `elem` ) . defMods) allDefs
+		implementedDefs = filter ((DefModAbstract `notElem` ) . defMods) allDefs
+		hasImplementation d = any (eqDef d) implementedDefs
+		eqDef :: Def -> Def -> Bool
+		eqDef l r = defName l == defName r && length (defPars l) == length (defPars r) && all eqPar (zip (defPars l) (defPars r))
+		makeError d = Error $ "Function " ++ show d ++ " is not implemented"
+	in (map makeError . filter (not . hasImplementation)) abstactDefs
 
 checkErrorsInExtends :: Extends -> [Error]
 checkErrorsInExtends (Extends cls traits) =
