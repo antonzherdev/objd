@@ -205,6 +205,7 @@ replaceGenericsInDef :: Generics -> Def -> Def
 replaceGenericsInDef gens d = d {defType =  replaceGenerics False gens (defType d), defPars = map (replaceGenericsInDef gens) (defPars d) }
 
 allDefsInClass :: ClassRef -> [Def]
+-- allDefsInClass (cl, gens) | trace ("allDefsInClass " ++ className cl ++ ": " ++ show gens) False = undefined
 allDefsInClass (cl, gens) = 
 	map (replaceGenericsInDef gens) notStaticDefs 
 	++ allDefsInParentClass gens cl
@@ -212,6 +213,7 @@ allDefsInClass (cl, gens) =
 		notStaticDefs = filter (not . isStatic) (classDefs cl) 
 
 allDefsInParentClass :: Generics -> Class -> [Def]
+-- allDefsInParentClass gens cl | trace ("allDefsInParentClass " ++ className cl ++ ": " ++ show gens) False = undefined
 allDefsInParentClass gens cl = concatMap defsInExtends $ extendsRefs $ classExtends cl
 	where
 		defsInExtends :: ExtendsRef -> [Def]
@@ -628,7 +630,7 @@ baseClassExtends :: ClassIndex -> ExtendsClass
 baseClassExtends cidx = ExtendsClass (classFind cidx "Object", []) []
 
 linkClass :: (ClassIndex, ObjectIndex, File, Package, [Import]) -> D.FileStm -> Class
---linkClass (_, _, _, _, _) D.Class{D.className = cls} | trace ("Class " ++ cls) False = undefined
+-- linkClass (_, _, _, _, _) D.Class{D.className = cls} | trace ("Class " ++ cls) False = undefined
 linkClass (ocidx, glidx, file, package, clImports) cl = self
 	where
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
@@ -813,9 +815,9 @@ translateMods = mapMaybe m
 		m _ = Nothing
 		
 linkDef :: Env -> D.ClassStm -> [DefMod] -> [Def]
---linkDef _ D.Def{D.defName = name} _ | trace ("Def " ++ name) False = undefined
+-- linkDef env D.Def{D.defName = name} _ | trace ("Def " ++ show (envSelf env) ++ "." ++ name) False = undefined
 linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body, D.defGenerics = generics} additionalMods = 
-	resolveDefPar env' mainDef pars'
+	resolveDefPar env' mainDef pars''
 	where 
 		env' = addEnvInit $ envAddClasses generics' env
 		generics' = map (linkGeneric env) generics
@@ -827,16 +829,27 @@ linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRe
 		pars' = case pars of
 		 	[] -> []
 		 	x@(Def{defName = dn}, _) : xs -> if dn == "self" then xs else x:xs
-		{-pars'' = case overrideDef of
-			Nothing -> pars
-			Just tp -> -}
+		pars'' = case overrideDef of
+			Nothing -> pars'
+			Just od -> map checkParTypeAndWrapIfNeeded $ zip pars' (defPars od)
+
+		checkParTypeAndWrapIfNeeded :: ((Def, Maybe Exp), Def) -> (Def, Maybe Exp)
+		checkParTypeAndWrapIfNeeded (p@(thisPar@Def{defType = thisTp}, de), Def{defType = superTp})
+			| isInstanceOfTp env thisTp superTp = case (thisTp, superTp) of
+				(TPGenericWrap{}, TPGenericWrap{}) -> p
+				(_, TPGenericWrap{}) -> (thisPar{defType = wrapGeneric thisTp}, de)
+				_ -> p
+			| otherwise = (thisPar{defType = TPUnknown $ "Incorrect override: " ++ show thisTp ++ " is not instance of " ++ show superTp }, de)
 		defGenerics' = Just $ DefGenerics generics' $ case pars of
 		 	[] -> envSelf env
 		 	(Def{defName = dn, defType = dtp}, _) : _ -> if dn == "self" then dtp else envSelf env
 		mods' = translateMods mods
 		overrideDef :: Maybe Def
 		overrideDef = find eqDef $ allDefsInParentClass (buildGenerics cl $ dataTypeGenerics env $ envSelf env) cl
-		eqDef d = defName d == name && length (defPars d) == length opars && all eqPar (zip (defPars d) parDefs)
+		eqDef d = defName d == name && length (defPars d) == length opars && all eqParameterNames (zip (defPars d) opars)
+			where
+				eqParameterNames (Def{defName = l}, D.Par{D.parName = r}) = l == r
+
 		overrideTp = fmap defType overrideDef
 		needWrapRetType = maybe False isTpGeneric overrideTp
 		mapOverrideType rtp = 
@@ -846,11 +859,11 @@ linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRe
 		 			if isInstanceOfTp env' rtp' otp then (if isJust tp || (null opars && name == "apply") then rtp' else otp) else
 		 				TPUnknown $ "Could not choose correct datatype for override " ++ show rtp' ++ " is not instance of " ++ show otp
 		 		_ -> rtp'
-		parDefs = map fst pars'
+		parDefs = map fst pars''
 		env'' = envAddVals parDefs env'
 		mainDef = (case body of
 			D.Nop -> Def {defMods = DefModDef : DefModAbstract : mods' ++ additionalMods, defName = name, defGenerics = defGenerics',
-					defPars = map fst pars',
+					defPars = parDefs,
 					defType = dataType env' (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
 			_   -> 
 				let 
@@ -1085,7 +1098,8 @@ dataTypeClassRef env tp = let
 
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
-dataTypeClass env (TPObject _ c) = Class { _classMods = [ClassModObject], className = className c, _classExtends = Extends (Just $ baseClassExtends (envIndex env)) [], 
+dataTypeClass env (TPObject _ c) = Class { _classMods = [ClassModObject], className = className c, 
+	_classExtends = Extends (if className c == "Object" then Nothing else Just $ baseClassExtends (envIndex env)) [], 
 	_classDefs = allDefsInObject (c, M.empty), _classGenerics = [], _classImports = [],
 	_classFile = fromMaybe (error $ "No class file for class " ++ className c) $ classFile c,
 	_classPackage = classPackage c}
