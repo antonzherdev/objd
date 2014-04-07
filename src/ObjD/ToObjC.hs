@@ -954,7 +954,7 @@ tExp _ D.Nop = C.Nop
 
 tExp _ (D.Braces []) = C.Nop
 tExp env (D.Braces [x]) = tExp env x
-tExp env (D.Braces stms) = C.ExpBraces (translate env (D.Braces $ init stms) ++ [C.Stm (tExp env $ last stms)])
+tExp env (D.Braces stms) = C.ExpBraces (concatMap (translate1 env stms) (init stms) ++ [C.Stm (tExp env $ last stms)])
 tExp env ee@(D.NonOpt check e) = 
 	let tp = D.unwrapGeneric $ D.exprDataType ee
 	in 
@@ -981,6 +981,11 @@ tExpToType env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
 
 translate :: Env -> D.Exp -> [C.Stm]
 translate env e = case tStm env [] e of
+	[C.Braces r] -> r
+	r -> r
+
+translate1 :: Env -> [D.Exp] -> D.Exp -> [C.Stm]
+translate1 env parexps e = case tStm env parexps e of
 	[C.Braces r] -> r
 	r -> r
 
