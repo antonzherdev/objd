@@ -454,7 +454,7 @@ eqPar (x, y) = defName x == defName y
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModProtected | DefModGlobalVal | DefModWeak
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
 	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper | DefModInline 
-	| DefModPure
+	| DefModPure | DefModFinal | DefModOverride | DefModError String
 	deriving (Eq, Ord)
 instance Show DefMod where
 	show DefModStatic = "static"
@@ -477,6 +477,9 @@ instance Show DefMod where
 	show DefModSuper = "super"
 	show DefModApplyLambda = "applyLambda"
 	show DefModPure = "pure"
+	show DefModFinal = "final"
+	show DefModOverride = "override"
+	show (DefModError s) = "Error: " ++ s
 data DefGenerics = DefGenerics{defGenericsClasses :: [Class], defGenericsSelfType :: DataType}
 
 data CImport = CImportLib String | CImportUser String
@@ -512,13 +515,15 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModMutable = 'm'
 		ch DefModAbstract = 'a' 
 		ch DefModPrivate = 'p'
+		ch DefModFinal = 'f'
+		ch DefModOverride = 'o'
 		ch DefModProtected = 'q'
 		ch DefModWeak = 'w'
 		ch DefModPure = 'u'
 		ch DefModConstructor = 'c'
 		ch DefModStub = 'b'
 		ch DefModGlobalVal = 'g'
-		ch DefModField = 'f'
+		ch DefModField = 'e'
 		ch DefModLocal = 'l'
 		ch DefModObject = 'o'
 		ch DefModEnumItem = 'e'
@@ -528,6 +533,7 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModApplyLambda = 'd'
 		ch DefModSuper = 'r'
 		ch DefModInline = 'i'
+		ch (DefModError _) = 'E'
 		
 
 dataTypePars :: DataType -> [Def]
@@ -812,6 +818,8 @@ translateMods = mapMaybe m
 		m D.DefModProtected = Just DefModProtected
 		m D.DefModWeak = Just DefModWeak
 		m D.DefModPure = Just DefModPure
+		m D.DefModFinal = Just DefModFinal
+		m D.DefModOverride = Just DefModOverride
 		m _ = Nothing
 		
 linkDef :: Env -> D.ClassStm -> [DefMod] -> [Def]
@@ -825,13 +833,16 @@ linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRe
 		isInit = name == "init" && null opars
 		addEnvInit e = if isInit then e {envInit = True} else e
 		
+		pars :: [(Def, Maybe Exp)]
 		pars = linkDefPars env'' opars
-		pars' = case pars of
-		 	[] -> []
-		 	x@(Def{defName = dn}, _) : xs -> if dn == "self" then xs else x:xs
+			
+		pars'' :: [(Def, Maybe Exp)]
 		pars'' = case overrideDef of
-			Nothing -> pars'
-			Just od -> map checkParTypeAndWrapIfNeeded $ zip pars' (defPars od)
+			Nothing -> filterSelfPar pars
+			Just od -> map checkParTypeAndWrapIfNeeded $ zip (filterSelfPar pars) (defPars od)
+			where
+				filterSelfPar ((Def{defName = "self"}, _):xs) = xs
+				filterSelfPar d = d
 
 		checkParTypeAndWrapIfNeeded :: ((Def, Maybe Exp), Def) -> (Def, Maybe Exp)
 		checkParTypeAndWrapIfNeeded (p@(thisPar@Def{defType = thisTp}, de), Def{defType = superTp})
@@ -843,12 +854,18 @@ linkDef env D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRe
 		defGenerics' = Just $ DefGenerics generics' $ case pars of
 		 	[] -> envSelf env
 		 	(Def{defName = dn, defType = dtp}, _) : _ -> if dn == "self" then dtp else envSelf env
-		mods' = translateMods mods
+		mods' = translateMods mods ++ if isInit then [] else case overrideDef of
+			Just o -> [DefModError "No override modifier" |  D.DefModOverride `notElem` mods] ++
+					 [DefModError "Override final def" | DefModFinal `elem` defMods o] 
+			Nothing -> [DefModError "Override nothing" |  D.DefModOverride `elem` mods]
 		overrideDef :: Maybe Def
 		overrideDef = find eqDef $ allDefsInParentClass (buildGenerics cl $ dataTypeGenerics env $ envSelf env) cl
-		eqDef d = defName d == name && length (defPars d) == length opars && all eqParameterNames (zip (defPars d) opars)
+		eqDef d = defName d == name && length (defPars d) == length opars' && all eqParameterNames (zip (defPars d) opars')
 			where
 				eqParameterNames (Def{defName = l}, D.Par{D.parName = r}) = l == r
+				filterSelfPar (D.Par{D.parName = "self"}:xs) = xs
+				filterSelfPar xs = xs
+				opars' = filterSelfPar opars
 
 		overrideTp = fmap defType overrideDef
 		needWrapRetType = maybe False isTpGeneric overrideTp
@@ -2517,13 +2534,18 @@ checkExtendsFinal Class{_classMods = mods}
 checkExtendsFinal _ = []
 
 checkErrorsInDef :: Def -> [Error]
-checkErrorsInDef Def {defName = name, defPars = pars, defType = tp, defBody = body, defGenerics = gens} =
+checkErrorsInDef Def {defName = name, defPars = pars, defType = tp, defBody = body, defGenerics = gens, defMods = mods} =
 	map (ErrorParent $"def " ++ name) (
 		concatMap checkErrorsInDef pars
 		++ checkErrorsInDataType tp
 		++ checkErrorsInExp body
 		++ maybe [] checkErrorsInDefGenerics gens
+		++ concatMap checkErrorsInDefMod mods
 	)
+
+checkErrorsInDefMod :: DefMod -> [Error]
+checkErrorsInDefMod (DefModError e) = [Error e]
+checkErrorsInDefMod _ = []
 
 checkErrorsInDefGenerics :: DefGenerics -> [Error]
 checkErrorsInDefGenerics DefGenerics{defGenericsClasses = classes, defGenericsSelfType = tp} =

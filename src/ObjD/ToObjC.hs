@@ -1013,7 +1013,7 @@ tStm env@Env{envDataType = D.TPVoid} _ (D.Return _ e) = [C.Stm $ tExp env{envCSt
 tStm env@Env{envDataType = tp}  _ (D.Return _ e) = [C.Return $ tExpToType env{envCStruct = 0} tp e]
 tStm env parexps (D.Val separate def@D.Def{D.defName = name, D.defType = tp, D.defBody = e, D.defMods = mods}) = 
 	[C.Var (showDataType tp) name (if separate then C.Nop else tExpToType env tp e) (["__block" | needBlock] ++ ["__weak" | isWeak])]
-	++ (if separate then translate env e else [])
+	++ (if separate then tStm env [] e else [])
 	where 
 		needBlock = D.DefModMutable `elem` mods && existsSetInLambda
 		existsSetInLambda = any (isJust . setsInLambda) parLambdas
