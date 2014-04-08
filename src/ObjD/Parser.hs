@@ -377,10 +377,6 @@ pExp = do
 				string "--"
 				sps
 				return $ MinusMinus o) <|>
-			try(do
-				string "?!"
-				sps
-				return $ NonOpt o) <|> 
 			try(do 
 				charSps '['
 				e <- pExp
@@ -397,21 +393,6 @@ pExp = do
 				e <- pTerm
 				sps
 				postFix $ NullDot o e) <|>
-			try(do 
-				stringSps "!."
-				e <- pTerm
-				sps
-				postFix $ Dot (NonOpt o) e) <|>
-			try(do 
-				stringSps "?>"
-				e <- (pLambda <|> pTuple)
-				sps
-				postFix $ NullDot o (MapVal e)) <|>
-			try(do 
-				stringSps "?:"
-				e <- pTerm
-				sps
-				postFix $ Elvis o e) <|>
 			(return o)
 
 pTerm :: Parser Exp

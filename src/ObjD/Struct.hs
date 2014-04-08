@@ -83,8 +83,6 @@ data Exp = Nop
 	| BoolOp BoolTp Exp Exp
 	| Dot Exp Exp
 	| NullDot Exp Exp
-	| Elvis Exp Exp
-	| MapVal Exp
 	| Set (Maybe MathTp) Exp Exp
 	| MathOp MathTp Exp Exp
 	| FuncOp FuncOpTp Exp Exp
@@ -92,7 +90,6 @@ data Exp = Nop
 	| MinusMinus Exp
 	| Call String (Maybe [CallPar]) [DataType]
 	| Index Exp Exp
-	| NonOpt Exp
 	| Lambda [(String, Maybe DataType)] Exp
 	| Val{valName :: String, valDataType :: Maybe DataType, valBody :: Exp, valMods :: [DefMod]}
 	| Throw Exp
@@ -164,9 +161,7 @@ instance Show Exp where
 	show Nil = "nil"
 	show Break = "break"
 	show (Dot l r) = showOp' l "." r
-	show (NullDot l (MapVal r)) = showOp' l "?" r
 	show (NullDot l r) = showOp' l "?." r
-	show (Elvis l r) = showOp' l "?:" r
 	show (Set Nothing l r) = showOp l "=" r
 	show (Set (Just t) l r) = showOp l (show t ++ "=") r
 	show (BoolOp t l r) = showOp l (show t) r
@@ -197,9 +192,7 @@ instance Show Exp where
 	show (Synchronized e b) = "synchronized(" ++ show e ++ ") {\n" ++ show b ++ "\n}"
 	show (Weak e) = "weak " ++ show e
 	show (Try e f) = "try " ++ show e ++ "\nfinally" ++ show f
-	show (NonOpt e) = show e ++ "?!"
-	show (MapVal r) = "?>(" ++ show r ++ ")"
-
+	
 showCaseItem :: (CaseCondition, Exp) -> String
 showCaseItem (cond, e) = show cond ++ " -> " ++ show e
 

@@ -1044,23 +1044,11 @@ unoptionHard (TPOption o) = o
 unoptionHard (TPGenericWrap _ (TPOption o)) = o
 unoptionHard tp = TPUnknown $ show tp ++ " is not option"
 
-unoption :: DataType -> DataType
-unoption TPVoid = TPVoid
-unoption (TPOption o) = o
-unoption (TPGenericWrap _ (TPOption o)) = o
-unoption tp = tp
-
 option :: DataType -> DataType
 option TPVoid = TPVoid
 option o@(TPOption _) = o
 option o@(TPGenericWrap _ (TPOption _)) = o
 option tp = TPOption $ wrapGeneric tp
-
-isOption :: DataType -> Bool
-isOption (TPOption _) = True
-isOption (TPGenericWrap _ (TPOption _)) = True
-isOption _ = False
-
 
 forDataType :: MonadPlus m => (DataType -> m a) -> DataType -> m a
 forDataType f tp = mplus (go tp) (f tp)
@@ -1722,7 +1710,6 @@ expr _ (D.StringConst i) = StringConst i
 expr _ D.Nil = Nil
 expr _ (D.BoolConst i) = BoolConst i
 expr _ (D.FloatConst s) = FloatConst s
-expr env (D.NonOpt e) = NonOpt True $ expr env e
 expr env (D.BoolOp tp a b) = BoolOp tp (exprToSome env a) (exprToSome env b)
 expr env (D.MathOp tp a b) = 
 	let 
@@ -1740,77 +1727,17 @@ expr env d@(D.Dot a b) = let
 	aa = case a of
 		D.Call {} -> exprCall env Nothing a
 		_ -> exprToSome env a
-	bb = exprCall env (Just $ exprDataType aa)  b
-	in case aa of
-		ExpDError s _ -> ExpDError s d
-		_ -> case bb of
-			Dot l r -> Dot (Dot aa l) r
-			_ -> Dot aa bb
-expr env d@(D.NullDot a b) = let
-	aa = case a of
-		D.Call {} -> exprCall env Nothing a
-		_ -> exprToSome env a
 	aTp = exprDataType aa
-	aTp' = unoptionHard aTp
-	bb = case aTp of
-		TPOption tp -> exprCall env (Just tp) b
-		tp -> ExpDError ("Null safe operation for the non-nullable datatype " ++ show tp) b
-	mapVal e = Braces [
-				declareVal env tmp, 
-				(case unwrapGeneric $ envTp env of
-					TPVoid -> If (BoolOp NotEq (callRef tmp) Nil) 
-						mapExpr' Nop
-					_ -> If (BoolOp NotEq (callRef tmp) Nil) 
-						(implicitConvertsion env (option bTp) mapExpr')
-						(None $ wrapGeneric $ bTp))
-			]
-			where
-				tmp :: Def
-				tmp = localValE mapVarName aTp' (NonOpt False aa)
-				mapVarName = case e of
-					D.Lambda [(name, _)] _ -> name 
-					_ -> "_"
-				mapExpr = case e of
-					D.Lambda _ le -> le
-					_ -> e
-				mapExpr' = expr (envAddVals [tmp] env) mapExpr
-				bTp = unoption $ exprDataType mapExpr'
-				
-	in case aa of
-		ExpDError s _ -> ExpDError s d
-		_ -> case b of
-			D.MapVal e -> mapVal e
+	bb = exprCall env (Just $ exprDataType aa)  b
+	in case aTp of
+		TPOption{} -> linkOptionCall env (a, aa) b
+		TPGenericWrap _ TPOption{} -> linkOptionCall env (a, aa) b
+		_ -> case aa of
+			ExpDError s _ -> ExpDError s d
 			_ -> case bb of
-				Dot l r -> Dot (NullDot aa l) r
-				_ -> NullDot aa bb
-expr env (D.Elvis l alt) = let
-	l' = expr env{envVarSuffix = envVarSuffix env ++ "_e1"} l
-	tp = case exprDataType l' of
-		TPOption t -> t
-		t -> TPUnknown ("Null safe operation for the non-nullable datatype " ++ show t)
-	alt' = expr env{envVarSuffix = envVarSuffix env ++ "_e2"} alt
-	altIsOption = isOption $ unwrapGeneric $ exprDataType alt' 
-	castTp = if altIsOption then option tp else tp
-	alt'' = implicitConvertsion env castTp alt'
-	wrapStraight = if altIsOption then id else NonOpt False
-	in case (l, l') of
-		((D.NullDot dl dr), (NullDot dl' dr') ) -> 
-			let
-				l'' = Dot (NonOpt False dl') dr'
-				tmp = tmpVal env (exprDataType dl') dl'
-				
-			in if isReference dl' then If (BoolOp NotEq dl' Nil) (expr env (D.Dot (D.NonOpt dl) dr)) alt'' 
-				else Braces[
-					declareVal env tmp,
-					If (BoolOp NotEq (callRef tmp) Nil) l'' alt''
-				]
-		_ ->
-			let 
-				tmp = tmpVal env (option tp) $ implicitConvertsion env (option tp) l'
-			in Braces[
-					declareVal env tmp,
-					If (BoolOp NotEq (callRef tmp) Nil) (wrapStraight $ callRef tmp) alt''
-				]
+				Dot l r -> Dot (Dot aa l) r
+				_ -> Dot aa bb
+expr env d@(D.NullDot _ _) = linkNullDot env d
 expr env (D.Set tp a b) = 
 	let 
 		aa = exprToSome env a
@@ -1920,6 +1847,96 @@ declareVal env d
 		mappedDef = d{defBody = mapExp replaceReturn (addReturn env True (defType d) $  defBody d)}
 		replaceReturn (Return _ e) = Just $ Set Nothing (callRef mappedDef) e
 		replaceReturn _ = Nothing
+
+
+{------------------------------------------------------------------------------------------------------------------------------ 
+ - Options
+ ------------------------------------------------------------------------------------------------------------------------------}
+linkOptionCall :: Env -> (D.Exp, Exp) -> D.Exp -> Exp
+linkOptionCall _ (_, leftExp) (D.Call "get" Nothing []) = NonOpt True $ leftExp
+linkOptionCall env (_ ,leftExp) e@(D.Call "cast" Nothing [tp]) = case tp of
+	D.DataTypeOption{} -> Cast (dataType env tp) leftExp 
+	_ -> ExpDError ("Cast option to non-option: " ++ show tp) e
+linkOptionCall env (l, _) (D.Call "getOr" (Just [(_, alt)]) []) = 
+	let
+		l' = expr env{envVarSuffix = envVarSuffix env ++ "_e1"} l
+		tp = unoptionHard $ exprDataType l'
+		alt'' = linkOptionAlt env alt tp
+	in linkOrElse env (tp, False) (l, l') alt''
+linkOptionCall env (l, _) (D.Call "or" (Just [(_, alt)]) []) = 
+	let
+		l' = expr env{envVarSuffix = envVarSuffix env ++ "_e1"} l
+		tp = unoptionHard $ exprDataType l'
+		alt'' = linkOptionAlt env alt (option tp)
+	in linkOrElse env (tp, True) (l, l') alt''
+linkOptionCall env (_, l') (D.Call fname (Just [(_, e)]) []) 
+	| fname == "map" || fname == "for" || fname == "flatMap" = let
+		aTp = unoptionHard $ exprDataType l'
+		tmp :: Def
+		tmp = localValE mapVarName aTp (NonOpt False l')
+		mapVarName = case e of
+			D.Lambda [(name, _)] _ -> name 
+			_ -> "_"
+		mapExpr = case e of
+			D.Lambda _ le -> le
+			_ -> e
+		mapExpr' = expr (envAddVals [tmp] env) mapExpr
+		bTp = case fname of
+			"for" -> TPVoid
+			"map" -> exprDataType mapExpr'
+			"flatMap" -> unoptionHard $ exprDataType mapExpr'
+	in	Braces [
+			declareVal env tmp, 
+			(case unwrapGeneric $ envTp env of
+				TPVoid -> If (BoolOp NotEq (callRef tmp) Nil) 
+					mapExpr' Nop
+				_ -> If (BoolOp NotEq (callRef tmp) Nil) 
+					(implicitConvertsion env (option bTp) mapExpr')
+					(None $ wrapGeneric $ bTp))
+		]
+
+			
+linkOptionCall _ _ e = ExpDError ("Unknown option operation: " ++ show e) e
+
+linkOptionAlt :: Env -> D.Exp -> DataType -> Exp
+linkOptionAlt env alt tp = implicitConvertsion env tp $ expr env{envVarSuffix = envVarSuffix env ++ "_e2"} alt'
+	where alt' = case alt of
+			(D.Lambda [] a) -> a
+			_ -> alt
+
+linkOrElse :: Env -> (DataType, Bool) -> (D.Exp, Exp) -> Exp -> Exp
+linkOrElse env _ ((D.NullDot dl dr), (NullDot dl' dr')) alt =
+	let
+		l'' = Dot (NonOpt False dl') dr'
+		tmp = tmpVal env (exprDataType dl') dl'
+	in if isReference dl' then If (BoolOp NotEq dl' Nil) (expr env (D.Dot (D.Dot dl (D.Call "get" Nothing [])) dr)) alt
+		else Braces[
+			declareVal env tmp,
+			If (BoolOp NotEq (callRef tmp) Nil) l'' alt
+		]
+linkOrElse env (tp, isOptionAlt) (_, l') alt = 
+	let 
+		tmp = tmpVal env (option tp) $ implicitConvertsion env (option tp) l'
+	in Braces[
+			declareVal env tmp,
+			If (BoolOp NotEq (callRef tmp) Nil) ((if isOptionAlt then id else NonOpt False) $ callRef tmp) alt
+		]
+
+linkNullDot :: Env -> D.Exp -> Exp
+linkNullDot env d@(D.NullDot a b) = let
+	aa = case a of
+		D.Call {} -> exprCall env Nothing a
+		_ -> exprToSome env a
+	aTp = exprDataType aa
+	bb = case aTp of
+		TPOption tp -> exprCall env (Just tp) b
+		TPGenericWrap _ (TPOption tp) -> exprCall env (Just tp) b
+		tp -> ExpDError ("Null safe operation for the non-nullable datatype " ++ show tp) b			
+	in case aa of
+		ExpDError s _ -> ExpDError s d
+		_ -> case bb of
+			Dot l r -> Dot (NullDot aa l) r
+			_ -> NullDot aa bb
 
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Functional Compositions >> *|* **

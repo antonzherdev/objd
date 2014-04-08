@@ -728,15 +728,17 @@ tExpTo :: Env -> D.DataType -> D.Exp -> C.Exp
 tExpTo env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
 
 castGeneric :: D.Exp -> C.Exp -> C.Exp
-castGeneric dexp e = case D.exprDataType dexp of
-	D.TPGenericWrap _ c@(D.TPClass D.TPMClass _ _) -> C.Cast (showDataType c) e
-	D.TPGenericWrap _ c@(D.TPClass D.TPMTrait _ _) -> C.Cast (showDataType c) e
-	D.TPGenericWrap _ c@(D.TPClass D.TPMEnum _ _) -> C.Cast (showDataType c) e
-	D.TPGenericWrap _ c@D.TPTuple{} -> C.Cast (showDataType c) e
-	D.TPGenericWrap _ c@D.TPArr{} -> C.Cast (showDataType c) e
-	D.TPGenericWrap _ c@D.TPEArr{} -> C.Cast (showDataType c) e
-	D.TPGenericWrap _ c@D.TPMap{} -> C.Cast (showDataType c) e
-	_ -> e
+castGeneric dexp e = let 
+	cst (D.TPOption tp) = cst (D.wrapGeneric tp)
+	cst (D.TPGenericWrap _ c@(D.TPClass D.TPMClass _ _)) = C.Cast (showDataType c) e
+	cst (D.TPGenericWrap _ c@(D.TPClass D.TPMTrait _ _)) = C.Cast (showDataType c) e
+	cst (D.TPGenericWrap _ c@(D.TPClass D.TPMEnum _ _)) = C.Cast (showDataType c) e
+	cst (D.TPGenericWrap _ c@D.TPTuple{}) = C.Cast (showDataType c) e
+	cst (D.TPGenericWrap _ c@D.TPArr{}) = C.Cast (showDataType c) e
+	cst (D.TPGenericWrap _ c@D.TPEArr{}) = C.Cast (showDataType c) e
+	cst (D.TPGenericWrap _ c@D.TPMap{}) = C.Cast (showDataType c) e
+	cst _ = e
+	in cst $ D.exprDataType dexp
 
 data Env = Env{envClass :: D.Class, envCStruct :: Int, envDataType :: D.DataType, envWeakSelf :: Bool}
 
