@@ -238,7 +238,7 @@ allDefsInObject (cl, gens) =
 
 
 buildGenerics :: Class -> [DataType] -> Generics
-buildGenerics cl gens = M.fromList $ zip (map className $ classGenerics cl) gens
+buildGenerics cl gens = M.fromList $ zip (map className $ classGenerics cl) $ map wrapGeneric gens
 
 buildGenericsForSelf :: Class -> Generics
 buildGenericsForSelf cl = M.fromList $ map (\g -> (className g, refDataType g []) ) $ classGenerics cl
@@ -876,6 +876,10 @@ linkDef env dd@D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.de
 
 		overrideTp = fmap defType overrideDef
 		needWrapRetType = maybe False isTpGeneric overrideTp
+		isTpGeneric (TPClass TPMGeneric _ _) = True
+		isTpGeneric (TPGenericWrap _ _) = True
+		isTpGeneric _ = False
+
 		mapOverrideType rtp = 
 			let rtp' = if needWrapRetType then wrapGeneric rtp else rtp
 		 	in case overrideTp of
@@ -1027,9 +1031,6 @@ isVoid _ = False
 isTpFun :: DataType -> Bool
 isTpFun TPFun{} = True
 isTpFun _ = False
-isTpGeneric :: DataType -> Bool
-isTpGeneric (TPClass TPMGeneric _ _) = True
-isTpGeneric _ = False
 isTpClass :: DataType -> Bool
 isTpClass (TPClass TPMClass _ _) = True
 isTpClass _ = False
