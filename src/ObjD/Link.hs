@@ -311,15 +311,16 @@ isInstanceOfTp env l r@(TPClass TPMType _ _) = isInstanceOfTp env l (fromJust $ 
 isInstanceOfTp _ _ TPAny = True
 isInstanceOfTp _ _ TPThrow = True
 isInstanceOfTp _ TPThrow _ = True
-isInstanceOfTp _ TPNil (TPOption _) = True
+isInstanceOfTp _ TPNil (TPOption _ _) = True
 isInstanceOfTp _ TPNil TPVoid = True
 isInstanceOfTp _ TPAnyGeneric _ = True
 isInstanceOfTp _ _ TPAnyGeneric = True
 isInstanceOfTp _ _ TPUnknown{} = True
-isInstanceOfTp env (TPOption a) (TPOption b) 
+isInstanceOfTp env (TPOption _ a) (TPOption _ b) 
 	| a == b = True
 	| otherwise = isInstanceOfTp env a b
-isInstanceOfTp env a (TPOption b)  = isInstanceOfTp env a b
+isInstanceOfTp env a (TPOption _ b)  = isInstanceOfTp env a b
+isInstanceOfTp env (TPOption True a) b  = isInstanceOfTp env a b
 isInstanceOfTp _ TPVoid (TPClass TPMGeneric _ _) = True
 isInstanceOfTp _ TPNil (TPClass TPMGeneric _ _) = True
 isInstanceOfTp env cl (TPClass TPMGeneric _ t) = dataTypeClass env cl `isInstanceOf` t
@@ -347,18 +348,18 @@ commonSuperDataType env a (TPGenericWrap _ b) = commonSuperDataType env a b
 commonSuperDataType env TPNil a = commonSuperDataType env a TPNil
 commonSuperDataType _ TPAny a = [a]
 commonSuperDataType _ TPThrow a = [a]
-commonSuperDataType _ a@(TPOption _) TPNil = [a]
+commonSuperDataType _ a@(TPOption _ _) TPNil = [a]
 commonSuperDataType _ TPVoid TPNil = [TPVoid]
-commonSuperDataType _ a TPNil = [option a]
+commonSuperDataType _ a TPNil = [option False a]
 commonSuperDataType _ a TPAny = [a]
 commonSuperDataType _ a TPThrow = [a]
 commonSuperDataType _ TPNumber{} f@TPFloatNumber{} = [f]
 commonSuperDataType _ f@TPFloatNumber{} TPNumber{} = [f]
 commonSuperDataType _ (TPNumber as an) (TPNumber bs bn) = [TPNumber (as || bs) (max an bn)]
 commonSuperDataType _ (TPFloatNumber an) (TPFloatNumber bn) = [TPFloatNumber (max an bn)]
-commonSuperDataType env (TPOption a) (TPOption b) = map option $ commonSuperDataType env a b
-commonSuperDataType env a (TPOption b) = map option $ commonSuperDataType env a b
-commonSuperDataType env (TPOption a) b = map option $ commonSuperDataType env a b
+commonSuperDataType env (TPOption ca a) (TPOption cb b) = map (option (ca && cb)) $ commonSuperDataType env a b
+commonSuperDataType env a (TPOption c b) = map (option c) $ commonSuperDataType env a b
+commonSuperDataType env (TPOption c a) b = map (option c) $ commonSuperDataType env a b
 commonSuperDataType env _ TPVoid = [baseDataType env]
 commonSuperDataType env TPVoid _ = [baseDataType env]
 commonSuperDataType env a b 
@@ -967,6 +968,9 @@ linkDefPars env pars = let
 type ClassIndex = M.Map String Class
 type ObjectIndex = [Class]
 data Env = Env{envSelf :: DataType, envIndex :: ClassIndex, envObjectIndex :: ObjectIndex, envVals :: [Def], envInit :: Bool, envTp :: DataType, envVarSuffix :: String}
+
+envChangeDefTp :: Env -> Def -> DataType -> Env
+envChangeDefTp env@Env{envVals = vals} d tp = env{envVals = d{defType = tp} : filter (/= d) vals}
 envAddVals :: [Def] -> Env -> Env 
 envAddVals newVals env@Env{envVals = vals} = env{envVals = vals ++ newVals}
 envAddClasses :: [Class] -> Env -> Env 
@@ -987,7 +991,8 @@ data DataType = TPNumber Bool Int | TPFloatNumber Int | TPString | TPVoid
 	| TPEArr Int DataType | TPAny | TPChar
 	| TPArr Int DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf Class | TPUnknown String 
 	| TPMap DataType DataType
-	| TPOption DataType | TPGenericWrap [WrapReason] DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
+	| TPOption Bool DataType -- Currently in option state. If already checked than True
+	| TPGenericWrap [WrapReason] DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
 	| TPAnyGeneric | TPVoidRef | TPUnset
 	deriving (Eq)
 data WrapReason = WrapReasonUp | WrapReasonBlock deriving(Eq) 
@@ -1040,15 +1045,17 @@ isTpStruct _ = False
 
 unoptionHard :: DataType -> DataType
 unoptionHard TPVoid = TPVoid
-unoptionHard (TPOption o) = o
-unoptionHard (TPGenericWrap _ (TPOption o)) = o
+unoptionHard (TPOption _ o) = o
+unoptionHard (TPGenericWrap _ (TPOption _ o)) = o
 unoptionHard tp = TPUnknown $ show tp ++ " is not option"
 
-option :: DataType -> DataType
-option TPVoid = TPVoid
-option o@(TPOption _) = o
-option o@(TPGenericWrap _ (TPOption _)) = o
-option tp = TPOption $ wrapGeneric tp
+option :: Bool -> DataType -> DataType
+option _ TPVoid = TPVoid
+option ch o@(TPOption och tp)
+	| ch == och = o
+	| otherwise = TPOption (och && ch) tp
+option ch (TPGenericWrap w tp) = TPGenericWrap w $ option ch tp
+option ch tp = TPOption ch $ wrapGeneric tp
 
 forDataType :: MonadPlus m => (DataType -> m a) -> DataType -> m a
 forDataType f tp = mplus (go tp) (f tp)
@@ -1059,7 +1066,7 @@ forDataType f tp = mplus (go tp) (f tp)
 		go (TPFun a b) = mplus (forDataType f a) (forDataType f b)
 		go (TPMap a b) = mplus (forDataType f a) (forDataType f b)
 		go (TPGenericWrap _ a) = forDataType f a
-		go (TPOption a) = forDataType f a
+		go (TPOption _ a) = forDataType f a
 		go (TPTuple a) =  msum $ map (forDataType f) a
 		go _ = mzero
 
@@ -1073,7 +1080,7 @@ mapDataType f tp = fromMaybe (go tp) (f tp)
 		go (TPFun a b) = TPFun (mapDataType f a) (mapDataType f b)
 		go (TPMap a b) = TPMap (mapDataType f a) (mapDataType f b)
 		go (TPGenericWrap t a) = TPGenericWrap t (mapDataType f a)
-		go (TPOption a) = TPOption (mapDataType f a)
+		go (TPOption ch a) = TPOption ch (mapDataType f a)
 		go (TPTuple a) = TPTuple (map (mapDataType f) a)
 		go _ = tp
 
@@ -1081,7 +1088,7 @@ mapDataTypeGenerics :: ([DataType] -> [DataType]) -> DataType -> DataType
 mapDataTypeGenerics f (TPGenericWrap reasons tp) = TPGenericWrap reasons $ mapDataTypeGenerics f tp
 mapDataTypeGenerics f (TPClass mods gens cl) = TPClass mods (f gens) cl
 mapDataTypeGenerics f (TPTuple gens) = TPTuple (f gens)
-mapDataTypeGenerics f (TPOption gen) = TPOption (head $ f [gen])
+mapDataTypeGenerics f (TPOption ch gen) = TPOption ch (head $ f [gen])
 mapDataTypeGenerics f (TPEArr count gen) = TPEArr count (head $ f [gen])
 mapDataTypeGenerics f (TPArr count gen) = TPArr count (head $ f [gen])
 mapDataTypeGenerics f (TPFun s d) = 
@@ -1160,7 +1167,6 @@ dataTypeClassName (TPClass _ _ c ) = className c
 dataTypeClassName (TPObject _ c) = className c
 dataTypeClassName (TPGenericWrap _ c) = dataTypeClassName c
 dataTypeClassName (TPArr _ _) = "Array"
-dataTypeClassName (TPOption _) = "Option"
 dataTypeClassName (TPMap _ _) = "Map"
 dataTypeClassName TPAny = "Any"
 dataTypeClassName (TPTuple [_, _]) = "Tuple"
@@ -1173,7 +1179,6 @@ dataTypeClassNameWithPrefix (TPClass _ _ c ) = classNameWithPrefix c
 dataTypeClassNameWithPrefix (TPObject _ c) = classNameWithPrefix c
 dataTypeClassNameWithPrefix (TPGenericWrap _ c) = dataTypeClassNameWithPrefix c
 dataTypeClassNameWithPrefix (TPArr _ _) = "CNArray"
-dataTypeClassNameWithPrefix (TPOption _) = "CNOption"
 dataTypeClassNameWithPrefix (TPMap _ _) = "CNMap"
 dataTypeClassNameWithPrefix TPAny = "ODAny"
 dataTypeClassNameWithPrefix (TPTuple [_, _]) = "CNTuple"
@@ -1190,7 +1195,7 @@ dataTypeGenerics _ (TPArr _ g) = [g]
 dataTypeGenerics _ (TPEArr _ g) = [g]
 dataTypeGenerics _ (TPFun s d) = [s, d]
 dataTypeGenerics _ (TPMap k v) = [k, v]
-dataTypeGenerics _ (TPOption v) = [v]
+dataTypeGenerics _ (TPOption _ v) = [v]
 dataTypeGenerics _ (TPTuple a) = a
 dataTypeGenerics env (TPGenericWrap _ g) = dataTypeGenerics env g
 dataTypeGenerics _ _ = []
@@ -1259,7 +1264,7 @@ dataType env (D.DataTypeFun (D.DataTypeTuple [s]) d) = TPFun (dataType env s) (d
 dataType env (D.DataTypeFun (D.DataTypeTuple tps) d) = TPFun (TPTuple $ map (dataType env) tps) (dataType env d)
 dataType env (D.DataTypeFun s d) = TPFun (dataType env s) (dataType env d)
 dataType env (D.DataTypeTuple tps) = TPTuple $ map (wrapGeneric . dataType env) tps
-dataType env (D.DataTypeOption t) = TPOption $ (wrapGeneric . dataType env) t
+dataType env (D.DataTypeOption t) = TPOption False $ (wrapGeneric . dataType env) t
 
 
 instance Show DataType where
@@ -1297,7 +1302,8 @@ instance Show DataType where
 	show (TPMap k v) = "[" ++ show k ++ " : " ++ show v ++ "]"
 	show (TPFun s d) = show s ++ " -> " ++ show d
 	show (TPTuple tps) = "(" ++ strs' ", " tps ++ ")"
-	show (TPOption t) = show t ++ "?"
+	show (TPOption False t) = "(" ++ show t ++ ")?"
+	show (TPOption True t) = "(" ++ show t ++ ")¿"
 	show TPUnset = "_unset"
 	show _ =  "UnknownTP"
 instance Show DataTypeMod where
@@ -1356,7 +1362,7 @@ data Exp = Nop
 	| Arr [Exp]
 	| Map [(Exp, Exp)]
 	| Tuple [Exp]
-	| Some Exp
+	| Some Bool Exp -- Return checked or unchecked option
 	| None DataType
 	| Throw Exp
 	| Not Exp
@@ -1385,10 +1391,10 @@ instance Show Exp where
 	show (Self c) = "<" ++ show c ++ ">self"
 	show (Super c) = "<" ++ show c ++ ">super"
 	show (Return _ e) = "return " ++ show e
-	show (Set Nothing l r) = showOp l "=" r
-	show (Set (Just t) l r) = showOp l (show t ++ "=") r
-	show (BoolOp t l r) = showOp l (show t) r
-	show (MathOp t l r) = showOp l (show t) r
+	show (Set Nothing l r) = "(" ++ showOp l "=" r ++ ")"
+	show (Set (Just t) l r) = "(" ++ showOp l (show t ++ "=") r ++ ")"
+	show (BoolOp t l r) = "(" ++ showOp l (show t) r ++ ")"
+	show (MathOp t l r) = "(" ++ showOp l (show t) r ++ ")"
 	show (PlusPlus e) = show e ++ "++"
 	show (MinusMinus e) = show e ++ "--"
 	show (Dot l r) = showOp' l "." r
@@ -1409,7 +1415,7 @@ instance Show Exp where
 	show (Arr exps) = "["  ++ strs' ", " exps ++ "]"
 	show (Map exps) = "["  ++ strs' ", " exps ++ "]"
 	show (Tuple exps) = "("  ++ strs' ", " exps ++ ")"
-	show (Some e) = "some(" ++ show e ++ ")"
+	show ee@(Some _ e) = "some(" ++ show e ++ ")\\" ++ show (exprDataType ee) ++ "\\"
 	show (None tp) = "none<" ++ show tp ++ ">" 
 	show (FirstTry _ e) = "First try: " ++ show e
 	show (Throw e) = "throw " ++ show e
@@ -1498,7 +1504,7 @@ forExp f ee = mplus (go ee) (f ee)
 		go (MinusMinus e) = forExp f e
 		go (Return _ e) = forExp f e
 		go (Cast _ e) = forExp f e
-		go (Some e) = forExp f e
+		go (Some _ e) = forExp f e
 		go (Throw e) = forExp f e
 		go (Not e) = forExp f e
 		go (Negative e) = forExp f e
@@ -1533,7 +1539,7 @@ mapExp f ee = fromMaybe (go ee) (f ee)
 		go (MinusMinus e) = MinusMinus $ mapExp f e
 		go (Return p e) = Return p $ mapExp f e
 		go (Cast t e) = Cast t $ mapExp f e
-		go (Some e) = Some $ mapExp f e
+		go (Some ch e) = Some ch $ mapExp f e
 		go (Throw e) = Throw $ mapExp f e
 		go (Not e) = Not $ mapExp f e
 		go (Negative e) = Negative $ mapExp f e
@@ -1607,7 +1613,7 @@ exprDataType (MathOp _ l r) = case(unwrapGeneric $ exprDataType l, unwrapGeneric
 	(lt, _) -> lt
 exprDataType (PlusPlus e) = exprDataType e
 exprDataType (MinusMinus e) = exprDataType e
-exprDataType (NullDot _ b) = option $ exprDataType b 
+exprDataType (NullDot _ b) = option False $ exprDataType b 
 exprDataType (Dot _ b) = exprDataType b
 exprDataType Set{} = TPVoid
 exprDataType (Self s) = s
@@ -1638,14 +1644,14 @@ exprDataType (Map exps) = let (k, v) = ((exprDataType >>> wrapGeneric) *** (expr
 	in TPMap k v
 exprDataType (Tuple exps) = TPTuple $ map (wrapGeneric .exprDataType) exps
 exprDataType (Val _ Def{defType = tp}) = tp
-exprDataType (Some v) = option $ exprDataType v
-exprDataType (None tp) = option tp
+exprDataType (Some ch v) = option ch $ exprDataType v
+exprDataType (None tp) = option False tp
 exprDataType (FirstTry _ e) = exprDataType e
 exprDataType (Throw _) = TPThrow
 exprDataType (Not _) = TPBool
 exprDataType (Negative e) = exprDataType e
 exprDataType (Cast dtp _) = dtp
-exprDataType (As dtp) = TPOption $ wrapGeneric dtp
+exprDataType (As dtp) = option False $ wrapGeneric dtp
 exprDataType (CastDot dtp) = dtp
 exprDataType (Is _) = TPBool
 exprDataType Break = TPVoid
@@ -1663,11 +1669,11 @@ maybeCast tp (Braces x) = Braces $ (init x) ++ [maybeCast tp $ last x]
 maybeCast TPNil e = e
 maybeCast (TPGenericWrap _ TPNil) e = e
 maybeCast _ Nil = Nil
-maybeCast (TPOption t) e = 
+maybeCast (TPOption ch t) e = 
 	let tp = unwrapGeneric $ exprDataType e
 	in case tp of
-		TPOption r -> if unwrapGeneric r == unwrapGeneric t then e else Cast tp e
-		_ -> Some(e)
+		TPOption _ r -> if unwrapGeneric r == unwrapGeneric t then e else Cast tp e
+		_ -> Some ch e
 maybeCast tp e 
 	| unwrapGeneric tp == unwrapGeneric (exprDataType e) = e
 	| otherwise = Cast tp e
@@ -1680,17 +1686,28 @@ exprToSome env e =  expr env{envTp = baseDataType env} e
 
 
 expr :: Env -> D.Exp -> Exp
-expr env (D.If cond t D.Nop) = If (exprTo env TPBool cond) (expr env t) Nop
+expr env (D.If cond t D.Nop) = let
+	cond' = exprTo env TPBool cond 
+	env' = optChecking env cond'
+	in If (exprTo env TPBool cond) (expr (fst env') t) Nop
 expr env (D.If cond t f)
-	| envTp env == TPVoid = If (exprTo env TPBool cond) (expr env t) (expr env f)
+	| envTp env == TPVoid = let
+		cond' = exprTo env TPBool cond 
+		env' = optChecking env cond'
+		in If (exprTo env TPBool cond) (expr (fst env') t) (expr (snd env') f)
 	| otherwise = let 
-		t' = expr env t
-		f' = expr env f
+		cond' = exprTo env TPBool cond 
+		env' = optChecking env cond'
+		t' = expr (fst env') t
+		f' = expr (snd env') f
 		dt = exprDataType t'
 		df = exprDataType f'
 		retTp = firstCommonSuperDataType env dt df
-	in If (expr env cond) (maybeCast retTp t') (maybeCast retTp f')
-expr env (D.While cond t) = While (exprTo env TPBool cond) (expr env{envTp = TPVoid} t)
+	in If cond' (maybeCast retTp t') (maybeCast retTp f')
+expr env (D.While cond t) = let
+	cond' = exprTo env TPBool cond 
+	env' = fst $ optChecking env{envTp = TPVoid} cond'
+	in While cond' (expr env' t)
 expr env (D.Synchronized cond t) = Synchronized (exprToSome env cond) (expr env t)
 expr env (D.Try e f) = Try (expr env e) (expr env f)
 expr env (D.Do cond t) = Do (exprTo env TPBool cond) (expr env{envTp = TPVoid} t)
@@ -1701,15 +1718,29 @@ expr env (D.Braces es) = Braces $ bracesRec env 0 es
 		bracesRec :: Env -> Int -> [D.Exp] -> [Exp]
 		bracesRec _  _ [] = []
 		bracesRec env' n [x] = [expr env'{envVarSuffix = envVarSuffix env ++ ('_' : show n)} x]
-		bracesRec env' n (x:xs) = case expr env'{envVarSuffix = envVarSuffix env ++ ('_' : show n), envTp = TPVoid} x of
-			x'@(Val _ d) -> x':(bracesRec (envAddVals [d] env') (n + 1) xs)
-			x' -> x':(bracesRec env' (n + 1) xs)
+		bracesRec env' n (x:xs) = let 
+				x' = expr env'{envVarSuffix = envVarSuffix env ++ ('_' : show n), envTp = TPVoid} x
+				env'' = case x' of
+					(Val _ d) -> (envAddVals [d] env')
+					(Set _ (Call d _ []) r) -> case unwrapGeneric (defType d) of
+						TPOption cl tpl -> case unwrapGeneric (exprDataType r) of
+							TPOption cr _ -> if cr == cl then env' else envChangeDefTp env' d (TPOption cr tpl)
+							_ -> env'
+						_ -> env'
+					_ -> env'
+			in x':(bracesRec env'' (n + 1) xs)
 expr _ D.Nop = Nop
 expr _ (D.IntConst i) = IntConst i
 expr _ (D.StringConst i) = StringConst i
 expr _ D.Nil = Nil
 expr _ (D.BoolConst i) = BoolConst i
 expr _ (D.FloatConst s) = FloatConst s
+expr env (D.BoolOp tp a b)
+	| tp == Or || tp == And = let
+		a' = exprTo env TPBool a
+		env' = optChecking env a'
+		env'' = if tp == Or then snd env' else fst env'
+	in BoolOp tp a' (exprTo env'' TPBool b)
 expr env (D.BoolOp tp a b) = BoolOp tp (exprToSome env a) (exprToSome env b)
 expr env (D.MathOp tp a b) = 
 	let 
@@ -1727,8 +1758,11 @@ expr env d@(D.Dot a b) = let
 	aa = case a of
 		D.Call {} -> exprCall env Nothing a
 		_ -> exprToSome env a
-	aTp = exprDataType aa
-	bb = exprCall env (Just $ exprDataType aa)  b
+	aTp = case exprDataType aa of
+		TPOption True t -> t
+		TPGenericWrap _ (TPOption True t) -> t
+		t -> t
+	bb = exprCall env (Just aTp)  b
 	in case aTp of
 		TPOption{} -> linkOptionCall env (a, aa) b
 		TPGenericWrap _ TPOption{} -> linkOptionCall env (a, aa) b
@@ -1867,7 +1901,7 @@ linkOptionCall env (l, _) (D.Call "or" (Just [(_, alt)]) []) =
 	let
 		l' = expr env{envVarSuffix = envVarSuffix env ++ "_e1"} l
 		tp = unoptionHard $ exprDataType l'
-		alt'' = linkOptionAlt env alt (option tp)
+		alt'' = linkOptionAlt env alt (option False tp)
 	in linkOrElse env (tp, True) (l, l') alt''
 linkOptionCall env (_, l') (D.Call fname (Just [(_, e)]) []) 
 	| fname == "map" || fname == "for" || fname == "flatMap" = let
@@ -1891,7 +1925,7 @@ linkOptionCall env (_, l') (D.Call fname (Just [(_, e)]) [])
 				TPVoid -> If (BoolOp NotEq (callRef tmp) Nil) 
 					mapExpr' Nop
 				_ -> If (BoolOp NotEq (callRef tmp) Nil) 
-					(implicitConvertsion env (option bTp) mapExpr')
+					(implicitConvertsion env (option False bTp) mapExpr')
 					(None $ wrapGeneric $ bTp))
 		]
 
@@ -1916,7 +1950,7 @@ linkOrElse env _ ((D.NullDot dl dr), (NullDot dl' dr')) alt =
 		]
 linkOrElse env (tp, isOptionAlt) (_, l') alt = 
 	let 
-		tmp = tmpVal env (option tp) $ implicitConvertsion env (option tp) l'
+		tmp = tmpVal env (option False tp) $ implicitConvertsion env (option False tp) l'
 	in Braces[
 			declareVal env tmp,
 			If (BoolOp NotEq (callRef tmp) Nil) ((if isOptionAlt then id else NonOpt False) $ callRef tmp) alt
@@ -1929,14 +1963,31 @@ linkNullDot env d@(D.NullDot a b) = let
 		_ -> exprToSome env a
 	aTp = exprDataType aa
 	bb = case aTp of
-		TPOption tp -> exprCall env (Just tp) b
-		TPGenericWrap _ (TPOption tp) -> exprCall env (Just tp) b
+		TPOption _ tp -> exprCall env (Just tp) b
+		TPGenericWrap _ (TPOption _ tp) -> exprCall env (Just tp) b
 		tp -> ExpDError ("Null safe operation for the non-nullable datatype " ++ show tp) b			
 	in case aa of
 		ExpDError s _ -> ExpDError s d
 		_ -> case bb of
 			Dot l r -> Dot (NullDot aa l) r
 			_ -> NullDot aa bb
+
+optChecking :: Env -> Exp -> (Env, Env)
+optChecking env e =  rec (env, env) e
+	where
+		mapEnvDef en d = case unwrapGeneric $ defType d of
+			TPOption False tp -> envChangeDefTp en d (TPOption True tp)
+			_ -> en
+		mapEnv en (Call d _ []) = mapEnvDef en d
+		mapEnv en (Dot (Self _) (Call d _ [])) = mapEnvDef en d
+		mapEnv en _ = en
+		rec :: (Env, Env) -> Exp -> (Env, Env)
+		rec en (BoolOp And a b) = rec (rec en a) b
+		rec (l, r) (BoolOp Eq ee Nil) = (l, mapEnv r ee)
+		rec (l, r) (BoolOp NotEq ee Nil) = (mapEnv l ee, r)
+		rec (l, r) (BoolOp Eq Nil ee) = (l, mapEnv r ee)
+		rec (l, r) (BoolOp NotEq Nil ee) = (mapEnv l ee, r)
+		rec en _ = en
 
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Functional Compositions >> *|* **
@@ -1955,7 +2006,7 @@ linkFuncOp env ex@(D.FuncOp tp l r)  =
 			_ -> Left $ "Left is not function but " ++ show ltp ++ " in " ++ show l'
 		rInputTypeShouldBe = case tp of
 			D.FuncOpBind -> lOutputType >>= \t -> case t of
-				TPOption o -> return $ unwrapGeneric o
+				TPOption _ o -> return $ unwrapGeneric o
 				_ -> return $ t
 			D.FuncOpClone -> lInputType
 		r'' = case exprDataType r' of
@@ -2007,10 +2058,10 @@ linkFuncOp env ex@(D.FuncOp tp l r)  =
 								[("_", wrapGeneric ri)] 
 								(maybeAddReturn env (wrapGeneric ro) gg)
 								(wrapGeneric ro)]
-							return $ lambda (if ro == TPVoid then TPVoid else TPOption $ wrapGeneric ro) c
+							return $ lambda (if ro == TPVoid then TPVoid else TPOption False $ wrapGeneric ro) c
 					case (lo, ri) of
-						(TPOption _, TPOption _) -> dotCall
-						(TPOption _, _) -> optCall
+						(TPOption _ _, TPOption _ _) -> dotCall
+						(TPOption _ _, _) -> optCall
 						_ -> dotCall
 				clone :: Either String Exp
 				clone = do
@@ -2144,7 +2195,7 @@ linkCase env (D.Case mainExpr items) =
 				newTpOpt = maybe (TPUnknown "Not found unapply") defType unapply
 				newVal = localVal  (caseEnvVal caseEnv) newTp
 				newTp = case newTpOpt of
-					TPOption t -> t
+					TPOption _ t -> t
 					TPUnknown _ -> tp
 					t -> t
 
@@ -2320,7 +2371,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 					tryDetermine :: Class -> (DataType, DataType) -> Maybe DataType
 					tryDetermine c (TPClass TPMGeneric _ gg, tp) = if c == gg then Just (wrapGeneric tp) else Nothing
 					tryDetermine c (TPArr _ a, TPArr _ a') = tryDetermine c (a, a')
-					tryDetermine c (TPOption a, TPOption a') = tryDetermine c (a, a')
+					tryDetermine c (TPOption _ a, TPOption _ a') = tryDetermine c (a, a')
 					tryDetermine c (TPMap a b, TPMap a' b') = mplus (tryDetermine c (a, a')) (tryDetermine c (b, b'))
 					tryDetermine c (TPTuple a, TPTuple a') = listToMaybe $ mapMaybe (tryDetermine c) (zip a a')
 					tryDetermine c (TPClass _ gg cl, TPClass _ gg' cl') = 
@@ -2470,11 +2521,12 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 				conv TPFun{} TPFun{} = ex
 				conv _ f@(TPFun _ fdtp) = Lambda (lambdaImplicitParameters f) (maybeAddReturn env fdtp ex) fdtp
 				{-conv TPFun{} _ = LambdaCall ex-}
-				conv (TPOption a) (TPOption b) = conv a b
-				conv TPNil (TPOption tp) = None (wrapGeneric tp)
-				conv a (TPOption b) 
-					| a == b = Some ex
-					| otherwise = Some $ conv a b
+				conv (TPOption True a) bb@(TPOption False b) = Cast bb $ conv a b
+				conv (TPOption _ a) (TPOption _ b) = conv a b
+				conv TPNil (TPOption _ tp) = None (wrapGeneric tp)
+				conv a (TPOption ch b) 
+					| a == b = Some ch ex
+					| otherwise = Some ch $ conv a b
 				conv _ (TPClass TPMGeneric _ _) = ex
 				conv (TPNumber _ _) TPString = Cast TPString ex
 				conv (TPFloatNumber _ ) TPString = Cast TPString ex

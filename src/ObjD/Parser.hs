@@ -395,6 +395,24 @@ pExp = do
 				postFix $ NullDot o e) <|>
 			(return o)
 
+pDot :: Parser Exp
+pDot = (do
+	e <- pTerm 
+	sps
+	postFix e)
+	where postFix o =
+		try(do 
+			charSps '.'
+			e <- pTerm
+			sps
+			postFix $ Dot o e) <|>
+		try(do 
+			stringSps "?."
+			e <- pTerm
+			sps
+			postFix $ NullDot o e) <|>
+		(return o)
+		
 pTerm :: Parser Exp
 pTerm = do
 		e <- pTerm'
@@ -406,7 +424,7 @@ pTerm = do
 
 		pMinus = do
 			charSps '-'
-			e <- pExp
+			e <- pDot
 			return $ Negative e
 		pBreak = try $ do 
 			string "break"

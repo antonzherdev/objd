@@ -637,7 +637,7 @@ procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
 		procDataType (D.TPGenericWrap _ cl) = procDataType cl
 		procDataType (D.TPClass _ _ cl) = retCl cl
 		procDataType (D.TPObject _ cl) = retCl cl
-		procDataType (D.TPOption cl) = procDataType cl
+		procDataType (D.TPOption _ cl) = procDataType cl
 		procDataType _ = []
 		procExp :: D.Exp -> [(D.Class, Bool)] 
 		procExp = D.forExp f
@@ -706,7 +706,7 @@ showDataType (D.TPSelf _) = idTp
 showDataType (D.TPTuple items) 
 	| length items > 2 = C.TPSimple ("CNTuple" ++ show (length items) ++ "*") []
 	| otherwise = C.TPSimple "CNTuple*" []
-showDataType (D.TPOption tp) = showDataType tp
+showDataType (D.TPOption _ tp) = showDataType tp
 showDataType (D.TPFun D.TPVoid d) = C.TPBlock (showDataType d) []
 showDataType (D.TPFun (D.TPTuple ss) d) = C.TPBlock (showDataType d) (map showDataType ss)
 showDataType (D.TPFun s d) = C.TPBlock (showDataType d) [showDataType s]
@@ -729,7 +729,7 @@ tExpTo env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
 
 castGeneric :: D.Exp -> C.Exp -> C.Exp
 castGeneric dexp e = let 
-	cst (D.TPOption tp) = cst (D.wrapGeneric tp)
+	cst (D.TPOption _ tp) = cst (D.wrapGeneric tp)
 	cst (D.TPGenericWrap _ c@(D.TPClass D.TPMClass _ _)) = C.Cast (showDataType c) e
 	cst (D.TPGenericWrap _ c@(D.TPClass D.TPMTrait _ _)) = C.Cast (showDataType c) e
 	cst (D.TPGenericWrap _ c@(D.TPClass D.TPMEnum _ _)) = C.Cast (showDataType c) e
@@ -896,7 +896,7 @@ tExp env (D.Weak expr) = tExp env{envWeakSelf = True} expr
 tExp env (D.Arr exps) = C.Arr $ map (tExpToType env D.tpGeneric) exps
 tExp env (D.Map exps) = C.Map $ map (tExpToType env D.tpGeneric *** tExpToType env D.tpGeneric) exps
 tExp env (D.Tuple exps) = C.CCall (C.Ref $ "tuple" ++ if length exps == 2 then "" else show (length exps) ) $ map (tExpToType env D.tpGeneric) exps
-tExp env (D.Some e) = tExpTo env (D.wrapGeneric $ D.exprDataType e) e
+tExp env (D.Some _ e) = tExpTo env (D.wrapGeneric $ D.exprDataType e) e
 tExp _ (D.None _) = C.Nil
 tExp env (D.Not e) = C.Not (tExpTo env D.TPBool e)
 tExp env (D.Negative e) = C.Negative (tExp env e)
