@@ -759,8 +759,17 @@ selfCall env = if envWeakSelf env then C.Ref "_self" else C.Self
 selfGetField :: Env -> String -> C.Exp
 selfGetField env field = if envWeakSelf env then C.Arrow (C.Ref "_self") (C.Ref $ "_" ++ field) else C.Dot C.Self (C.Ref field)
 
-setSelf :: Env -> [C.Stm] -> [C.Stm]
-setSelf env stm = if hasWeakSelf False stm then [(C.Var (C.tp $ (D.classNameWithPrefix $ envClass env) ++ "*") "_self" (C.Ref "_weakSelf") [])] ++ stm else stm
+setSelf :: Env -> D.DataType -> [C.Stm] -> [C.Stm]
+setSelf env tp stm = if hasWeakSelf False stm then [
+		C.Var (C.tp $ (D.classNameWithPrefix $ envClass env) ++ "*") "_self" (C.Ref "_weakSelf") [],
+		C.If (C.BoolOp NotEq (C.Ref "_self") C.Nil) stm (ret tp)] else stm
+	where 
+		ret D.TPVoid = []
+		ret D.TPBool = [C.Return $ C.BoolConst False]
+		ret D.TPNumber{} = [C.Return $ C.IntConst 0]
+		ret D.TPFloatNumber{} = [C.Return $ C.FloatConst 0.0]
+		ret _ = [C.Return C.Nil]
+		
 
 tExp :: Env -> D.Exp -> C.Exp
 tExp env (D.Dot l (D.Call (D.Def{D.defName = "im"}) _ [])) 
@@ -899,7 +908,7 @@ tExp env (D.Lambda pars e rtp) =
 		unwrapPar (name, D.TPGenericWrap gw tp) = C.Var (showDataType tp) name (maybeVal (D.TPGenericWrap gw tp, tp) $ C.Ref $ name ++ "_") []
 		stm = translate env{envDataType = rtp} e
 	in
-	C.Lambda (map par' pars) (unwrapPars ++ setSelf env stm) (showDataType rtp)
+	C.Lambda (map par' pars) (unwrapPars ++ setSelf env rtp stm) (showDataType rtp)
 tExp env (D.Weak expr) = tExp env{envWeakSelf = True} expr
 tExp env (D.Arr exps) = C.Arr $ map (tExpToType env D.tpGeneric) exps
 tExp env (D.Map exps) = C.Map $ map (tExpToType env D.tpGeneric *** tExpToType env D.tpGeneric) exps
