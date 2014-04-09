@@ -1031,6 +1031,9 @@ isVoid _ = False
 isTpFun :: DataType -> Bool
 isTpFun TPFun{} = True
 isTpFun _ = False
+isTpOption :: DataType -> Bool
+isTpOption TPOption{} = True
+isTpOption _ = False
 isTpClass :: DataType -> Bool
 isTpClass (TPClass TPMClass _ _) = True
 isTpClass _ = False
@@ -1854,9 +1857,12 @@ expr env (D.Val name tp body mods) = let
 	tp' = fmap (dataType env) tp
 	body' = expr env{envTp = fromMaybe (baseDataType env) tp'} body
 	tp'' = unwrapGeneric $ fromMaybe (exprDataType body') tp'
+	body'' = if isJust tp then implicitConvertsion env tp'' body' else body'
 	mods' = DefModLocal : [DefModMutable | D.DefModMutable `elem` mods] ++ [DefModWeak | D.DefModWeak `elem` mods] 
 	def' = Def{defName = name, defType = tp'', defMods = mods', defPars = [], 
-		defBody = if isJust tp then implicitConvertsion env tp'' body' else body', 
+		defBody = if isTpOption tp'' then body'' else case body'' of
+			Nop -> ExpError $ name ++ ": no initialiazation value for non-option"
+			_ -> body'', 
 		defGenerics = Nothing}
 	in declareVal env def'
 expr _ (D.Arr []) = Arr []
