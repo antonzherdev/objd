@@ -475,6 +475,7 @@ instance Show DefMod where
 	show DefModSpecial = "special"
 	show DefModStruct = "struct"
 	show DefModInline = "inline"
+	show DefModConstructorField = ""
 	show DefModSuper = "super"
 	show DefModApplyLambda = "applyLambda"
 	show DefModPure = "pure"
@@ -534,6 +535,7 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModApplyLambda = 'd'
 		ch DefModSuper = 'r'
 		ch DefModInline = 'i'
+		ch DefModConstructorField = 'U'
 		ch (DefModError _) = 'E'
 		
 
@@ -1433,7 +1435,6 @@ instance Show Exp where
 	show (Break) = "break"
 	show (Continue) = "continue"
 	show (NonOpt _ e) = show e ++ "?!"
-	show (LambdaCall e) = show e ++ "()"
 	show (Try e f) = "try " ++ show e ++ "\nfinally " ++ show f
 	show (StringBuild pars lastS) = "\"" ++ join (map (\(prev, e) -> prev ++ "$" ++ show e) pars) ++ lastS ++ "\""
 
@@ -1987,7 +1988,7 @@ linkNullDot env d@(D.NullDot a b) = let
 	in case aa of
 		ExpDError s _ -> ExpDError s d
 		_ -> case bb of
-			Dot l r -> Dot (NullDot aa l) r
+			Dot l r -> NullDot (NullDot aa l) r
 			_ -> NullDot aa bb
 
 optChecking :: Env -> Exp -> (Env, Env)
