@@ -1742,6 +1742,14 @@ expr env (D.BoolOp tp a b)
 		env' = optChecking env a'
 		env'' = if tp == Or then snd env' else fst env'
 	in BoolOp tp a' (exprTo env'' TPBool b)
+expr env (D.BoolOp tp a b) 
+	| tp == Eq || tp == NotEq = let
+		a' = exprToSome env a
+		b' = exprToSome env b
+	in case (a', b') of
+		(Nil, _) -> compareWithNil env tp b'
+		(_, Nil) -> compareWithNil env tp a'
+		_ -> BoolOp tp  a' b'
 expr env (D.BoolOp tp a b) = BoolOp tp (exprToSome env a) (exprToSome env b)
 expr env (D.MathOp tp a b) = 
 	let 
@@ -1788,9 +1796,10 @@ expr env (D.Set tp a b) =
 
 		set tp' (NullDot dl dr) r = 
 			let 
-				tmp = tmpVal env (exprDataType dl) dl
+				dltp = exprDataType dl
+				tmp = tmpVal env dltp dl
 				ref = if isReference dl then dl else callRef tmp
-				f = If (BoolOp NotEq ref Nil) (Set tp' (Dot (NonOpt False ref) dr) r) Nop
+				f = If (BoolOp NotEq ref (None dltp) ) (Set tp' (Dot (NonOpt False ref) dr) r) Nop
 			in  if isReference dl then f else Braces [declareVal env tmp, f]
 		set tp' l r = Set tp' l r
 
@@ -1923,9 +1932,9 @@ linkOptionCall env (_, l') (D.Call fname (Just [(_, e)]) [])
 	in	Braces [
 			declareVal env tmp, 
 			(case unwrapGeneric $ envTp env of
-				TPVoid -> If (BoolOp NotEq (callRef tmp) Nil) 
+				TPVoid -> If (BoolOp NotEq (callRef tmp) (None aTp) ) 
 					mapExpr' Nop
-				_ -> If (BoolOp NotEq (callRef tmp) Nil) 
+				_ -> If (BoolOp NotEq (callRef tmp) (None aTp) ) 
 					(implicitConvertsion env (option False bTp) mapExpr')
 					(None $ wrapGeneric $ bTp))
 		]
@@ -1943,18 +1952,19 @@ linkOrElse :: Env -> (DataType, Bool) -> (D.Exp, Exp) -> Exp -> Exp
 linkOrElse env _ ((D.NullDot dl dr), (NullDot dl' dr')) alt =
 	let
 		l'' = Dot (NonOpt False dl') dr'
-		tmp = tmpVal env (exprDataType dl') dl'
-	in if isReference dl' then If (BoolOp NotEq dl' Nil) (expr env (D.Dot (D.Dot dl (D.Call "get" Nothing [])) dr)) alt
+		dltp = exprDataType dl'
+		tmp = tmpVal env dltp dl'
+	in if isReference dl' then If (BoolOp NotEq dl' (None dltp) ) (expr env (D.Dot (D.Dot dl (D.Call "get" Nothing [])) dr)) alt
 		else Braces[
 			declareVal env tmp,
-			If (BoolOp NotEq (callRef tmp) Nil) l'' alt
+			If (BoolOp NotEq (callRef tmp) (None dltp)) l'' alt
 		]
 linkOrElse env (tp, isOptionAlt) (_, l') alt = 
 	let 
 		tmp = tmpVal env (option False tp) $ implicitConvertsion env (option False tp) l'
 	in Braces[
 			declareVal env tmp,
-			If (BoolOp NotEq (callRef tmp) Nil) ((if isOptionAlt then id else NonOpt False) $ callRef tmp) alt
+			If (BoolOp NotEq (callRef tmp) (None tp)) ((if isOptionAlt then id else NonOpt False) $ callRef tmp) alt
 		]
 
 linkNullDot :: Env -> D.Exp -> Exp
@@ -1984,11 +1994,16 @@ optChecking env e =  rec (env, env) e
 		mapEnv en _ = en
 		rec :: (Env, Env) -> Exp -> (Env, Env)
 		rec en (BoolOp And a b) = rec (rec en a) b
-		rec (l, r) (BoolOp Eq ee Nil) = (l, mapEnv r ee)
-		rec (l, r) (BoolOp NotEq ee Nil) = (mapEnv l ee, r)
-		rec (l, r) (BoolOp Eq Nil ee) = (l, mapEnv r ee)
-		rec (l, r) (BoolOp NotEq Nil ee) = (mapEnv l ee, r)
+		rec (l, r) (BoolOp Eq ee (None _)) = (l, mapEnv r ee)
+		rec (l, r) (BoolOp NotEq ee (None _)) = (mapEnv l ee, r)
+		rec (l, r) (BoolOp Eq (None _) ee) = (l, mapEnv r ee)
+		rec (l, r) (BoolOp NotEq (None _) ee) = (mapEnv l ee, r)
 		rec en _ = en
+
+compareWithNil :: Env -> BoolTp -> Exp -> Exp 
+compareWithNil _ btp e = case unwrapGeneric $ exprDataType e of
+	TPOption _ tp -> BoolOp btp e (None tp)
+	_ -> ExpLError "Non-option compares with nil" e
 
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Functional Compositions >> *|* **
@@ -2370,9 +2385,13 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 					determineBySelfType = tryDetermine g (selfType, self)
 					errorText = "Could not determine generic type for " ++ show g ++ " in " ++ show cll 
 					tryDetermine :: Class -> (DataType, DataType) -> Maybe DataType
+					tryDetermine c (TPGenericWrap _  a, TPGenericWrap _ b) = tryDetermine c (a, b)
+					tryDetermine c (TPGenericWrap _ a, b) = tryDetermine c (a, b)
+					tryDetermine c (a, TPGenericWrap _ b) = tryDetermine c (a, b)
 					tryDetermine c (TPClass TPMGeneric _ gg, tp) = if c == gg then Just (wrapGeneric tp) else Nothing
 					tryDetermine c (TPArr _ a, TPArr _ a') = tryDetermine c (a, a')
 					tryDetermine c (TPOption _ a, TPOption _ a') = tryDetermine c (a, a')
+					tryDetermine c (TPOption _ a, a') = tryDetermine c (a, a')
 					tryDetermine c (TPMap a b, TPMap a' b') = mplus (tryDetermine c (a, a')) (tryDetermine c (b, b'))
 					tryDetermine c (TPTuple a, TPTuple a') = listToMaybe $ mapMaybe (tryDetermine c) (zip a a')
 					tryDetermine c (TPClass _ gg cl, TPClass _ gg' cl') = 
@@ -2382,9 +2401,6 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 					tryDetermine c (cl@(TPClass _ _ _), TPObject m cl') = 
 						tryDetermine c (cl, TPClass TPMClass [TPClass m [] cl'] (classFind (envIndex env) "Class"))
 					tryDetermine c (TPFun a b, TPFun a' b') = listToMaybe $ catMaybes [tryDetermine c (a, a'), tryDetermine c (b, b')]
-					tryDetermine c (TPGenericWrap _  a, TPGenericWrap _ b) = tryDetermine c (a, b)
-					tryDetermine c (TPGenericWrap _ a, b) = tryDetermine c (a, b)
-					tryDetermine c (a, TPGenericWrap _ b) = tryDetermine c (a, b)
 					tryDetermine c (a, b@TPArr{}) = tryDetermine c (a, dtpw b)
 					tryDetermine c (a, b@TPMap{}) = tryDetermine c (a, dtpw b)
 					tryDetermine _ _ = Nothing

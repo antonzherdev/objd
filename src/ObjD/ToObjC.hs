@@ -772,7 +772,7 @@ tExp env (D.Dot l (D.Call (D.Def{D.defName = "im"}) _ []))
 
 tExp _ (D.IntConst i) = C.IntConst i
 tExp _ (D.StringConst i) = C.StringConst i
-tExp _ (D.Nil) = C.Nil
+tExp _ (D.Nil) = C.Nil -- C.Call (C.Ref "NSNull") "null" [] []
 tExp _ (D.BoolConst i) = C.BoolConst i
 tExp _ (D.FloatConst i) = C.FloatConst i
 tExp env (D.BoolOp Eq l r) = equals True (D.exprDataType l, tExp env l) (D.exprDataType r, tExp env r) 
@@ -957,8 +957,12 @@ tExp _ D.Nop = C.Nop
 tExp _ (D.Braces []) = C.Nop
 tExp env (D.Braces [x]) = tExp env x
 tExp env (D.Braces stms) = C.ExpBraces (concatMap (translate1 env stms) (init stms) ++ [C.Stm (tExp env $ last stms)])
-tExp env ee@(D.NonOpt check e) = 
-	let tp = D.unwrapGeneric $ D.exprDataType ee
+tExp env ee@(D.NonOpt ch e) = let 
+		tp = D.unwrapGeneric $ D.exprDataType ee
+		check = ch && case tp of
+			D.TPVoid -> False
+			D.TPClass D.TPMGeneric _ _ -> False
+			_ -> True
 	in 
 		if isElementary tp then 
 			if check then maybeVal (D.exprDataType e, tp) $ C.CCall (C.Ref "nonnil") [tExp env e]
@@ -1054,9 +1058,12 @@ equals False (D.TPNumber{}, e1) (_, e2) = C.BoolOp NotEq e1 e2
 equals False (D.TPChar, e1) (_, e2) = C.BoolOp NotEq e1 e2
 equals False (D.TPBool, e1) (_, e2) = C.BoolOp NotEq e1 e2
 equals False (D.TPNil, e1) (_, e2) = C.BoolOp NotEq e1 e2
-equals False (_, e1) (D.TPNil, e2) = C.BoolOp NotEq e1 e2
+equals False (_, e1) (_, C.Nil) = C.BoolOp NotEq e1 C.Nil
+equals False (_, C.Nil) (_, e2) = C.BoolOp NotEq C.Nil e2
 equals False s1@(_, _) s2@(_, _) = C.Not $ equals True s1 s2
 
+equals True (_, e1) (_, C.Nil) = C.BoolOp Eq e1 C.Nil
+equals True (_, C.Nil) (_, e2) = C.BoolOp Eq C.Nil e2
 equals True (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp Eq e1 e2
 equals True (dtp@(D.TPClass D.TPMStruct _ c), e1) (stp, e2) = C.CCall (C.Ref (D.classNameWithPrefix c ++ "Eq")) [e1, maybeVal (stp, dtp) e2]
 equals True (D.TPGenericWrap{}, e1) (D.TPGenericWrap{}, e2) = C.Call e1 "isEqual" [("", e2)] []
@@ -1070,7 +1077,6 @@ equals True (D.TPChar, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPBool, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPNil, e1) (_, e2) = C.BoolOp Eq e1 e2
 equals True (D.TPEArr _ _, e1) (_, e2) = C.BoolOp Eq e1 e2
-equals True (_, e1) (D.TPNil, e2) = C.BoolOp Eq e1 e2
 equals True (_, e1) (_, e2) = C.Call e1 "isEqual" [("", e2)] []
 
 callConstructor :: Env -> D.Def -> [(D.Def, D.Exp)] -> C.Exp
