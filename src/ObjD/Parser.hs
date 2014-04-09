@@ -216,7 +216,7 @@ pClassBody :: Parser [ClassStm]
 pClassBody = option [] $ braces $ many pStm
 
 pClassFields :: Parser [ClassStm]
-pClassFields = option [] $ brackets $ pDeclPar `sepBy` charSps ','
+pClassFields = option [] $ brackets $ (pDeclPar >>= (\d -> return d{defMods = DefModConstructorField : defMods d }) ) `sepBy` charSps ','
 
 
 pDeclPar :: Parser ClassStm
@@ -412,7 +412,7 @@ pDot = (do
 			sps
 			postFix $ NullDot o e) <|>
 		(return o)
-		
+
 pTerm :: Parser Exp
 pTerm = do
 		e <- pTerm'

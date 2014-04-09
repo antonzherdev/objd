@@ -455,7 +455,7 @@ eqPar (x, y) = defName x == defName y
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModProtected | DefModGlobalVal | DefModWeak
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
 	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper | DefModInline 
-	| DefModPure | DefModFinal | DefModOverride | DefModError String
+	| DefModPure | DefModFinal | DefModOverride | DefModError String | DefModConstructorField
 	deriving (Eq, Ord)
 instance Show DefMod where
 	show DefModStatic = "static"
@@ -837,6 +837,7 @@ translateMods = mapMaybe m
 		m D.DefModPure = Just DefModPure
 		m D.DefModFinal = Just DefModFinal
 		m D.DefModOverride = Just DefModOverride
+		m D.DefModConstructorField = Just DefModConstructorField
 		m _ = Nothing
 		
 linkDef :: Env -> D.ClassStm -> [DefMod] -> [Def]
@@ -2615,9 +2616,24 @@ checkErrorsInClass cl@Class{className = name, _classExtends = extends, _classGen
 		checkErrorsInExtends extends
 		++ concatMap checkErrorsInClass gens
 		++ concatMap checkErrorsInDef defs
+		++ checkUninitializedFields cl
 		++ if ClassModAbstract `notElem` mods && ClassModStub `notElem` mods && ClassModTrait `notElem` mods then 
 			checkAbstactFunctionsInClass cl else []
 	)
+
+checkUninitializedFields :: Class -> [Error]
+checkUninitializedFields cl@Class{_classDefs = defs} = if ClassModStub `elem` classMods cl then [] else concatMap check fieldsToCheck
+	where
+		initFields = maybe [] (findInits . defBody) $ classInitDef cl
+		findInits :: Exp -> [Def]
+		findInits (Braces xs) = concatMap findInits xs
+		findInits (Set Nothing (Dot (Self{}) (Call d _ [])) _) = [d]
+		findInits (If _ l r) = intersect (findInits l) (findInits r)
+		findInits _ = []
+		fieldsToCheck = filter (\d -> DefModField `elem` defMods d && DefModSpecial `notElem` defMods d && DefModConstructorField `notElem` defMods d) defs
+		check d@Def{defName = name, defBody = Nop, defType = tp}
+			| not (isTpOption tp) && d `notElem` initFields = [Error $ name ++ ": is not initialized and not option"]
+		check _ = []
 
 checkAbstactFunctionsInClass :: Class -> [Error]
 --checkAbstactFunctionsInClass cl | trace ("checkAbstactFunctionsInClass : " ++ className cl) False = undefined
