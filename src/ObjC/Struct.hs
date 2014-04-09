@@ -338,8 +338,6 @@ stmLines (Synchronized r s) = ["@synchronized(" ++ show r ++ ") {"] ++ stms s ++
 stmLines (Try e f) = ["@try {"] ++ stms e ++ ["} @finally {"] ++ stms f ++ ["}"]
 
 expLines :: Exp -> [String]
-expLines (ExpBraces []) = []
-expLines (ExpBraces [t]) = stmLines t
 expLines (ExpBraces t) = ["({"] ++ stms t ++ ["})"]
 expLines Self = ["self"]
 expLines Super = ["super"]

@@ -1593,6 +1593,7 @@ isConst _ = False
 isSimpleExpression :: Exp -> Bool
 isSimpleExpression (If _ l r) = isSimpleExpression l && isSimpleExpression r
 isSimpleExpression (Braces _) = False
+isSimpleExpression (Throw _) = False
 isSimpleExpression _ = True
 
 isError :: Exp -> Bool
@@ -1814,7 +1815,7 @@ expr env (D.Set tp a b) =
 				ref = if isReference dl then dl else callRef tmp
 				f = If (BoolOp NotEq ref (None dltp) ) (Set tp' (Dot (NonOpt False ref) dr) r) Nop
 			in  if isReference dl then f else Braces [declareVal env tmp, f]
-		set tp' l r = Set tp' l r
+		set tp' l r = if isSimpleExpression r then Set tp' l r else multilineSet env tp' l r
 
 		math = exprTo env ltp b 
 		callOp = Dot aa $ exprCall env (Just ltp) $ D.Call (literalDefName $ show $ fromJust tp) (Just [(Nothing, b)]) []
@@ -1904,8 +1905,11 @@ declareVal env d
 	| isSimpleExpression (defBody d) = Val False d
 	| otherwise = Val True mappedDef
 	where
-		mappedDef = d{defBody = mapExp replaceReturn (addReturn env True (defType d) $  defBody d)}
-		replaceReturn (Return _ e) = Just $ Set Nothing (callRef mappedDef) e
+		mappedDef = d{defBody =  multilineSet env Nothing (callRef mappedDef) (defBody d)}
+multilineSet :: Env -> Maybe MathTp -> Exp -> Exp -> Exp
+multilineSet env tp l r = mapExp replaceReturn $ addReturn env True (exprDataType r) r
+	where
+		replaceReturn (Return _ e) = Just $ Set tp l e
 		replaceReturn _ = Nothing
 
 

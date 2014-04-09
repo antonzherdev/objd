@@ -979,6 +979,7 @@ tExp env ee@(D.NonOpt ch e) = let
 			if check then C.Cast (showDataType tp) $ C.CCall (C.Ref "nonnil") [tExp env e]
 			else C.Cast (showDataType tp) $ tExpTo env tp e
 tExp env (D.Return _ e) = tExp env e
+tExp env (D.Throw e) = C.ExpBraces [C.Throw $ tExp env e]
 tExp _ x = C.Error $ "No tExp for " ++ show x
 
 
