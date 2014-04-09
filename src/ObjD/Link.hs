@@ -1050,6 +1050,11 @@ isTpStruct :: DataType -> Bool
 isTpStruct (TPClass TPMStruct _ _) = True
 isTpStruct _ = False
 
+unoptionIfChecked :: DataType -> DataType
+unoptionIfChecked (TPGenericWrap _ (TPOption True d)) = d
+unoptionIfChecked (TPOption True d) = d
+unoptionIfChecked d = d
+
 unoptionHard :: DataType -> DataType
 unoptionHard TPVoid = TPVoid
 unoptionHard (TPOption _ o) = o
@@ -1434,7 +1439,8 @@ instance Show Exp where
 	show (CastDot tp) = "cast<" ++ show tp ++ ">"
 	show (Break) = "break"
 	show (Continue) = "continue"
-	show (NonOpt _ e) = show e ++ "?!"
+	show (NonOpt _ e) = show e ++ ".get"
+	show (LambdaCall e) = show e ++ "()"
 	show (Try e f) = "try " ++ show e ++ "\nfinally " ++ show f
 	show (StringBuild pars lastS) = "\"" ++ join (map (\(prev, e) -> prev ++ "$" ++ show e) pars) ++ lastS ++ "\""
 
@@ -1663,6 +1669,8 @@ exprDataType (Is _) = TPBool
 exprDataType Break = TPVoid
 exprDataType StringBuild{} = TPString
 exprDataType (LambdaCall e) = case unwrapGeneric $ exprDataType e of
+	(TPOption True (TPGenericWrap _ (TPFun _ d))) -> d
+	(TPOption True (TPFun _ d)) -> d
 	(TPFun _ d) -> d
 	t -> t
 {- exprDataType x = error $ "No exprDataType for " ++ show x -}
@@ -1819,7 +1827,7 @@ expr env (D.Set tp a b) =
 			Dot Self{} _ -> True
 			_ -> False
 		bToProcCall = if isJust tp then D.MathOp (fromJust tp) a b else b
-		callSet ldef ref = exprCall env (Just $ exprDataType ref) $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
+		callSet ldef ref = exprCall env (Just $ unoptionIfChecked $ exprDataType ref) $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
 	in if isNothing lcall then Set tp (ExpLError "Left is not def" aa) $ expr env b
 		else case fromJust lcall of
 			Call ldef _ [] -> 
@@ -1925,7 +1933,7 @@ linkOptionCall env (_, l') (D.Call fname (Just [(_, e)]) [])
 	| fname == "map" || fname == "for" || fname == "flatMap" = let
 		aTp = unoptionHard $ exprDataType l'
 		tmp :: Def
-		tmp = localValE mapVarName aTp (NonOpt False l')
+		tmp = localValE mapVarName (option True aTp) l'
 		mapVarName = case e of
 			D.Lambda [(name, _)] _ -> name 
 			_ -> "_"
@@ -2339,9 +2347,10 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 						ExpLError (show tp ++ " is not instance of " ++ show dtp ++ " in parameter \"" ++ dname ++ "\"") call'')
 -}
 		maybeLambdaCall = case pars of
-			Just [] -> case exprDataType call'' of
+			Just [] -> case unwrapGeneric $ exprDataType call'' of
 				(TPFun TPVoid _) -> LambdaCall call''
-				TPGenericWrap _ (TPFun TPVoid _) -> LambdaCall call''
+				TPOption True (TPGenericWrap _ (TPFun TPVoid _))-> LambdaCall call''
+				TPOption True (TPFun TPVoid _) -> LambdaCall call''
 				_ -> call''
 			_ -> call''
 
