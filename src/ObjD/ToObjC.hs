@@ -1058,9 +1058,12 @@ tStm env pe (D.Weak expr) = tStm env{envWeakSelf = True} pe expr
 tStm env _ x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar, cycleTp)] cycleBody _)])) 
 	| dn == "for" || dn == "go" =
 		case D.exprDataType l of
-			D.TPArr _ _ -> [C.ForIn (showDataType cycleTp) cycleVar (tExp env l) (translate env ((if dn == "go" then processGo else id) cycleBody) )]
+			D.TPArr _ _ -> forin
+			D.TPClass _ _ D.Class{D.className = "MArray"} -> forin 
+			D.TPClass _ _ D.Class{D.className = "Array"} -> forin 
 			_ -> [C.Stm $ tExp env x]
 	where
+		forin = [C.ForIn (showDataType cycleTp) cycleVar (tExp env l) (translate env ((if dn == "go" then processGo else id) cycleBody) )]
 		processGo :: D.Exp -> D.Exp
 		processGo e = D.mapExp procGo e 
 		procGo (D.Return _ (D.BoolConst True)) = Just D.Continue
