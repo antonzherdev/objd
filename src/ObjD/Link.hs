@@ -1810,7 +1810,7 @@ expr env d@(D.Dot a b) = let
 		_ -> case aa of
 			ExpDError s _ -> ExpDError s d
 			_ -> case bb of
-				Dot l r -> Dot (Dot aa l) r
+				Dot l r -> maybeInlineCall env $ Dot (Dot aa l) r
 				_ -> maybeInlineCall env $ Dot aa bb
 expr env d@(D.NullDot _ _) = linkNullDot env d
 expr env (D.Set tp a b) = 
