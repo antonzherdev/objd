@@ -251,6 +251,7 @@ pMod = do
 		<|> (try(string "static") >> return DefModStatic) 
 		<|> (try(string "weak") >> return DefModWeak) <|> (try(string "delegate") >> return DefModDelegate)
 		<|> (try(string "lazy") >> return DefModLazy) <|> (try(string "pure") >> return DefModPure)
+		<|> (try(string "inline") >> return DefModInline)
 	sps1
 	return v
 

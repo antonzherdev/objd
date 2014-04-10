@@ -807,7 +807,7 @@ linkField env (obj, _isStruct) dd@D.Def{D.defMods = mods, D.defName = name, D.de
 			defType = lazyTp, 
 			defBody = Dot (callRef (objectDef lazyClass)) $ Call lazyConstr lazyTp [(head $ defPars lazyConstr, Lambda [] (Return True (Weak i')) gtp)], 
 			defGenerics = Nothing, defPars = []}
-		defLazyGet = Def{defMods = DefModInline : DefModDef : translateMods mods ++ [DefModStatic | obj], defName = name, 
+		defLazyGet = Def{defMods = DefModDef : translateMods mods ++ [DefModStatic | obj], defName = name, 
 			defType = tp'', 
 			defBody = Return True $ Dot (callRef defLazy) (Call lazyGet gtp []), defGenerics = Nothing, defPars = []}
 		in if isLazy then [defLazyGet, defLazy] else [def]
@@ -840,6 +840,7 @@ translateMods = mapMaybe m
 		m D.DefModFinal = Just DefModFinal
 		m D.DefModOverride = Just DefModOverride
 		m D.DefModConstructorField = Just DefModConstructorField
+		m D.DefModInline = Just DefModInline
 		m _ = Nothing
 		
 linkDef :: Env -> D.ClassStm -> [DefMod] -> [Def]
@@ -1808,7 +1809,7 @@ expr env d@(D.Dot a b) = let
 			ExpDError s _ -> ExpDError s d
 			_ -> case bb of
 				Dot l r -> Dot (Dot aa l) r
-				_ -> Dot aa bb
+				_ -> maybeInlineCall env $ Dot aa bb
 expr env d@(D.NullDot _ _) = linkNullDot env d
 expr env (D.Set tp a b) = 
 	let 
@@ -1858,7 +1859,7 @@ expr env (D.PlusPlus e) = PlusPlus (exprToSome env e)
 expr env (D.MinusMinus e) = MinusMinus (exprToSome env e)
 expr env D.Self = Self $ envSelf env
 expr env D.Super = Super $ fromMaybe (error $ "No super data type for " ++ show (envSelf env)) $ superType $ envSelf env
-expr env r@D.Call{} = exprCall env Nothing r
+expr env r@D.Call{} = maybeInlineCall env $ exprCall env Nothing r
 expr env (D.Index e i) = let
 	e' = exprToSome env e
 	obf = expr env $ D.Dot e (D.Call "apply" (Just [(Nothing, i)]) [])
@@ -2565,6 +2566,44 @@ insertWeak e = mapExp f e
 		f _ = Nothing
 
 
+{-----------------------------------------------------------------------------------------------------------------------------------------
+ - Inline
+ -----------------------------------------------------------------------------------------------------------------------------------------}
+
+maybeInlineCall :: Env -> Exp -> Exp
+maybeInlineCall env e = let
+	callExpOpt = case e of
+		Dot _ c@Call{} -> Just c
+		Call{} -> Just e
+		_ -> Nothing
+	callExp = fromJust callExpOpt
+	pars = case callExp of
+		Call _ _ p -> p
+	defOpt = case callExpOpt of 
+		Just (Call dd _ _) -> Just dd
+		Nothing -> Nothing
+	def = fromJust defOpt
+	
+	inline = 
+		if null parsForDeclareVars then replacedExp
+		else Braces $ (map (Val False . snd) vals) ++ [replacedExp]
+		where
+			replacedExp = mapExp rep $ defBody def
+			rep :: Exp -> Maybe Exp
+			rep (Call d _ []) = lookup d refs
+			rep _ = Nothing
+			refs = (map (second callRef) vals) ++ pars
+			vals = (map dec parsForDeclareVars)
+			dec (d, pe) = (d, tmpVal env (defName d) (defType d) pe)
+
+	parsForDeclareVars = filter (checkCountOfUsing . fst) unelementaryPars
+		where 
+			unelementaryPars = filter (not . isElementaryExpression . snd) pars
+			checkCountOfUsing d = (length $ filter (d ==) usingDefs) > 1
+			usingDefs = forExp findUsage (defBody def)
+			findUsage (Call d _ []) = [d]
+			findUsage _ = []
+	in if isJust defOpt && DefModInline `elem` defMods (fromJust defOpt) then inline else e
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - Implicit conversion
  -----------------------------------------------------------------------------------------------------------------------------------------}
