@@ -1522,6 +1522,7 @@ forExp f ee = mplus (go ee) (f ee)
 		go (Not e) = forExp f e
 		go (Negative e) = forExp f e
 		go (Lambda _ e _) = forExp f e
+		go (LambdaCall e) = forExp f e
 		go (FirstTry _ e) = forExp f e
 		go (NonOpt _ e) = forExp f e
 		go (Val _ d) = forExp f (defBody d)
@@ -1559,6 +1560,7 @@ mapExp f ee = fromMaybe (go ee) (f ee)
 		go (Lambda p1 e p2) = Lambda p1 (mapExp f e) p2
 		go (FirstTry p e) = FirstTry p $ mapExp f e
 		go (NonOpt c e) = NonOpt c $ mapExp f e
+		go (LambdaCall e) = LambdaCall $ mapExp f e
 		go (Val e d) = Val e d{defBody = mapExp f (defBody d)}
 		go e = e
 
@@ -2578,11 +2580,13 @@ maybeInlineCall env e = let
 		_ -> Nothing
 	callExp = fromJust callExpOpt
 	pars = case callExp of
-		Call _ _ p -> p
+		Call _ _ p -> if DefModStatic `notElem` defMods def then selfPar : p else p
 	defOpt = case callExpOpt of 
 		Just (Call dd _ _) -> Just dd
 		Nothing -> Nothing
 	def = fromJust defOpt
+	selfExp = case e of Dot l _ -> l
+	selfPar = (localVal "self" (exprDataType selfExp), selfExp)
 	
 	inline = 
 		if null parsForDeclareVars then replacedExp
@@ -2590,11 +2594,15 @@ maybeInlineCall env e = let
 		where
 			replacedExp = mapExp rep $ defBody def
 			rep :: Exp -> Maybe Exp
+			rep (LambdaCall (Call d _ [])) = fmap unwrapLambda $ lookup d refs
 			rep (Call d _ []) = lookup d refs
+			rep (Self _) = lookup (fst selfPar) refs
 			rep _ = Nothing
 			refs = (map (second callRef) vals) ++ pars
 			vals = (map dec parsForDeclareVars)
 			dec (d, pe) = (d, tmpVal env (defName d) (defType d) pe)
+			unwrapLambda (Lambda _ ee _) = ee
+			unwrapLambda ee = ee
 
 	parsForDeclareVars = filter (checkCountOfUsing . fst) unelementaryPars
 		where 
@@ -2602,6 +2610,7 @@ maybeInlineCall env e = let
 			checkCountOfUsing d = (length $ filter (d ==) usingDefs) > 1
 			usingDefs = forExp findUsage (defBody def)
 			findUsage (Call d _ []) = [d]
+			findUsage (Self _) = [fst selfPar]
 			findUsage _ = []
 	in if isJust defOpt && DefModInline `elem` defMods (fromJust defOpt) then inline else e
 {-----------------------------------------------------------------------------------------------------------------------------------------
