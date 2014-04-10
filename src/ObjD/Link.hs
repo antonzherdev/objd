@@ -430,8 +430,8 @@ localVal :: String -> DataType -> Def
 localVal name tp = Def name [] tp Nop [DefModLocal] Nothing
 localValE :: String -> DataType -> Exp -> Def
 localValE name tp e = Def name [] tp e [DefModLocal] Nothing
-tmpVal :: Env -> DataType -> Exp -> Def
-tmpVal env tp e = Def ("__tmp" ++ envVarSuffix env) [] tp e [DefModLocal] Nothing 
+tmpVal :: Env -> String -> DataType -> Exp -> Def
+tmpVal env sf tp e = Def ("__tmp" ++ envVarSuffix env ++ sf) [] tp e [DefModLocal] Nothing 
 isStatic :: Def -> Bool
 isStatic = (DefModStatic `elem` ). defMods
 isDef :: Def -> Bool
@@ -1596,6 +1596,15 @@ isSimpleExpression (Braces _) = False
 isSimpleExpression (Throw _) = False
 isSimpleExpression _ = True
 
+isElementaryExpression :: Exp -> Bool
+isElementaryExpression (IntConst _) = True
+isElementaryExpression (FloatConst _) = True
+isElementaryExpression (BoolConst _) = True
+isElementaryExpression (Call Def{defMods = mods} _ []) = DefModDef `notElem` mods
+isElementaryExpression (Dot (Self _) (Call Def{defMods = mods} _ [])) = DefModDef `notElem` mods
+isElementaryExpression _ = False
+
+
 isError :: Exp -> Bool
 isError ExpDError{} = True
 isError ExpLError{} = True
@@ -1760,10 +1769,16 @@ expr env (D.BoolOp tp a b)
 	| tp == Eq || tp == NotEq = let
 		a' = exprToSome env a
 		b' = exprToSome env b
+		atp = unwrapGeneric $ exprDataType a'
+		btp = unwrapGeneric $ exprDataType b'
 	in case (a', b') of
-		(Nil, _) -> compareWithNil env tp b'
-		(_, Nil) -> compareWithNil env tp a'
-		_ -> BoolOp tp  a' b'
+		(Nil, _) -> compareWithNil env tp (b', btp)
+		(_, Nil) -> compareWithNil env tp (a', atp)
+		_ -> case (atp, btp) of
+			(TPOption False _, TPOption False _) -> compareOptions env tp (a', atp) (b', btp)
+			(TPOption False _, _) -> compareOptionWithNonOption env tp (a', atp) (b', btp)
+			(_, TPOption False _) -> compareOptionWithNonOption env tp (b', btp) (a', atp)
+			_ -> BoolOp tp  a' b'
 expr env (D.BoolOp tp a b) = BoolOp tp (exprToSome env a) (exprToSome env b)
 expr env (D.MathOp tp a b) = 
 	let 
@@ -1811,10 +1826,10 @@ expr env (D.Set tp a b) =
 		set tp' (NullDot dl dr) r = 
 			let 
 				dltp = exprDataType dl
-				tmp = tmpVal env dltp dl
-				ref = if isReference dl then dl else callRef tmp
+				tmp = tmpVal env "" dltp dl
+				ref = if isElementaryExpression dl then dl else callRef tmp
 				f = If (BoolOp NotEq ref (None dltp) ) (Set tp' (Dot (NonOpt False ref) dr) r) Nop
-			in  if isReference dl then f else Braces [declareVal env tmp, f]
+			in  if isElementaryExpression dl then f else Braces [declareVal env tmp, f]
 		set tp' l r = if isSimpleExpression r then Set tp' l r else multilineSet env tp' l r
 
 		math = exprTo env ltp b 
@@ -1895,11 +1910,6 @@ expr env s@D.StringBuild {} = linkStringBuild env s
 expr env ex@D.FuncOp{} = linkFuncOp env ex
 -- expr x = error $ "No expr for " ++ show x
 
-isReference :: Exp -> Bool
-isReference e = case e of
-	Dot Self{} (Call d _ _) ->  DefModDef `notElem` defMods d
-	Call d _ _ ->  DefModDef `notElem` defMods d
-	_ -> False
 declareVal :: Env -> Def -> Exp
 declareVal env d 
 	| isSimpleExpression (defBody d) = Val False d
@@ -1973,15 +1983,15 @@ linkOrElse env _ ((D.NullDot dl dr), (NullDot dl' dr')) alt =
 	let
 		l'' = Dot (NonOpt False dl') dr'
 		dltp = exprDataType dl'
-		tmp = tmpVal env dltp dl'
-	in if isReference dl' then If (BoolOp NotEq dl' (None dltp) ) (expr env (D.Dot (D.Dot dl (D.Call "get" Nothing [])) dr)) alt
+		tmp = tmpVal env "" dltp dl'
+	in if isElementaryExpression dl' then If (BoolOp NotEq dl' (None dltp) ) (expr env (D.Dot (D.Dot dl (D.Call "get" Nothing [])) dr)) alt
 		else Braces[
 			declareVal env tmp,
 			If (BoolOp NotEq (callRef tmp) (None dltp)) l'' alt
 		]
 linkOrElse env (tp, isOptionAlt) (_, l') alt = 
 	let 
-		tmp = tmpVal env (option False tp) $ implicitConvertsion env (option False tp) l'
+		tmp = tmpVal env "" (option False tp) $ implicitConvertsion env (option False tp) l'
 	in Braces[
 			declareVal env tmp,
 			If (BoolOp NotEq (callRef tmp) (None tp)) ((if isOptionAlt then id else NonOpt False) $ callRef tmp) alt
@@ -2020,11 +2030,44 @@ optChecking env e =  rec (env, env) e
 		rec (l, r) (BoolOp NotEq (None _) ee) = (mapEnv l ee, r)
 		rec en _ = en
 
-compareWithNil :: Env -> BoolTp -> Exp -> Exp 
-compareWithNil _ btp e = case unwrapGeneric $ exprDataType e of
+compareWithNil :: Env -> BoolTp -> (Exp, DataType) -> Exp 
+compareWithNil _ btp (e, etp) = case etp of
 	TPOption _ tp -> BoolOp btp e (None tp)
 	_ -> ExpLError "Non-option compares with nil" e
 
+compareOptions :: Env -> BoolTp -> (Exp, DataType) -> (Exp, DataType) -> Exp
+compareOptions env btp (l, ltp) (r, rtp) = let
+	comp l' r' = case btp of
+		Eq -> BoolOp Or 
+			(BoolOp ExactEq l' r') 
+			(BoolOp And 
+				(BoolOp And (BoolOp NotEq l' (None $ unoptionHard ltp)) (BoolOp NotEq r' (None $ unoptionHard rtp))) 
+				(BoolOp Eq l' r') )
+		NotEq -> BoolOp And 
+			(BoolOp ExactNotEq l' r') 
+			(BoolOp Or 
+				(BoolOp Or (BoolOp Eq l' (None $ unoptionHard ltp)) (BoolOp Eq r' (None $ unoptionHard rtp))) 
+				(BoolOp NotEq l' r') )
+	isSimpleL = isElementaryExpression l
+	isSimpleR = isElementaryExpression r
+	lval = tmpVal env "_l" ltp l
+	rval = tmpVal env "_r" rtp r
+	ml = Braces $
+		[Val False lval | not isSimpleL]
+		++ [Val False rval | not isSimpleR]
+		++ [comp (if isSimpleL then l else callRef lval) (if isSimpleR then r else callRef rval)]
+	in if isSimpleL && isSimpleR then comp l r else ml
+
+compareOptionWithNonOption :: Env -> BoolTp -> (Exp, DataType) -> (Exp, DataType) -> Exp
+compareOptionWithNonOption env btp (opt, optTp) (nonopt, _) = let 
+	comp opt' nonopt' = case btp of
+		Eq -> BoolOp And (BoolOp NotEq opt' (None $ unoptionHard optTp)) (BoolOp Eq opt' nonopt') 
+		NotEq -> BoolOp Or (BoolOp Eq opt' (None $ unoptionHard optTp)) (BoolOp NotEq opt' nonopt') 
+	isSimpleOpt = isElementaryExpression opt
+	val = tmpVal env "" optTp opt
+	ml = Braces [Val False val,
+		comp (callRef val) nonopt]
+	in if isSimpleOpt then comp opt nonopt else ml
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Functional Compositions >> *|* **
  ------------------------------------------------------------------------------------------------------------------------------}
