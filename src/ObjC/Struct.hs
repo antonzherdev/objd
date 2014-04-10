@@ -307,21 +307,21 @@ glueAll _ [x] = x
 glueAll s (a:b:xs) = glueAll s $ ((a `appp` s) `glue` b):xs
 
 multiLineIf :: Stm -> [String]
-multiLineIf (If cond t []) = ["if(" ++ show cond ++ ") {" ] ++ stms t ++ ["}"]
-multiLineIf (If cond t f) = ["if(" ++ show cond ++ ") {" ] ++ stms t ++ ["} else {"] ++ stms f ++ ["}"]
+multiLineIf (If cond t []) = (["if("] `glue` expLines cond `appp` ") {") ++ stms t ++ ["}"]
+multiLineIf (If cond t f) = (["if("] `glue` expLines cond `appp` ") {") ++ stms t ++ ["} else {"] ++ stms f ++ ["}"]
 
 stmLines :: Stm -> [String]
 stmLines i@(If _ [If {}] _) = multiLineIf i
 stmLines i@(If _ _ [If{}]) = multiLineIf i
-stmLines (If cond [t] []) = ["if(" ++ show cond ++ ") " ] `glue` stmLines t
-stmLines (If cond t []) = ["if(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
+stmLines (If cond [t] []) = (["if("] `glue` expLines cond `appp` ") ") `glue` stmLines t
+stmLines (If cond t []) = (["if("] `glue` expLines cond `appp` ") {") ++ stms t ++ ["}"]
 stmLines (Braces []) = []
 stmLines (Braces [t]) = stmLines t
 stmLines (Braces t) = ["{"] ++ stms t ++ ["}"]
 stmLines (While cond t) = ["while(" ++ show cond ++ ") {"] ++ stms t ++ ["}"]
 stmLines (ForIn t name e s) = ["for(" ++ showDecl t name ++ " in " ++ show e ++ ") {"] ++ stms s ++ ["}"]
 stmLines (Do cond t) = ["do {"] ++ stms t ++ ["} while(" ++ show cond ++ ");"]
-stmLines (If cond [t] [f]) = (["if(" ++ show cond ++ ") " ] `glue` stmLines t) ++ (["else "] `glue` stmLines f)
+stmLines (If cond [t] [f]) = ((["if("] `glue` expLines cond `appp` ") ") `glue` stmLines t) ++ (["else "] `glue` stmLines f)
 stmLines i@If{} = multiLineIf i
 
 stmLines (Set Nothing l r) = (expLines l `appp` " = ") `glue` (expLines r `appp` ";")
@@ -362,23 +362,23 @@ expLines (StringConst s) = case lines2 s of
 		[] -> ["@\"\""]
 		[x] -> ['@' : '"' : escape x ++ "\""]
 		x:xs -> ('@' : '"' : escape x ++ "\\n\"") : map (\line -> ind $ '"' : escape line ++ "\\n\"" ) (init xs) ++ [ind $ '"' : escape (last xs) ++ "\"" | not $ null $ last xs]
-expLines (BoolOp t l r) = [mbb l ++ " " ++ show t ++ " " ++ mbb r]
+expLines (BoolOp t l r) = (mbb l `appp` (" " ++ show t ++ " ")) `glue` mbb r
 	where 
-		mbb :: Exp -> String
+		mbb :: Exp -> [String]
 		mbb b@(BoolOp tt _ _) 
-			| needb t tt = "(" ++ show b ++ ")"
-			| otherwise = show b
-		mbb e = show e
+			| needb t tt = ["("] `glue` expLines b `appp` ")"
+			| otherwise = expLines b
+		mbb e = expLines e
 		needb And Or = True
 		needb Or And = True
 		needb _ _ = False
-expLines (MathOp t l r) = [mbb l ++ " " ++ show t ++ " " ++ mbb r]
+expLines (MathOp t l r) = (mbb l `appp` (" " ++ show t ++ " ")) `glue` mbb r
 	where 
-		mbb :: Exp -> String
+		mbb :: Exp -> [String]
 		mbb b@(MathOp tt _ _) 
-			| needb t tt = "(" ++ show b ++ ")"
-			| otherwise = show b
-		mbb e = show e
+			| needb t tt = ["("] `glue` expLines b `appp` ")"
+			| otherwise = expLines b
+		mbb e = expLines e
 		needb Div Plus = True
 		needb Div Minus = True
 		needb Div Mul = True
