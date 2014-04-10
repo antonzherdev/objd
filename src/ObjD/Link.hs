@@ -2594,15 +2594,19 @@ maybeInlineCall env e = let
 		where
 			replacedExp = mapExp rep $ defBody def
 			rep :: Exp -> Maybe Exp
-			rep (LambdaCall (Call d _ [])) = fmap unwrapLambda $ lookup d refs
+			rep (Dot (Call d _ []) (Call Def{defMods = mbLamdaMods} _ lambdaCallPars)) 
+				| DefModApplyLambda `elem` mbLamdaMods = fmap (unwrapLambda (map (mapExp rep . snd) lambdaCallPars)) $ lookup d refs
+			rep (LambdaCall (Call d _ [])) = fmap (unwrapLambda []) $ lookup d refs
 			rep (Call d _ []) = lookup d refs
 			rep (Self _) = lookup (fst selfPar) refs
 			rep _ = Nothing
 			refs = (map (second callRef) vals) ++ pars
 			vals = (map dec parsForDeclareVars)
 			dec (d, pe) = (d, tmpVal env (defName d) (defType d) pe)
-			unwrapLambda (Lambda _ ee _) = ee
-			unwrapLambda ee = ee
+			unwrapLambda :: [Exp] -> Exp -> Exp
+			unwrapLambda [] (Lambda _ ee _) = ee
+			unwrapLambda parExps (Lambda lpars ee _) = Braces $ (map (\((nm, tp), lpe) -> Val False $ localValE nm tp lpe) (zip lpars parExps)) ++ [ee]
+			unwrapLambda _ ee = ee
 
 	parsForDeclareVars = filter (checkCountOfUsing . fst) unelementaryPars
 		where 
