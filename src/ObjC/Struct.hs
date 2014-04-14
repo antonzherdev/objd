@@ -52,7 +52,7 @@ data CFunPar = CFunPar {cfunParDataType :: DataType, cfunParName :: String}
 data CFunMod = CFunStatic | CFunInline
 {- EXPRESSIONS -}
 
-data DataType = TPSimple String [String]| TPBlock DataType [DataType] | TPArr Int String 
+data DataType = TPSimple String [String]| TPBlock DataType [DataType] | TPArr Int String | TPRef DataType 
 tp :: String -> DataType
 tp name = TPSimple name []
 
@@ -111,6 +111,7 @@ data Exp =
 	| MinusMinus Exp
 	| Nop
 	| Nil
+	| Null
 	| InlineIf Exp Exp Exp
 	| Index Exp Exp
 	| Arr [Exp]
@@ -127,6 +128,7 @@ data Exp =
 	| GetRef Exp
 	| RefUp Exp
 	| ExpBraces [Stm]
+	| Deferencing Exp
 forExp :: MonadPlus m => (Stm -> Bool, Stm -> m a, Exp -> Bool, Exp -> m a) -> Exp -> m a
 forExp f@(_, _, ce, fe) ee = mplus (fe ee) $ if ce ee then (go ee) else mzero
 	where	
@@ -145,6 +147,7 @@ forExp f@(_, _, ce, fe) ee = mplus (fe ee) $ if ce ee then (go ee) else mzero
 		go (MinusMinus e) = mfor e
 		go (Not e) = mfor e
 		go (Negative e) = mfor e
+		go (Deferencing e) = mfor e
 		go (ProtocolRef e) = mfor e
 		go (GetRef e) = mfor e
 		go (RefUp e) = mfor e
@@ -176,6 +179,7 @@ kw s = s
 instance Show DataType where
 	show (TPSimple s []) = s
 	show (TPArr 0 s) = s ++ "[]"
+	show (TPRef s) = show s ++ "*"
 	show (TPArr n s) = s ++ "[" ++ show n ++ "]"
 	show (TPSimple s pr) = s ++ "<" ++ strs ", " pr ++ ">"
 	show (TPBlock TPBlock{} t) = "id(^)" ++ "(" ++ strs' ", " t ++ ")"
@@ -184,6 +188,7 @@ instance Show DataType where
 showDecl ::  DataType -> String ->String
 showDecl (TPArr 0 tpp) name = tpp ++ " " ++ name ++ "[]"
 showDecl (TPArr n tpp) name = tpp ++ " " ++ name ++ "[" ++ show n ++ "]"
+showDecl tpp@TPRef{} name = show tpp ++ " " ++ name
 showDecl tpp@TPSimple{} name = show tpp ++ " " ++ name
 showDecl (TPBlock TPBlock{} t) name = "id(^" ++ name ++ ")" ++ "(" ++ strs' ", " t ++ ")"
 showDecl (TPBlock d t) name = show d ++ "(^" ++ name ++ ")" ++ "(" ++ strs' ", " t ++ ")"
@@ -341,6 +346,7 @@ expLines :: Exp -> [String]
 expLines (ExpBraces t) = ["({"] ++ stms t ++ ["})"]
 expLines Self = ["self"]
 expLines Super = ["super"]
+expLines Null = ["NULL"]
 expLines (Call inst name pars vargs) = ["["] `glue` (expLines inst `appp` (" " ++ kw name)) `glue` pars' `glue` (vargs'  `appp` "]")
 	where 
 		pars' = (mapFirst cap . glueAll " " . map (\(nm, e) -> [kw nm ++ ":"] `glue` expLines e)) pars
@@ -405,6 +411,7 @@ expLines (Lambda pars e rtp) = ["^" ++ showRtp ++ "(" ++ strs ", " (map showPar 
 			_ -> show rtp
 expLines (Not e) = ["!("] `glue` (expLines e `appp` ")")
 expLines (Negative e) = ["-"] `glue` expLines e
+expLines (Deferencing e) = ["*("] `glue` expLines e `appp` ")"
 expLines (Cast tpp e) =  ["((" ++ show tpp ++ ")("] `glue` (expLines e `appp` "))")
 expLines (ShortCast tpp e) =  ["(" ++ show tpp ++ ")"] `glue` expLines e
 expLines (ProtocolRef e) =  ["@protocol(" ++ show e ++ ")"]

@@ -71,12 +71,12 @@ stmToInterface cl =
 		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs,
 		C.interfaceFuns = constrFuns ++ [typeInstanceFun]
 			++ intefaceFuns defs ++ staticGetters,
-		C.interfaceFields = [(C.Private, map (implField env) implFields)]
+		C.interfaceFields = [(C.Protected, map (implField env) implFields)]
 	}
 	where 
 		env = Env cl 0 D.TPVoid False
 		name = D.classNameWithPrefix cl
-		defs = D.classDefs cl
+		defs = filter (not . D.isInline) $ D.classDefs cl
 		implFields = filter needField (D.classDefsWithTraits cl)
 		needField f = D.isField f && not (D.isStatic f)
 		constrFuns = fromMaybe [] $ fmap (\constr -> [createFun name constr, initFun constr]) (D.classConstructor cl)
@@ -195,7 +195,7 @@ stmToImpl cl =
 		clsName = D.classNameWithPrefix cl
 		env = Env cl 0 D.TPVoid False
 		defs :: [D.Def]
-		defs = D.classDefsWithTraits cl
+		defs = filter (not . D.isInline) $ D.classDefsWithTraits cl
 					
 		constrFuns = fromMaybe [] $ fmap (\constr -> [implCreate cl constr, implInit env constr]) (D.classConstructor cl)
 		implFields = filter needField defs
@@ -366,7 +366,7 @@ genStruct cl =
 	where
 		name = D.classNameWithPrefix cl
 		clDefs = D.classDefs cl
-		defs = filter D.isDef clDefs
+		defs = filter (\d -> D.isDef d && not (D.isInline d)) clDefs
 		env = Env cl 0 D.TPVoid False
 		fields = filter (\d -> not (D.isStatic d) && D.isField d) clDefs
 		staticFields = filter (\d -> (D.isStatic d) && D.isField d) clDefs
@@ -526,7 +526,7 @@ stringFormatForType (D.TPNumber True _)= "%u"
 stringFormatForType (D.TPChar)= "%d"
 stringFormatForType (D.TPFloatNumber _) = "%f"
 stringFormatForType D.TPBool = "%d"
-stringFormatForType D.TPVoidRef = "%p"
+stringFormatForType D.TPPointer{} = "%p"
 stringFormatForType (D.TPEArr n tp)  = "[" ++ strs ", " (replicate n (stringFormatForType tp)) ++ "]"
 stringFormatForType _ = "%@"
 
@@ -690,6 +690,9 @@ showDataType (D.TPFloatNumber 4) = C.TPSimple "float" []
 showDataType (D.TPFloatNumber 8) = C.TPSimple "double" []
 showDataType (D.TPFloatNumber 0) = C.TPSimple "CGFloat" []
 showDataType D.TPString = C.TPSimple "NSString*" []
+showDataType (D.TPPointer tp) = case D.unwrapGeneric tp of
+	D.TPClass D.TPMGeneric _ _ -> C.TPSimple "void*" []
+	t -> C.TPRef $ showDataType t
 showDataType D.TPBool = C.TPSimple "BOOL" []
 showDataType D.TPAny = idTp
 showDataType D.TPAnyGeneric = idTp
@@ -772,11 +775,16 @@ setSelf env tp stm = if hasWeakSelf False stm then [
 		
 
 tExp :: Env -> D.Exp -> C.Exp
+{- Optimizations -}
 tExp env (D.Dot l (D.Call (D.Def{D.defName = "im"}) _ [])) 
 	| isExp = tExp env l
 	where isExp = case D.exprDataType l of
 		D.TPClass _ _ D.Class{D.className = "MArray"} -> True
 		_ -> False
+-- sizeof(structure)
+tExp _ (D.Dot (D.Dot (D.Call (D.Def{D.defType = D.TPObject _ cl}) _ []) 
+		(D.Call (D.Def{D.defName = "type"}) _ [])) (D.Call (D.Def{D.defName = "size"}) _ [])) 
+	= C.CCall (C.Ref "sizeof") [C.Ref $ D.classNameWithPrefix cl]
 
 
 tExp _ (D.IntConst i) = C.IntConst i
@@ -798,12 +806,8 @@ tExp env (D.BoolOp t l r) = C.BoolOp (t' t) (tExpTo env tp l) (tExpTo env tp r)
 tExp env (D.MathOp t l r) = let 
 		l' = tExp env l
 		r' = tExp env r
-		ltp = case D.exprDataType l of
-			D.TPGenericWrap _ tt -> tt
-			tt -> tt
-		rtp = case D.exprDataType r of
-			D.TPGenericWrap _ tt -> tt
-			tt -> tt
+		ltp = D.unwrapGeneric $ D.exprDataType l 
+		rtp = D.unwrapGeneric $ D.exprDataType r
 	in case ltp of
 		D.TPString -> case rtp of
 			D.TPString -> C.Call l' "stringByAppending" [("string", r')] []
@@ -846,9 +850,10 @@ tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars))
 		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
 			C.Dot (castGeneric l $ tExpTo env ltp l) $ C.CCall (C.Ref name) ((map snd . tPars env dd) pars)
 	| D.DefModConstructor `elem` mods = callConstructor env dd pars
-	| D.DefModStruct `elem` mods = case ltp  of
+	| D.DefModStruct `elem` mods = case ltp of
 		(D.TPClass D.TPMStruct _ c) -> structCall (D.classNameWithPrefix c) (castGeneric l $ tExpTo env ltp l)
 		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) dd) ((map snd . tPars env dd) pars)
+		D.TPPointer{} -> structCall "cnPointer" (castGeneric l $ tExpTo env ltp l)
 		tp -> structCall (show tp) (castGeneric l $ tExpTo env ltp l)
 	| otherwise = C.Call (castGeneric l $ tExp env l) (funName dd) (tPars env dd pars) []
 	where
@@ -868,7 +873,8 @@ tExp env (D.Dot l (D.CastDot dtp)) = tExp env (D.Cast dtp l)
 tExp env (D.Dot l (D.Cast dtp c)) = tExp env (D.Cast dtp (D.Dot l c))
 tExp env (D.Dot l (D.LambdaCall c)) = tExp env (D.LambdaCall $ D.Dot l c)
 
-
+tExp env (D.Arrow l (D.Call D.Def{D.defName = name} _ [])) = C.Arrow (tExp env l) (C.Ref name)
+tExp env (D.Arrow l r) = C.Arrow (tExp env l) (tExp env r)
 
 tExp env (D.Self _) = selfCall env
 tExp _ (D.Super _) = C.Super
@@ -923,7 +929,7 @@ tExp env (D.Cast dtp e) = let
 		toString format = C.Call (C.Ref "NSString") "stringWith" [("format", C.StringConst format)] (stringExpressionsForTp stp $ tExpTo env stp e)
 		cast = C.Cast (showDataType dtp) e'
 		e' = (tExpTo env stp' e)
-		voidRefStructCast = C.CCall (C.Ref "voidRef") [e']
+		{-voidRefStructCast = C.CCall (C.Ref "voidRef") [e']-}
 		sear exps = C.EArr $ map (tExp env) exps
 		ear etp exps = if envCStruct env == 2 then sear exps
 			else C.ShortCast (C.TPArr 0 $ show $ showDataType $ D.unwrapGeneric etp) $ sear exps
@@ -949,7 +955,7 @@ tExp env (D.Cast dtp e) = let
 			case e of
 				D.Arr exps -> ear etp exps
 				_ -> error $ "Could not convert to EArr " ++ show e
-		(D.TPNumber{}, D.TPVoidRef) -> voidRefStructCast
+		{-(D.TPNumber{}, D.TPVoidRef) -> voidRefStructCast
 		(D.TPFloatNumber{}, D.TPVoidRef) -> voidRefStructCast
 		(D.TPClass D.TPMStruct _ _, D.TPVoidRef) -> voidRefStructCast
 		(D.TPVoidRef, _) -> case showDataType dtp of 
@@ -957,7 +963,7 @@ tExp env (D.Cast dtp e) = let
 		(D.TPArr _ etp, D.TPVoidRef) ->
 			case e of
 				D.Arr exps -> ear etp exps
-				_ -> cast
+				_ -> cast-}
 		(D.TPAny, dd@D.TPNumber{}) -> C.CCall (C.Ref $ "unum" ++ dataTypeSuffix dd) [e']
 		(D.TPAny, dd@D.TPFloatNumber{}) -> C.CCall (C.Ref $ "unum" ++ dataTypeSuffix dd) [e']
 		_ -> cast 
@@ -971,6 +977,7 @@ tExp _ e@D.ExpDError{} = C.Error $ show e
 tExp _ e@D.ExpLError{} = C.Error $ show e
 tExp _ D.Nop = C.Nop
 
+tExp _ D.Null{} = C.Null
 tExp _ (D.Braces []) = C.Nop
 tExp env (D.Braces [x]) = tExp env x
 tExp env (D.Braces stms) = C.ExpBraces (concatMap (translate1 env stms) (init stms) ++ [C.Stm (tExp env $ last stms)])
@@ -989,6 +996,7 @@ tExp env ee@(D.NonOpt ch e) = let
 			else C.Cast (showDataType tp) $ tExpTo env tp e
 tExp env (D.Return _ e) = tExp env e
 tExp env (D.Throw e) = C.ExpBraces [C.Throw $ tExp env e]
+tExp env (D.Deferencing e) = C.Deferencing (tExp env e)
 tExp _ x = C.Error $ "No tExp for " ++ show x
 
 

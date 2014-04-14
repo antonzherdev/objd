@@ -8,7 +8,7 @@ module ObjD.Link (
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
 	fileNameWithPrefix, classDefsWithTraits, classInitDef, classContainsInit, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait,
-	isAbstract, isFinal, isCaseClass, classFieldsForEquals, needHashForClass, needIsEqualForClass, isGenericWrap, mapExp
+	isAbstract, isFinal, isCaseClass, classFieldsForEquals, needHashForClass, needIsEqualForClass, isGenericWrap, mapExp, isInline
 )where
 
 import 			 Control.Arrow
@@ -202,7 +202,7 @@ objectDef cl = Def {defName = className cl, defPars = [], defType = TPObject (re
 				defMods = [DefModStatic, DefModObject], defGenerics = Nothing}
 
 replaceGenericsInDef :: Generics -> Def -> Def
-replaceGenericsInDef gens d = d {defType =  replaceGenerics False gens (defType d), defPars = map (replaceGenericsInDef gens) (defPars d) }
+replaceGenericsInDef gens d = d {defType = replaceGenerics False gens (defType d), defPars = map (replaceGenericsInDef gens) (defPars d) }
 
 allDefsInClass :: ClassRef -> [Def]
 -- allDefsInClass (cl, gens) | trace ("allDefsInClass " ++ className cl ++ ": " ++ show gens) False = undefined
@@ -442,6 +442,8 @@ isEnumItem :: Def -> Bool
 isEnumItem = (DefModEnumItem `elem` ) . defMods
 isConstructor :: Def -> Bool
 isConstructor = (DefModConstructor `elem` ) . defMods
+isInline :: Def -> Bool
+isInline = (DefModInline `elem` ) . defMods
 isPure :: Def -> Bool
 isPure = (DefModPure `elem` ) . defMods
 enumItems :: Class -> [Def]
@@ -1001,7 +1003,7 @@ data DataType = TPNumber Bool Int | TPFloatNumber Int | TPString | TPVoid
 	| TPMap DataType DataType
 	| TPOption Bool DataType -- Currently in option state. If already checked than True
 	| TPGenericWrap [WrapReason] DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
-	| TPAnyGeneric | TPVoidRef | TPUnset
+	| TPAnyGeneric | TPUnset | TPPointer DataType
 	deriving (Eq)
 data WrapReason = WrapReasonUp | WrapReasonBlock deriving(Eq) 
 data DataTypeMod = TPMClass | TPMStruct | TPMEnum | TPMTrait | TPMGeneric | TPMType deriving (Eq)
@@ -1080,6 +1082,7 @@ forDataType f tp = mplus (go tp) (f tp)
 		go (TPMap a b) = mplus (forDataType f a) (forDataType f b)
 		go (TPGenericWrap _ a) = forDataType f a
 		go (TPOption _ a) = forDataType f a
+		go (TPPointer a) = forDataType f a
 		go (TPTuple a) =  msum $ map (forDataType f) a
 		go _ = mzero
 
@@ -1093,6 +1096,7 @@ mapDataType f tp = fromMaybe (go tp) (f tp)
 		go (TPFun a b) = TPFun (mapDataType f a) (mapDataType f b)
 		go (TPMap a b) = TPMap (mapDataType f a) (mapDataType f b)
 		go (TPGenericWrap t a) = TPGenericWrap t (mapDataType f a)
+		go (TPPointer a) = TPPointer (mapDataType f a)
 		go (TPOption ch a) = TPOption ch (mapDataType f a)
 		go (TPTuple a) = TPTuple (map (mapDataType f) a)
 		go _ = tp
@@ -1102,6 +1106,7 @@ mapDataTypeGenerics f (TPGenericWrap reasons tp) = TPGenericWrap reasons $ mapDa
 mapDataTypeGenerics f (TPClass mods gens cl) = TPClass mods (f gens) cl
 mapDataTypeGenerics f (TPTuple gens) = TPTuple (f gens)
 mapDataTypeGenerics f (TPOption ch gen) = TPOption ch (head $ f [gen])
+mapDataTypeGenerics f (TPPointer gen) = TPPointer (head $ f [gen])
 mapDataTypeGenerics f (TPEArr count gen) = TPEArr count (head $ f [gen])
 mapDataTypeGenerics f (TPArr count gen) = TPArr count (head $ f [gen])
 mapDataTypeGenerics f (TPFun s d) = 
@@ -1159,6 +1164,7 @@ dataTypeClass env TPChar = classFind (envIndex env) "Char"
 dataTypeClass env TPString = classFind (envIndex env) "String"
 dataTypeClass env TPAny = classFind (envIndex env) "Any"
 dataTypeClass env TPBool = classFind (envIndex env) "Bool"
+dataTypeClass env (TPPointer _) = classFind (envIndex env) "Pointer"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("Tuple" ++ show (length a))
 dataTypeClass env f@TPFun{} = Class { _classMods = [], className = "", _classExtends =  Extends (Just $ baseClassExtends (envIndex env)) [],
 	_classPackage = Package ["core"] Nothing "", _classFile = coreFakeFile, 
@@ -1182,6 +1188,7 @@ dataTypeClassName (TPGenericWrap _ c) = dataTypeClassName c
 dataTypeClassName (TPArr _ _) = "Array"
 dataTypeClassName (TPMap _ _) = "Map"
 dataTypeClassName TPAny = "Any"
+dataTypeClassName (TPPointer _) = "Pointer"
 dataTypeClassName (TPTuple [_, _]) = "Tuple"
 dataTypeClassName (TPTuple a) = "Tuple" ++ show (length a)
 dataTypeClassName x = error ("No dataTypeClassName for " ++ show x)
@@ -1210,6 +1217,7 @@ dataTypeGenerics _ (TPFun s d) = [s, d]
 dataTypeGenerics _ (TPMap k v) = [k, v]
 dataTypeGenerics _ (TPOption _ v) = [v]
 dataTypeGenerics _ (TPTuple a) = a
+dataTypeGenerics _ (TPPointer a) = [a]
 dataTypeGenerics env (TPGenericWrap _ g) = dataTypeGenerics env g
 dataTypeGenerics _ _ = []
 
@@ -1254,8 +1262,10 @@ dataType env (D.DataType name gens) = case name of
 	"string" -> TPString
 	"bool" -> TPBool
 	"self" -> TPSelf $ dataTypeClass env $ envSelf env
-	"VoidRef" -> TPVoidRef
 	"any" -> TPAny
+	"Pointer" -> TPPointer $ case gens of
+		[tp] -> dataType env tp
+		_ -> TPUnknown $ "Incorrect generics for pointer: " ++ show gens
 	"_" -> TPAnyGeneric
 	_ -> maybe (TPUnknown $ "No class found " ++ name) (\cl -> refDataType cl (map (wrapGeneric . dataType env) gens)) (idxFind (envIndex env) name)
 dataType env (D.DataTypeArr m tp) = case tp' of
@@ -1300,7 +1310,6 @@ instance Show DataType where
 	show TPNil = "nil"
 	show TPThrow = "throw"
 	show TPAnyGeneric = "_"
-	show TPVoidRef = "VoidRef"
 	show TPAny = "any"
 	show (TPUnknown s) = s
 	show (TPClass t [] c) = className c ++ show t
@@ -1318,6 +1327,7 @@ instance Show DataType where
 	show (TPOption False t) = "(" ++ show t ++ ")?"
 	show (TPOption True t) = "(" ++ show t ++ ")¿"
 	show TPUnset = "_unset"
+	show (TPPointer e) = show e ++ "*"
 	show _ =  "UnknownTP"
 instance Show DataTypeMod where
 	show TPMClass = "#C"
@@ -1355,11 +1365,13 @@ data Exp = Nop
 	| Self DataType
 	| Super DataType
 	| Nil
+	| Null DataType
 	| BoolOp BoolTp Exp Exp
 	| MathOp MathTp Exp Exp
 	| PlusPlus Exp
 	| MinusMinus Exp
 	| Dot Exp Exp
+	| Arrow Exp Exp
 	| NullDot Exp Exp
 	| NonOpt Bool Exp -- Need to check
 	| Set (Maybe MathTp) Exp Exp
@@ -1388,6 +1400,7 @@ data Exp = Nop
 	| Break
 	| Continue
 	| LambdaCall Exp
+	| Deferencing Exp
 	| StringBuild [(String, Exp)] String
 	deriving(Eq)
 type CallPar = (Def, Exp)	
@@ -1411,6 +1424,7 @@ instance Show Exp where
 	show (PlusPlus e) = show e ++ "++"
 	show (MinusMinus e) = show e ++ "--"
 	show (Dot l r) = showOp' l "." r
+	show (Arrow l r) = showOp' l "->" r
 	show (NullDot l r) = showOp' l "?." r
 	show (Call dd tp pars) = defRefPrep dd ++ defName dd ++ showCallPars pars ++ "\\" ++ show tp ++ "\\" 
 	show (IntConst i) = show i
@@ -1440,8 +1454,10 @@ instance Show Exp where
 	show (CastDot tp) = "cast<" ++ show tp ++ ">"
 	show (Break) = "break"
 	show (Continue) = "continue"
+	show (Null tp) = "null<" ++ show tp ++ ">"
 	show (NonOpt _ e) = show e ++ ".get"
 	show (LambdaCall e) = show e ++ "()"
+	show (Deferencing e) = "*(" ++ show e ++ ")"
 	show (Try e f) = "try " ++ show e ++ "\nfinally " ++ show f
 	show (StringBuild pars lastS) = "\"" ++ join (map (\(prev, e) -> prev ++ "$" ++ show e) pars) ++ lastS ++ "\""
 
@@ -1511,6 +1527,7 @@ forExp f ee = mplus (go ee) (f ee)
 		go (Do l r) = mplus (forExp f l) (forExp f r)
 		go (Set _ l r) = mplus (forExp f l) (forExp f r)
 		go (Dot l r) = mplus (forExp f l) (forExp f r)
+		go (Arrow l r) = mplus (forExp f l) (forExp f r)
 		go (NullDot l r) = mplus (forExp f l) (forExp f r)
 		go (Index l r) = mplus (forExp f l) (forExp f r)
 		go (PlusPlus e) = forExp f e
@@ -1525,6 +1542,7 @@ forExp f ee = mplus (go ee) (f ee)
 		go (LambdaCall e) = forExp f e
 		go (FirstTry _ e) = forExp f e
 		go (NonOpt _ e) = forExp f e
+		go (Deferencing e) = forExp f e
 		go (Val _ d) = forExp f (defBody d)
 		go _ = mzero
 
@@ -1547,6 +1565,7 @@ mapExp f ee = fromMaybe (go ee) (f ee)
 		go (Do l r) = Do (mapExp f l) (mapExp f r)
 		go (Set t l r) = Set t (mapExp f l) (mapExp f r)
 		go (Dot l r) = Dot (mapExp f l) (mapExp f r)
+		go (Arrow l r) = Arrow (mapExp f l) (mapExp f r)
 		go (NullDot l r) = NullDot (mapExp f l) (mapExp f r)
 		go (Index l r) = Index (mapExp f l) (mapExp f r)
 		go (PlusPlus e) = PlusPlus $ mapExp f e
@@ -1560,6 +1579,7 @@ mapExp f ee = fromMaybe (go ee) (f ee)
 		go (Lambda p1 e p2) = Lambda p1 (mapExp f e) p2
 		go (FirstTry p e) = FirstTry p $ mapExp f e
 		go (NonOpt c e) = NonOpt c $ mapExp f e
+		go (Deferencing e) = Deferencing $ mapExp f e
 		go (LambdaCall e) = LambdaCall $ mapExp f e
 		go (Val e d) = Val e d{defBody = mapExp f (defBody d)}
 		go e = e
@@ -1580,6 +1600,7 @@ isConst (Arr exps) = all isConst exps
 isConst (Map exps) = all (\(a, b) -> isConst a && isConst b) exps
 isConst (Cast _ e) = isConst e
 isConst (Dot l r) = isConst l && isConst r
+isConst (Arrow l r) = isConst l && isConst r
 isConst (NullDot l r) = isConst l && isConst r
 isConst (Call Def {defMods = mods, defBody = b} _ pars) = 
 	(DefModStruct `elem` mods  &&  DefModConstructor `elem` mods && all (isConst . snd) pars)
@@ -1605,6 +1626,7 @@ isElementaryExpression (FloatConst _) = True
 isElementaryExpression (BoolConst _) = True
 isElementaryExpression (Call Def{defMods = mods} _ []) = DefModDef `notElem` mods
 isElementaryExpression (Dot (Self _) (Call Def{defMods = mods} _ [])) = DefModDef `notElem` mods
+isElementaryExpression (Self _) = True
 isElementaryExpression _ = False
 
 
@@ -1640,6 +1662,7 @@ exprDataType (PlusPlus e) = exprDataType e
 exprDataType (MinusMinus e) = exprDataType e
 exprDataType (NullDot _ b) = option False $ exprDataType b 
 exprDataType (Dot _ b) = exprDataType b
+exprDataType (Arrow _ b) = exprDataType b
 exprDataType Set{} = TPVoid
 exprDataType (Self s) = s
 exprDataType (Super s) = s
@@ -1675,11 +1698,16 @@ exprDataType (FirstTry _ e) = exprDataType e
 exprDataType (Throw _) = TPThrow
 exprDataType (Not _) = TPBool
 exprDataType (Negative e) = exprDataType e
+exprDataType (Deferencing e) = case exprDataType e of
+	TPPointer r -> unwrapGeneric r
+	TPGenericWrap _ (TPPointer r) -> unwrapGeneric r
+	r -> TPUnknown $ show r ++ " is not a reference"
 exprDataType (Cast dtp _) = dtp
 exprDataType (As dtp) = option False $ wrapGeneric dtp
 exprDataType (CastDot dtp) = dtp
 exprDataType (Is _) = TPBool
 exprDataType Break = TPVoid
+exprDataType (Null tp) = TPPointer tp
 exprDataType StringBuild{} = TPString
 exprDataType (LambdaCall e) = case unwrapGeneric $ exprDataType e of
 	(TPOption True (TPGenericWrap _ (TPFun _ d))) -> d
@@ -1788,30 +1816,38 @@ expr env (D.MathOp tp a b) =
 		aa = exprToSome env a
 		ltp = exprDataType aa
 		math = MathOp tp aa (exprToSome env b)
-		callOp =  Dot aa $ exprCall env (Just ltp) $ D.Call (literalDefName $ show tp) (Just [(Nothing, b)]) []
+		cll = D.Call (literalDefName $ show tp) (Just [(Nothing, b)]) []
+		callOp =  Dot aa $ exprCall env (Just ltp) $ cll
 	in case unwrapGeneric ltp of
 		TPNumber{} -> math
 		TPFloatNumber{} -> math
 		TPString{} -> math
-		TPVoidRef{} -> math
+		TPPointer{} -> math
 		_ -> callOp 
 expr env d@(D.Dot a b) = let
 	aa = case a of
 		D.Call {} -> exprCall env Nothing a
 		_ -> exprToSome env a
+	aTp' = case exprDataType aa of
+		TPOption True t -> t
+		TPPointer t -> t
+		TPGenericWrap _ (TPOption True t) -> t
+		t -> t
 	aTp = case exprDataType aa of
 		TPOption True t -> t
 		TPGenericWrap _ (TPOption True t) -> t
 		t -> t
-	bb = exprCall env (Just aTp)  b
-	in case aTp of
-		TPOption{} -> linkOptionCall env (a, aa) b
-		TPGenericWrap _ TPOption{} -> linkOptionCall env (a, aa) b
-		_ -> case aa of
+	bb = exprCall env (Just aTp')  b
+	def = case aa of
 			ExpDError s _ -> ExpDError s d
 			_ -> case bb of
 				Dot l r -> maybeInlineCall env $ Dot (Dot aa l) r
 				_ -> maybeInlineCall env $ Dot aa bb
+	in case unwrapGeneric aTp of
+		TPOption{} -> linkOptionCall env (a, aa) b
+		TPPointer{} -> fromMaybe (Arrow aa bb) $ linkPointerCall env (a, aa) b
+		TPObject _ Class{className = "Pointer"} -> fromMaybe def $ linkPointerStatic env b
+		_ -> def
 expr env d@(D.NullDot _ _) = linkNullDot env d
 expr env (D.Set tp a b) = 
 	let 
@@ -1824,6 +1860,7 @@ expr env (D.Set tp a b) =
 				TPNumber{} -> set tp aa math
 				TPFloatNumber{} -> set tp aa math
 				TPString{} -> set tp aa math
+				TPPointer{} -> set tp aa math
 				_ -> set Nothing aa callOp
 
 		set tp' (NullDot dl dr) r = 
@@ -1835,10 +1872,14 @@ expr env (D.Set tp a b) =
 			in  if isElementaryExpression dl then f else Braces [declareVal env tmp, f]
 		set tp' l r = if isSimpleExpression r then Set tp' l r else multilineSet env tp' l r
 
-		math = exprTo env ltp b 
+		rtp = case unwrapGeneric ltp of
+			 t@TPPointer{} -> if isJust tp then int else t
+			 t -> t
+		math = exprTo env rtp b 
 		callOp = Dot aa $ exprCall env (Just ltp) $ D.Call (literalDefName $ show $ fromJust tp) (Just [(Nothing, b)]) []
 		lcall = case aa of
 				Dot _ c@(Call {}) -> Just c
+				Arrow _ c@(Call {}) -> Just c
 				NullDot _ c@(Call {}) -> Just c
 				c@Call {} -> Just c
 				_ -> Nothing
@@ -1970,9 +2011,7 @@ linkOptionCall env (_, l') (D.Call fname (Just [(_, e)]) [])
 				_ -> If (BoolOp NotEq (callRef tmp) (None aTp) ) 
 					(implicitConvertsion env (option False bTp) mapExpr')
 					(None $ wrapGeneric $ bTp))
-		]
-
-			
+		]			
 linkOptionCall _ _ e = ExpDError ("Unknown option operation: " ++ show e) e
 
 linkOptionAlt :: Env -> D.Exp -> DataType -> Exp
@@ -2071,6 +2110,29 @@ compareOptionWithNonOption env btp (opt, optTp) (nonopt, _) = let
 	ml = Braces [Val False val,
 		comp (callRef val) nonopt]
 	in if isSimpleOpt then comp opt nonopt else ml
+
+
+{------------------------------------------------------------------------------------------------------------------------------ 
+ - Pointer
+ ------------------------------------------------------------------------------------------------------------------------------}
+
+linkPointerCall :: Env -> (D.Exp, Exp) -> D.Exp -> Maybe Exp
+linkPointerCall env (_, leftExp) (D.Call "cast" Nothing [tp]) = Just $ Cast (case dataType env tp of
+	p@TPPointer{} -> p
+	p -> TPUnknown $ "Cast Pointer to non-pointer: " ++ show p) leftExp
+linkPointerCall _ (_, leftExp) (D.Call "get" Nothing _) = Just $ Deferencing leftExp
+linkPointerCall env (_, leftExp) (D.Call "get" (Just [(_, rel)]) _) = Just $ Deferencing $ MathOp Plus leftExp (expr env rel)
+linkPointerCall env (_, leftExp) (D.Call "set" (Just [(_, value)]) _) = Just $ Set Nothing (Deferencing $ leftExp) (expr env value)
+linkPointerCall env (_, leftExp) (D.Call "set" (Just [(_, rel), (_, value)]) _) = 
+	Just $ Set Nothing (Deferencing $ MathOp Plus leftExp (expr env rel)) (expr env value)
+linkPointerCall env (_, leftExp) c@(D.Call "free" Nothing _) = Just $ Dot leftExp $ exprCall env (Just $ exprDataType leftExp) c
+linkPointerCall env (_, leftExp) c@(D.Call "copy" (Just [_]) _) = Just $ Dot leftExp $ exprCall env (Just $ exprDataType leftExp) c
+linkPointerCall _ _ _ = Nothing
+
+linkPointerStatic :: Env -> D.Exp -> Maybe Exp
+linkPointerStatic env (D.Call "null" Nothing [tp]) = Just $ Null $ dataType env tp
+linkPointerStatic _ _ = Nothing
+
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Functional Compositions >> *|* **
  ------------------------------------------------------------------------------------------------------------------------------}
@@ -2586,27 +2648,50 @@ maybeInlineCall env e = let
 		Nothing -> Nothing
 	def = fromJust defOpt
 	selfExp = case e of Dot l _ -> l
-	selfPar = (localVal "self" (exprDataType selfExp), selfExp)
+	selfTp = exprDataType selfExp
+	selfPar = (localVal "self" selfTp, selfExp)
 	
 	inline = 
 		if null parsForDeclareVars then replacedExp
 		else Braces $ (map (Val False . snd) vals) ++ [replacedExp]
 		where
+			declaredVals :: [Def]
+			declaredVals = forExp findVal $ defBody def
+				where 
+					findVal (Val _ d) = [d]
+					findVal _ = []
+			gens = buildGenerics (dataTypeClass env selfTp) (dataTypeGenerics env selfTp)
+			mapDeclaredValsGenerics = map repGens declaredVals
+				where repGens d = d{defType = replaceGenerics False gens $ unblockGenerics $ defType d}
+
 			replacedExp = mapExp rep $ defBody def
 			rep :: Exp -> Maybe Exp
 			rep (Dot (Call d _ []) (Call Def{defMods = mbLamdaMods} _ lambdaCallPars)) 
 				| DefModApplyLambda `elem` mbLamdaMods = fmap (unwrapLambda (map (mapExp rep . snd) lambdaCallPars)) $ lookup d refs
 			rep (LambdaCall (Call d _ [])) = fmap (unwrapLambda []) $ lookup d refs
 			rep (Call d _ []) = lookup d refs
+			rep (Val b Def{defName = nm}) = 
+				fmap (\d -> Val b $ d{defBody = mapExp rep (defBody d)} ) $ find ((== nm) . defName) mapDeclaredValsGenerics
 			rep (Self _) = lookup (fst selfPar) refs
 			rep _ = Nothing
-			refs = (map (second callRef) vals) ++ pars
+			refs :: [(Def, Exp)]
+			refs = (map (second callRef) vals) ++ pars ++ map (\d -> (d, callRef d)) mapDeclaredValsGenerics
 			vals = (map dec parsForDeclareVars)
 			dec (d, pe) = (d, tmpVal env (defName d) (defType d) pe)
 			unwrapLambda :: [Exp] -> Exp -> Exp
 			unwrapLambda [] (Lambda _ ee _) = ee
-			unwrapLambda parExps (Lambda lpars ee _) = Braces $ (map (\((nm, tp), lpe) -> Val False $ localValE nm tp lpe) (zip lpars parExps)) ++ [ee]
-			unwrapLambda _ ee = ee
+			unwrapLambda parExps (Lambda lpars ee _) = let
+				nonelemPars = (map (\((nm, tp), lpe) -> Val False $ localValE nm tp lpe) $ filter (not . isElementaryExpression . snd ) (zip lpars parExps))
+				elemPars = map (first fst) $ filter (isElementaryExpression . snd ) (zip lpars parExps)
+				ee' = case elemPars of
+					[] -> ee
+					_ -> mapExp replaceOnEP ee
+				replaceOnEP (Call d _ []) = lookup (defName d) elemPars
+				replaceOnEP _ = Nothing
+				in case nonelemPars of
+					[] -> ee'
+					_ -> Braces $ nonelemPars ++ [ee']
+			unwrapLambda _ ee = LambdaCall ee
 
 	parsForDeclareVars = filter (checkCountOfUsing . fst) unelementaryPars
 		where 
@@ -2676,7 +2761,6 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 					Arr exps -> Arr $ map (implicitConvertsion env adtp) exps
 					_ -> ex
 				conv (TPArr _ _) (TPClass _ [d] Class{className = "PArray"}) = Cast (TPEArr 0 (unwrapGeneric d)) ex
-				conv _ TPVoidRef = Cast dtp ex
 				conv sc dc@TPClass{} = if isInstanceOfTp env sc dc then ex else classConversion dc sc ex
 				conv _ _ = ex
 
