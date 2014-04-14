@@ -2649,6 +2649,7 @@ maybeInlineCall env e = let
 	def = fromJust defOpt
 	selfExp = case e of Dot l _ -> l
 	selfTp = exprDataType selfExp
+	selfClass = dataTypeClass env selfTp
 	selfPar = (localVal "self" selfTp, selfExp)
 	
 	inline = 
@@ -2660,9 +2661,18 @@ maybeInlineCall env e = let
 				where 
 					findVal (Val _ d) = [d]
 					findVal _ = []
-			gens = buildGenerics (dataTypeClass env selfTp) (dataTypeGenerics env selfTp)
+
+			defClass :: Class
+			defClass = fromJust $ defClassRec selfClass
+				where defClassRec cl
+					| def `elem` classDefs cl = Just cl
+					| otherwise = listToMaybe $ mapMaybe defClassRec $ map fst $ extendsRefs $ classExtends cl
+			gens :: Generics
+			gens = buildGenerics defClass $ fromJust $ upGenericsToClass defClass ((dataTypeClass env selfTp), (dataTypeGenerics env selfTp))
+				
 			mapDeclaredValsGenerics = map repGens declaredVals
-				where repGens d = d{defType = replaceGenerics False gens $ unblockGenerics $ defType d}
+				where repGens d = (d, d{defType = replaceGenerics False gens $ unblockGenerics $ defType d, 
+					defName = "__inline_" ++ envVarSuffix env ++ "_" ++ defName d})
 
 			replacedExp = mapExp rep $ defBody def
 			rep :: Exp -> Maybe Exp
@@ -2670,12 +2680,12 @@ maybeInlineCall env e = let
 				| DefModApplyLambda `elem` mbLamdaMods = fmap (unwrapLambda (map (mapExp rep . snd) lambdaCallPars)) $ lookup d refs
 			rep (LambdaCall (Call d _ [])) = fmap (unwrapLambda []) $ lookup d refs
 			rep (Call d _ []) = lookup d refs
-			rep (Val b Def{defName = nm}) = 
-				fmap (\d -> Val b $ d{defBody = mapExp rep (defBody d)} ) $ find ((== nm) . defName) mapDeclaredValsGenerics
+			rep (Val b dd) = 
+				fmap (\d -> Val b $ d{defBody = mapExp rep (defBody d)} ) $ lookup dd mapDeclaredValsGenerics
 			rep (Self _) = lookup (fst selfPar) refs
 			rep _ = Nothing
 			refs :: [(Def, Exp)]
-			refs = (map (second callRef) vals) ++ pars ++ map (\d -> (d, callRef d)) mapDeclaredValsGenerics
+			refs = (map (second callRef) vals) ++ pars ++ map (second callRef) mapDeclaredValsGenerics
 			vals = (map dec parsForDeclareVars)
 			dec (d, pe) = (d, tmpVal env (defName d) (defType d) pe)
 			unwrapLambda :: [Exp] -> Exp -> Exp
