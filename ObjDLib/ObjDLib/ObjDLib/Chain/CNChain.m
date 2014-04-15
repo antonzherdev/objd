@@ -6,7 +6,6 @@
 #import "CNPrependLink.h"
 #import "CNMulLink.h"
 #import "CNReverseLink.h"
-#import "CNOption.h"
 #import "CNFlatMapLink.h"
 #import "CNDistinctLink.h"
 #import "CNTreeMap.h"
@@ -19,6 +18,13 @@
 #import "CNZipLink.h"
 #import "CNTreeSet.h"
 #import "CNTopLink.h"
+#import "CNFlatLink.h"
+#import "CNFuture.h"
+#import "CNFutureEnd.h"
+#import "CNDispatchQueue.h"
+#import "CNShuffleLink.h"
+#import "CNList.h"
+#import "CNSeed.h"
 
 
 @implementation CNChain {
@@ -104,11 +110,11 @@
 }
 
 - (id )findWhere:(cnPredicate)predicate {
-    __block id ret = [CNOption none];
+    __block id ret = nil;
     CNYield *yield = [CNYield alloc];
     yield = [yield initWithBegin:nil yield:^CNYieldResult(id item) {
         if(predicate(item)) {
-            ret = [CNSome someWithValue:item];
+            ret = item;
             return cnYieldBreak;
         }
         return cnYieldContinue;
@@ -119,11 +125,11 @@
 
 
 - (CNChain *)filter:(cnPredicate)predicate {
-    return [self link:[CNFilterLink linkWithPredicate:predicate selectivity:0]];
+    return [self link:[CNFilterLink filterLinkWithPredicate:predicate selectivity:0]];
 }
 
 - (CNChain *)filter:(cnPredicate)predicate selectivity:(double)selectivity {
-    return [self link:[CNFilterLink linkWithPredicate:predicate selectivity:selectivity]];
+    return [self link:[CNFilterLink filterLinkWithPredicate:predicate selectivity:selectivity]];
 }
 
 - (CNChain *)filterCast:(ODType *)type {
@@ -133,7 +139,7 @@
 }
 
 - (CNChain *)map:(cnF)f {
-    return [self link:[CNMapLink linkWithF:f]];
+    return [self link:[CNMapLink mapLinkWithF:f]];
 }
 
 - (CNChain *)flatMap:(cnF)f {
@@ -205,7 +211,18 @@
 
 
 - (CNChain *)zipA:(id <CNIterable>)a by:(id (^)(id, id))by {
-    return [self link:[CNZipLink linkWithA:a by:by]];
+    return [self link:[CNZipLink zipLinkWithA:a f:by]];
+}
+
+- (void)zipForA:(id <CNIterable>)a by:(void (^)(id, id))by {
+    id <CNIterator> ai = [a iterator];
+    [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
+        if(![ai hasNext]) return cnYieldBreak;
+        else {
+            by(item, [ai next]);
+            return cnYieldContinue;
+        }
+    } end:nil all:nil]];
 }
 
 - (CNChain *)zip3A:(id <CNIterable>)a b:(id <CNIterable>)b {
@@ -216,7 +233,7 @@
 
 
 - (CNChain *)zip3A:(id <CNIterable>)a b:(id <CNIterable>)b by:(cnF3)by {
-    return [self link:[CNZip3Link linkWithA:a b:b by:by]];
+    return [self link:[CNZip3Link zip3LinkWithA:a b:b f:by]];
 }
 
 - (CNChain *)append:(id)collection {
@@ -273,6 +290,16 @@
     } end:nil all:nil]];
 }
 
+- (void)parForEach:(void (^)(id))each {
+    [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
+        [[CNDispatchQueue aDefault] asyncF:^{
+            each(item);
+        }];
+        return cnYieldContinue;
+    } end:nil all:nil]];
+}
+
+
 - (BOOL)goOn:(BOOL(^)(id))on {
     return [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
         return on(item) ? cnYieldContinue : cnYieldBreak;
@@ -283,22 +310,20 @@
     return self;
 }
 
-
 - (id)head {
     __block id ret = nil;
     [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
         ret = item;
         return cnYieldBreak;
     } end:nil all:nil]];
-    if(ret == nil) @throw @"Chain is empty";
     return ret;
 }
 
-- (id)headOpt {
-    __block id ret = [CNOption none];
+- (id)last {
+    __block id ret = nil;
     [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
-        ret = [CNSome someWithValue:item];
-        return cnYieldBreak;
+        ret = item;
+        return cnYieldContinue;
     } end:nil all:nil]];
     return ret;
 }
@@ -311,12 +336,39 @@
 }
 
 - (id)randomItem {
-    NSArray *array = [self toArray];
-    if(array.count == 0) {
-        return [CNOption none];
+    if([_link isKindOfClass:[CNSourceLink class]]) {
+        id collection = [(CNSourceLink *)_link collection];
+        if([collection conformsToProtocol:@protocol(CNSeq)]) {
+            NSUInteger n = [collection count];
+            if(n == 0) return nil;
+            NSUInteger i = oduIntRndMax(n - 1);
+            return [collection applyIndex:i];
+        }
     }
-    NSUInteger n = oduIntRndMax(array.count - 1);
-    return [CNSome someWithValue:[array objectAtIndex:n]];
+    NSArray *array = [self toArray];
+    NSUInteger n = array.count;
+    if(n == 0) return nil;
+
+    NSUInteger i = oduIntRndMax(n - 1);
+    return [array objectAtIndex:i];
+}
+
+- (id)randomItemSeed:(CNSeed*)seed {
+    if([_link isKindOfClass:[CNSourceLink class]]) {
+        id collection = [(CNSourceLink *)_link collection];
+        if([collection conformsToProtocol:@protocol(CNSeq)]) {
+            NSUInteger n = [collection count];
+            if(n == 0) return nil;
+            NSUInteger i = (NSUInteger) [seed nextIntMin:0 max:(int)n - 1];
+            return [collection applyIndex:i];
+        }
+    }
+    NSArray *array = [self toArray];
+    NSUInteger n = array.count;
+    if(n == 0) return nil;
+
+    NSUInteger i = (NSUInteger) [seed nextIntMin:0 max:(int)n - 1];
+    return [array objectAtIndex:i];
 }
 
 - (NSUInteger)count {
@@ -344,7 +396,7 @@
     [self forEach:^(id x) {
         if(min == nil || [x compareTo:min] < 0 ) min = x;
     }];
-    return [CNOption applyValue:min];
+    return min;
 }
 
 - (id)max {
@@ -352,7 +404,7 @@
     [self forEach:^(id x) {
         if(max == nil || [x compareTo:max] > 0 ) max = x;
     }];
-    return [CNOption applyValue:max];
+    return max;
 }
 
 - (NSDictionary *)toMap {
@@ -439,12 +491,83 @@
     return ret;
 }
 
-- (CNTreeSet *)toTreeSet {
+- (CNImTreeSet *)toTreeSet {
     return [self convertWithBuilder:[CNTreeSetBuilder apply]];
 }
 
 - (CNChain *)topNumbers:(NSUInteger)numbers {
     return [self link:[CNTopLink linkWithNumbers:numbers]];
+}
+
+- (CNChain *)flat {
+    return [self link:[CNFlatLink flatLinkWithFactor:2]];
+}
+
+- (CNFuture *)futureF:(id (^)(CNChain *))f {
+    CNFutureEnd *lnk = [CNFutureEnd futureEnd];
+    [self apply:[lnk yield]];
+    return [[lnk future] mapF:^id(id<CNIterable> o) {
+        return f([o chain]);
+    }];
+}
+
+- (CNFuture *)voidFuture {
+    CNFutureVoidEnd *lnk = [CNFutureVoidEnd futureVoidEnd];
+    [self apply:[lnk yield]];
+    return [lnk future];
+}
+
+- (CNFuture *)future {
+    CNFutureEnd *lnk = [CNFutureEnd futureEnd];
+    [self apply:[lnk yield]];
+    return [lnk future];
+}
+
+
+
+- (BOOL)or {
+    __block BOOL ret = NO;
+    CNYield *yield = [CNYield alloc];
+    yield = [yield initWithBegin:nil yield:^CNYieldResult(id item) {
+        if(unumb(item)) {
+            ret = YES;
+            return cnYieldBreak;
+        }
+        return cnYieldContinue;
+    } end:nil all:nil];
+    [self apply:yield];
+    return ret;
+}
+
+- (BOOL)and {
+    __block BOOL ret = YES;
+    CNYield *yield = [CNYield alloc];
+    yield = [yield initWithBegin:nil yield:^CNYieldResult(id item) {
+        if(!unumb(item)) {
+            ret = NO;
+            return cnYieldBreak;
+        }
+        return cnYieldContinue;
+    } end:nil all:nil];
+    [self apply:yield];
+    return ret;
+}
+
+- (CNChain *)reverseWhen:(BOOL)when {
+    if(when) return [self reverse];
+    return self;
+}
+
+- (CNChain *)shuffle {
+    return [self link:[CNShuffleLink shuffleLink]];
+}
+
+- (CNImList *)toList {
+    return [self convertWithBuilder:[CNImListBuilder imListBuilder]];
+}
+
+- (CNChain *)mapOpt:(id(^)(id))f {
+    return [self link:[CNMapOptLink mapOptLinkWithF:f]];
 }
 @end
 

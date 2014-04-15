@@ -2,31 +2,38 @@
 #import "CNCollection.h"
 
 #import "ODType.h"
+#import "CNDispatchQueue.h"
 #import "CNChain.h"
-@implementation CNIterableF{
-    id<CNIterator>(^_iteratorF)();
-}
+@implementation CNIterableF
 static ODClassType* _CNIterableF_type;
 @synthesize iteratorF = _iteratorF;
 
-+ (id)iterableFWithIteratorF:(id<CNIterator>(^)())iteratorF {
++ (instancetype)iterableFWithIteratorF:(id<CNIterator>(^)())iteratorF {
     return [[CNIterableF alloc] initWithIteratorF:iteratorF];
 }
 
-- (id)initWithIteratorF:(id<CNIterator>(^)())iteratorF {
+- (instancetype)initWithIteratorF:(id<CNIterator>(^)())iteratorF {
     self = [super init];
-    if(self) _iteratorF = iteratorF;
+    if(self) _iteratorF = [iteratorF copy];
     
     return self;
 }
 
 + (void)initialize {
     [super initialize];
-    _CNIterableF_type = [ODClassType classTypeWithCls:[CNIterableF class]];
+    if(self == [CNIterableF class]) _CNIterableF_type = [ODClassType classTypeWithCls:[CNIterableF class]];
 }
 
 - (id<CNIterator>)iterator {
-    return ((id<CNIterator>(^)())(_iteratorF))();
+    return _iteratorF();
+}
+
+- (id<CNMIterable>)mCopy {
+    NSMutableArray* arr = [NSMutableArray mutableArray];
+    [self forEach:^void(id item) {
+        [arr appendItem:item];
+    }];
+    return arr;
 }
 
 - (NSUInteger)count {
@@ -40,26 +47,28 @@ static ODClassType* _CNIterableF_type;
 }
 
 - (id)head {
-    return [[self iterator] next];
-}
-
-- (id)headOpt {
-    if([self isEmpty]) return [CNOption none];
-    else return [CNOption applyValue:[self head]];
+    if([self isEmpty]) return nil;
+    else return [[self iterator] next];
 }
 
 - (BOOL)isEmpty {
     return !([[self iterator] hasNext]);
 }
 
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
-}
-
 - (void)forEach:(void(^)(id))each {
     id<CNIterator> i = [self iterator];
     while([i hasNext]) {
         each([i next]);
+    }
+}
+
+- (void)parForEach:(void(^)(id))each {
+    id<CNIterator> i = [self iterator];
+    while([i hasNext]) {
+        id v = [i next];
+        [CNDispatchQueue.aDefault asyncF:^void() {
+            each(v);
+        }];
     }
 }
 
@@ -79,24 +88,15 @@ static ODClassType* _CNIterableF_type;
     return NO;
 }
 
-- (NSString*)description {
-    return [[self chain] toStringWithStart:@"[" delimiter:@", " end:@"]"];
-}
-
-- (NSUInteger)hash {
-    NSUInteger ret = 13;
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        ret = ret * 31 + [[i next] hash];
-    }
-    return ret;
+- (CNChain*)chain {
+    return [CNChain chainWithCollection:self];
 }
 
 - (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = [CNOption none];
+    __block id ret = nil;
     [self goOn:^BOOL(id x) {
         if(where(x)) {
-            ret = [CNOption applyValue:x];
+            ret = x;
             return NO;
         } else {
             return YES;
@@ -150,11 +150,10 @@ static ODClassType* _CNIterableF_type;
     return self;
 }
 
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNIterableF* o = ((CNIterableF*)(other));
-    return [self.iteratorF isEqual:o.iteratorF];
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendString:@">"];
+    return description;
 }
 
 @end
@@ -164,11 +163,11 @@ static ODClassType* _CNIterableF_type;
 static CNEmptyIterator* _CNEmptyIterator_instance;
 static ODClassType* _CNEmptyIterator_type;
 
-+ (id)emptyIterator {
++ (instancetype)emptyIterator {
     return [[CNEmptyIterator alloc] init];
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     
     return self;
@@ -176,8 +175,10 @@ static ODClassType* _CNEmptyIterator_type;
 
 + (void)initialize {
     [super initialize];
-    _CNEmptyIterator_type = [ODClassType classTypeWithCls:[CNEmptyIterator class]];
-    _CNEmptyIterator_instance = [CNEmptyIterator emptyIterator];
+    if(self == [CNEmptyIterator class]) {
+        _CNEmptyIterator_type = [ODClassType classTypeWithCls:[CNEmptyIterator class]];
+        _CNEmptyIterator_instance = [CNEmptyIterator emptyIterator];
+    }
 }
 
 - (BOOL)hasNext {
@@ -202,16 +203,6 @@ static ODClassType* _CNEmptyIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    return YES;
-}
-
-- (NSUInteger)hash {
-    return 0;
 }
 
 - (NSString*)description {

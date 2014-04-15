@@ -1,12 +1,13 @@
 package core.chain
 
 import com.antonzherdev.test._
+import com.antonzherdev.test.Assert._
 
 class TreeMapTest extends TestCase {
     def testMain {
         val map = MTreeMap<int, string>()
         assertEquals(0, map.count)
-        assertTrue(map.opt(0).isEmpty)
+        assertTrue(map.opt(0) == nil)
 
         map.set(0, "test")
         assertEquals("test", map[0])
@@ -21,7 +22,7 @@ class TreeMapTest extends TestCase {
         tests.chain.distinct.for(i -> {
             assertEquals("test" + i, map[i])
             map.removeFor(key = i)
-            assertTrue(map.opt(i).isEmpty)
+            assertTrue(map.opt(i) == nil)
         })
         assertEquals(0, map.count)
     }

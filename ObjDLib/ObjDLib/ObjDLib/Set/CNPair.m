@@ -2,20 +2,18 @@
 #import "CNPair.h"
 
 #import "ODType.h"
+#import "CNDispatchQueue.h"
 #import "CNChain.h"
-@implementation CNPair{
-    id _a;
-    id _b;
-}
+@implementation CNPair
 static ODClassType* _CNPair_type;
 @synthesize a = _a;
 @synthesize b = _b;
 
-+ (id)pairWithA:(id)a b:(id)b {
++ (instancetype)pairWithA:(id)a b:(id)b {
     return [[CNPair alloc] initWithA:a b:b];
 }
 
-- (id)initWithA:(id)a b:(id)b {
+- (instancetype)initWithA:(id)a b:(id)b {
     self = [super init];
     if(self) {
         _a = a;
@@ -27,7 +25,7 @@ static ODClassType* _CNPair_type;
 
 + (void)initialize {
     [super initialize];
-    _CNPair_type = [ODClassType classTypeWithCls:[CNPair class]];
+    if(self == [CNPair class]) _CNPair_type = [ODClassType classTypeWithCls:[CNPair class]];
 }
 
 + (CNPair*)newWithA:(id)a b:(id)b {
@@ -51,22 +49,32 @@ static ODClassType* _CNPair_type;
     return _a;
 }
 
-- (id)headOpt {
-    return [CNOption applyValue:_a];
+- (id<CNMSet>)mCopy {
+    NSMutableSet* arr = [NSMutableSet mutableSet];
+    [self forEach:^void(id item) {
+        [arr appendItem:item];
+    }];
+    return arr;
 }
 
 - (BOOL)isEmpty {
     return !([[self iterator] hasNext]);
 }
 
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
-}
-
 - (void)forEach:(void(^)(id))each {
     id<CNIterator> i = [self iterator];
     while([i hasNext]) {
         each([i next]);
+    }
+}
+
+- (void)parForEach:(void(^)(id))each {
+    id<CNIterator> i = [self iterator];
+    while([i hasNext]) {
+        id v = [i next];
+        [CNDispatchQueue.aDefault asyncF:^void() {
+            each(v);
+        }];
     }
 }
 
@@ -78,24 +86,15 @@ static ODClassType* _CNPair_type;
     return YES;
 }
 
-- (NSString*)description {
-    return [[self chain] toStringWithStart:@"[" delimiter:@", " end:@"]"];
-}
-
-- (NSUInteger)hash {
-    NSUInteger ret = 13;
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        ret = ret * 31 + [[i next] hash];
-    }
-    return ret;
+- (CNChain*)chain {
+    return [CNChain chainWithCollection:self];
 }
 
 - (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = [CNOption none];
+    __block id ret = nil;
     [self goOn:^BOOL(id x) {
         if(where(x)) {
-            ret = [CNOption applyValue:x];
+            ret = x;
             return NO;
         } else {
             return YES;
@@ -156,21 +155,33 @@ static ODClassType* _CNPair_type;
     return [self.a isEqual:o.a] && [self.b isEqual:o.b];
 }
 
+- (NSUInteger)hash {
+    NSUInteger hash = 0;
+    hash = hash * 31 + [self.a hash];
+    hash = hash * 31 + [self.b hash];
+    return hash;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendFormat:@"a=%@", self.a];
+    [description appendFormat:@", b=%@", self.b];
+    [description appendString:@">"];
+    return description;
+}
+
 @end
 
 
-@implementation CNPairIterator{
-    CNPair* _pair;
-    NSInteger _state;
-}
+@implementation CNPairIterator
 static ODClassType* _CNPairIterator_type;
 @synthesize pair = _pair;
 
-+ (id)pairIteratorWithPair:(CNPair*)pair {
++ (instancetype)pairIteratorWithPair:(CNPair*)pair {
     return [[CNPairIterator alloc] initWithPair:pair];
 }
 
-- (id)initWithPair:(CNPair*)pair {
+- (instancetype)initWithPair:(CNPair*)pair {
     self = [super init];
     if(self) {
         _pair = pair;
@@ -182,7 +193,7 @@ static ODClassType* _CNPairIterator_type;
 
 + (void)initialize {
     [super initialize];
-    _CNPairIterator_type = [ODClassType classTypeWithCls:[CNPairIterator class]];
+    if(self == [CNPairIterator class]) _CNPairIterator_type = [ODClassType classTypeWithCls:[CNPairIterator class]];
 }
 
 - (BOOL)hasNext {
@@ -205,19 +216,6 @@ static ODClassType* _CNPairIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNPairIterator* o = ((CNPairIterator*)(other));
-    return [self.pair isEqual:o.pair];
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + [self.pair hash];
-    return hash;
 }
 
 - (NSString*)description {

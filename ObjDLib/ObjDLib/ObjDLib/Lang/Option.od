@@ -1,0 +1,10 @@
+package core.lang
+
+stub class Option<T> {
+    def get : T
+    def getOr(value : T) : T
+    def or(option : T?) : T?
+    def for(f : T -> void)
+    def map<X>(f : T -> X) : X?
+    def flatMap<X>(f : T -> X?) : X?
+}

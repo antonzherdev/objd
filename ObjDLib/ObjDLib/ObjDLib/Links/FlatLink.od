@@ -1,0 +1,20 @@
+package core.chain
+
+class FlatLink<T>(factor : float) extends ChainLink<Traversable<T>, T> {
+    override def build(yield : Yield<T>) : Yield<Traversable<T>> = {
+        Yield.decorate<Traversable<T>>(
+            base = yield,
+            begin = size -> yield.beginYieldWith(size = size * factor),
+            yield = col -> {
+                var result = 0
+                col.go {item ->
+                    if(yield.yield(item) != 0) {
+                        result = 1
+                        false
+                    } else true
+                }
+                result
+            }
+        )
+    }
+}

@@ -25,12 +25,12 @@
 
 - (CNYield *)buildYield:(CNYield *)yield {
     __block NSUInteger n = 0;
-    return [CNYield decorateYield:yield begin:nil yield:^CNYieldResult(id item) {
-        if(_numbers == 0) return cnYieldBreak;
+    return [CNYield decorateBase:yield begin:nil yield:^CNYieldResult(id item) {
+        if (_numbers == 0) return cnYieldBreak;
         CNYieldResult result = [yield yieldItem:item];
         n++;
         return (n >= _numbers) ? cnYieldBreak : result;
-    } end:nil all:nil];
+    }                        end:nil all:nil];
 }
 
 @end

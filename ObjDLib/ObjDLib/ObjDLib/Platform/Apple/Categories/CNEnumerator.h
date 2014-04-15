@@ -10,7 +10,7 @@
 @end
 
 
-@interface CNMutableEnumerator : NSObject<CNMutableIterator>
+@interface CNMEnumerator : NSObject<CNMIterator>
 - (id)initWithEnumerator:(NSEnumerator *)enumerator;
 
 + (id)enumeratorWithEnumerator:(NSEnumerator *)enumerator;

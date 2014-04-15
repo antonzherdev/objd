@@ -1,0 +1,59 @@
+package core.chain
+
+import com.antonzherdev.test._
+import com.antonzherdev.test.Assert._
+
+class FutureTest extends TestCase {
+    def testPromiseOnComplete {
+        val n = AtomicInt()
+
+        val count = 100000
+        1.to(count).for {i ->
+            val p = Promise<int>()
+            DispatchQueue.default.async{
+                p.success(i)
+            }
+            p.onComplete{ _ ->
+                n.incrementAndGet
+            }
+        }
+        Thread.sleep(1)
+        assertEquals(n.intValue, count)
+    }
+
+    def testMap {
+        val n = AtomicInt()
+
+        val count = 100
+        var result = AtomicInt()
+        1.to(count).parFor {i ->
+            val p = Promise<int>()
+            val m = p.map(_ + 1)
+            result.addAndGet(i + 1)
+            DispatchQueue.default.async{
+                p.success(i)
+            }
+            m.onComplete(n.addAndGet(_.get))
+        }
+        Thread.sleep(3)
+        assertEquals(n, result)
+    }
+
+    def testFlatMap {
+        val n = AtomicInt()
+
+        val count = 100
+        var result = 0
+        1.to(count).for {i ->
+            val p = Promise<int>()
+            val m = p.flatMap(Future{_ + 1})
+            result += i + 1
+            DispatchQueue.default.async{
+              p.success(i)
+            }
+            m.onComplete(n.addAndGet(_.get))
+        }
+        Thread.sleep(3)
+        assertEquals(n.intValue, result)
+    }
+}

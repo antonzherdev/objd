@@ -6,11 +6,14 @@
 
 @class CNNotificationHandle;
 
-@interface CNNotificationHandle : NSObject
+@interface CNNotificationHandle : NSObject {
+@protected
+    NSString* _name;
+}
 @property (nonatomic, readonly) NSString* name;
 
-+ (id)notificationHandleWithName:(NSString*)name;
-- (id)initWithName:(NSString*)name;
++ (instancetype)notificationHandleWithName:(NSString*)name;
+- (instancetype)initWithName:(NSString*)name;
 - (ODClassType*)type;
 - (void)postSender:(id)sender;
 - (void)postSender:(id)sender data:(id)data;

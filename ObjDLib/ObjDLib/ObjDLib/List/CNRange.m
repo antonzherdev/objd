@@ -2,25 +2,21 @@
 #import "CNRange.h"
 
 #import "ODType.h"
-#import "CNSet.h"
 #import "CNChain.h"
-@implementation CNRange{
-    NSInteger _start;
-    NSInteger _end;
-    NSInteger _step;
-    NSUInteger _count;
-}
+#import "CNSet.h"
+#import "CNDispatchQueue.h"
+@implementation CNRange
 static ODClassType* _CNRange_type;
 @synthesize start = _start;
 @synthesize end = _end;
 @synthesize step = _step;
 @synthesize count = _count;
 
-+ (id)rangeWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step {
++ (instancetype)rangeWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step {
     return [[CNRange alloc] initWithStart:start end:end step:step];
 }
 
-- (id)initWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step {
+- (instancetype)initWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step {
     self = [super init];
     if(self) {
         _start = start;
@@ -34,12 +30,12 @@ static ODClassType* _CNRange_type;
 
 + (void)initialize {
     [super initialize];
-    _CNRange_type = [ODClassType classTypeWithCls:[CNRange class]];
+    if(self == [CNRange class]) _CNRange_type = [ODClassType classTypeWithCls:[CNRange class]];
 }
 
 - (id)applyIndex:(NSUInteger)index {
-    if(index >= _count) @throw @"Incorrect index";
-    else return numi(_start + _step * index);
+    if(index < _count) return numi(_start + _step * index);
+    else return nil;
 }
 
 - (id<CNIterator>)iterator {
@@ -63,46 +59,39 @@ static ODClassType* _CNRange_type;
     return [CNRange rangeWithStart:i end:i step:1];
 }
 
-- (id)optIndex:(NSUInteger)index {
-    if(index >= [self count]) return [CNOption none];
-    else return [CNOption applyValue:[self applyIndex:index]];
-}
-
-- (id)randomItem {
-    NSUInteger c = [self count];
-    if(c == 0) {
-        return [CNOption none];
-    } else {
-        if(c == 1) return [CNOption applyValue:[self head]];
-        else return [CNOption applyValue:[self applyIndex:oduIntRndMax([self count] - 1)]];
-    }
-}
-
-- (id<CNSet>)toSet {
-    return [self convertWithBuilder:[CNHashSetBuilder hashSetBuilder]];
-}
-
-- (id<CNSeq>)addItem:(id)item {
+- (id<CNImSeq>)addItem:(id)item {
     CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
     [builder appendAllItems:self];
     [builder appendItem:item];
     return [builder build];
 }
 
-- (id<CNSeq>)addSeq:(id<CNSeq>)seq {
+- (id<CNImSeq>)addSeq:(id<CNSeq>)seq {
     CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
     [builder appendAllItems:self];
     [builder appendAllItems:seq];
     return [builder build];
 }
 
-- (id<CNSeq>)subItem:(id)item {
+- (id<CNImSeq>)subItem:(id)item {
     return [[[self chain] filter:^BOOL(id _) {
         return !([_ isEqual:item]);
     }] toArray];
 }
 
-- (BOOL)isEqualToSeq:(id<CNSeq>)seq {
+- (id<CNMSeq>)mCopy {
+    NSMutableArray* arr = [NSMutableArray mutableArray];
+    [self forEach:^void(id item) {
+        [arr appendItem:item];
+    }];
+    return arr;
+}
+
+- (id<CNSet>)toSet {
+    return [self convertWithBuilder:[CNHashSetBuilder hashSetBuilder]];
+}
+
+- (BOOL)isEqualSeq:(id<CNSeq>)seq {
     if([self count] != [seq count]) return NO;
     id<CNIterator> ia = [self iterator];
     id<CNIterator> ib = [seq iterator];
@@ -116,11 +105,11 @@ static ODClassType* _CNRange_type;
     return [self applyIndex:0];
 }
 
-- (id)headOpt {
-    return [self optIndex:0];
+- (id)last {
+    return [self applyIndex:[self count] - 1];
 }
 
-- (id<CNSeq>)tail {
+- (id<CNImSeq>)tail {
     CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
     id<CNIterator> i = [self iterator];
     if([i hasNext]) {
@@ -132,14 +121,20 @@ static ODClassType* _CNRange_type;
     return [builder build];
 }
 
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
-}
-
 - (void)forEach:(void(^)(id))each {
     id<CNIterator> i = [self iterator];
     while([i hasNext]) {
         each([i next]);
+    }
+}
+
+- (void)parForEach:(void(^)(id))each {
+    id<CNIterator> i = [self iterator];
+    while([i hasNext]) {
+        id v = [i next];
+        [CNDispatchQueue.aDefault asyncF:^void() {
+            each(v);
+        }];
     }
 }
 
@@ -159,24 +154,15 @@ static ODClassType* _CNRange_type;
     return NO;
 }
 
-- (NSString*)description {
-    return [[self chain] toStringWithStart:@"[" delimiter:@", " end:@"]"];
-}
-
-- (NSUInteger)hash {
-    NSUInteger ret = 13;
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        ret = ret * 31 + [[i next] hash];
-    }
-    return ret;
+- (CNChain*)chain {
+    return [CNChain chainWithCollection:self];
 }
 
 - (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = [CNOption none];
+    __block id ret = nil;
     [self goOn:^BOOL(id x) {
         if(where(x)) {
-            ret = [CNOption applyValue:x];
+            ret = x;
             return NO;
         } else {
             return YES;
@@ -233,29 +219,41 @@ static ODClassType* _CNRange_type;
 - (BOOL)isEqual:(id)other {
     if(self == other) return YES;
     if(!(other)) return NO;
-    if([other conformsToProtocol:@protocol(CNSeq)]) return [self isEqualToSeq:((id<CNSeq>)(other))];
+    if([other conformsToProtocol:@protocol(CNSeq)]) return [self isEqualSeq:((id<CNSeq>)(other))];
     return NO;
+}
+
+- (NSUInteger)hash {
+    NSUInteger hash = 0;
+    hash = hash * 31 + self.start;
+    hash = hash * 31 + self.end;
+    hash = hash * 31 + self.step;
+    return hash;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendFormat:@"start=%ld", (long)self.start];
+    [description appendFormat:@", end=%ld", (long)self.end];
+    [description appendFormat:@", step=%ld", (long)self.step];
+    [description appendString:@">"];
+    return description;
 }
 
 @end
 
 
-@implementation CNRangeIterator{
-    NSInteger _start;
-    NSInteger _end;
-    NSInteger _step;
-    NSInteger _i;
-}
+@implementation CNRangeIterator
 static ODClassType* _CNRangeIterator_type;
 @synthesize start = _start;
 @synthesize end = _end;
 @synthesize step = _step;
 
-+ (id)rangeIteratorWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step {
++ (instancetype)rangeIteratorWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step {
     return [[CNRangeIterator alloc] initWithStart:start end:end step:step];
 }
 
-- (id)initWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step {
+- (instancetype)initWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step {
     self = [super init];
     if(self) {
         _start = start;
@@ -269,7 +267,7 @@ static ODClassType* _CNRangeIterator_type;
 
 + (void)initialize {
     [super initialize];
-    _CNRangeIterator_type = [ODClassType classTypeWithCls:[CNRangeIterator class]];
+    if(self == [CNRangeIterator class]) _CNRangeIterator_type = [ODClassType classTypeWithCls:[CNRangeIterator class]];
 }
 
 - (BOOL)hasNext {
@@ -292,21 +290,6 @@ static ODClassType* _CNRangeIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNRangeIterator* o = ((CNRangeIterator*)(other));
-    return self.start == o.start && self.end == o.end && self.step == o.step;
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + self.start;
-    hash = hash * 31 + self.end;
-    hash = hash * 31 + self.step;
-    return hash;
 }
 
 - (NSString*)description {

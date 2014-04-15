@@ -5,6 +5,10 @@
 @class CNSortBuilder;
 @protocol CNTraversable;
 @class CNTreeSet;
+@class CNFuture;
+@class CNImList;
+@class CNImTreeSet;
+@class CNSeed;
 
 @interface CNChain : NSObject <CNTraversable>
 - (id)initWithLink:(id <CNChainLink>)link previous:(CNChain *)previous;
@@ -35,6 +39,7 @@
 
 - (CNChain*)zipA:(id <CNIterable>)a;
 - (CNChain*)zipA:(id <CNIterable>)a by:(cnF2)by;
+- (void)zipForA:(id <CNIterable>)a by:(cnP2)by;
 - (CNChain*)zip3A:(id <CNIterable>)a b:(id <CNIterable>)b;
 - (CNChain*)zip3A:(id <CNIterable>)a b:(id <CNIterable>)b by:(cnF3)by;
 
@@ -55,11 +60,14 @@
 
 
 - (id)randomItem;
+- (id)randomItemSeed:(CNSeed*)seed;
 - (NSUInteger)count;
 - (NSArray*)toArray;
 - (NSSet*)toSet;
 
 - (id)foldStart:(id)start by:(cnF2)by;
+- (id)head;
+- (id)last;
 - (id)min;
 - (id)max;
 - (NSDictionary *)toMap;
@@ -71,7 +79,24 @@
 
 - (NSString *)charsToString;
 
-- (CNTreeSet *)toTreeSet;
+- (CNImTreeSet *)toTreeSet;
 
 - (CNChain *)topNumbers:(NSUInteger)numbers;
+
+- (CNChain *)flat;
+
+- (BOOL)or;
+- (BOOL)and;
+
+- (CNFuture *)voidFuture;
+- (CNFuture *)futureF:(id (^)(CNChain *))f;
+- (CNFuture *)future;
+
+- (CNChain *)reverseWhen:(BOOL)when;
+
+- (CNChain *)shuffle;
+
+- (CNImList *)toList;
+
+- (CNChain *)mapOpt:(id(^)(id))f;
 @end

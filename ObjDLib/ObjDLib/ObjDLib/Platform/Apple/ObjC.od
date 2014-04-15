@@ -1,25 +1,47 @@
 package core.objc
 
-stub class NSSet<T> extends Set<T>
+stub class NSSet<T> extends ImSet<T> {
+    override def mCopy : NSMutableSet<T>
+}
 
-stub class NSMutableSet<T> extends NSSet<T> with MutableSet<T>
+stub class NSMutableSet<T> extends MSet<T> {
+    override def im : NSSet<T>
+    override def imCopy : NSSet<T>
+}
 
-typedef HashSet<T> = NSSet<T>
-typedef MutableHashSet<T> = NSMutableSet<T>
+typedef ImHashSet<T> = NSSet<T>
+typedef MHashSet<T> = NSMutableSet<T>
 
-stub class NSArray<T> extends Seq<T> {}
-stub class NSMutableArray<T> extends NSArray<T> with MutableSeq<T> {}
+stub class NSArray<T> extends ImSeq<T> {
+    static def apply<T>(mArray : MArray) : [T]
+    override def mCopy : NSMutableArray<T>
 
-typedef Array<T> = NSArray<T>
-typedef MutableArray<T> = NSMutableArray<T>
+    override def add(item : T) : [T]
+    override def add(seq : Seq<T>) : [T]
+    override def sub(item : T) : [T]
+    override def tail : [T]
+}
+stub class NSMutableArray<T> extends MSeq<T> {
+    static def apply<T>(capacity : uint) : NSMutableArray<T>
+    override def im : [T]
+    override def imCopy : [T]
+}
+
+typedef ImArray<T> = NSArray<T>
+typedef MArray<T> = NSMutableArray<T>
 
 
-stub class NSDictionary <K, V> extends Map<K, V>
+stub class NSDictionary <K, V> extends ImMap<K, V> {
+    override def mCopy : NSMutableDictionary<K, V>
+}
 
-stub class NSMutableDictionary<K, V> extends NSDictionary<K, V> with MutableMap<K, V>
+stub class NSMutableDictionary<K, V> extends MMap<K, V> {
+    override def im : NSDictionary<K, V>
+    override def imCopy : NSDictionary<K, V>
+}
 
-typedef HashMap<K, V> = NSDictionary<K, V>
-typedef MutableHashMap<K, V> = NSMutableDictionary<K, V>
+typedef ImHashMap<K, V> = NSDictionary<K, V>
+typedef MHashMap<K, V> = NSMutableDictionary<K, V>
 
 stub class NSObject {
 }

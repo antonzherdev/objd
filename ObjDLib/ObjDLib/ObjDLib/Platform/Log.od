@@ -1,0 +1,6 @@
+package core.chain
+
+stub struct log {
+    static def apply(text : string) : void
+    static def par(text : string) : void
+}

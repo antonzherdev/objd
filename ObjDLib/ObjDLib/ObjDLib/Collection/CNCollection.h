@@ -1,17 +1,20 @@
 #import "objdcore.h"
 #import "ODObject.h"
 @class ODClassType;
+@class CNDispatchQueue;
 @class CNChain;
 
 @class CNIterableF;
 @class CNEmptyIterator;
 @protocol CNIterator;
-@protocol CNMutableIterator;
+@protocol CNMIterator;
 @protocol CNBuilder;
 @protocol CNTraversable;
-@protocol CNMutableTraversable;
+@protocol CNImTraversable;
+@protocol CNMTraversable;
 @protocol CNIterable;
-@protocol CNMutableIterable;
+@protocol CNImIterable;
+@protocol CNMIterable;
 
 @protocol CNIterator<NSObject>
 - (BOOL)hasNext;
@@ -19,8 +22,9 @@
 @end
 
 
-@protocol CNMutableIterator<CNIterator>
+@protocol CNMIterator<CNIterator>
 - (void)remove;
+- (void)setValue:(id)value;
 @end
 
 
@@ -33,21 +37,28 @@
 
 @protocol CNTraversable<NSObject>
 - (void)forEach:(void(^)(id))each;
+- (void)parForEach:(void(^)(id))each;
 - (BOOL)goOn:(BOOL(^)(id))on;
 - (CNChain*)chain;
 - (id)findWhere:(BOOL(^)(id))where;
 - (BOOL)existsWhere:(BOOL(^)(id))where;
 - (BOOL)allConfirm:(BOOL(^)(id))confirm;
 - (id)head;
-- (id)headOpt;
 - (id)convertWithBuilder:(id<CNBuilder>)builder;
 @end
 
 
-@protocol CNMutableTraversable<CNTraversable>
+@protocol CNImTraversable<CNTraversable>
+- (id<CNMTraversable>)mCopy;
+@end
+
+
+@protocol CNMTraversable<CNTraversable>
 - (void)appendItem:(id)item;
-- (void)removeItem:(id)item;
+- (BOOL)removeItem:(id)item;
 - (void)clear;
+- (id<CNImTraversable>)im;
+- (id<CNImTraversable>)imCopy;
 @end
 
 
@@ -55,10 +66,9 @@
 - (NSUInteger)count;
 - (id<CNIterator>)iterator;
 - (id)head;
-- (id)headOpt;
 - (BOOL)isEmpty;
-- (CNChain*)chain;
 - (void)forEach:(void(^)(id))each;
+- (void)parForEach:(void(^)(id))each;
 - (BOOL)goOn:(BOOL(^)(id))on;
 - (BOOL)containsItem:(id)item;
 - (NSString*)description;
@@ -66,17 +76,28 @@
 @end
 
 
-@protocol CNMutableIterable<CNIterable, CNMutableTraversable>
-- (id<CNMutableIterator>)mutableIterator;
-- (void)removeItem:(id)item;
+@protocol CNImIterable<CNIterable, CNImTraversable>
+- (id<CNMIterable>)mCopy;
 @end
 
 
-@interface CNIterableF : NSObject<CNIterable>
+@protocol CNMIterable<CNIterable, CNMTraversable>
+- (id<CNMIterator>)mutableIterator;
+- (BOOL)removeItem:(id)item;
+- (void)mutableFilterBy:(BOOL(^)(id))by;
+- (id<CNImIterable>)im;
+- (id<CNImIterable>)imCopy;
+@end
+
+
+@interface CNIterableF : NSObject<CNImIterable> {
+@protected
+    id<CNIterator>(^_iteratorF)();
+}
 @property (nonatomic, readonly) id<CNIterator>(^iteratorF)();
 
-+ (id)iterableFWithIteratorF:(id<CNIterator>(^)())iteratorF;
-- (id)initWithIteratorF:(id<CNIterator>(^)())iteratorF;
++ (instancetype)iterableFWithIteratorF:(id<CNIterator>(^)())iteratorF;
+- (instancetype)initWithIteratorF:(id<CNIterator>(^)())iteratorF;
 - (ODClassType*)type;
 - (id<CNIterator>)iterator;
 + (ODClassType*)type;
@@ -84,8 +105,8 @@
 
 
 @interface CNEmptyIterator : NSObject<CNIterator>
-+ (id)emptyIterator;
-- (id)init;
++ (instancetype)emptyIterator;
+- (instancetype)init;
 - (ODClassType*)type;
 - (BOOL)hasNext;
 - (id)next;

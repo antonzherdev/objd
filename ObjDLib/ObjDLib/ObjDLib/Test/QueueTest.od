@@ -1,10 +1,11 @@
 package core.chain
 
 import com.antonzherdev.test._
+import com.antonzherdev.test.Assert._
 
 class QueueTest extends TestCase {
     def testDeque {
-        var q = Queue<int>()
+        var q = ImQueue<int>()
         assertTrue(q.isEmpty)
         assertEquals(0, q.count)
 

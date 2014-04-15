@@ -23,28 +23,28 @@
 
 
 - (CNYield *)buildYield:(CNYield *)yield {
-    return [CNYield decorateYield:yield begin:^CNYieldResult(NSUInteger size) {
+    return [CNYield decorateBase:yield begin:^CNYieldResult(NSUInteger size) {
         return [yield beginYieldWithSize:(NSUInteger) (size * _factor)];
-    } yield:^CNYieldResult(id item) {
+    }                      yield:^CNYieldResult(id item) {
         id o = _f(item);
-        if([o isKindOfClass:[CNChain class]]) {
+        if ([o isKindOfClass:[CNChain class]]) {
             __block CNYieldResult ret = cnYieldContinue;
-            [((CNChain*)o) apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id x) {
+            [((CNChain *) o) apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id x) {
                 ret = [yield yieldItem:x];
                 return ret;
-            } end:nil all:nil]];
+            }                                          end:nil all:nil]];
             return ret;
         } else {
             __block CNYieldResult result = cnYieldContinue;
             [o goOn:^BOOL(id x) {
                 result = [yield yieldItem:x];
-                if(result == cnYieldBreak) return NO;
+                if (result == cnYieldBreak) return NO;
                 return YES;
             }];
             return result;
         }
 
-    } end:nil all:nil];
+    }                        end:nil all:nil];
 }
 
 @end

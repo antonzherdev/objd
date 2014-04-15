@@ -1,31 +1,35 @@
 #import <Foundation/Foundation.h>
 #import <math.h>
 #import <float.h>
-#import <CoreGraphics/CGBase.h>
 #import "ODType.h"
 
-#define OD_DBL_EPSILON 2.2204460492503131E-16
-#define OD_FLT_EPSILON 1.19209290E-07F
+#ifndef FLT_EPSILON
+    #define FLT_EPSILON __FLT_EPSILON__
+#endif
+#ifndef DBL_EPSILON
+    #define DBL_EPSILON __DBL_EPSILON__
+#endif
 @class CNRange;
 
 static inline BOOL eqf4(float a, float b) {
-    return fabs(a - b) <= OD_FLT_EPSILON;
+    return fabs(a - b) <= FLT_EPSILON;
 }
 
 static inline BOOL eqf8(double a, double b) {
-    return fabs(a - b) <= OD_DBL_EPSILON;
+    return fabs(a - b) <= DBL_EPSILON;
 }
 
 static inline BOOL eqf(CGFloat a, CGFloat b) {
     #if defined(__LP64__) && __LP64__
-        return fabs(a - b) <= OD_DBL_EPSILON;
+        return fabs(a - b) <= DBL_EPSILON;
     #else
-        return fabs(a - b) <= OD_FLT_EPSILON;
+        return fabs(a - b) <= FLT_EPSILON;
     #endif
 }
 
 #define max(a, b) MAX(a, b)
 #define min(a, b) MIN(a, b)
+#define __clamp(a, b, c) MIN(MAX(a, b), c)
 
 @protocol ODComparable<NSObject>
 - (NSInteger)compareTo:(id)to;
@@ -119,6 +123,51 @@ static inline NSUInteger uintMaxB(NSUInteger self, NSUInteger b) {
 static inline CGFloat floatMaxB(CGFloat self, CGFloat b) {
     return max(self, b);
 }
+static inline NSInteger intMaxB(NSInteger self, NSInteger b) {
+    return max(self, b);
+}
+static inline long int8MaxB(long self, long b) {
+    return max(self, b);
+}
+static inline unsigned char byteMaxB(unsigned char self, unsigned char b) {
+    return max(self, b);
+}
+
+static inline NSInteger intMinB(NSInteger self, NSInteger b) {
+    return min(self, b);
+}
+static inline long int8MinB(long self, long b) {
+    return min(self, b);
+}
+static inline char byteMinB(char self, char b) {
+    return min(self, b);
+}
+
+static inline char byteClampMinMax(char self, char b, char c) {
+    return __clamp(self, b, c);
+}
+static inline NSInteger intClampMinMax(NSInteger self, NSInteger b, NSInteger c) {
+    return __clamp(self, b, c);
+}
+static inline NSUInteger uintClampMinMax(NSUInteger self, NSUInteger b, NSUInteger c) {
+    return __clamp(self, b, c);
+}
+static inline int int4ClampMinMax(int self, int b, int c) {
+    return __clamp(self, b, c);
+}
+static inline long int8ClampMinMax(long self, long b, long c) {
+    return __clamp(self, b, c);
+}
+static inline CGFloat floatClampMinMax(CGFloat self, CGFloat b, CGFloat c) {
+    return __clamp(self, b, c);
+}
+static inline float float4ClampMinMax(float self, float b, float c) {
+    return __clamp(self, b, c);
+}
+static inline double float8ClampMinMax(double self, double b, double c) {
+    return __clamp(self, b, c);
+}
+
 
 static inline float float4MinB(float self, float b) {
     return min(self, b);

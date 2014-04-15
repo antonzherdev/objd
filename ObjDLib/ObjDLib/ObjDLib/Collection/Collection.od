@@ -5,8 +5,9 @@ trait Iterator<T> {
    def next : T
 }
 
-trait MutableIterator<T> extends Iterator<T> {
+trait MIterator<T> extends Iterator<T> {
     def remove
+    def set(value : T)
 }
 
 trait Builder<T, C extends Traversable<T>> {
@@ -20,10 +21,19 @@ trait Builder<T, C extends Traversable<T>> {
 
 trait Traversable<T> {
     def for(each : T -> void) {
-        go(item -> {
+        go{item ->
             each(item)
             true
-        })
+        }
+    }
+
+    def parFor(each : T -> void) {
+        go{item ->
+            DispatchQueue.default.async{
+                each(item)
+            }
+            true
+        }
     }
 
     def go(on : T -> bool) : bool
@@ -65,18 +75,8 @@ trait Traversable<T> {
         ret
     }
 
-    def head : T = {
-        var ret : T
-        go{on ->
-            ret = on
-            false
-        }
-        if(ret == nil) throw "Traversable is empty"
-        ret
-    }
-
-    def headOpt : T? = {
-        var ret : T
+    def head : T? = {
+        var ret : T?
         go{on ->
             ret = on
             false
@@ -90,14 +90,29 @@ trait Traversable<T> {
     }
 }
 
-trait MutableTraversable<T> extends Traversable<T> {
+trait ImTraversable<T> extends Traversable<T> {
+    def mCopy : MTraversable<T> = {
+        val arr = MArray<T>()
+        for{item -> arr.append(item)}
+        arr
+    }
+}
+
+trait MTraversable<T> extends Traversable<T> {
     def append(item : T)
-    def remove(item : T)
+    def remove(item : T) : bool
     def clear
+
+    def im : ImTraversable<T> = imCopy
+    def imCopy : ImTraversable<T> = {
+        val arr = MArray<T>()
+        for{item -> arr.append(item)}
+        arr.im
+    }
 }
 
 trait Iterable<T> extends Traversable<T> {
-    pure def count : uint = {
+    def count : uint = {
         val i = iterator
         var n : uint = 0
         while(i.hasNext) {
@@ -106,20 +121,27 @@ trait Iterable<T> extends Traversable<T> {
         }
         n
     }
-    pure def iterator : Iterator<T>
+    def iterator : Iterator<T>
 
-    pure def head : T = iterator.next
-    pure def headOpt : T? = if(isEmpty) nil else head
-    pure def isEmpty : bool = !iterator.hasNext
+    override def head : T? = if(isEmpty) nil else iterator.next
+    def isEmpty : bool = !iterator.hasNext
 
-    pure def chain : Chain<T> = {
-        Chain.chainWith<T>(self)
-    }
-    pure def for(each : T -> void) {
+    override def for(each : T -> void) {
         val i = iterator
         while(i.hasNext) each(i.next)
     }
-    pure def go(on : T -> bool) : bool = {
+
+    override def parFor(each : T -> void) {
+        val i = iterator
+        while(i.hasNext) {
+            val v = i.next
+            DispatchQueue.default.async{
+                each(v)
+            }
+        }
+    }
+
+    override def go(on : T -> bool) : bool = {
         val i = iterator
         while(i.hasNext) if(!on(i.next)) return false
         true
@@ -131,11 +153,11 @@ trait Iterable<T> extends Traversable<T> {
         false
     }
 
-    def description : string = {
+    override def description : string = {
         chain.toStringWith(start = "[", delimiter = ", ", end = "]")
     }
 
-    def hash : uint = {
+    override def hash : uint = {
         var ret : uint = 13
         val i = iterator
         while(i.hasNext) {
@@ -145,23 +167,49 @@ trait Iterable<T> extends Traversable<T> {
     }
 }
 
-trait MutableIterable<T> extends Iterable<T> with MutableTraversable<T> {
-    def mutableIterator : MutableIterator<T>
+trait ImIterable<T> extends Iterable<T> with ImTraversable<T> {
+    override def mCopy : MIterable<T> = {
+        val arr = MArray<T>()
+        for{item -> arr.append(item)}
+        arr
+    }
+}
+trait MIterable<T> extends Iterable<T> with MTraversable<T> {
+    def mutableIterator : MIterator<T>
 
-    def remove(item : T) {
+    override def remove(item : T) : bool = {
+        val i = mutableIterator
+        var ret = false
+        while(i.hasNext) {
+            if(i.next == item) {
+                i.remove
+                ret = true
+            }
+        }
+        ret
+    }
+
+    def mutableFilter(by : T -> bool) {
         val i = mutableIterator
         while(i.hasNext) {
-            if(i.next == item) i.remove
+            if(by(i.next)) i.remove
         }
+    }
+
+    override def im : ImIterable<T> = imCopy
+    override def imCopy : ImIterable<T> = {
+        val arr = MArray<T>()
+        for{item -> arr.append(item)}
+        arr.im
     }
 }
 
-class IterableF<T>(iteratorF : () -> Iterator<T>) extends Iterable<T> {
-    def iterator = iteratorF()
+class IterableF<T>(iteratorF : () -> Iterator<T>) extends ImIterable<T> {
+    override def iterator = iteratorF()
 }
 
 class EmptyIterator<T> extends Iterator<T> {
     static val instance = EmptyIterator<any>()
-    def hasNext : bool = false
-    def next : T = throw "Iterator is empty"
+    override def hasNext : bool = false
+    override def next : T = throw "Iterator is empty"
 }

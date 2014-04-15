@@ -1,7 +1,185 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="16c5eed2-cb4a-4f08-a71b-4cbfdd50beda" name="Default" comment="" />
+    <list default="true" id="16c5eed2-cb4a-4f08-a71b-4cbfdd50beda" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Atomic.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/CNAtomic.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/CNAtomic.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNChainTest.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNChainTest.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/CNDispatchQueue.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/CNDispatchQueue.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNFlatLink.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNFlatLink.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Concurrent/CNFuture.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Concurrent/CNFuture.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNFutureEnd.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNFutureEnd.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNFutureTest.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNFutureTest.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Var/CNLazy.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Var/CNLazy.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/CNLog.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/CNPointer.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/CNSeed.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/CNSeed.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNShuffleLink.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNShuffleLink.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/CNThread.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/CNThread.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Concurrent/CNTry.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Concurrent/CNTry.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/ChainTest.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Date.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/DispatchQueue.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/FilterLink.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/FlatLink.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Concurrent/Future.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/FutureEnd.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/FutureTest.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Invocation.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Var/Lazy.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Lock.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Log.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/MapLink.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSConditionLock+CNChain.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSConditionLock+CNChain.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSLock+CNChain.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSLock+CNChain.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSString+CNChain.h" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSString+CNChain.m" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/Option.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Pointer.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Seed.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/ShuffleLink.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/String.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Concurrent/Try.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/Yield.od" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/ZipLink.od" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Data/CNVoidRefArray.h" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Data/CNVoidRefArray.m" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Data/VoidRefArray.od" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lazy/CNLazy.h" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lazy/CNLazy.m" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lazy/Lazy.od" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Log/CNLog.h" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Log/CNLog.m" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Log/Log.od" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Option/CNOption.h" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Option/CNOption.m" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Option/Option.od" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Date.od" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/String/NSString+CNChain.h" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/String/NSString+CNChain.m" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/String/String.od" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/Action.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/Action.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNAppendLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNAppendLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNChain.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNChain.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNChain.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNChain.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Collection/CNCollection.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Collection/CNCollection.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Collection/CNCollection.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Collection/CNCollection.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNCombinationsLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNCombinationsLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Data/CNData.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Data/CNData.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Data/CNData.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Data/CNData.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNDistinctLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNDistinctLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/CNEnumerator.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/CNEnumerator.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/CNEnumerator.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/CNEnumerator.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNFilterLink.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNFilterLink.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNFilterLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNFilterLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNFlatMapLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNFlatMapLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNGroupByLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNGroupByLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNList.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNList.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNList.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNList.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Map/CNMap.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Map/CNMap.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Map/CNMap.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Map/CNMap.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNMapLink.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNMapLink.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNMapLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNMapLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNMulLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNMulLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNMutableList.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNMutableList.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNMutableList.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNMutableList.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNNeighboursLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNNeighboursLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Notification/CNNotification.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Notification/CNNotification.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Notification/CNNotification.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Notification/CNNotification.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/CNPair.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/CNPair.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/CNPair.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/CNPair.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNPrependLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNPrependLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNQueue.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNQueue.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNQueue.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNQueue.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNQueueTest.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNQueueTest.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNQueueTest.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNQueueTest.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNRange.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNRange.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNRange.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNRange.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNReverseLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNReverseLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNSeq.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNSeq.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNSeq.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/CNSeq.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/CNSet.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/CNSet.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/CNSet.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/CNSet.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNSortBuilder.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNSortBuilder.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNSortBuilder.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNSortBuilder.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNSortLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNSortLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNSourceLink.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNSourceLink.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNTopLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNTopLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Map/CNTreeMap.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Map/CNTreeMap.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Map/CNTreeMap.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Map/CNTreeMap.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNTreeMapTest.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNTreeMapTest.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNTreeMapTest.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNTreeMapTest.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/CNTreeSet.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/CNTreeSet.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/CNTreeSet.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/CNTreeSet.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNTuple.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNTuple.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNTuple.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNTuple.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNTypes.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNTypes.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNUncombinationsLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNUncombinationsLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNYield.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNYield.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNYield.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNYield.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNZipLink.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNZipLink.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNZipLink.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Links/CNZipLink.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/Chain.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/Chain.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Collection/Collection.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Collection/Collection.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Data/Data.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Data/Data.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/Enum.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/Enum.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/List.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/List.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Map/Map.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Map/Map.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/MutableList.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/MutableList.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSArray+CNChain.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSArray+CNChain.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSArray+CNChain.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSArray+CNChain.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSDictionary+CNChain.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSDictionary+CNChain.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSDictionary+CNChain.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSDictionary+CNChain.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSMutableArray+CNChain.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSMutableArray+CNChain.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSMutableArray+CNChain.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSMutableArray+CNChain.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSMutableDictionary+CNChain.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSMutableDictionary+CNChain.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSMutableDictionary+CNChain.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSMutableDictionary+CNChain.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSMutableSet+CNChain.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSMutableSet+CNChain.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSMutableSet+CNChain.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSMutableSet+CNChain.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSSet+CNChain.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSSet+CNChain.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSSet+CNChain.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSSet+CNChain.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Notification/Notification.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Notification/Notification.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/ODObject.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/ODObject.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/ODObject.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/ODObject.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/ODType.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/ODType.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/ObjC.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/ObjC.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/Object.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/Object.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/Pair.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/Pair.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Platform.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Platform.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/Queue.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/Queue.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/QueueTest.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/QueueTest.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/Range.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/Range.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/Seq.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/List/Seq.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/Set.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/Set.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/SortBuilder.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/SortBuilder.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.m" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.m" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TestCase.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TestCase.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Map/TreeMap.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Map/TreeMap.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TreeMapTest.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TreeMapTest.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/TreeSet.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Set/TreeSet.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/Tuple.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/Tuple.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/Type.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/Type.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/Types.od" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/Types.od" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/chain.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/chain.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib/objdcore.h" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib/objdcore.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ObjDLib/ObjDLib.xcodeproj/project.pbxproj" afterPath="$PROJECT_DIR$/ObjDLib/ObjDLib.xcodeproj/project.pbxproj" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+    </list>
     <ignored path="ObjDLib.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -22,7 +200,44 @@
     <favorites_list name="ObjDLib" />
   </component>
   <component name="FileEditorManager">
-    <leaf />
+    <leaf>
+      <file leaf-file-name="TestCase.od" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TestCase.od">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="330">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="TSTestCase.m" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.m">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="900">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="chain.h" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/chain.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="22" column="0" selection-start="526" selection-end="526" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="615">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="objdcore.h" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/objdcore.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="2" column="8" selection-start="61" selection-end="61" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="225">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
   </component>
   <component name="FindManager">
     <FindUsagesManager>
@@ -40,12 +255,12 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/chain.h" />
         <option value="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TestCase.od" />
         <option value="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.h" />
-        <option value="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.m" />
         <option value="$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/ODObject.h" />
         <option value="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNTreeMapTest.m" />
+        <option value="$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/chain.h" />
+        <option value="$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.m" />
       </list>
     </option>
   </component>
@@ -79,7 +294,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Cidr.FilesView" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -91,10 +305,6 @@
               <option name="myItemId" value="ObjDLib" />
               <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
             </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Products" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
-            </PATH_ELEMENT>
           </PATH>
           <PATH>
             <PATH_ELEMENT>
@@ -124,7 +334,7 @@
               <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="String" />
+              <option name="myItemId" value="Test" />
               <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -142,99 +352,7 @@
               <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="Platform" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeRootNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ObjDLib" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ObjDLib" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Platform" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Apple" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeRootNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ObjDLib" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ObjDLib" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Platform" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Apple" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Mac" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeRootNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ObjDLib" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ObjDLib" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Platform" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Apple" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="iOS" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeRootNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ObjDLib" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ObjDLib" />
-              <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Chain" />
+              <option name="myItemId" value="Data" />
               <option name="myItemType" value="com.jetbrains.cidr.projectView.XcodeViewNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -272,18 +390,19 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Cidr.FilesView" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="options.splitter.main.proportions" value="0.3" />
-    <property name="recentsLimit" value="5" />
     <property name="options.lastSelected" value="project.propVCSSupport.Mappings" />
+    <property name="recentsLimit" value="5" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/ObjDLib/ObjDLib/Platform/Apple/Categories/NSString+CNChain.m" />
     <property name="restartRequiresConfirmation" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/ObjDLib/ObjDLib/XML" />
     <property name="FullScreen" value="true" />
-    <property name="OBJC.PRESERVED_TARGET_SELECTION" value="ObjDLibOSXTests" />
-    <property name="options.splitter.details.proportions" value="0.2" />
+    <property name="OBJC.PRESERVED_TARGET_SELECTION" value="ObjDLibiOSTests,,,ObjDLibOSXTests" />
     <property name="options.searchVisible" value="true" />
+    <property name="options.splitter.details.proportions" value="0.2" />
   </component>
   <component name="RunManager" selected="XCTest/Kiwi.OSX tests">
     <configuration default="true" type="AppleRunConfiguration" factoryName="Application" PROJECT_NAME="ObjDLib" TARGET_NAME="ObjDLib" CONFIG_NAME="Debug" PASS_PARENT_ENVS="FALSE" MAKE_ACTIVE="TRUE" WAIT_FOR="FALSE">
@@ -337,11 +456,12 @@
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
     <editor active="false" />
     <layout>
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32969698" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Changes" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32848486" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32848486" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Changes" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.3272727" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.23570925" sideWeight="0.67151517" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.23570925" sideWeight="0.6727273" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
@@ -350,7 +470,6 @@
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
@@ -370,9 +489,9 @@
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.23570925" sideWeight="0.6" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32969698" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
     </layout-to-restore>
   </component>
   <component name="VcsContentAnnotationSettings">
@@ -392,28 +511,14 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="1" column="0" selection-start="17" selection-end="17" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="285" />
-      </provider>
-    </entry>
     <entry file="file:///Applications/Xcode.app/Contents/Developer/Library/Frameworks/XCTest.framework/Headers/XCTestAssertions.h">
       <provider selected="true" editor-type-id="text-editor">
         <state line="86" column="29" selection-start="4875" selection-end="4896" vertical-scroll-proportion="0.0" vertical-offset="1075" max-vertical-offset="2925" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.m">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="19" column="17" selection-start="309" selection-end="309" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="780">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNQueueTest.m">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="17" column="23" selection-start="271" selection-end="271" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1275">
-          <folding />
-        </state>
+        <state line="17" column="23" selection-start="271" selection-end="271" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1275" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/ODType.m">
@@ -423,29 +528,14 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/chain.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="5" selection-start="4" selection-end="5" vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="525">
-          <folding>
-            <element signature="e#0#19#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/objd.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="3" column="14" selection-start="85" selection-end="85" vertical-scroll-proportion="-1.8" vertical-offset="0" max-vertical-offset="165">
-          <folding />
-        </state>
+        <state line="3" column="14" selection-start="85" selection-end="85" vertical-scroll-proportion="-1.8" vertical-offset="0" max-vertical-offset="165" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/ODObject.m">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="13" selection-start="132" selection-end="132" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1305">
-          <folding>
-            <element signature="e#0#20#0" expanded="false" />
-          </folding>
-        </state>
+        <state line="6" column="13" selection-start="132" selection-end="132" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1305" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Map/CNTreeMap.m">
@@ -455,25 +545,14 @@
         </state>
       </provider>
     </entry>
-    <entry file="file:///Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/5.0/include/float.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1950">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/Library/Caches/appCode20/DerivedData/ObjDLib-5c489215/Build/Intermediates/ObjDLib.build/Debug/ObjDLibOSXTests.build/Script-0224A3F81886AC2400E49BD2.sh">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="1" column="0" selection-start="10" selection-end="10" vertical-scroll-proportion="0.018820576" vertical-offset="0" max-vertical-offset="797">
-          <folding />
-        </state>
+        <state line="1" column="0" selection-start="10" selection-end="10" vertical-scroll-proportion="0.018820576" vertical-offset="0" max-vertical-offset="797" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNTreeMapTest.m">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="1" column="16" selection-start="33" selection-end="33" vertical-scroll-proportion="0.02851711" vertical-offset="0" max-vertical-offset="1260">
-          <folding />
-        </state>
+        <state line="1" column="16" selection-start="33" selection-end="33" vertical-scroll-proportion="0.02851711" vertical-offset="0" max-vertical-offset="1260" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Test/CNTreeMapTest.h">
@@ -487,26 +566,44 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/CNTypes.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="8" selection-start="8" selection-end="8" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="2175">
-          <folding>
-            <element signature="e#0#19#0" expanded="true" />
-          </folding>
-        </state>
+        <state line="0" column="8" selection-start="8" selection-end="8" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="2175" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Lang/ODObject.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="3" column="30" selection-start="99" selection-end="99" vertical-scroll-proportion="-4.8441067" vertical-offset="2593" max-vertical-offset="3315">
-          <folding />
-        </state>
+        <state line="3" column="30" selection-start="99" selection-end="99" vertical-scroll-proportion="-4.8441067" vertical-offset="2593" max-vertical-offset="3315" />
       </provider>
     </entry>
     <entry file="file:///Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/System/Library/Frameworks/CoreGraphics.framework/Headers/CGBase.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="244" column="21" selection-start="7009" selection-end="7012" vertical-scroll-proportion="7.3053894" vertical-offset="0" max-vertical-offset="4245">
-          <folding>
-            <element signature="e#130#150#0" expanded="true" />
-          </folding>
+        <state line="244" column="21" selection-start="7009" selection-end="7012" vertical-scroll-proportion="7.3053894" vertical-offset="0" max-vertical-offset="4245" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/objdcore.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="2" column="8" selection-start="61" selection-end="61" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="225">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Chain/chain.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="22" column="0" selection-start="526" selection-end="526" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="615">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TestCase.od">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="526">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ObjDLib/ObjDLib/Test/TSTestCase.m">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="900">
+          <folding />
         </state>
       </provider>
     </entry>

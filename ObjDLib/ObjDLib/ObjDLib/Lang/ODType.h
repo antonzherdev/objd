@@ -1,4 +1,4 @@
-#import "objdcore.h"
+//#import "objdcore.h"
 
 @class ODType;
 @class ODClassType;

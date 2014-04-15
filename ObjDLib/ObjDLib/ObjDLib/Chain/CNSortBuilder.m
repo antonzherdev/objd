@@ -4,18 +4,15 @@
 #import "CNChain.h"
 #import "CNCollection.h"
 #import "ODType.h"
-@implementation CNSortBuilder{
-    CNChain* _chain;
-    NSMutableArray* _functions;
-}
+@implementation CNSortBuilder
 static ODClassType* _CNSortBuilder_type;
 @synthesize chain = _chain;
 
-+ (id)sortBuilderWithChain:(CNChain*)chain {
++ (instancetype)sortBuilderWithChain:(CNChain*)chain {
     return [[CNSortBuilder alloc] initWithChain:chain];
 }
 
-- (id)initWithChain:(CNChain*)chain {
+- (instancetype)initWithChain:(CNChain*)chain {
     self = [super init];
     if(self) {
         _chain = chain;
@@ -27,7 +24,7 @@ static ODClassType* _CNSortBuilder_type;
 
 + (void)initialize {
     [super initialize];
-    _CNSortBuilder_type = [ODClassType classTypeWithCls:[CNSortBuilder class]];
+    if(self == [CNSortBuilder class]) _CNSortBuilder_type = [ODClassType classTypeWithCls:[CNSortBuilder class]];
 }
 
 - (CNSortBuilder*)ascBy:(id(^)(id))by {
@@ -71,19 +68,6 @@ static ODClassType* _CNSortBuilder_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNSortBuilder* o = ((CNSortBuilder*)(other));
-    return [self.chain isEqual:o.chain];
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + [self.chain hash];
-    return hash;
 }
 
 - (NSString*)description {

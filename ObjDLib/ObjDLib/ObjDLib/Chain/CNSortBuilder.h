@@ -6,11 +6,15 @@
 
 @class CNSortBuilder;
 
-@interface CNSortBuilder : NSObject
+@interface CNSortBuilder : NSObject {
+@protected
+    CNChain* _chain;
+    NSMutableArray* _functions;
+}
 @property (nonatomic, readonly) CNChain* chain;
 
-+ (id)sortBuilderWithChain:(CNChain*)chain;
-- (id)initWithChain:(CNChain*)chain;
++ (instancetype)sortBuilderWithChain:(CNChain*)chain;
+- (instancetype)initWithChain:(CNChain*)chain;
 - (ODClassType*)type;
 - (CNSortBuilder*)ascBy:(id(^)(id))by;
 - (CNSortBuilder*)descBy:(id(^)(id))by;

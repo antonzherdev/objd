@@ -6,5 +6,5 @@
 @class CNChain;
 
 
-@interface NSSet (CNChain) <CNSet>
+@interface NSSet (CNChain) <CNImSet>
 @end

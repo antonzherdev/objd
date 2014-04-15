@@ -33,15 +33,15 @@
 
 - (CNYield *)buildYield:(CNYield *)yield {
     __block CNMTreeSet* ret = [CNMTreeSet applyComparator:_comparator];
-    return [CNYield decorateYield: yield begin:nil yield:^CNYieldResult(id item) {
+    return [CNYield decorateBase:yield begin:nil yield:^CNYieldResult(id item) {
         [ret appendItem:item];
         return cnYieldContinue;
-    } end:^CNYieldResult(CNYieldResult result) {
-        if(result != cnYieldBreak) {
+    }                        end:^CNYieldResult(CNYieldResult result) {
+        if (result != cnYieldBreak) {
             [yield yieldAll:ret];
         }
         return [yield endYieldWithResult:result];
-    } all:nil];
+    }                        all:nil];
 }
 
 + (id)link {

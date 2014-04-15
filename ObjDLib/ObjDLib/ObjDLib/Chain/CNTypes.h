@@ -1,5 +1,6 @@
 #import "CNYield.h"
 #import "CNTuple.h"
+#import <libkern/OSAtomic.h>
 
 
 typedef void* VoidRef;
@@ -12,6 +13,7 @@ typedef id (^cnF2)(id x, id y);
 typedef id (^cnF3)(id x, id y, id z);
 typedef id (^cnF0)();
 typedef void (^cnP)(id x);
+typedef void (^cnP2)(id x, id y);
 
 @protocol CNChainLink <NSObject>
 - (CNYield *)buildYield:(CNYield *)yield;
@@ -83,10 +85,10 @@ extern id cnResolveCollection(id collection);
 #define uwrap(tp, expr) [((tp ## Wrap*)expr) value]
 
 
-#define arr(p_type, p_f, p_count)  CNPArray applyStride:sizeof(p_type) wrap:^id(VoidRef arr, NSUInteger i) { \
+#define arr(p_type, p_f, p_count)  CNPArray applyStride:sizeof(p_type) wrap:^id(Pointer arr, NSUInteger i) { \
     return p_f(((p_type*)(arr))[i]);\
 } count:p_count copyBytes:(p_type[])
-#define arrp(p_type, p_f, p_count)  CNPArray applyStride:sizeof(p_type) wrap:^id(VoidRef arr, NSUInteger i) { \
+#define arrp(p_type, p_f, p_count)  CNPArray applyStride:sizeof(p_type) wrap:^id(Pointer arr, NSUInteger i) { \
     return p_f(((p_type*)(arr))[i]);\
 } count:p_count copyBytes:(p_type*)
 #define arrc(p_count) arr(char, numc, p_count)
@@ -100,10 +102,10 @@ extern id cnResolveCollection(id collection);
 #define arrf(p_count) arr(CGFloat, numf, p_count)
 #define arrf4(p_count) arr(float, numf4, p_count)
 #define arrf8(p_count) arr(double, numf8, p_count)
-#define arrs(p_type, p_count) CNPArray applyStride:sizeof(p_type) wrap:^id(void* arr, NSUInteger i) { \
+#define arrs(p_type, p_count) CNPArray applyStride:sizeof(p_type) wrap:^id(Pointer arr, NSUInteger i) { \
     return wrap(p_type, ((p_type*)(arr))[i]);\
 } count:p_count copyBytes:(p_type[])
-#define arrsv(p_type, p_count) CNPArray applyStride:sizeof(p_type) wrap:^id(void* arr, NSUInteger i) { \
+#define arrsv(p_type, p_count) CNPArray applyStride:sizeof(p_type) wrap:^id(Pointer arr, NSUInteger i) { \
     return wrap(p_type, ((p_type*)(arr))[i]);\
 } count:p_count copyBytes:(p_type*)
 
@@ -136,4 +138,29 @@ static inline CNTuple3* tuple3(id anA, id aB, id aC) {
 static inline CNTuple4* tuple4(id anA, id aB, id aC, id aD) {
     return [CNTuple4 tuple4WithA:anA b: aB c:aC d:aD];
 }
+static inline CNTuple5* tuple5(id anA, id aB, id aC, id aD, id aE) {
+    return [CNTuple5 tuple5WithA:anA b: aB c:aC d:aD e:aE];
+}
 
+#define autoreleasePoolStart() @autoreleasepool {
+#define autoreleasePoolEnd() }
+
+#define memoryBarrier() OSMemoryBarrier()
+
+static inline id nonnil(id value) {
+    if(!value) @throw @"Null pointer exception";
+    return value;
+}
+
+static inline id wrapNil(id object) {
+    if(object == nil) {
+        static id null;
+        if(null == nil) null = [NSNull null];
+        return null;
+    } else return object;
+}
+static inline id uwrapNil(id object) {
+    static id null;
+    if(null == nil) null = [NSNull null];
+    return object == null ? nil : object;
+}

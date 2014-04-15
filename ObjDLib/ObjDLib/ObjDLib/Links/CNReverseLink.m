@@ -15,16 +15,16 @@
 }
 
 - (CNYield *)buildYield:(CNYield *)yield {
-    __block CNList* ret = [CNList apply];
-    return [CNYield decorateYield: yield begin:nil yield:^CNYieldResult(id item) {
-        ret = [CNList applyItem:item tail:ret];
+    __block CNImList* ret = [CNImList apply];
+    return [CNYield decorateBase:yield begin:nil yield:^CNYieldResult(id item) {
+        ret = [CNImList applyItem:item tail:ret];
         return cnYieldContinue;
-    } end:^CNYieldResult(CNYieldResult result) {
-        if(result != cnYieldBreak) {
+    }                        end:^CNYieldResult(CNYieldResult result) {
+        if (result != cnYieldBreak) {
             return [yield yieldAll:ret];
         }
         return result;
-    } all:nil];
+    }                        all:nil];
 }
 
 + (id)link {

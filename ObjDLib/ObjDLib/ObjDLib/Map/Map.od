@@ -3,52 +3,83 @@ package core.chain
 trait Map<K, V> extends Iterable<(K, V)> {
     def apply(key : K) : V
     def opt(key : K) : V?
+    def get(key : K, orValue : V) : V = opt(key).getOr(orValue)
     def keys : Iterable<K>
     def values : Iterable<V>
-    def contains(key : K) : bool = opt(key).isDefined
-    def isValueEqual(key : K, value : V) : bool = {
-        val v = opt(key)
-        if(v.isEmpty) false else value == v.get
-    }
-    def add(item : (K, V)) : Map<K, V> = {
+    def contains(key : K) : bool = opt(key) != nil
+    def isValueEqual(key : K, value : V) : bool = opt(key).map(_ == value).getOr(false)
+}
+
+trait ImMap<K, V> extends Map<K, V> with ImIterable<(K, V)> {
+    def add(item : (K, V)) : ImMap<K, V> = {
         val builder = HashMapBuilder<K, V>()
         builder.appendAll(self)
         builder.append(item)
         builder.build
     }
+
+    override def mCopy : MMap<K, V> = {
+        val m = MHashMap<K, V>()
+        m.assign(self)
+        m
+    }
 }
 
-trait MutableMap<K, V> extends Map<K, V> with MutableIterable<(K, V)> {
+trait MMap<K, V> extends Map<K, V> with MIterable<(K, V)> {
     def set(key : K, value : V)
     def removeFor(key : K) : V?
-    def objectFor(key: K, orUpdateWith: () -> V) : V = {
-        val o = opt(key)
-        if(o.isDefined) o.get
-        else {
-            val init : V = orUpdateWith()
-            set(key, init)
-            init
-        }
+    def objectFor(key: K, orUpdateWith: () -> V) : V = opt(key).getOr {
+        val init : V = orUpdateWith()
+        set(key, init)
+        init
     }
-    def modify(by : V? -> V?, forKey : K) : V? = {
-        val newObject = by(apply(forKey))
-        if(newObject.isEmpty) removeFor(forKey)
-        else set(forKey, newObject.get)
+    def modify(key : K, by : V? -> V?) : V? = {
+        val newObject = by(opt(key))
+        if(newObject == nil) removeFor(key)
+        else set(key, newObject)
         newObject
     }
 
-    def append(item : (K, V)) {
+    def take(key : K) : V? = {
+        val ret = opt(key)
+        removeFor(key)
+        ret
+    }
+
+    override def append(item : (K, V)) {
         set(item.b, item.a)
     }
-    def remove(item : (K, V)) {
-        removeFor(item.a)
+    override def remove(item : (K, V)) : bool = removeFor(item.a) != nil
+
+    override def im : ImMap<K, V> = imCopy
+    override def imCopy : ImMap<K, V> = {
+        val arr = MHashMap<K, V>()
+        for{item -> arr.set(item.a, item.b)}
+        arr.im
+    }
+
+    def assign(imMap : ImMap<K, V>) {
+        clear
+        imMap.for(append(_))
     }
 }
 
-class MapDefault<K, V>(defaultFunc : K -> V, map : MutableMap<K, V>) extends MutableIterable<(K, V)> {
-    def count : uint = map.count
-    def iterator : Iterator<(K, V)> = map.iterator
-    def mutableIterator : MutableIterator<(K, V)> = map.mutableIterator
+class ImMapDefault<K, V>(map : ImMap<K, V>, defaultFunc : K -> V) extends ImIterable<(K, V)> {
+    override def count : uint = map.count
+    override def iterator : Iterator<(K, V)> = map.iterator
+    def apply(key : K) : V = map.opt(key) .getOr (defaultFunc(key))
+    def keys : Iterable<K> = map.keys
+    def values : Iterable<V> = map.values
+    def contains(key : K) : bool = map.contains(key)
+    def isEqual(map : Map<K, V>) = self.map == map
+    def isEqual(mapDefault : ImMapDefault<K, V>) = map == mapDefault.map
+    override def hash : uint = map.hash
+    override def mCopy : MMapDefault<K, V> = MMapDefault<K, V>(map.mCopy, defaultFunc)
+}
+class MMapDefault<K, V>(map : MMap<K, V>, defaultFunc : K -> V) extends MIterable<(K, V)> {
+    override def count : uint = map.count
+    override def iterator : Iterator<(K, V)> = map.iterator
+    override def mutableIterator : MIterator<(K, V)> = map.mutableIterator
     def apply(key : K) : V = map.objectFor(key, orUpdateWith = defaultFunc(key))
     def keys : Iterable<K> = map.keys
     def values : Iterable<V> = map.values
@@ -56,27 +87,30 @@ class MapDefault<K, V>(defaultFunc : K -> V, map : MutableMap<K, V>) extends Mut
     def set(key : K, value : V) {
         map.set(key, value)
     }
-    def modify(by : V -> V, forKey : K) : V {
-        val value = by(apply(forKey))
-        map.set(forKey, value)
+    def modify(key : K, by : V -> V) : V {
+        val value = by(apply(key))
+        map.set(key, value)
         value
     }
-    def append(item : (K, V)) {
+    override def append(item : (K, V)) {
         map.append(item)
     }
-    def remove(item : (K, V)) {
+    override def remove(item : (K, V)) : bool = {
         map.remove(item)
     }
-    def clear {
+    override def clear {
         map.clear
     }
+
+    override def im : ImMapDefault<K, V> = ImMapDefault(map.im, defaultFunc)
+    override def imCopy : ImMapDefault<K, V> = ImMapDefault(map.imCopy, defaultFunc)
 }
 
-class HashMapBuilder<K, V> extends Builder<(K, V), HashMap<K, V>> {
-    val map = MutableHashMap<K, V>()
+class HashMapBuilder<K, V> extends Builder<(K, V), ImHashMap<K, V>> {
+    private val map = MHashMap<K, V>()
 
-    def append(item : (K, V)) {
+    override def append(item : (K, V)) {
         map.set(item.a, item.b)
     }
-    def build : HashMap<K, V> = map
+    override def build : ImHashMap<K, V> = map.im
 }

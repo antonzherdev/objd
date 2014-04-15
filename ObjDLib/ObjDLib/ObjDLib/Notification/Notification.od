@@ -9,13 +9,13 @@ class NotificationHandle<S, D>(name : string) {
         NotificationCenter.instance.post(name, sender, data)
     }
 
-    def observe(by : (S, D) -> void) : NotificationObserver = {
+    def observe(weak by : (S, D) -> void) : NotificationObserver = {
         NotificationCenter.instance.addObserver<S, D>(name, sender = nil) { sender, data ->
             by(sender, data)
         }
     }
 
-    def observe(sender : S, by : D -> void) : NotificationObserver = {
+    def observe(sender : S, weak by : D -> void) : NotificationObserver = {
         NotificationCenter.instance.addObserver<S, D>(name, sender) { _, data ->
             by(data)
         }

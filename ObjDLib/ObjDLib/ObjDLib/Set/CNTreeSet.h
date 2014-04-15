@@ -4,21 +4,27 @@
 @class CNTreeMap;
 @protocol CNTreeMapKeySet;
 @class ODClassType;
+@class CNDispatchQueue;
 @class CNChain;
+@class CNImTreeMap;
 @class NSObject;
 @class CNMTreeMap;
 @class CNMTreeMapKeySet;
+@class ODObject;
 
 @class CNTreeSet;
 @class CNImTreeSet;
 @class CNTreeSetBuilder;
 @class CNMTreeSet;
 
-@interface CNTreeSet : NSObject<CNSet>
+@interface CNTreeSet : NSObject<CNSet> {
+@protected
+    CNTreeMap* _map;
+}
 @property (nonatomic, readonly) CNTreeMap* map;
 
-+ (id)treeSetWithMap:(CNTreeMap*)map;
-- (id)initWithMap:(CNTreeMap*)map;
++ (instancetype)treeSetWithMap:(CNTreeMap*)map;
+- (instancetype)initWithMap:(CNTreeMap*)map;
 - (ODClassType*)type;
 - (id)higherThanItem:(id)item;
 - (id)lowerThanItem:(id)item;
@@ -26,48 +32,62 @@
 - (id<CNIterator>)iterator;
 - (id<CNIterator>)iteratorHigherThanItem:(id)item;
 - (id)head;
-- (id)headOpt;
 - (id)last;
 - (BOOL)containsItem:(id)item;
 + (ODClassType*)type;
 @end
 
 
-@interface CNImTreeSet : CNTreeSet
-+ (id)imTreeSetWithMap:(CNTreeMap*)map;
-- (id)initWithMap:(CNTreeMap*)map;
+@interface CNImTreeSet : CNTreeSet<CNImSet> {
+@protected
+    CNImTreeMap* _immap;
+}
+@property (nonatomic, readonly) CNImTreeMap* immap;
+
++ (instancetype)imTreeSetWithImmap:(CNImTreeMap*)immap;
+- (instancetype)initWithImmap:(CNImTreeMap*)immap;
 - (ODClassType*)type;
+- (CNMTreeSet*)mCopy;
 + (ODClassType*)type;
 @end
 
 
-@interface CNTreeSetBuilder : NSObject<CNBuilder>
+@interface CNTreeSetBuilder : NSObject<CNBuilder> {
+@protected
+    NSInteger(^_comparator)(id, id);
+    CNMTreeSet* _set;
+}
 @property (nonatomic, readonly) NSInteger(^comparator)(id, id);
 
-+ (id)treeSetBuilderWithComparator:(NSInteger(^)(id, id))comparator;
-- (id)initWithComparator:(NSInteger(^)(id, id))comparator;
++ (instancetype)treeSetBuilderWithComparator:(NSInteger(^)(id, id))comparator;
+- (instancetype)initWithComparator:(NSInteger(^)(id, id))comparator;
 - (ODClassType*)type;
 + (CNTreeSetBuilder*)apply;
 - (void)appendItem:(id)item;
-- (CNTreeSet*)build;
+- (CNImTreeSet*)build;
 + (ODClassType*)type;
 @end
 
 
-@interface CNMTreeSet : CNTreeSet<CNMutableSet>
+@interface CNMTreeSet : CNTreeSet<CNMSet> {
+@protected
+    CNMTreeMap* _mmap;
+}
 @property (nonatomic, readonly) CNMTreeMap* mmap;
 
-+ (id)treeSetWithMmap:(CNMTreeMap*)mmap;
-- (id)initWithMmap:(CNMTreeMap*)mmap;
++ (instancetype)treeSetWithMmap:(CNMTreeMap*)mmap;
+- (instancetype)initWithMmap:(CNMTreeMap*)mmap;
 - (ODClassType*)type;
 + (CNMTreeSet*)applyComparator:(NSInteger(^)(id, id))comparator;
 + (CNMTreeSet*)apply;
-- (id<CNMutableIterator>)mutableIterator;
+- (id<CNMIterator>)mutableIterator;
 - (void)appendItem:(id)item;
 - (BOOL)removeItem:(id)item;
 - (void)clear;
 - (void)addAllObjects:(id<CNTraversable>)objects;
 - (CNMTreeSet*)reorder;
+- (CNImTreeSet*)im;
+- (CNImTreeSet*)imCopy;
 + (ODClassType*)type;
 @end
 

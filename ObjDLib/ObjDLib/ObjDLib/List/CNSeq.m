@@ -2,19 +2,17 @@
 #import "CNSeq.h"
 
 #import "CNSet.h"
-#import "CNChain.h"
 #import "ODType.h"
-@implementation CNArrayBuilder{
-    NSMutableArray* _array;
-}
+#import "CNDispatchQueue.h"
+#import "CNChain.h"
+@implementation CNArrayBuilder
 static ODClassType* _CNArrayBuilder_type;
-@synthesize array = _array;
 
-+ (id)arrayBuilder {
++ (instancetype)arrayBuilder {
     return [[CNArrayBuilder alloc] init];
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if(self) _array = [NSMutableArray mutableArray];
     
@@ -23,7 +21,7 @@ static ODClassType* _CNArrayBuilder_type;
 
 + (void)initialize {
     [super initialize];
-    _CNArrayBuilder_type = [ODClassType classTypeWithCls:[CNArrayBuilder class]];
+    if(self == [CNArrayBuilder class]) _CNArrayBuilder_type = [ODClassType classTypeWithCls:[CNArrayBuilder class]];
 }
 
 - (void)appendItem:(id)item {
@@ -52,16 +50,6 @@ static ODClassType* _CNArrayBuilder_type;
     return self;
 }
 
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    return YES;
-}
-
-- (NSUInteger)hash {
-    return 0;
-}
-
 - (NSString*)description {
     NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
     [description appendString:@">"];
@@ -71,23 +59,20 @@ static ODClassType* _CNArrayBuilder_type;
 @end
 
 
-@implementation CNIndexFunSeq{
-    NSUInteger _count;
-    id(^_f)(NSUInteger);
-}
+@implementation CNIndexFunSeq
 static ODClassType* _CNIndexFunSeq_type;
 @synthesize count = _count;
 @synthesize f = _f;
 
-+ (id)indexFunSeqWithCount:(NSUInteger)count f:(id(^)(NSUInteger))f {
++ (instancetype)indexFunSeqWithCount:(NSUInteger)count f:(id(^)(NSUInteger))f {
     return [[CNIndexFunSeq alloc] initWithCount:count f:f];
 }
 
-- (id)initWithCount:(NSUInteger)count f:(id(^)(NSUInteger))f {
+- (instancetype)initWithCount:(NSUInteger)count f:(id(^)(NSUInteger))f {
     self = [super init];
     if(self) {
         _count = count;
-        _f = f;
+        _f = [f copy];
     }
     
     return self;
@@ -95,11 +80,11 @@ static ODClassType* _CNIndexFunSeq_type;
 
 + (void)initialize {
     [super initialize];
-    _CNIndexFunSeq_type = [ODClassType classTypeWithCls:[CNIndexFunSeq class]];
+    if(self == [CNIndexFunSeq class]) _CNIndexFunSeq_type = [ODClassType classTypeWithCls:[CNIndexFunSeq class]];
 }
 
 - (id)applyIndex:(NSUInteger)index {
-    if(index >= _count) @throw @"Incorrect index";
+    if(index >= _count) return nil;
     else return _f(index);
 }
 
@@ -107,46 +92,39 @@ static ODClassType* _CNIndexFunSeq_type;
     return [CNIndexFunSeqIterator indexFunSeqIteratorWithCount:_count f:_f];
 }
 
-- (id)optIndex:(NSUInteger)index {
-    if(index >= [self count]) return [CNOption none];
-    else return [CNOption applyValue:[self applyIndex:index]];
-}
-
-- (id)randomItem {
-    NSUInteger c = [self count];
-    if(c == 0) {
-        return [CNOption none];
-    } else {
-        if(c == 1) return [CNOption applyValue:[self head]];
-        else return [CNOption applyValue:[self applyIndex:oduIntRndMax([self count] - 1)]];
-    }
-}
-
-- (id<CNSet>)toSet {
-    return [self convertWithBuilder:[CNHashSetBuilder hashSetBuilder]];
-}
-
-- (id<CNSeq>)addItem:(id)item {
+- (id<CNImSeq>)addItem:(id)item {
     CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
     [builder appendAllItems:self];
     [builder appendItem:item];
     return [builder build];
 }
 
-- (id<CNSeq>)addSeq:(id<CNSeq>)seq {
+- (id<CNImSeq>)addSeq:(id<CNSeq>)seq {
     CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
     [builder appendAllItems:self];
     [builder appendAllItems:seq];
     return [builder build];
 }
 
-- (id<CNSeq>)subItem:(id)item {
+- (id<CNImSeq>)subItem:(id)item {
     return [[[self chain] filter:^BOOL(id _) {
         return !([_ isEqual:item]);
     }] toArray];
 }
 
-- (BOOL)isEqualToSeq:(id<CNSeq>)seq {
+- (id<CNMSeq>)mCopy {
+    NSMutableArray* arr = [NSMutableArray mutableArray];
+    [self forEach:^void(id item) {
+        [arr appendItem:item];
+    }];
+    return arr;
+}
+
+- (id<CNSet>)toSet {
+    return [self convertWithBuilder:[CNHashSetBuilder hashSetBuilder]];
+}
+
+- (BOOL)isEqualSeq:(id<CNSeq>)seq {
     if([self count] != [seq count]) return NO;
     id<CNIterator> ia = [self iterator];
     id<CNIterator> ib = [seq iterator];
@@ -164,11 +142,11 @@ static ODClassType* _CNIndexFunSeq_type;
     return [self applyIndex:0];
 }
 
-- (id)headOpt {
-    return [self optIndex:0];
+- (id)last {
+    return [self applyIndex:[self count] - 1];
 }
 
-- (id<CNSeq>)tail {
+- (id<CNImSeq>)tail {
     CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
     id<CNIterator> i = [self iterator];
     if([i hasNext]) {
@@ -180,14 +158,20 @@ static ODClassType* _CNIndexFunSeq_type;
     return [builder build];
 }
 
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
-}
-
 - (void)forEach:(void(^)(id))each {
     id<CNIterator> i = [self iterator];
     while([i hasNext]) {
         each([i next]);
+    }
+}
+
+- (void)parForEach:(void(^)(id))each {
+    id<CNIterator> i = [self iterator];
+    while([i hasNext]) {
+        id v = [i next];
+        [CNDispatchQueue.aDefault asyncF:^void() {
+            each(v);
+        }];
     }
 }
 
@@ -207,24 +191,15 @@ static ODClassType* _CNIndexFunSeq_type;
     return NO;
 }
 
-- (NSString*)description {
-    return [[self chain] toStringWithStart:@"[" delimiter:@", " end:@"]"];
-}
-
-- (NSUInteger)hash {
-    NSUInteger ret = 13;
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        ret = ret * 31 + [[i next] hash];
-    }
-    return ret;
+- (CNChain*)chain {
+    return [CNChain chainWithCollection:self];
 }
 
 - (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = [CNOption none];
+    __block id ret = nil;
     [self goOn:^BOOL(id x) {
         if(where(x)) {
-            ret = [CNOption applyValue:x];
+            ret = x;
             return NO;
         } else {
             return YES;
@@ -281,32 +256,41 @@ static ODClassType* _CNIndexFunSeq_type;
 - (BOOL)isEqual:(id)other {
     if(self == other) return YES;
     if(!(other)) return NO;
-    if([other conformsToProtocol:@protocol(CNSeq)]) return [self isEqualToSeq:((id<CNSeq>)(other))];
+    if([other conformsToProtocol:@protocol(CNSeq)]) return [self isEqualSeq:((id<CNSeq>)(other))];
     return NO;
+}
+
+- (NSUInteger)hash {
+    NSUInteger hash = 0;
+    hash = hash * 31 + self.count;
+    hash = hash * 31 + [self.f hash];
+    return hash;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendFormat:@"count=%lu", (unsigned long)self.count];
+    [description appendString:@">"];
+    return description;
 }
 
 @end
 
 
-@implementation CNIndexFunSeqIterator{
-    NSUInteger _count;
-    id(^_f)(NSUInteger);
-    NSUInteger _i;
-}
+@implementation CNIndexFunSeqIterator
 static ODClassType* _CNIndexFunSeqIterator_type;
 @synthesize count = _count;
 @synthesize f = _f;
-@synthesize i = _i;
 
-+ (id)indexFunSeqIteratorWithCount:(NSUInteger)count f:(id(^)(NSUInteger))f {
++ (instancetype)indexFunSeqIteratorWithCount:(NSUInteger)count f:(id(^)(NSUInteger))f {
     return [[CNIndexFunSeqIterator alloc] initWithCount:count f:f];
 }
 
-- (id)initWithCount:(NSUInteger)count f:(id(^)(NSUInteger))f {
+- (instancetype)initWithCount:(NSUInteger)count f:(id(^)(NSUInteger))f {
     self = [super init];
     if(self) {
         _count = count;
-        _f = f;
+        _f = [f copy];
         _i = 0;
     }
     
@@ -315,7 +299,7 @@ static ODClassType* _CNIndexFunSeqIterator_type;
 
 + (void)initialize {
     [super initialize];
-    _CNIndexFunSeqIterator_type = [ODClassType classTypeWithCls:[CNIndexFunSeqIterator class]];
+    if(self == [CNIndexFunSeqIterator class]) _CNIndexFunSeqIterator_type = [ODClassType classTypeWithCls:[CNIndexFunSeqIterator class]];
 }
 
 - (BOOL)hasNext {
@@ -338,20 +322,6 @@ static ODClassType* _CNIndexFunSeqIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNIndexFunSeqIterator* o = ((CNIndexFunSeqIterator*)(other));
-    return self.count == o.count && [self.f isEqual:o.f];
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + self.count;
-    hash = hash * 31 + [self.f hash];
-    return hash;
 }
 
 - (NSString*)description {

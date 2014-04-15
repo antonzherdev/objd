@@ -2,18 +2,17 @@
 #import "CNSet.h"
 
 #import "ODType.h"
+#import "CNDispatchQueue.h"
 #import "CNChain.h"
-@implementation CNHashSetBuilder{
-    NSMutableSet* _set;
-}
+@implementation CNHashSetBuilder
 static ODClassType* _CNHashSetBuilder_type;
 @synthesize set = _set;
 
-+ (id)hashSetBuilder {
++ (instancetype)hashSetBuilder {
     return [[CNHashSetBuilder alloc] init];
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if(self) _set = [NSMutableSet mutableSet];
     
@@ -22,7 +21,7 @@ static ODClassType* _CNHashSetBuilder_type;
 
 + (void)initialize {
     [super initialize];
-    _CNHashSetBuilder_type = [ODClassType classTypeWithCls:[CNHashSetBuilder class]];
+    if(self == [CNHashSetBuilder class]) _CNHashSetBuilder_type = [ODClassType classTypeWithCls:[CNHashSetBuilder class]];
 }
 
 - (void)appendItem:(id)item {
@@ -30,7 +29,7 @@ static ODClassType* _CNHashSetBuilder_type;
 }
 
 - (NSSet*)build {
-    return _set;
+    return [_set im];
 }
 
 - (void)appendAllItems:(id<CNTraversable>)items {
@@ -49,16 +48,6 @@ static ODClassType* _CNHashSetBuilder_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    return YES;
-}
-
-- (NSUInteger)hash {
-    return 0;
 }
 
 - (NSString*)description {

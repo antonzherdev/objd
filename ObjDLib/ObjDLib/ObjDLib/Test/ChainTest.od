@@ -1,0 +1,75 @@
+package core.chain
+
+import com.antonzherdev.test._
+import com.antonzherdev.test.Assert._
+
+class ChainTest extends TestCase {
+    def testAnd {
+        assertTrue(![true, false, true].chain.and)
+        assertTrue(![false, false, false].chain.and)
+        assertTrue([true, true, true].chain.and)
+        assertTrue([].chain.and)
+    }
+
+    def testOr {
+        assertTrue([false, false, true].chain.or)
+        assertTrue(![false, false, false].chain.or)
+        assertTrue([true, true, true].chain.or)
+        assertTrue(![].chain.or)
+    }
+
+    def testFuture {
+        repeat(1000){
+            val arr : [(int, Promise<int>)] = 0.to(1000).chain.map{i -> (i, Promise<int>())}.toArray
+
+
+            arr.for {t ->
+                DispatchQueue.default.async {
+                    t.b.success(t.a * t.a)
+                }
+            }
+            val fut : Future<[int]> = arr.chain.map(_.b).future {chain ->
+                chain.toArray
+            }
+
+            val set :[int] = arr.chain.map(_.a).map(_ * _).toArray
+
+            assertEquals(set, fut.getResult(5))
+        }
+    }
+
+    def testVoidFuture {
+        val arr : [Promise<void>] = 0.to(1000).chain.map{i -> Promise<void>()}.toArray
+
+        val fut : Future<void> = arr.chain.voidFuture
+        var count = AtomicInt()
+        arr.for {p ->
+            DispatchQueue.default.async {
+                count.incrementAndGet
+                p.success(nil)
+            }
+        }
+        assertTrue(fut.waitResult(5) != nil)
+        assertEquals(count.intValue, arr.count)
+    }
+
+    def testFlat {
+        assertEquals([1, 5, 2, 3, 2], [[1, 5], [2, 3], [2]].chain.flat.toArray)
+    }
+
+    def testZip {
+        assertEquals([2, 3], [1, 0, 3].chain.zip([1, 3]){a, b -> a + b}.toArray)
+    }
+
+    def testZip3 {
+        assertEquals([3, 4], [1, 0, 3].chain.zip3([1, 3], [1, 1, 2, 4]){a, b, c -> a + b + c}.toArray)
+    }
+
+    def testZipFor {
+        var arr : [int] = []
+        [1, 0, 3].chain.zipFor([1, 3]) {a, b ->
+            arr += (a + b)
+        }
+        assertEquals([2, 3], arr)
+    }
+}

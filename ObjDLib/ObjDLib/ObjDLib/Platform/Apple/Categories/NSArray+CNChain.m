@@ -2,8 +2,8 @@
 #import "NSArray+CNChain.h"
 #import "NSSet+CNChain.h"
 #import "CNChain.h"
-#import "CNOption.h"
 #import "CNEnumerator.h"
+#import "CNDispatchQueue.h"
 
 
 @implementation NSArray (CNChain)
@@ -25,13 +25,9 @@
     return self.count == 0;
 }
 
-- (id)headOpt {
-    if(self.count == 0) return [CNOption none];
-    return [CNSome someWithValue:[self objectAtIndex :0]];
-}
-
 - (id)head {
-    return [self objectAtIndex :0];
+    if(self.count == 0) return nil;
+    return uwrapNil([self objectAtIndex :0]);
 }
 
 - (id)convertWithBuilder:(id<CNBuilder>)builder {
@@ -43,20 +39,20 @@
 
 
 - (id)optIndex:(NSUInteger)index {
-    if(index >= self.count) return [CNOption none];
-    return [CNOption someValue:[self objectAtIndex:index]];
+    if(index >= self.count) return nil;
+    return [self objectAtIndex:index];
 }
 
 - (id)randomItem {
-    if([self isEmpty]) return [CNOption none];
-    else return [CNSome someWithValue:[self objectAtIndex:oduIntRndMax([self count] - 1)]];
+    if([self isEmpty]) return nil;
+    else return [self objectAtIndex:oduIntRndMax([self count] - 1)];
 }
 
 - (id)findWhere:(BOOL(^)(id))where {
-    id ret = [CNOption none];
+    id ret = nil;
     for(id item in self)  {
         if(where(item)) {
-            ret = [CNSome someWithValue:item];
+            ret = item;
             break;
         }
     }
@@ -92,6 +88,15 @@
     }
 }
 
+- (void)parForEach:(void (^)(id))each {
+    for(id item in self)  {
+        [[CNDispatchQueue aDefault] asyncF:^{
+            each(item);
+        }];
+    }
+}
+
+
 - (BOOL)goOn:(BOOL (^)(id))on {
     for(id item in self)  {
         if(!on(item)) return NO;
@@ -106,7 +111,7 @@
     }] toArray];
 }
 
-- (BOOL)isEqualToSeq:(id<CNSeq>)seq {
+- (BOOL)isEqualSeq:(id<CNSeq>)seq {
     if([self count] != [seq count]) return NO;
     id<CNIterator> ia = [self iterator];
     id<CNIterator> ib = [seq iterator];
@@ -123,7 +128,7 @@
 - (BOOL)isEqual:(id)other {
     if(self == other) return YES;
     if(!(other)) return NO;
-    if([other conformsToProtocol:@protocol(CNSeq)]) return [self isEqualToSeq:((id<CNSeq>)(other))];
+    if([other conformsToProtocol:@protocol(CNSeq)]) return [self isEqualSeq:((id<CNSeq>)(other))];
     return NO;
 }
 
@@ -132,18 +137,22 @@
     return [NSSet setWithArray:self];
 }
 
-- (id <CNSeq>)addItem:(id)item {
+- (NSArray*)addItem:(id)item {
     return [self arrayByAddingObject:item];
 }
 
-- (id<CNSeq>)addSeq:(id<CNSeq>)seq {
+- (NSArray*)addSeq:(id<CNSeq>)seq {
     CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
     [builder appendAllItems:self];
     [builder appendAllItems:seq];
     return ((NSArray*)([builder build]));
 }
 
-- (id <CNSeq>)subItem:(id)item {
+- (id <CNMSeq>)mCopy {
+    return (id <CNMSeq>) [self mutableCopy];
+}
+
+- (NSArray*)subItem:(id)item {
     return [self arrayByRemovingObject:item];
 }
 
@@ -166,7 +175,7 @@
     return [self objectAtIndex:index];
 }
 
-- (id<CNSeq>)tail {
+- (NSArray*)tail {
     CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
     id<CNIterator> i = [self iterator];
     if([i hasNext]) {
@@ -177,5 +186,10 @@
     }
     return [builder build];
 }
+
+- (id)last {
+    return [self lastObject];
+}
+
 
 @end

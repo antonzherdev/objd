@@ -7,11 +7,11 @@
 @implementation CNTreeMapTest
 static ODClassType* _CNTreeMapTest_type;
 
-+ (id)treeMapTest {
++ (instancetype)treeMapTest {
     return [[CNTreeMapTest alloc] init];
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     
     return self;
@@ -19,30 +19,30 @@ static ODClassType* _CNTreeMapTest_type;
 
 + (void)initialize {
     [super initialize];
-    _CNTreeMapTest_type = [ODClassType classTypeWithCls:[CNTreeMapTest class]];
+    if(self == [CNTreeMapTest class]) _CNTreeMapTest_type = [ODClassType classTypeWithCls:[CNTreeMapTest class]];
 }
 
 - (void)testMain {
     CNMTreeMap* map = [CNMTreeMap apply];
-    [self assertEqualsA:@0 b:numi(((NSInteger)([map count])))];
-    [self assertTrueValue:[[map optKey:@0] isEmpty]];
+    assertEquals(@0, numi(((NSInteger)([map count]))));
+    assertTrue([map optKey:@0] == nil);
     [map setKey:@0 value:@"test"];
-    [self assertEqualsA:@"test" b:[map applyKey:@0]];
-    id<CNSeq> tests = (@[@-10, @-20, @-30, @10, @20, @-15, @20, @0, @11, @13, @-18]);
-    [tests forEach:^void(id i) {
+    assertEquals(@"test", [map applyKey:@0]);
+    NSArray* tests = (@[@-10, @-20, @-30, @10, @20, @-15, @20, @0, @11, @13, @-18]);
+    for(id i in tests) {
         [map setKey:i value:[@"test" stringByAppendingFormat:@"%ld", unumi(i)]];
-    }];
-    [self assertEqualsA:numui([[[tests chain] distinct] count]) b:numui([map count])];
+    }
+    assertEquals(numui([[[tests chain] distinct] count]), numui([map count]));
     [[[tests chain] distinct] forEach:^void(id i) {
-        [self assertEqualsA:[@"test" stringByAppendingFormat:@"%ld", unumi(i)] b:[map applyKey:i]];
+        assertEquals(([@"test" stringByAppendingFormat:@"%ld", unumi(i)]), [map applyKey:i]);
     }];
-    [self assertEqualsA:(@[@-30, @-20, @-18, @-15, @-10, @0, @10, @11, @13, @20]) b:[[map.keys chain] toArray]];
+    assertEquals(((@[@-30, @-20, @-18, @-15, @-10, @0, @10, @11, @13, @20])), [[map.keys chain] toArray]);
     [[[tests chain] distinct] forEach:^void(id i) {
-        [self assertEqualsA:[@"test" stringByAppendingFormat:@"%ld", unumi(i)] b:[map applyKey:i]];
+        assertEquals(([@"test" stringByAppendingFormat:@"%ld", unumi(i)]), [map applyKey:i]);
         [map removeForKey:i];
-        [self assertTrueValue:[[map optKey:i] isEmpty]];
+        assertTrue([map optKey:i] == nil);
     }];
-    [self assertEqualsA:@0 b:numi(((NSInteger)([map count])))];
+    assertEquals(@0, numi(((NSInteger)([map count]))));
 }
 
 - (ODClassType*)type {
@@ -55,16 +55,6 @@ static ODClassType* _CNTreeMapTest_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    return YES;
-}
-
-- (NSUInteger)hash {
-    return 0;
 }
 
 - (NSString*)description {

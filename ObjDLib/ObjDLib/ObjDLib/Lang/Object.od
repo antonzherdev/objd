@@ -10,9 +10,8 @@ stub class Object {
     def hash : uint
     static def type : Type<self>
     static def class : Class
+    def dealloc
 }
-
-
 
 stub trait Number {
 }
@@ -22,34 +21,48 @@ stub trait Comparable<T> {
 }
 
 stub struct Void
+stub struct Any
+stub struct Bool
 
-stub struct Byte extends Comparable<byte> with Number {
+stub struct Byte extends Number {
     def compare(to : byte) : byte
     def range : Range
     def to(: byte) : Range
     def between(from : byte, to : byte) : bool
     def abs : byte
+
+    def max(b : byte) : byte
+    def min(b : byte) : byte
+    def clamp(min : byte, max : byte) : byte
 }
 
 
-stub struct Int extends Comparable<int>  with Number {
+stub struct Int extends Number {
     def compare(to : int) : int
     def range : Range
     def to(: int) : Range
     def between( : int, : int) : bool
     def abs : int
+
+    def max(b : int) : int
+    def min(b : int) : int
+    def clamp(min : int, max : int) : int
 }
 
-stub struct Int4 extends Comparable<int4> with Number {
+stub struct Int4 extends Number {
     def compare(to : int4) : int4
     def range : Range
     def to(: int4) : Range
     def between( : int4, : int4) : bool
     def abs : int4
+
+    def max(b : int4) : int4
+    def min(b : int4) : int4
+    def clamp(min : int4, max : int4) : int4
 }
 
 
-stub struct UInt extends Comparable<uint>  with Number {
+stub struct UInt extends Number {
     def compare(to : uint) : int
     def range : Range
     def to(: uint) : Range
@@ -59,16 +72,17 @@ stub struct UInt extends Comparable<uint>  with Number {
 
     def max(b : uint) : uint
     def min(b : uint) : uint
+    def clamp(min : uint, max : uint) : uint
 }
 
-stub struct UInt4 extends Comparable<uint4> with Number {
+stub struct UInt4 extends Number {
     def compare(to : uint4) : int
     def range : Range
     def to(: uint4) : Range
     def between( : uint4, : uint4) : bool
 }
 
-stub struct Float extends Comparable<float> with Number {
+stub struct Float extends Number {
     static val max : float
     static val min : float
 
@@ -82,11 +96,12 @@ stub struct Float extends Comparable<float> with Number {
 
     def max(b : float) : float
     def min(b : float) : float
+    def clamp(min : float, max : float) : float
     def round : int
     def fraction : float
 }
 
-stub struct Float4 extends Comparable<float4> with Number {
+stub struct Float4 extends Number {
     static val max : float4
     static val min : float4
 
@@ -97,6 +112,7 @@ stub struct Float4 extends Comparable<float4> with Number {
 
     def max(b : float4) : float4
     def min(b : float4) : float4
+    def clamp(min : float4, max : float4) : float4
     def round : int
 
     static def rnd : float4
@@ -104,7 +120,7 @@ stub struct Float4 extends Comparable<float4> with Number {
     def fraction : float4
 }
 
-stub struct Float8 extends Comparable<float8> with Number {
+stub struct Float8 extends Number {
     static val max : float8
     static val min : float8
 
@@ -115,12 +131,11 @@ stub struct Float8 extends Comparable<float8> with Number {
 
     def max(b : float8) : float8
     def min(b : float8) : float8
+    def clamp(min : float8, max : float8) : float8
     def round : int
 
     static def rnd : float8
     static def rnd(min : float8, max : float8) : float8
     def fraction : float8
 }
-
-
 

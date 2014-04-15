@@ -3,6 +3,15 @@ package com.antonzherdev.test
 stub class XCTestCase
 
 stub class TestCase extends XCTestCase {
+    import com.antonzherdev.test.Assert._
+
+    def repeat(times : uint, f : () -> void)
+}
+
+stub object Assert {
     def assertEquals<T>(a: T, b: T) : void
+    def floatArrayEquals<T>(a: [float], b: [float]) : void
     def assertTrue(value: bool) :void
+    def assertFalse(value: bool) :void
+    def fail(text : string)
 }

@@ -1,34 +1,37 @@
 package core.chain
 
-class Queue<T>(in : List<T>, out : List<T>) extends Seq<T> {
-    static def apply<T> : Queue<T> = empty
-    private static val empty : Queue<any> = Queue<any>(List<any>(), List<any>())
+trait Queue<T> {
+}
+
+class ImQueue<T>(in : ImList<T>, out : ImList<T>) extends Queue<T> {
+    static def apply<T> : ImQueue<T> = empty
+    private static val empty : ImQueue<any> = ImQueue<any>(ImList<any>(), ImList<any>())
 
     def iterator : Iterator<T> = QueueIterator<T>(in, out)
     def isEmpty = in.isEmpty && out.isEmpty
     def count = in.count + out.count
-    def apply(index : uint) : T =
-        if(index < out.count) out(index)
-        else if(index < out.count + in.count) in(in.count - index + out.count)
-        else throw "Incorrect index=$index"
 
-    def enqueue(item : T) : Queue<T> =
-        if(isEmpty) Queue<T>(List<T>(), List(item))
-        else Queue<T>(List(item, in), out)
+    def add(item : T) : ImQueue<T> =
+        if(isEmpty) ImQueue<T>(ImList<T>(), ImList(item))
+        else ImQueue<T>(ImList(item, in), out)
 
-    def dequeue : (T?, Queue<T>) =
-        if(!out.isEmpty) (out.headOpt, Queue<T>(in, out.tail))
-        else if(in.isEmpty) (Option.none<T>, self)
+    def enqueue(item : T) : ImQueue<T> =
+        if(isEmpty) ImQueue<T>(ImList<T>(), ImList(item))
+        else ImQueue<T>(ImList(item, in), out)
+
+    def dequeue : (T?, ImQueue<T>) =
+        if(!out.isEmpty) (out.head, ImQueue<T>(in, out.tail))
+        else if(in.isEmpty) (nil, self)
         else {
             val rev = in.reverse
-            (rev.headOpt, Queue<T>(List<T>(), rev.tail))
+            (rev.head, ImQueue<T>(ImList<T>(), rev.tail))
         }
 }
 
-class QueueIterator<T>(in : List<T>, out : List<T>) extends Iterator<T> {
+class QueueIterator<T>(in : ImList<T>, out : ImList<T>) extends Iterator<T> {
     private var i = in.iterator
     private var isIn = true
-    def hasNext =
+    override def hasNext =
         if(i.hasNext) true
         else if(isIn) {
             isIn = false
@@ -37,11 +40,27 @@ class QueueIterator<T>(in : List<T>, out : List<T>) extends Iterator<T> {
         }
         else false
 
-    def next : T = {
+    override def next : T = {
         if(!i.hasNext && isIn) {
             isIn = false
             i = out.reverse.iterator
         }
         i.next
     }
+}
+
+class MQueue<T> extends Queue<T> {
+    private var _queue : ImQueue<T> = ImQueue<T>()
+
+    def enqueue(item : T)  {
+        _queue = _queue + item
+    }
+
+    def dequeue : T? = {
+        val p = _queue.dequeue
+        _queue = p.b
+        p.a
+    }
+
+    def count = _queue.count
 }

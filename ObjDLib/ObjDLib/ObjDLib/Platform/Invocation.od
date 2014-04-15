@@ -1,0 +1,8 @@
+package core.objc
+
+stub class NSInvocation<T, R> {
+    def invokeWith(target : T)
+    def invokeAndGetResult(target : T) : T
+}
+
+typedef Invocation<T, R> = NSInvocation<T, R>

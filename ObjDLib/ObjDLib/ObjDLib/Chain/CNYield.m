@@ -1,5 +1,6 @@
 #import "CNYield.h"
 #import "CNCollection.h"
+#import "CNFuture.h"
 
 
 @implementation CNYield {
@@ -24,7 +25,19 @@
     return [[self alloc] initWithBegin:begin yield:yield end:end all:all];
 }
 
-+ (CNYield *)decorateYield:(CNYield *)base begin:(cnYieldBegin)begin yield:(cnYield)yield end:(cnYieldEnd)end all:(cnYieldAll)all {
++ (CNYield*)applyBegin:(cnYieldBegin)begin yield:(cnYield)yield end:(cnYieldEnd)end{
+    return [[self alloc] initWithBegin:begin yield:yield end:end all:nil];
+}
+
++ (CNYield*)applyYield:(cnYield)yield end:(cnYieldEnd)end {
+    return [[self alloc] initWithBegin:nil yield:yield end:end all:nil];
+}
+
++ (CNYield*)applyBegin:(cnYieldBegin)begin yield:(cnYield)yield {
+    return [[self alloc] initWithBegin:begin yield:yield end:nil all:nil];
+}
+
++ (CNYield *)decorateBase:(CNYield *)base begin:(cnYieldBegin)begin yield:(cnYield)yield end:(cnYieldEnd)end all:(cnYieldAll)all {
     if(begin == nil) {
         begin = ^CNYieldResult(NSUInteger size) {
             return [base beginYieldWithSize:size];
@@ -43,6 +56,23 @@
 
     return [CNYield yieldWithBegin:begin yield:yield end:end all:all];
 }
+
++ (CNYield *)decorateBase:(CNYield *)base begin:(cnYieldBegin)begin yield:(cnYield)yield end:(cnYieldEnd)end {
+    return [CNYield decorateBase:base begin:begin yield:yield end:end all:nil];
+}
+
++ (CNYield *)decorateBase:(CNYield *)base yield:(cnYield)yield end:(cnYieldEnd)end {
+    return [CNYield decorateBase:base begin:nil yield:yield end:end all:nil];
+}
+
++ (CNYield *)decorateBase:(CNYield *)base begin:(cnYieldBegin)begin yield:(cnYield)yield {
+    return [CNYield decorateBase:base begin:begin yield:yield end:nil all:nil];
+}
+
++ (CNYield *)decorateBase:(CNYield *)base yield:(cnYield)yield {
+    return [CNYield decorateBase:base begin:nil yield:yield end:nil all:nil];
+}
+
 
 
 + (CNYieldResult)yieldAll:(id)collection byItemsTo:(CNYield *)yield {

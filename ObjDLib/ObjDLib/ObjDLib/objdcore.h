@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import "ODType.h"
+#import "CNPointer.h"
 
 @protocol CNSeq;
 

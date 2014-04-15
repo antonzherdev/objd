@@ -3,12 +3,12 @@
 
 @implementation NSMutableDictionary (CNChain)
 - (void)setKey:(id)key value:(id)value {
-    [self setObject:value forKey:key];
+    [self setObject:wrapNil(value) forKey:wrapNil(key)];
 }
 
 - (id)removeForKey:(id)key {
-    id ret = [self optKey:key];
-    if([ret isDefined]) [self removeObjectForKey:key];
+    id ret = [self objectForKey:wrapNil(key)];
+    if(ret != nil) [self removeObjectForKey:wrapNil(key)];
     return ret;
 }
 
@@ -17,38 +17,70 @@
 }
 
 - (id)objectForKey:(id)key orUpdateWith:(id (^)())with {
-    id v = [self objectForKey:key];
+    id v = [self objectForKey:wrapNil(key)];
     if(v != nil) return v;
     v = with();
-    [self setObject:v forKey:key];
+    [self setObject:wrapNil(v) forKey:wrapNil(key)];
     return v;
 }
 
-- (id)modifyBy:(id (^)(id))with forKey:(id)key {
-    id v = with([self optKey:key]);
-    if([v isEmpty]) {
-        [self removeObjectForKey:v];
+- (id)takeKey:(id)key {
+    id ret = self[wrapNil(key)];
+    if(ret != nil) [self removeObjectForKey:wrapNil(key)];
+    return ret;
+}
+
+
+- (id)modifyKey:(id)key by:(id(^)(id))by {
+    id v = by(self[wrapNil(key)]);
+    if(v == nil) {
+        [self removeObjectForKey:wrapNil(key)];
     } else {
-        [self setObject:[v get] forKey:key];
+        [self setObject:v forKey:wrapNil(key)];
     }
     return v;
 }
 
 - (void)appendItem:(CNTuple *)object {
-    [self setObject:object.b forKey:object.a];
+    [self setObject:wrapNil(object.b) forKey:wrapNil(object.a)];
 }
 
-- (void)removeItem:(CNTuple *)object {
-    [self removeObjectForKey:object.a];
+- (BOOL)removeItem:(CNTuple *)object {
+    NSUInteger oldCount = self.count;
+    [self removeObjectForKey:wrapNil(object.a)];
+    return oldCount > self.count;
 }
+
+- (NSDictionary*)im {
+    return self;
+}
+
+- (NSDictionary*)imCopy {
+    return [NSDictionary dictionaryWithDictionary:self];
+}
+
+- (void)assignImMap:(id <CNImMap>)imMap {
+    if([imMap isKindOfClass:[NSDictionary class]]) {
+        [self setDictionary:(NSDictionary *) imMap];
+    } else {
+        [self removeAllObjects];
+        [imMap forEach:^void(CNTuple* _) {
+            [self setObject:wrapNil(_.b) forKey:wrapNil(_.a)];
+        }];
+    }
+}
+
+
+- (void)mutableFilterBy:(BOOL(^)(id))by {
+    @throw @"Hasn't implemented yet";
+}
+
 
 - (void)clear {
     [self removeAllObjects];
 }
 
-- (id <CNMutableIterator>)mutableIterator {
+- (id <CNMIterator>)mutableIterator {
     @throw @"Hasn't implemented yet";
 }
-
-
 @end

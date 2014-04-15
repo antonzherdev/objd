@@ -1,0 +1,23 @@
+package core.objc
+
+stub class NSLock {
+    def lock
+    def unlock
+    def tryLock : bool
+}
+
+stub class NSConditionLock(condition : int) {
+    def lock
+    def unlock
+    def tryLock : bool
+
+    def tryLockWhen(condition : int) : bool
+    def lockWhen(condition : int)
+    def lockWhen(condition : int, period : float) : bool
+    def unlockWith(condition : int)
+}
+
+
+
+typedef Lock = NSLock
+typedef ConditionLock = NSConditionLock

@@ -1,41 +1,51 @@
 #import "objdcore.h"
 #import "CNSeq.h"
-#import "ODObject.h"
 #import "CNCollection.h"
 @class ODClassType;
+@class CNChain;
 @protocol CNSet;
 @class CNHashSetBuilder;
-@class CNChain;
+@class CNDispatchQueue;
 
 @class CNPArray;
 @class CNPArrayIterator;
 
-@interface CNPArray : NSObject<CNSeq>
+@interface CNPArray : NSObject<CNImSeq> {
+@protected
+    NSUInteger _stride;
+    id(^_wrap)(void*, NSUInteger);
+    NSUInteger _count;
+    NSUInteger _length;
+    void* _bytes;
+    BOOL _copied;
+}
 @property (nonatomic, readonly) NSUInteger stride;
-@property (nonatomic, readonly) id(^wrap)(VoidRef, NSUInteger);
+@property (nonatomic, readonly) id(^wrap)(void*, NSUInteger);
 @property (nonatomic, readonly) NSUInteger count;
 @property (nonatomic, readonly) NSUInteger length;
-@property (nonatomic, readonly) VoidRef bytes;
+@property (nonatomic, readonly) void* bytes;
 @property (nonatomic, readonly) BOOL copied;
 
-+ (id)arrayWithStride:(NSUInteger)stride wrap:(id(^)(VoidRef, NSUInteger))wrap count:(NSUInteger)count length:(NSUInteger)length bytes:(VoidRef)bytes copied:(BOOL)copied;
-- (id)initWithStride:(NSUInteger)stride wrap:(id(^)(VoidRef, NSUInteger))wrap count:(NSUInteger)count length:(NSUInteger)length bytes:(VoidRef)bytes copied:(BOOL)copied;
++ (instancetype)arrayWithStride:(NSUInteger)stride wrap:(id(^)(void*, NSUInteger))wrap count:(NSUInteger)count length:(NSUInteger)length bytes:(void*)bytes copied:(BOOL)copied;
+- (instancetype)initWithStride:(NSUInteger)stride wrap:(id(^)(void*, NSUInteger))wrap count:(NSUInteger)count length:(NSUInteger)length bytes:(void*)bytes copied:(BOOL)copied;
 - (ODClassType*)type;
-+ (CNPArray*)applyStride:(NSUInteger)stride wrap:(id(^)(VoidRef, NSUInteger))wrap count:(NSUInteger)count copyBytes:(VoidRef)copyBytes;
++ (CNPArray*)applyStride:(NSUInteger)stride wrap:(id(^)(void*, NSUInteger))wrap count:(NSUInteger)count copyBytes:(void*)copyBytes;
 - (id<CNIterator>)iterator;
-- (id)applyIndex:(NSUInteger)index;
 - (void)dealloc;
-- (id)unsafeApplyIndex:(NSUInteger)index;
-- (void)forRefEach:(void(^)(VoidRef))each;
+- (id)applyIndex:(NSUInteger)index;
 + (ODClassType*)type;
 @end
 
 
-@interface CNPArrayIterator : NSObject<CNIterator>
+@interface CNPArrayIterator : NSObject<CNIterator> {
+@protected
+    CNPArray* _array;
+    NSInteger _i;
+}
 @property (nonatomic, readonly) CNPArray* array;
 
-+ (id)arrayIteratorWithArray:(CNPArray*)array;
-- (id)initWithArray:(CNPArray*)array;
++ (instancetype)arrayIteratorWithArray:(CNPArray*)array;
+- (instancetype)initWithArray:(CNPArray*)array;
 - (ODClassType*)type;
 - (BOOL)hasNext;
 - (id)next;

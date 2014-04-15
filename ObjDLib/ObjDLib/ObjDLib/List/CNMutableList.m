@@ -3,27 +3,25 @@
 
 #import "ODType.h"
 #import "CNSet.h"
+#import "CNDispatchQueue.h"
 #import "CNChain.h"
-@implementation CNMutableList{
-    NSUInteger __count;
-    CNMutableListItem* _headItem;
-    CNMutableListItem* _lastItem;
-}
-static ODClassType* _CNMutableList_type;
+@implementation CNMList
+static ODClassType* _CNMList_type;
 
-+ (id)mutableList {
-    return [[CNMutableList alloc] init];
++ (instancetype)list {
+    return [[CNMList alloc] init];
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
+    if(self) __count = 0;
     
     return self;
 }
 
 + (void)initialize {
     [super initialize];
-    _CNMutableList_type = [ODClassType classTypeWithCls:[CNMutableList class]];
+    if(self == [CNMList class]) _CNMList_type = [ODClassType classTypeWithCls:[CNMList class]];
 }
 
 - (NSUInteger)count {
@@ -31,44 +29,88 @@ static ODClassType* _CNMutableList_type;
 }
 
 - (id<CNIterator>)iterator {
-    CNMutableListImmutableIterator* i = [CNMutableListImmutableIterator mutableListImmutableIterator];
+    CNMListImmutableIterator* i = [CNMListImmutableIterator listImmutableIterator];
     i.item = _headItem;
     return i;
 }
 
-- (id<CNMutableIterator>)mutableIterator {
-    CNMutableListIterator* i = [CNMutableListIterator mutableListIteratorWithList:self];
+- (id<CNMIterator>)mutableIterator {
+    CNMListIterator* i = [CNMListIterator listIteratorWithList:self];
     i.item = _headItem;
     return i;
 }
 
-- (void)appendItem:(id)item {
-    CNMutableListItem* i = [CNMutableListItem mutableListItem];
-    i.data = item;
+- (void)insertIndex:(NSUInteger)index item:(id)item {
+    if(index == 0) {
+        [self prependItem:item];
+    } else {
+        if(index >= __count) {
+            [self appendItem:item];
+        } else {
+            CNMListItem* c = _headItem;
+            NSUInteger i = index;
+            while(c != nil && i > 0) {
+                c = ((CNMListItem*)(c)).next;
+            }
+            if(c != nil) {
+                CNMListItem* li = [CNMListItem listItemWithData:item];
+                {
+                    CNMListItem* __tmp_0_3_1 = ((CNMListItem*)(c)).next;
+                    if(__tmp_0_3_1 != nil) ((CNMListItem*)(__tmp_0_3_1)).prev = li;
+                }
+                ((CNMListItem*)(c)).next = li;
+            } else {
+                [self appendItem:item];
+            }
+        }
+    }
+}
+
+- (void)prependItem:(id)item {
+    CNMListItem* i = [CNMListItem listItemWithData:item];
     if(_headItem == nil) {
         _headItem = i;
         _lastItem = i;
         __count = 1;
     } else {
-        i.prev = _lastItem;
-        _lastItem.next = i;
+        i.next = ((CNMListItem*)(_headItem));
+        ((CNMListItem*)(_headItem)).prev = i;
+        _headItem = i;
+        __count++;
+    }
+}
+
+- (void)appendItem:(id)item {
+    CNMListItem* i = [CNMListItem listItemWithData:item];
+    if(_lastItem == nil) {
+        _headItem = i;
+        _lastItem = i;
+        __count = 1;
+    } else {
+        i.prev = ((CNMListItem*)(_lastItem));
+        ((CNMListItem*)(_lastItem)).next = i;
         _lastItem = i;
         __count++;
     }
 }
 
-- (void)removeListItem:(CNMutableListItem*)listItem {
-    if(listItem == _headItem) {
-        _headItem = _headItem.next;
-        if(_headItem == nil) _lastItem = nil;
-        else _headItem.prev = nil;
+- (void)removeListItem:(CNMListItem*)listItem {
+    if(_headItem != nil && [_headItem isEqual:listItem]) {
+        _headItem = ((CNMListItem*)(_headItem)).next;
+        ((CNMListItem*)(_headItem)).prev = nil;
     } else {
-        if(listItem == _lastItem) {
-            _lastItem = _lastItem.prev;
-            _lastItem.next = nil;
+        if(_lastItem != nil && [_lastItem isEqual:listItem]) {
+            _lastItem = ((CNMListItem*)(_lastItem)).prev;
+            ((CNMListItem*)(_lastItem)).next = nil;
         } else {
-            listItem.prev.next = listItem.next;
-            listItem.next.prev = listItem.prev;
+            {
+                CNMListItem* __tmp_0_0 = listItem.prev;
+                if(__tmp_0_0 != nil) ((CNMListItem*)(__tmp_0_0)).next = listItem.next;
+            }
+            {
+                CNMListItem* __tmp_0_1 = listItem.next;
+                if(__tmp_0_1 != nil) ((CNMListItem*)(__tmp_0_1)).prev = listItem.prev;
+            }
         }
     }
     __count--;
@@ -79,45 +121,116 @@ static ODClassType* _CNMutableList_type;
     _lastItem = nil;
 }
 
+- (void)removeHead {
+    CNMListItem* _ = _headItem;
+    if(_ != nil) [self removeListItem:_];
+}
+
+- (void)removeLast {
+    CNMListItem* _ = _lastItem;
+    if(_ != nil) [self removeListItem:_];
+}
+
+- (id)takeHead {
+    CNMListItem* h = _headItem;
+    if(h != nil) {
+        id r = h.data;
+        [self removeListItem:h];
+        return r;
+    } else {
+        return nil;
+    }
+}
+
+- (id)last {
+    return ((CNMListItem*)(_lastItem)).data;
+}
+
+- (id)takeLast {
+    CNMListItem* h = _lastItem;
+    if(h != nil) {
+        id r = h.data;
+        [self removeListItem:h];
+        return r;
+    } else {
+        return nil;
+    }
+}
+
 - (void)forEach:(void(^)(id))each {
-    CNMutableListItem* i = _headItem;
+    CNMListItem* i = _headItem;
     while(i != nil) {
-        each(i.data);
-        i = i.next;
+        each(((CNMListItem*)(i)).data);
+        i = ((CNMListItem*)(i)).next;
     }
 }
 
 - (BOOL)goOn:(BOOL(^)(id))on {
-    CNMutableListItem* i = _headItem;
+    CNMListItem* i = _headItem;
     while(i != nil) {
-        if(!(on(i.data))) return NO;
-        i = i.next;
+        if(!(on(((CNMListItem*)(i)).data))) return NO;
+        i = ((CNMListItem*)(i)).next;
     }
     return YES;
 }
 
 - (void)mutableFilterBy:(BOOL(^)(id))by {
-    CNMutableListItem* i = _headItem;
+    CNMListItem* i = _headItem;
     while(i != nil) {
-        if(!(by(i.data))) [self removeListItem:i];
-        i = i.next;
+        if(!(by(((CNMListItem*)(i)).data))) [self removeListItem:i];
+        i = ((CNMListItem*)(i)).next;
     }
 }
 
-- (void)removeIndex:(NSUInteger)index {
-    id<CNMutableIterator> i = [self mutableIterator];
+- (id)head {
+    return ((CNMListItem*)(_headItem)).data;
+}
+
+- (BOOL)removeIndex:(NSUInteger)index {
+    id<CNMIterator> i = [self mutableIterator];
     NSUInteger j = index;
+    BOOL ret = NO;
     while([i hasNext]) {
         [i next];
         if(j == 0) {
             [i remove];
+            ret = YES;
             break;
         }
         j--;
     }
+    return ret;
+}
+
+- (void)setIndex:(NSUInteger)index item:(id)item {
+    id<CNMIterator> i = [self mutableIterator];
+    NSUInteger n = index;
+    while([i hasNext]) {
+        if(n == 0) {
+            [i next];
+            [i setValue:item];
+            return ;
+        }
+        [i next];
+        n--;
+    }
+    @throw @"Incorrect index";
+}
+
+- (id<CNImSeq>)im {
+    return [self imCopy];
+}
+
+- (id<CNImSeq>)imCopy {
+    NSMutableArray* arr = [NSMutableArray mutableArray];
+    [self forEach:^void(id item) {
+        [arr appendItem:item];
+    }];
+    return arr;
 }
 
 - (id)applyIndex:(NSUInteger)index {
+    if(index >= [self count]) return nil;
     id<CNIterator> i = [self iterator];
     NSUInteger n = index;
     while([i hasNext]) {
@@ -125,49 +238,14 @@ static ODClassType* _CNMutableList_type;
         [i next];
         n--;
     }
-    @throw @"Incorrect index";
-}
-
-- (id)optIndex:(NSUInteger)index {
-    if(index >= [self count]) return [CNOption none];
-    else return [CNOption applyValue:[self applyIndex:index]];
-}
-
-- (id)randomItem {
-    NSUInteger c = [self count];
-    if(c == 0) {
-        return [CNOption none];
-    } else {
-        if(c == 1) return [CNOption applyValue:[self head]];
-        else return [CNOption applyValue:[self applyIndex:oduIntRndMax([self count] - 1)]];
-    }
+    return nil;
 }
 
 - (id<CNSet>)toSet {
     return [self convertWithBuilder:[CNHashSetBuilder hashSetBuilder]];
 }
 
-- (id<CNSeq>)addItem:(id)item {
-    CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
-    [builder appendAllItems:self];
-    [builder appendItem:item];
-    return [builder build];
-}
-
-- (id<CNSeq>)addSeq:(id<CNSeq>)seq {
-    CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
-    [builder appendAllItems:self];
-    [builder appendAllItems:seq];
-    return [builder build];
-}
-
-- (id<CNSeq>)subItem:(id)item {
-    return [[[self chain] filter:^BOOL(id _) {
-        return !([_ isEqual:item]);
-    }] toArray];
-}
-
-- (BOOL)isEqualToSeq:(id<CNSeq>)seq {
+- (BOOL)isEqualSeq:(id<CNSeq>)seq {
     if([self count] != [seq count]) return NO;
     id<CNIterator> ia = [self iterator];
     id<CNIterator> ib = [seq iterator];
@@ -181,15 +259,7 @@ static ODClassType* _CNMutableList_type;
     return [self count] == 0;
 }
 
-- (id)head {
-    return [self applyIndex:0];
-}
-
-- (id)headOpt {
-    return [self optIndex:0];
-}
-
-- (id<CNSeq>)tail {
+- (id<CNImSeq>)tail {
     CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
     id<CNIterator> i = [self iterator];
     if([i hasNext]) {
@@ -201,8 +271,14 @@ static ODClassType* _CNMutableList_type;
     return [builder build];
 }
 
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
+- (void)parForEach:(void(^)(id))each {
+    id<CNIterator> i = [self iterator];
+    while([i hasNext]) {
+        id v = [i next];
+        [CNDispatchQueue.aDefault asyncF:^void() {
+            each(v);
+        }];
+    }
 }
 
 - (BOOL)containsItem:(id)item {
@@ -213,24 +289,15 @@ static ODClassType* _CNMutableList_type;
     return NO;
 }
 
-- (NSString*)description {
-    return [[self chain] toStringWithStart:@"[" delimiter:@", " end:@"]"];
-}
-
-- (NSUInteger)hash {
-    NSUInteger ret = 13;
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        ret = ret * 31 + [[i next] hash];
-    }
-    return ret;
+- (CNChain*)chain {
+    return [CNChain chainWithCollection:self];
 }
 
 - (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = [CNOption none];
+    __block id ret = nil;
     [self goOn:^BOOL(id x) {
         if(where(x)) {
-            ret = [CNOption applyValue:x];
+            ret = x;
             return NO;
         } else {
             return YES;
@@ -272,59 +339,24 @@ static ODClassType* _CNMutableList_type;
     return [builder build];
 }
 
-- (void)removeItem:(id)item {
-    id<CNMutableIterator> i = [self mutableIterator];
+- (BOOL)removeItem:(id)item {
+    id<CNMIterator> i = [self mutableIterator];
+    BOOL ret = NO;
     while([i hasNext]) {
-        if([[i next] isEqual:item]) [i remove];
+        if([[i next] isEqual:item]) {
+            [i remove];
+            ret = YES;
+        }
     }
+    return ret;
 }
 
 - (ODClassType*)type {
-    return [CNMutableList type];
+    return [CNMList type];
 }
 
 + (ODClassType*)type {
-    return _CNMutableList_type;
-}
-
-- (id)copyWithZone:(NSZone*)zone {
-    return self;
-}
-
-@end
-
-
-@implementation CNMutableListItem{
-    id _data;
-    CNMutableListItem* _next;
-    __weak CNMutableListItem* _prev;
-}
-static ODClassType* _CNMutableListItem_type;
-@synthesize data = _data;
-@synthesize next = _next;
-@synthesize prev = _prev;
-
-+ (id)mutableListItem {
-    return [[CNMutableListItem alloc] init];
-}
-
-- (id)init {
-    self = [super init];
-    
-    return self;
-}
-
-+ (void)initialize {
-    [super initialize];
-    _CNMutableListItem_type = [ODClassType classTypeWithCls:[CNMutableListItem class]];
-}
-
-- (ODClassType*)type {
-    return [CNMutableListItem type];
-}
-
-+ (ODClassType*)type {
-    return _CNMutableListItem_type;
+    return _CNMList_type;
 }
 
 - (id)copyWithZone:(NSZone*)zone {
@@ -340,20 +372,60 @@ static ODClassType* _CNMutableListItem_type;
 @end
 
 
-@implementation CNMutableListIterator{
-    CNMutableList* _list;
-    CNMutableListItem* _prev;
-    CNMutableListItem* _item;
+@implementation CNMListItem
+static ODClassType* _CNMListItem_type;
+@synthesize data = _data;
+@synthesize next = _next;
+@synthesize prev = _prev;
+
++ (instancetype)listItemWithData:(id)data {
+    return [[CNMListItem alloc] initWithData:data];
 }
-static ODClassType* _CNMutableListIterator_type;
+
+- (instancetype)initWithData:(id)data {
+    self = [super init];
+    if(self) _data = data;
+    
+    return self;
+}
+
++ (void)initialize {
+    [super initialize];
+    if(self == [CNMListItem class]) _CNMListItem_type = [ODClassType classTypeWithCls:[CNMListItem class]];
+}
+
+- (ODClassType*)type {
+    return [CNMListItem type];
+}
+
++ (ODClassType*)type {
+    return _CNMListItem_type;
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    return self;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendFormat:@"data=%@", self.data];
+    [description appendString:@">"];
+    return description;
+}
+
+@end
+
+
+@implementation CNMListIterator
+static ODClassType* _CNMListIterator_type;
 @synthesize list = _list;
 @synthesize item = _item;
 
-+ (id)mutableListIteratorWithList:(CNMutableList*)list {
-    return [[CNMutableListIterator alloc] initWithList:list];
++ (instancetype)listIteratorWithList:(CNMList*)list {
+    return [[CNMListIterator alloc] initWithList:list];
 }
 
-- (id)initWithList:(CNMutableList*)list {
+- (instancetype)initWithList:(CNMList*)list {
     self = [super init];
     if(self) _list = list;
     
@@ -362,7 +434,7 @@ static ODClassType* _CNMutableListIterator_type;
 
 + (void)initialize {
     [super initialize];
-    _CNMutableListIterator_type = [ODClassType classTypeWithCls:[CNMutableListIterator class]];
+    if(self == [CNMListIterator class]) _CNMListIterator_type = [ODClassType classTypeWithCls:[CNMListIterator class]];
 }
 
 - (BOOL)hasNext {
@@ -371,37 +443,28 @@ static ODClassType* _CNMutableListIterator_type;
 
 - (id)next {
     _prev = _item;
-    _item = _item.next;
-    return _prev.data;
+    _item = ((CNMListItem*)(nonnil(_item))).next;
+    return ((CNMListItem*)(nonnil(_prev))).data;
 }
 
 - (void)remove {
-    [_list removeListItem:_prev];
+    [_list removeListItem:((CNMListItem*)(nonnil(_prev)))];
+}
+
+- (void)setValue:(id)value {
+    ((CNMListItem*)(nonnil(_prev))).data = value;
 }
 
 - (ODClassType*)type {
-    return [CNMutableListIterator type];
+    return [CNMListIterator type];
 }
 
 + (ODClassType*)type {
-    return _CNMutableListIterator_type;
+    return _CNMListIterator_type;
 }
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNMutableListIterator* o = ((CNMutableListIterator*)(other));
-    return self.list == o.list;
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + [self.list hash];
-    return hash;
 }
 
 - (NSString*)description {
@@ -414,17 +477,15 @@ static ODClassType* _CNMutableListIterator_type;
 @end
 
 
-@implementation CNMutableListImmutableIterator{
-    __weak CNMutableListItem* _item;
-}
-static ODClassType* _CNMutableListImmutableIterator_type;
+@implementation CNMListImmutableIterator
+static ODClassType* _CNMListImmutableIterator_type;
 @synthesize item = _item;
 
-+ (id)mutableListImmutableIterator {
-    return [[CNMutableListImmutableIterator alloc] init];
++ (instancetype)listImmutableIterator {
+    return [[CNMListImmutableIterator alloc] init];
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     
     return self;
@@ -432,7 +493,7 @@ static ODClassType* _CNMutableListImmutableIterator_type;
 
 + (void)initialize {
     [super initialize];
-    _CNMutableListImmutableIterator_type = [ODClassType classTypeWithCls:[CNMutableListImmutableIterator class]];
+    if(self == [CNMListImmutableIterator class]) _CNMListImmutableIterator_type = [ODClassType classTypeWithCls:[CNMListImmutableIterator class]];
 }
 
 - (BOOL)hasNext {
@@ -440,17 +501,17 @@ static ODClassType* _CNMutableListImmutableIterator_type;
 }
 
 - (id)next {
-    CNMutableListItem* r = _item;
-    _item = _item.next;
-    return r;
+    CNMListItem* r = _item;
+    _item = ((CNMListItem*)(nonnil(_item))).next;
+    return ((CNMListItem*)(nonnil(r))).data;
 }
 
 - (ODClassType*)type {
-    return [CNMutableListImmutableIterator type];
+    return [CNMListImmutableIterator type];
 }
 
 + (ODClassType*)type {
-    return _CNMutableListImmutableIterator_type;
+    return _CNMListImmutableIterator_type;
 }
 
 - (id)copyWithZone:(NSZone*)zone {

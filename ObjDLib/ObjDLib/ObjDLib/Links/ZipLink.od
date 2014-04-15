@@ -1,0 +1,28 @@
+package core.chain
+
+class ZipLink<T, A, R>(a : Iterable<A>, f : (T, A) -> R) extends ChainLink<T, R> {
+    override def build(yield : Yield<R>) : Yield<A> = {
+        val ai = a.iterator
+        Yield.decorate<A>(
+            base = yield,
+            yield = item -> {
+                if(!ai.hasNext) 1
+                else yield.yield(f(item, ai.next))
+            }
+        )
+    }
+}
+
+class Zip3Link<T, A, B, R>(a : Iterable<A>, b : Iterable<B>, f : (T, A, B) -> R) extends ChainLink<T, R> {
+    override def build(yield : Yield<R>) : Yield<A> = {
+        val ai = a.iterator
+        val bi = b.iterator
+        Yield.decorate<A>(
+            base = yield,
+            yield = item -> {
+                if(!ai.hasNext || !bi.hasNext) 1
+                else yield.yield(f(item, ai.next, bi.next))
+            }
+        )
+    }
+}

@@ -1,0 +1,369 @@
+package core.chain
+
+abstract class Future<T> {
+    static def apply<T>(f : () -> T) : Future<T> = {
+        val p = Promise<T>()
+        DispatchQueue.default.async {
+            p.success(f())
+        }
+        p
+    }
+    static def join<A, B>(a : Future<A>, b : Future<B>) : Future<(A, B)> = Future.map(a, b) {_a, _b -> (_a, _b)}
+    static def join<A, B, C>(a : Future<A>, b : Future<B>, c : Future<C>) : Future<(A, B, C)> = Future.map(a, b, c) {_a, _b, _c -> (_a, _b, _c)}
+    static def join<A, B, C, D>(a : Future<A>, b : Future<B>, c : Future<C>, d : Future<D>) : Future<(A, B, C, D)> = Future.map(a, b, c, d) {_a, _b, _c, _d -> (_a, _b, _c, _d)}
+    static def join<A, B, C, D, E>(a : Future<A>, b : Future<B>, c : Future<C>, d : Future<D>, e : Future<E>) : Future<(A, B, C, D, E)> = Future.map(a, b, c, d, e) {_a, _b, _c, _d, _e -> (_a, _b, _c, _d, _e)}
+    static def map<A, B, R>(a : Future<A>, b : Future<B>, f : (A, B) -> R) : Future<R> = {
+        val p = Promise<R>()
+        var _a : A = nil
+        var _b : B = nil
+        val n = AtomicInt()
+        a.onComplete{t ->
+            if(t.isSuccess) {
+                _a = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 2) p.success(f(_a, _b))
+            } else {
+                p.complete(t.cast<Try<R>>)
+            }
+        }
+        b.onComplete{t ->
+            if(t.isSuccess) {
+                _b = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 2) p.success(f(_a, _b))
+            } else {
+                p.complete(t.cast<Try<R>>)
+            }
+        }
+        p
+    }
+
+    static def map<A, B, C, R>(a : Future<A>, b : Future<B>, c : Future<C>, f : (A, B, C) -> R) : Future<R> = {
+        val p = Promise<R>()
+        var _a : A = nil
+        var _b : B = nil
+        var _c : C = nil
+        val n = AtomicInt()
+        a.onComplete{t ->
+            if(t.isSuccess) {
+                _a = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 3) p.success(f(_a, _b, _c))
+            } else {
+                p.complete(t.cast<Try<R>>)
+            }
+        }
+        b.onComplete{t ->
+            if(t.isSuccess) {
+                _b = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 3) p.success(f(_a, _b, _c))
+            } else {
+                p.complete(t.cast<Try<R>>)
+            }
+        }
+        c.onComplete{t ->
+            if(t.isSuccess) {
+                _c = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 3) p.success(f(_a, _b, _c))
+            } else {
+                p.complete(t.cast<Try<R>>)
+            }
+        }
+        p
+    }
+
+    static def map<A, B, C, D, R>(a : Future<A>, b : Future<B>, c : Future<C>, d : Future<D>, f : (A, B, C, D) -> R) : Future<R> = {
+        val p = Promise<R>()
+        var _a : A = nil
+        var _b : B = nil
+        var _c : C = nil
+        var _d : D = nil
+        val n = AtomicInt()
+        a.onComplete{t ->
+            if(t.isSuccess) {
+                _a = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 4) p.success(f(_a, _b, _c, _d))
+            } else {
+                p.complete(t.cast<Try<R>>)
+            }
+        }
+        b.onComplete{t ->
+            if(t.isSuccess) {
+                _b = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 4) p.success(f(_a, _b, _c, _d))
+            } else {
+                p.complete(t.cast<Try<R>>)
+            }
+        }
+        c.onComplete{t ->
+            if(t.isSuccess) {
+                _c = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 4) p.success(f(_a, _b, _c, _d))
+            } else {
+                p.complete(t.cast<Try<R>>)
+            }
+        }
+        d.onComplete{t ->
+            if(t.isSuccess) {
+                _d = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 4) p.success(f(_a, _b, _c, _d))
+            } else {
+                p.complete(t.cast<Try<R>>)
+            }
+        }
+        p
+    }
+
+    static def map<A, B, C, D, E, R>(a : Future<A>, b : Future<B>, c : Future<C>, d : Future<D>, e : Future<E>, f : (A, B, C, D, E) -> R) : Future<R> = {
+        val p = Promise<R>()
+        var _a : A = nil
+        var _b : B = nil
+        var _c : C = nil
+        var _d : D = nil
+        var _e : D = nil
+        val n = AtomicInt()
+        a.onComplete{t ->
+            if(t.isSuccess) {
+                _a = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 5) p.success(f(_a, _b, _c, _d, _e))
+            } else {
+                p.complete(t.cast<Try<R>>)
+            }
+        }
+        b.onComplete{t ->
+            if(t.isSuccess) {
+                _b = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 5) p.success(f(_a, _b, _c, _d, _e))
+            } else {
+                p.complete(t.cast<Try<R>>)
+            }
+        }
+        c.onComplete{t ->
+            if(t.isSuccess) {
+                _c = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 5) p.success(f(_a, _b, _c, _d, _e))
+            } else {
+                p.complete(t.cast<Try<R>>)
+            }
+        }
+        d.onComplete{t ->
+            if(t.isSuccess) {
+                _d = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 5) p.success(f(_a, _b, _c, _d, _e))
+            } else {
+                p.complete(t.cast<Try<R>>)
+            }
+        }
+        e.onComplete{t ->
+            if(t.isSuccess) {
+                _e = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 5) p.success(f(_a, _b, _c, _d, _e))
+            } else {
+                p.complete(t.cast<Try<R>>)
+            }
+        }
+        p
+    }
+
+    static def successful<T>(result : T) : Future<T> = KeptPromise<T>(Success(result))
+
+    def result : Try<T>?
+    def isCompleted : bool = result != nil
+    def isSucceeded : bool = result?.isSuccess.getOr(false)
+    def isFailed : bool = result?.isFailure.getOr(true)
+
+    def onComplete(f : Try<T> -> void)
+
+    inline def onSuccess(f : T -> void) {
+        onComplete{t ->
+            if(t.isSuccess) f(t.get)
+        }
+    }
+
+    inline def onFailure(f : any -> void) {
+        onComplete{t ->
+            if(t.isFailure) f(t.reason)
+        }
+    }
+
+    def map<R>(f : T -> R) : Future<R> = {
+        val p = Promise<R>()
+        onComplete{tr ->
+            p.complete(tr.map(f))
+        }
+        p
+    }
+
+    def for(f : T -> void) : Future<void> = {
+        val p = Promise<void>()
+        onComplete{tr ->
+            if(tr.isSuccess) {
+                f(tr.get)
+                p.success(nil)
+            } else p.complete(tr.cast<Try<void>>)
+        }
+        p
+    }
+
+    def flatMap<R>(f : T -> Future<R>) : Future<R> = {
+        val p = Promise<R>()
+        onComplete{tr ->
+            if(tr.isFailure) {
+                p.complete(tr.cast<Try<R>>)
+            } else {
+                val fut = f(tr.get)
+                fut.onComplete {ftr ->
+                    p.complete(ftr)
+                }
+            }
+        }
+        p
+    }
+
+    def waitResult(period : float) : Try<T>? = {
+        val lock = ConditionLock(0)
+        onComplete { _ ->
+            lock.lock
+            lock.unlockWith(condition = 1)
+        }
+        if(lock.lockWhen(condition = 1, period)) {
+            lock.unlock
+        }
+        result
+    }
+
+    def waitResult : Try<T> = {
+        val lock = ConditionLock(0)
+        onComplete { _ ->
+            lock.lock
+            lock.unlockWith(condition = 1)
+        }
+        lock.lockWhen(condition = 1)
+        lock.unlock
+        result.get
+    }
+
+    inline def waitAndOnSuccess(await : float, f : T -> void) {
+        waitResult(await).for{ __tr ->
+            if(__tr.isSuccess) {
+                f(__tr.get)
+            }
+        }
+    }
+
+    inline def waitAndOnSuccessFlat<I>(self : Future<Traversable<I>>, await : float, f : I -> void) {
+        waitAndOnSuccess(await) {__tr2 ->
+            __tr2.cast<Traversable<I>>.for(f)
+        }
+    }
+
+    def getResult(await : float) : T = waitResult(await)?.get.get
+
+    def join<R>(another : Future<R>) : Future<(T, R)> = {
+        val p = Promise<(T, R)>()
+        var a : T = nil
+        var b : R = nil
+        val n = AtomicInt()
+        onComplete{t ->
+            if(t.isSuccess) {
+                a = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 2) p.success(Tuple(a, b))
+            } else {
+                p.complete(t.cast<Try<(T, R)>>)
+            }
+        }
+        another.onComplete{t ->
+            if(t.isSuccess) {
+                b = t.get
+                Memory.memoryBarrier
+                if(n.incrementAndGet == 2) p.success(Tuple(a, b))
+            } else {
+                p.complete(t.cast<Try<(T, R)>>)
+            }
+        }
+        p
+    }
+}
+
+abstract class Promise<T> extends Future<T> {
+    static def apply<T> : Promise<T> = DefaultPromise<T>()
+
+    def complete(value : Try<T>): bool
+    def success(value : T) : bool
+    def failure(reason : any): bool
+}
+
+class DefaultPromise<T> extends Promise<T> {
+    private val _state = AtomicObject<any>([])
+    override def result : Try<T>? = {
+        val v = _state.value
+        if(v.is<Try<T>>) v.cast<Try<T>>
+        else nil
+    }
+
+    override def complete(value : Try<T>) : bool = {
+        while(true) {
+            val v = _state.value
+            if(v.is<Try<T>>) return false
+            else {
+                if(_state.compareAndSet(v, value)) {
+                    v.cast<[Try<T> -> void]>.for{f -> f(value)}
+                    return true
+                }
+            }
+        }
+        false
+    }
+
+    override def success(value : T) : bool = {
+        complete(Success(value))
+    }
+
+    override def failure(reason : any) : bool = {
+        complete(Failure<T>(result))
+    }
+
+    override def onComplete(f : Try<T> -> void) {
+        while(true) {
+            val v = _state.value
+            if(v.is<Try<T>>) {
+                f(v.cast<Try<T>>)
+                return nil
+            } else {
+                val vv = v.cast<[Try<T> -> void]>
+                if(_state.compareAndSet(vv, vv + f)) {
+                    return nil
+                }
+            }
+        }
+    }
+
+}
+
+final class KeptPromise<T>(value : Try<T>) extends Promise<T> {
+    override def result : Try<T>? = value
+
+    override def onComplete(f : Try<T> -> void) {
+        f(value)
+    }
+
+    override def waitResult(period : float) : Try<T>? = value
+
+    override def waitResult : Try<T> = value
+
+    override def complete(value : Try<T>): bool = false
+    override def success(value : T) : bool = false
+    override def failure(reason : any): bool = false
+}

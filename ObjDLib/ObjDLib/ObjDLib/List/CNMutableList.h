@@ -5,61 +5,89 @@
 @class ODClassType;
 @protocol CNSet;
 @class CNHashSetBuilder;
+@class CNDispatchQueue;
 @class CNChain;
 
-@class CNMutableList;
-@class CNMutableListItem;
-@class CNMutableListIterator;
-@class CNMutableListImmutableIterator;
+@class CNMList;
+@class CNMListItem;
+@class CNMListIterator;
+@class CNMListImmutableIterator;
 
-@interface CNMutableList : NSObject<CNMutableSeq>
-+ (id)mutableList;
-- (id)init;
+@interface CNMList : NSObject<CNMSeq> {
+@protected
+    NSUInteger __count;
+    CNMListItem* _headItem;
+    CNMListItem* _lastItem;
+}
++ (instancetype)list;
+- (instancetype)init;
 - (ODClassType*)type;
 - (NSUInteger)count;
 - (id<CNIterator>)iterator;
-- (id<CNMutableIterator>)mutableIterator;
+- (id<CNMIterator>)mutableIterator;
+- (void)insertIndex:(NSUInteger)index item:(id)item;
+- (void)prependItem:(id)item;
 - (void)appendItem:(id)item;
-- (void)removeListItem:(CNMutableListItem*)listItem;
+- (void)removeListItem:(CNMListItem*)listItem;
 - (void)clear;
+- (void)removeHead;
+- (void)removeLast;
+- (id)takeHead;
+- (id)last;
+- (id)takeLast;
 - (void)forEach:(void(^)(id))each;
 - (BOOL)goOn:(BOOL(^)(id))on;
 - (void)mutableFilterBy:(BOOL(^)(id))by;
+- (id)head;
 + (ODClassType*)type;
 @end
 
 
-@interface CNMutableListItem : NSObject
+@interface CNMListItem : NSObject {
+@protected
+    id _data;
+    CNMListItem* _next;
+    __weak CNMListItem* _prev;
+}
 @property (nonatomic, retain) id data;
-@property (nonatomic, retain) CNMutableListItem* next;
-@property (nonatomic, weak) CNMutableListItem* prev;
+@property (nonatomic) CNMListItem* next;
+@property (nonatomic, weak) CNMListItem* prev;
 
-+ (id)mutableListItem;
-- (id)init;
++ (instancetype)listItemWithData:(id)data;
+- (instancetype)initWithData:(id)data;
 - (ODClassType*)type;
 + (ODClassType*)type;
 @end
 
 
-@interface CNMutableListIterator : NSObject<CNMutableIterator>
-@property (nonatomic, readonly) CNMutableList* list;
-@property (nonatomic, retain) CNMutableListItem* item;
+@interface CNMListIterator : NSObject<CNMIterator> {
+@protected
+    CNMList* _list;
+    CNMListItem* _prev;
+    CNMListItem* _item;
+}
+@property (nonatomic, readonly) CNMList* list;
+@property (nonatomic) CNMListItem* item;
 
-+ (id)mutableListIteratorWithList:(CNMutableList*)list;
-- (id)initWithList:(CNMutableList*)list;
++ (instancetype)listIteratorWithList:(CNMList*)list;
+- (instancetype)initWithList:(CNMList*)list;
 - (ODClassType*)type;
 - (BOOL)hasNext;
 - (id)next;
 - (void)remove;
+- (void)setValue:(id)value;
 + (ODClassType*)type;
 @end
 
 
-@interface CNMutableListImmutableIterator : NSObject<CNIterator>
-@property (nonatomic, weak) CNMutableListItem* item;
+@interface CNMListImmutableIterator : NSObject<CNIterator> {
+@protected
+    __weak CNMListItem* _item;
+}
+@property (nonatomic, weak) CNMListItem* item;
 
-+ (id)mutableListImmutableIterator;
-- (id)init;
++ (instancetype)listImmutableIterator;
+- (instancetype)init;
 - (ODClassType*)type;
 - (BOOL)hasNext;
 - (id)next;

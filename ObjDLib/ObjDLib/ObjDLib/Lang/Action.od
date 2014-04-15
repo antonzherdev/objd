@@ -1,5 +1,5 @@
 package core.lang
 
 stub object Action {
-    def delay(seconds : float8, action : () -> void)
+    def delay(seconds : float8, weak action : () -> void)
 }

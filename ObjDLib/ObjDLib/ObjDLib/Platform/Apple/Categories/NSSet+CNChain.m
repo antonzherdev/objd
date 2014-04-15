@@ -1,7 +1,7 @@
 #import "NSSet+CNChain.h"
 #import "CNChain.h"
-#import "CNOption.h"
 #import "CNEnumerator.h"
+#import "CNDispatchQueue.h"
 
 
 @implementation NSSet (CNChain)
@@ -10,12 +10,8 @@
 }
 
 - (id)head {
-    return [self anyObject];
-}
-
-- (id)headOpt {
-    if(self.count == 0) return [CNOption none];
-    return [CNOption someValue:[self anyObject]];
+    if(self.count == 0) return nil;
+    return uwrapNil([self anyObject]);
 }
 
 - (BOOL)isEmpty {
@@ -29,7 +25,7 @@
 - (BOOL)existsWhere:(BOOL(^)(id))where {
     BOOL ret = NO;
     for(id item in self)  {
-        if(where(item)) {
+        if(where(uwrapNil(item))) {
             ret = YES;
             break;
         }
@@ -49,9 +45,9 @@
 }
 
 - (id)findWhere:(BOOL(^)(id))where {
-    id ret = [CNOption none];
+    id ret = nil;
     for(id item in self)  {
-        if(where(item)) {
+        if(where(uwrapNil(item))) {
             ret = item;
             break;
         }
@@ -61,7 +57,7 @@
 
 - (id)convertWithBuilder:(id<CNBuilder>)builder {
     for(id x in self)  {
-        [builder appendItem:x];
+        [builder appendItem:uwrapNil(x)];
     }
     return [builder build];
 }
@@ -69,19 +65,33 @@
 
 - (void)forEach:(cnP)p {
     for(id item in self)  {
-        p(item);
+        p(uwrapNil(item));
     }
 }
 
+- (void)parForEach:(void (^)(id))each {
+    for(id item in self)  {
+        [[CNDispatchQueue aDefault] asyncF:^{
+            each(uwrapNil(item));
+        }];
+    }
+}
+
+
 - (BOOL)goOn:(BOOL (^)(id))on {
     for(id item in self)  {
-        if(!on(item)) return NO;
+        if(!on(uwrapNil(item))) return NO;
     }
     return YES;
 }
 
 - (BOOL)containsItem:(id)item {
-    return [self containsObject:item];
+    return [self containsObject:wrapNil(item)];
 }
+
+- (id <CNMSet>)mCopy {
+    return (id <CNMSet>) [self mutableCopy];
+}
+
 
 @end

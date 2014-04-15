@@ -1,0 +1,14 @@
+package core.chain
+
+stub class Yield<T>(begin : uint -> int, yield : T -> int, end : int -> int, all : Traversable<T> -> int) {
+    static def apply<T>(begin : uint -> int, yield : T -> int, end : int -> int) : Yield<T>
+    static def decorate<T>(base : Yield<_>, begin : uint -> int, yield : T -> int, end : int -> int, all : Traversable<T> -> int) : Yield<T>
+    static def decorate<T>(base : Yield<_>, begin : uint -> int, yield : T -> int, end : int -> int) : Yield<T>
+    static def decorate<T>(base : Yield<_>, begin : uint -> int, yield : T -> int) : Yield<T>
+    static def decorate<T>(base : Yield<_>, yield : T -> int, end : int -> int) : Yield<T>
+    static def decorate<T>(base : Yield<_>, yield : T -> int) : Yield<T>
+    def beginYieldWith(size : uint) : int
+    def yield(item : T) : int
+    def endYieldWith(result : int) : int
+    def yieldAll( : Traversable<T>) : int
+}

@@ -12,3 +12,7 @@ stub class Directory {
 stub class Locale {
     static def preferredLanguages : [string]
 }
+
+stub struct System {
+    static def milliTime : int8
+}

@@ -3,17 +3,15 @@
 
 #import "CNNotificationPlatform.h"
 #import "ODType.h"
-@implementation CNNotificationHandle{
-    NSString* _name;
-}
+@implementation CNNotificationHandle
 static ODClassType* _CNNotificationHandle_type;
 @synthesize name = _name;
 
-+ (id)notificationHandleWithName:(NSString*)name {
++ (instancetype)notificationHandleWithName:(NSString*)name {
     return [[CNNotificationHandle alloc] initWithName:name];
 }
 
-- (id)initWithName:(NSString*)name {
+- (instancetype)initWithName:(NSString*)name {
     self = [super init];
     if(self) _name = name;
     
@@ -22,7 +20,7 @@ static ODClassType* _CNNotificationHandle_type;
 
 + (void)initialize {
     [super initialize];
-    _CNNotificationHandle_type = [ODClassType classTypeWithCls:[CNNotificationHandle class]];
+    if(self == [CNNotificationHandle class]) _CNNotificationHandle_type = [ODClassType classTypeWithCls:[CNNotificationHandle class]];
 }
 
 - (void)postSender:(id)sender {
@@ -55,19 +53,6 @@ static ODClassType* _CNNotificationHandle_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNNotificationHandle* o = ((CNNotificationHandle*)(other));
-    return [self.name isEqual:o.name];
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + [self.name hash];
-    return hash;
 }
 
 - (NSString*)description {

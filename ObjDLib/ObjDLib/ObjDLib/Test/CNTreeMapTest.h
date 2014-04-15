@@ -8,8 +8,8 @@
 @class CNTreeMapTest;
 
 @interface CNTreeMapTest : TSTestCase
-+ (id)treeMapTest;
-- (id)init;
++ (instancetype)treeMapTest;
+- (instancetype)init;
 - (ODClassType*)type;
 - (void)testMain;
 + (ODClassType*)type;

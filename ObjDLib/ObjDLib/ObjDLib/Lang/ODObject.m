@@ -1,7 +1,6 @@
 #import "ODObject.h"
 #import "CNRange.h"
 #import "CNTypes.h"
-#import "CNOption.h"
 
 @implementation NSNumber (ODObject)
 - (NSInteger)compareTo:(id)to {
@@ -73,10 +72,10 @@ ODPType * odFloat4Type() {
 @implementation ODObject
 
 + (id)asKindOfClass:(Class)pClass object:(id)obj{
-    return [obj isKindOfClass:pClass] ? [CNSome someWithValue:obj] : [CNOption none];
+    return [obj isKindOfClass:pClass] ? obj : nil;
 }
 
 + (id)asKindOfProtocol:(Protocol *)protocol object:(id)obj {
-    return [obj conformsToProtocol:protocol] ? [CNSome someWithValue:obj] : [CNOption none];
+    return [obj conformsToProtocol:protocol] ? obj : nil;
 }
 @end

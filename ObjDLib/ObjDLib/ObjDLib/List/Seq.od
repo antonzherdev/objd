@@ -3,7 +3,9 @@ package core.chain
 import core.math._
 
 trait Seq<T> extends Iterable<T> {
-    def apply(index : uint) : T = {
+    def apply(index : uint) : T? = {
+        if(index >= count) return nil
+
         val i = iterator
         var n = index
         while(i.hasNext) {
@@ -11,40 +13,13 @@ trait Seq<T> extends Iterable<T> {
             i.next
             n--
         }
-        throw "Incorrect index"
-    }
-
-    def opt(index : uint) : T? =
-        if(index >= count) nil
-        else apply(index)
-
-    def randomItem : T? = {
-        val c = count
-        if(c == 0) nil
-        else if(c == 1) head
-        else apply(UInt.rnd(count - 1))
+        nil
     }
 
     def toSet : Set<T> = convertWith<Set<T>>(HashSetBuilder<T>())
-    def add(item : T) : Seq<T> = {
-        val builder = ArrayBuilder<T>()
-        builder.appendAll(self)
-        builder.append(item)
-        builder.build
-    }
 
-    def add(seq : Seq<T>) : Seq<T> = {
-        val builder = ArrayBuilder<T>()
-        builder.appendAll(self)
-        builder.appendAll(seq)
-        builder.build
-    }
 
-    def sub(item : T) : Seq<T> = {
-        chain.filter(_ != item).toArray
-    }
-
-    def isEqualTo(seq : Seq<T>) : bool = {
+    def isEqual(seq : Seq<T>) : bool = {
         if(self.count != seq.count) return false
         val ia = self.iterator
         val ib = seq.iterator
@@ -54,11 +29,11 @@ trait Seq<T> extends Iterable<T> {
         true
     }
 
-    def isEmpty : bool = count == 0
+    override def isEmpty : bool = count == 0
 
-    def head : T = apply(0)
-    def headOpt : T? = opt(0)
-    def tail : Seq<T> = {
+    override def head : T? = apply(0)
+    def last : T? = apply(count - 1)
+    def tail : ImSeq<T> = {
         val builder = ArrayBuilder<T>()
         val i = iterator
         if(i.hasNext) {
@@ -71,44 +46,98 @@ trait Seq<T> extends Iterable<T> {
     }
 }
 
-trait MutableSeq<T> extends Seq<T> with MutableIterable<T> {
-    def remove(index : uint) {
+trait ImSeq<T> extends Seq<T> with ImIterable<T> {
+    def add(item : T) : ImSeq<T> = {
+        val builder = ArrayBuilder<T>()
+        builder.appendAll(self)
+        builder.append(item)
+        builder.build
+    }
+
+    def add(seq : Seq<T>) : ImSeq<T> = {
+        val builder = ArrayBuilder<T>()
+        builder.appendAll(self)
+        builder.appendAll(seq)
+        builder.build
+    }
+
+    def sub(item : T) : ImSeq<T> = {
+        chain.filter(_ != item).toArray
+    }
+
+    override def mCopy : MSeq<T> = {
+        val arr = MArray<T>()
+        for{item -> arr.append(item)}
+        arr
+    }
+}
+
+trait MSeq<T> extends Seq<T> with MIterable<T> {
+    def remove(index : uint) : bool = {
         val i = mutableIterator
         var j = index
+        var ret = false
         while(i.hasNext) {
             i.next
             if(j == 0) {
                 i.remove
+                ret = true
                 break
             }
             j--
         }
+        ret
+    }
+
+    def insert(index : uint, item : T)
+    def prepend(item : T)
+
+    def set(index : uint, item : T) {
+        val i = mutableIterator
+        var n = index
+        while(i.hasNext) {
+            if(n == 0) {
+                i.next
+                i.set(value = item)
+                return nil
+            }
+            i.next
+            n--
+        }
+        throw "Incorrect index"
+    }
+
+    override def im : ImSeq<T> = imCopy
+    override def imCopy : ImSeq<T> = {
+        val arr = MArray<T>()
+        for{item -> arr.append(item)}
+        arr.im
     }
 }
 
-class ArrayBuilder<T> extends Builder<T, Array<T>> {
-    val array = MutableArray<T>()
+class ArrayBuilder<T> extends Builder<T, ImArray<T>> {
+    private val array = MArray<T>()
 
-    def append(item : T) {
+    override def append(item : T) {
         array.append(item)
     }
 
-    def build : Array<T> = array
+    override def build : ImArray<T> = array.im
 }
 
-class IndexFunSeq<T>(count : uint, f : uint -> T) extends Seq<T> {
-    def apply(index : uint) : T =
-        if(index >= count) throw "Incorrect index"
+case class IndexFunSeq<T>(override count : uint, f : uint -> T) extends ImSeq<T> {
+    override def apply(index : uint) : T? =
+        if(index >= count) nil
         else f(index)
 
-    def iterator : Iterator<T> = IndexFunSeqIterator<T>(count, f)
+    override def iterator : Iterator<T> = IndexFunSeqIterator<T>(count, f)
 }
 
 class IndexFunSeqIterator<T>(count : uint, f : uint -> T) extends Iterator<T> {
-    var i : uint = 0
-    def hasNext = i < count
+    private var i : uint = 0
+    override def hasNext = i < count
 
-    def next : T = {
+    override def next : T = {
         val ret = f(i)
         i++
         ret

@@ -1,20 +1,19 @@
 package core.chain
 
-class Pair<T>(a : T, b : T) extends Set<T> {
+case class Pair<T>(a : T, b : T) extends ImSet<T> {
     static def newWith<T>(a : T, b : T) : Pair<T> =
         if(a < b) Pair<T>(a, b)
         else Pair<T>(b, a)
-    def contains(item : T) : bool = a == item || b == item
-    def count : uint = 2
-    def iterator : Iterator<T> = PairIterator<T>(self)
-    def head : T = a
-    def headOpt : T? = a
+    override def contains(item : T) : bool = a == item || b == item
+    override def count : uint = 2
+    override def iterator : Iterator<T> = PairIterator<T>(self)
+    override def head : T? = a
 }
 
 class PairIterator<T>(pair : Pair<T>) extends Iterator<T> {
     private var state : int = 0
-    def hasNext : bool = state < 2
-    def next : T = {
+    override def hasNext : bool = state < 2
+    override def next : T = {
         state++
         if(state == 1) pair.a
         else pair.b

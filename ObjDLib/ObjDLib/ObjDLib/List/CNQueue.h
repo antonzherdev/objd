@@ -1,44 +1,69 @@
 #import "objdcore.h"
-#import "CNSeq.h"
 #import "ODObject.h"
 #import "CNCollection.h"
-@class CNList;
-@class CNOption;
 @class ODClassType;
-@protocol CNSet;
-@class CNHashSetBuilder;
-@class CNChain;
+@class CNImList;
 
-@class CNQueue;
+@class CNImQueue;
 @class CNQueueIterator;
+@class CNMQueue;
+@protocol CNQueue;
 
-@interface CNQueue : NSObject<CNSeq>
-@property (nonatomic, readonly) CNList* in;
-@property (nonatomic, readonly) CNList* out;
+@protocol CNQueue<NSObject>
+@end
 
-+ (id)queueWithIn:(CNList*)in out:(CNList*)out;
-- (id)initWithIn:(CNList*)in out:(CNList*)out;
+
+@interface CNImQueue : NSObject<CNQueue> {
+@protected
+    CNImList* _in;
+    CNImList* _out;
+}
+@property (nonatomic, readonly) CNImList* in;
+@property (nonatomic, readonly) CNImList* out;
+
++ (instancetype)imQueueWithIn:(CNImList*)in out:(CNImList*)out;
+- (instancetype)initWithIn:(CNImList*)in out:(CNImList*)out;
 - (ODClassType*)type;
-+ (CNQueue*)apply;
++ (CNImQueue*)apply;
 - (id<CNIterator>)iterator;
 - (BOOL)isEmpty;
 - (NSUInteger)count;
-- (id)applyIndex:(NSUInteger)index;
-- (CNQueue*)enqueueItem:(id)item;
+- (CNImQueue*)addItem:(id)item;
+- (CNImQueue*)enqueueItem:(id)item;
 - (CNTuple*)dequeue;
 + (ODClassType*)type;
 @end
 
 
-@interface CNQueueIterator : NSObject<CNIterator>
-@property (nonatomic, readonly) CNList* in;
-@property (nonatomic, readonly) CNList* out;
+@interface CNQueueIterator : NSObject<CNIterator> {
+@protected
+    CNImList* _in;
+    CNImList* _out;
+    id<CNIterator> _i;
+    BOOL _isIn;
+}
+@property (nonatomic, readonly) CNImList* in;
+@property (nonatomic, readonly) CNImList* out;
 
-+ (id)queueIteratorWithIn:(CNList*)in out:(CNList*)out;
-- (id)initWithIn:(CNList*)in out:(CNList*)out;
++ (instancetype)queueIteratorWithIn:(CNImList*)in out:(CNImList*)out;
+- (instancetype)initWithIn:(CNImList*)in out:(CNImList*)out;
 - (ODClassType*)type;
 - (BOOL)hasNext;
 - (id)next;
++ (ODClassType*)type;
+@end
+
+
+@interface CNMQueue : NSObject<CNQueue> {
+@protected
+    CNImQueue* __queue;
+}
++ (instancetype)queue;
+- (instancetype)init;
+- (ODClassType*)type;
+- (void)enqueueItem:(id)item;
+- (id)dequeue;
+- (NSUInteger)count;
 + (ODClassType*)type;
 @end
 

@@ -1,18 +1,11 @@
 #import "objd.h"
 #import "CNData.h"
 
-#import "CNTypes.h"
 #import "ODType.h"
-#import "CNSet.h"
 #import "CNChain.h"
-@implementation CNPArray{
-    NSUInteger _stride;
-    id(^_wrap)(VoidRef, NSUInteger);
-    NSUInteger _count;
-    NSUInteger _length;
-    VoidRef _bytes;
-    BOOL _copied;
-}
+#import "CNSet.h"
+#import "CNDispatchQueue.h"
+@implementation CNPArray
 static ODClassType* _CNPArray_type;
 @synthesize stride = _stride;
 @synthesize wrap = _wrap;
@@ -21,15 +14,15 @@ static ODClassType* _CNPArray_type;
 @synthesize bytes = _bytes;
 @synthesize copied = _copied;
 
-+ (id)arrayWithStride:(NSUInteger)stride wrap:(id(^)(VoidRef, NSUInteger))wrap count:(NSUInteger)count length:(NSUInteger)length bytes:(VoidRef)bytes copied:(BOOL)copied {
++ (instancetype)arrayWithStride:(NSUInteger)stride wrap:(id(^)(void*, NSUInteger))wrap count:(NSUInteger)count length:(NSUInteger)length bytes:(void*)bytes copied:(BOOL)copied {
     return [[CNPArray alloc] initWithStride:stride wrap:wrap count:count length:length bytes:bytes copied:copied];
 }
 
-- (id)initWithStride:(NSUInteger)stride wrap:(id(^)(VoidRef, NSUInteger))wrap count:(NSUInteger)count length:(NSUInteger)length bytes:(VoidRef)bytes copied:(BOOL)copied {
+- (instancetype)initWithStride:(NSUInteger)stride wrap:(id(^)(void*, NSUInteger))wrap count:(NSUInteger)count length:(NSUInteger)length bytes:(void*)bytes copied:(BOOL)copied {
     self = [super init];
     if(self) {
         _stride = stride;
-        _wrap = wrap;
+        _wrap = [wrap copy];
         _count = count;
         _length = length;
         _bytes = bytes;
@@ -41,16 +34,20 @@ static ODClassType* _CNPArray_type;
 
 + (void)initialize {
     [super initialize];
-    _CNPArray_type = [ODClassType classTypeWithCls:[CNPArray class]];
+    if(self == [CNPArray class]) _CNPArray_type = [ODClassType classTypeWithCls:[CNPArray class]];
 }
 
-+ (CNPArray*)applyStride:(NSUInteger)stride wrap:(id(^)(VoidRef, NSUInteger))wrap count:(NSUInteger)count copyBytes:(VoidRef)copyBytes {
++ (CNPArray*)applyStride:(NSUInteger)stride wrap:(id(^)(void*, NSUInteger))wrap count:(NSUInteger)count copyBytes:(void*)copyBytes {
     NSUInteger len = count * stride;
-    return [CNPArray arrayWithStride:stride wrap:wrap count:count length:len bytes:copy(copyBytes, count * stride) copied:YES];
+    return [CNPArray arrayWithStride:stride wrap:wrap count:count length:len bytes:cnPointerCopyBytes(copyBytes, count * stride) copied:YES];
 }
 
 - (id<CNIterator>)iterator {
     return [CNPArrayIterator arrayIteratorWithArray:self];
+}
+
+- (void)dealloc {
+    if(_copied) cnPointerFree(_bytes);
 }
 
 - (id)applyIndex:(NSUInteger)index {
@@ -58,64 +55,39 @@ static ODClassType* _CNPArray_type;
     else return _wrap(_bytes, index);
 }
 
-- (void)dealloc {
-    if(_copied) free(_bytes);
-}
-
-- (id)unsafeApplyIndex:(NSUInteger)index {
-    return _wrap(_bytes, index);
-}
-
-- (void)forRefEach:(void(^)(VoidRef))each {
-    VoidRef b = _bytes;
-    NSInteger i = 0;
-    while(i < _count) {
-        each(b);
-        i++;
-        b = b + _stride;
-    }
-}
-
-- (id)optIndex:(NSUInteger)index {
-    if(index >= [self count]) return [CNOption none];
-    else return [CNOption applyValue:[self applyIndex:index]];
-}
-
-- (id)randomItem {
-    NSUInteger c = [self count];
-    if(c == 0) {
-        return [CNOption none];
-    } else {
-        if(c == 1) return [CNOption applyValue:[self head]];
-        else return [CNOption applyValue:[self applyIndex:oduIntRndMax([self count] - 1)]];
-    }
-}
-
-- (id<CNSet>)toSet {
-    return [self convertWithBuilder:[CNHashSetBuilder hashSetBuilder]];
-}
-
-- (id<CNSeq>)addItem:(id)item {
+- (id<CNImSeq>)addItem:(id)item {
     CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
     [builder appendAllItems:self];
     [builder appendItem:item];
     return [builder build];
 }
 
-- (id<CNSeq>)addSeq:(id<CNSeq>)seq {
+- (id<CNImSeq>)addSeq:(id<CNSeq>)seq {
     CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
     [builder appendAllItems:self];
     [builder appendAllItems:seq];
     return [builder build];
 }
 
-- (id<CNSeq>)subItem:(id)item {
+- (id<CNImSeq>)subItem:(id)item {
     return [[[self chain] filter:^BOOL(id _) {
         return !([_ isEqual:item]);
     }] toArray];
 }
 
-- (BOOL)isEqualToSeq:(id<CNSeq>)seq {
+- (id<CNMSeq>)mCopy {
+    NSMutableArray* arr = [NSMutableArray mutableArray];
+    [self forEach:^void(id item) {
+        [arr appendItem:item];
+    }];
+    return arr;
+}
+
+- (id<CNSet>)toSet {
+    return [self convertWithBuilder:[CNHashSetBuilder hashSetBuilder]];
+}
+
+- (BOOL)isEqualSeq:(id<CNSeq>)seq {
     if([self count] != [seq count]) return NO;
     id<CNIterator> ia = [self iterator];
     id<CNIterator> ib = [seq iterator];
@@ -133,11 +105,11 @@ static ODClassType* _CNPArray_type;
     return [self applyIndex:0];
 }
 
-- (id)headOpt {
-    return [self optIndex:0];
+- (id)last {
+    return [self applyIndex:[self count] - 1];
 }
 
-- (id<CNSeq>)tail {
+- (id<CNImSeq>)tail {
     CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
     id<CNIterator> i = [self iterator];
     if([i hasNext]) {
@@ -149,14 +121,20 @@ static ODClassType* _CNPArray_type;
     return [builder build];
 }
 
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
-}
-
 - (void)forEach:(void(^)(id))each {
     id<CNIterator> i = [self iterator];
     while([i hasNext]) {
         each([i next]);
+    }
+}
+
+- (void)parForEach:(void(^)(id))each {
+    id<CNIterator> i = [self iterator];
+    while([i hasNext]) {
+        id v = [i next];
+        [CNDispatchQueue.aDefault asyncF:^void() {
+            each(v);
+        }];
     }
 }
 
@@ -176,24 +154,15 @@ static ODClassType* _CNPArray_type;
     return NO;
 }
 
-- (NSString*)description {
-    return [[self chain] toStringWithStart:@"[" delimiter:@", " end:@"]"];
-}
-
-- (NSUInteger)hash {
-    NSUInteger ret = 13;
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        ret = ret * 31 + [[i next] hash];
-    }
-    return ret;
+- (CNChain*)chain {
+    return [CNChain chainWithCollection:self];
 }
 
 - (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = [CNOption none];
+    __block id ret = nil;
     [self goOn:^BOOL(id x) {
         if(where(x)) {
-            ret = [CNOption applyValue:x];
+            ret = x;
             return NO;
         } else {
             return YES;
@@ -247,28 +216,29 @@ static ODClassType* _CNPArray_type;
     return self;
 }
 
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other)) return NO;
-    if([other conformsToProtocol:@protocol(CNSeq)]) return [self isEqualToSeq:((id<CNSeq>)(other))];
-    return NO;
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendFormat:@"stride=%lu", (unsigned long)self.stride];
+    [description appendFormat:@", count=%lu", (unsigned long)self.count];
+    [description appendFormat:@", length=%lu", (unsigned long)self.length];
+    [description appendFormat:@", bytes=%p", self.bytes];
+    [description appendFormat:@", copied=%d", self.copied];
+    [description appendString:@">"];
+    return description;
 }
 
 @end
 
 
-@implementation CNPArrayIterator{
-    CNPArray* _array;
-    NSInteger _i;
-}
+@implementation CNPArrayIterator
 static ODClassType* _CNPArrayIterator_type;
 @synthesize array = _array;
 
-+ (id)arrayIteratorWithArray:(CNPArray*)array {
++ (instancetype)arrayIteratorWithArray:(CNPArray*)array {
     return [[CNPArrayIterator alloc] initWithArray:array];
 }
 
-- (id)initWithArray:(CNPArray*)array {
+- (instancetype)initWithArray:(CNPArray*)array {
     self = [super init];
     if(self) {
         _array = array;
@@ -280,7 +250,7 @@ static ODClassType* _CNPArrayIterator_type;
 
 + (void)initialize {
     [super initialize];
-    _CNPArrayIterator_type = [ODClassType classTypeWithCls:[CNPArrayIterator class]];
+    if(self == [CNPArrayIterator class]) _CNPArrayIterator_type = [ODClassType classTypeWithCls:[CNPArrayIterator class]];
 }
 
 - (BOOL)hasNext {
@@ -288,7 +258,7 @@ static ODClassType* _CNPArrayIterator_type;
 }
 
 - (id)next {
-    id ret = [_array unsafeApplyIndex:((NSUInteger)(_i))];
+    id ret = ((id)([_array applyIndex:((NSUInteger)(_i))]));
     _i++;
     return ret;
 }
@@ -303,19 +273,6 @@ static ODClassType* _CNPArrayIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNPArrayIterator* o = ((CNPArrayIterator*)(other));
-    return [self.array isEqual:o.array];
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + [self.array hash];
-    return hash;
 }
 
 - (NSString*)description {

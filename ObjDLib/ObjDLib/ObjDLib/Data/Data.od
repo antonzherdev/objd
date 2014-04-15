@@ -3,40 +3,38 @@ package core.chain
 import core.chain.Memory._
 
 
-class PArray<T>(stride : uint, wrap : (VoidRef, uint) -> T, count : uint, length : uint, bytes : VoidRef, copied : bool) extends Seq<T> {
-    static def apply<T>(stride : uint, wrap : (VoidRef, uint) -> T, count : uint, copyBytes : VoidRef) : PArray<T> = {
+final class PArray<T>(stride : uint, wrap : (Pointer<T>, uint) -> T, override count : uint, length : uint, bytes : Pointer<T>, copied : bool) extends ImSeq<T> {
+    static def apply<T>(stride : uint, wrap : (Pointer<T>, uint) -> T, count : uint, copyBytes : Pointer<T>) : PArray<T> = {
         val len =  count * stride
-        PArray<T>(stride, wrap, count, len, copy(copyBytes, count * stride), true)
+        PArray<T>(stride, wrap, count, len, copyBytes.copy(count * stride), true)
     }
 
-    def iterator : Iterator<T> = PArrayIterator<T>(self)
+    override def iterator : Iterator<T> = PArrayIterator<T>(self)
 
-    def apply(index : uint) : T =
+    override def dealloc {
+        if(copied) bytes.free
+    }
+
+    override def apply(index : uint) : T? =
         if(index >= count) nil
         else wrap(bytes, index)
 
-    def dealloc {
-        if(copied) free(bytes)
-    }
-
-    def unsafeApply(index : uint) : T = wrap(bytes, index)
-
-    def forRef(each : VoidRef -> void) {
-        var b = bytes
-        var i = 0
-        while(i < count) {
-            each(b)
-            i++
-            b = b + stride
+    inline def forRef(each : Pointer<T> -> void) {
+        var __b = bytes
+        var __i = 0
+        while(__i < count) {
+            each(__b)
+            __i++
+            __b++
         }
     }
 }
 
 class PArrayIterator<T>(array : PArray<T>) extends Iterator<T> {
     private var i = 0
-    def hasNext : bool = i < array.count
-    def next : T = {
-        val ret = array.unsafeApply(i)
+    override def hasNext : bool = i < array.count
+    override def next : T = {
+        val ret = array.apply(i).get
         i++
         ret
     }

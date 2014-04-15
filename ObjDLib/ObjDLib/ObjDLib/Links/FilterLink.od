@@ -1,0 +1,14 @@
+package core.chain
+
+class FilterLink<T>(predicate : T -> bool, selectivity : float4) extends ChainLink<T, T> {
+    override def build(yield : Yield<T>) : Yield<T> = {
+        Yield.decorate<Traversable<T>>(
+            base = yield,
+            begin = size -> yield.beginYieldWith(size = size * selectivity),
+            yield = item -> {
+                if(predicate(item)) yield.yield(item)
+                else 0
+            }
+        )
+    }
+}

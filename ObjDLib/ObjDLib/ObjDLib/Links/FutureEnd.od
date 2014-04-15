@@ -1,0 +1,114 @@
+package core.chain
+
+class FutureEnd<T> {
+    private val _promise = Promise<Seq<T>>()
+    private var _stopped : bool = false
+    private var _counter : AtomicInt = AtomicInt()
+    private var _ended : bool = false
+    private var _yielded = AtomicBool()
+    private var _array : MArray<T>?
+
+    def future : Future<Seq<T>> = _promise
+
+    def yield : Yield<Future<T>> = {
+        var _i = 0
+        Yield<Future<T>>(
+            begin = size -> {
+                _array = NSMutableArray<T>(capacity = size)
+                0
+            },
+            yield = fut -> {
+                if(!_stopped) {
+                    _counter.incrementAndGet
+                    _array.get.append(nil)
+                    val i = _i
+                    _i++
+                    fut.onComplete {tr ->
+                        if(!_stopped) {
+                            if(tr.isFailure) {
+                                _stopped = true
+                                _promise.failure(tr)
+                            } else if(!_stopped) {
+                                _array.get.set(index = i, tr.get)
+                                Memory.memoryBarrier
+                                val r = _counter.decrementAndGet
+                                Memory.memoryBarrier
+                                if(_ended && r == 0) {
+                                    Memory.memoryBarrier
+                                    if(!_yielded.getAndSet(true)) {
+                                        _promise.success(_array.get)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if(_stopped) 1 else 0
+            },
+            end = res -> {
+                _ended = true
+                Memory.memoryBarrier
+                if(_counter.intValue == 0) {
+                    Memory.memoryBarrier
+                    if(!_yielded.getAndSet(true)) {
+                        _promise.success(_array.get)
+                    }
+                }
+                res
+            }
+        )
+    }
+}
+
+class FutureVoidEnd<T> {
+    private val _promise = Promise<void>()
+    private var _stopped : bool = false
+    private var _counter : AtomicInt = AtomicInt()
+    private var _ended : bool = false
+    private var _yielded = AtomicBool()
+
+    def future : Future<void> = _promise
+
+    def yield : Yield<Future<T>> = {
+        Yield<Future<T>>(
+        begin = size -> {
+            0
+        },
+        yield = fut -> {
+            if(!_stopped) {
+                _counter.incrementAndGet
+                fut.onComplete {tr ->
+                if(!_stopped) {
+                    if(tr.isFailure) {
+                        _stopped = true
+                        _promise.failure(tr)
+                    } else if(!_stopped) {
+                        val r = _counter.decrementAndGet
+                        Memory.memoryBarrier
+                        if(_ended && r == 0) {
+                            Memory.memoryBarrier
+                            if(!_yielded.getAndSet(true)) {
+                                _promise.success(nil)
+                            }
+                        }
+                    }
+                }
+                }
+            }
+            if(_stopped) 1 else 0
+        },
+        end = res -> {
+            var ret = res
+            _ended = true
+            Memory.memoryBarrier
+            if(_counter.intValue == 0) {
+                Memory.memoryBarrier
+                if(!_yielded.getAndSet(true)) {
+                    _promise.success(nil)
+                }
+            }
+            ret
+        }
+        )
+    }
+}

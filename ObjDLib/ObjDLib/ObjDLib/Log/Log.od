@@ -1,5 +1,0 @@
-package core.chain
-
-stub class log {
-    static def apply(text : string) : void
-}

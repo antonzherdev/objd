@@ -1,23 +1,29 @@
 #import "objdcore.h"
 #import "CNSeq.h"
-#import "ODObject.h"
 #import "CNCollection.h"
 @class ODClassType;
+@class CNChain;
 @protocol CNSet;
 @class CNHashSetBuilder;
-@class CNChain;
+@class CNDispatchQueue;
 
 @class CNRange;
 @class CNRangeIterator;
 
-@interface CNRange : NSObject<CNSeq>
+@interface CNRange : NSObject<CNImSeq> {
+@protected
+    NSInteger _start;
+    NSInteger _end;
+    NSInteger _step;
+    NSUInteger _count;
+}
 @property (nonatomic, readonly) NSInteger start;
 @property (nonatomic, readonly) NSInteger end;
 @property (nonatomic, readonly) NSInteger step;
 @property (nonatomic, readonly) NSUInteger count;
 
-+ (id)rangeWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step;
-- (id)initWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step;
++ (instancetype)rangeWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step;
+- (instancetype)initWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step;
 - (ODClassType*)type;
 - (id)applyIndex:(NSUInteger)index;
 - (id<CNIterator>)iterator;
@@ -28,13 +34,19 @@
 @end
 
 
-@interface CNRangeIterator : NSObject<CNIterator>
+@interface CNRangeIterator : NSObject<CNIterator> {
+@protected
+    NSInteger _start;
+    NSInteger _end;
+    NSInteger _step;
+    NSInteger _i;
+}
 @property (nonatomic, readonly) NSInteger start;
 @property (nonatomic, readonly) NSInteger end;
 @property (nonatomic, readonly) NSInteger step;
 
-+ (id)rangeIteratorWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step;
-- (id)initWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step;
++ (instancetype)rangeIteratorWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step;
+- (instancetype)initWithStart:(NSInteger)start end:(NSInteger)end step:(NSInteger)step;
 - (ODClassType*)type;
 - (BOOL)hasNext;
 - (id)next;

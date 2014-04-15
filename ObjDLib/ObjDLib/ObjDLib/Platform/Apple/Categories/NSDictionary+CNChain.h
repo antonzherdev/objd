@@ -4,7 +4,7 @@
 
 @class CNChain;
 
-@interface NSDictionary (CNChain) <CNMap>
+@interface NSDictionary (CNChain) <CNImMap>
 - (NSDictionary *)dictionaryByAddingValue:(id)value forKey:(id)key;
 - (CNChain *) chain;
 - (void) forEach:(cnP)p;

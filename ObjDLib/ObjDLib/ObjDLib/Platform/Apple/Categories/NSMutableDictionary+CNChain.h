@@ -1,10 +1,10 @@
 #import <Foundation/Foundation.h>
 #import "CNMap.h"
 
-@interface NSMutableDictionary (CNChain) <CNMutableMap>
+@interface NSMutableDictionary (CNChain) <CNMMap>
 - (id)objectForKey:(id)key orUpdateWith:(id (^)())with;
 
 + (NSMutableDictionary *)mutableDictionary;
-
-- (id)modifyBy:(id (^)(id))with forKey:(id)key;
+- (NSDictionary*)im;
+- (NSDictionary*)imCopy;
 @end
