@@ -1480,14 +1480,19 @@ callLocalVal :: String -> DataType -> Exp
 callLocalVal name tp = Call (localVal name tp) tp []
 
 maybeAddReturn :: Env -> DataType -> Exp -> Exp
+--maybeAddReturn _ tp _ | trace ("r " ++ show tp) False = undefined
 maybeAddReturn _ TPVoid e = e
-maybeAddReturn _ (TPGenericWrap _ TPVoid) (Braces es)  = Braces (es ++ [Return False Nil]) 
-maybeAddReturn _ (TPGenericWrap _ TPVoid) e  = Braces (e : [Return False Nil]) 
-maybeAddReturn env tp e  = case exprDataType e of
-	TPVoid -> case e of
-		Braces es -> Braces (es ++ [Return False Nil]) 
-		_ -> Braces (e : [Return False Nil]) 
-	_ -> addReturn env True tp e
+maybeAddReturn env tp e  = let
+	mbNil = case unwrapGeneric $ exprDataType e of
+		TPVoid -> case e of
+			Braces es -> Braces (es ++ [Return False Nil]) 
+			_ -> Braces (e : [Return False Nil]) 
+		_ -> addReturn env True tp e
+	in case unwrapGeneric tp of
+		TPClass TPMGeneric _ _ -> mbNil 
+		TPVoid -> mbNil 
+		TPUnknown{} -> mbNil 
+		_ -> addReturn env True tp e
 
 addReturn :: Env -> Bool -> DataType -> Exp -> Exp 
 addReturn env hard tp ee = addReturnBy defBy hard ee
