@@ -1,4 +1,4 @@
-module ObjD.ToObjC (
+module ObjC.Generator (
 	fieldToProperty,
 	stmToInterface,
 	stmToImpl,

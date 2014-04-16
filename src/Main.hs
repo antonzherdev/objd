@@ -2,7 +2,7 @@ module Main where
 
 import Data.Maybe
 import Ex.String
-import ObjD.ToObjC
+import ObjC.Generator
 import Java.Generator
 import ObjD.Parser
 import ObjD.Link as L
