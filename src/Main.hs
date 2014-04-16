@@ -1,19 +1,25 @@
 module Main where
 
 import Data.Maybe
+import Ex.String
 import ObjD.ToObjC
+import Java.Generator
 import ObjD.Parser
 import ObjD.Link as L
 import ObjD.Struct as D
+import Java.Struct as J
 import ObjC.Struct as C
 import Control.Monad
 import Control.Arrow
-import System.Directory (doesDirectoryExist, getDirectoryContents, doesFileExist)
+import System.Environment
+import System.Directory (doesDirectoryExist, getDirectoryContents, doesFileExist, createDirectoryIfMissing)
 import System.IO
 import System.FilePath
 
 debug :: [String]
 debug = []
+
+data Args = Args{objCPath :: Maybe String, javaPath :: Maybe String}
 
 main::IO()
 main = 
@@ -49,17 +55,22 @@ main =
 				check
 				when(isJust debugFile) $ hClose $ fromJust debugFileHandle
 				return linked
-			compiledFiles :: IO [(FilePath, ((String, [C.FileStm]), (String, [C.FileStm])))]
-			compiledFiles = liftM (map (second toObjC) . filter (containsRealStatement . snd)) linkedFiles
-			containsRealStatement :: L.File -> Bool
-			containsRealStatement L.File{L.fileClasses = clss} = any (not . L.isStub) clss
-			textFiles :: IO [(FilePath, ((String, String), (String, String)))]
-			textFiles = liftM (map (second (toText *** toText))) compiledFiles
-			toText :: (String, [C.FileStm]) -> (String, String)
-			toText = second (unlines . map show)
-			write :: String -> String -> String -> IO ()
-			write _ _ [] = return ()
-			write nm path txt = let fn =  replaceFileName path nm 
+			linkedFilesWithRealStatements :: IO [(FilePath, L.File)]
+			linkedFilesWithRealStatements = liftM (filter (containsRealStatement . snd)) linkedFiles
+				where containsRealStatement L.File{L.fileClasses = clss} = any (not . L.isStub) clss
+			ocCompiledFiles :: IO [(FilePath, ((String, [C.FileStm]), (String, [C.FileStm])))]
+			ocCompiledFiles = liftM (map (second toObjC)) linkedFilesWithRealStatements
+			ocTextFiles :: IO [(FilePath, ((String, String), (String, String)))]
+			ocTextFiles = liftM (map (second (toText *** toText))) ocCompiledFiles
+				where toText = second (unlines . map show)
+			javaCompiledFiles :: IO [J.File]
+			javaCompiledFiles = liftM (concatMap (toJava . snd)) linkedFiles
+			javaTextFiles :: IO [(FilePath, String)]
+			javaTextFiles = liftM (map (toText)) javaCompiledFiles
+				where toText f@(J.File pack _ J.Class{J.className = nm}) = ((strs [pathSeparator] pack) ++ [pathSeparator] ++ nm, show f)
+			ocWrite :: String -> String -> String -> IO ()
+			ocWrite _ _ [] = return ()
+			ocWrite nm path txt = let fn =  replaceFileName path nm 
 				in do
 					e <- testFileEq fn txt
 					when(not e) $ do
@@ -72,12 +83,33 @@ main =
 			checkFile (x:xs) h = hIsEOF h >>= \eof -> if eof then return False else (hGetLine h >>= \l -> if l == x then checkFile xs h else return False)
 			checkFile _ h = hIsEOF h
 			in do
-				txtFS <- textFiles
-				forM_ txtFS (\(path, ((hnm, h), (mnm, m)) ) -> do
-					{-putStrLn ("File: " ++ path)-}
-					write hnm path h
-					write mnm path m)
+				args <- getArgs >>= return . processArgs
+				when (isJust $ objCPath args) $ do
+					putStrLn "Generate Objctive-C"
+					txtFS <- ocTextFiles
+					forM_ txtFS (\(path, ((hnm, h), (mnm, m)) ) -> do
+						{-putStrLn ("File: " ++ path)-}
+						ocWrite hnm path h
+						ocWrite mnm path m)
+				when (isJust $ javaPath args) $ do
+					let rootPath = fromJust $ javaPath args
+					putStrLn $ "Generate Java at " ++ rootPath
+					txtFS <- javaTextFiles
+					forM_ txtFS (\(path, txt) -> do
+						{-putStrLn ("File: " ++ path)-}
+						let fn = addExtension (combine rootPath path) "java"
+						createDirectoryIfMissing True $ dropFileName fn
+						e <- testFileEq fn txt
+						when(not e) $ do
+							print $ "Writing " ++ fn
+							writeFile  fn txt)
 				putStrLn "Finished"
+
+processArgs :: [String] -> Args
+processArgs args = let
+	pairs = zip ("":args) args
+	val f = lookup f pairs 
+	in Args (val "--obj-c") (val "--java")
 
 parseFiles :: [(FilePath, String)] -> IO [(FilePath, D.File)]
 parseFiles = mapM parse
