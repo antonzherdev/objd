@@ -46,7 +46,14 @@ parseStatement :: String -> Either ParseError FileStm
 parseStatement = parse pStatement "ObjD"
 
 pStatement :: Parser FileStm
-pStatement = pTypeStm <|> pImport <|> pClass <|> pEnum
+pStatement = pImport <|> 
+	(pAnnotations >>= \a -> pTypeStm a <|>  pClass a <|> pEnum a)
+
+pAnnotations :: Parser [Annotation]
+pAnnotations = many $ do
+	char '@'
+	(Call name pars tps) <- pCall
+	return $ Annotation name (fromMaybe [] pars) tps
 
 wsps :: Parser String
 wsps = many (char ' ' <|> char '\t') <?> ""
@@ -122,8 +129,8 @@ brackets = between (charSps '(') (spsChar ')')
 stringSps :: String -> Parser String
 stringSps s = string s >> sps
 
-pTypeStm :: Parser FileStm
-pTypeStm = do
+pTypeStm :: [Annotation] -> Parser FileStm
+pTypeStm a = do
 	try(string "typedef")
 	sps1
 	name <- ident
@@ -135,11 +142,11 @@ pTypeStm = do
 	sps
 	gens <- pGensRef
 	sps
-	return $ Type name generics (tp, gens)
+	return $ Type name generics (tp, gens) a
 
 
-pClass :: Parser FileStm
-pClass = do
+pClass :: [Annotation] -> Parser FileStm
+pClass a = do
 	mods <- many $ (try (stringSps "stub") >> return ClassModStub) <|> (try (stringSps "abstract") >> return ClassModAbstract) <|> (try (stringSps "final") >> return ClassModFinal) <|> (try (stringSps "case") >> return ClassModCase)
 	struct <- (string "class" >> return []) <|> (string "struct" >> return [ClassModStruct]) <|> (string "trait" >> return [ClassModTrait]) <|> (string "object" >> return [ClassModObject])
 	sps
@@ -153,10 +160,10 @@ pClass = do
 	sps
 	body <- pClassBody
 	sps
-	return Class {classMods = mods ++ struct, className = name, classFields = fields, classExtends = extends, classBody = body, classGenerics = generics}
+	return Class {classMods = mods ++ struct, className = name, classFields = fields, classExtends = extends, classBody = body, classGenerics = generics, classAnnotations = a}
 
-pEnum :: Parser FileStm
-pEnum = do
+pEnum :: [Annotation] -> Parser FileStm
+pEnum a = do
 	string "enum"
 	sps 
 	name <- ident
@@ -177,7 +184,7 @@ pEnum = do
 		in do
 			items <- many enumItem
 			body <- many pStm
-			return Enum { className = name, classFields = fields, classExtends = extends, enumItems = items, classBody = body, classGenerics = generics}
+			return Enum { className = name, classFields = fields, classExtends = extends, enumItems = items, classBody = body, classGenerics = generics, classAnnotations = a}
 
 
 pGenerics :: Parser [Generic]

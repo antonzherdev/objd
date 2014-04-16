@@ -1,14 +1,15 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), DataType(..), Exp(..), CImport(..), 
 	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef, CallPar, Package(..),
-	WrapReason(..),
+	WrapReason(..), Annotation(..),
 	Import(..), link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, dataTypeClassNameWithPrefix,
 	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
 	fileNameWithPrefix, classDefsWithTraits, classInitDef, classContainsInit, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait,
-	isAbstract, isFinal, isCaseClass, classFieldsForEquals, needHashForClass, needIsEqualForClass, isGenericWrap, mapExp, isInline
+	isAbstract, isFinal, isCaseClass, classFieldsForEquals, needHashForClass, needIsEqualForClass, isGenericWrap, mapExp, isInline,
+	containsAnnotationWithClassName, findAnnotationWithClassName, annotationClass
 )where
 
 import 			 Control.Arrow
@@ -44,10 +45,9 @@ fileNameWithPrefix f = packagePrefix (filePackage f) ++ fileName f
  -----------------------------------------------------------------------------------------------------------------------------------------}
 data Class = Class {_classFile :: File, _classPackage :: Package, className :: String
 	, _classGenerics :: [Class], _classExtends :: Extends, _classMods :: [ClassMod], _classDefs :: [Def]
-	, _classImports :: [Import]}
+	, _classImports :: [Import], classAnnotations :: [Annotation]}
 	| Generic {className :: String, _classExtendsRef :: [ExtendsRef]}
 	| ClassError {className :: String, classErrorText :: String}
-
 classFile :: Class -> Maybe File
 classFile Class{_classFile = file} = Just file
 classFile _ = Nothing
@@ -165,6 +165,23 @@ classFields = filter isField . classDefs
 
 classPackageName :: Class -> [String]
 classPackageName = packageName . classPackage
+
+
+data Annotation = Annotation Def [CallPar]
+
+annotationClass :: Annotation -> Class
+annotationClass (Annotation Def{defType = TPClass _ _ cl} _) = cl
+
+findAnnotationWithClassName :: String -> [Annotation] -> Maybe Annotation
+findAnnotationWithClassName nm = find ((== nm) .className . annotationClass)
+
+containsAnnotationWithClassName :: String -> [Annotation] -> Bool
+containsAnnotationWithClassName nm a = isJust $ findAnnotationWithClassName nm a
+
+
+{-----------------------------------------------------------------------------------------------------------------------------------------
+ - Extends 
+ -----------------------------------------------------------------------------------------------------------------------------------------}
 
 extendsNothing :: Extends
 extendsNothing = Extends Nothing []
@@ -662,7 +679,8 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 					else fields ++ defs ++ constr constrPars ++ [typeField] 
 				{-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
 				_classGenerics = generics,
-				_classImports = clImports
+				_classImports = clImports,
+				classAnnotations = annotations
 			}
 			D.Enum{} -> Class {
 				_classFile = file,
@@ -677,7 +695,8 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 					defName = "values", defType = TPArr 0 (TPClass TPMEnum [] self), defBody = Nop,
 					defMods = [DefModStatic], defPars = [], defGenerics = Nothing}],
 				_classGenerics = generics,
-				_classImports = clImports
+				_classImports = clImports,
+				classAnnotations = annotations
 			}
 			D.Type{} -> Class {
 				_classFile = file,
@@ -687,8 +706,10 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 				_classExtends = Extends (Just $ ExtendsClass (linkExtendsRef env (D.typeDef cl)) []) [], 
 				_classDefs = [constructorForType], 
 				_classGenerics = generics,
-				_classImports = []
+				_classImports = [],
+				classAnnotations = annotations
 			}
+		annotations = map (linkAnnotations env) $ D.classAnnotations cl
 		enumOrdinal = Def "ordinal" [] uint Nop [] Nothing
 		enumName = Def "name" [] TPString Nop [] Nothing
 		enumAdditionalDefs = [(enumOrdinal, Nothing), (enumName, Nothing)]
@@ -771,6 +792,11 @@ linkExtends env constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs
 			Dot _ (Call _ _ pars') -> pars'
 			err -> [(unknownDef, err)]
 	in Extends (Just $ ExtendsClass (linkExtendsRef env eref) superCallPars) $ map (linkExtendsRef env) withs
+
+linkAnnotations :: Env -> D.Annotation -> Annotation
+linkAnnotations env (D.Annotation nm pars tps) = case expr env (D.Call nm (Just pars) tps) of
+	Call d _ pars' -> Annotation d pars'
+	Dot _ (Call d _ pars') -> Annotation d pars'
 
 linkExtendsRef :: Env -> D.ExtendsRef -> ExtendsRef
 linkExtendsRef env (ecls, gens) = (classFind (envIndex env) ecls, map (dataType env) gens) 
@@ -1142,7 +1168,7 @@ dataTypeClass env (TPObject _ c) = Class { _classMods = [ClassModObject], classN
 	_classExtends = Extends (if className c == "Object" then Nothing else Just $ baseClassExtends (envIndex env)) [], 
 	_classDefs = allDefsInObject (c, M.empty), _classGenerics = [], _classImports = [],
 	_classFile = fromMaybe (error $ "No class file for class " ++ className c) $ classFile c,
-	_classPackage = classPackage c}
+	_classPackage = classPackage c, classAnnotations = []}
 dataTypeClass env (TPGenericWrap _ c) = dataTypeClass env c
 dataTypeClass _ (TPSelf c) = c
 dataTypeClass env (TPArr _ _) = classFind (envIndex env) "ImArray"
@@ -1168,7 +1194,7 @@ dataTypeClass env (TPPointer _) = classFind (envIndex env) "Pointer"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("Tuple" ++ show (length a))
 dataTypeClass env f@TPFun{} = Class { _classMods = [], className = "", _classExtends =  Extends (Just $ baseClassExtends (envIndex env)) [],
 	_classPackage = Package ["core"] Nothing "", _classFile = coreFakeFile, 
-	_classDefs = [applyLambdaDef f], _classGenerics = [], _classImports = []}
+	_classDefs = [applyLambdaDef f], _classGenerics = [], _classImports = [], classAnnotations = []}
 	where
 		
 dataTypeClass _ x = ClassError (show x) ("No dataTypeClass for " ++ show x)

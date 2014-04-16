@@ -1,6 +1,7 @@
 module ObjD.Struct (
 	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, EnumItem(..), CallPar, DefMod(..), 
 	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), ExtendsRef, ExtendsClass(..), CaseCondition(..), CaseItem, FuncOpTp(..), ParMod(..),
+	Annotation(..),
 	isClass, isImport, isDef, isDecl, isStub, isEnum, isStatic, isType, isClassImport
 ) where
 import           Ex.String
@@ -15,10 +16,10 @@ instance Show File where
 data FileStm =
 	Import [String]
 	| Class {classMods :: [ClassMod], className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, classBody :: [ClassStm]
-		, classGenerics :: [Generic] }
+		, classGenerics :: [Generic], classAnnotations :: [Annotation]}
 	| Enum {className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, enumItems :: [EnumItem], classBody :: [ClassStm]
-		, classGenerics :: [Generic] }
-	| Type {className :: String, classGenerics :: [Generic], typeDef :: ExtendsRef}
+		, classGenerics :: [Generic], classAnnotations :: [Annotation]}
+	| Type {className :: String, classGenerics :: [Generic], typeDef :: ExtendsRef, classAnnotations :: [Annotation]}
 isClass :: FileStm -> Bool
 isClass (Class {}) = True
 isClass _ = False
@@ -42,6 +43,8 @@ data Generic = Generic String (Maybe Extends)
 data Extends = Extends ExtendsClass [ExtendsRef]
 data ExtendsClass = ExtendsClass ExtendsRef [CallPar]
 type ExtendsRef =  (String, [DataType])
+
+data Annotation = Annotation String [CallPar] [DataType]
 
 data ClassStm = Def {defMods :: [DefMod],  defName :: String, defGenerics :: [Generic], defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
 	| ClassImport [String]
