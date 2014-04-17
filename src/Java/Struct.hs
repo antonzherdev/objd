@@ -7,11 +7,11 @@ import           Ex.String
 --import           Control.Monad
 --import 			 Control.Arrow
 
-data File = File Package [Import] Class
+data File = File{fileIsTest :: Bool, filePackage :: Package, fileImports :: [Import], fileClass :: Class}
 type Package = [String]
 type Import = [String]
 instance Show File where
-	show (File pack imps cls) = "package " ++ strs "." pack ++ ";\n\n" ++ showImports ++ show cls
+	show (File _ pack imps cls) = "package " ++ strs "." pack ++ ";\n\n" ++ showImports ++ show cls
 		where
 			showImports = case imps of
 				[] -> ""

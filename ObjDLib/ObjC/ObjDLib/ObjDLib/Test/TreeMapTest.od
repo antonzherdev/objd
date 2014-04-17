@@ -1,8 +1,8 @@
 package core.chain
 
-import com.antonzherdev.test._
-import com.antonzherdev.test.Assert._
+import test._
 
+@Test
 class TreeMapTest extends TestCase {
     def testMain {
         val map = MTreeMap<int, string>()

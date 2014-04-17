@@ -1,8 +1,8 @@
 package core.chain
 
-import com.antonzherdev.test._
-import com.antonzherdev.test.Assert._
+import test._
 
+@Test
 class QueueTest extends TestCase {
     def testDeque {
         var q = ImQueue<int>()

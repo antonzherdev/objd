@@ -1,8 +1,8 @@
 package core.chain
 
-import com.antonzherdev.test._
-import com.antonzherdev.test.Assert._
+import test._
 
+@Test
 class ChainTest extends TestCase {
     def testAnd {
         assertTrue(![true, false, true].chain.and)

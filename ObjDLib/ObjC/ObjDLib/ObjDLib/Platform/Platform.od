@@ -1,5 +1,9 @@
 package core.os
 
+stub package object {
+    val prefix = "OS"
+}
+
 stub class Bundle {
     static def fileNameFor(resource : string) : string
     static def readToString(resource : string) : string

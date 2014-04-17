@@ -19,7 +19,7 @@ import System.FilePath
 debug :: [String]
 debug = []
 
-data Args = Args{objCPath :: Maybe String, javaPath :: Maybe String}
+data Args = Args{objCPath :: Maybe String, javaPath :: Maybe String, javaTestPath :: Maybe String}
 
 main::IO()
 main = 
@@ -65,9 +65,10 @@ main =
 				where toText = second (unlines . map show)
 			javaCompiledFiles :: IO [J.File]
 			javaCompiledFiles = liftM (concatMap (toJava . snd)) linkedFiles
-			javaTextFiles :: IO [(FilePath, String)]
+			javaTextFiles :: IO [(Bool, FilePath, String)]
 			javaTextFiles = liftM (map (toText)) javaCompiledFiles
-				where toText f@(J.File pack _ J.Class{J.className = nm}) = ((strs [pathSeparator] pack) ++ [pathSeparator] ++ nm, show f)
+				where toText f@(J.File _ pack _ J.Class{J.className = nm}) = 
+					(J.fileIsTest f, strs [pathSeparator] pack ++ [pathSeparator] ++ nm, show f)
 			ocWrite :: String -> String -> String -> IO ()
 			ocWrite _ _ [] = return ()
 			ocWrite nm path txt = let fn =  replaceFileName path nm 
@@ -93,11 +94,12 @@ main =
 						ocWrite mnm path m)
 				when (isJust $ javaPath args) $ do
 					let rootPath = fromJust $ javaPath args
-					putStrLn $ "Generate Java at " ++ rootPath
-					txtFS <- javaTextFiles
-					forM_ txtFS (\(path, txt) -> do
+					let rootTestPath = fromMaybe rootPath $ javaTestPath args
+					putStrLn $ "Generate Java at " ++ rootPath ++ " and tests at " ++ rootTestPath
+					txtFS <- javaTextFiles 
+					forM_ txtFS (\(isTest, path, txt) -> do
 						{-putStrLn ("File: " ++ path)-}
-						let fn = addExtension (combine rootPath path) "java"
+						let fn = addExtension (combine (if isTest then rootTestPath else rootPath) path) "java"
 						createDirectoryIfMissing True $ dropFileName fn
 						e <- testFileEq fn txt
 						when(not e) $ do
@@ -109,7 +111,7 @@ processArgs :: [String] -> Args
 processArgs args = let
 	pairs = zip ("":args) args
 	val f = lookup f pairs 
-	in Args (val "--obj-c") (val "--java")
+	in Args (val "--obj-c") (val "--java") (val "--java-test")
 
 parseFiles :: [(FilePath, String)] -> IO [(FilePath, D.File)]
 parseFiles = mapM parse

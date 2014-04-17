@@ -1,5 +1,10 @@
 package core.lang
 
+stub package object {
+    val prefix = "OD"
+}
+
+
 stub class Object {
     def is<T> : bool
     def as<T> : T?

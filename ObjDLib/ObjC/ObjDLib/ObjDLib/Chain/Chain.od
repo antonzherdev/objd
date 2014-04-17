@@ -1,5 +1,9 @@
 package core.chain
 
+stub package object {
+    val prefix = "CN"
+}
+
 stub class Chain<A> extends ImIterable<A> {
     static pure def chainWith<T>(collection:Traversable<T>) : Chain<T>
 

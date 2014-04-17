@@ -80,6 +80,10 @@ needIsEqualForClass :: Class -> Bool
 needIsEqualForClass cl = ClassModCase `elem` classMods cl || any ( ("isEqual" == ). defName) (classDefs cl)
 needHashForClass :: Class -> Bool
 needHashForClass cl = ClassModCase `elem` classMods cl && (not $ any ( ("hash" == ). defName) (classDefs cl))
+fullClassName :: Class -> String
+fullClassName cl = strs "." (packageName $ classPackage cl) ++ case className cl of
+	"" -> ""
+	nm -> "." ++ nm
 
 data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType | 
 	ClassModAbstract | ClassModFinal | ClassModCase | ClassModPackageObject deriving (Eq)
@@ -175,7 +179,7 @@ annotationClass :: Annotation -> Class
 annotationClass (Annotation Def{defType = TPClass _ _ cl} _) = cl
 
 findAnnotationWithClassName :: String -> [Annotation] -> Maybe Annotation
-findAnnotationWithClassName nm = find ((== nm) .className . annotationClass)
+findAnnotationWithClassName nm = find ((== nm) . fullClassName . annotationClass)
 
 containsAnnotationWithClassName :: String -> [Annotation] -> Bool
 containsAnnotationWithClassName nm a = isJust $ findAnnotationWithClassName nm a

@@ -1,17 +1,16 @@
-package com.antonzherdev.test
+package test
 
-stub class XCTestCase
-
-stub class TestCase extends XCTestCase {
-    import com.antonzherdev.test.Assert._
-
-    def repeat(times : uint, f : () -> void)
-}
-
-stub object Assert {
+stub package object {
+    val prefix = "TS"
     def assertEquals<T>(a: T, b: T) : void
     def floatArrayEquals<T>(a: [float], b: [float]) : void
     def assertTrue(value: bool) :void
     def assertFalse(value: bool) :void
     def fail(text : string)
+}
+
+stub class Test
+
+stub class TestCase {
+    def repeat(times : uint, f : () -> void)
 }
