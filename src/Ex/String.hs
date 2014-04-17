@@ -1,4 +1,5 @@
-module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp', cap, MathTp(..), BoolTp(..), tryCon, zipWithIndex, startsWith, lines2) where
+module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp', cap, MathTp(..), BoolTp(..), 
+	tryCon, zipWithIndex, startsWith, lines2, pstrs, pstrs') where
 
 import           Data.Char
 
@@ -14,6 +15,12 @@ zipWithIndex = doZip 0
 		doZip _ [] = []
 		doZip i (x:xs) = (x, i) : doZip (i + 1) xs
 
+pmkString :: (a -> String) -> String -> String -> String -> [a] -> String
+pmkString _ _ _ _ [] = ""
+pmkString f p _ s [x] = p ++ f x ++ s
+pmkString f p d s xs = p ++ mkString f d xs ++ s
+
+
 mkString :: (a -> String) -> String -> [a] -> String
 mkString _ _ [] = ""
 mkString f _ [x] = f x
@@ -24,6 +31,13 @@ strs = mkString id
 
 strs' :: (Show a) => String -> [a] -> String
 strs' = mkString show
+
+pstrs :: String -> String -> String -> [String] -> String
+pstrs = pmkString id
+
+pstrs' :: (Show a) => String -> String -> String -> [a] -> String
+pstrs' = pmkString show
+
 
 break2 :: (a -> Bool) -> [a] -> ([a],Maybe [a])
 break2 _ xs@[]           =  (xs, Nothing)

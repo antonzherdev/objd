@@ -215,8 +215,8 @@ instance Show FileStm where
 		 	showFields [] = "\n"
 		 	showFields fields = " {\n" ++ unlines (map showVisibilitySection fields) ++ "}\n"
 		 	showVisibilitySection (visibility, fields) = show visibility ++ "\n" ++ mkString (ind . show) "\n" fields 
-	show (Protocol name (Extends cl trs) properties funs) =
-		"@protocol " ++ name ++ "<" ++ cl ++ unwords (map (", " ++ ) trs) ++ ">\n"
+	show (Protocol name (Extends _ trs) properties funs) =
+		"@protocol " ++ name ++ "<" ++ strs ", " trs ++ ">\n"
 		++ (unlines' . map show) properties
 		 ++ (unlines  . map (( ++ ";") . show)) funs
 		 ++ "@end\n\n"

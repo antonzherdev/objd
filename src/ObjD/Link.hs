@@ -9,7 +9,7 @@ module ObjD.Link (
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
 	fileNameWithPrefix, classDefsWithTraits, classInitDef, classContainsInit, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait,
 	isAbstract, isFinal, isCaseClass, classFieldsForEquals, needHashForClass, needIsEqualForClass, isGenericWrap, mapExp, isInline,
-	containsAnnotationWithClassName, findAnnotationWithClassName, annotationClass
+	containsAnnotationWithClassName, findAnnotationWithClassName, annotationClass, isTpBaseClass, isBaseClass, traitExtendsRefs, mainExtendsRef
 )where
 
 import 			 Control.Arrow
@@ -160,7 +160,9 @@ isCaseClass :: Class -> Bool
 isCaseClass = (ClassModCase `elem` ) . classMods
 isAbstract :: Class -> Bool
 isAbstract = (ClassModAbstract `elem` ) . classMods
-
+isBaseClass :: Class -> Bool
+isBaseClass Class{className = "Object"} = True
+isBaseClass _ = False
 
 isRealClass :: Class -> Bool
 isRealClass = (ClassModStub `notElem` ) . classMods
@@ -195,6 +197,13 @@ extendsNothing = Extends Nothing []
 extendsRefs :: Extends -> [ExtendsRef]
 extendsRefs (Extends Nothing traits) = traits
 extendsRefs (Extends (Just (ExtendsClass cl _)) traits) = cl : traits
+
+mainExtendsRef :: Extends -> Maybe ExtendsRef
+mainExtendsRef (Extends (Just (ExtendsClass cl _)) _) = Just cl
+mainExtendsRef _ = Nothing
+
+traitExtendsRefs :: Extends -> [ExtendsRef]
+traitExtendsRefs (Extends _ traits) = traits
 
 superClass :: Class -> Maybe Class
 superClass = fmap extendsClassClass . extendsClass . classExtends
@@ -799,7 +808,10 @@ linkExtends env constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs
 		superCallPars = case superCall' of
 			Dot _ (Call _ _ pars') -> pars'
 			err -> [(unknownDef, err)]
-	in Extends (Just $ ExtendsClass (linkExtendsRef env eref) superCallPars) $ map (linkExtendsRef env) withs
+		mainExt = linkExtendsRef env eref
+		withs' = map (linkExtendsRef env) withs
+		isMainTrait = isTrait (fst mainExt)
+	in Extends (if isMainTrait then Nothing else Just $ ExtendsClass mainExt superCallPars) (if isMainTrait then mainExt:withs' else withs')
 
 linkAnnotations :: Env -> D.Annotation -> Annotation
 linkAnnotations env (D.Annotation nm pars tps) = case expr env (D.Call nm (Just pars) tps) of
@@ -1086,6 +1098,9 @@ isTpTrait _ = False
 isTpStruct :: DataType -> Bool
 isTpStruct (TPClass TPMStruct _ _) = True
 isTpStruct _ = False
+isTpBaseClass :: DataType -> Bool
+isTpBaseClass (TPClass TPMClass _ Class{className = "Object"}) = True
+isTpBaseClass _ = False
 
 unoptionIfChecked :: DataType -> DataType
 unoptionIfChecked (TPGenericWrap _ (TPOption True d)) = d
