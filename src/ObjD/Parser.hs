@@ -53,6 +53,7 @@ pAnnotations :: Parser [Annotation]
 pAnnotations = many $ do
 	char '@'
 	(Call name pars tps) <- pCall
+	sps
 	return $ Annotation name (fromMaybe [] pars) tps
 
 wsps :: Parser String
@@ -147,10 +148,10 @@ pTypeStm a = do
 
 pClass :: [Annotation] -> Parser FileStm
 pClass a = do
-	mods <- many $ (try (stringSps "stub") >> return ClassModStub) <|> (try (stringSps "abstract") >> return ClassModAbstract) <|> (try (stringSps "final") >> return ClassModFinal) <|> (try (stringSps "case") >> return ClassModCase)
+	mods <- many $ (try (stringSps "stub") >> return ClassModStub) <|> (try (stringSps "abstract") >> return ClassModAbstract) <|> (try (stringSps "final") >> return ClassModFinal) <|> (try (stringSps "case") >> return ClassModCase) <|> (try (stringSps "package") >> return ClassModPackageObject)
 	struct <- (string "class" >> return []) <|> (string "struct" >> return [ClassModStruct]) <|> (string "trait" >> return [ClassModTrait]) <|> (string "object" >> return [ClassModObject])
 	sps
-	name <- ident
+	name <- option "" ident
 	sps
 	generics <- pGenerics
 	sps

@@ -85,7 +85,7 @@ main =
 			in do
 				args <- getArgs >>= return . processArgs
 				when (isJust $ objCPath args) $ do
-					putStrLn "Generate Objctive-C"
+					putStrLn "Generate Objective-C"
 					txtFS <- ocTextFiles
 					forM_ txtFS (\(path, ((hnm, h), (mnm, m)) ) -> do
 						{-putStrLn ("File: " ++ path)-}

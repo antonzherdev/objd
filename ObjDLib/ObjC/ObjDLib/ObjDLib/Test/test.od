@@ -1,5 +1,0 @@
-package com.antonzherdev
-
-stub object test {
-    val prefix = "TS"
-}

@@ -81,7 +81,8 @@ needIsEqualForClass cl = ClassModCase `elem` classMods cl || any ( ("isEqual" ==
 needHashForClass :: Class -> Bool
 needHashForClass cl = ClassModCase `elem` classMods cl && (not $ any ( ("hash" == ). defName) (classDefs cl))
 
-data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType | ClassModAbstract | ClassModFinal | ClassModCase deriving (Eq)
+data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType | 
+	ClassModAbstract | ClassModFinal | ClassModCase | ClassModPackageObject deriving (Eq)
 
 type ExtendsRef = (Class, [DataType])
 data Extends = Extends {extendsClass :: Maybe ExtendsClass, extendsTraits :: [ExtendsRef]}
@@ -114,6 +115,7 @@ instance Show ClassMod where
 	show ClassModAbstract = "abstract"
 	show ClassModFinal = "final"
 	show ClassModCase = "case"
+	show ClassModPackageObject = "package"
 			
 instance Show Extends where
 	show (Extends Nothing []) = ""
@@ -607,9 +609,9 @@ linkFile files (D.File name package stms) = fl
 			p <- findValWithName "prefix" o
 			(extractStringConst . defBody) p
 		packObj :: Maybe Class
-		packObj = find (\cl -> last package == className cl && ClassModObject `elem` classMods cl) 
+		packObj = find (\cl -> "" == className cl && ClassModObject `elem` classMods cl && ClassModPackageObject `elem` classMods cl) 
 			. concatMap fileClasses 
-			. filter ((== init package) . packageName . filePackage) $ files
+			. filter ((== package) . packageName . filePackage) $ files
 
 		importClasses cl = mapMaybe impcl (imports cl)
 			where
@@ -622,7 +624,7 @@ linkFile files (D.File name package stms) = fl
 		imports :: D.FileStm -> [Import]
 		imports cl = nub (clImports cl ++ thisFileImports ++ packObjImports)
 
-		packObjImports = maybe [] classImports packObj
+		packObjImports = maybe [] (\o -> ImportObjectDefs o : classImports o) packObj
 
 		thisFileImports :: [Import]
 		thisFileImports = concatMap processImport . filter D.isImport $ stms
@@ -648,10 +650,11 @@ linkImport :: [File] -> [String] -> [Import]
 linkImport files name
 	| last name == "_" = let s = init name
 		in (map ImportClass . filter (startsWith s . classPackageName)) allClasses 
-				++ (map ImportObjectDefs . classesWithName) s
+				++ (map ImportObjectDefs . packObject) s
 	| otherwise = map ImportClass $ classesWithName name
 	where
 		allClasses = concatMap fileClasses files
+		packObject imp = filter (\c -> ClassModPackageObject `elem` classMods c && classPackageName c == imp) allClasses
 		classesWithName imp = filter (\c -> className c == last imp && classPackageName c == init imp) allClasses
 
 baseClassExtends :: ClassIndex -> ExtendsClass
@@ -720,6 +723,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 		clsMod D.ClassModObject = [ClassModObject]
 		clsMod D.ClassModAbstract = [ClassModAbstract]
 		clsMod D.ClassModFinal = [ClassModFinal]
+		clsMod D.ClassModPackageObject = [ClassModPackageObject]
 		clsMod D.ClassModCase = [ClassModFinal, ClassModCase]
 		-- clsMod _ = []
 		extends = fmap (linkExtends env (map fst constrPars)) (D.classExtends cl) 
