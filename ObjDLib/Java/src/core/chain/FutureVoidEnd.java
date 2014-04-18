@@ -7,51 +7,60 @@ public class FutureVoidEnd<T> {
     private boolean _ended = ERROR: Unknown False;
     private AtomicBool _yielded = new AtomicBool();
     public Future<Void> future() {
-        return _promise;
+        return this._promise;
     }
     public Yield<Future<T>> yield() {
         return Yield().applyBeginYieldEnd<Future<T>>(new F<Integer, Integer>() {
             @Override
-            public Integer f(Integer size) {
+            public Integer apply(Integer size) {
                 return ERROR: Unknown 0;
             }
         }, new F<Future<T>, Integer>() {
             @Override
-            public Integer f(Future<T> fut) {
-                ERROR: Unknown if(!(<FutureVoidEnd#C<T#G>>self.<emp>_stopped\bool\)) {
-    <FutureVoidEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dI>incrementAndGet\int4\
-    <l>fut\§^Future#C<T#G>§\.<dIa>onComplete(f = tr : Try#C<§T#G§> -> void = if(!(<FutureVoidEnd#C<T#G>>self.<emp>_stopped\bool\)) {
-    if(<l>tr\Try#C<§T#G§>\.<dI>isFailure\bool\) {
-    (<FutureVoidEnd#C<T#G>>self.<emp>_stopped\bool\ = True)
-    <FutureVoidEnd#C<T#G>>self.<ep>_promise\Promise#C<§^void§>\.<dIa>failure(reason = <l>tr\Try#C<§T#G§>\)\bool\
-}
-else if(!(<FutureVoidEnd#C<T#G>>self.<emp>_stopped\bool\)) {
-    local r : int4 = <FutureVoidEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dI>decrementAndGet\int4\
-    <to>Memory\Memory#C.class\.<dIt>memoryBarrier\void\
-    if((<FutureVoidEnd#C<T#G>>self.<emp>_ended\bool\ && (<l>r\int4\ == 0))) {
-    <to>Memory\Memory#C.class\.<dIt>memoryBarrier\void\
-    if(!(<FutureVoidEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dI>getAndSet(newValue = True)\bool\)) {
-    <FutureVoidEnd#C<T#G>>self.<ep>_promise\Promise#C<§^void§>\.<dIa>success(value = nil)\bool\
-}
-}
-}
-})\void\
-};
-                ERROR: Unknown if(<FutureVoidEnd#C<T#G>>self.<emp>_stopped\bool\) return 1
-else return 0;
+            public Integer apply(Future<T> fut) {
+                if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_stopped\bool\)) {
+                    FutureVoidEnd.this._counter.incrementAndGet();
+                    fut.onCompleteF(new P<Try<T>>() {
+                        @Override
+                        public void apply(Try<T> tr) {
+                            if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_stopped\bool\)) {
+                                if(tr.isFailure()) {
+                                    FutureVoidEnd.this._stopped = ERROR: Unknown True;
+                                    FutureVoidEnd.this._promise.failureReason(tr);
+                                } else {
+                                    if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_stopped\bool\)) {
+                                        ERROR: Unknown local r : int4 = <FutureVoidEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dI>decrementAndGet\int4\;
+                                        Memory().memoryBarrier();
+                                        if(FutureVoidEnd.this._ended && r.equals(ERROR: Unknown 0)) {
+                                            Memory().memoryBarrier();
+                                            if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dI>getAndSet(newValue = True)\bool\)) {
+                                                FutureVoidEnd.this._promise.successValue(null);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                if(FutureVoidEnd.this._stopped) {
+                    return ERROR: Unknown 1;
+                } else {
+                    return ERROR: Unknown 0;
+                }
             }
         }, new F<Integer, Integer>() {
             @Override
-            public Integer f(Integer res) {
+            public Integer apply(Integer res) {
                 ERROR: Unknown local var ret : int = <l>res\int\;
-                ERROR: Unknown (<FutureVoidEnd#C<T#G>>self.<emp>_ended\bool\ = True);
+                FutureVoidEnd.this._ended = ERROR: Unknown True;
                 Memory().memoryBarrier();
-                ERROR: Unknown if((<FutureVoidEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dI>intValue\int4\ == 0)) {
-    <to>Memory\Memory#C.class\.<dIt>memoryBarrier\void\
-    if(!(<FutureVoidEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dI>getAndSet(newValue = True)\bool\)) {
-    <FutureVoidEnd#C<T#G>>self.<ep>_promise\Promise#C<§^void§>\.<dIa>success(value = nil)\bool\
-}
-};
+                if(FutureVoidEnd.this._counter.intValue().equals(ERROR: Unknown 0)) {
+                    Memory().memoryBarrier();
+                    if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dI>getAndSet(newValue = True)\bool\)) {
+                        FutureVoidEnd.this._promise.successValue(null);
+                    }
+                }
                 return ret;
             }
         });

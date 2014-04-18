@@ -1,17 +1,26 @@
 package core.chain;
 
-public class Cache<X, F> {
-    public final F<X, F> f;
+public class Cache<X, R> {
+    public final F<X, R> f;
     private X _lastX;
-    private F _lastF;
-    public F applyX(X x) {
-        ERROR: Unknown if(((<Cache#C<X#G, F#G>>self.<emp>_lastX\(§X#G§)?\ != none<§X#G§>) && (<Cache#C<X#G, F#G>>self.<emp>_lastX\(§X#G§)?\ == <l>x\§X#G§\))) return <Cache#C<X#G, F#G>>self.<emp>_lastF\(§F#G§)?\.get
-else {
-    (<Cache#C<X#G, F#G>>self.<emp>_lastX\(§X#G§)?\ = some(<l>x\§X#G§\)\§(X#G)?§\)
-    (<Cache#C<X#G, F#G>>self.<emp>_lastF\(§F#G§)?\ = some(<Cache#C<X#G, F#G>>self.<eIU>f\§X#G§ -> §F#G§\.<d>apply( = <l>x\§X#G§\)\§F#G§\)\§(F#G)?§\)
-    return <Cache#C<X#G, F#G>>self.<emp>_lastF\(§F#G§)?\.get
-};
+    private R _lastF;
+    public R applyX(X x) {
+        if(this._lastX != null && this._lastX.equals(x)) {
+            if(this._lastF == null) {
+                throw new RuntimeException("Not null");
+            } else {
+                return this._lastF;
+            }
+        } else {
+            this._lastX = x;
+            this._lastF = this.f.apply(x);
+            if(this._lastF == null) {
+                throw new RuntimeException("Not null");
+            } else {
+                return this._lastF;
+            }
+        }
     }
-    public Cache(F<X, F> f) {
+    public Cache(F<X, R> f) {
     }
 }

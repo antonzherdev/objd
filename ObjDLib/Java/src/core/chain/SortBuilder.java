@@ -4,31 +4,31 @@ public class SortBuilder<A> {
     public final Chain<A> chain;
     private final MArray<F2<A, A, Integer>> functions = new MArray<F2<A, A, Integer>>();
     public SortBuilder<A> ascBy(F<A, B> by) {
-        functions.appendItem(new F2<A, A, Integer>() {
+        this.functions.appendItem(new F2<A, A, Integer>() {
             @Override
-            public Integer f(A x,A y) {
+            public Integer apply(A x,A y) {
                 return by.apply(x).compareTo(by.apply(y));
             }
         });
-        return ERROR: Unknown <SortBuilder#C<A#G>>self;
+        return this;
     }
     public SortBuilder<A> descBy(F<A, B> by) {
-        functions.appendItem(new F2<A, A, Integer>() {
+        this.functions.appendItem(new F2<A, A, Integer>() {
             @Override
-            public Integer f(A x,A y) {
+            public Integer apply(A x,A y) {
                 return by.apply(y).compareTo(by.apply(x));
             }
         });
-        return ERROR: Unknown <SortBuilder#C<A#G>>self;
+        return this;
     }
     public SortBuilder<A> andF(F2<A, A, Integer> f) {
-        functions.appendItem(f);
-        return ERROR: Unknown <SortBuilder#C<A#G>>self;
+        this.functions.appendItem(f);
+        return this;
     }
     public Chain<A> endSort() {
-        return chain.sort(new F2<A, A, Integer>() {
+        return this.chain.sort(new F2<A, A, Integer>() {
             @Override
-            public Integer f(A x,A y) {
+            public Integer apply(A x,A y) {
                 ERROR: Unknown local var ret : int = 0;
                 ERROR: Unknown local i : Iterator#T<§^(A#G, A#G) -> int§> = <SortBuilder#C<A#G>>self.<ep>functions\MArray#C<§^(A#G, A#G) -> int§>\.<rdIa>iterator\Iterator#T<§^(A#G, A#G) -> int§>\;
                 ERROR: Unknown while(((<lm>ret\int\ == 0) && <l>i\Iterator#T<§^(A#G, A#G) -> int§>\.<dIa>hasNext\bool\)) {

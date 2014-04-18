@@ -8,7 +8,7 @@ public class EmptyIterator<T> implements Iterator<T> {
     }
     @Override
     public T next() {
-        ERROR: Unknown throw "Iterator is empty";
+        throw new RuntimeException("Iterator is empty");
     }
     public EmptyIterator() {
     }

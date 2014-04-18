@@ -5,7 +5,7 @@ public class PArrayIterator<T> implements Iterator<T> {
     private int i = ERROR: Unknown 0;
     @Override
     public boolean hasNext() {
-        return ERROR: Unknown (<PArrayIterator#C<T#G>>self.<emp>i\int\ < <PArrayIterator#C<T#G>>self.<eIU>array\PArray#C<§T#G§>\.<eIUo>count\uint\);
+        return this.i < this.array.count;
     }
     @Override
     public T next() {

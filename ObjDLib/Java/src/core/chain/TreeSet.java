@@ -3,32 +3,32 @@ package core.chain;
 public class TreeSet<T> implements Set<T> {
     public final TreeMap<T, Object> map;
     public T higherThanItem(T item) {
-        return map.higherKeyThanKey(item);
+        return this.map.higherKeyThanKey(item);
     }
     public T lowerThanItem(T item) {
-        return map.lowerKeyThanKey(item);
+        return this.map.lowerKeyThanKey(item);
     }
     @Override
     public int count() {
-        return map.count();
+        return this.map.count();
     }
     @Override
     public Iterator<T> iterator() {
-        return map.keys().iterator();
+        return this.map.keys().iterator();
     }
     public Iterator<T> iteratorHigherThanItem(T item) {
-        return map.keys().iteratorHigherThanKey(item);
+        return this.map.keys().iteratorHigherThanKey(item);
     }
     @Override
     public T head() {
-        return map.firstKey();
+        return this.map.firstKey();
     }
     public T last() {
-        return map.lastKey();
+        return this.map.lastKey();
     }
     @Override
     public boolean containsItem(T item) {
-        return map.containsKey(item);
+        return this.map.containsKey(item);
     }
     public TreeSet(TreeMap<T, Object> map) {
     }
@@ -57,7 +57,7 @@ public class TreeSet<T> implements Set<T> {
     public void forEach(P<T> each) {
         goOn(new F<T, Boolean>() {
             @Override
-            public Boolean f(T item) {
+            public Boolean apply(T item) {
                 each.apply(item);
                 return ERROR: Unknown True;
             }
@@ -66,10 +66,10 @@ public class TreeSet<T> implements Set<T> {
     public void parForEach(P<T> each) {
         goOn(new F<T, Boolean>() {
             @Override
-            public Boolean f(T item) {
+            public Boolean apply(T item) {
                 DispatchQueue().default.asyncF(new P0() {
                     @Override
-                    public void f() {
+                    public void apply() {
                         each.apply(item);
                     }
                 });
@@ -78,18 +78,19 @@ public class TreeSet<T> implements Set<T> {
         });
     }
     public Chain<T> chain() {
-        return Chain().chainWithCollection<T>(ERROR: Unknown <Traversable#T<T#G>>self);
+        return Chain().chainWithCollection<T>(this);
     }
     public T findWhere(F<T, Boolean> where) {
         ERROR: Unknown local var ret : (T#G)? = none<T#G>;
         goOn(new F<T, Boolean>() {
             @Override
-            public Boolean f(T x) {
-                ERROR: Unknown if(<l>where\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\) {
-    (<lm>ret\(§T#G§)?\ = some(<l>x\§T#G§\)\§(T#G)?§\)
-    return False
-}
-else return True;
+            public Boolean apply(T x) {
+                if(where.apply(x)) {
+                    ret = x;
+                    return ERROR: Unknown False;
+                } else {
+                    return ERROR: Unknown True;
+                }
             }
         });
         return ret;
@@ -98,12 +99,13 @@ else return True;
         ERROR: Unknown local var ret : bool = False;
         goOn(new F<T, Boolean>() {
             @Override
-            public Boolean f(T x) {
-                ERROR: Unknown if(<l>where\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\) {
-    (<lm>ret\bool\ = True)
-    return False
-}
-else return True;
+            public Boolean apply(T x) {
+                if(where.apply(x)) {
+                    ret = ERROR: Unknown True;
+                    return ERROR: Unknown False;
+                } else {
+                    return ERROR: Unknown True;
+                }
             }
         });
         return ret;
@@ -112,12 +114,13 @@ else return True;
         ERROR: Unknown local var ret : bool = True;
         goOn(new F<T, Boolean>() {
             @Override
-            public Boolean f(T x) {
-                ERROR: Unknown if(!(<l>confirm\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\)) {
-    (<lm>ret\bool\ = False)
-    return False
-}
-else return True;
+            public Boolean apply(T x) {
+                if(ERROR: Unknown !(<l>confirm\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\)) {
+                    ret = ERROR: Unknown False;
+                    return ERROR: Unknown False;
+                } else {
+                    return ERROR: Unknown True;
+                }
             }
         });
         return ret;
@@ -125,7 +128,7 @@ else return True;
     public C convertWithBuilder(Builder<T, C> builder) {
         forEach(new P<T>() {
             @Override
-            public void f(T x) {
+            public void apply(T x) {
                 builder.appendItem(x);
             }
         });

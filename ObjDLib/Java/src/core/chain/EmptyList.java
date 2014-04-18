@@ -8,11 +8,11 @@ public class EmptyList<T> extends ImList<T> {
     }
     @Override
     public T head() {
-        return ERROR: Unknown none<T#G>;
+        return null;
     }
     @Override
     public ImList<T> tail() {
-        return ERROR: Unknown <EmptyList#C<T#G>>self;
+        return this;
     }
     @Override
     public boolean isEmpty() {
@@ -20,11 +20,11 @@ public class EmptyList<T> extends ImList<T> {
     }
     @Override
     public ImList<T> filterF(F<T, Boolean> f) {
-        return ERROR: Unknown <EmptyList#C<T#G>>self;
+        return this;
     }
     @Override
     public ImList<T> reverse() {
-        return ERROR: Unknown <EmptyList#C<T#G>>self;
+        return this;
     }
     @Override
     public void forEach(P<T> each) {

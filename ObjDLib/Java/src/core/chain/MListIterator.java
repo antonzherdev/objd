@@ -6,21 +6,41 @@ public class MListIterator<T> implements MIterator<T> {
     public MListItem<T> item;
     @Override
     public boolean hasNext() {
-        return ERROR: Unknown (<MListIterator#C<T#G>>self.<eIm>item\(^MListItem#C<§T#G§>)?\ != none<^MListItem#C<§T#G§>>);
+        return this.item != null;
     }
     @Override
     public T next() {
-        ERROR: Unknown (<MListIterator#C<T#G>>self.<emp>prev\(^MListItem#C<§T#G§>)?\ = <MListIterator#C<T#G>>self.<eIm>item\(^MListItem#C<§T#G§>)?\);
-        ERROR: Unknown (<MListIterator#C<T#G>>self.<eIm>item\(^MListItem#C<§T#G§>)?\ = <MListIterator#C<T#G>>self.<eIm>item\(^MListItem#C<§T#G§>)?\.get.<eIm>next\(^MListItem#C<§T#G§>)?\);
-        return ERROR: Unknown <MListIterator#C<T#G>>self.<emp>prev\(^MListItem#C<§T#G§>)?\.get.data;
+        this.prev = this.item;
+        if(this.item == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            this.item;
+        }
+        this.item = .next;
+        if(this.prev == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            this.prev;
+        }
+        return .data;
     }
     @Override
     public void remove() {
-        list.removeListItem(ERROR: Unknown <MListIterator#C<T#G>>self.<emp>prev\(^MListItem#C<§T#G§>)?\.get);
+        if(this.prev == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            this.prev;
+        }
+        this.list.removeListItem();
     }
     @Override
     public void setValue(T value) {
-        ERROR: Unknown (<MListIterator#C<T#G>>self.<emp>prev\(^MListItem#C<§T#G§>)?\.get.<eIUm>data\§T#G§\ = <l>value\§T#G§\);
+        if(this.prev == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            this.prev;
+        }
+        .data = value;
     }
     public MListIterator(MList<T> list) {
     }

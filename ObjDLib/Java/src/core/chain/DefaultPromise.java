@@ -5,8 +5,11 @@ public class DefaultPromise<T> extends Promise<T> {
     @Override
     public Try<T> result() {
         ERROR: Unknown local v : any = <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<dI>value\§^any§\;
-        ERROR: Unknown if(<l>v\any\.is<Try#C<T#G>>) return some(<l>v\any\.cast<Try#C<T#G>>)\(^Try#C<T#G>)?\
-else return none<^Try#C<T#G>>;
+        if(v.ERROR: Unknown is<Try#C<T#G>>) {
+            return v.ERROR: Unknown cast<Try#C<T#G>>;
+        } else {
+            return null;
+        }
     }
     @Override
     public boolean completeValue(Try<T> value) {
@@ -28,7 +31,7 @@ else {
     }
     @Override
     public boolean failureReason(Object reason) {
-        return completeValue(new Failure<T>(result()));
+        return completeValue(new Failure<T>(this.result()));
     }
     @Override
     public void onCompleteF(P<Try<T>> f) {

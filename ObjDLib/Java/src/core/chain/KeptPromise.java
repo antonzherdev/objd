@@ -4,19 +4,19 @@ public class KeptPromise<T> extends Promise<T> {
     public final Try<T> value;
     @Override
     public Try<T> result() {
-        return ERROR: Unknown some(<KeptPromise#C<T#G>>self.<eIU>value\Try#C<§T#G§>\)\(^Try#C<§T#G§>)?\;
+        return this.value;
     }
     @Override
     public void onCompleteF(P<Try<T>> f) {
-        f.apply(value);
+        f.apply(this.value);
     }
     @Override
     public Try<T> waitResultPeriod(float period) {
-        return ERROR: Unknown some(<KeptPromise#C<T#G>>self.<eIU>value\Try#C<§T#G§>\)\(^Try#C<§T#G§>)?\;
+        return this.value;
     }
     @Override
     public Try<T> waitResult() {
-        return value;
+        return this.value;
     }
     @Override
     public boolean completeValue(Try<T> value) {

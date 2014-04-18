@@ -10,9 +10,12 @@ public class Zip3Link<T, A, B, R> implements ChainLink<T, R> {
         ERROR: Unknown local bi : Iterator#T<§B#G§> = <Zip3Link#C<T#G, A#G, B#G, R#G>>self.<eIU>b\Iterable#T<§B#G§>\.<dIa>iterator\Iterator#T<§B#G§>\;
         return Yield().decorateBaseYield<A>(yield, new F<A, Integer>() {
             @Override
-            public Integer f(A item) {
-                ERROR: Unknown if((!(<l>ai\Iterator#T<§A#G§>\.<dIa>hasNext\bool\) || !(<l>bi\Iterator#T<§B#G§>\.<dIa>hasNext\bool\))) return 1
-else return <l>yield\Yield#C<§R#G§>\.<dI>yield(item = <Zip3Link#C<T#G, A#G, B#G, R#G>>self.<eIU>f\(§T#G§, §A#G§, §B#G§) -> §R#G§\.<d>apply( = <l>item\§A#G§\,  = <l>ai\Iterator#T<§A#G§>\.<dIa>next\§A#G§\,  = <l>bi\Iterator#T<§B#G§>\.<dIa>next\§B#G§\)\§R#G§\)\int\;
+            public Integer apply(A item) {
+                if(ERROR: Unknown !(<l>ai\Iterator#T<§A#G§>\.<dIa>hasNext\bool\) || ERROR: Unknown !(<l>bi\Iterator#T<§B#G§>\.<dIa>hasNext\bool\)) {
+                    return ERROR: Unknown 1;
+                } else {
+                    return yield.yieldItem(Zip3Link.this.f.apply(item, ai.next(), bi.next()));
+                }
             }
         });
     }

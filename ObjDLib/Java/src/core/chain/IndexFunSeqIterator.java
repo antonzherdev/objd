@@ -6,7 +6,7 @@ public class IndexFunSeqIterator<T> implements Iterator<T> {
     private int i = ERROR: Unknown 0.cast<uint>;
     @Override
     public boolean hasNext() {
-        return ERROR: Unknown (<IndexFunSeqIterator#C<T#G>>self.<emp>i\uint\ < <IndexFunSeqIterator#C<T#G>>self.<eIU>count\uint\);
+        return this.i < this.count;
     }
     @Override
     public T next() {

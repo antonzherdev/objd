@@ -3,25 +3,29 @@ package core.chain;
 public class QueueIterator<T> implements Iterator<T> {
     public final ImList<T> in;
     public final ImList<T> out;
-    private Iterator<T> i = in.iterator();
+    private Iterator<T> i = this.in.iterator();
     private boolean isIn = ERROR: Unknown True;
     @Override
     public boolean hasNext() {
-        ERROR: Unknown if(<QueueIterator#C<T#G>>self.<emp>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) return True
-else if(<QueueIterator#C<T#G>>self.<emp>isIn\bool\) {
-    (<QueueIterator#C<T#G>>self.<emp>isIn\bool\ = False)
-    (<QueueIterator#C<T#G>>self.<emp>i\Iterator#T<§T#G§>\ = <QueueIterator#C<T#G>>self.<eIU>out\ImList#C<§T#G§>\.<dIa>reverse\ImList#C<§T#G§>\.<dIo>iterator\Iterator#T<§T#G§>\)
-    return <QueueIterator#C<T#G>>self.<emp>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\
-}
-else return False;
+        if(this.i.hasNext()) {
+            return ERROR: Unknown True;
+        } else {
+            if(this.isIn) {
+                this.isIn = ERROR: Unknown False;
+                this.i = this.out.reverse().iterator();
+                return this.i.hasNext();
+            } else {
+                return ERROR: Unknown False;
+            }
+        }
     }
     @Override
     public T next() {
-        ERROR: Unknown if((!(<QueueIterator#C<T#G>>self.<emp>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) && <QueueIterator#C<T#G>>self.<emp>isIn\bool\)) {
-    (<QueueIterator#C<T#G>>self.<emp>isIn\bool\ = False)
-    (<QueueIterator#C<T#G>>self.<emp>i\Iterator#T<§T#G§>\ = <QueueIterator#C<T#G>>self.<eIU>out\ImList#C<§T#G§>\.<dIa>reverse\ImList#C<§T#G§>\.<dIo>iterator\Iterator#T<§T#G§>\)
-};
-        return i.next();
+        if(ERROR: Unknown !(<QueueIterator#C<T#G>>self.<emp>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) && this.isIn) {
+            this.isIn = ERROR: Unknown False;
+            this.i = this.out.reverse().iterator();
+        }
+        return this.i.next();
     }
     public QueueIterator(ImList<T> in,ImList<T> out) {
     }

@@ -6,21 +6,39 @@ public class ShuffleLink<T> implements ChainLink<T, T> {
     public Yield<T> buildYield(Yield<T> yield) {
         return Yield().decorateBaseBeginYieldEnd<T>(yield, new F<Integer, Integer>() {
             @Override
-            public Integer f(Integer size) {
-                ERROR: Unknown (<ShuffleLink#C<T#G>>self.<emp>_array\(^MArray#C<§T#G§>)?\ = some(<to>MArray\MArray#C.class\.<dIt>apply(capacity = <l>size\uint\)\MArray#C<§T#G§>\)\(^MArray#C<§T#G§>)?\);
+            public Integer apply(Integer size) {
+                ShuffleLink.this._array = MArray().applyCapacity<T>(size);
                 return ERROR: Unknown 0;
             }
         }, new F<T, Integer>() {
             @Override
-            public Integer f(T item) {
-                ERROR: Unknown <ShuffleLink#C<T#G>>self.<emp>_array\(^MArray#C<§T#G§>)?\.get.insertIndexItem(UInt().rndMax(ERROR: Unknown <ShuffleLink#C<T#G>>self.<emp>_array\(^MArray#C<§T#G§>)?\.get.count()), item);
+            public Integer apply(T item) {
+                if(ShuffleLink.this._array == null) {
+                    throw new RuntimeException("Not null");
+                } else {
+                    ShuffleLink.this._array;
+                }
+                if(ShuffleLink.this._array == null) {
+                    throw new RuntimeException("Not null");
+                } else {
+                    ShuffleLink.this._array;
+                }
+                .insertIndexItem(UInt().rndMax(.count()), item);
                 return ERROR: Unknown 0;
             }
         }, new F<Integer, Integer>() {
             @Override
-            public Integer f(Integer r) {
-                ERROR: Unknown if((<l>yield\Yield#C<§T#G§>\.<dI>yieldAll( = <ShuffleLink#C<T#G>>self.<emp>_array\(^MArray#C<§T#G§>)?\.get)\int\ == 1)) return 1
-else return <l>r\int\;
+            public Integer apply(Integer r) {
+                if(ShuffleLink.this._array == null) {
+                    throw new RuntimeException("Not null");
+                } else {
+                    ShuffleLink.this._array;
+                }
+                if(yield.yieldAll().equals(ERROR: Unknown 1)) {
+                    return ERROR: Unknown 1;
+                } else {
+                    return r;
+                }
             }
         });
     }

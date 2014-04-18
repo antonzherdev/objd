@@ -2,6 +2,7 @@ module Java.Generator (
 	toJava
 )where
 
+import Control.Monad.Writer
 import Ex.String
 import Data.Maybe
 import ObjD.Link as D
@@ -112,14 +113,14 @@ genDef d =
  				J.defMods = mods ++ [J.DefModFinal | D.DefModMutable `notElem` D.defMods d],
  				J.defName = D.defName d,
  				J.defTp = genTp $ D.defType d,
- 				J.defExp = genExp $ D.defBody d
+ 				J.defExp = fst $ runWriter $ genExp defaultEnv $ D.defBody d
 	 		}
  		else if D.isConstructor d then
  			J.Constructor {
  				J.defAnnotations = [],
  				J.defMods = mods,
  				J.defPars = map genPar $ D.defPars d,
- 				J.defStms = getStms $ D.defBody d 
+ 				J.defStms = getStms defaultEnv $ D.defBody d 
  			}
  		else 
  			J.Def {
@@ -128,7 +129,7 @@ genDef d =
  				J.defName = fullDefName d,
  				J.defTp = genTp $ D.defType d,
  				J.defPars = map genPar $ D.defPars d,
- 				J.defStms = getStms $ D.defBody d
+ 				J.defStms = getStms defaultEnv $ D.defBody d
  			}
 
 genPar :: D.Def -> J.DefPar
@@ -138,38 +139,110 @@ genPar D.Def{D.defName = nm, D.defType = tp} = (genTp tp, nm)
  - Stm
  -----------------------------------------------------------------------------------------------------------------------------------------------}
 
+data Env = Env {envInnerClass :: Bool}
+defaultEnv :: Env
+defaultEnv = Env{envInnerClass = False}
 
-genExp :: D.Exp -> J.Exp
-genExp D.Nop = J.Nop
-genExp (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
-	| D.DefModConstructor `elem` D.defMods constr = J.New [] $ J.Call (D.defName objDef) (map genTp gens) (map (genExp . snd) pars)
-genExp (D.Dot (D.Self _) r) = genExp r
-genExp (D.Dot l r) = J.Dot (genExp l) (genExp r)
-genExp (D.Call d _ [] []) 
-	| D.DefModField `elem` D.defMods d || D.DefModLocal `elem` D.defMods d = J.Ref $ D.defName d
-genExp (D.Call d _ pars gens) = J.Call (fullDefName d) (map genTp gens) (map (genExp . snd) pars)
-genExp (D.Lambda pars e dtp) = let 
+
+genExp :: Env -> D.Exp -> Writer [J.Stm] J.Exp
+genExp _ D.Nop = return J.Nop
+genExp _ (D.None _) = return J.Null
+genExp _ D.Nil = return J.Null
+genExp _ (D.StringConst s) = return $ J.StringConst s
+genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
+	| D.DefModConstructor `elem` D.defMods constr = do
+		pars' <- mapM ((genExp env) . snd) pars
+		return $ J.New [] $ J.Call (D.defName objDef) (map genTp gens) pars'
+genExp env (D.Dot (Self _) r@(D.Call _ _ pars _) ) 
+	| not (null pars) = genExp env r
+genExp env (D.Dot l r) = do
+	l' <- genExp env l
+	r' <- genExp env r
+	return $ J.Dot l' r'
+genExp _ (D.Call d _ [] []) 
+	| D.DefModField `elem` D.defMods d || D.DefModLocal `elem` D.defMods d = return $ J.Ref $ D.defName d
+genExp env (D.Call d _ pars gens) = do
+	pars' <- mapM ((genExp env) . snd) pars
+	return $ J.Call (fullDefName d) (map genTp gens) pars'
+genExp env (D.Lambda pars e dtp) = let 
 	def = J.Def {
 		J.defAnnotations = [overrideAnnotation],
 		J.defMods = [J.DefModVisability J.Public],
-		J.defName = "f",
+		J.defName = "apply",
 		J.defTp = if dtp == D.TPVoid then J.tpRef "void" else genTp (D.wrapGeneric dtp),
 		J.defPars = map funPar pars,
-		J.defStms = getStms e
+		J.defStms = getStms env{envInnerClass = True} e
 	}
 	funPar (nm, tp) = (genTp (D.wrapGeneric tp), nm)
 	clNm = (if dtp == D.TPVoid then "P" else "F") ++ if length pars == 1 then "" else show (length pars)
-	in J.New [def] $ J.Call clNm (map (genTp . D.wrapGeneric . snd) pars ++ [genTp (D.wrapGeneric dtp) | dtp /= D.TPVoid]) []
-genExp e = J.ExpError $ "Unknown " ++ show e
+	in return $ J.New [def] $ J.Call clNm (map (genTp . D.wrapGeneric . snd) pars ++ [genTp (D.wrapGeneric dtp) | dtp /= D.TPVoid]) []
+genExp Env{envInnerClass = False} (D.Self _) = return J.This
+genExp Env{envInnerClass = True} (D.Self tp) = return  $ J.Dot (J.Ref $ D.dataTypeClassName tp) J.This
+genExp env (D.MathOp tp l r) = do
+	l' <- genExp env l
+	r' <- genExp env r
+	return $ J.MathOp tp l' r'
+genExp env (D.BoolOp tp l r) = do
+	l' <- genExp env l
+	r' <- genExp env r
+	let
+		bool = J.BoolOp tp l' r'
+		eq = case (l, r) of
+			(D.None _, _) -> bool
+			(_, D.None _) -> bool
+			_ -> case (D.exprDataType l, D.exprDataType r) of
+				_ -> J.Dot l' (J.Call "equals" [] [r'])
+		in return $ case tp of 
+			ExactEq -> J.BoolOp Eq l' r'
+			ExactNotEq -> J.BoolOp NotEq l' r'
+			Eq -> eq
+			NotEq -> eq
+			_ -> bool
+genExp env (NonOpt _ _ e) = genExp env e
+genExp env e@(D.If cond t f) = do
+	cond' <- genExp env cond
+	let 
+		(t', tstms) = runWriter $ genExp env t
+		(f', fstms) = runWriter $ genExp env f
+		in if t' == J.Nop || f' == J.Nop then (do 
+			tell $ genStm env e
+			return J.Nop
+		) else (do 
+			tell tstms
+			tell fstms
+			return $ J.InlineIf cond' t' f'
+		)
+genExp env e@D.Throw{} = do 
+	tell $ genStm env e 
+	return J.Nop
+genExp env (D.Some _ e) = genExp env e
+genExp _ e = return $ J.ExpError $ "Unknown " ++ show e
 
-getStms :: D.Exp -> [J.Stm]
-getStms e = case e of
-	D.Braces bs -> concatMap genStm bs 
-	b -> genStm b
 
-genStm :: D.Exp -> [J.Stm]
-genStm D.Nop = []
-genStm (D.Braces bs) = [J.Braces $ concatMap genStm bs]
-genStm (D.Return _ e) = [J.Return $ genExp e]
-genStm e = [J.Stm $ genExp e]
+genExpStm :: Env -> D.Exp -> (J.Exp -> J.Stm) -> [J.Stm]
+genExpStm env e f = let 
+		(e', stms) = runWriter $ genExp env e 
+		addFs ss = mapLast addF ss
+		addF (J.If cond tt ff) = J.If cond (addFs tt) (addFs ff)
+		addF (J.Stm ee) = f ee
+		addF (J.Braces ee) = J.Braces $ addFs ee
+		addF ee = ee
+	in if e' == J.Nop then addFs stms else stms ++ [f e']
+
+getStms :: Env -> D.Exp -> [J.Stm]
+getStms env e = case e of
+	D.Braces bs -> concatMap (genStm env) bs 
+	b -> genStm env b
+
+genStm :: Env -> D.Exp -> [J.Stm]
+genStm _ D.Nop = []
+genStm env (D.Braces bs) = [J.Braces $ concatMap (genStm env) bs]
+genStm env (D.Return _ e) = genExpStm env e J.Return 
+genStm env (D.If cond t f) = genExpStm env cond (\cond' -> J.If cond' (getStms env t) (getStms env f))
+genStm env (D.Throw e) = genExpStm env e (\e' -> J.Throw $ J.New [] $ J.Call "RuntimeException" [] [e'])
+genStm env (D.Set tp l r) = let
+	(l', lstm) = runWriter $ genExp env l
+	(r', rstm) = runWriter $ genExp env r
+	in lstm ++ rstm ++ [J.Set tp l' r']
+genStm env e = genExpStm env e J.Stm 
 

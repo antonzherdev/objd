@@ -5,15 +5,24 @@ public class Lazy<T> {
     private T _value;
     private boolean _calculated = ERROR: Unknown False;
     public boolean isCalculated() {
-        return _calculated;
+        return this._calculated;
     }
     public T get() {
-        ERROR: Unknown if(<Lazy#C<T#G>>self.<emp>_calculated\bool\) return <Lazy#C<T#G>>self.<emp>_value\(§T#G§)?\.get
-else {
-    (<Lazy#C<T#G>>self.<emp>_value\(§T#G§)?\ = some(<Lazy#C<T#G>>self.<eIU>f\void -> §T#G§\())\§(T#G)?§\)
-    (<Lazy#C<T#G>>self.<emp>_calculated\bool\ = True)
-    return <Lazy#C<T#G>>self.<emp>_value\(§T#G§)?\.get
-};
+        if(this._calculated) {
+            if(this._value == null) {
+                throw new RuntimeException("Not null");
+            } else {
+                return this._value;
+            }
+        } else {
+            this._value = ERROR: Unknown <Lazy#C<T#G>>self.<eIU>f\void -> §T#G§\();
+            this._calculated = ERROR: Unknown True;
+            if(this._value == null) {
+                throw new RuntimeException("Not null");
+            } else {
+                return this._value;
+            }
+        }
     }
     public Lazy(F<Void, T> f) {
     }

@@ -3,10 +3,10 @@ package core.chain;
 public class FilledList<T> extends ImList<T> {
     public final T _head;
     public final ImList<T> tail;
-    public final int count = ERROR: Unknown (<FilledList#C<T#G>>self.<eIUo>tail\ImList#C<§T#G§>\.<rdI>count\uint\ + 1);
+    public final int count = this.tail.count() + ERROR: Unknown 1;
     @Override
     public T head() {
-        return ERROR: Unknown some(<FilledList#C<T#G>>self.<eIU>_head\§T#G§\)\§(T#G)?§\;
+        return this._head;
     }
     @Override
     public boolean isEmpty() {
@@ -14,8 +14,11 @@ public class FilledList<T> extends ImList<T> {
     }
     @Override
     public ImList<T> filterF(F<T, Boolean> f) {
-        ERROR: Unknown if(<l>f\§T#G§ -> bool\.<d>apply( = <FilledList#C<T#G>>self.<eIU>_head\§T#G§\)\bool\) return <to>FilledList\FilledList#C.class\.<tcI>apply(_head = <FilledList#C<T#G>>self.<eIU>_head\§T#G§\, tail = <FilledList#C<T#G>>self.<eIUo>tail\ImList#C<§T#G§>\.<dIa>filter(f = <l>f\§T#G§ -> bool\)\ImList#C<§T#G§>\)\FilledList#C<§T#G§>\.cast<ImList#C<§T#G§>>
-else return <FilledList#C<T#G>>self.<eIUo>tail\ImList#C<§T#G§>\.<dIa>filter(f = <l>f\§T#G§ -> bool\)\ImList#C<§T#G§>\;
+        if(f.apply(this._head)) {
+            return ERROR: Unknown <to>FilledList\FilledList#C.class\.<tcI>apply(_head = <FilledList#C<T#G>>self.<eIU>_head\§T#G§\, tail = <FilledList#C<T#G>>self.<eIUo>tail\ImList#C<§T#G§>\.<dIa>filter(f = <l>f\§T#G§ -> bool\)\ImList#C<§T#G§>\)\FilledList#C<§T#G§>\.cast<ImList#C<§T#G§>>;
+        } else {
+            return this.tail.filterF(f);
+        }
     }
     @Override
     public ImList<T> reverse() {

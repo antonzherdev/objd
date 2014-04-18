@@ -11,40 +11,40 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
     }
     @Override
     public MIterator<T> mutableIterator() {
-        return mmap.keys.mutableIterator();
+        return this.mmap.keys.mutableIterator();
     }
     @Override
     public void appendItem(T item) {
-        mmap.setKeyValue(item, obj);
+        this.mmap.setKeyValue(item, this.obj);
     }
     @Override
     public boolean removeItem(T item) {
-        return ERROR: Unknown (<MTreeSet#C<T#G>>self.<eIU>mmap\MTreeMap#C<§T#G§, ^Object#C>\.<dIo>removeFor(key = <l>item\§T#G§\)\(^Object#C)?\ != none<^Object#C>);
+        return this.mmap.removeForKey(item) != null;
     }
     @Override
     public void clear() {
-        mmap.clear();
+        this.mmap.clear();
     }
     public void addAllObjects(Traversable<T> objects) {
         objects.forEach(new P<T>() {
             @Override
-            public void f(T _) {
+            public void apply(T _) {
                 appendItem(_);
             }
         });
     }
     public MTreeSet<T> reorder() {
         ERROR: Unknown local ret : MTreeSet#C<§T#G§> = <to>MTreeSet\MTreeSet#C.class\.<tcI>apply(mmap = <to>MTreeMap\MTreeMap#C.class\.<tcI>apply(comparator = <MTreeSet#C<T#G>>self.<eIU>mmap\MTreeMap#C<§T#G§, ^Object#C>\.<reIU>comparator\(§T#G§, §T#G§) -> int\)\MTreeMap#C<§T#G§, §^Object#C§>\)\MTreeSet#C<§T#G§>\;
-        ret.addAllObjects(ERROR: Unknown <MTreeSet#C<T#G>>self);
+        ret.addAllObjects(this);
         return ret;
     }
     @Override
     public ImTreeSet<T> im() {
-        return new ImTreeSet<T>(mmap.im());
+        return new ImTreeSet<T>(this.mmap.im());
     }
     @Override
     public ImTreeSet<T> imCopy() {
-        return new ImTreeSet<T>(mmap.imCopy());
+        return new ImTreeSet<T>(this.mmap.imCopy());
     }
     public MTreeSet(MTreeMap<T, Object> mmap) {
     }

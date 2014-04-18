@@ -5,13 +5,16 @@ public class PairIterator<T> implements Iterator<T> {
     private int state = ERROR: Unknown 0;
     @Override
     public boolean hasNext() {
-        return ERROR: Unknown (<PairIterator#C<T#G>>self.<emp>state\int\ < 2);
+        return this.state < ERROR: Unknown 2;
     }
     @Override
     public T next() {
         ERROR: Unknown <PairIterator#C<T#G>>self.<emp>state\int\++;
-        ERROR: Unknown if((<PairIterator#C<T#G>>self.<emp>state\int\ == 1)) return <PairIterator#C<T#G>>self.<eIU>pair\Pair#C<§T#G§>\.<eIU>a\§T#G§\
-else return <PairIterator#C<T#G>>self.<eIU>pair\Pair#C<§T#G§>\.<eIU>b\§T#G§\;
+        if(this.state.equals(ERROR: Unknown 1)) {
+            return this.pair.a;
+        } else {
+            return this.pair.b;
+        }
     }
     public PairIterator(Pair<T> pair) {
     }

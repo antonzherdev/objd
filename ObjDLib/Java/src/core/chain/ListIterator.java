@@ -9,8 +9,12 @@ public class ListIterator<T> implements Iterator<T> {
     @Override
     public T next() {
         ERROR: Unknown local ret : (§T#G§)? = <ListIterator#C<T#G>>self.<eIm>list\ImList#C<§T#G§>\.<rdIo>head\(§T#G§)?\;
-        ERROR: Unknown (<ListIterator#C<T#G>>self.<eIm>list\ImList#C<§T#G§>\ = <ListIterator#C<T#G>>self.<eIm>list\ImList#C<§T#G§>\.<dIoa>tail\ImList#C<§T#G§>\);
-        return ERROR: Unknown <l>ret\(§T#G§)?\.get;
+        this.list = this.list.tail();
+        if(ret == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            return ret;
+        }
     }
     public ListIterator() {
     }

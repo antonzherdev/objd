@@ -53,7 +53,7 @@ instance Show Generic where
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - DataType
  -----------------------------------------------------------------------------------------------------------------------------------------------}
-data TP = TPRef [TP] String | TPArr TP Int | TPAnyGeneric
+data TP = TPRef [TP] String | TPArr TP Int | TPAnyGeneric deriving (Eq)
 tpRef :: String -> TP
 tpRef = TPRef []
 instance Show TP where
@@ -68,7 +68,7 @@ instance Show TP where
 data Def = 
 	  Def{defAnnotations :: [DefAnnotation], defMods :: [DefMod], defTp :: TP, defName :: String, defPars :: [DefPar], defStms :: [Stm]}
 	| Constructor {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defPars :: [DefPar], defStms :: [Stm]}
-	| Field {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defTp :: TP, defName :: String, defExp :: Exp}
+	| Field {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defTp :: TP, defName :: String, defExp :: Exp} deriving (Eq)
 type DefPar = (TP, String)
 data DefMod = DefModStatic | DefModAbstract | DefModFinal | DefModOverride | DefModVisability Visibility deriving (Eq)
 
@@ -101,7 +101,7 @@ instance Show DefMod where
 	show DefModOverride = ""
 	show (DefModVisability v) = show v
 
-data DefAnnotation = DefAnnotation String [Exp]
+data DefAnnotation = DefAnnotation String [Exp] deriving (Eq)
 showAnnotation :: DefAnnotation -> [String]
 showAnnotation (DefAnnotation nm []) = ["@" ++ nm]
 showAnnotation (DefAnnotation nm pars) = ["@" ++ nm ++ "("] `glue` (glueAll ", " . map showExp) pars `appp` ")"
@@ -112,23 +112,58 @@ showAnnotation (DefAnnotation nm pars) = ["@" ++ nm ++ "("] `glue` (glueAll ", "
 showStmsInBrackets :: [Stm] -> [String]
 showStmsInBrackets stms = ["{"] ++ (map ind . concatMap showStm) stms ++ ["}"]
 
-data Stm = Stm Exp | Braces [Stm] | Return Exp
+data Stm = Stm Exp | Braces [Stm] | Return Exp | If Exp [Stm] [Stm] | Throw Exp | Set (Maybe MathTp) Exp Exp deriving (Eq)
 
 showStm :: Stm -> [String]
 showStm (Stm Nop) = []
 showStm (Stm e) = showExp e `appp` ";"
 showStm (Return e) = ["return "] `glue` showExp e `appp` ";"
+showStm (Set tp l r) = showExp l `appp` maybe " = " (\t -> " " ++ show t ++ "= ") tp `glue` showExp r `appp` ";"
+showStm (Throw e) = ["throw "] `glue` showExp e `appp` ";"
+showStm (If cond t []) = (["if("] `glue` showExp cond `appp` ") ") `glue` showStmsInBrackets t
+showStm (If cond t f) = (showStm (If cond t []) `appp` " else ") `glue` showStmsInBrackets f 
 showStm (Braces stms) = showStmsInBrackets stms
 
 
-data Exp = Nop | IntConst Int | ExpError String | Call String [TP] [Exp] | New [Def] Exp | Dot Exp Exp | Ref String 
+data Exp = Nop | IntConst Int | ExpError String | Call String [TP] [Exp] | New [Def] Exp | Dot Exp Exp | Ref String | InlineIf Exp Exp Exp | This
+	| BoolOp BoolTp Exp Exp | MathOp MathTp Exp Exp | Null
+	| StringConst String deriving (Eq)
 
 showExp :: Exp -> [String]
 showExp Nop = []
+showExp Null = ["null"]
+showExp This = ["this"]
 showExp (IntConst i) = [show i]
+showExp (StringConst s) = [show s]
 showExp (Ref s) = [s]
 showExp (Call name gens pars) = [name ++ pstrs' "<" ", " ">" gens ++ "("] `glue` (glueAll ", " . map showExp) pars `appp` ")"
 showExp (New [] e) = ["new "] `glue` showExp e
 showExp (New defs e) = (["new "] `glue` showExp e `appp` " {") ++  (map ind . concatMap (showDef (ClassTypeClass, ""))) defs ++ ["}"]
 showExp (Dot l r) = showExp l `appp` "." `glue` showExp r
+showExp (InlineIf cond t f) = ((["("] `glue` showExp cond `appp` ") ? (") `glue` showExp t `appp` ") : (")  `glue` showExp f `appp` ")"
 showExp (ExpError e) = ["ERROR: " ++ e]
+showExp (BoolOp t l r) = (mbb l `appp` (" " ++ show t ++ " ")) `glue` mbb r
+	where 
+		mbb :: Exp -> [String]
+		mbb b@(BoolOp tt _ _) 
+			| needb t tt = ["("] `glue` showExp b `appp` ")"
+			| otherwise = showExp b
+		mbb e = showExp e
+		needb And Or = True
+		needb Or And = True
+		needb _ _ = False
+showExp (MathOp t l r) = (mbb l `appp` (" " ++ show t ++ " ")) `glue` mbb r
+	where 
+		mbb :: Exp -> [String]
+		mbb b@(MathOp tt _ _) 
+			| needb t tt = ["("] `glue` showExp b `appp` ")"
+			| otherwise = showExp b
+		mbb e = showExp e
+		needb Div Plus = True
+		needb Div Minus = True
+		needb Div Mul = True
+		needb Mul Plus = True
+		needb Mul Minus = True
+		needb Minus Minus = True
+		needb _ _ = False
+

@@ -8,57 +8,86 @@ public class FutureEnd<T> {
     private AtomicBool _yielded = new AtomicBool();
     private MArray<T> _array;
     public Future<Seq<T>> future() {
-        return _promise;
+        return this._promise;
     }
     public Yield<Future<T>> yield() {
         ERROR: Unknown local var _i : int = 0;
         return Yield().applyBeginYieldEnd<Future<T>>(new F<Integer, Integer>() {
             @Override
-            public Integer f(Integer size) {
-                ERROR: Unknown (<FutureEnd#C<T#G>>self.<emp>_array\(^MArray#C<§T#G§>)?\ = some(<to>MArray\MArray#C.class\.<dIt>apply(capacity = <l>size\uint\)\MArray#C<§T#G§>\)\(^MArray#C<§T#G§>)?\);
+            public Integer apply(Integer size) {
+                FutureEnd.this._array = MArray().applyCapacity<T>(size);
                 return ERROR: Unknown 0;
             }
         }, new F<Future<T>, Integer>() {
             @Override
-            public Integer f(Future<T> fut) {
-                ERROR: Unknown if(!(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\)) {
-    <FutureEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dI>incrementAndGet\int4\
-    <FutureEnd#C<T#G>>self.<emp>_array\(^MArray#C<§T#G§>)?\.get.<rdIa>append(item = nil)\void\
-    local i : int = <lm>_i\int\
-    <lm>_i\int\++
-    <l>fut\§^Future#C<T#G>§\.<dIa>onComplete(f = tr : Try#C<§T#G§> -> void = if(!(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\)) {
-    if(<l>tr\Try#C<§T#G§>\.<dI>isFailure\bool\) {
-    (<FutureEnd#C<T#G>>self.<emp>_stopped\bool\ = True)
-    <FutureEnd#C<T#G>>self.<ep>_promise\Promise#C<§^Seq#T<T#G>§>\.<dIa>failure(reason = <l>tr\Try#C<§T#G§>\)\bool\
-}
-else if(!(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\)) {
-    <FutureEnd#C<T#G>>self.<emp>_array\(^MArray#C<§T#G§>)?\.get.<rdI>set(index = <l>i\int\.cast<uint>, item = <l>tr\Try#C<§T#G§>\.<dIa>get\§T#G§\)\void\
-    <to>Memory\Memory#C.class\.<dIt>memoryBarrier\void\
-    local r : int4 = <FutureEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dI>decrementAndGet\int4\
-    <to>Memory\Memory#C.class\.<dIt>memoryBarrier\void\
-    if((<FutureEnd#C<T#G>>self.<emp>_ended\bool\ && (<l>r\int4\ == 0))) {
-    <to>Memory\Memory#C.class\.<dIt>memoryBarrier\void\
-    if(!(<FutureEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dI>getAndSet(newValue = True)\bool\)) {
-    <FutureEnd#C<T#G>>self.<ep>_promise\Promise#C<§^Seq#T<T#G>§>\.<dIa>success(value = <FutureEnd#C<T#G>>self.<emp>_array\(^MArray#C<§T#G§>)?\.get)\bool\
-}
-}
-}
-})\void\
-};
-                ERROR: Unknown if(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\) return 1
-else return 0;
+            public Integer apply(Future<T> fut) {
+                if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\)) {
+                    FutureEnd.this._counter.incrementAndGet();
+                    if(FutureEnd.this._array == null) {
+                        throw new RuntimeException("Not null");
+                    } else {
+                        FutureEnd.this._array;
+                    }
+                    .appendItem(null);
+                    ERROR: Unknown local i : int = <lm>_i\int\;
+                    ERROR: Unknown <lm>_i\int\++;
+                    fut.onCompleteF(new P<Try<T>>() {
+                        @Override
+                        public void apply(Try<T> tr) {
+                            if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\)) {
+                                if(tr.isFailure()) {
+                                    FutureEnd.this._stopped = ERROR: Unknown True;
+                                    FutureEnd.this._promise.failureReason(tr);
+                                } else {
+                                    if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\)) {
+                                        if(FutureEnd.this._array == null) {
+                                            throw new RuntimeException("Not null");
+                                        } else {
+                                            FutureEnd.this._array;
+                                        }
+                                        .setIndexItem(ERROR: Unknown <l>i\int\.cast<uint>, tr.get());
+                                        Memory().memoryBarrier();
+                                        ERROR: Unknown local r : int4 = <FutureEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dI>decrementAndGet\int4\;
+                                        Memory().memoryBarrier();
+                                        if(FutureEnd.this._ended && r.equals(ERROR: Unknown 0)) {
+                                            Memory().memoryBarrier();
+                                            if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dI>getAndSet(newValue = True)\bool\)) {
+                                                if(FutureEnd.this._array == null) {
+                                                    throw new RuntimeException("Not null");
+                                                } else {
+                                                    FutureEnd.this._array;
+                                                }
+                                                FutureEnd.this._promise.successValue();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                if(FutureEnd.this._stopped) {
+                    return ERROR: Unknown 1;
+                } else {
+                    return ERROR: Unknown 0;
+                }
             }
         }, new F<Integer, Integer>() {
             @Override
-            public Integer f(Integer res) {
-                ERROR: Unknown (<FutureEnd#C<T#G>>self.<emp>_ended\bool\ = True);
+            public Integer apply(Integer res) {
+                FutureEnd.this._ended = ERROR: Unknown True;
                 Memory().memoryBarrier();
-                ERROR: Unknown if((<FutureEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dI>intValue\int4\ == 0)) {
-    <to>Memory\Memory#C.class\.<dIt>memoryBarrier\void\
-    if(!(<FutureEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dI>getAndSet(newValue = True)\bool\)) {
-    <FutureEnd#C<T#G>>self.<ep>_promise\Promise#C<§^Seq#T<T#G>§>\.<dIa>success(value = <FutureEnd#C<T#G>>self.<emp>_array\(^MArray#C<§T#G§>)?\.get)\bool\
-}
-};
+                if(FutureEnd.this._counter.intValue().equals(ERROR: Unknown 0)) {
+                    Memory().memoryBarrier();
+                    if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dI>getAndSet(newValue = True)\bool\)) {
+                        if(FutureEnd.this._array == null) {
+                            throw new RuntimeException("Not null");
+                        } else {
+                            FutureEnd.this._array;
+                        }
+                        FutureEnd.this._promise.successValue();
+                    }
+                }
                 return res;
             }
         });

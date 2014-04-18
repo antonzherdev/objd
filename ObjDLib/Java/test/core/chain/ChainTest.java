@@ -16,15 +16,15 @@ public class ChainTest extends TestCase {
     public void testFuture() {
         repeatTimesF(ERROR: Unknown 1000.cast<uint>, new P0() {
             @Override
-            public void f() {
+            public void apply() {
                 ERROR: Unknown local arr : [^(^int, ^Promise#C<^int>)] = 0.<dIs>to( = 1000)\Range#C\.<rdI>chain\Chain#C<§^int§>\.<dIu>map( = i : §^int§ -> ^(§^int§, ^Promise#C<§^int§>) = return (<l>i\§^int§\, <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§^int§>\))\Chain#C<§^(§^int§, ^Promise#C<§^int§>)§>\.<dIu>toArray\[§^(§^int§, ^Promise#C<§^int§>)§]\;
                 arr.forEach(new P<Tuple2<Integer, Promise<Integer>>>() {
                     @Override
-                    public void f(Tuple2<Integer, Promise<Integer>> t) {
+                    public void apply(Tuple2<Integer, Promise<Integer>> t) {
                         DispatchQueue().default.asyncF(new P0() {
                             @Override
-                            public void f() {
-                                return t.b.successValue(ERROR: Unknown (<l>t\§^(^int, ^Promise#C<^int>)§\.<eIU>a\^int\ * <l>t\§^(^int, ^Promise#C<^int>)§\.<eIU>a\^int\));
+                            public void apply() {
+                                return t.b.successValue(t.a * t.a);
                             }
                         });
                     }
@@ -41,17 +41,17 @@ public class ChainTest extends TestCase {
         ERROR: Unknown local var count : AtomicInt#C = <to>AtomicInt\AtomicInt#C.class\.<tcI>apply\AtomicInt#C\;
         arr.forEach(new P<Promise<Void>>() {
             @Override
-            public void f(Promise<Void> p) {
+            public void apply(Promise<Void> p) {
                 DispatchQueue().default.asyncF(new P0() {
                     @Override
-                    public void f() {
+                    public void apply() {
                         count.incrementAndGet();
-                        return p.successValue(ERROR: Unknown nil);
+                        return p.successValue(null);
                     }
                 });
             }
         });
-        ().assertTrueValue(ERROR: Unknown (<l>fut\Future#C<^void>\.<dI>waitResult(period = 5.cast<float>)\(^Try#C<^void>)?\ != none<^Try#C<^void>>));
+        ().assertTrueValue(fut.waitResultPeriod(ERROR: Unknown 5.cast<float>) != null);
         ().assertEqualsAB<Integer>(count.intValue(), ERROR: Unknown <l>arr\[^Promise#C<^void>]\.<rdI>count\uint\.cast<int4>);
     }
     public void testFlat() {
@@ -60,16 +60,16 @@ public class ChainTest extends TestCase {
     public void testZip() {
         ().assertEqualsAB<ImArray<Integer>>(ERROR: Unknown [2, 3], ERROR: Unknown [1, 0, 3].chain().zipABy<Integer, Integer>(ERROR: Unknown [1, 3], new F2<Integer, Integer, Integer>() {
             @Override
-            public Integer f(Integer a,Integer b) {
-                return ERROR: Unknown (<l>a\§^int§\ + <l>b\§^int§\);
+            public Integer apply(Integer a,Integer b) {
+                return a + b;
             }
         }).toArray());
     }
     public void testZip3() {
         ().assertEqualsAB<ImArray<Integer>>(ERROR: Unknown [3, 4], ERROR: Unknown [1, 0, 3].chain().zip3ABBy<Integer, Integer, Integer>(ERROR: Unknown [1, 3], ERROR: Unknown [1, 1, 2, 4], new F3<Integer, Integer, Integer, Integer>() {
             @Override
-            public Integer f(Integer a,Integer b,Integer c) {
-                return ERROR: Unknown ((<l>a\§^int§\ + <l>b\§^int§\) + <l>c\§^int§\);
+            public Integer apply(Integer a,Integer b,Integer c) {
+                return a + b + c;
             }
         }).toArray());
     }
@@ -77,8 +77,8 @@ public class ChainTest extends TestCase {
         ERROR: Unknown local var arr : [^int] = [];
         ERROR: Unknown [1, 0, 3].chain().zipForABy<Integer>(ERROR: Unknown [1, 3], new P2<Integer, Integer>() {
             @Override
-            public void f(Integer a,Integer b) {
-                ERROR: Unknown (<lm>arr\[^int]\ = <lm>arr\[^int]\.<dIo>add(item = (<l>a\§^int§\ + <l>b\§^int§\))\[^int]\);
+            public void apply(Integer a,Integer b) {
+                arr = arr.addItem(a + b);
             }
         });
         ().assertEqualsAB<ImArray<Integer>>(ERROR: Unknown [2, 3], arr);

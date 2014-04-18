@@ -12,11 +12,11 @@ public class Success<T> extends Try<T> {
     }
     @Override
     public Object reason() {
-        ERROR: Unknown throw "Getting reason for success try";
+        throw new RuntimeException("Getting reason for success try");
     }
     @Override
     public Try<R> mapF(F<T, R> f) {
-        return new Success<R>(f.apply(get));
+        return new Success<R>(f.apply(this.get));
     }
     public Success(T get) {
     }
