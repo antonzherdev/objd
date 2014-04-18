@@ -3,6 +3,7 @@
 #import "ODObject.h"
 #import "CNCollection.h"
 @class ODClassType;
+@class CNMArray;
 @protocol CNSet;
 @class CNHashSetBuilder;
 @class CNDispatchQueue;

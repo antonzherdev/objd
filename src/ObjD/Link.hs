@@ -4,7 +4,7 @@ module ObjD.Link (
 	WrapReason(..), Annotation(..),
 	Import(..), link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, dataTypeClassNameWithPrefix,
-	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass,
+	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass, isConstructor,
 	tpGeneric, superType, wrapGeneric, isConst, int, uint, byte, ubyte, int4, uint4, float, float4, resolveTypeAlias,
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
 	fileNameWithPrefix, classDefsWithTraits, classInitDef, classContainsInit, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait,
@@ -34,7 +34,7 @@ instance Eq Package where
 data File = File {fileName :: String, filePackage :: Package, fileImports :: [Import], fileClasses :: [Class]}
 data Import = ImportClass {importClass :: Class} | ImportObjectDefs {importClass :: Class} deriving (Eq)
 instance Eq File where
-	File {fileName = a, filePackage = appp} == File {fileName = b, filePackage = bp} = a == b && appp == bp
+	File {fileName = a, filePackage = p} == File {fileName = b, filePackage = bp} = a == b && p == bp
 coreFakeFile :: File
 coreFakeFile = File "fake.od" (Package ["core"] Nothing "") [] []
 fileNameWithPrefix :: File -> String
@@ -486,7 +486,7 @@ instance Eq Def where
 eqPar :: (Def, Def) -> Bool
 eqPar (x, y) = defName x == defName y
 
-data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModProtected | DefModGlobalVal | DefModWeak
+data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModPublic | DefModProtected | DefModGlobalVal | DefModWeak
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
 	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper | DefModInline 
 	| DefModPure | DefModFinal | DefModOverride | DefModError String | DefModConstructorField
@@ -496,6 +496,7 @@ instance Show DefMod where
 	show DefModMutable = "var"
 	show DefModAbstract = "abstract" 
 	show DefModPrivate = "private"
+	show DefModPublic = "public"
 	show DefModProtected = "protected"
 	show DefModWeak = "weak"
 	show DefModConstructor = "constructor"
@@ -551,6 +552,7 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModMutable = 'm'
 		ch DefModAbstract = 'a' 
 		ch DefModPrivate = 'p'
+		ch DefModPublic = 'I'
 		ch DefModFinal = 'f'
 		ch DefModOverride = 'o'
 		ch DefModProtected = 'q'
@@ -691,8 +693,8 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 				className = D.className cl, 
 				_classExtends = if D.className cl == "Object" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
 				_classDefs = 
-					if isObject then fields ++ defs ++ [typeField] 
-					else fields ++ defs ++ constr constrPars ++ [typeField] 
+					if isObject then fields ++ defs ++ [typeField | not isSeltTrait] 
+					else fields ++ defs ++ constr constrPars ++ [typeField | not isSeltTrait] 
 				{-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
 				_classGenerics = generics,
 				_classImports = clImports,
@@ -725,6 +727,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 				_classImports = [],
 				classAnnotations = annotations
 			}
+		isSeltTrait = D.ClassModTrait `elem` D.classMods cl
 		annotations = map (linkAnnotations env) $ D.classAnnotations cl
 		enumOrdinal = Def "ordinal" [] uint Nop [] Nothing
 		enumName = Def "name" [] TPString Nop [] Nothing
@@ -759,7 +762,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 		enumConstr = constr (enumAdditionalDefs ++ constrPars)
 		constr :: [(Def, Maybe Exp)] -> [Def]
 		constr pars = let
-			mainDef = Def{defName = "apply", defMods = [DefModStatic, DefModConstructor] ++ [DefModStruct | selfIsStruct], defBody = Nop,
+			mainDef = Def{defName = "apply", defMods = [DefModStatic, DefModConstructor, DefModPublic] ++ [DefModStruct | selfIsStruct], defBody = Nop,
 				defPars = map fst pars, defType = selfType, defGenerics = Just $ DefGenerics generics selfType}
 			in resolveDefPar env mainDef pars 
 		constrPars :: [(Def, Maybe Exp)]
@@ -877,8 +880,9 @@ checkOverrideMods mods (Just o) =
 checkOverrideMods mods Nothing = [DefModError "Override nothing" |  D.DefModOverride `elem` mods]		
 
 translateMods :: [D.DefMod] -> [DefMod]
-translateMods = mapMaybe m
+translateMods = fx . mapMaybe m
 	where 
+		fx ms = if DefModPrivate `notElem` ms && DefModProtected `notElem` ms then DefModPublic : ms else ms
 		m D.DefModStatic = Just DefModStatic
 		m D.DefModMutable = Just DefModMutable
 		m D.DefModPrivate = Just DefModPrivate

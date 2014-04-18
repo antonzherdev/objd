@@ -1,9 +1,10 @@
 #import "objd.h"
 #import "CNSet.h"
 
-#import "ODType.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
+#import "CNPlat.h"
+#import "ODType.h"
 @implementation CNHashSetBuilder
 static ODClassType* _CNHashSetBuilder_type;
 @synthesize set = _set;
@@ -14,7 +15,7 @@ static ODClassType* _CNHashSetBuilder_type;
 
 - (instancetype)init {
     self = [super init];
-    if(self) _set = [NSMutableSet mutableSet];
+    if(self) _set = [CNMHashSet hashSet];
     
     return self;
 }
@@ -28,7 +29,7 @@ static ODClassType* _CNHashSetBuilder_type;
     [_set appendItem:item];
 }
 
-- (NSSet*)build {
+- (CNImHashSet*)build {
     return [_set im];
 }
 

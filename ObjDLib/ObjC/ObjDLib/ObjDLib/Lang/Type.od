@@ -13,7 +13,7 @@ stub class Type<T> {
 }
 
 stub class ClassType<T>(override cls : Class) extends Type<T> {
-    override def name : string = NSGeneric.NSStringFromClass(cls)
+    override def name : string
 }
 
 stub class PType<T>(override cls : Class, override name : string, override size : uint, wrap : (Pointer<T>, uint) -> T) extends Type<T>

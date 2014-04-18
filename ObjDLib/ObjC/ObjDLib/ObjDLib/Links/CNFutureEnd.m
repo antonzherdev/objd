@@ -3,8 +3,8 @@
 
 #import "CNFuture.h"
 #import "CNAtomic.h"
+#import "CNPlat.h"
 #import "CNYield.h"
-#import "ObjC.h"
 #import "CNTry.h"
 #import "CNTypes.h"
 #import "ODType.h"
@@ -40,12 +40,12 @@ static ODClassType* _CNFutureEnd_type;
 - (CNYield*)yield {
     __block NSInteger _i = 0;
     return [CNYield applyBegin:^NSInteger(NSUInteger size) {
-        __array = [NSMutableArray applyCapacity:size];
+        __array = [CNMArray applyCapacity:size];
         return 0;
     } yield:^NSInteger(CNFuture* fut) {
         if(!(__stopped)) {
             [__counter incrementAndGet];
-            [((NSMutableArray*)(nonnil(__array))) appendItem:nil];
+            [((CNMArray*)(nonnil(__array))) appendItem:nil];
             NSInteger i = _i;
             _i++;
             [((CNFuture*)(fut)) onCompleteF:^void(CNTry* tr) {
@@ -55,13 +55,13 @@ static ODClassType* _CNFutureEnd_type;
                         [__promise failureReason:tr];
                     } else {
                         if(!(__stopped)) {
-                            [((NSMutableArray*)(nonnil(__array))) setIndex:((NSUInteger)(i)) item:[tr get]];
+                            [((CNMArray*)(nonnil(__array))) setIndex:((NSUInteger)(i)) item:[tr get]];
                             memoryBarrier();
                             int r = [__counter decrementAndGet];
                             memoryBarrier();
                             if(__ended && r == 0) {
                                 memoryBarrier();
-                                if(!([__yielded getAndSetNewValue:YES])) [__promise successValue:((NSMutableArray*)(nonnil(__array)))];
+                                if(!([__yielded getAndSetNewValue:YES])) [__promise successValue:((CNMArray*)(nonnil(__array)))];
                             }
                         }
                     }
@@ -75,7 +75,7 @@ static ODClassType* _CNFutureEnd_type;
         memoryBarrier();
         if([__counter intValue] == 0) {
             memoryBarrier();
-            if(!([__yielded getAndSetNewValue:YES])) [__promise successValue:((NSMutableArray*)(nonnil(__array)))];
+            if(!([__yielded getAndSetNewValue:YES])) [__promise successValue:((CNMArray*)(nonnil(__array)))];
         }
         return res;
     }];

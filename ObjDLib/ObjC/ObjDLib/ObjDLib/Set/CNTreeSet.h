@@ -7,10 +7,9 @@
 @class CNDispatchQueue;
 @class CNChain;
 @class CNImTreeMap;
-@class NSObject;
+@class ODObject;
 @class CNMTreeMap;
 @class CNMTreeMapKeySet;
-@class ODObject;
 
 @class CNTreeSet;
 @class CNImTreeSet;

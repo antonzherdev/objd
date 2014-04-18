@@ -3,9 +3,9 @@
 @class CNPromise;
 @class CNAtomicInt;
 @class CNAtomicBool;
+@class CNMArray;
 @class CNFuture;
 @class CNYield;
-@class NSMutableArray;
 @class CNTry;
 @class ODClassType;
 
@@ -19,7 +19,7 @@
     CNAtomicInt* __counter;
     BOOL __ended;
     CNAtomicBool* __yielded;
-    NSMutableArray* __array;
+    CNMArray* __array;
 }
 + (instancetype)futureEnd;
 - (instancetype)init;

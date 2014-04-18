@@ -2,9 +2,10 @@
 #import "CNSeq.h"
 
 #import "CNSet.h"
-#import "ODType.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
+#import "CNPlat.h"
+#import "ODType.h"
 @implementation CNArrayBuilder
 static ODClassType* _CNArrayBuilder_type;
 
@@ -14,7 +15,7 @@ static ODClassType* _CNArrayBuilder_type;
 
 - (instancetype)init {
     self = [super init];
-    if(self) _array = [NSMutableArray mutableArray];
+    if(self) _array = [CNMArray array];
     
     return self;
 }
@@ -28,7 +29,7 @@ static ODClassType* _CNArrayBuilder_type;
     [_array appendItem:item];
 }
 
-- (NSArray*)build {
+- (CNImArray*)build {
     return _array;
 }
 
@@ -113,7 +114,7 @@ static ODClassType* _CNIndexFunSeq_type;
 }
 
 - (id<CNMSeq>)mCopy {
-    NSMutableArray* arr = [NSMutableArray mutableArray];
+    CNMArray* arr = [CNMArray array];
     [self forEach:^void(id item) {
         [arr appendItem:item];
     }];

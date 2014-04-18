@@ -1,8 +1,8 @@
 #import "objd.h"
 #import "CNQueue.h"
 
-#import "ODType.h"
 #import "CNList.h"
+#import "ODType.h"
 @implementation CNImQueue
 static CNImQueue* _CNImQueue_empty;
 static ODClassType* _CNImQueue_type;

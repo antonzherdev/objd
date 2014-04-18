@@ -1,8 +1,8 @@
 #import "objd.h"
 #import "CNShuffleLink.h"
 
+#import "CNPlat.h"
 #import "CNYield.h"
-#import "ObjC.h"
 #import "ODType.h"
 @implementation CNShuffleLink
 static ODClassType* _CNShuffleLink_type;
@@ -24,13 +24,13 @@ static ODClassType* _CNShuffleLink_type;
 
 - (CNYield*)buildYield:(CNYield*)yield {
     return [CNYield decorateBase:yield begin:^NSInteger(NSUInteger size) {
-        __array = [NSMutableArray applyCapacity:size];
+        __array = [CNMArray applyCapacity:size];
         return 0;
     } yield:^NSInteger(id item) {
-        [((NSMutableArray*)(nonnil(__array))) insertIndex:oduIntRndMax([((NSMutableArray*)(nonnil(__array))) count]) item:item];
+        [((CNMArray*)(nonnil(__array))) insertIndex:oduIntRndMax([((CNMArray*)(nonnil(__array))) count]) item:item];
         return 0;
     } end:^NSInteger(NSInteger r) {
-        if([yield yieldAll:((NSMutableArray*)(nonnil(__array)))] == 1) return 1;
+        if([yield yieldAll:((CNMArray*)(nonnil(__array)))] == 1) return 1;
         else return r;
     }];
 }

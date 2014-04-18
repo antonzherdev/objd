@@ -33,7 +33,7 @@ class MTreeSet<T>(mmap : MTreeMap<T, Object>) extends TreeSet<T>(mmap) with MSet
     }
 
     static def apply<T> = MTreeSet<T>(MTreeMap<T, Object>())
-    private static val obj = NSObject()
+    private static val obj = Object()
     override def mutableIterator = mmap.keys.mutableIterator
 //    def between(a : T, b : T) : [T]
 

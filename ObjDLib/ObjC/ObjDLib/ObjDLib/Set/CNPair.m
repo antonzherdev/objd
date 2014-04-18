@@ -2,6 +2,7 @@
 #import "CNPair.h"
 
 #import "ODType.h"
+#import "CNPlat.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
 @implementation CNPair
@@ -50,7 +51,7 @@ static ODClassType* _CNPair_type;
 }
 
 - (id<CNMSet>)mCopy {
-    NSMutableSet* arr = [NSMutableSet mutableSet];
+    CNMHashSet* arr = [CNMHashSet hashSet];
     [self forEach:^void(id item) {
         [arr appendItem:item];
     }];

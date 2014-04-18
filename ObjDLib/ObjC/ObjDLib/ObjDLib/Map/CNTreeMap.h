@@ -3,8 +3,10 @@
 #import "CNCollection.h"
 #import "ODObject.h"
 @class ODClassType;
+@class CNMHashMap;
 @class CNDispatchQueue;
 @class CNChain;
+@class CNMArray;
 
 @class CNTreeMap;
 @class CNImTreeMap;

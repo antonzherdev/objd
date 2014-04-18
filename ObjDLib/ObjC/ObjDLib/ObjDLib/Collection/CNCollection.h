@@ -1,8 +1,9 @@
 #import "objdcore.h"
 #import "ODObject.h"
-@class ODClassType;
 @class CNDispatchQueue;
 @class CNChain;
+@class CNMArray;
+@class ODClassType;
 
 @class CNIterableF;
 @class CNEmptyIterator;

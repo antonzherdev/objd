@@ -1,9 +1,10 @@
 #import "objd.h"
 #import "CNMap.h"
 
-#import "ODType.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
+#import "CNPlat.h"
+#import "ODType.h"
 @implementation CNImMapDefault
 static ODClassType* _CNImMapDefault_type;
 @synthesize map = _map;
@@ -406,7 +407,7 @@ static ODClassType* _CNHashMapBuilder_type;
 
 - (instancetype)init {
     self = [super init];
-    if(self) _map = [NSMutableDictionary mutableDictionary];
+    if(self) _map = [CNMHashMap hashMap];
     
     return self;
 }
@@ -420,7 +421,7 @@ static ODClassType* _CNHashMapBuilder_type;
     [_map setKey:((CNTuple*)(item)).a value:((CNTuple*)(item)).b];
 }
 
-- (NSDictionary*)build {
+- (CNImHashMap*)build {
     return [_map im];
 }
 

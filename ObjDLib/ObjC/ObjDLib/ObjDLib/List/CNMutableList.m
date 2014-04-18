@@ -2,6 +2,7 @@
 #import "CNMutableList.h"
 
 #import "ODType.h"
+#import "CNPlat.h"
 #import "CNSet.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
@@ -222,7 +223,7 @@ static ODClassType* _CNMList_type;
 }
 
 - (id<CNImSeq>)imCopy {
-    NSMutableArray* arr = [NSMutableArray mutableArray];
+    CNMArray* arr = [CNMArray array];
     [self forEach:^void(id item) {
         [arr appendItem:item];
     }];

@@ -14,7 +14,7 @@ class FutureEnd<T> {
         var _i = 0
         Yield<Future<T>>(
             begin = size -> {
-                _array = NSMutableArray<T>(capacity = size)
+                _array = MArray<T>(capacity = size)
                 0
             },
             yield = fut -> {

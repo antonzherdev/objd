@@ -1,6 +1,7 @@
 #import "objdcore.h"
 #import "ODObject.h"
 @class CNChain;
+@class CNMArray;
 @protocol CNIterator;
 @class ODClassType;
 
@@ -9,7 +10,7 @@
 @interface CNSortBuilder : NSObject {
 @protected
     CNChain* _chain;
-    NSMutableArray* _functions;
+    CNMArray* _functions;
 }
 @property (nonatomic, readonly) CNChain* chain;
 

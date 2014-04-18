@@ -12,7 +12,7 @@
     return ret;
 }
 
-+ (NSMutableDictionary *)mutableDictionary {
++ (NSMutableDictionary *)hashMap {
     return [NSMutableDictionary dictionary];
 }
 

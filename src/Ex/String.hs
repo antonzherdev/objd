@@ -1,5 +1,6 @@
 module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp', cap, MathTp(..), BoolTp(..), 
-	tryCon, zipWithIndex, startsWith, lines2, pstrs, pstrs') where
+	tryCon, zipWithIndex, startsWith, lines2, pstrs, pstrs', pmkString,
+	mapFirst, mapLast, appendLast, appp, glue, glueAll, mapNotFirst, wrapStr) where
 
 import           Data.Char
 
@@ -75,6 +76,10 @@ tryCon _ "" = ""
 tryCon "" _ = ""
 tryCon a b = a ++ b
 
+wrapStr :: String -> String -> String -> String
+wrapStr _ _ "" = ""
+wrapStr p s ss = p ++ ss ++ s
+
 
 data MathTp = Plus | Minus | Mul | Div deriving (Eq)
 data BoolTp = Eq | NotEq | More | MoreEq | Less | LessEq | And | Or | ExactEq | ExactNotEq deriving (Eq)
@@ -94,3 +99,29 @@ instance Show BoolTp where
 	show LessEq = "<="
 	show And = "&&"
 	show Or = "||"
+
+
+mapFirst :: (a -> a) -> [a] -> [a]
+mapFirst _ [] = []
+mapFirst f a = f (head a) : tail a
+mapNotFirst :: (a -> a) -> [a] -> [a]
+mapNotFirst _ [] = []
+mapNotFirst f a = head a : map f (tail a)
+mapLast :: (a -> a) -> [a] -> [a]
+mapLast _ [] = []
+mapLast f a = init a ++ [f $ last a]
+appendLast :: String -> [String] -> [String]
+appendLast s [] = [s]
+appendLast s r = mapLast (++ s) r
+appp :: [String] -> String -> [String]
+a `appp` b = appendLast b a
+glue :: [String] -> [String] -> [String]
+[] `glue` [] = []
+[] `glue` b = b
+a `glue` [] = a
+a `glue` b = init a ++ [last a ++ head b] ++ tail b
+glueAll :: String -> [[String]] -> [String]
+glueAll _ [] = []
+glueAll _ [x] = x
+glueAll s (a:b:xs) = glueAll s $ ((a `appp` s) `glue` b):xs
+

@@ -174,6 +174,7 @@
 		6F3DF1155C841442C8216F22 /* List.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = List.od; sourceTree = "<group>"; };
 		6F3DF1219FADF456AAF737CD /* CNSeq.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNSeq.m; sourceTree = "<group>"; };
 		6F3DF137550572FBFFD28804 /* NSConditionLock+CNChain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSConditionLock+CNChain.h"; sourceTree = "<group>"; };
+		6F3DF13CAA5F56F358C8D8F9 /* Plat.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Plat.od; sourceTree = "<group>"; };
 		6F3DF141921D722206AE01BD /* Invocation.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Invocation.od; sourceTree = "<group>"; };
 		6F3DF145A558028512BE06E2 /* Collection.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Collection.od; sourceTree = "<group>"; };
 		6F3DF17DC7CBCA923CD6B34D /* CNCombinationsLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNCombinationsLink.h; sourceTree = "<group>"; };
@@ -229,7 +230,6 @@
 		6F3DF5A7AB58194860F9EE14 /* CNMap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNMap.m; sourceTree = "<group>"; };
 		6F3DF5B311B2821CA400E51D /* CNTreeSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNTreeSet.h; sourceTree = "<group>"; };
 		6F3DF5D1C07C1A0D97BE110E /* DispatchQueue.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = DispatchQueue.od; sourceTree = "<group>"; };
-		6F3DF5D631CF8C963906DB57 /* ObjC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjC.h; sourceTree = "<group>"; };
 		6F3DF5D9F462F776430158A4 /* ODType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ODType.h; sourceTree = "<group>"; };
 		6F3DF5E54A16F2171F91A44E /* Lock.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Lock.od; sourceTree = "<group>"; };
 		6F3DF5EC4DD87FBF4364DC5F /* CNFlatLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNFlatLink.h; sourceTree = "<group>"; };
@@ -257,6 +257,7 @@
 		6F3DF7E3567D72D6EB6D36C4 /* NSMutableDictionary+CNChain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableDictionary+CNChain.m"; sourceTree = "<group>"; };
 		6F3DF7E3D089CE618F126BD1 /* CNShuffleLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNShuffleLink.h; sourceTree = "<group>"; };
 		6F3DF807FF138755C8FD04A3 /* CNSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNSet.h; sourceTree = "<group>"; };
+		6F3DF81955268DF52E956EF0 /* CNPlat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNPlat.h; sourceTree = "<group>"; };
 		6F3DF82035E2761FEEF64C44 /* Pointer.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Pointer.od; sourceTree = "<group>"; };
 		6F3DF82E94317F3B4D717339 /* CNFlatLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNFlatLink.m; sourceTree = "<group>"; };
 		6F3DF83428BB79C7EDC964D8 /* NSArray+CNChain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSArray+CNChain.m"; sourceTree = "<group>"; };
@@ -272,7 +273,6 @@
 		6F3DF92DC9C09C152EFF5E52 /* CNFlatMapLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNFlatMapLink.h; sourceTree = "<group>"; };
 		6F3DF94AB4B5CF5DC6F36B61 /* CNFilterLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNFilterLink.m; sourceTree = "<group>"; };
 		6F3DF94B4A7BE46248422437 /* CNAppendLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNAppendLink.m; sourceTree = "<group>"; };
-		6F3DF94DF19359086E5F5FC4 /* ObjC.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = ObjC.od; sourceTree = "<group>"; };
 		6F3DF9537E1EAF84D541E672 /* NSDate+CNChain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate+CNChain.m"; sourceTree = "<group>"; };
 		6F3DF963FD5509B3223B1309 /* CNPrependLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNPrependLink.m; sourceTree = "<group>"; };
 		6F3DF97D9500ADC6783D40D4 /* ObjDLibOSX-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "ObjDLibOSX-Prefix.pch"; sourceTree = "<group>"; };
@@ -354,7 +354,6 @@
 		6F3DFF2D72188BD997C86823 /* CNChain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNChain.h; sourceTree = "<group>"; };
 		6F3DFF64DEDAAAF07B05A2A5 /* CNRange.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNRange.m; sourceTree = "<group>"; };
 		6F3DFF875666103911123874 /* CNMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNMap.h; sourceTree = "<group>"; };
-		6F3DFFFF20E69943FE7DE61D /* Date.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Date.od; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -537,9 +536,6 @@
 			children = (
 				6F3DFD4ABC6DF490D0C79DA5 /* iOS */,
 				6F3DF715AD37DE8BEA3E2DD8 /* Mac */,
-				6F3DF5D631CF8C963906DB57 /* ObjC.h */,
-				6F3DFFFF20E69943FE7DE61D /* Date.od */,
-				6F3DF94DF19359086E5F5FC4 /* ObjC.od */,
 				6F3DFAA5B129F6BB60C2680A /* Categories */,
 				6F3DFB3D21ED02EF178EBC34 /* OSPlatform.h */,
 				6F3DFE577F63D695B92DA554 /* CNNotificationPlatform.h */,
@@ -558,6 +554,7 @@
 				6F3DF3A99EB8F6E07F61C664 /* CNSeed.m */,
 				6F3DF6BBB0B72CD86202D573 /* CNThread.h */,
 				6F3DFEA04ADDF2E7A371676C /* CNThread.m */,
+				6F3DF81955268DF52E956EF0 /* CNPlat.h */,
 			);
 			path = Apple;
 			sourceTree = "<group>";
@@ -584,6 +581,7 @@
 				6F3DF82035E2761FEEF64C44 /* Pointer.od */,
 				6F3DF7197820E18DFCDD457F /* Seed.od */,
 				6F3DFE8CC9271129C1446FFE /* String.od */,
+				6F3DF13CAA5F56F358C8D8F9 /* Plat.od */,
 			);
 			path = Platform;
 			sourceTree = "<group>";

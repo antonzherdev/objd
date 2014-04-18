@@ -1,9 +1,10 @@
 #import "objd.h"
 #import "CNCollection.h"
 
-#import "ODType.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
+#import "CNPlat.h"
+#import "ODType.h"
 @implementation CNIterableF
 static ODClassType* _CNIterableF_type;
 @synthesize iteratorF = _iteratorF;
@@ -29,7 +30,7 @@ static ODClassType* _CNIterableF_type;
 }
 
 - (id<CNMIterable>)mCopy {
-    NSMutableArray* arr = [NSMutableArray mutableArray];
+    CNMArray* arr = [CNMArray array];
     [self forEach:^void(id item) {
         [arr appendItem:item];
     }];

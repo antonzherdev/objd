@@ -1,8 +1,10 @@
 #import "objdcore.h"
 #import "CNCollection.h"
-@class ODClassType;
 @class CNDispatchQueue;
 @class CNChain;
+@class CNMHashMap;
+@class ODClassType;
+@class CNImHashMap;
 
 @class CNImMapDefault;
 @class CNMMapDefault;
@@ -98,13 +100,13 @@
 
 @interface CNHashMapBuilder : NSObject<CNBuilder> {
 @protected
-    NSMutableDictionary* _map;
+    CNMHashMap* _map;
 }
 + (instancetype)hashMapBuilder;
 - (instancetype)init;
 - (ODClassType*)type;
 - (void)appendItem:(CNTuple*)item;
-- (NSDictionary*)build;
+- (CNImHashMap*)build;
 + (ODClassType*)type;
 @end
 

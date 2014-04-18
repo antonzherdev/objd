@@ -4,7 +4,7 @@
 
 
 @implementation NSMutableSet (CNChain)
-+ (id)mutableSet {
++ (id)hashSet {
     return [NSMutableSet set];
 }
 

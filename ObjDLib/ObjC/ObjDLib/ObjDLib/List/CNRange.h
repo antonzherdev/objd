@@ -3,6 +3,7 @@
 #import "CNCollection.h"
 @class ODClassType;
 @class CNChain;
+@class CNMArray;
 @protocol CNSet;
 @class CNHashSetBuilder;
 @class CNDispatchQueue;

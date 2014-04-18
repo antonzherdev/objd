@@ -3,7 +3,7 @@
 #import "CNSet.h"
 
 @interface NSMutableSet (CNChain)<CNMSet>
-+ (id) mutableSet;
++ (id) hashSet;
 - (NSSet*)im;
 - (NSSet*)imCopy;
 @end

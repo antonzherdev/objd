@@ -2,8 +2,10 @@
 #import "CNSet.h"
 #import "CNCollection.h"
 @class ODClassType;
+@class CNMHashSet;
 @class CNDispatchQueue;
 @class CNChain;
+@class CNMArray;
 
 @class CNPair;
 @class CNPairIterator;

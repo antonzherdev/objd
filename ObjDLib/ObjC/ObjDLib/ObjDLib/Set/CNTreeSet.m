@@ -5,7 +5,6 @@
 #import "ODType.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
-#import "ObjC.h"
 #import "ODObject.h"
 @implementation CNTreeSet
 static ODClassType* _CNTreeSet_type;
@@ -290,7 +289,7 @@ static ODClassType* _CNMTreeSet_type;
     [super initialize];
     if(self == [CNMTreeSet class]) {
         _CNMTreeSet_type = [ODClassType classTypeWithCls:[CNMTreeSet class]];
-        _CNMTreeSet_obj = [NSObject object];
+        _CNMTreeSet_obj = [ODObject object];
     }
 }
 

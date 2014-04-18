@@ -1,8 +1,10 @@
 #import "objdcore.h"
 #import "CNCollection.h"
-@class ODClassType;
 @class CNDispatchQueue;
 @class CNChain;
+@class CNMHashSet;
+@class CNImHashSet;
+@class ODClassType;
 
 @class CNHashSetBuilder;
 @protocol CNSet;
@@ -26,15 +28,15 @@
 
 @interface CNHashSetBuilder : NSObject<CNBuilder> {
 @protected
-    NSMutableSet* _set;
+    CNMHashSet* _set;
 }
-@property (nonatomic, readonly) NSMutableSet* set;
+@property (nonatomic, readonly) CNMHashSet* set;
 
 + (instancetype)hashSetBuilder;
 - (instancetype)init;
 - (ODClassType*)type;
 - (void)appendItem:(id)item;
-- (NSSet*)build;
+- (CNImHashSet*)build;
 + (ODClassType*)type;
 @end
 

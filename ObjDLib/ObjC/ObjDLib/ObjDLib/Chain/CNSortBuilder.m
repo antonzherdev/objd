@@ -2,6 +2,7 @@
 #import "CNSortBuilder.h"
 
 #import "CNChain.h"
+#import "CNPlat.h"
 #import "CNCollection.h"
 #import "ODType.h"
 @implementation CNSortBuilder
@@ -16,7 +17,7 @@ static ODClassType* _CNSortBuilder_type;
     self = [super init];
     if(self) {
         _chain = chain;
-        _functions = [NSMutableArray mutableArray];
+        _functions = [CNMArray array];
     }
     
     return self;

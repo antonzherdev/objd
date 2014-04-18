@@ -2,9 +2,11 @@
 #import "CNCollection.h"
 @protocol CNSet;
 @class CNHashSetBuilder;
-@class ODClassType;
 @class CNDispatchQueue;
 @class CNChain;
+@class CNMArray;
+@class CNImArray;
+@class ODClassType;
 
 @class CNArrayBuilder;
 @class CNIndexFunSeq;
@@ -44,13 +46,13 @@
 
 @interface CNArrayBuilder : NSObject<CNBuilder> {
 @protected
-    NSMutableArray* _array;
+    CNMArray* _array;
 }
 + (instancetype)arrayBuilder;
 - (instancetype)init;
 - (ODClassType*)type;
 - (void)appendItem:(id)item;
-- (NSArray*)build;
+- (CNImArray*)build;
 + (ODClassType*)type;
 @end
 

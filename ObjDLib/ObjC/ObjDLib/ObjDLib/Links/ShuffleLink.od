@@ -6,7 +6,7 @@ class ShuffleLink<T> extends ChainLink<T, T> {
         Yield.decorate<T>(
             base = yield,
             begin = size -> {
-                _array = NSMutableArray<T>(size)
+                _array = MArray<T>(capacity = size)
                 0
             },
             yield = item -> {

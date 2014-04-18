@@ -1,15 +1,15 @@
 #import "objdcore.h"
 #import "CNChain.h"
 #import "ODObject.h"
+@class CNMArray;
 @class CNYield;
-@class NSMutableArray;
 @class ODClassType;
 
 @class CNShuffleLink;
 
 @interface CNShuffleLink : NSObject<CNChainLink> {
 @protected
-    NSMutableArray* __array;
+    CNMArray* __array;
 }
 + (instancetype)shuffleLink;
 - (instancetype)init;

@@ -4,7 +4,7 @@
 @interface NSMutableDictionary (CNChain) <CNMMap>
 - (id)objectForKey:(id)key orUpdateWith:(id (^)())with;
 
-+ (NSMutableDictionary *)mutableDictionary;
++ (NSMutableDictionary *)hashMap;
 - (NSDictionary*)im;
 - (NSDictionary*)imCopy;
 @end

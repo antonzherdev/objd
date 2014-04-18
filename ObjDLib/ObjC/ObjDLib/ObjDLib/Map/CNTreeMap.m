@@ -2,6 +2,7 @@
 #import "CNTreeMap.h"
 
 #import "ODType.h"
+#import "CNPlat.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
 @implementation CNTreeMap
@@ -166,7 +167,7 @@ static ODClassType* _CNTreeMap_type;
 }
 
 - (id<CNMMap>)mCopy {
-    NSMutableDictionary* m = [NSMutableDictionary mutableDictionary];
+    CNMHashMap* m = [CNMHashMap hashMap];
     [m assignImMap:self];
     return m;
 }
@@ -1012,7 +1013,7 @@ static ODClassType* _CNImTreeMapKeySet_type;
 }
 
 - (id<CNMIterable>)mCopy {
-    NSMutableArray* arr = [NSMutableArray mutableArray];
+    CNMArray* arr = [CNMArray array];
     [self forEach:^void(id item) {
         [arr appendItem:item];
     }];
@@ -1229,7 +1230,7 @@ static ODClassType* _CNMTreeMapKeySet_type;
 }
 
 - (id<CNMIterable>)mCopy {
-    NSMutableArray* arr = [NSMutableArray mutableArray];
+    CNMArray* arr = [CNMArray array];
     [self forEach:^void(id item) {
         [arr appendItem:item];
     }];
@@ -1454,7 +1455,7 @@ static ODClassType* _CNTreeMapValues_type;
 }
 
 - (id<CNMIterable>)mCopy {
-    NSMutableArray* arr = [NSMutableArray mutableArray];
+    CNMArray* arr = [CNMArray array];
     [self forEach:^void(id item) {
         [arr appendItem:item];
     }];

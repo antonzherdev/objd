@@ -290,26 +290,6 @@ instance Show Exp where
 instance Show Stm where
 	show s = unlines $ stmLines s
 
-mapFirst :: (a -> a) -> [a] -> [a]
-mapFirst _ [] = []
-mapFirst f a = f (head a) : tail a
-mapLast :: (a -> a) -> [a] -> [a]
-mapLast _ [] = []
-mapLast f a = init a ++ [f $ last a]
-appendLast :: String -> [String] -> [String]
-appendLast s [] = [s]
-appendLast s r = mapLast (++ s) r
-appp :: [String] -> String -> [String]
-a `appp` b = appendLast b a
-glue :: [String] -> [String] -> [String]
-[] `glue` [] = []
-[] `glue` b = b
-a `glue` [] = a
-a `glue` b = init a ++ [last a ++ head b] ++ tail b
-glueAll :: String -> [[String]] -> [String]
-glueAll _ [] = []
-glueAll _ [x] = x
-glueAll s (a:b:xs) = glueAll s $ ((a `appp` s) `glue` b):xs
 
 multiLineIf :: Stm -> [String]
 multiLineIf (If cond t []) = (["if("] `glue` expLines cond `appp` ") {") ++ stms t ++ ["}"]

@@ -4,7 +4,6 @@
 
 @class CNChain;
 
-
 @interface NSArray (CNChain)<CNImSeq>
 - (id) chain:(cnChainBuildBlock)block;
 - (CNChain*) chain;

@@ -1,0 +1,34 @@
+package core.chain
+
+stub class ImHashSet<T> extends ImSet<T> {
+    override def mCopy : MHashSet<T>
+}
+
+stub class MHashSet<T> extends MSet<T> {
+    override def im : ImHashSet<T>
+    override def imCopy : ImHashSet<T>
+}
+
+stub class ImArray<T> extends ImSeq<T> {
+    static def apply<T>(mArray : MArray) : [T]
+    override def mCopy : MArray<T>
+
+    override def add(item : T) : [T]
+    override def add(seq : Seq<T>) : [T]
+    override def sub(item : T) : [T]
+    override def tail : [T]
+}
+stub class MArray<T> extends MSeq<T> {
+    static def apply<T>(capacity : uint) : MArray<T>
+    override def im : [T]
+    override def imCopy : [T]
+}
+
+stub class ImHashMap <K, V> extends ImMap<K, V> {
+    override def mCopy : MHashMap<K, V>
+}
+
+stub class MHashMap<K, V> extends MMap<K, V> {
+    override def im : ImHashMap<K, V>
+    override def imCopy : ImHashMap<K, V>
+}
