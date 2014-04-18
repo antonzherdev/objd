@@ -1,14 +1,14 @@
 package core.chain;
 
 public class ImQueue<T> implements Queue<T> {
-    private static final ImQueue<Object> empty = new ImQueue(ERROR: Unknown <to>ImList\ImList#C.class\.<dIt>apply\ImList#C<§^any§>\, ERROR: Unknown <to>ImList\ImList#C.class\.<dIt>apply\ImList#C<§^any§>\);
+    private static final ImQueue<Object> empty = new ImQueue<Object>(ImList().apply<Object>(), ImList().apply<Object>());
     public final ImList<T> in;
     public final ImList<T> out;
     public static ImQueue<T> apply() {
-        return ERROR: Unknown <ImQueue#C.class>self.<ept>empty\ImQueue#C<^any>\;
+        return empty;
     }
     public Iterator<T> iterator() {
-        return new QueueIterator(ERROR: Unknown <ImQueue#C<T#G>>self.<eIU>in\ImList#C<§T#G§>\, ERROR: Unknown <ImQueue#C<T#G>>self.<eIU>out\ImList#C<§T#G§>\);
+        return new QueueIterator<T>(in, out);
     }
     public boolean isEmpty() {
         return ERROR: Unknown (<ImQueue#C<T#G>>self.<eIU>in\ImList#C<§T#G§>\.<rdIo>isEmpty\bool\ && <ImQueue#C<T#G>>self.<eIU>out\ImList#C<§T#G§>\.<rdIo>isEmpty\bool\);

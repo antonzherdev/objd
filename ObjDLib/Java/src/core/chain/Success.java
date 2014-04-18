@@ -12,7 +12,7 @@ public class Success<T> extends Try<T> {
         ERROR: Unknown throw "Getting reason for success try";
     }
     public Try<R> mapF(F<T, R> f) {
-        return new Success(ERROR: Unknown <l>f\§T#G§ -> R#G\.<d>apply( = <Success#C<T#G>>self.<eIUo>get\§T#G§\)\R#G\);
+        return new Success<R>(f.apply(get));
     }
     public Success(T get) {
     }

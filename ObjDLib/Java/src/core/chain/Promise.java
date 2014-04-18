@@ -2,7 +2,7 @@ package core.chain;
 
 public class Promise<T> extends Future<T> {
     public static Promise<T> apply() {
-        return new DefaultPromise();
+        return new DefaultPromise<T>();
     }
     public abstract boolean completeValue(Try<T> value);
     public abstract boolean successValue(T value);

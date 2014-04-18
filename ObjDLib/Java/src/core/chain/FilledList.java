@@ -15,7 +15,7 @@ public class FilledList<T> extends ImList<T> {
 else return <FilledList#C<T#G>>self.<eIUo>tail\ImList#C<§T#G§>\.<dIa>filter(f = <l>f\§T#G§ -> bool\)\ImList#C<§T#G§>\;
     }
     public ImList<T> reverse() {
-        return ERROR: Unknown <FilledList#C<T#G>>self.<dp>reverseAndAdd(list = <to>EmptyList\EmptyList#C.class\.<eIt>instance\EmptyList#C<§^any§>\.cast<ImList#C<T#G>>)\ImList#C<§T#G§>\;
+        return reverseAndAddList(EmptyList().instance.ERROR: Unknown cast<ImList#C<T#G>>);
     }
     private ImList<T> reverseAndAddList(ImList<T> list) {
         ERROR: Unknown local var ret : FilledList#C<§T#G§> = <to>FilledList\FilledList#C.class\.<tcI>apply(_head = <FilledList#C<T#G>>self.<eIU>_head\§T#G§\, tail = <l>list\ImList#C<§T#G§>\)\FilledList#C<§T#G§>\;
@@ -24,7 +24,7 @@ else return <FilledList#C<T#G>>self.<eIUo>tail\ImList#C<§T#G§>\.<dIa>filter(f 
     (<lm>ret\FilledList#C<§T#G§>\ = <to>FilledList\FilledList#C.class\.<tcI>apply(_head = <lm>l\ImList#C<§T#G§>\.cast<FilledList#C<T#G>>.<eIU>_head\§T#G§\, tail = <lm>ret\FilledList#C<§T#G§>\)\FilledList#C<§T#G§>\)
     (<lm>l\ImList#C<§T#G§>\ = <lm>l\ImList#C<§T#G§>\.<dIoa>tail\ImList#C<§T#G§>\)
 };
-        return ERROR: Unknown <lm>ret\FilledList#C<§T#G§>\;
+        return ret;
     }
     public void forEach(F<T, Void> each) {
         ERROR: Unknown local var list : FilledList#C<T#G> = <FilledList#C<T#G>>self;
@@ -49,7 +49,7 @@ else return <FilledList#C<T#G>>self.<eIUo>tail\ImList#C<§T#G§>\.<dIa>filter(f 
 }
     (<lm>list\FilledList#C<§T#G§>\ = <lm>list\FilledList#C<§T#G§>\.<eIUo>tail\ImList#C<§T#G§>\.cast<FilledList#C<T#G>>)
 };
-        return ERROR: Unknown <lm>list\FilledList#C<§T#G§>\;
+        return list;
     }
     public FilledList(T _head,ImList<T> tail) {
     }

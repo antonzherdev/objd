@@ -1,7 +1,7 @@
 package core.chain;
 
 public class HashSetBuilder<T> implements Builder<T, ImHashSet<T>> {
-    public final MHashSet<T> set = new MHashSet();
+    public final MHashSet<T> set = new MHashSet<T>();
     public void appendItem(T item) {
         ERROR: Unknown <HashSetBuilder#C<T#G>>self.<eI>set\MHashSet#C<§T#G§>\.<rdIa>append(item = <l>item\§T#G§\)\void\;
     }

@@ -3,7 +3,7 @@ package core.chain;
 public class MapOptLink<A, B> implements ChainLink<A, B> {
     public final F<A, B> f;
     public Yield<A> buildYield(Yield<B> yield) {
-        return ERROR: Unknown <to>Yield\Yield#C.class\.<dIt>decorate(base = <l>yield\Yield#C<§B#G§>\, yield = item : §A#G§ -> int = {
+        return Yield().decorateBaseYield<A>(yield, ERROR: Unknown item : §A#G§ -> int = {
     val __tmp_0 : ^(^int)?
 {
     local _ : §(B#G)¿§ = <MapOptLink#C<A#G, B#G>>self.<eIU>f\§A#G§ -> (§B#G§)?\.<d>apply( = <l>item\§A#G§\)\(§B#G§)?\
@@ -12,7 +12,7 @@ else (<l>__tmp_0\^(^int)?\ = none<^int>)
 }
     if((<l>__tmp_0\^(^int)?\ != none<^int>)) return <l>__tmp_0\^(^int)?\.get
 else return 0
-})\Yield#C<§A#G§>\;
+});
     }
     public MapOptLink(F<A, B> f) {
     }

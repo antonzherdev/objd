@@ -809,7 +809,7 @@ linkExtends env constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs
 		superCall = D.Dot D.Super $ D.Call "apply" (Just $ pars) gens
 		superCall' = expr env' superCall
 		superCallPars = case superCall' of
-			Dot _ (Call _ _ pars') -> pars'
+			Dot _ (Call _ _ pars' _) -> pars'
 			err -> [(unknownDef, err)]
 		mainExt = linkExtendsRef env eref
 		withs' = map (linkExtendsRef env) withs
@@ -818,8 +818,8 @@ linkExtends env constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs
 
 linkAnnotations :: Env -> D.Annotation -> Annotation
 linkAnnotations env (D.Annotation nm pars tps) = case expr env (D.Call nm (Just pars) tps) of
-	Call d _ pars' -> Annotation d pars'
-	Dot _ (Call d _ pars') -> Annotation d pars'
+	Call d _ pars' _ -> Annotation d pars'
+	Dot _ (Call d _ pars' _ ) -> Annotation d pars'
 
 linkExtendsRef :: Env -> D.ExtendsRef -> ExtendsRef
 linkExtendsRef env (ecls, gens) = (classFind (envIndex env) ecls, map (dataType env) gens) 
@@ -856,11 +856,11 @@ linkField env (obj, _isStruct) dd@D.Def{D.defMods = mods, D.defName = name, D.de
 		lazyTp = TPClass TPMClass [gtp] lazyClass
 		defLazy = Def{defMods = [DefModField, DefModPrivate] ++ [DefModStatic | D.DefModStatic `elem` mods || obj], defName = "_lazy_" ++ name, 
 			defType = lazyTp, 
-			defBody = Dot (callRef (objectDef lazyClass)) $ Call lazyConstr lazyTp [(head $ defPars lazyConstr, Lambda [] (Return True (Weak i')) gtp)], 
+			defBody = Dot (callRef (objectDef lazyClass)) $ Call lazyConstr lazyTp [(head $ defPars lazyConstr, Lambda [] (Return True (Weak i')) gtp)] [], 
 			defGenerics = Nothing, defPars = []}
 		defLazyGet = Def{defMods = DefModDef : translateMods mods ++ [DefModStatic | obj], defName = name, 
 			defType = tp'', 
-			defBody = Return True $ Dot (callRef defLazy) (Call lazyGet gtp []), defGenerics = Nothing, defPars = []}
+			defBody = Return True $ Dot (callRef defLazy) (Call lazyGet gtp [] []), defGenerics = Nothing, defPars = []}
 		in if isLazy then [defLazyGet, defLazy] else [def]
 
 findOverridenDef :: Env -> D.ClassStm -> Maybe Def
@@ -1428,7 +1428,7 @@ data Exp = Nop
 	| NullDot Exp Exp
 	| NonOpt Bool Exp -- Need to check
 	| Set (Maybe MathTp) Exp Exp
-	| Call Def DataType [CallPar]
+	| Call Def DataType [CallPar] [DataType]
 	| Return Bool Exp
 	| Index Exp Exp
 	| Lambda [(String, DataType)] Exp DataType
@@ -1479,7 +1479,7 @@ instance Show Exp where
 	show (Dot l r) = showOp' l "." r
 	show (Arrow l r) = showOp' l "->" r
 	show (NullDot l r) = showOp' l "?." r
-	show (Call dd tp pars) = defRefPrep dd ++ defName dd ++ showCallPars pars ++ "\\" ++ show tp ++ "\\" 
+	show (Call dd tp pars _) = defRefPrep dd ++ defName dd ++ showCallPars pars ++ "\\" ++ show tp ++ "\\" 
 	show (IntConst i) = show i
 	show (StringConst i) = show i
 	show Nil = "nil"
@@ -1519,10 +1519,10 @@ extractStringConst (StringConst s) = Just s
 extractStringConst _ = Nothing
 
 callRef :: Def -> Exp
-callRef d = Call d (defType d) []
+callRef d = Call d (defType d) [] []
 
 call :: Def -> [Exp] -> Exp
-call d pars = Call d (defType d) $ zip (defPars d) pars
+call d pars = Call d (defType d) (zip (defPars d) pars) []
 
 showCallPars :: [CallPar] -> String
 showCallPars [] = ""
@@ -1530,7 +1530,7 @@ showCallPars pars = "(" ++ strs ", " (map showPar pars) ++ ")"
 	where showPar (Def {defName = name}, e) = name ++ " = " ++ show e
 	
 callLocalVal :: String -> DataType -> Exp
-callLocalVal name tp = Call (localVal name tp) tp []
+callLocalVal name tp = Call (localVal name tp) tp [] []
 
 maybeAddReturn :: Env -> DataType -> Exp -> Exp
 --maybeAddReturn _ tp _ | trace ("r " ++ show tp) False = undefined
@@ -1574,7 +1574,7 @@ forExp f ee = mplus (go ee) (f ee)
 		go (Arr es) = msum $ map (forExp f) es
 		go (Tuple es) = msum $ map (forExp f) es
 		go (Map es) = msum $ map (forExp f *** forExp f >>> uncurry mplus) es
-		go (Call _ _ pars) = msum $ map (forExp f . snd) pars
+		go (Call _ _ pars _) = msum $ map (forExp f . snd) pars
 		go (If cond te fe) =  mplus (forExp f cond) $ mplus (forExp f te) (forExp f fe)
 		go (BoolOp _ l r) = mplus (forExp f l) (forExp f r)
 		go (MathOp _ l r) = mplus (forExp f l) (forExp f r)
@@ -1612,7 +1612,7 @@ mapExp f ee = fromMaybe (go ee) (f ee)
 		go (Arr es) = Arr $ map (mapExp f) es
 		go (Tuple es) = Tuple $ map (mapExp f) es
 		go (Map es) = Map $ map (mapExp f *** mapExp f) es
-		go (Call p1 p2 pars) = Call p1 p2 $ map (second $ mapExp f) pars
+		go (Call p1 p2 pars gens) = Call p1 p2 (map (second $ mapExp f) pars) gens
 		go (If cond te fe) =  If (mapExp f cond) (mapExp f te) (mapExp f fe)
 		go (BoolOp tp l r) = BoolOp tp (mapExp f l) (mapExp f r)
 		go (MathOp tp l r) = MathOp tp (mapExp f l) (mapExp f r)
@@ -1660,7 +1660,7 @@ isConst (Cast _ e) = isConst e
 isConst (Dot l r) = isConst l && isConst r
 isConst (Arrow l r) = isConst l && isConst r
 isConst (NullDot l r) = isConst l && isConst r
-isConst (Call Def {defMods = mods, defBody = b} _ pars) = 
+isConst (Call Def {defMods = mods, defBody = b} _ pars _) = 
 	(DefModStruct `elem` mods  &&  DefModConstructor `elem` mods && all (isConst . snd) pars)
 	|| (DefModObject `elem` mods && null pars)
 	|| (DefModStub `elem` mods  &&  DefModGlobalVal `elem` mods)
@@ -1682,8 +1682,8 @@ isElementaryExpression :: Exp -> Bool
 isElementaryExpression (IntConst _) = True
 isElementaryExpression (FloatConst _) = True
 isElementaryExpression (BoolConst _) = True
-isElementaryExpression (Call Def{defMods = mods} _ []) = DefModDef `notElem` mods
-isElementaryExpression (Dot (Self _) (Call Def{defMods = mods} _ [])) = DefModDef `notElem` mods
+isElementaryExpression (Call Def{defMods = mods} _ [] _) = DefModDef `notElem` mods
+isElementaryExpression (Dot (Self _) (Call Def{defMods = mods} _ [] _)) = DefModDef `notElem` mods
 isElementaryExpression (Self _) = True
 isElementaryExpression _ = False
 
@@ -1724,7 +1724,7 @@ exprDataType (Arrow _ b) = exprDataType b
 exprDataType Set{} = TPVoid
 exprDataType (Self s) = s
 exprDataType (Super s) = s
-exprDataType (Call _ t _) = t
+exprDataType (Call _ t _ _) = t
 exprDataType (Return _ e) = exprDataType e
 exprDataType (Index e i) = resolve $ exprDataType e 
 	where  
@@ -1835,7 +1835,7 @@ expr env (D.Braces es) = Braces $ bracesRec env 0 es
 				x' = expr env'{envVarSuffix = envVarSuffix env ++ ('_' : show n), envTp = TPVoid} x
 				env'' = case x' of
 					(Val _ d) -> (envAddVals [d] env')
-					(Set _ (Call d _ []) r) -> case unwrapGeneric (defType d) of
+					(Set _ (Call d _ [] _) r) -> case unwrapGeneric (defType d) of
 						TPOption cl tpl -> case unwrapGeneric (exprDataType r) of
 							TPOption cr _ -> if cr == cl then env' else envChangeDefTp env' d (TPOption cr tpl)
 							_ -> env'
@@ -1948,7 +1948,7 @@ expr env (D.Set tp a b) =
 		callSet ldef ref = exprCall env (Just $ unoptionIfChecked $ exprDataType ref) $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
 	in if isNothing lcall then Set tp (ExpLError "Left is not def" aa) $ expr env b
 		else case fromJust lcall of
-			Call ldef _ [] -> 
+			Call ldef _ [] _ -> 
 				if DefModMutable `elem` defMods ldef then simpleSet 
 				else if envInit env && isSelfSet then simpleSet
 				else case aa of
@@ -2119,8 +2119,8 @@ optChecking env e =  rec (env, env) e
 		mapEnvDef en d = case unwrapGeneric $ defType d of
 			TPOption False tp -> envChangeDefTp en d (TPOption True tp)
 			_ -> en
-		mapEnv en (Call d _ []) = mapEnvDef en d
-		mapEnv en (Dot (Self _) (Call d _ [])) = mapEnvDef en d
+		mapEnv en (Call d _ [] _) = mapEnvDef en d
+		mapEnv en (Dot (Self _) (Call d _ [] _)) = mapEnvDef en d
 		mapEnv en _ = en
 		rec :: (Env, Env) -> Exp -> (Env, Env)
 		rec en (BoolOp And a b) = rec (rec en a) b
@@ -2405,7 +2405,7 @@ linkCase env (D.Case mainExpr items) =
 				unapplyCall :: [Exp] -> Exp
 				unapplyCall next = maybe (buildIf next) (buildCall next) unapply
 				buildCall next f@Def{defType = ftp, defPars = [fpar]} = Braces $
-					[declareVal env $ newValOpt{defBody = Dot (callRef (objectDef cl)) (Call f ftp [(fpar, maybeCast tp $ callRef val)])},
+					[declareVal env $ newValOpt{defBody = Dot (callRef (objectDef cl)) (Call f ftp [(fpar, maybeCast tp $ callRef val)] [])},
 					If (callFromValOpt "isDefined") 
 						(Braces $ (declareVal env $ newVal{defBody = callFromValOpt "get"}): next)
 						notOk 
@@ -2496,7 +2496,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 			(cl, cc@Call{}) -> (resolveDef strictClass cl . correctCall) cc
 			_ -> snd call'
 			where
-				resolveDef Nothing cl c@(Call d _ _)
+				resolveDef Nothing cl c@(Call d _ _ _)
 					| DefModConstructor `elem` defMods d = c
 					| DefModObject `elem` defMods d = c
 					| DefModLocal `elem` defMods d = c
@@ -2528,7 +2528,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 
 		pars'' :: [(Def, Exp)]
 		pars'' = case snd call' of
-			Call _ _ r -> r
+			Call _ _ r _ -> r
 		pars''' :: [(Def, Exp)]
 		pars''' = (map (correctCallPar env gens') pars'')
 		
@@ -2593,7 +2593,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 					tryDetermine _ _ = Nothing
 					dtpw tp = TPClass TPMGeneric (dataTypeGenerics env tp) (dataTypeClass env tp) 
 			in case snd call' of
-				(Call Def{defGenerics = Just defGens} _ _) -> 
+				(Call Def{defGenerics = Just defGens} _ _ _) -> 
 					M.fromList $ ddefGenerics defGens ++ dclassGenerics
 				_ -> M.fromList dclassGenerics 
 								
@@ -2605,8 +2605,11 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 			where callStr = name ++ maybe "" (\ps -> "(" ++ strs ", " (map ((++ ":") . fromMaybe "" . fst) ps) ++ ")" ) pars
 
 		correctCall :: Exp -> Exp
-		correctCall (Call d tp _) = Call d (replaceGenerics True gens'' tp) (map doImplicitConversation pars''')
+		correctCall (Call d tp _ _) = 
+			Call d (replaceGenerics True gens'' tp) (map doImplicitConversation pars''') 
+				(fromMaybe [] $ fmap cordg $ defGenerics d)
 			where
+				cordg = map (replaceGenerics True gens'' . TPClass TPMGeneric []) . defGenericsClasses
 				doImplicitConversation (dd, e) = (dd, implicitConvertsion env (replaceGenerics True gens'' $ defType dd) e)
 
 		allDefs :: [(Maybe Class, Def)]
@@ -2633,7 +2636,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 							if checkParameters pars' (defPars d) then Just $ (cl, def' d) else Nothing
 					| otherwise = Nothing
 
-				def' d = Call d (resolveTp d) $  zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars'
+				def' d = Call d (resolveTp d) (zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars') []
 				resolveTp d = case defType d of
 					TPSelf _ -> self
 					tp@(TPFun _ dtp)-> if length pars' == length (defPars d) then tp else dtp
@@ -2700,9 +2703,9 @@ maybeInlineCall env e = let
 		_ -> Nothing
 	callExp = fromJust callExpOpt
 	pars = case callExp of
-		Call _ _ p -> if DefModStatic `notElem` defMods def then selfPar : p else p
+		Call _ _ p _ -> if DefModStatic `notElem` defMods def then selfPar : p else p
 	defOpt = case callExpOpt of 
-		Just (Call dd _ _) -> Just dd
+		Just (Call dd _ _ _) -> Just dd
 		Nothing -> Nothing
 	def = fromJust defOpt
 	selfExp = case e of Dot l _ -> l
@@ -2734,10 +2737,10 @@ maybeInlineCall env e = let
 
 			replacedExp = mapExp rep $ defBody def
 			rep :: Exp -> Maybe Exp
-			rep (Dot (Call d _ []) (Call Def{defMods = mbLamdaMods} _ lambdaCallPars)) 
+			rep (Dot (Call d _ [] _) (Call Def{defMods = mbLamdaMods} _ lambdaCallPars _)) 
 				| DefModApplyLambda `elem` mbLamdaMods = fmap (unwrapLambda (map (mapExp rep . snd) lambdaCallPars)) $ lookup d refs
-			rep (LambdaCall (Call d _ [])) = fmap (unwrapLambda []) $ lookup d refs
-			rep (Call d _ []) = if DefModField `elem` defMods d then Nothing else lookup d refs
+			rep (LambdaCall (Call d _ [] _)) = fmap (unwrapLambda []) $ lookup d refs
+			rep (Call d _ [] _) = if DefModField `elem` defMods d then Nothing else lookup d refs
 			rep (Val b dd) = 
 				fmap (\d -> Val b $ d{defBody = mapExp rep (defBody d)} ) $ lookup dd mapDeclaredValsGenerics
 			rep (Self _) = lookup (fst selfPar) refs
@@ -2754,7 +2757,7 @@ maybeInlineCall env e = let
 				ee' = case elemPars of
 					[] -> ee
 					_ -> mapExp replaceOnEP ee
-				replaceOnEP (Call d _ []) = lookup (defName d) elemPars
+				replaceOnEP (Call d _ [] _) = lookup (defName d) elemPars
 				replaceOnEP _ = Nothing
 				in case nonelemPars of
 					[] -> ee'
@@ -2766,7 +2769,7 @@ maybeInlineCall env e = let
 			unelementaryPars = filter (not . isElementaryExpression . snd) pars
 			checkCountOfUsing d = (length $ filter (d ==) usingDefs) > 1
 			usingDefs = forExp findUsage (defBody def)
-			findUsage (Call d _ []) = [d]
+			findUsage (Call d _ [] _) = [d]
 			findUsage (Self _) = [fst selfPar]
 			findUsage _ = []
 	in if isJust defOpt && DefModInline `elem` defMods (fromJust defOpt) then inline else e
@@ -2845,7 +2848,7 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 						checkApplyPars [Def{defType = tp}] = isInstanceOfTp env sc tp
 						checkApplyPars _ = False
 						od = objectDef cls
-						wrapWithApply apply@Def{defPars = [par]} = Dot (Call od (defType od) []) (Call apply dtp [(par, e)])
+						wrapWithApply apply@Def{defPars = [par]} = Dot (Call od (defType od) [] []) (Call apply dtp [(par, e)] [])
 				classConversion t sc _ = ExpLError (show t ++ " from " ++ show sc) ex
 
 lambdaImplicitParameters :: DataType -> [(String, DataType)]
@@ -2888,7 +2891,7 @@ checkUninitializedFields cl@Class{_classDefs = defs} = if ClassModStub `elem` cl
 		initFields = maybe [] (findInits . defBody) $ classInitDef cl
 		findInits :: Exp -> [Def]
 		findInits (Braces xs) = concatMap findInits xs
-		findInits (Set Nothing (Dot (Self{}) (Call d _ [])) _) = [d]
+		findInits (Set Nothing (Dot (Self{}) (Call d _ [] _)) _) = [d]
 		findInits (If _ l r) = intersect (findInits l) (findInits r)
 		findInits _ = []
 		fieldsToCheck = filter (\d -> DefModField `elem` defMods d && DefModSpecial `notElem` defMods d && DefModConstructorField `notElem` defMods d) defs
@@ -2957,7 +2960,7 @@ checkErrorsInExp :: Exp -> [Error]
 checkErrorsInExp = forExp f
 	where 
 		f (Self tp) = checkErrorsInDataType tp
-		f e@(Call _ tp _) = checkErrorsInDataType tp ++ checkCallAbstractConstructor e
+		f e@(Call _ tp _ gens) = checkErrorsInDataType tp ++ checkCallAbstractConstructor e ++ concatMap checkErrorsInDataType gens
 		f (Lambda pars _ ret) = checkErrorsInDataType ret ++ concatMap (checkErrorsInDataType . snd) pars
 		f (Val _ Def{defType = tp}) = checkErrorsInDataType tp
 		f (ExpDError t e) = [Error (show e ++ ": " ++ t)]
@@ -2968,6 +2971,6 @@ checkErrorsInExp = forExp f
 		f _ = []
 
 checkCallAbstractConstructor :: Exp -> [Error]
-checkCallAbstractConstructor (Call Def{defMods = dMods} (TPClass _ _ Class{_classMods = clMods}) _)
+checkCallAbstractConstructor (Call Def{defMods = dMods} (TPClass _ _ Class{_classMods = clMods}) _ _)
 	| (DefModConstructor `elem` dMods) && (ClassModAbstract `elem` clMods) = [Error "Using abstract class"]
 checkCallAbstractConstructor _ = []	

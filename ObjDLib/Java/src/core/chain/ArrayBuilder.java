@@ -1,17 +1,17 @@
 package core.chain;
 
 public class ArrayBuilder<T> implements Builder<T, ImArray<T>> {
-    private final MArray<T> array = new MArray();
+    private final MArray<T> array = new MArray<T>();
     public void appendItem(T item) {
-        ERROR: Unknown <ArrayBuilder#C<T#G>>self.<ep>array\MArray#C<§T#G§>\.<rdIa>append(item = <l>item\§T#G§\)\void\;
+        array.appendItem(item);
     }
     public ImArray<T> build() {
-        return ERROR: Unknown <ArrayBuilder#C<T#G>>self.<ep>array\MArray#C<§T#G§>\.<dIo>im\[§T#G§]\;
+        return array.im();
     }
     public ArrayBuilder() {
     }
     static final ClassType<ArrayBuilder<T>> type;
     public void appendAllItems(Traversable<T> items) {
-        ERROR: Unknown <l>items\Traversable#T<§T#G§>\.<dI>for(each = _ : §T#G§ -> void = <Builder#T<T#G, C#G>>self.<dIa>append(item = <l>_\§T#G§\)\void\)\void\;
+        items.forEach(ERROR: Unknown _ : §T#G§ -> void = <Builder#T<T#G, C#G>>self.<dIa>append(item = <l>_\§T#G§\)\void\);
     }
 }

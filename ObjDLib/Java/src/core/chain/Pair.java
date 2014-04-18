@@ -14,7 +14,7 @@ else return <to>Pair\Pair#C.class\.<tcI>apply(a = <l>b\T#G\, b = <l>a\T#G\)\Pair
         return ERROR: Unknown 2.cast<uint>;
     }
     public Iterator<T> iterator() {
-        return new PairIterator(ERROR: Unknown <Pair#C<T#G>>self);
+        return new PairIterator<T>(ERROR: Unknown <Pair#C<T#G>>self);
     }
     public T head() {
         return ERROR: Unknown some(<Pair#C<T#G>>self.<eIU>a\§T#G§\)\§(T#G)?§\;

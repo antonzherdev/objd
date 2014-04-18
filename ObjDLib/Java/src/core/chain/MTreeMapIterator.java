@@ -7,7 +7,7 @@ public class MTreeMapIterator<K, V> implements MIterator<Tuple2<K, V>> {
     public static MTreeMapIterator<K, V> applyMapEntry(MTreeMap<K, V> map,TreeMapEntry<K, V> entry) {
         ERROR: Unknown local ret : MTreeMapIterator#C<§K#G§, §V#G§> = <to>MTreeMapIterator\MTreeMapIterator#C.class\.<tcI>apply(map = <l>map\MTreeMap#C<K#G, V#G>\)\MTreeMapIterator#C<§K#G§, §V#G§>\;
         ERROR: Unknown (<l>ret\MTreeMapIterator#C<§K#G§, §V#G§>\.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ = <l>entry\(^TreeMapEntry#C<K#G, V#G>)?\);
-        return ERROR: Unknown <l>ret\MTreeMapIterator#C<§K#G§, §V#G§>\;
+        return ret;
     }
     public boolean hasNext() {
         return ERROR: Unknown (<MTreeMapIterator#C<K#G, V#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>);
@@ -16,7 +16,7 @@ public class MTreeMapIterator<K, V> implements MIterator<Tuple2<K, V>> {
         ERROR: Unknown local ret : (§K#G§, §V#G§) = (<MTreeMapIterator#C<K#G, V#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIUm>key\§K#G§\, <MTreeMapIterator#C<K#G, V#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIUm>value\§V#G§\);
         ERROR: Unknown (<MTreeMapIterator#C<K#G, V#G>>self.<emp>prev\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ = <MTreeMapIterator#C<K#G, V#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\);
         ERROR: Unknown (<MTreeMapIterator#C<K#G, V#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ = <MTreeMapIterator#C<K#G, V#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<dI>next\(^TreeMapEntry#C<§K#G§, §V#G§>)?\);
-        return ERROR: Unknown <l>ret\(§K#G§, §V#G§)\;
+        return ret;
     }
     public void remove() {
         {

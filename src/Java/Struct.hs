@@ -112,11 +112,13 @@ showStm (Return e) = ["return "] `glue` showExp e `appp` ";"
 showStm (Braces stms) = showStmsInBrackets stms
 
 
-data Exp = Nop | IntConst Int | ExpError String | Call String [Exp] | New String [Exp] 
+data Exp = Nop | IntConst Int | ExpError String | Call String [TP] [Exp] | New Exp | Dot Exp Exp | Ref String
 
 showExp :: Exp -> [String]
 showExp Nop = []
 showExp (IntConst i) = [show i]
-showExp (Call name pars) = [name ++ "("] `glue` (glueAll ", " . map showExp) pars `appp` ")"
-showExp (New name pars) = ["new " ++ name ++ "("] `glue` (glueAll ", " . map showExp) pars `appp` ")"
+showExp (Ref s) = [s]
+showExp (Call name gens pars) = [name ++ pstrs' "<" ", " ">" gens ++ "("] `glue` (glueAll ", " . map showExp) pars `appp` ")"
+showExp (New e) = ["new "] `glue` showExp e
+showExp (Dot l r) = showExp l `appp` "." `glue` showExp r
 showExp (ExpError e) = ["ERROR: " ++ e]

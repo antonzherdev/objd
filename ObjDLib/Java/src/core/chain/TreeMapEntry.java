@@ -31,7 +31,7 @@ else {
         ERROR: Unknown (<l>c\TreeMapEntry#C<§K#G§, §V#G§>\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ = <TreeMapEntry#C<K#G, V#G>>self.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<dI>copy(parent = some(<l>c\TreeMapEntry#C<§K#G§, §V#G§>\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)\TreeMapEntry#C<§K#G§, §V#G§>\);
         ERROR: Unknown (<l>c\TreeMapEntry#C<§K#G§, §V#G§>\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ = <TreeMapEntry#C<K#G, V#G>>self.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<dI>copy(parent = some(<l>c\TreeMapEntry#C<§K#G§, §V#G§>\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)\TreeMapEntry#C<§K#G§, §V#G§>\);
         ERROR: Unknown (<l>c\TreeMapEntry#C<§K#G§, §V#G§>\.<eIm>color\int\ = <TreeMapEntry#C<K#G, V#G>>self.<eIm>color\int\);
-        return ERROR: Unknown <l>c\TreeMapEntry#C<§K#G§, §V#G§>\;
+        return c;
     }
     public TreeMapEntry(K key,V value,TreeMapEntry<K, V> parent) {
     }

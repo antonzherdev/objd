@@ -10,7 +10,7 @@ public class IndexFunSeqIterator<T> implements Iterator<T> {
     public T next() {
         ERROR: Unknown local ret : T#G = <IndexFunSeqIterator#C<T#G>>self.<eIU>f\uint -> §T#G§\.<d>apply( = <IndexFunSeqIterator#C<T#G>>self.<emp>i\uint\)\§T#G§\;
         ERROR: Unknown <IndexFunSeqIterator#C<T#G>>self.<emp>i\uint\++;
-        return ERROR: Unknown <l>ret\§T#G§\;
+        return ret;
     }
     public IndexFunSeqIterator(int count,F<Integer, T> f) {
     }

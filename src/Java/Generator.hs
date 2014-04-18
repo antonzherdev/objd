@@ -84,6 +84,9 @@ genTp tp = error $ "genTp: " ++ show tp
  - Defs
  -----------------------------------------------------------------------------------------------------------------------------------------------}
 
+fullDefName :: D.Def -> String
+fullDefName d = D.defName d ++ concatMap (cap . D.defName) (D.defPars d)
+
 genDef :: D.Def -> J.Def
 genDef d =
  	let 
@@ -113,7 +116,7 @@ genDef d =
  		else 
  			J.Def {
  				J.defMods = mods,
- 				J.defName = D.defName d ++ concatMap (cap . D.defName) (D.defPars d),
+ 				J.defName = fullDefName d,
  				J.defTp = genTp $ D.defType d,
  				J.defPars = map genPar $ D.defPars d,
  				J.defStms = stms
@@ -129,8 +132,13 @@ genPar D.Def{D.defName = nm, D.defType = tp} = (genTp tp, nm)
 
 genExp :: D.Exp -> J.Exp
 genExp D.Nop = J.Nop
-genExp (D.Dot (D.Call objDef _ []) (D.Call constr _ pars))
-	| D.DefModConstructor `elem` D.defMods constr = J.New (D.defName objDef) (map (genExp . snd) pars)
+genExp (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
+	| D.DefModConstructor `elem` D.defMods constr = J.New $ J.Call (D.defName objDef) (map genTp gens) (map (genExp . snd) pars)
+genExp (D.Dot (D.Self _) r) = genExp r
+genExp (D.Dot l r) = J.Dot (genExp l) (genExp r)
+genExp (D.Call d _ [] []) 
+	| D.DefModField `elem` D.defMods d || D.DefModLocal `elem` D.defMods d = J.Ref $ D.defName d
+genExp (D.Call d _ pars gens) = J.Call (fullDefName d) (map genTp gens) (map (genExp . snd) pars)
 genExp e = J.ExpError $ "Unknown " ++ show e
 
 genStm :: D.Exp -> [J.Stm]

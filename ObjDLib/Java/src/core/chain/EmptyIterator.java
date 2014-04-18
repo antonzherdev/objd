@@ -1,7 +1,7 @@
 package core.chain;
 
 public class EmptyIterator<T> implements Iterator<T> {
-    public static final EmptyIterator<Object> instance = new EmptyIterator();
+    public static final EmptyIterator<Object> instance = new EmptyIterator<Object>();
     public boolean hasNext() {
         return ERROR: Unknown False;
     }

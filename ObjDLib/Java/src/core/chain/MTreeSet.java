@@ -4,10 +4,10 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
     private static final Object obj = new Object();
     public final MTreeMap<T, Object> mmap;
     public static MTreeSet<T> applyComparator(F2<T, T, Integer> comparator) {
-        return new MTreeSet(new MTreeMap(ERROR: Unknown <lw>comparator\(T#G, T#G) -> int\));
+        return new MTreeSet<T>(new MTreeMap<T, Object>(ERROR: Unknown <lw>comparator\(T#G, T#G) -> int\));
     }
     public static MTreeSet<T> apply() {
-        return new MTreeSet(ERROR: Unknown <to>MTreeMap\MTreeMap#C.class\.<dIt>apply\MTreeMap#C<§T#G§, §^Object#C§>\);
+        return new MTreeSet<T>(ERROR: Unknown <to>MTreeMap\MTreeMap#C.class\.<dIt>apply\MTreeMap#C<§T#G§, §^Object#C§>\);
     }
     public MIterator<T> mutableIterator() {
         return ERROR: Unknown <MTreeSet#C<T#G>>self.<eIU>mmap\MTreeMap#C<§T#G§, ^Object#C>\.<eIo>keys\MTreeMapKeySet#C<§T#G§>\.<dI>mutableIterator\MIterator#T<§T#G§>\;
@@ -30,10 +30,10 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
         return ERROR: Unknown <l>ret\MTreeSet#C<§T#G§>\;
     }
     public ImTreeSet<T> im() {
-        return new ImTreeSet(ERROR: Unknown <MTreeSet#C<T#G>>self.<eIU>mmap\MTreeMap#C<§T#G§, ^Object#C>\.<dIo>im\ImTreeMap#C<§T#G§, ^Object#C>\);
+        return new ImTreeSet<T>(ERROR: Unknown <MTreeSet#C<T#G>>self.<eIU>mmap\MTreeMap#C<§T#G§, ^Object#C>\.<dIo>im\ImTreeMap#C<§T#G§, ^Object#C>\);
     }
     public ImTreeSet<T> imCopy() {
-        return new ImTreeSet(ERROR: Unknown <MTreeSet#C<T#G>>self.<eIU>mmap\MTreeMap#C<§T#G§, ^Object#C>\.<dIo>imCopy\ImTreeMap#C<§T#G§, ^Object#C>\);
+        return new ImTreeSet<T>(ERROR: Unknown <MTreeSet#C<T#G>>self.<eIU>mmap\MTreeMap#C<§T#G§, ^Object#C>\.<dIo>imCopy\ImTreeMap#C<§T#G§, ^Object#C>\);
     }
     public MTreeSet(MTreeMap<T, Object> mmap) {
     }

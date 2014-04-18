@@ -12,7 +12,7 @@ public class Failure<T> extends Try<T> {
         return ERROR: Unknown True;
     }
     public Try<R> mapF(F<T, R> f) {
-        return ERROR: Unknown <Failure#C<T#G>>self.cast<Try#C<R#G>>;
+        return ERROR: Unknown cast<Try#C<R#G>>;
     }
     public Failure(Object reason) {
     }

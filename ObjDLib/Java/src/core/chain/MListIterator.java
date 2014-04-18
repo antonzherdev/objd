@@ -10,10 +10,10 @@ public class MListIterator<T> implements MIterator<T> {
     public T next() {
         ERROR: Unknown (<MListIterator#C<T#G>>self.<emp>prev\(^MListItem#C<§T#G§>)?\ = <MListIterator#C<T#G>>self.<eIm>item\(^MListItem#C<§T#G§>)?\);
         ERROR: Unknown (<MListIterator#C<T#G>>self.<eIm>item\(^MListItem#C<§T#G§>)?\ = <MListIterator#C<T#G>>self.<eIm>item\(^MListItem#C<§T#G§>)?\.get.<eIm>next\(^MListItem#C<§T#G§>)?\);
-        return ERROR: Unknown <MListIterator#C<T#G>>self.<emp>prev\(^MListItem#C<§T#G§>)?\.get.<eIUm>data\§T#G§\;
+        return ERROR: Unknown <MListIterator#C<T#G>>self.<emp>prev\(^MListItem#C<§T#G§>)?\.get.data;
     }
     public void remove() {
-        ERROR: Unknown <MListIterator#C<T#G>>self.<eIU>list\MList#C<§T#G§>\.<dI>remove(listItem = <MListIterator#C<T#G>>self.<emp>prev\(^MListItem#C<§T#G§>)?\.get)\void\;
+        list.removeListItem(ERROR: Unknown <MListIterator#C<T#G>>self.<emp>prev\(^MListItem#C<§T#G§>)?\.get);
     }
     public void setValue(T value) {
         ERROR: Unknown (<MListIterator#C<T#G>>self.<emp>prev\(^MListItem#C<§T#G§>)?\.get.<eIUm>data\§T#G§\ = <l>value\§T#G§\);

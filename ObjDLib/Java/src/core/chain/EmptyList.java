@@ -1,7 +1,7 @@
 package core.chain;
 
 public class EmptyList<T> extends ImList<T> {
-    public static final EmptyList<Object> instance = new EmptyList();
+    public static final EmptyList<Object> instance = new EmptyList<Object>();
     public int count() {
         return ERROR: Unknown 0.cast<uint>;
     }
@@ -23,7 +23,7 @@ public class EmptyList<T> extends ImList<T> {
     public void forEach(F<T, Void> each) {
     }
     public ImList<T> insertItem(C item) {
-        return ERROR: Unknown <to>ImList\ImList#C.class\.<dIt>apply(item = <l>item\C#G\.cast<T#G>)\ImList#C<§T#G§>\;
+        return ImList().applyItem<T>(item.ERROR: Unknown cast<T#G>);
     }
     public EmptyList() {
     }

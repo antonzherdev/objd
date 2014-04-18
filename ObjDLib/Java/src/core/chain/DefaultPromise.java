@@ -1,7 +1,7 @@
 package core.chain;
 
 public class DefaultPromise<T> extends Promise<T> {
-    private final AtomicObject<Object> _state = ERROR: Unknown <to>AtomicObject\AtomicObject#C.class\.<dIt>apply(value = [])\AtomicObject#C<§^any§>\;
+    private final AtomicObject<Object> _state = AtomicObject().applyValue<Object>(ERROR: Unknown []);
     public Try<T> result() {
         ERROR: Unknown local v : any = <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<dI>value\§^any§\;
         ERROR: Unknown if(<l>v\any\.is<Try#C<T#G>>) return some(<l>v\any\.cast<Try#C<T#G>>)\(^Try#C<T#G>)?\
@@ -21,10 +21,10 @@ else {
         return ERROR: Unknown False;
     }
     public boolean successValue(T value) {
-        return ERROR: Unknown <DefaultPromise#C<T#G>>self.<dIo>complete(value = <to>Success\Success#C.class\.<tcI>apply(get = <l>value\§T#G§\)\Success#C<§T#G§>\)\bool\;
+        return completeValue(new Success<T>(value));
     }
     public boolean failureReason(Object reason) {
-        return ERROR: Unknown <DefaultPromise#C<T#G>>self.<dIo>complete(value = <to>Failure\Failure#C.class\.<tcI>apply(reason = <DefaultPromise#C<T#G>>self.<dIo>result\(^Try#C<§T#G§>)?\)\Failure#C<§T#G§>\)\bool\;
+        return completeValue(new Failure<T>(result()));
     }
     public void onCompleteF(F<Try<T>, Void> f) {
         ERROR: Unknown while(True) {

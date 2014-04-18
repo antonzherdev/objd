@@ -776,14 +776,14 @@ setSelf env tp stm = if hasWeakSelf False stm then [
 
 tExp :: Env -> D.Exp -> C.Exp
 {- Optimizations -}
-tExp env (D.Dot l (D.Call (D.Def{D.defName = "im"}) _ [])) 
+tExp env (D.Dot l (D.Call (D.Def{D.defName = "im"}) _ [] _)) 
 	| isExp = tExp env l
 	where isExp = case D.exprDataType l of
 		D.TPClass _ _ D.Class{D.className = "MArray"} -> True
 		_ -> False
 -- sizeof(structure)
-tExp _ (D.Dot (D.Dot (D.Call (D.Def{D.defType = D.TPObject _ cl}) _ []) 
-		(D.Call (D.Def{D.defName = "type"}) _ [])) (D.Call (D.Def{D.defName = "size"}) _ [])) 
+tExp _ (D.Dot (D.Dot (D.Call (D.Def{D.defType = D.TPObject _ cl}) _ [] _) 
+		(D.Call (D.Def{D.defName = "type"}) _ [] _)) (D.Call (D.Def{D.defName = "size"}) _ [] _)) 
 	= C.CCall (C.Ref "sizeof") [C.Ref $ D.classNameWithPrefix cl]
 
 
@@ -818,7 +818,7 @@ tExp env (D.MinusMinus e) = C.MinusMinus (tExp env e)
 
 
 {- Dot -}
-tExp env (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars)) 
+tExp env (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars _)) 
 	| not (null pars) && D.DefModApplyLambda `elem` mods =
 		let 
 			tp = D.exprDataType l
@@ -827,10 +827,10 @@ tExp env (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars))
 			C.Stm $ C.InlineIf (C.BoolOp Eq (C.Ref "__nd") C.Nil) C.Nil (C.CCall (C.Ref "__nd") ((map snd . tPars env dd) pars))
 		]
 tExp env (D.NullDot l r) = tExpToType env (D.wrapGeneric $ D.exprDataType r) (D.Dot l r)
-tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call d@D.Def {D.defName = name, D.defMods = mods} _ pars)) 
+tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call d@D.Def {D.defName = name, D.defMods = mods} _ pars _)) 
 	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
 	| otherwise = C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) d) (C.Ref "self" : (map snd . tPars env d) pars)
-tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name} _ pars)) 
+tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name} _ pars _)) 
 	| D.DefModField `elem` mods && null pars && D.DefModSuper `notElem` mods && (not (envWeakSelf env) || D.DefModStatic `elem` mods) = 
 		C.Ref $ fieldName env d
 	| D.DefModField `elem` mods && D.DefModSuper `notElem` mods && not ((envWeakSelf env) || D.DefModStatic `elem` mods) = 
@@ -838,7 +838,7 @@ tExp env (D.Dot (D.Self stp) (D.Call d@D.Def{D.defMods = mods, D.defName = name}
 	| D.DefModStatic `elem` mods = C.Call (C.Ref $ D.classNameWithPrefix $ D.tpClass stp) name (tPars env d pars) []
 	| D.DefModField `elem` mods && null pars = selfGetField env name
 	| otherwise = C.Call (selfCall env) name (tPars env d pars) [] 
-tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars))
+tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars _))
 	| D.DefModStatic `elem` mods && isStubObject = 
 		if D.DefModField `elem` mods then C.Ref name
 		else C.CCall (C.Ref $ name) ((map snd . tPars env dd) pars)
@@ -873,7 +873,7 @@ tExp env (D.Dot l (D.CastDot dtp)) = tExp env (D.Cast dtp l)
 tExp env (D.Dot l (D.Cast dtp c)) = tExp env (D.Cast dtp (D.Dot l c))
 tExp env (D.Dot l (D.LambdaCall c)) = tExp env (D.LambdaCall $ D.Dot l c)
 
-tExp env (D.Arrow l (D.Call D.Def{D.defName = name} _ [])) = C.Arrow (tExp env l) (C.Ref name)
+tExp env (D.Arrow l (D.Call D.Def{D.defName = name} _ [] _)) = C.Arrow (tExp env l) (C.Ref name)
 tExp env (D.Arrow l r) = C.Arrow (tExp env l) (tExp env r)
 
 tExp env (D.Self _) = selfCall env
@@ -882,7 +882,7 @@ tExp env (D.LambdaCall e) = let
 		tp = D.exprDataType e
 		e' = tExp env e 
 	in C.CCall (if D.isGenericWrap tp then C.Cast (showDataType tp) e' else e') []
-tExp env (D.Call d@D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars)
+tExp env (D.Call d@D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ pars _)
 	| D.DefModField `elem` mods = C.Ref $ fieldName env d
 	| D.DefModEnumItem `elem` mods = C.Ref $ fieldName env d
 	| D.DefModLocal `elem` mods && null pars = C.Ref name
@@ -1055,15 +1055,15 @@ tStm env parexps (D.Val separate def@D.Def{D.defName = name, D.defType = tp, D.d
 		isLambda _ = []
 		isWeak = D.DefModWeak `elem` mods
 		setsInLambda (D.Lambda _ lambdaExpr _) = D.forExp isSet lambdaExpr
-		isSet ee@(D.Set _ (D.Call d _ _) _) = if D.defName d == D.defName def then Just ee else Nothing
-		isSet ee@(D.PlusPlus (D.Call d _ _)) = if D.defName d == D.defName def then Just ee else Nothing
-		isSet ee@(D.MinusMinus (D.Call d _ _)) = if D.defName d == D.defName def then Just ee else Nothing
+		isSet ee@(D.Set _ (D.Call d _ _ _) _) = if D.defName d == D.defName def then Just ee else Nothing
+		isSet ee@(D.PlusPlus (D.Call d _ _ _)) = if D.defName d == D.defName def then Just ee else Nothing
+		isSet ee@(D.MinusMinus (D.Call d _ _ _)) = if D.defName d == D.defName def then Just ee else Nothing
 		isSet _ = Nothing
 tStm env _ (D.Throw e) = [C.Throw $ tExp env e]
 tStm _ _ D.Break = [C.Break]
 tStm _ _ D.Continue = [C.Continue]
 tStm env pe (D.Weak expr) = tStm env{envWeakSelf = True} pe expr
-tStm env _ x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar, cycleTp)] cycleBody _)])) 
+tStm env _ x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar, cycleTp)] cycleBody _)] _)) 
 	| dn == "for" || dn == "go" =
 		case D.exprDataType l of
 			D.TPArr _ _ -> forin
@@ -1079,7 +1079,7 @@ tStm env _ x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar
 		procGo (D.Return _ e) = Just $ D.If e D.Continue D.Break
 		procGo _ = Nothing
 tStm env _ (D.Try e f) = [C.Try (translate env e) (translate env f)]
-tStm env _ (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars)) 
+tStm env _ (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars _)) 
 	| not (null pars) && D.DefModApplyLambda `elem` mods =
 		let 
 			tp = D.exprDataType l
