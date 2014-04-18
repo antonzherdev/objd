@@ -6,5 +6,5 @@ public class MListItem<T> {
     public MListItem<T> prev;
     public MListItem(T data) {
     }
-    static ClassType<MListItem<T>> type;
+    static final ClassType<MListItem<T>> type;
 }

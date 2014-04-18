@@ -1,6 +1,6 @@
 module Java.Struct ( 
 	File(..), Class(..), Visibility(..), ClassType(..),
-	TP(..), Generic(..), ref, Def(..), DefPar, DefMod(..), Stm(..), Exp(..)
+	TP(..), Generic(..), tpRef, Def(..), DefPar, DefMod(..), Stm(..), Exp(..)
 ) where
 
 import           Ex.String
@@ -54,8 +54,8 @@ instance Show Generic where
  - DataType
  -----------------------------------------------------------------------------------------------------------------------------------------------}
 data TP = TPRef [TP] String | TPArr TP Int
-ref :: String -> TP
-ref = TPRef []
+tpRef :: String -> TP
+tpRef = TPRef []
 instance Show TP where
 	show (TPRef [] nm) = nm
 	show (TPRef exts nm) = nm ++ "<" ++ strs' ", " exts ++ ">"
@@ -69,7 +69,7 @@ data Def =
 	| Constructor {defMods :: [DefMod], defPars :: [DefPar], defStms :: [Stm]}
 	| Field {defMods :: [DefMod], defTp :: TP, defName :: String, defExp :: Exp}
 type DefPar = (TP, String)
-data DefMod = DefModStatic | DefModAbstract | DefModVisability Visibility deriving (Eq)
+data DefMod = DefModStatic | DefModAbstract | DefModFinal | DefModVisability Visibility deriving (Eq)
 
 showDef :: Class -> Def -> [String]
 showDef _ d@Field{} = [mods ++ " " ++ show (defTp d) ++ " " ++ defName d] `glue` body
@@ -94,6 +94,7 @@ showPars d = "(" ++ mkString showDefPar "," (defPars d) ++ ")"
 instance Show DefMod where
 	show DefModStatic = "static"
 	show DefModAbstract = "abstract"
+	show DefModFinal = "final"
 	show (DefModVisability v) = show v
 
 {-----------------------------------------------------------------------------------------------------------------------------------------------
@@ -102,15 +103,20 @@ instance Show DefMod where
 showStmsInBrackets :: [Stm] -> [String]
 showStmsInBrackets stms = ["{"] ++ (map ind . concatMap showStm) stms ++ ["}"]
 
-data Stm = Stm Exp
+data Stm = Stm Exp | Braces [Stm] | Return Exp
 
 showStm :: Stm -> [String]
 showStm (Stm Nop) = []
 showStm (Stm e) = showExp e `appp` ";"
+showStm (Return e) = ["return "] `glue` showExp e `appp` ";"
+showStm (Braces stms) = showStmsInBrackets stms
 
 
-data Exp = Nop | IntConst Int
+data Exp = Nop | IntConst Int | ExpError String | Call String [Exp] | New String [Exp] 
 
 showExp :: Exp -> [String]
 showExp Nop = []
 showExp (IntConst i) = [show i]
+showExp (Call name pars) = [name ++ "("] `glue` (glueAll ", " . map showExp) pars `appp` ")"
+showExp (New name pars) = ["new " ++ name ++ "("] `glue` (glueAll ", " . map showExp) pars `appp` ")"
+showExp (ExpError e) = ["ERROR: " ++ e]

@@ -1,12 +1,14 @@
 package core.chain;
 
 public class EmptyIterator<T> implements Iterator<T> {
-    public static EmptyIterator<Object> instance;
+    public static final EmptyIterator<Object> instance = new EmptyIterator();
     public boolean hasNext() {
+        return ERROR: Unknown False;
     }
     public T next() {
+        ERROR: Unknown throw "Iterator is empty";
     }
     public EmptyIterator() {
     }
-    static ClassType<EmptyIterator<T>> type;
+    static final ClassType<EmptyIterator<T>> type;
 }

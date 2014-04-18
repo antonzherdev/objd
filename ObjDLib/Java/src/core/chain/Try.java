@@ -5,9 +5,10 @@ public class Try<T> {
     public abstract Object reason();
     public abstract boolean isSuccess();
     public boolean isFailure() {
+        return ERROR: Unknown !(<Try#C<T#G>>self.<dIa>isSuccess\bool\);
     }
     public abstract Try<R> mapF(F<T, R> f);
     public Try() {
     }
-    static ClassType<Try<T>> type;
+    static final ClassType<Try<T>> type;
 }

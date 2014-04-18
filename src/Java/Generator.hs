@@ -46,37 +46,37 @@ genExtendsRef (cl, gens) = J.TPRef (map genTp gens) (D.className cl)
  -----------------------------------------------------------------------------------------------------------------------------------------------}
 genTp :: D.DataType -> J.TP
 genTp (D.TPClass _ gens cl) = J.TPRef (map genTp gens) (D.className cl) 
-genTp (D.TPNumber _ 1) = J.ref "byte"
-genTp (D.TPNumber _ 8) = J.ref "long"
-genTp (D.TPNumber _ _) = J.ref "int"
-genTp (D.TPGenericWrap _ (D.TPNumber _ 1)) = J.ref "Byte"
-genTp (D.TPGenericWrap _ (D.TPNumber _ 8)) = J.ref "Long"
-genTp (D.TPGenericWrap _ (D.TPNumber _ _)) = J.ref "Integer"
-genTp (D.TPFloatNumber 8) = J.ref "double"
-genTp (D.TPFloatNumber _) = J.ref "float"
-genTp (D.TPGenericWrap _ (D.TPFloatNumber 8)) = J.ref "Double"
-genTp (D.TPGenericWrap _ (D.TPFloatNumber _)) = J.ref "Float"
-genTp D.TPVoid = J.ref "void"
-genTp (D.TPGenericWrap _ D.TPVoid) = J.ref "Void"
-genTp D.TPChar = J.ref "char"
-genTp (D.TPGenericWrap _ D.TPChar) = J.ref "Character"
-genTp D.TPBool = J.ref "boolean"
-genTp (D.TPGenericWrap _ D.TPBool) = J.ref "Boolean"
+genTp (D.TPNumber _ 1) = J.tpRef "byte"
+genTp (D.TPNumber _ 8) = J.tpRef "long"
+genTp (D.TPNumber _ _) = J.tpRef "int"
+genTp (D.TPGenericWrap _ (D.TPNumber _ 1)) = J.tpRef "Byte"
+genTp (D.TPGenericWrap _ (D.TPNumber _ 8)) = J.tpRef "Long"
+genTp (D.TPGenericWrap _ (D.TPNumber _ _)) = J.tpRef "Integer"
+genTp (D.TPFloatNumber 8) = J.tpRef "double"
+genTp (D.TPFloatNumber _) = J.tpRef "float"
+genTp (D.TPGenericWrap _ (D.TPFloatNumber 8)) = J.tpRef "Double"
+genTp (D.TPGenericWrap _ (D.TPFloatNumber _)) = J.tpRef "Float"
+genTp D.TPVoid = J.tpRef "void"
+genTp (D.TPGenericWrap _ D.TPVoid) = J.tpRef "Void"
+genTp D.TPChar = J.tpRef "char"
+genTp (D.TPGenericWrap _ D.TPChar) = J.tpRef "Character"
+genTp D.TPBool = J.tpRef "boolean"
+genTp (D.TPGenericWrap _ D.TPBool) = J.tpRef "Boolean"
 
 genTp (D.TPGenericWrap _ w) = genTp w
-genTp D.TPString = J.ref "String"
+genTp D.TPString = J.tpRef "String"
 genTp (D.TPEArr n tp)  = J.TPArr (genTp tp) n
-genTp D.TPAny = J.ref "Object"
+genTp D.TPAny = J.tpRef "Object"
 genTp (D.TPArr _ tp) = J.TPRef [genTp tp] "ImArray"
 genTp (D.TPFun (D.TPTuple [stp]) dtp) = J.TPRef [genTp $ D.wrapGeneric stp, genTp $ D.wrapGeneric dtp] "F"
 genTp (D.TPFun (D.TPTuple stps) dtp) = J.TPRef (map (genTp . D.wrapGeneric) stps ++ [genTp $ D.wrapGeneric dtp]) ("F" ++ show (length stps))
 genTp (D.TPFun stp dtp) = J.TPRef [genTp $ D.wrapGeneric stp, genTp $ D.wrapGeneric dtp] "F"
 genTp (D.TPTuple tps) = J.TPRef (map genTp tps) ("Tuple" ++ show (length tps))
-genTp (D.TPSelf cl) = J.TPRef (map (J.ref . D.className) (D.classGenerics cl) ) (D.className cl)
+genTp (D.TPSelf cl) = J.TPRef (map (J.tpRef . D.className) (D.classGenerics cl) ) (D.className cl)
 genTp (D.TPMap key value) = J.TPRef [genTp key, genTp value] "HashMap"
 genTp (D.TPOption _ tp) = genTp tp
-genTp D.TPAnyGeneric = J.ref "Object"
-genTp (D.TPPointer _) = J.ref "Pointer"
+genTp D.TPAnyGeneric = J.tpRef "Object"
+genTp (D.TPPointer _) = J.tpRef "Pointer"
 
 genTp tp = error $ "genTp: " ++ show tp
 
@@ -94,9 +94,12 @@ genDef d =
  		genMod D.DefModAbstract = Just J.DefModAbstract
  		genMod _ = Nothing
  		mods = mapMaybe genMod (D.defMods d)
+ 		stms = case D.defBody d of
+ 			D.Braces bs -> concatMap genStm bs 
+ 			b -> genStm b
  	in if D.isField d then 
  			J.Field {
- 				J.defMods = mods,
+ 				J.defMods = mods ++ [J.DefModFinal | D.DefModMutable `notElem` D.defMods d],
  				J.defName = D.defName d,
  				J.defTp = genTp $ D.defType d,
  				J.defExp = genExp $ D.defBody d
@@ -105,7 +108,7 @@ genDef d =
  			J.Constructor {
  				J.defMods = mods,
  				J.defPars = map genPar $ D.defPars d,
- 				J.defStms = genStm $ D.defBody d 
+ 				J.defStms = stms 
  			}
  		else 
  			J.Def {
@@ -113,7 +116,7 @@ genDef d =
  				J.defName = D.defName d ++ concatMap (cap . D.defName) (D.defPars d),
  				J.defTp = genTp $ D.defType d,
  				J.defPars = map genPar $ D.defPars d,
- 				J.defStms = genStm $ D.defBody d 
+ 				J.defStms = stms
  			}
 
 genPar :: D.Def -> J.DefPar
@@ -125,8 +128,14 @@ genPar D.Def{D.defName = nm, D.defType = tp} = (genTp tp, nm)
 
 
 genExp :: D.Exp -> J.Exp
-genExp _ = J.Nop
+genExp D.Nop = J.Nop
+genExp (D.Dot (D.Call objDef _ []) (D.Call constr _ pars))
+	| D.DefModConstructor `elem` D.defMods constr = J.New (D.defName objDef) (map (genExp . snd) pars)
+genExp e = J.ExpError $ "Unknown " ++ show e
 
 genStm :: D.Exp -> [J.Stm]
-genStm _ = [J.Stm J.Nop]
+genStm D.Nop = []
+genStm (D.Braces bs) = [J.Braces $ concatMap genStm bs]
+genStm (D.Return _ e) = [J.Return $ genExp e]
+genStm e = [J.Stm $ genExp e]
 

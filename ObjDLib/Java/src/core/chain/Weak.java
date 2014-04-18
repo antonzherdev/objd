@@ -1,10 +1,11 @@
 package core.chain;
 
 public class Weak<T> {
-    public T value;
+    public final T value;
     public boolean isEmpty() {
+        return ERROR: Unknown (<Weak#C<T#G>>self.<eIUw>value\(§T#G§)?\ === nil);
     }
     public Weak(T value) {
     }
-    static ClassType<Weak<T>> type;
+    static final ClassType<Weak<T>> type;
 }
