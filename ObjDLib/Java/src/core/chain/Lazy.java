@@ -5,7 +5,7 @@ public class Lazy<T> {
     private T _value;
     private boolean _calculated = ERROR: Unknown False;
     public boolean isCalculated() {
-        return ERROR: Unknown <Lazy#C<T#G>>self.<emp>_calculated\bool\;
+        return _calculated;
     }
     public T get() {
         ERROR: Unknown if(<Lazy#C<T#G>>self.<emp>_calculated\bool\) return <Lazy#C<T#G>>self.<emp>_value\(§T#G§)?\.get
@@ -17,5 +17,4 @@ else {
     }
     public Lazy(F<Void, T> f) {
     }
-    static final ClassType<Lazy<T>> type;
 }

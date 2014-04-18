@@ -35,5 +35,4 @@ else {
     }
     public TreeMapEntry(K key,V value,TreeMapEntry<K, V> parent) {
     }
-    static final ClassType<TreeMapEntry<K, V>> type;
 }

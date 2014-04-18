@@ -1,6 +1,6 @@
 module Java.Struct ( 
 	File(..), Class(..), Visibility(..), ClassType(..),
-	TP(..), Generic(..), tpRef, Def(..), DefPar, DefMod(..), Stm(..), Exp(..)
+	TP(..), Generic(..), tpRef, Def(..), DefPar, DefMod(..), Stm(..), Exp(..), DefAnnotation(..)
 ) where
 
 import           Ex.String
@@ -31,7 +31,7 @@ instance Show Class where
 		++ maybe "" ((" extends " ++ ). show)  (classExtends cl)
 		++ pstrs' (if classType cl == ClassTypeClass then " implements " else " extends ") ", " "" (classImplements cl)
 		++ " {\n" 
-		++ (unlines . map ind . concatMap (showDef cl) )  (classDefs cl)
+		++ (unlines . map ind . concatMap (showDef (classType cl, className cl)) )  (classDefs cl)
 		++ "}"
 
 data Visibility = Private | Protected | Public | Package deriving (Eq)
@@ -53,10 +53,11 @@ instance Show Generic where
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - DataType
  -----------------------------------------------------------------------------------------------------------------------------------------------}
-data TP = TPRef [TP] String | TPArr TP Int
+data TP = TPRef [TP] String | TPArr TP Int | TPAnyGeneric
 tpRef :: String -> TP
 tpRef = TPRef []
 instance Show TP where
+	show (TPAnyGeneric) = "?"
 	show (TPRef [] nm) = nm
 	show (TPRef exts nm) = nm ++ "<" ++ strs' ", " exts ++ ">"
 	show (TPArr tp n) = show tp ++ "[" ++ show n ++ "]"
@@ -65,27 +66,29 @@ instance Show TP where
  - Def
  -----------------------------------------------------------------------------------------------------------------------------------------------}
 data Def = 
-	  Def{defMods :: [DefMod], defTp :: TP, defName :: String, defPars :: [DefPar], defStms :: [Stm]}
-	| Constructor {defMods :: [DefMod], defPars :: [DefPar], defStms :: [Stm]}
-	| Field {defMods :: [DefMod], defTp :: TP, defName :: String, defExp :: Exp}
+	  Def{defAnnotations :: [DefAnnotation], defMods :: [DefMod], defTp :: TP, defName :: String, defPars :: [DefPar], defStms :: [Stm]}
+	| Constructor {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defPars :: [DefPar], defStms :: [Stm]}
+	| Field {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defTp :: TP, defName :: String, defExp :: Exp}
 type DefPar = (TP, String)
-data DefMod = DefModStatic | DefModAbstract | DefModFinal | DefModVisability Visibility deriving (Eq)
+data DefMod = DefModStatic | DefModAbstract | DefModFinal | DefModOverride | DefModVisability Visibility deriving (Eq)
 
-showDef :: Class -> Def -> [String]
-showDef _ d@Field{} = [mods ++ " " ++ show (defTp d) ++ " " ++ defName d] `glue` body
+showDef :: (ClassType, String) -> Def -> [String]
+showDef _ d@Field{} = concatMap showAnnotation (defAnnotations d) 
+	++ [mods ++ " " ++ show (defTp d) ++ " " ++ defName d] `glue` body
 	where 
 		mods = strs' " " (defMods d)
 		body = case defExp d of
 			Nop -> [";"] 
 			e -> [" = "] `glue` mapNotFirst ind (showExp e) `appp` ";"
-showDef cl d@Def{} = [wrapStr "" " " mods ++ show (defTp d) ++ " " ++ defName d ++ showPars d] `glue` body
+showDef (clTp, _) d@Def{} = concatMap showAnnotation (defAnnotations d)
+	 ++ [wrapStr "" " " mods ++ show (defTp d) ++ " " ++ defName d ++ showPars d] `glue` body
 	where 
-		clTp = classType cl
 		mods = strs' " " (if clTp == ClassTypeInterface then filter isValidModForInterface (defMods d) else defMods d)
 		isValidModForInterface _ = False
 		body = if clTp == ClassTypeInterface || DefModAbstract `elem` defMods d then [";"] else (mapFirst (" " ++ ) (showStmsInBrackets (defStms d)))
-showDef cl d@Constructor{} = [wrapStr "" " " (strs' " " (delete DefModStatic (defMods d))) ++ 
-	className cl ++ showPars d ++ " "] `glue` showStmsInBrackets (defStms d)
+showDef (_, clNm) d@Constructor{} = concatMap showAnnotation (defAnnotations d) 
+	++ [wrapStr "" " " (strs' " " (delete DefModStatic (defMods d))) ++ 
+	clNm ++ showPars d ++ " "] `glue` showStmsInBrackets (defStms d)
 
 showPars :: Def -> String
 showPars d = "(" ++ mkString showDefPar "," (defPars d) ++ ")"
@@ -95,7 +98,13 @@ instance Show DefMod where
 	show DefModStatic = "static"
 	show DefModAbstract = "abstract"
 	show DefModFinal = "final"
+	show DefModOverride = ""
 	show (DefModVisability v) = show v
+
+data DefAnnotation = DefAnnotation String [Exp]
+showAnnotation :: DefAnnotation -> [String]
+showAnnotation (DefAnnotation nm []) = ["@" ++ nm]
+showAnnotation (DefAnnotation nm pars) = ["@" ++ nm ++ "("] `glue` (glueAll ", " . map showExp) pars `appp` ")"
 
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - Stm
@@ -112,13 +121,14 @@ showStm (Return e) = ["return "] `glue` showExp e `appp` ";"
 showStm (Braces stms) = showStmsInBrackets stms
 
 
-data Exp = Nop | IntConst Int | ExpError String | Call String [TP] [Exp] | New Exp | Dot Exp Exp | Ref String
+data Exp = Nop | IntConst Int | ExpError String | Call String [TP] [Exp] | New [Def] Exp | Dot Exp Exp | Ref String 
 
 showExp :: Exp -> [String]
 showExp Nop = []
 showExp (IntConst i) = [show i]
 showExp (Ref s) = [s]
 showExp (Call name gens pars) = [name ++ pstrs' "<" ", " ">" gens ++ "("] `glue` (glueAll ", " . map showExp) pars `appp` ")"
-showExp (New e) = ["new "] `glue` showExp e
+showExp (New [] e) = ["new "] `glue` showExp e
+showExp (New defs e) = (["new "] `glue` showExp e `appp` " {") ++  (map ind . concatMap (showDef (ClassTypeClass, ""))) defs ++ ["}"]
 showExp (Dot l r) = showExp l `appp` "." `glue` showExp r
 showExp (ExpError e) = ["ERROR: " ++ e]

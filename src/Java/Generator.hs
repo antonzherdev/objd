@@ -30,7 +30,8 @@ genClass cl = J.Class {
 	J.classDefs = map genDef defs
 	}
 	where 
-		defs = if D.isTrait cl then filter (not . D.isConstructor) (D.classDefs cl) else D.classDefsWithTraits cl
+		defs = filter (\f -> not (D.isSpecial f) && not (D.isInline f)) 
+			$ if D.isTrait cl then filter (not . D.isConstructor) (D.classDefs cl) else D.classDefsWithTraits cl
 
 genGeneric :: D.Class -> J.Generic
 genGeneric cl = J.Generic {
@@ -63,20 +64,25 @@ genTp (D.TPGenericWrap _ D.TPChar) = J.tpRef "Character"
 genTp D.TPBool = J.tpRef "boolean"
 genTp (D.TPGenericWrap _ D.TPBool) = J.tpRef "Boolean"
 
+genTp (D.TPFun (D.TPTuple [stp]) D.TPVoid) = J.TPRef [genTp $ D.wrapGeneric stp] "P"
+genTp (D.TPFun (D.TPTuple stps) D.TPVoid) = J.TPRef (map (genTp . D.wrapGeneric) stps) ("P" ++ show (length stps))
+genTp (D.TPFun stp D.TPVoid) = J.TPRef [genTp $ D.wrapGeneric stp] "P"
+genTp (D.TPFun (D.TPTuple [stp]) dtp) = J.TPRef [genTp $ D.wrapGeneric stp, genTp $ D.wrapGeneric dtp] "F"
+genTp (D.TPFun (D.TPTuple stps) dtp) = J.TPRef (map (genTp . D.wrapGeneric) stps ++ [genTp $ D.wrapGeneric dtp]) ("F" ++ show (length stps))
+genTp (D.TPFun stp dtp) = J.TPRef [genTp $ D.wrapGeneric stp, genTp $ D.wrapGeneric dtp] "F"
+
 genTp (D.TPGenericWrap _ w) = genTp w
 genTp D.TPString = J.tpRef "String"
 genTp (D.TPEArr n tp)  = J.TPArr (genTp tp) n
 genTp D.TPAny = J.tpRef "Object"
 genTp (D.TPArr _ tp) = J.TPRef [genTp tp] "ImArray"
-genTp (D.TPFun (D.TPTuple [stp]) dtp) = J.TPRef [genTp $ D.wrapGeneric stp, genTp $ D.wrapGeneric dtp] "F"
-genTp (D.TPFun (D.TPTuple stps) dtp) = J.TPRef (map (genTp . D.wrapGeneric) stps ++ [genTp $ D.wrapGeneric dtp]) ("F" ++ show (length stps))
-genTp (D.TPFun stp dtp) = J.TPRef [genTp $ D.wrapGeneric stp, genTp $ D.wrapGeneric dtp] "F"
 genTp (D.TPTuple tps) = J.TPRef (map genTp tps) ("Tuple" ++ show (length tps))
 genTp (D.TPSelf cl) = J.TPRef (map (J.tpRef . D.className) (D.classGenerics cl) ) (D.className cl)
 genTp (D.TPMap key value) = J.TPRef [genTp key, genTp value] "HashMap"
 genTp (D.TPOption _ tp) = genTp tp
-genTp D.TPAnyGeneric = J.tpRef "Object"
+genTp D.TPAnyGeneric = J.TPAnyGeneric
 genTp (D.TPPointer _) = J.tpRef "Pointer"
+genTp (D.TPNil) = J.tpRef "Object"
 
 genTp tp = error $ "genTp: " ++ show tp
 
@@ -86,6 +92,9 @@ genTp tp = error $ "genTp: " ++ show tp
 
 fullDefName :: D.Def -> String
 fullDefName d = D.defName d ++ concatMap (cap . D.defName) (D.defPars d)
+
+overrideAnnotation :: J.DefAnnotation
+overrideAnnotation = J.DefAnnotation "Override" []
 
 genDef :: D.Def -> J.Def
 genDef d =
@@ -97,11 +106,9 @@ genDef d =
  		genMod D.DefModAbstract = Just J.DefModAbstract
  		genMod _ = Nothing
  		mods = mapMaybe genMod (D.defMods d)
- 		stms = case D.defBody d of
- 			D.Braces bs -> concatMap genStm bs 
- 			b -> genStm b
  	in if D.isField d then 
  			J.Field {
+ 				J.defAnnotations = [],
  				J.defMods = mods ++ [J.DefModFinal | D.DefModMutable `notElem` D.defMods d],
  				J.defName = D.defName d,
  				J.defTp = genTp $ D.defType d,
@@ -109,17 +116,19 @@ genDef d =
 	 		}
  		else if D.isConstructor d then
  			J.Constructor {
+ 				J.defAnnotations = [],
  				J.defMods = mods,
  				J.defPars = map genPar $ D.defPars d,
- 				J.defStms = stms 
+ 				J.defStms = getStms $ D.defBody d 
  			}
  		else 
  			J.Def {
+ 				J.defAnnotations = [overrideAnnotation| D.DefModOverride `elem` D.defMods d],
  				J.defMods = mods,
  				J.defName = fullDefName d,
  				J.defTp = genTp $ D.defType d,
  				J.defPars = map genPar $ D.defPars d,
- 				J.defStms = stms
+ 				J.defStms = getStms $ D.defBody d
  			}
 
 genPar :: D.Def -> J.DefPar
@@ -133,13 +142,30 @@ genPar D.Def{D.defName = nm, D.defType = tp} = (genTp tp, nm)
 genExp :: D.Exp -> J.Exp
 genExp D.Nop = J.Nop
 genExp (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
-	| D.DefModConstructor `elem` D.defMods constr = J.New $ J.Call (D.defName objDef) (map genTp gens) (map (genExp . snd) pars)
+	| D.DefModConstructor `elem` D.defMods constr = J.New [] $ J.Call (D.defName objDef) (map genTp gens) (map (genExp . snd) pars)
 genExp (D.Dot (D.Self _) r) = genExp r
 genExp (D.Dot l r) = J.Dot (genExp l) (genExp r)
 genExp (D.Call d _ [] []) 
 	| D.DefModField `elem` D.defMods d || D.DefModLocal `elem` D.defMods d = J.Ref $ D.defName d
 genExp (D.Call d _ pars gens) = J.Call (fullDefName d) (map genTp gens) (map (genExp . snd) pars)
+genExp (D.Lambda pars e dtp) = let 
+	def = J.Def {
+		J.defAnnotations = [overrideAnnotation],
+		J.defMods = [J.DefModVisability J.Public],
+		J.defName = "f",
+		J.defTp = if dtp == D.TPVoid then J.tpRef "void" else genTp (D.wrapGeneric dtp),
+		J.defPars = map funPar pars,
+		J.defStms = getStms e
+	}
+	funPar (nm, tp) = (genTp (D.wrapGeneric tp), nm)
+	clNm = (if dtp == D.TPVoid then "P" else "F") ++ if length pars == 1 then "" else show (length pars)
+	in J.New [def] $ J.Call clNm (map (genTp . D.wrapGeneric . snd) pars ++ [genTp (D.wrapGeneric dtp) | dtp /= D.TPVoid]) []
 genExp e = J.ExpError $ "Unknown " ++ show e
+
+getStms :: D.Exp -> [J.Stm]
+getStms e = case e of
+	D.Braces bs -> concatMap genStm bs 
+	b -> genStm b
 
 genStm :: D.Exp -> [J.Stm]
 genStm D.Nop = []

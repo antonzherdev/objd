@@ -2,16 +2,22 @@ package core.chain;
 
 public class HashSetBuilder<T> implements Builder<T, ImHashSet<T>> {
     public final MHashSet<T> set = new MHashSet<T>();
+    @Override
     public void appendItem(T item) {
-        ERROR: Unknown <HashSetBuilder#C<T#G>>self.<eI>set\MHashSet#C<§T#G§>\.<rdIa>append(item = <l>item\§T#G§\)\void\;
+        set.appendItem(item);
     }
+    @Override
     public ImHashSet<T> build() {
-        return ERROR: Unknown <HashSetBuilder#C<T#G>>self.<eI>set\MHashSet#C<§T#G§>\.<dIo>im\ImHashSet#C<§T#G§>\;
+        return set.im();
     }
     public HashSetBuilder() {
     }
-    static final ClassType<HashSetBuilder<T>> type;
     public void appendAllItems(Traversable<T> items) {
-        ERROR: Unknown <l>items\Traversable#T<§T#G§>\.<dI>for(each = _ : §T#G§ -> void = <Builder#T<T#G, C#G>>self.<dIa>append(item = <l>_\§T#G§\)\void\)\void\;
+        items.forEach(new P<T>() {
+            @Override
+            public void f(T _) {
+                appendItem(_);
+            }
+        });
     }
 }

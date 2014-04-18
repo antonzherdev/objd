@@ -5,9 +5,11 @@ public class RangeIterator implements Iterator<int> {
     public final int end;
     public final int step;
     private int i = start;
+    @Override
     public boolean hasNext() {
         return ERROR: Unknown (((<RangeIterator#C>self.<eIU>step\int\ > 0) && (<RangeIterator#C>self.<emp>i\int\ <= <RangeIterator#C>self.<eIU>end\int\)) || ((<RangeIterator#C>self.<eIU>step\int\ < 0) && (<RangeIterator#C>self.<emp>i\int\ >= <RangeIterator#C>self.<eIU>end\int\)));
     }
+    @Override
     public Integer next() {
         ERROR: Unknown local ret : int = <RangeIterator#C>self.<emp>i\int\;
         ERROR: Unknown (<RangeIterator#C>self.<emp>i\int\ += <RangeIterator#C>self.<eIU>step\int\);
@@ -15,5 +17,4 @@ public class RangeIterator implements Iterator<int> {
     }
     public RangeIterator(int start,int end,int step) {
     }
-    static final ClassType<RangeIterator> type;
 }

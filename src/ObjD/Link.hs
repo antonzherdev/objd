@@ -9,7 +9,8 @@ module ObjD.Link (
 	classDefs, classGenerics, classExtends, classMods, classFile, classPackage, isGeneric, isNop, classNameWithPrefix,
 	fileNameWithPrefix, classDefsWithTraits, classInitDef, classContainsInit, isPure, isError, isTpClass, isTpEnum, isTpStruct, isTpTrait,
 	isAbstract, isFinal, isCaseClass, classFieldsForEquals, needHashForClass, needIsEqualForClass, isGenericWrap, mapExp, isInline,
-	containsAnnotationWithClassName, findAnnotationWithClassName, annotationClass, isTpBaseClass, isBaseClass, traitExtendsRefs, mainExtendsRef
+	containsAnnotationWithClassName, findAnnotationWithClassName, annotationClass, isTpBaseClass, isBaseClass, traitExtendsRefs, mainExtendsRef,
+	isSpecial
 )where
 
 import 			 Control.Arrow
@@ -474,6 +475,8 @@ isEnumItem :: Def -> Bool
 isEnumItem = (DefModEnumItem `elem` ) . defMods
 isConstructor :: Def -> Bool
 isConstructor = (DefModConstructor `elem` ) . defMods
+isSpecial :: Def -> Bool
+isSpecial = (DefModSpecial `elem` ) . defMods
 isInline :: Def -> Bool
 isInline = (DefModInline `elem` ) . defMods
 isPure :: Def -> Bool
@@ -797,7 +800,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 				parConstructor' = replaceGenericsInDef parGenerics parConstructor
 		typeField :: Def 
 		typeField = Def{defMods = [DefModField, DefModStatic, DefModSpecial] ++ [DefModStruct | selfIsStruct], defName = "type", 
-			defType = TPClass TPMClass [selfType] (classFind cidx typeName), 
+			defType = TPClass TPMClass [mapDataTypeGenerics (map (\_ -> TPAnyGeneric)) selfType] (classFind cidx typeName), 
 			defBody = Nop, 
 			defGenerics = Nothing, defPars = []}
 			where 

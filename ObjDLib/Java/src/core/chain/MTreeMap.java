@@ -5,14 +5,22 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     private int _size = ERROR: Unknown 0.cast<uint>;
     public final MTreeMapKeySet<K> keys = new MTreeMapKeySet<K>(ERROR: Unknown <MTreeMap#C<K#G, V#G>>self);
     public static MTreeMap<K, V> apply() {
-        return new MTreeMap<K, V>(ERROR: Unknown a : K#G, b : K#G -> int = weak return <l>a\K#G\.<rdI>compare(to = <l>b\K#G\)\int\);
+        return new MTreeMap<K, V>(new F2<K, K, Integer>() {
+            @Override
+            public Integer f(K a,K b) {
+                ERROR: Unknown weak return <l>a\K#G\.<rdI>compare(to = <l>b\K#G\)\int\;
+            }
+        });
     }
+    @Override
     public ImTreeMap<K, V> imCopy() {
         return new ImTreeMap<K, V>(comparator, ERROR: Unknown <MTreeMap#C<K#G, V#G>>self.<emp>_root\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<dI>copy(parent = none<^TreeMapEntry#C<§K#G§, §V#G§>>)\TreeMapEntry#C<§K#G§, §V#G§>\, _size);
     }
+    @Override
     public ImTreeMap<K, V> im() {
         return new ImTreeMap<K, V>(comparator, _root, _size);
     }
+    @Override
     public void assignImMap(ImMap<K, V> imMap) {
         ERROR: Unknown if(<l>imMap\ImMap#T<§K#G§, §V#G§>\.is<ImTreeMap#C<K#G, V#G>>) {
     local m : ImTreeMap#C<K#G, V#G> = <l>imMap\ImMap#T<§K#G§, §V#G§>\.cast<ImTreeMap#C<K#G, V#G>>
@@ -24,19 +32,24 @@ else {
     <l>imMap\ImMap#T<§K#G§, §V#G§>\.<rdIo>for(each = _ : ^(§K#G§, §V#G§) -> void = <MTreeMap#C<K#G, V#G>>self.<rdIo>append(item = <l>_\^(§K#G§, §V#G§)\)\void\)\void\
 };
     }
+    @Override
     public TreeMapEntry<K, V> root() {
         return _root;
     }
+    @Override
     public int count() {
         return _size;
     }
+    @Override
     public void clear() {
         ERROR: Unknown (<MTreeMap#C<K#G, V#G>>self.<emp>_size\uint\ = 0.cast<uint>);
         ERROR: Unknown (<MTreeMap#C<K#G, V#G>>self.<emp>_root\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ = none<^TreeMapEntry#C<§K#G§, §V#G§>>);
     }
+    @Override
     public MIterator<Tuple2<K, V>> mutableIterator() {
         return MTreeMapIterator().applyMapEntry<K, V>(ERROR: Unknown <MTreeMap#C<K#G, V#G>>self, firstEntry());
     }
+    @Override
     public void setKeyValue(K key,V value) {
         ERROR: Unknown local __comparator : (§K#G§, §K#G§) -> int = <MTreeMap#C<K#G, V#G>>self.<reIU>comparator\(§K#G§, §K#G§) -> int\;
         ERROR: Unknown local var t : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <MTreeMap#C<K#G, V#G>>self.<emp>_root\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
@@ -64,6 +77,7 @@ else (<lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIm>right\(^TreeMapE
     <MTreeMap#C<K#G, V#G>>self.<emp>_size\uint\++
 };
     }
+    @Override
     public V removeForKey(K key) {
         ERROR: Unknown local _ : ^(^TreeMapEntry#C<§K#G§, §V#G§>)¿ = <MTreeMap#C<K#G, V#G>>self.<rdI>entryFor(key = <l>key\§K#G§\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
         ERROR: Unknown if((<l>_\^(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) return some(<MTreeMap#C<K#G, V#G>>self.<dp>delete(entry = <l>_\^(^TreeMapEntry#C<§K#G§, §V#G§>)¿\)\§V#G§\)\§(V#G)?§\
@@ -354,7 +368,6 @@ else return none<^(§K#G§, §V#G§)>;
     }
     public MTreeMap(F2<K, K, Integer> comparator) {
     }
-    static final ClassType<MTreeMap<K, V>> type;
     public V objectForKeyOrUpdateWith(K key,F<Void, V> orUpdateWith) {
         ERROR: Unknown local __tmp : §(V#G)?§ = <MMap#T<K#G, V#G>>self.<rdIa>opt(key = <l>key\§K#G§\)\(§V#G§)?\;
         ERROR: Unknown if((<l>__tmp\§(V#G)?§\ != none<§V#G§>)) return <l>__tmp\§(V#G)?§\.get
@@ -375,12 +388,15 @@ else <MMap#T<K#G, V#G>>self.<dIa>set(key = <l>key\§K#G§\, value = <l>newObject
         removeForKey(key);
         return ret;
     }
+    @Override
     public void appendItem(Tuple2<K, V> item) {
         setKeyValue(item.b, item.a);
     }
+    @Override
     public boolean removeItem(Tuple2<K, V> item) {
         return ERROR: Unknown (<MMap#T<K#G, V#G>>self.<dIa>removeFor(key = <l>item\^(§K#G§, §V#G§)\.<eIU>a\§K#G§\)\(§V#G§)?\ != none<§V#G§>);
     }
+    @Override
     public boolean removeItem(T item) {
         ERROR: Unknown local i : MIterator#T<§T#G§> = <MIterable#T<T#G>>self.<dIa>mutableIterator\MIterator#T<§T#G§>\;
         ERROR: Unknown local var ret : bool = False;

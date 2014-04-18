@@ -12,11 +12,16 @@ public class FutureEnd<T> {
     }
     public Yield<Future<T>> yield() {
         ERROR: Unknown local var _i : int = 0;
-        return Yield().applyBeginYieldEnd<Future<T>>(ERROR: Unknown size : uint -> int = {
-    (<FutureEnd#C<T#G>>self.<emp>_array\(^MArray#C<§T#G§>)?\ = some(<to>MArray\MArray#C.class\.<dIt>apply(capacity = <l>size\uint\)\MArray#C<§T#G§>\)\(^MArray#C<§T#G§>)?\)
-    return 0
-}, ERROR: Unknown fut : §^Future#C<T#G>§ -> int = {
-    if(!(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\)) {
+        return Yield().applyBeginYieldEnd<Future<T>>(new F<Integer, Integer>() {
+            @Override
+            public Integer f(Integer size) {
+                ERROR: Unknown (<FutureEnd#C<T#G>>self.<emp>_array\(^MArray#C<§T#G§>)?\ = some(<to>MArray\MArray#C.class\.<dIt>apply(capacity = <l>size\uint\)\MArray#C<§T#G§>\)\(^MArray#C<§T#G§>)?\);
+                return ERROR: Unknown 0;
+            }
+        }, new F<Future<T>, Integer>() {
+            @Override
+            public Integer f(Future<T> fut) {
+                ERROR: Unknown if(!(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\)) {
     <FutureEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dI>incrementAndGet\int4\
     <FutureEnd#C<T#G>>self.<emp>_array\(^MArray#C<§T#G§>)?\.get.<rdIa>append(item = nil)\void\
     local i : int = <lm>_i\int\
@@ -39,22 +44,25 @@ else if(!(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\)) {
 }
 }
 })\void\
-}
-    if(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\) return 1
-else return 0
-}, ERROR: Unknown res : int -> int = {
-    (<FutureEnd#C<T#G>>self.<emp>_ended\bool\ = True)
-    <to>Memory\Memory#C.class\.<dIt>memoryBarrier\void\
-    if((<FutureEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dI>intValue\int4\ == 0)) {
+};
+                ERROR: Unknown if(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\) return 1
+else return 0;
+            }
+        }, new F<Integer, Integer>() {
+            @Override
+            public Integer f(Integer res) {
+                ERROR: Unknown (<FutureEnd#C<T#G>>self.<emp>_ended\bool\ = True);
+                Memory().memoryBarrier();
+                ERROR: Unknown if((<FutureEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dI>intValue\int4\ == 0)) {
     <to>Memory\Memory#C.class\.<dIt>memoryBarrier\void\
     if(!(<FutureEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dI>getAndSet(newValue = True)\bool\)) {
     <FutureEnd#C<T#G>>self.<ep>_promise\Promise#C<§^Seq#T<T#G>§>\.<dIa>success(value = <FutureEnd#C<T#G>>self.<emp>_array\(^MArray#C<§T#G§>)?\.get)\bool\
 }
-}
-    return <l>res\int\
-});
+};
+                return res;
+            }
+        });
     }
     public FutureEnd() {
     }
-    static final ClassType<FutureEnd<T>> type;
 }

@@ -3,9 +3,11 @@ package core.chain;
 public class ImMapDefault<K, V> implements ImIterable<Tuple2<K, V>> {
     public final ImMap<K, V> map;
     public final F<K, V> defaultFunc;
+    @Override
     public int count() {
         return map.count();
     }
+    @Override
     public Iterator<Tuple2<K, V>> iterator() {
         return map.iterator();
     }
@@ -29,15 +31,17 @@ else return <ImMapDefault#C<K#G, V#G>>self.<eIU>defaultFunc\§K#G§ -> §V#G§\.
     public boolean isEqualMapDefault(ImMapDefault<K, V> mapDefault) {
         return ERROR: Unknown (<ImMapDefault#C<K#G, V#G>>self.<eIU>map\ImMap#T<§K#G§, §V#G§>\ == <l>mapDefault\ImMapDefault#C<§K#G§, §V#G§>\.<eIU>map\ImMap#T<§K#G§, §V#G§>\);
     }
+    @Override
     public int hash() {
         return map.hash();
     }
+    @Override
     public MMapDefault<K, V> mCopy() {
         return new MMapDefault<K, V>(map.mCopy(), defaultFunc);
     }
     public ImMapDefault(ImMap<K, V> map,F<K, V> defaultFunc) {
     }
-    static final ClassType<ImMapDefault<K, V>> type;
+    @Override
     public T head() {
         ERROR: Unknown if(<Iterable#T<T#G>>self.<dI>isEmpty\bool\) return none<T#G>
 else return some(<Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\§(T#G)?§\;
@@ -45,17 +49,20 @@ else return some(<Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\.<dIa>n
     public boolean isEmpty() {
         return ERROR: Unknown !(<Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\.<dIa>hasNext\bool\);
     }
-    public void forEach(F<T, Void> each) {
+    @Override
+    public void forEach(P<T> each) {
         ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) <l>each\§T#G§ -> void\.<d>apply( = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\void\;
     }
-    public void parForEach(F<T, Void> each) {
+    @Override
+    public void parForEach(P<T> each) {
         ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
     local v : T#G = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\
     <to>DispatchQueue\DispatchQueue#C.class\.<eIt>default\DispatchQueue#C\.<dI>async(f =  -> void = <l>each\§T#G§ -> void\.<d>apply( = <l>v\§T#G§\)\void\)\void\
 };
     }
+    @Override
     public boolean goOn(F<T, Boolean> on) {
         ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) if(!(<l>on\§T#G§ -> bool\.<d>apply( = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\bool\)) return False;
@@ -66,112 +73,180 @@ else return some(<Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\.<dIa>n
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) if((<l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\ == <l>i\Iterator#T<§T#G§>\)) return True;
         return ERROR: Unknown False;
     }
-    public void forEach(F<T, Void> each) {
-        goOn(ERROR: Unknown item : §T#G§ -> bool = {
-    <l>each\§T#G§ -> void\.<d>apply( = <l>item\§T#G§\)\void\
-    return True
-});
+    public void forEach(P<T> each) {
+        goOn(new F<T, Boolean>() {
+            @Override
+            public Boolean f(T item) {
+                each.apply(item);
+                return ERROR: Unknown True;
+            }
+        });
     }
-    public void parForEach(F<T, Void> each) {
-        goOn(ERROR: Unknown item : §T#G§ -> bool = {
-    <to>DispatchQueue\DispatchQueue#C.class\.<eIt>default\DispatchQueue#C\.<dI>async(f =  -> void = <l>each\§T#G§ -> void\.<d>apply( = <l>item\§T#G§\)\void\)\void\
-    return True
-});
+    public void parForEach(P<T> each) {
+        goOn(new F<T, Boolean>() {
+            @Override
+            public Boolean f(T item) {
+                DispatchQueue().default.asyncF(new P0() {
+                    @Override
+                    public void f() {
+                        each.apply(item);
+                    }
+                });
+                return ERROR: Unknown True;
+            }
+        });
     }
     public Chain<T> chain() {
         return Chain().chainWithCollection<T>(ERROR: Unknown <Traversable#T<T#G>>self);
     }
     public T findWhere(F<T, Boolean> where) {
         ERROR: Unknown local var ret : (T#G)? = none<T#G>;
-        goOn(ERROR: Unknown x : §T#G§ -> bool = if(<l>where\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\) {
+        goOn(new F<T, Boolean>() {
+            @Override
+            public Boolean f(T x) {
+                ERROR: Unknown if(<l>where\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\) {
     (<lm>ret\(§T#G§)?\ = some(<l>x\§T#G§\)\§(T#G)?§\)
     return False
 }
-else return True);
+else return True;
+            }
+        });
         return ret;
     }
     public boolean existsWhere(F<T, Boolean> where) {
         ERROR: Unknown local var ret : bool = False;
-        goOn(ERROR: Unknown x : §T#G§ -> bool = if(<l>where\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\) {
+        goOn(new F<T, Boolean>() {
+            @Override
+            public Boolean f(T x) {
+                ERROR: Unknown if(<l>where\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\) {
     (<lm>ret\bool\ = True)
     return False
 }
-else return True);
+else return True;
+            }
+        });
         return ret;
     }
     public boolean allConfirm(F<T, Boolean> confirm) {
         ERROR: Unknown local var ret : bool = True;
-        goOn(ERROR: Unknown x : §T#G§ -> bool = if(!(<l>confirm\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\)) {
+        goOn(new F<T, Boolean>() {
+            @Override
+            public Boolean f(T x) {
+                ERROR: Unknown if(!(<l>confirm\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\)) {
     (<lm>ret\bool\ = False)
     return False
 }
-else return True);
+else return True;
+            }
+        });
         return ret;
     }
     public T head() {
         ERROR: Unknown local var ret : (T#G)? = ;
-        goOn(ERROR: Unknown on : §T#G§ -> bool = {
-    (<lm>ret\(§T#G§)?\ = some(<l>on\§T#G§\)\§(T#G)?§\)
-    return False
-});
+        goOn(new F<T, Boolean>() {
+            @Override
+            public Boolean f(T on) {
+                ERROR: Unknown (<lm>ret\(§T#G§)?\ = some(<l>on\§T#G§\)\§(T#G)?§\);
+                return ERROR: Unknown False;
+            }
+        });
         return ret;
     }
     public C convertWithBuilder(Builder<T, C> builder) {
-        forEach(ERROR: Unknown x : §T#G§ -> void = <l>builder\Builder#T<§T#G§, C#G>\.<dIa>append(item = <l>x\§T#G§\)\void\);
+        forEach(new P<T>() {
+            @Override
+            public void f(T x) {
+                builder.appendItem(x);
+            }
+        });
         return builder.build();
     }
-    public void forEach(F<T, Void> each) {
-        goOn(ERROR: Unknown item : §T#G§ -> bool = {
-    <l>each\§T#G§ -> void\.<d>apply( = <l>item\§T#G§\)\void\
-    return True
-});
+    public void forEach(P<T> each) {
+        goOn(new F<T, Boolean>() {
+            @Override
+            public Boolean f(T item) {
+                each.apply(item);
+                return ERROR: Unknown True;
+            }
+        });
     }
-    public void parForEach(F<T, Void> each) {
-        goOn(ERROR: Unknown item : §T#G§ -> bool = {
-    <to>DispatchQueue\DispatchQueue#C.class\.<eIt>default\DispatchQueue#C\.<dI>async(f =  -> void = <l>each\§T#G§ -> void\.<d>apply( = <l>item\§T#G§\)\void\)\void\
-    return True
-});
+    public void parForEach(P<T> each) {
+        goOn(new F<T, Boolean>() {
+            @Override
+            public Boolean f(T item) {
+                DispatchQueue().default.asyncF(new P0() {
+                    @Override
+                    public void f() {
+                        each.apply(item);
+                    }
+                });
+                return ERROR: Unknown True;
+            }
+        });
     }
     public Chain<T> chain() {
         return Chain().chainWithCollection<T>(ERROR: Unknown <Traversable#T<T#G>>self);
     }
     public T findWhere(F<T, Boolean> where) {
         ERROR: Unknown local var ret : (T#G)? = none<T#G>;
-        goOn(ERROR: Unknown x : §T#G§ -> bool = if(<l>where\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\) {
+        goOn(new F<T, Boolean>() {
+            @Override
+            public Boolean f(T x) {
+                ERROR: Unknown if(<l>where\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\) {
     (<lm>ret\(§T#G§)?\ = some(<l>x\§T#G§\)\§(T#G)?§\)
     return False
 }
-else return True);
+else return True;
+            }
+        });
         return ret;
     }
     public boolean existsWhere(F<T, Boolean> where) {
         ERROR: Unknown local var ret : bool = False;
-        goOn(ERROR: Unknown x : §T#G§ -> bool = if(<l>where\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\) {
+        goOn(new F<T, Boolean>() {
+            @Override
+            public Boolean f(T x) {
+                ERROR: Unknown if(<l>where\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\) {
     (<lm>ret\bool\ = True)
     return False
 }
-else return True);
+else return True;
+            }
+        });
         return ret;
     }
     public boolean allConfirm(F<T, Boolean> confirm) {
         ERROR: Unknown local var ret : bool = True;
-        goOn(ERROR: Unknown x : §T#G§ -> bool = if(!(<l>confirm\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\)) {
+        goOn(new F<T, Boolean>() {
+            @Override
+            public Boolean f(T x) {
+                ERROR: Unknown if(!(<l>confirm\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\)) {
     (<lm>ret\bool\ = False)
     return False
 }
-else return True);
+else return True;
+            }
+        });
         return ret;
     }
     public T head() {
         ERROR: Unknown local var ret : (T#G)? = ;
-        goOn(ERROR: Unknown on : §T#G§ -> bool = {
-    (<lm>ret\(§T#G§)?\ = some(<l>on\§T#G§\)\§(T#G)?§\)
-    return False
-});
+        goOn(new F<T, Boolean>() {
+            @Override
+            public Boolean f(T on) {
+                ERROR: Unknown (<lm>ret\(§T#G§)?\ = some(<l>on\§T#G§\)\§(T#G)?§\);
+                return ERROR: Unknown False;
+            }
+        });
         return ret;
     }
     public C convertWithBuilder(Builder<T, C> builder) {
-        forEach(ERROR: Unknown x : §T#G§ -> void = <l>builder\Builder#T<§T#G§, C#G>\.<dIa>append(item = <l>x\§T#G§\)\void\);
+        forEach(new P<T>() {
+            @Override
+            public void f(T x) {
+                builder.appendItem(x);
+            }
+        });
         return builder.build();
     }
 }

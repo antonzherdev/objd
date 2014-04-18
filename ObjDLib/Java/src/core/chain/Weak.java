@@ -7,5 +7,4 @@ public class Weak<T> {
     }
     public Weak(T value) {
     }
-    static final ClassType<Weak<T>> type;
 }

@@ -14,5 +14,4 @@ else {
     }
     public Cache(F<X, F> f) {
     }
-    static final ClassType<Cache<X, F>> type;
 }

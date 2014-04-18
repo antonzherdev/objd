@@ -1,8 +1,8 @@
 package core.chain;
 
 public interface Traversable<T> {
-    void forEach(F<T, Void> each);
-    void parForEach(F<T, Void> each);
+    void forEach(P<T> each);
+    void parForEach(P<T> each);
     boolean goOn(F<T, Boolean> on);
     Chain<T> chain();
     T findWhere(F<T, Boolean> where);

@@ -34,5 +34,4 @@ else {
     }
     public ImQueue(ImList<T> in,ImList<T> out) {
     }
-    static final ClassType<ImQueue<T>> type;
 }

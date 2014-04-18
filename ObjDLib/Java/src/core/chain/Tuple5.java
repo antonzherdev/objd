@@ -6,6 +6,7 @@ public class Tuple5<A, B, C, D, E> implements Comparable<Tuple5<A, B, C, D, E>> 
     public final C c;
     public final D d;
     public final E e;
+    @Override
     public int compareTo(Tuple5<AC, BC, CC, DC, EC> to) {
         ERROR: Unknown local var r : int = <l>to\^Tuple5#C<AC#G, BC#G, CC#G, DC#G, EC#G>\.<eIU>a\AC#G\.<rdI>compare(to = <Tuple5#C<A#G, B#G, C#G, D#G, E#G>>self.<eIU>a\§A#G§\)\int\;
         ERROR: Unknown if((<lm>r\int\ == 0)) {
@@ -23,6 +24,7 @@ else return -<lm>r\int\
 }
 else return -<lm>r\int\;
     }
+    @Override
     public String description() {
         return ERROR: Unknown "($<Tuple5#C<A#G, B#G, C#G, D#G, E#G>>self.<eIU>a\§A#G§\, $<Tuple5#C<A#G, B#G, C#G, D#G, E#G>>self.<eIU>b\§B#G§\, $<Tuple5#C<A#G, B#G, C#G, D#G, E#G>>self.<eIU>c\§C#G§\, $<Tuple5#C<A#G, B#G, C#G, D#G, E#G>>self.<eIU>d\§D#G§\, $<Tuple5#C<A#G, B#G, C#G, D#G, E#G>>self.<eIU>e\§E#G§\)";
     }
@@ -31,5 +33,4 @@ else return -<lm>r\int\;
     }
     public Tuple5(A a,B b,C c,D d,E e) {
     }
-    static final ClassType<Tuple5<A, B, C, D, E>> type;
 }

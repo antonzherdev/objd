@@ -10,5 +10,4 @@ public class Try<T> {
     public abstract Try<R> mapF(F<T, R> f);
     public Try() {
     }
-    static final ClassType<Try<T>> type;
 }

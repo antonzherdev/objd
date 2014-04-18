@@ -5,6 +5,8 @@ public interface MSeq<T> extends Seq<T>, MIterable<T> {
     void insertIndexItem(int index,T item);
     void prependItem(T item);
     void setIndexItem(int index,T item);
+    @Override
     ImSeq<T> im();
+    @Override
     ImSeq<T> imCopy();
 }

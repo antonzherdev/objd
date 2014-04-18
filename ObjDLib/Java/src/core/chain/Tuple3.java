@@ -4,6 +4,7 @@ public class Tuple3<A, B, C> implements Comparable<Tuple3<A, B, C>> {
     public final A a;
     public final B b;
     public final C c;
+    @Override
     public int compareTo(Tuple3<AC, BC, CC> to) {
         ERROR: Unknown local var r : int = <l>to\^Tuple3#C<AC#G, BC#G, CC#G>\.<eIU>a\AC#G\.<rdI>compare(to = <Tuple3#C<A#G, B#G, C#G>>self.<eIU>a\§A#G§\)\int\;
         ERROR: Unknown if((<lm>r\int\ == 0)) {
@@ -13,6 +14,7 @@ else return -<lm>r\int\
 }
 else return -<lm>r\int\;
     }
+    @Override
     public String description() {
         return ERROR: Unknown "($<Tuple3#C<A#G, B#G, C#G>>self.<eIU>a\§A#G§\, $<Tuple3#C<A#G, B#G, C#G>>self.<eIU>b\§B#G§\, $<Tuple3#C<A#G, B#G, C#G>>self.<eIU>c\§C#G§\)";
     }
@@ -21,5 +23,4 @@ else return -<lm>r\int\;
     }
     public Tuple3(A a,B b,C c) {
     }
-    static final ClassType<Tuple3<A, B, C>> type;
 }

@@ -9,21 +9,25 @@ public class MTreeMapIterator<K, V> implements MIterator<Tuple2<K, V>> {
         ERROR: Unknown (<l>ret\MTreeMapIterator#C<§K#G§, §V#G§>\.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ = <l>entry\(^TreeMapEntry#C<K#G, V#G>)?\);
         return ret;
     }
+    @Override
     public boolean hasNext() {
         return ERROR: Unknown (<MTreeMapIterator#C<K#G, V#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>);
     }
+    @Override
     public Tuple2<K, V> next() {
         ERROR: Unknown local ret : (§K#G§, §V#G§) = (<MTreeMapIterator#C<K#G, V#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIUm>key\§K#G§\, <MTreeMapIterator#C<K#G, V#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIUm>value\§V#G§\);
         ERROR: Unknown (<MTreeMapIterator#C<K#G, V#G>>self.<emp>prev\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ = <MTreeMapIterator#C<K#G, V#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\);
         ERROR: Unknown (<MTreeMapIterator#C<K#G, V#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ = <MTreeMapIterator#C<K#G, V#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<dI>next\(^TreeMapEntry#C<§K#G§, §V#G§>)?\);
         return ret;
     }
+    @Override
     public void remove() {
         {
             ERROR: Unknown local _ : ^(^TreeMapEntry#C<§K#G§, §V#G§>)¿ = <MTreeMapIterator#C<K#G, V#G>>self.<emp>prev\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
             ERROR: Unknown if((<l>_\^(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) <MTreeMapIterator#C<K#G, V#G>>self.<eIU>map\MTreeMap#C<§K#G§, §V#G§>\.<dp>delete(entry = <l>_\^(^TreeMapEntry#C<§K#G§, §V#G§>)¿\)\§V#G§\;
         }
     }
+    @Override
     public void setValue(Tuple2<K, V> value) {
         {
             ERROR: Unknown local p : ^(^TreeMapEntry#C<§K#G§, §V#G§>)¿ = <MTreeMapIterator#C<K#G, V#G>>self.<emp>prev\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
@@ -36,5 +40,4 @@ else {
     }
     public MTreeMapIterator(MTreeMap<K, V> map) {
     }
-    static final ClassType<MTreeMapIterator<K, V>> type;
 }

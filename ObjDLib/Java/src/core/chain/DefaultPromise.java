@@ -2,11 +2,13 @@ package core.chain;
 
 public class DefaultPromise<T> extends Promise<T> {
     private final AtomicObject<Object> _state = AtomicObject().applyValue<Object>(ERROR: Unknown []);
+    @Override
     public Try<T> result() {
         ERROR: Unknown local v : any = <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<dI>value\§^any§\;
         ERROR: Unknown if(<l>v\any\.is<Try#C<T#G>>) return some(<l>v\any\.cast<Try#C<T#G>>)\(^Try#C<T#G>)?\
 else return none<^Try#C<T#G>>;
     }
+    @Override
     public boolean completeValue(Try<T> value) {
         ERROR: Unknown while(True) {
     local v : any = <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<dI>value\§^any§\
@@ -20,13 +22,16 @@ else {
 };
         return ERROR: Unknown False;
     }
+    @Override
     public boolean successValue(T value) {
         return completeValue(new Success<T>(value));
     }
+    @Override
     public boolean failureReason(Object reason) {
         return completeValue(new Failure<T>(result()));
     }
-    public void onCompleteF(F<Try<T>, Void> f) {
+    @Override
+    public void onCompleteF(P<Try<T>> f) {
         ERROR: Unknown while(True) {
     local v : any = <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<dI>value\§^any§\
     if(<l>v\any\.is<Try#C<T#G>>) {
@@ -43,5 +48,4 @@ else {
     }
     public DefaultPromise() {
     }
-    static final ClassType<DefaultPromise<T>> type;
 }

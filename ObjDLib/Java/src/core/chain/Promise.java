@@ -9,5 +9,4 @@ public class Promise<T> extends Future<T> {
     public abstract boolean failureReason(Object reason);
     public Promise() {
     }
-    static final ClassType<Promise<T>> type;
 }

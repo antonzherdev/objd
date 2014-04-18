@@ -3,12 +3,18 @@ package core.chain;
 public interface Iterable<T> extends Traversable<T> {
     int count();
     Iterator<T> iterator();
+    @Override
     T head();
     boolean isEmpty();
-    void forEach(F<T, Void> each);
-    void parForEach(F<T, Void> each);
+    @Override
+    void forEach(P<T> each);
+    @Override
+    void parForEach(P<T> each);
+    @Override
     boolean goOn(F<T, Boolean> on);
     boolean containsItem(T item);
+    @Override
     String description();
+    @Override
     int hash();
 }

@@ -15,5 +15,4 @@ public class MQueue<T> implements Queue<T> {
     }
     public MQueue() {
     }
-    static final ClassType<MQueue<T>> type;
 }
