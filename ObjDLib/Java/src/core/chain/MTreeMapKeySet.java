@@ -18,6 +18,7 @@ public class MTreeMapKeySet<K> implements TreeMapKeySet<K> {
         return MTreeMapKeyIterator().applyMapEntry<K>(this.map, this.map.higherEntryThanKey(key));
     }
     public MTreeMapKeySet(MTreeMap<K, ?> map) {
+        this.map = map;
     }
     @Override
     public MIterable<T> mCopy() {

@@ -31,5 +31,6 @@ public class KeptPromise<T> extends Promise<T> {
         return ERROR: Unknown False;
     }
     public KeptPromise(Try<T> value) {
+        this.value = value;
     }
 }

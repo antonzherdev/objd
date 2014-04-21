@@ -20,6 +20,7 @@ public class TreeSetBuilder<T> implements Builder<T, ImTreeSet<T>> {
         return this.set.im();
     }
     public TreeSetBuilder(F2<T, T, Integer> comparator) {
+        this.comparator = comparator;
     }
     public void appendAllItems(Traversable<T> items) {
         items.forEach(new P<T>() {

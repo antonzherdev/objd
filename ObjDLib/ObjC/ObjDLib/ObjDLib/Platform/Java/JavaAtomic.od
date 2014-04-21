@@ -1,0 +1,10 @@
+package java.util.concurrent.atomic
+
+@Java
+stub class AtomicReference<T> {
+    static def apply<T>(value : T) : AtomicObject<T>
+
+    def get : T
+    def set(newValue : T)
+    def compareAndSet(oldValue : T, newValue : T) : bool
+}

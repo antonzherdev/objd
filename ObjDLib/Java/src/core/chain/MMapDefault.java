@@ -61,6 +61,8 @@ public class MMapDefault<K, V> implements MIterable<Tuple2<K, V>> {
         return new ImMapDefault<K, V>(this.map.imCopy(), this.defaultFunc);
     }
     public MMapDefault(MMap<K, V> map,F<K, V> defaultFunc) {
+        this.map = map;
+        this.defaultFunc = defaultFunc;
     }
     public void mutableFilterBy(F<T, Boolean> by) {
         ERROR: Unknown local i : MIterator#T<§T#G§> = <MIterable#T<T#G>>self.<dIa>mutableIterator\MIterator#T<§T#G§>\;

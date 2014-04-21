@@ -14,5 +14,6 @@ public class PArrayIterator<T> implements Iterator<T> {
         return ret;
     }
     public PArrayIterator(PArray<T> array) {
+        this.array = array;
     }
 }

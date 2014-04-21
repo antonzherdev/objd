@@ -14,12 +14,12 @@ instance Show File where
 	show (File _ package stms) = "package " ++ strs "." package ++ "\n\n" ++ strs' "\n" stms
 
 data FileStm =
-	Import [String]
+	Import {importPath :: [String], stmAnnotations :: [Annotation]}
 	| Class {classMods :: [ClassMod], className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, classBody :: [ClassStm]
-		, classGenerics :: [Generic], classAnnotations :: [Annotation]}
+		, classGenerics :: [Generic], stmAnnotations :: [Annotation]}
 	| Enum {className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, enumItems :: [EnumItem], classBody :: [ClassStm]
-		, classGenerics :: [Generic], classAnnotations :: [Annotation]}
-	| Type {className :: String, classGenerics :: [Generic], typeDef :: ExtendsRef, classAnnotations :: [Annotation]}
+		, classGenerics :: [Generic], stmAnnotations :: [Annotation]}
+	| Type {className :: String, classGenerics :: [Generic], typeDef :: ExtendsRef, stmAnnotations :: [Annotation]}
 isClass :: FileStm -> Bool
 isClass (Class {}) = True
 isClass _ = False
@@ -44,7 +44,7 @@ data Extends = Extends ExtendsClass [ExtendsRef]
 data ExtendsClass = ExtendsClass ExtendsRef [CallPar]
 type ExtendsRef =  (String, [DataType])
 
-data Annotation = Annotation String [CallPar] [DataType]
+data Annotation = Annotation {annotationName :: String, annotaionPars :: [CallPar], annotationGenerics :: [DataType]}
 
 data ClassStm = Def {defMods :: [DefMod],  defName :: String, defGenerics :: [Generic], defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
 	| ClassImport [String]
@@ -126,7 +126,7 @@ instance Show FileStm where
 			tp = (if ClassModStub `elem` mods then "stub " else "") ++ (if ClassModStruct `elem` mods then "struct" else "class")
 	show (Enum{className = name, classFields = fields, classBody = body}) = "enum " ++ name ++  "(" ++ strs' ", " fields ++ ")" ++ showClassBody body
 	show (Type{className = name, typeDef = (td, _)}) = "type " ++ name ++  " = " ++ td
-	show (Import names) = "import " ++ strs "." names
+	show (Import names _) = "import " ++ strs "." names
 	
 showClassBody :: [ClassStm] -> String
 showClassBody stms = " {\n" ++ (unlines . map ( ind . show )) stms ++ "\n}"

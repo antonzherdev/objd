@@ -40,5 +40,6 @@ public class SortBuilder<A> {
         });
     }
     public SortBuilder(Chain<A> chain) {
+        this.chain = chain;
     }
 }

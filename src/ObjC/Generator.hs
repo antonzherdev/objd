@@ -981,7 +981,7 @@ tExp _ D.Null{} = C.Null
 tExp _ (D.Braces []) = C.Nop
 tExp env (D.Braces [x]) = tExp env x
 tExp env (D.Braces stms) = C.ExpBraces (concatMap (translate1 env stms) (init stms) ++ [C.Stm (tExp env $ last stms)])
-tExp env ee@(D.NonOpt ch e) = let 
+tExp env ee@(D.NonOpt ch e _) = let 
 		tp = D.unwrapGeneric $ D.exprDataType ee
 		check = ch && case tp of
 			D.TPVoid -> False

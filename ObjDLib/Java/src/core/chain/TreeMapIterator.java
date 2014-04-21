@@ -24,5 +24,6 @@ public class TreeMapIterator<K, V> implements Iterator<Tuple2<K, V>> {
         return ret;
     }
     public TreeMapIterator(TreeMap<K, V> map) {
+        this.map = map;
     }
 }

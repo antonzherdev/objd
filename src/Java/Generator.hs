@@ -18,7 +18,7 @@ genFile D.File{D.filePackage = D.Package{D.packageName = package}} cls =
 		J.fileIsTest = D.containsAnnotationWithClassName "test.Test" $ D.classAnnotations cls,
 		J.filePackage = package,
 		J.fileImports = [],
-		J.fileClass = (genClass cls) }
+		J.fileClass = genClass cls}
 
 genClass :: D.Class -> J.Class
 genClass cl = J.Class {
@@ -42,6 +42,55 @@ genGeneric cl = J.Generic {
 
 genExtendsRef :: D.ExtendsRef -> J.TP
 genExtendsRef (cl, gens) = J.TPRef (map genTp gens) (D.className cl) 
+
+{-----------------------------------------------------------------------------------------------------------------------------------------------
+ - Defs
+ -----------------------------------------------------------------------------------------------------------------------------------------------}
+
+fullDefName :: D.Def -> String
+fullDefName d = D.defName d ++ concatMap (cap . D.defName) (D.defPars d)
+
+overrideAnnotation :: J.DefAnnotation
+overrideAnnotation = J.DefAnnotation "Override" []
+
+genDef :: D.Def -> J.Def
+genDef d =
+ 	let 
+ 		genMod D.DefModPrivate = Just $ J.DefModVisability J.Private
+ 		genMod D.DefModProtected = Just $ J.DefModVisability J.Protected
+ 		genMod D.DefModPublic = Just $ J.DefModVisability J.Public
+ 		genMod D.DefModStatic = Just J.DefModStatic
+ 		genMod D.DefModAbstract = Just J.DefModAbstract
+ 		genMod _ = Nothing
+ 		constrSet D.Def{D.defName = nm} = J.Set Nothing (J.Dot J.This (J.Ref nm)) (J.Ref nm)
+ 		mods = mapMaybe genMod (D.defMods d)
+ 	in if D.isField d then 
+ 			J.Field {
+ 				J.defAnnotations = [],
+ 				J.defMods = mods ++ [J.DefModFinal | D.DefModMutable `notElem` D.defMods d],
+ 				J.defName = D.defName d,
+ 				J.defTp = genTp $ D.defType d,
+ 				J.defExp = fst $ runWriter $ genExp defaultEnv $ D.defBody d
+	 		}
+ 		else if D.isConstructor d then
+ 			J.Constructor {
+ 				J.defAnnotations = [],
+ 				J.defMods = mods,
+ 				J.defPars = map genPar $ D.defPars d,
+ 				J.defStms = map constrSet $ D.defPars d
+ 			}
+ 		else 
+ 			J.Def {
+ 				J.defAnnotations = [overrideAnnotation| D.DefModOverride `elem` D.defMods d],
+ 				J.defMods = mods,
+ 				J.defName = fullDefName d,
+ 				J.defTp = genTp $ D.defType d,
+ 				J.defPars = map genPar $ D.defPars d,
+ 				J.defStms = getStms defaultEnv $ D.defBody d
+ 			}
+
+genPar :: D.Def -> J.DefPar
+genPar D.Def{D.defName = nm, D.defType = tp} = (genTp tp, nm)
 
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - DataType
@@ -86,54 +135,6 @@ genTp (D.TPPointer _) = J.tpRef "Pointer"
 genTp (D.TPNil) = J.tpRef "Object"
 
 genTp tp = error $ "genTp: " ++ show tp
-
-{-----------------------------------------------------------------------------------------------------------------------------------------------
- - Defs
- -----------------------------------------------------------------------------------------------------------------------------------------------}
-
-fullDefName :: D.Def -> String
-fullDefName d = D.defName d ++ concatMap (cap . D.defName) (D.defPars d)
-
-overrideAnnotation :: J.DefAnnotation
-overrideAnnotation = J.DefAnnotation "Override" []
-
-genDef :: D.Def -> J.Def
-genDef d =
- 	let 
- 		genMod D.DefModPrivate = Just $ J.DefModVisability J.Private
- 		genMod D.DefModProtected = Just $ J.DefModVisability J.Protected
- 		genMod D.DefModPublic = Just $ J.DefModVisability J.Public
- 		genMod D.DefModStatic = Just J.DefModStatic
- 		genMod D.DefModAbstract = Just J.DefModAbstract
- 		genMod _ = Nothing
- 		mods = mapMaybe genMod (D.defMods d)
- 	in if D.isField d then 
- 			J.Field {
- 				J.defAnnotations = [],
- 				J.defMods = mods ++ [J.DefModFinal | D.DefModMutable `notElem` D.defMods d],
- 				J.defName = D.defName d,
- 				J.defTp = genTp $ D.defType d,
- 				J.defExp = fst $ runWriter $ genExp defaultEnv $ D.defBody d
-	 		}
- 		else if D.isConstructor d then
- 			J.Constructor {
- 				J.defAnnotations = [],
- 				J.defMods = mods,
- 				J.defPars = map genPar $ D.defPars d,
- 				J.defStms = getStms defaultEnv $ D.defBody d 
- 			}
- 		else 
- 			J.Def {
- 				J.defAnnotations = [overrideAnnotation| D.DefModOverride `elem` D.defMods d],
- 				J.defMods = mods,
- 				J.defName = fullDefName d,
- 				J.defTp = genTp $ D.defType d,
- 				J.defPars = map genPar $ D.defPars d,
- 				J.defStms = getStms defaultEnv $ D.defBody d
- 			}
-
-genPar :: D.Def -> J.DefPar
-genPar D.Def{D.defName = nm, D.defType = tp} = (genTp tp, nm)
 
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - Stm

@@ -20,5 +20,8 @@ public class Zip3Link<T, A, B, R> implements ChainLink<T, R> {
         });
     }
     public Zip3Link(Iterable<A> a,Iterable<B> b,F3<T, A, B, R> f) {
+        this.a = a;
+        this.b = b;
+        this.f = f;
     }
 }

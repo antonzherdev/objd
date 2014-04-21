@@ -6,5 +6,6 @@ public class Weak<T> {
         return this.value == null;
     }
     public Weak(T value) {
+        this.value = value;
     }
 }

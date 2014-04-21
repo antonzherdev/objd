@@ -28,5 +28,7 @@ public class QueueIterator<T> implements Iterator<T> {
         return this.i.next();
     }
     public QueueIterator(ImList<T> in,ImList<T> out) {
+        this.in = in;
+        this.out = out;
     }
 }

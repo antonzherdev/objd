@@ -30,6 +30,12 @@ public class PArray<T> implements ImSeq<T> {
         }
     }
     public PArray(int stride,F2<Pointer, Integer, T> wrap,int count,int length,Pointer bytes,boolean copied) {
+        this.stride = stride;
+        this.wrap = wrap;
+        this.count = count;
+        this.length = length;
+        this.bytes = bytes;
+        this.copied = copied;
     }
     public ImSeq<T> addItem(T item) {
         ERROR: Unknown local builder : ArrayBuilder#C<§T#G§> = <to>ArrayBuilder\ArrayBuilder#C.class\.<tcI>apply\ArrayBuilder#C<§T#G§>\;

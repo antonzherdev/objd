@@ -1,7 +1,7 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), DataType(..), Exp(..), CImport(..), 
 	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef, CallPar, Package(..),
-	WrapReason(..), Annotation(..),
+	WrapReason(..), Annotation(..), Lang(..),
 	Import(..), link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, dataTypeClassNameWithPrefix,
 	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass, isConstructor,
@@ -26,6 +26,8 @@ import           Data.Char
 
 detailedReferenceError :: Bool
 detailedReferenceError = False
+
+data Lang = ObjC | Java deriving (Eq)
 
 type Sources = [File]
 data Package = Package {packageName :: [String], packageObject :: Maybe Class, packagePrefix :: String}
@@ -601,18 +603,24 @@ literalDefName nam = nmRec False nam
  - Link 
  -----------------------------------------------------------------------------------------------------------------------------------------}
 
-link :: D.Sources -> Sources
-link src = files
+link :: Lang -> D.Sources -> Sources
+link lang src = files
 	where
-		files = map (linkFile files) src
+		files = map (linkFile lang files) src
 
-linkFile :: [File] -> D.File -> File
-linkFile files (D.File name package stms) = fl
+linkFile :: Lang -> [File] -> D.File -> File
+linkFile lang files (D.File name package stms) = fl
 	where
 		fl :: File
 		fl = File {fileName = name, fileImports = thisFileImports,
 			fileClasses = classes, filePackage = package'}
-		classes = (map linkCl . filter isCls) stms
+		stms' = filter (not . containsOtherLangAnnotation) stms
+		containsOtherLangAnnotation stm = any isOtherLangAnnotation $ D.stmAnnotations stm
+		otherLangs = ["ObjD" | lang /= ObjC] ++ ["Java" | lang /= Java]
+		isOtherLangAnnotation (D.Annotation nm [] []) = nm `elem` otherLangs
+		isOtherLangAnnotation _ = False
+
+		classes = (map linkCl . filter isCls) stms'
 		linkCl cl = linkClass (cidx cl, glidx cl, fl, package', clImports cl) cl
 		isCls s = D.isClass s || D.isStub s || D.isEnum s || D.isType s
 		cidx cl =  M.fromList . map (idx className) $ classes ++ importClasses cl ++ (concatMap fileClasses $ kernelFiles ++ packageFiles)
@@ -645,9 +653,9 @@ linkFile files (D.File name package stms) = fl
 		packObjImports = maybe [] (\o -> ImportObjectDefs o : classImports o) packObj
 
 		thisFileImports :: [Import]
-		thisFileImports = concatMap processImport . filter D.isImport $ stms
+		thisFileImports = concatMap processImport . filter D.isImport $ stms'
 			where
-				processImport (D.Import imp) = linkImport allFiles imp
+				processImport (D.Import imp _) = linkImport allFiles imp
 
 		packageFiles = filter (\f -> f /= fl && package == (packageName . filePackage) f) files
 		
@@ -731,7 +739,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 				classAnnotations = annotations
 			}
 		isSeltTrait = D.ClassModTrait `elem` D.classMods cl
-		annotations = map (linkAnnotations env) $ D.classAnnotations cl
+		annotations = map (linkAnnotations env) $ D.stmAnnotations cl
 		enumOrdinal = Def "ordinal" [] uint Nop [] Nothing
 		enumName = Def "name" [] TPString Nop [] Nothing
 		enumAdditionalDefs = [(enumOrdinal, Nothing), (enumName, Nothing)]
@@ -1429,7 +1437,7 @@ data Exp = Nop
 	| Dot Exp Exp
 	| Arrow Exp Exp
 	| NullDot Exp Exp
-	| NonOpt Bool Exp -- Need to check
+	| NonOpt Bool Exp Exp -- Need to check. The second is expanded expression
 	| Set (Maybe MathTp) Exp Exp
 	| Call Def DataType [CallPar] [DataType]
 	| Return Bool Exp
@@ -1511,7 +1519,7 @@ instance Show Exp where
 	show (Break) = "break"
 	show (Continue) = "continue"
 	show (Null tp) = "null<" ++ show tp ++ ">"
-	show (NonOpt _ e) = show e ++ ".get"
+	show (NonOpt _ e _) = show e ++ ".get"
 	show (LambdaCall e) = show e ++ "()"
 	show (Deferencing e) = "*(" ++ show e ++ ")"
 	show (Try e f) = "try " ++ show e ++ "\nfinally " ++ show f
@@ -1602,7 +1610,7 @@ forExp f ee = mplus (go ee) (f ee)
 		go (Lambda _ e _) = forExp f e
 		go (LambdaCall e) = forExp f e
 		go (FirstTry _ e) = forExp f e
-		go (NonOpt _ e) = forExp f e
+		go (NonOpt _ e u) = mplus (forExp f e) (forExp f u)
 		go (Deferencing e) = forExp f e
 		go (Val _ d) = forExp f (defBody d)
 		go _ = mzero
@@ -1639,7 +1647,7 @@ mapExp f ee = fromMaybe (go ee) (f ee)
 		go (Negative e) = Negative $ mapExp f e
 		go (Lambda p1 e p2) = Lambda p1 (mapExp f e) p2
 		go (FirstTry p e) = FirstTry p $ mapExp f e
-		go (NonOpt c e) = NonOpt c $ mapExp f e
+		go (NonOpt c e u) = NonOpt c (mapExp f e) (mapExp f u)
 		go (Deferencing e) = Deferencing $ mapExp f e
 		go (LambdaCall e) = LambdaCall $ mapExp f e
 		go (Val e d) = Val e d{defBody = mapExp f (defBody d)}
@@ -1671,7 +1679,7 @@ isConst (Call Def {defMods = mods, defBody = b} _ pars _) =
 isConst (As _) = True
 isConst (Is _) = True
 isConst (CastDot _) = True
-isConst (NonOpt _ e) = isConst e
+isConst (NonOpt _ e _) = isConst e
 isConst Nop = True
 isConst _ = False
 
@@ -1712,7 +1720,7 @@ exprDataType (Nop) = TPVoid
 exprDataType (IntConst _ ) = int
 exprDataType (StringConst _ ) = TPString
 exprDataType Nil = TPNil
-exprDataType (NonOpt _ e) = unwrapGeneric $ unoptionHard $ exprDataType e
+exprDataType (NonOpt _ e _) = unwrapGeneric $ unoptionHard $ exprDataType e
 exprDataType (BoolConst _ ) = TPBool
 exprDataType (FloatConst _) = float
 exprDataType (BoolOp {}) = TPBool
@@ -1929,7 +1937,7 @@ expr env (D.Set tp a b) =
 				dltp = exprDataType dl
 				tmp = tmpVal env "" dltp dl
 				ref = if isElementaryExpression dl then dl else callRef tmp
-				f = If (BoolOp NotEq ref (None dltp) ) (Set tp' (Dot (NonOpt False ref) dr) r) Nop
+				f = If (BoolOp NotEq ref (None dltp) ) (Set tp' (Dot (nonOpt env False ref) dr) r) Nop
 			in  if isElementaryExpression dl then f else Braces [declareVal env tmp, f]
 		set tp' l r = if isSimpleExpression r then Set tp' l r else multilineSet env tp' l r
 
@@ -2031,8 +2039,18 @@ multilineSet env tp l r = mapExp replaceReturn $ addReturn env True (exprDataTyp
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Options
  ------------------------------------------------------------------------------------------------------------------------------}
+
+nonOpt :: Env -> Bool -> Exp -> Exp
+nonOpt _ False e = NonOpt False e e
+nonOpt env True e = let
+	tp = exprDataType e
+	tp' = unoptionHard $ tp
+	rt w = If (BoolOp Eq w (None tp')) (Throw $ StringConst "Not null") w
+	val = tmpVal env "" tp e
+	in NonOpt True e $ if isElementaryExpression e then rt e else Braces [Val False val, rt (callRef val)]
+
 linkOptionCall :: Env -> (D.Exp, Exp) -> D.Exp -> Exp
-linkOptionCall _ (_, leftExp) (D.Call "get" Nothing []) = NonOpt True $ leftExp
+linkOptionCall env (_, leftExp) (D.Call "get" Nothing []) = nonOpt env True $ leftExp
 linkOptionCall env (_ ,leftExp) e@(D.Call "cast" Nothing [tp]) = case tp of
 	D.DataTypeOption{} -> Cast (dataType env tp) leftExp 
 	_ -> ExpDError ("Cast option to non-option: " ++ show tp) e
@@ -2084,7 +2102,7 @@ linkOptionAlt env alt tp = implicitConvertsion env tp $ expr env{envVarSuffix = 
 linkOrElse :: Env -> (DataType, Bool) -> (D.Exp, Exp) -> Exp -> Exp
 linkOrElse env _ ((D.NullDot dl dr), (NullDot dl' dr')) alt =
 	let
-		l'' = Dot (NonOpt False dl') dr'
+		l'' = Dot (nonOpt env False dl') dr'
 		dltp = exprDataType dl'
 		tmp = tmpVal env "" dltp dl'
 	in if isElementaryExpression dl' then If (BoolOp NotEq dl' (None dltp) ) (expr env (D.Dot (D.Dot dl (D.Call "get" Nothing [])) dr)) alt
@@ -2097,7 +2115,7 @@ linkOrElse env (tp, isOptionAlt) (_, l') alt =
 		tmp = tmpVal env "" (option False tp) $ implicitConvertsion env (option False tp) l'
 	in Braces[
 			declareVal env tmp,
-			If (BoolOp NotEq (callRef tmp) (None tp)) ((if isOptionAlt then id else NonOpt False) $ callRef tmp) alt
+			If (BoolOp NotEq (callRef tmp) (None tp)) ((if isOptionAlt then id else nonOpt env False) $ callRef tmp) alt
 		]
 
 linkNullDot :: Env -> D.Exp -> Exp

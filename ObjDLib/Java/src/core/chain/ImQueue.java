@@ -43,5 +43,7 @@ public class ImQueue<T> implements Queue<T> {
         }
     }
     public ImQueue(ImList<T> in,ImList<T> out) {
+        this.in = in;
+        this.out = out;
     }
 }

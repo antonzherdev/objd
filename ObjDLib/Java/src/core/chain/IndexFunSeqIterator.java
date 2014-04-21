@@ -15,5 +15,7 @@ public class IndexFunSeqIterator<T> implements Iterator<T> {
         return ret;
     }
     public IndexFunSeqIterator(int count,F<Integer, T> f) {
+        this.count = count;
+        this.f = f;
     }
 }

@@ -17,5 +17,6 @@ public class PairIterator<T> implements Iterator<T> {
         }
     }
     public PairIterator(Pair<T> pair) {
+        this.pair = pair;
     }
 }

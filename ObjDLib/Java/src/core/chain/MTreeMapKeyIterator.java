@@ -47,5 +47,6 @@ public class MTreeMapKeyIterator<K> implements MIterator<K> {
         }
     }
     public MTreeMapKeyIterator(MTreeMap<K, ?> map) {
+        this.map = map;
     }
 }

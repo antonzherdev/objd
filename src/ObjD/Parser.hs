@@ -46,8 +46,7 @@ parseStatement :: String -> Either ParseError FileStm
 parseStatement = parse pStatement "ObjD"
 
 pStatement :: Parser FileStm
-pStatement = pImport <|> 
-	(pAnnotations >>= \a -> pTypeStm a <|>  pClass a <|> pEnum a)
+pStatement =  (pAnnotations >>= \a -> pImport a <|> pTypeStm a <|>  pClass a <|> pEnum a)
 
 pAnnotations :: Parser [Annotation]
 pAnnotations = many $ do
@@ -161,7 +160,7 @@ pClass a = do
 	sps
 	body <- pClassBody
 	sps
-	return Class {classMods = mods ++ struct, className = name, classFields = fields, classExtends = extends, classBody = body, classGenerics = generics, classAnnotations = a}
+	return Class {classMods = mods ++ struct, className = name, classFields = fields, classExtends = extends, classBody = body, classGenerics = generics, stmAnnotations = a}
 
 pEnum :: [Annotation] -> Parser FileStm
 pEnum a = do
@@ -185,7 +184,7 @@ pEnum a = do
 		in do
 			items <- many enumItem
 			body <- many pStm
-			return Enum { className = name, classFields = fields, classExtends = extends, enumItems = items, classBody = body, classGenerics = generics, classAnnotations = a}
+			return Enum { className = name, classFields = fields, classExtends = extends, enumItems = items, classBody = body, classGenerics = generics, stmAnnotations = a}
 
 
 pGenerics :: Parser [Generic]
@@ -264,17 +263,17 @@ pMod = do
 	return v
 
 
-pImport :: Parser FileStm
-pImport = do
+pImport :: [Annotation] -> Parser FileStm
+pImport a = do
 	string "import"
 	sps
 	ret <- ident `sepBy1` char '.'
 	sps
-	return $ Import ret
+	return $ Import ret a
 	
 
 pStm :: Parser ClassStm
-pStm = pDef <|> pDecl <|> (pImport >>= \(Import name) -> return $ ClassImport name) <?> "Class statement"
+pStm = pDef <|> pDecl <|> (pImport [] >>= \(Import name _) -> return $ ClassImport name) <?> "Class statement"
 	
 pDef :: Parser ClassStm
 pDef = do

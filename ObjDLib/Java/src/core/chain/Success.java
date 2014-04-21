@@ -19,5 +19,6 @@ public class Success<T> extends Try<T> {
         return new Success<R>(f.apply(this.get));
     }
     public Success(T get) {
+        this.get = get;
     }
 }

@@ -16,6 +16,8 @@ public class IndexFunSeq<T> implements ImSeq<T> {
         return new IndexFunSeqIterator<T>(this.count, this.f);
     }
     public IndexFunSeq(int count,F<Integer, T> f) {
+        this.count = count;
+        this.f = f;
     }
     public ImSeq<T> addItem(T item) {
         ERROR: Unknown local builder : ArrayBuilder#C<§T#G§> = <to>ArrayBuilder\ArrayBuilder#C.class\.<tcI>apply\ArrayBuilder#C<§T#G§>\;

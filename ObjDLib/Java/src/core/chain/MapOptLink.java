@@ -22,5 +22,6 @@ else (<l>__tmp_0\^(^int)?\ = none<^int>)
         });
     }
     public MapOptLink(F<A, B> f) {
+        this.f = f;
     }
 }

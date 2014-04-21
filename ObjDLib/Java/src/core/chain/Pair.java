@@ -27,6 +27,8 @@ public class Pair<T> implements ImSet<T> {
         return this.a;
     }
     public Pair(T a,T b) {
+        this.a = a;
+        this.b = b;
     }
     @Override
     public MSet<T> mCopy() {

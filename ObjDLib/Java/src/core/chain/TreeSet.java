@@ -31,6 +31,7 @@ public class TreeSet<T> implements Set<T> {
         return this.map.containsKey(item);
     }
     public TreeSet(TreeMap<T, Object> map) {
+        this.map = map;
     }
     public boolean isEmpty() {
         return ERROR: Unknown !(<Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\.<dIa>hasNext\bool\);

@@ -32,5 +32,9 @@ public class Tuple4<A, B, C, D> implements Comparable<Tuple4<A, B, C, D>> {
         return tuple;
     }
     public Tuple4(A a,B b,C c,D d) {
+        this.a = a;
+        this.b = b;
+        this.c = c;
+        this.d = d;
     }
 }

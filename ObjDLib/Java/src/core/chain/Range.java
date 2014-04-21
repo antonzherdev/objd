@@ -36,6 +36,9 @@ public class Range implements ImSeq<int> {
         return new Range(i, i, ERROR: Unknown 1);
     }
     public Range(int start,int end,int step) {
+        this.start = start;
+        this.end = end;
+        this.step = step;
     }
     public ImSeq<T> addItem(T item) {
         ERROR: Unknown local builder : ArrayBuilder#C<§T#G§> = <to>ArrayBuilder\ArrayBuilder#C.class\.<tcI>apply\ArrayBuilder#C<§T#G§>\;

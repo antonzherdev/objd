@@ -240,6 +240,7 @@
 		6F3DF6535FDF17939560758B /* CNPointer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNPointer.h; sourceTree = "<group>"; };
 		6F3DF69232CDDAC09B5A8FD2 /* CNSortLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNSortLink.h; sourceTree = "<group>"; };
 		6F3DF697294E02C6A0979664 /* NotificationPlatform.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = NotificationPlatform.od; sourceTree = "<group>"; };
+		6F3DF69CB926EA7B57DA40F0 /* GenAnnotations.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = GenAnnotations.od; sourceTree = "<group>"; };
 		6F3DF6A53F5F4AB87E4E9637 /* MapLink.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = MapLink.od; sourceTree = "<group>"; };
 		6F3DF6B03C9AB6933D025F36 /* CNChainTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNChainTest.m; sourceTree = "<group>"; };
 		6F3DF6B9B3EE38B3E97BD6C2 /* NSString+CNChain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+CNChain.m"; sourceTree = "<group>"; };
@@ -256,6 +257,7 @@
 		6F3DF7D801F1A3FC56E8828F /* CNRange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNRange.h; sourceTree = "<group>"; };
 		6F3DF7E3567D72D6EB6D36C4 /* NSMutableDictionary+CNChain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableDictionary+CNChain.m"; sourceTree = "<group>"; };
 		6F3DF7E3D089CE618F126BD1 /* CNShuffleLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNShuffleLink.h; sourceTree = "<group>"; };
+		6F3DF7F0AA7E8C4B58497A29 /* JavaAtomic.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = JavaAtomic.od; sourceTree = "<group>"; };
 		6F3DF807FF138755C8FD04A3 /* CNSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNSet.h; sourceTree = "<group>"; };
 		6F3DF81955268DF52E956EF0 /* CNPlat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNPlat.h; sourceTree = "<group>"; };
 		6F3DF82035E2761FEEF64C44 /* Pointer.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Pointer.od; sourceTree = "<group>"; };
@@ -582,6 +584,8 @@
 				6F3DF7197820E18DFCDD457F /* Seed.od */,
 				6F3DFE8CC9271129C1446FFE /* String.od */,
 				6F3DF13CAA5F56F358C8D8F9 /* Plat.od */,
+				6F3DF69CB926EA7B57DA40F0 /* GenAnnotations.od */,
+				6F3DF9C0B39ABF5B8931CE8C /* Java */,
 			);
 			path = Platform;
 			sourceTree = "<group>";
@@ -670,6 +674,14 @@
 				6F3DF3CA7BD1F4E91839E522 /* Yield.od */,
 			);
 			path = Chain;
+			sourceTree = "<group>";
+		};
+		6F3DF9C0B39ABF5B8931CE8C /* Java */ = {
+			isa = PBXGroup;
+			children = (
+				6F3DF7F0AA7E8C4B58497A29 /* JavaAtomic.od */,
+			);
+			path = Java;
 			sourceTree = "<group>";
 		};
 		6F3DF9F4639844F97E27CB92 /* Var */ = {

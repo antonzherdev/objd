@@ -40,11 +40,11 @@ main =
 		let 
 			parsedFiles :: IO [(FilePath, D.File)]
 			parsedFiles = parseFiles files
-			linkedFiles :: IO [(FilePath, L.File)]
-			linkedFiles = do
+			linkedFiles :: L.Lang -> IO [(FilePath, L.File)]
+			linkedFiles lang = do
 				fs <- parsedFiles
 				let 
-					linked = (uncurry zip . second L.link. unzip) fs
+					linked = (uncurry zip . second (L.link lang). unzip) fs
 					errors =  unlines $ map show $ checkErrors $ map snd linked 
 					check = if null errors then return () else error errors
 				debugFileHandle <- if isJust debugFile then fmap Just $ openFile (fromJust debugFile) WriteMode else return Nothing
@@ -55,16 +55,16 @@ main =
 				check
 				when(isJust debugFile) $ hClose $ fromJust debugFileHandle
 				return linked
-			linkedFilesWithRealStatements :: IO [(FilePath, L.File)]
-			linkedFilesWithRealStatements = liftM (filter (containsRealStatement . snd)) linkedFiles
+			linkedFilesWithRealStatements :: L.Lang -> IO [(FilePath, L.File)]
+			linkedFilesWithRealStatements lang = liftM (filter (containsRealStatement . snd)) $ linkedFiles lang
 				where containsRealStatement L.File{L.fileClasses = clss} = any (not . L.isStub) clss
 			ocCompiledFiles :: IO [(FilePath, ((String, [C.FileStm]), (String, [C.FileStm])))]
-			ocCompiledFiles = liftM (map (second toObjC)) linkedFilesWithRealStatements
+			ocCompiledFiles = liftM (map (second toObjC)) $ linkedFilesWithRealStatements L.ObjC
 			ocTextFiles :: IO [(FilePath, ((String, String), (String, String)))]
 			ocTextFiles = liftM (map (second (toText *** toText))) ocCompiledFiles
 				where toText = second (unlines . map show)
 			javaCompiledFiles :: IO [J.File]
-			javaCompiledFiles = liftM (concatMap (toJava . snd)) linkedFiles
+			javaCompiledFiles = liftM (concatMap (toJava . snd)) $ linkedFiles L.Java
 			javaTextFiles :: IO [(Bool, FilePath, String)]
 			javaTextFiles = liftM (map (toText)) javaCompiledFiles
 				where toText f@(J.File _ pack _ J.Class{J.className = nm}) = 

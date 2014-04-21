@@ -16,5 +16,8 @@ public class RangeIterator implements Iterator<int> {
         return ret;
     }
     public RangeIterator(int start,int end,int step) {
+        this.start = start;
+        this.end = end;
+        this.step = step;
     }
 }

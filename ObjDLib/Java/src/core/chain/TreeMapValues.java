@@ -11,6 +11,7 @@ public class TreeMapValues<V> implements ImIterable<V> {
         return TreeMapValuesIterator().applyMapEntry<V>(this.map, this.map.firstEntry());
     }
     public TreeMapValues(TreeMap<?, V> map) {
+        this.map = map;
     }
     @Override
     public MIterable<T> mCopy() {

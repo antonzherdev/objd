@@ -1,5 +1,7 @@
 package core.chain
 
+import java.util.concurrent.atomic._
+
 stub class AtomicBool {
     def boolValue : bool
     def set(newValue : bool)
@@ -16,9 +18,16 @@ stub class AtomicInt {
     def compareAndSet(oldValue : int4, newValue : int4) : bool
 }
 
+@ObjC
 stub class AtomicObject<T> {
     static def apply<T>(value : T) : AtomicObject<T>
     def value : T
     def set(newValue : T)
     def compareAndSet(oldValue : T, newValue : T) : bool
+}
+
+@Java
+class AtomicObject<T> extends AtomicReference<T> {
+    static inline def apply<T>(value : T) : AtomicObject<T> = AtomicReference<T>(value)
+    inline def value : T = get
 }

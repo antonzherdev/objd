@@ -61,5 +61,7 @@ public class FilledList<T> extends ImList<T> {
         return list;
     }
     public FilledList(T _head,ImList<T> tail) {
+        this._head = _head;
+        this.tail = tail;
     }
 }

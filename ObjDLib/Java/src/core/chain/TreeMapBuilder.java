@@ -20,6 +20,7 @@ public class TreeMapBuilder<K, V> implements Builder<Tuple2<K, V>, TreeMap<K, V>
         return this.map;
     }
     public TreeMapBuilder(F2<K, K, Integer> comparator) {
+        this.comparator = comparator;
     }
     public void appendAllItems(Traversable<T> items) {
         items.forEach(new P<T>() {

@@ -29,5 +29,6 @@ public class FlatLink<T> implements ChainLink<Traversable<T>, T> {
         });
     }
     public FlatLink(float factor) {
+        this.factor = factor;
     }
 }

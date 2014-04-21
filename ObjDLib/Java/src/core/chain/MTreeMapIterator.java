@@ -49,5 +49,6 @@ public class MTreeMapIterator<K, V> implements MIterator<Tuple2<K, V>> {
         }
     }
     public MTreeMapIterator(MTreeMap<K, V> map) {
+        this.map = map;
     }
 }

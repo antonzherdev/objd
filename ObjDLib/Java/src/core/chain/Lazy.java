@@ -25,5 +25,6 @@ public class Lazy<T> {
         }
     }
     public Lazy(F<Void, T> f) {
+        this.f = f;
     }
 }

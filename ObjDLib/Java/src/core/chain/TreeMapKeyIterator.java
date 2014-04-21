@@ -24,5 +24,6 @@ public class TreeMapKeyIterator<K> implements Iterator<K> {
         return ret;
     }
     public TreeMapKeyIterator(TreeMap<K, ?> map) {
+        this.map = map;
     }
 }

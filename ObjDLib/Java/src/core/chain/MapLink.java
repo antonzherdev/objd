@@ -12,5 +12,6 @@ public class MapLink<A, B> implements ChainLink<A, B> {
         });
     }
     public MapLink(F<A, B> f) {
+        this.f = f;
     }
 }

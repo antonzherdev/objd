@@ -43,5 +43,6 @@ public class MListIterator<T> implements MIterator<T> {
         .data = value;
     }
     public MListIterator(MList<T> list) {
+        this.list = list;
     }
 }

@@ -22,5 +22,6 @@ public class Cache<X, R> {
         }
     }
     public Cache(F<X, R> f) {
+        this.f = f;
     }
 }

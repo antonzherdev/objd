@@ -7,6 +7,7 @@ public class IterableF<T> implements ImIterable<T> {
         return ERROR: Unknown <IterableF#C<T#G>>self.<eIU>iteratorF\void -> Iterator#T<§T#G§>\();
     }
     public IterableF(F<Void, Iterator<T>> iteratorF) {
+        this.iteratorF = iteratorF;
     }
     @Override
     public MIterable<T> mCopy() {

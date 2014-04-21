@@ -33,5 +33,8 @@ public class TreeMapEntry<K, V> {
         return c;
     }
     public TreeMapEntry(K key,V value,TreeMapEntry<K, V> parent) {
+        this.key = key;
+        this.value = value;
+        this.parent = parent;
     }
 }

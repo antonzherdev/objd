@@ -7,5 +7,6 @@ public class ImTreeSet<T> extends TreeSet<T> implements ImSet<T> {
         return new MTreeSet<T>(this.immap.mCopy());
     }
     public ImTreeSet(ImTreeMap<T, Object> immap) {
+        this.immap = immap;
     }
 }

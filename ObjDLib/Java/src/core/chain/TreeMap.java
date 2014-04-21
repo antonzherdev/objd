@@ -124,6 +124,7 @@ else {
         return p;
     }
     public TreeMap(F2<K, K, Integer> comparator) {
+        this.comparator = comparator;
     }
     public ImMap<K, V> addItem(Tuple2<K, V> item) {
         ERROR: Unknown local builder : HashMapBuilder#C<§K#G§, §V#G§> = <to>HashMapBuilder\HashMapBuilder#C.class\.<tcI>apply\HashMapBuilder#C<§K#G§, §V#G§>\;

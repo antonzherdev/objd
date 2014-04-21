@@ -15,5 +15,8 @@ public class ImTreeMap<K, V> extends TreeMap<K, V> {
         return m;
     }
     public ImTreeMap(F2<K, K, Integer> comparator,TreeMapEntry<K, V> root,int count) {
+        this.comparator = comparator;
+        this.root = root;
+        this.count = count;
     }
 }

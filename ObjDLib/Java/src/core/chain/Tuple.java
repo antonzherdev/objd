@@ -20,5 +20,7 @@ public class Tuple<A, B> implements Comparable<Tuple<A, B>> {
         return tuple;
     }
     public Tuple(A a,B b) {
+        this.a = a;
+        this.b = b;
     }
 }

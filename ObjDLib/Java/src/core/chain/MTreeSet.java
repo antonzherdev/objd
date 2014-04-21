@@ -47,6 +47,7 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
         return new ImTreeSet<T>(this.mmap.imCopy());
     }
     public MTreeSet(MTreeMap<T, Object> mmap) {
+        this.mmap = mmap;
     }
     public void mutableFilterBy(F<T, Boolean> by) {
         ERROR: Unknown local i : MIterator#T<§T#G§> = <MIterable#T<T#G>>self.<dIa>mutableIterator\MIterator#T<§T#G§>\;

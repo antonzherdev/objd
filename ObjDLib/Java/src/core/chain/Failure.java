@@ -19,5 +19,6 @@ public class Failure<T> extends Try<T> {
         return this.ERROR: Unknown cast<Try#C<R#G>>;
     }
     public Failure(Object reason) {
+        this.reason = reason;
     }
 }

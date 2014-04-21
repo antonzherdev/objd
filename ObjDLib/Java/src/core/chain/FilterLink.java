@@ -22,5 +22,7 @@ public class FilterLink<T> implements ChainLink<T, T> {
         });
     }
     public FilterLink(F<T, Boolean> predicate,float selectivity) {
+        this.predicate = predicate;
+        this.selectivity = selectivity;
     }
 }

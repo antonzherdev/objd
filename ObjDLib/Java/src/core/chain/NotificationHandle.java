@@ -25,5 +25,6 @@ public class NotificationHandle<S, D> {
         });
     }
     public NotificationHandle(String name) {
+        this.name = name;
     }
 }

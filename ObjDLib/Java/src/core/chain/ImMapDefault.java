@@ -43,6 +43,8 @@ public class ImMapDefault<K, V> implements ImIterable<Tuple2<K, V>> {
         return new MMapDefault<K, V>(this.map.mCopy(), this.defaultFunc);
     }
     public ImMapDefault(ImMap<K, V> map,F<K, V> defaultFunc) {
+        this.map = map;
+        this.defaultFunc = defaultFunc;
     }
     @Override
     public T head() {

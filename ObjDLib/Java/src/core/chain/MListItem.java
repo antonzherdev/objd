@@ -5,5 +5,6 @@ public class MListItem<T> {
     public MListItem<T> next;
     public MListItem<T> prev;
     public MListItem(T data) {
+        this.data = data;
     }
 }

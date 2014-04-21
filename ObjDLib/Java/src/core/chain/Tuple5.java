@@ -38,5 +38,10 @@ public class Tuple5<A, B, C, D, E> implements Comparable<Tuple5<A, B, C, D, E>> 
         return tuple;
     }
     public Tuple5(A a,B b,C c,D d,E e) {
+        this.a = a;
+        this.b = b;
+        this.c = c;
+        this.d = d;
+        this.e = e;
     }
 }

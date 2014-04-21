@@ -18,5 +18,7 @@ public class ZipLink<T, A, R> implements ChainLink<T, R> {
         });
     }
     public ZipLink(Iterable<A> a,F2<T, A, R> f) {
+        this.a = a;
+        this.f = f;
     }
 }
