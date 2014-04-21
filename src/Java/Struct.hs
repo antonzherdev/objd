@@ -1,6 +1,6 @@
 module Java.Struct ( 
 	File(..), Class(..), Visibility(..), ClassType(..),
-	TP(..), Generic(..), tpRef, Def(..), DefPar, DefMod(..), Stm(..), Exp(..), DefAnnotation(..)
+	TP(..), Generic(..), tpRef, Def(..), DefPar, DefMod(..), Stm(..), Exp(..), DefAnnotation(..), Import
 ) where
 
 import           Ex.String

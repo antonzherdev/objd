@@ -767,7 +767,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 			Just super -> any (\d -> DefModField `elem` defMods d && defName d == name) $ allDefsInClass (super, M.empty)
 
 		defs = concatMap (\ def -> 
-			linkDef (envForDef def) def ([DefModStruct | selfIsStruct] ++ [DefModStatic | isObject])) 
+			linkDef (envForDef def) def ([DefModStruct | selfIsStruct] ++ [DefModStatic | isObject] ++ [DefModStub | D.ClassModStub `elem` D.classMods cl])) 
 			. filter D.isDef $ D.classBody cl
 		envForDef def = if isStaticDecl def then staticEnv else env
 		enumConstr = constr (enumAdditionalDefs ++ constrPars)
@@ -1440,7 +1440,7 @@ data Exp = Nop
 	| NonOpt Bool Exp Exp -- Need to check. The second is expanded expression
 	| Set (Maybe MathTp) Exp Exp
 	| Call Def DataType [CallPar] [DataType]
-	| Return Bool Exp
+	| Return Bool Exp -- Required return
 	| Index Exp Exp
 	| Lambda [(String, DataType)] Exp DataType
 	| Val Bool Def -- Separate declaraion and initialization if true
@@ -2521,7 +2521,6 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 					| DefModConstructor `elem` defMods d = c
 					| DefModObject `elem` defMods d = c
 					| DefModLocal `elem` defMods d = c
-					| DefModStub `elem` defMods d = c
 					| isJust cl = Dot (callRef $ objectDef $ fromJust cl) c
 					| otherwise = Dot (Self (envSelf env)) c
 				resolveDef _ _ c = c

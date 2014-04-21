@@ -13,12 +13,16 @@ toJava file@D.File{D.fileClasses = classes} =
 	map (genFile file) $ filter (\cls -> not (D.isType cls) && not (D.isStub cls)) classes
 
 genFile :: D.File -> D.Class -> J.File
-genFile D.File{D.filePackage = D.Package{D.packageName = package}} cls =
+genFile D.File{D.filePackage = D.Package{D.packageName = package}, D.fileImports = imps} cls =
 	J.File {
 		J.fileIsTest = D.containsAnnotationWithClassName "test.Test" $ D.classAnnotations cls,
 		J.filePackage = package,
-		J.fileImports = [],
+		J.fileImports = map genImport imps,
 		J.fileClass = genClass cls}
+
+genImport :: D.Import -> J.Import
+genImport (D.ImportClass cl) = D.packageName (D.classPackage cl) ++ [D.className cl] 
+genImport (D.ImportObjectDefs cl) = D.packageName (D.classPackage cl) ++ [D.className cl, "*"]
 
 genClass :: D.Class -> J.Class
 genClass cl = J.Class {
@@ -151,9 +155,11 @@ genExp _ (D.None _) = return J.Null
 genExp _ D.Nil = return J.Null
 genExp _ (D.StringConst s) = return $ J.StringConst s
 genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
-	| D.DefModConstructor `elem` D.defMods constr = do
-		pars' <- mapM ((genExp env) . snd) pars
-		return $ J.New [] $ J.Call (D.defName objDef) (map genTp gens) pars'
+	| D.DefModConstructor `elem` D.defMods constr 
+		|| (D.defName constr == "apply" && D.DefModStub `elem` D.defMods constr && D.DefModStatic `elem` D.defMods constr) 
+		= do
+			pars' <- mapM ((genExp env) . snd) pars
+			return $ J.New [] $ J.Call (D.defName objDef) (map genTp gens) pars'
 genExp env (D.Dot (Self _) r@(D.Call _ _ pars _) ) 
 	| not (null pars) = genExp env r
 genExp env (D.Dot l r) = do
@@ -217,6 +223,7 @@ genExp env e@D.Throw{} = do
 	tell $ genStm env e 
 	return J.Nop
 genExp env (D.Some _ e) = genExp env e
+genExp env (D.Return False e) = genExp env e
 genExp _ e = return $ J.ExpError $ "Unknown " ++ show e
 
 
