@@ -23,6 +23,5 @@ public class TreeMapValuesIterator<V> implements Iterator<V> {
         return ret;
     }
     public TreeMapValuesIterator(TreeMap<?, V> map) {
-        this.map = map;
     }
 }

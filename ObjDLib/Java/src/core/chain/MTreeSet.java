@@ -47,6 +47,7 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
         return new ImTreeSet<T>(this.mmap.imCopy());
     }
     public MTreeSet(MTreeMap<T, Object> mmap) {
+        super(mmap);
         this.mmap = mmap;
     }
     public void mutableFilterBy(F<T, Boolean> by) {

@@ -32,7 +32,7 @@ genClass cl = J.Class {
 	J.classGenerics = map genGeneric $ D.classGenerics cl,
 	J.classExtends = D.mainExtendsRef (D.classExtends cl) >>= \e -> if D.isBaseClass (fst e) then Nothing else Just (genExtendsRef e),
 	J.classImplements = map genExtendsRef $ filter (not . D.isBaseClass . fst) $ D.traitExtendsRefs $ D.classExtends cl,
-	J.classDefs = map genDef defs
+	J.classDefs = map (genDef cl) defs
 	}
 	where 
 		defs = filter (\f -> not (D.isSpecial f) && not (D.isInline f)) 
@@ -57,8 +57,8 @@ fullDefName d = D.defName d ++ concatMap (cap . D.defName) (D.defPars d)
 overrideAnnotation :: J.DefAnnotation
 overrideAnnotation = J.DefAnnotation "Override" []
 
-genDef :: D.Def -> J.Def
-genDef d =
+genDef :: D.Class -> D.Def -> J.Def
+genDef cl d =
  	let 
  		genMod D.DefModPrivate = Just $ J.DefModVisability J.Private
  		genMod D.DefModProtected = Just $ J.DefModVisability J.Protected
@@ -67,6 +67,11 @@ genDef d =
  		genMod D.DefModAbstract = Just J.DefModAbstract
  		genMod _ = Nothing
  		constrSet D.Def{D.defName = nm} = J.Set Nothing (J.Dot J.This (J.Ref nm)) (J.Ref nm)
+ 		callSuperConstructor = case D.extendsClass $ D.classExtends cl of
+ 			Just (ExtendsClass _ []) -> []
+ 			Just (ExtendsClass _ pars) -> [J.Stm $ J.Call "super" [] $ map superPar pars]
+ 			_ -> []
+ 			where superPar p = fst $ runWriter $ genExp defaultEnv $ snd p
  		mods = mapMaybe genMod (D.defMods d)
  	in if D.isField d then 
  			J.Field {
@@ -81,7 +86,7 @@ genDef d =
  				J.defAnnotations = [],
  				J.defMods = mods,
  				J.defPars = map genPar $ D.defPars d,
- 				J.defStms = map constrSet $ D.defPars d
+ 				J.defStms = callSuperConstructor ++ (map constrSet . filter ((D.DefModConstructorField `elem` ). D.defMods)) (D.classDefs cl)
  			}
  		else 
  			J.Def {

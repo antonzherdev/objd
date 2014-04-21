@@ -454,7 +454,7 @@ else <l>__tmp_0_4\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
         }
     }
     public MTreeMap(F2<K, K, Integer> comparator) {
-        this.comparator = comparator;
+        super(comparator);
     }
     public V objectForKeyOrUpdateWith(K key,F<Void, V> orUpdateWith) {
         ERROR: Unknown local __tmp : §(V#G)?§ = <MMap#T<K#G, V#G>>self.<rdIa>opt(key = <l>key\§K#G§\)\(§V#G§)?\;
