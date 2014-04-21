@@ -1,10 +1,10 @@
 package core.chain;
 
 public class DefaultPromise<T> extends Promise<T> {
-    private final AtomicObject<T> _state = ERROR: Unknown return <to>AtomicReference\AtomicReference#C.class\.<dIt>apply(value = [])\AtomicObject#C<§T#G§>\;
+    private final AtomicObject<Object> _state = new AtomicObject<Object>(ERROR: Unknown []);
     @Override
     public Try<T> result() {
-        ERROR: Unknown local v : T#G = return <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§T#G§>\.<rdI>get\§T#G§\;
+        ERROR: Unknown local v : T#G = return <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<rdIb>get\§T#G§\;
         if(v.ERROR: Unknown is<Try#C<T#G>>) {
             return v.ERROR: Unknown cast<Try#C<T#G>>;
         } else {
@@ -14,10 +14,10 @@ public class DefaultPromise<T> extends Promise<T> {
     @Override
     public boolean completeValue(Try<T> value) {
         ERROR: Unknown while(True) {
-    local v : T#G = return <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§T#G§>\.<rdI>get\§T#G§\
+    local v : T#G = return <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<rdIb>get\§T#G§\
     if(<l>v\§T#G§\.is<Try#C<T#G>>) return False
 else {
-    if(<DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§T#G§>\.<rdI>compareAndSet(oldValue = <l>v\§T#G§\, newValue = <l>value\Try#C<§T#G§>\)\bool\) {
+    if(<DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<rdIb>compareAndSet(oldValue = <l>v\§T#G§\, newValue = <l>value\Try#C<§T#G§>\)\bool\) {
     <l>v\§T#G§\.cast<[^Try#C<T#G> -> void]>.<rdIo>for(each = f : §^Try#C<T#G> -> void§ -> void = <l>f\§^Try#C<T#G> -> void§\.<d>apply( = <l>value\Try#C<§T#G§>\)\void\)\void\
     return True
 }
@@ -36,14 +36,14 @@ else {
     @Override
     public void onCompleteF(P<Try<T>> f) {
         ERROR: Unknown while(True) {
-    local v : T#G = return <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§T#G§>\.<rdI>get\§T#G§\
+    local v : T#G = return <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<rdIb>get\§T#G§\
     if(<l>v\§T#G§\.is<Try#C<T#G>>) {
     <l>f\Try#C<§T#G§> -> void\.<d>apply( = <l>v\§T#G§\.cast<Try#C<T#G>>)\void\
     return nil
 }
 else {
     local vv : [^Try#C<T#G> -> void] = <l>v\§T#G§\.cast<[^Try#C<T#G> -> void]>
-    if(<DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§T#G§>\.<rdI>compareAndSet(oldValue = <l>vv\[^Try#C<§T#G§> -> void]\, newValue = <l>vv\[^Try#C<§T#G§> -> void]\.<dIo>add(item = <l>f\Try#C<§T#G§> -> void\)\[^Try#C<§T#G§> -> void]\)\bool\) {
+    if(<DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<rdIb>compareAndSet(oldValue = <l>vv\[^Try#C<§T#G§> -> void]\, newValue = <l>vv\[^Try#C<§T#G§> -> void]\.<dIob>add(item = <l>f\Try#C<§T#G§> -> void\)\[^Try#C<§T#G§> -> void]\)\bool\) {
     return nil
 }
 }

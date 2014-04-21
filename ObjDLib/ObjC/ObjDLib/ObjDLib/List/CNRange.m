@@ -23,7 +23,7 @@ static ODClassType* _CNRange_type;
         _start = start;
         _end = end;
         _step = step;
-        _count = ((_step > 0) ? ((_start <= _end) ? ((NSUInteger)((_end - _start) / _step + 1)) : 0) : ((_step < 0) ? ((_start >= _end) ? ((NSUInteger)((_end - _start) / _step + 1)) : 0) : 1));
+        _count = ((step > 0) ? ((start <= end) ? ((NSUInteger)((end - start) / step + 1)) : 0) : ((step < 0) ? ((start >= end) ? ((NSUInteger)((end - start) / step + 1)) : 0) : 1));
     }
     
     return self;
@@ -260,7 +260,7 @@ static ODClassType* _CNRangeIterator_type;
         _start = start;
         _end = end;
         _step = step;
-        _i = _start;
+        _i = start;
     }
     
     return self;

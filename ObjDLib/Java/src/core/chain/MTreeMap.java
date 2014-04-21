@@ -8,7 +8,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
         return new MTreeMap<K, V>(new F2<K, K, Integer>() {
             @Override
             public Integer apply(K a,K b) {
-                ERROR: Unknown weak return <l>a\K#G\.<rdI>compare(to = <l>b\K#G\)\int\;
+                ERROR: Unknown weak return <l>a\K#G\.<rdIb>compare(to = <l>b\K#G\)\int\;
             }
         });
     }

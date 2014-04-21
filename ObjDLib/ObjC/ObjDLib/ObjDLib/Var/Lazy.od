@@ -1,6 +1,6 @@
 package core.chain
 
-class Lazy<T>(f : () -> T) {
+class Lazy<T>(val f : () -> T) {
     private var _value : T?
     private var _calculated = false
     def isCalculated : bool =  _calculated
@@ -14,7 +14,7 @@ class Lazy<T>(f : () -> T) {
 }
 
 
-class Cache<X, R>(f : X -> R) {
+class Cache<X, R>(val f : X -> R) {
     private var _lastX : X?
     private var _lastF : R?
 
@@ -28,6 +28,6 @@ class Cache<X, R>(f : X -> R) {
 }
 
 
-class Weak<T>(weak value : T?) {
+class Weak<T>(weak val value : T?) {
     def isEmpty : bool = value === nil
 }

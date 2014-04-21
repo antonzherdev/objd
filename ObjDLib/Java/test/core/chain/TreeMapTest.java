@@ -1,5 +1,10 @@
 package core.chain;
 
+import test.;
+import test.Test;
+import test.TestCase;
+import test..*;
+
 public class TreeMapTest extends TestCase {
     public void testMain() {
         ERROR: Unknown local map : MTreeMap#C<§^int§, §^string§> = <to>MTreeMap\MTreeMap#C.class\.<dIt>apply\MTreeMap#C<§^int§, §^string§>\;

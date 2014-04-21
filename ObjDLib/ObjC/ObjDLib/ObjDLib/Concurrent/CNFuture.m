@@ -422,7 +422,7 @@ static ODClassType* _CNDefaultPromise_type;
 
 - (instancetype)init {
     self = [super init];
-    if(self) __state = [CNAtomicObject applyValue:(@[])];
+    if(self) __state = [CNAtomicObject atomicObjectWithValue:(@[])];
     
     return self;
 }

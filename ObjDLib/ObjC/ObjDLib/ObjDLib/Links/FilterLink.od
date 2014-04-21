@@ -1,6 +1,6 @@
 package core.chain
 
-class FilterLink<T>(predicate : T -> bool, selectivity : float4) extends ChainLink<T, T> {
+class FilterLink<T>(val predicate : T -> bool, val selectivity : float4) extends ChainLink<T, T> {
     override def build(yield : Yield<T>) : Yield<T> = {
         Yield.decorate<Traversable<T>>(
             base = yield,

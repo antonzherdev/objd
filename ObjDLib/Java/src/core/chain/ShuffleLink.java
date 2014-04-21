@@ -7,7 +7,7 @@ public class ShuffleLink<T> implements ChainLink<T, T> {
         return Yield().decorateBaseBeginYieldEnd<T>(yield, new F<Integer, Integer>() {
             @Override
             public Integer apply(Integer size) {
-                ShuffleLink.this._array = MArray().applyCapacity<T>(size);
+                ShuffleLink.this._array = new MArray<T>(size);
                 return ERROR: Unknown 0;
             }
         }, new F<T, Integer>() {

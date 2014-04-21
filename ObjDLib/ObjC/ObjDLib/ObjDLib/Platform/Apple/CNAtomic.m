@@ -181,7 +181,7 @@ static ODClassType* _ATAtomicInt_type;
     return self;
 }
 
-+ (instancetype)applyValue:(id)value {
++ (instancetype)atomicObjectWithValue:(id)value {
     return [((CNAtomicObject *)[self alloc]) initWithValue:value];
 }
 

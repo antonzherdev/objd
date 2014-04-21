@@ -49,16 +49,18 @@ data Annotation = Annotation {annotationName :: String, annotaionPars :: [CallPa
 data ClassStm = Def {defMods :: [DefMod],  defName :: String, defGenerics :: [Generic], defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
 	| ClassImport [String]
 
-data DefMod = DefModPrivate | DefModProtected | DefModMutable | DefModVal | DefModStatic | DefModWeak | DefModDelegate | DefModLazy | DefModPure |
+data DefMod = DefModPrivate | DefModProtected | 
+	DefModMutable | DefModField | DefModDef |
+	DefModStatic | DefModWeak | DefModDelegate | DefModLazy | DefModPure |
 	DefModFinal | DefModOverride | DefModConstructorField | DefModInline deriving (Eq)
 isDef :: ClassStm -> Bool
-isDef d@Def{} = (DefModVal `notElem`) . defMods $ d
+isDef d@Def{} = DefModDef `elem` defMods d
 isDef _ =  False
 isDecl :: ClassStm -> Bool
-isDecl d@Def{} = (DefModVal `elem`) . defMods $ d
+isDecl d@Def{} = DefModField `elem` defMods d
 isDecl _ =  False
 isStatic :: ClassStm -> Bool
-isStatic d@Def{} = (DefModStatic `elem`) . defMods $ d
+isStatic d@Def{} = DefModStatic `elem` defMods d
 isStatic _ =  False
 isClassImport :: ClassStm -> Bool
 isClassImport ClassImport{} = True

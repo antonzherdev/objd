@@ -223,25 +223,25 @@ pClassBody :: Parser [ClassStm]
 pClassBody = option [] $ braces $ many pStm
 
 pClassFields :: Parser [ClassStm]
-pClassFields = option [] $ brackets $ (pDeclPar >>= (\d -> return d{defMods = DefModConstructorField : defMods d }) ) `sepBy` charSps ','
+pClassFields = option [] $ brackets $ pConstrField `sepBy` charSps ','
 
 
-pDeclPar :: Parser ClassStm
-pDeclPar = pDecl' (option False)
+pConstrField :: Parser ClassStm
+pConstrField = pDecl' (\p -> (optionMaybe p >>= (\mut -> return $ DefModConstructorField : [DefModField | isJust mut] ++ [DefModMutable| isJust mut && fromJust mut] ) ))
 pDecl :: Parser ClassStm
-pDecl = pDecl' id
+pDecl = pDecl' (\ p -> p >>= (\mut -> return $ DefModField : [DefModMutable| mut]))
 
-pDecl' :: (Parser Bool->Parser Bool) -> Parser ClassStm
+pDecl' :: (Parser Bool -> Parser [DefMod]) -> Parser ClassStm
 pDecl' mtf = do
 		mods <- many pMod
-		mut <- mtf mutableType
+		tpmd <- mtf mutableType
 		name <- ident
 		sps
 		dataType <- optionMaybe $ pDataType False
 		sps
 		def <- oExp
 		sps
-		return Def{defName = name, defRetType = dataType, defMods = DefModVal : [DefModMutable| mut] ++ mods, defBody = def, defGenerics = [], defPars = []}
+		return Def{defName = name, defRetType = dataType, defMods = tpmd ++ mods, defBody = def, defGenerics = [], defPars = []}
 	where
 		mutableType = var <|> val
 		val = try(string "val" >> sps1)  >> return False
@@ -282,7 +282,7 @@ pDef = do
 		sps
 		string "def"
 		sps1
-		return mds
+		return $ DefModDef : mds
 	name <- ident
 	sps
 	gens <- pGenerics

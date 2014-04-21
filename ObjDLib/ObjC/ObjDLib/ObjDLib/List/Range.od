@@ -1,6 +1,6 @@
 package core.chain
 
-case class Range(start : int, end : int, step : int) extends ImSeq<int> {
+case class Range(val start : int, val end : int, val step : int) extends ImSeq<int> {
     override val count : uint =
         if(step > 0) if(start <= end) (end - start)/step + 1 else 0
         else if(step < 0) if(start >= end) (end - start)/step + 1 else 0
@@ -18,7 +18,7 @@ case class Range(start : int, end : int, step : int) extends ImSeq<int> {
     static def apply(i : int) : Range = Range(i, i, 1)
 }
 
-class RangeIterator(start : int, end : int, step : int) extends Iterator<int> {
+class RangeIterator(val start : int, val end : int, val step : int) extends Iterator<int> {
     private var i : int = start
     override def hasNext : bool = (step > 0 && i <= end) || (step < 0 && i >= end)
     override def next : int = {

@@ -3,7 +3,7 @@ package core.chain;
 public class FilledList<T> extends ImList<T> {
     public final T _head;
     public final ImList<T> tail;
-    public final int count = this.tail.count() + ERROR: Unknown 1;
+    public final int count = tail.count() + ERROR: Unknown 1;
     @Override
     public T head() {
         return this._head;
@@ -49,7 +49,7 @@ public class FilledList<T> extends ImList<T> {
         ERROR: Unknown local var list : FilledList#C<T#G> = <FilledList#C<T#G>>self;
         ERROR: Unknown while(True) {
     local h : T#G = <lm>list\FilledList#C<§T#G§>\.<eIU>_head\§T#G§\
-    if((<l>item\C#G\.<rdI>compare(to = <l>h\§T#G§\)\int\ < 0)) {
+    if((<l>item\C#G\.<rdIb>compare(to = <l>h\§T#G§\)\int\ < 0)) {
     return <to>FilledList\FilledList#C.class\.<tcI>apply(_head = <l>item\C#G\.cast<T#G>, tail = <lm>before\ImList#C<§T#G§>\)\FilledList#C<§T#G§>\.<dp>reverseAndAdd(list = <lm>list\FilledList#C<§T#G§>\)\ImList#C<§T#G§>\
 }
     (<lm>before\ImList#C<§T#G§>\ = <to>ImList\ImList#C.class\.<dIt>apply(item = <l>h\§T#G§\, tail = <lm>before\ImList#C<§T#G§>\)\ImList#C<§T#G§>\)

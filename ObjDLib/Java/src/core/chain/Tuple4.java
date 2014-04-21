@@ -7,13 +7,13 @@ public class Tuple4<A, B, C, D> implements Comparable<Tuple4<A, B, C, D>> {
     public final D d;
     @Override
     public int compareTo(Tuple4<AC, BC, CC, DC> to) {
-        ERROR: Unknown local var r : int = <l>to\^Tuple4#C<AC#G, BC#G, CC#G, DC#G>\.<eIU>a\AC#G\.<rdI>compare(to = <Tuple4#C<A#G, B#G, C#G, D#G>>self.<eIU>a\§A#G§\)\int\;
+        ERROR: Unknown local var r : int = <l>to\^Tuple4#C<AC#G, BC#G, CC#G, DC#G>\.<eIU>a\AC#G\.<rdIb>compare(to = <Tuple4#C<A#G, B#G, C#G, D#G>>self.<eIU>a\§A#G§\)\int\;
         if(r.equals(ERROR: Unknown 0)) {
             r = to.b.compareTo(this.b);
             if(r.equals(ERROR: Unknown 0)) {
                 r = to.c.compareTo(this.c);
                 if(r.equals(ERROR: Unknown 0)) {
-                    return ERROR: Unknown -<l>to\^Tuple4#C<AC#G, BC#G, CC#G, DC#G>\.<eIU>d\DC#G\.<rdI>compare(to = <Tuple4#C<A#G, B#G, C#G, D#G>>self.<eIU>d\§D#G§\)\int\;
+                    return ERROR: Unknown -<l>to\^Tuple4#C<AC#G, BC#G, CC#G, DC#G>\.<eIU>d\DC#G\.<rdIb>compare(to = <Tuple4#C<A#G, B#G, C#G, D#G>>self.<eIU>d\§D#G§\)\int\;
                 } else {
                     return ERROR: Unknown -<lm>r\int\;
                 }

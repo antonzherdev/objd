@@ -1,6 +1,6 @@
 package core.chain
 
-case class Pair<T>(a : T, b : T) extends ImSet<T> {
+case class Pair<T>(val a : T, val b : T) extends ImSet<T> {
     static def newWith<T>(a : T, b : T) : Pair<T> =
         if(a < b) Pair<T>(a, b)
         else Pair<T>(b, a)
@@ -10,7 +10,7 @@ case class Pair<T>(a : T, b : T) extends ImSet<T> {
     override def head : T? = a
 }
 
-class PairIterator<T>(pair : Pair<T>) extends Iterator<T> {
+class PairIterator<T>(val pair : Pair<T>) extends Iterator<T> {
     private var state : int = 0
     override def hasNext : bool = state < 2
     override def next : T = {

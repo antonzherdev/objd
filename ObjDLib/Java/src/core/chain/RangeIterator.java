@@ -4,7 +4,7 @@ public class RangeIterator implements Iterator<int> {
     public final int start;
     public final int end;
     public final int step;
-    private int i = this.start;
+    private int i = start;
     @Override
     public boolean hasNext() {
         return (this.step > ERROR: Unknown 0 && this.i <= this.end) || (this.step < ERROR: Unknown 0 && this.i >= this.end);

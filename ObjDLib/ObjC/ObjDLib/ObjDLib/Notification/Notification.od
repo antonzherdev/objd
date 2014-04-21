@@ -1,6 +1,6 @@
 package core.chain
 
-class NotificationHandle<S, D>(name : string) {
+class NotificationHandle<S, D>(val name : string) {
     def post(self : NotificationHandle<_, void>, sender : S) {
         NotificationCenter.instance.post(name, sender, nil)
     }

@@ -1,6 +1,6 @@
 package core.chain
 
-class ZipLink<T, A, R>(a : Iterable<A>, f : (T, A) -> R) extends ChainLink<T, R> {
+class ZipLink<T, A, R>(val a : Iterable<A>, val f : (T, A) -> R) extends ChainLink<T, R> {
     override def build(yield : Yield<R>) : Yield<A> = {
         val ai = a.iterator
         Yield.decorate<A>(
@@ -13,7 +13,7 @@ class ZipLink<T, A, R>(a : Iterable<A>, f : (T, A) -> R) extends ChainLink<T, R>
     }
 }
 
-class Zip3Link<T, A, B, R>(a : Iterable<A>, b : Iterable<B>, f : (T, A, B) -> R) extends ChainLink<T, R> {
+class Zip3Link<T, A, B, R>(val a : Iterable<A>, val b : Iterable<B>, val f : (T, A, B) -> R) extends ChainLink<T, R> {
     override def build(yield : Yield<R>) : Yield<A> = {
         val ai = a.iterator
         val bi = b.iterator

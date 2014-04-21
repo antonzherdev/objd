@@ -253,7 +253,7 @@ static ODClassType* _CNFilledList_type;
     if(self) {
         __head = _head;
         _tail = tail;
-        _count = [_tail count] + 1;
+        _count = [tail count] + 1;
     }
     
     return self;

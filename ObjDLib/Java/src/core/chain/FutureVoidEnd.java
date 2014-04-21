@@ -10,7 +10,7 @@ public class FutureVoidEnd<T> {
         return this._promise;
     }
     public Yield<Future<T>> yield() {
-        return Yield().applyBeginYieldEnd<Future<T>>(new F<Integer, Integer>() {
+        return new Yield<Future<T>>(new F<Integer, Integer>() {
             @Override
             public Integer apply(Integer size) {
                 return ERROR: Unknown 0;
@@ -29,11 +29,11 @@ public class FutureVoidEnd<T> {
                                     FutureVoidEnd.this._promise.failureReason(tr);
                                 } else {
                                     if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_stopped\bool\)) {
-                                        ERROR: Unknown local r : int4 = <FutureVoidEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dI>decrementAndGet\int4\;
+                                        ERROR: Unknown local r : int4 = <FutureVoidEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dIb>decrementAndGet\int4\;
                                         Memory().memoryBarrier();
                                         if(FutureVoidEnd.this._ended && r.equals(ERROR: Unknown 0)) {
                                             Memory().memoryBarrier();
-                                            if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dI>getAndSet(newValue = True)\bool\)) {
+                                            if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dIb>getAndSet(newValue = True)\bool\)) {
                                                 FutureVoidEnd.this._promise.successValue(null);
                                             }
                                         }
@@ -57,7 +57,7 @@ public class FutureVoidEnd<T> {
                 Memory().memoryBarrier();
                 if(FutureVoidEnd.this._counter.intValue().equals(ERROR: Unknown 0)) {
                     Memory().memoryBarrier();
-                    if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dI>getAndSet(newValue = True)\bool\)) {
+                    if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dIb>getAndSet(newValue = True)\bool\)) {
                         FutureVoidEnd.this._promise.successValue(null);
                     }
                 }

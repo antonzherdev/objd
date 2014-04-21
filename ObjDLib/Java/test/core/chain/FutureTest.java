@@ -1,5 +1,10 @@
 package core.chain;
 
+import test.;
+import test.Test;
+import test.TestCase;
+import test..*;
+
 public class FutureTest extends TestCase {
     public void testPromiseOnComplete() {
         ERROR: Unknown local n : AtomicInt#C = <to>AtomicInt\AtomicInt#C.class\.<tcI>apply\AtomicInt#C\;

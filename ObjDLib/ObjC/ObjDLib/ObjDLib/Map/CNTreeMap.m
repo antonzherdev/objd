@@ -391,7 +391,7 @@ static ODClassType* _CNTreeMapBuilder_type;
     self = [super init];
     if(self) {
         _comparator = [comparator copy];
-        _map = [CNMTreeMap treeMapWithComparator:_comparator];
+        _map = [CNMTreeMap treeMapWithComparator:comparator];
     }
     
     return self;
@@ -1578,7 +1578,6 @@ static ODClassType* _CNTreeMapValues_type;
 
 @implementation CNTreeMapValuesIterator
 static ODClassType* _CNTreeMapValuesIterator_type;
-@synthesize map = _map;
 @synthesize entry = _entry;
 
 + (instancetype)treeMapValuesIteratorWithMap:(CNTreeMap*)map {
@@ -1587,7 +1586,6 @@ static ODClassType* _CNTreeMapValuesIterator_type;
 
 - (instancetype)initWithMap:(CNTreeMap*)map {
     self = [super init];
-    if(self) _map = map;
     
     return self;
 }

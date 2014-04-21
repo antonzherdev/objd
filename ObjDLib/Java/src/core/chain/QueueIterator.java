@@ -1,9 +1,8 @@
 package core.chain;
 
 public class QueueIterator<T> implements Iterator<T> {
-    public final ImList<T> in;
     public final ImList<T> out;
-    private Iterator<T> i = this.in.iterator();
+    private Iterator<T> i = in.iterator();
     private boolean isIn = ERROR: Unknown True;
     @Override
     public boolean hasNext() {

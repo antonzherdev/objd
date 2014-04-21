@@ -204,7 +204,7 @@ trait MIterable<T> extends Iterable<T> with MTraversable<T> {
     }
 }
 
-class IterableF<T>(iteratorF : () -> Iterator<T>) extends ImIterable<T> {
+class IterableF<T>(val iteratorF : () -> Iterator<T>) extends ImIterable<T> {
     override def iterator = iteratorF()
 }
 

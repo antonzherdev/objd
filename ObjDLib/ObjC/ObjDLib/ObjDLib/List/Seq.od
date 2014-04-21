@@ -125,7 +125,7 @@ class ArrayBuilder<T> extends Builder<T, ImArray<T>> {
     override def build : ImArray<T> = array.im
 }
 
-case class IndexFunSeq<T>(override count : uint, f : uint -> T) extends ImSeq<T> {
+case class IndexFunSeq<T>(override val count : uint, val f : uint -> T) extends ImSeq<T> {
     override def apply(index : uint) : T? =
         if(index >= count) nil
         else f(index)
@@ -133,7 +133,7 @@ case class IndexFunSeq<T>(override count : uint, f : uint -> T) extends ImSeq<T>
     override def iterator : Iterator<T> = IndexFunSeqIterator<T>(count, f)
 }
 
-class IndexFunSeqIterator<T>(count : uint, f : uint -> T) extends Iterator<T> {
+class IndexFunSeqIterator<T>(val count : uint, val f : uint -> T) extends Iterator<T> {
     private var i : uint = 0
     override def hasNext = i < count
 

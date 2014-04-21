@@ -1,6 +1,6 @@
 package core.lang
 
-stub class Enum(ordinal : uint, name : string) {
+stub class Enum(val ordinal : uint, val name : string) {
     override def description : string = name
 
     override def hash : uint = ordinal

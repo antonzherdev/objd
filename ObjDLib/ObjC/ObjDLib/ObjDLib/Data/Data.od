@@ -3,7 +3,7 @@ package core.chain
 import core.chain.Memory._
 
 
-final class PArray<T>(stride : uint, wrap : (Pointer<T>, uint) -> T, override count : uint, length : uint, bytes : Pointer<T>, copied : bool) extends ImSeq<T> {
+final class PArray<T>(val stride : uint, val wrap : (Pointer<T>, uint) -> T, override val count : uint, val length : uint, val bytes : Pointer<T>, val copied : bool) extends ImSeq<T> {
     static def apply<T>(stride : uint, wrap : (Pointer<T>, uint) -> T, count : uint, copyBytes : Pointer<T>) : PArray<T> = {
         val len =  count * stride
         PArray<T>(stride, wrap, count, len, copyBytes.copy(count * stride), true)
@@ -30,7 +30,7 @@ final class PArray<T>(stride : uint, wrap : (Pointer<T>, uint) -> T, override co
     }
 }
 
-class PArrayIterator<T>(array : PArray<T>) extends Iterator<T> {
+class PArrayIterator<T>(val array : PArray<T>) extends Iterator<T> {
     private var i = 0
     override def hasNext : bool = i < array.count
     override def next : T = {

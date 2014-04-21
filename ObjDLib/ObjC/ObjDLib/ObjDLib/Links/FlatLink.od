@@ -1,6 +1,6 @@
 package core.chain
 
-class FlatLink<T>(factor : float) extends ChainLink<Traversable<T>, T> {
+class FlatLink<T>(val factor : float) extends ChainLink<Traversable<T>, T> {
     override def build(yield : Yield<T>) : Yield<Traversable<T>> = {
         Yield.decorate<Traversable<T>>(
             base = yield,

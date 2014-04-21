@@ -1,6 +1,6 @@
 package core.chain
 
-abstract class TreeMap<K, V>(comparator : (K, K) -> int) extends ImMap<K, V> {
+abstract class TreeMap<K, V>(val comparator : (K, K) -> int) extends ImMap<K, V> {
     override def apply(key : K) : V = entryFor(key).get.value
     override def opt(key : K) : V? = entryFor(key)?.value
     def root : TreeMapEntry<K, V>?
@@ -95,7 +95,7 @@ abstract class TreeMap<K, V>(comparator : (K, K) -> int) extends ImMap<K, V> {
 
 }
 
-class ImTreeMap<K, V>(comparator : (K, K) -> int, override root : TreeMapEntry<K, V>?, override count : uint)
+class ImTreeMap<K, V>(comparator : (K, K) -> int, override val root : TreeMapEntry<K, V>?, override val count : uint)
     extends TreeMap<K, V>(comparator)
 {
     override def isEmpty : bool = root == nil
@@ -108,7 +108,7 @@ class ImTreeMap<K, V>(comparator : (K, K) -> int, override root : TreeMapEntry<K
     }
 }
 
-class TreeMapBuilder<K, V>(comparator : (K, K) -> int) extends Builder<(K, V), TreeMap<K, V>> {
+class TreeMapBuilder<K, V>(val comparator : (K, K) -> int) extends Builder<(K, V), TreeMap<K, V>> {
     static def apply<K extends Comparable<K>, V> : TreeMapBuilder<K, V> = TreeMapBuilder<K, V>((a : K, b : K) -> a.compare(b))
     private val map = MTreeMap<K, V>(comparator)
     override def append(item : (K, V)) {
@@ -386,14 +386,14 @@ trait TreeMapKeySet<K> extends ImIterable<K> {
     def iteratorHigherThan(key : K) : Iterator<K>
 }
 
-class ImTreeMapKeySet<K>(weak map : TreeMap<K, _>) extends TreeMapKeySet<K> {
+class ImTreeMapKeySet<K>(weak val map : TreeMap<K, _>) extends TreeMapKeySet<K> {
     override def count : uint = map.count
 
     override def iterator : Iterator<K> = TreeMapKeyIterator<K>(map, map.firstEntry)
     override def iteratorHigherThan(key : K) : Iterator<K> = TreeMapKeyIterator<K>(map, map.higherEntryThan(key))
 }
 
-class TreeMapKeyIterator<K>(map : TreeMap<K, _>) extends Iterator<K> {
+class TreeMapKeyIterator<K>(val map : TreeMap<K, _>) extends Iterator<K> {
    static def apply<K>(map : TreeMap<K, _>, entry : TreeMapEntry<K, _>?) : TreeMapKeyIterator<K> = {
        val ret = TreeMapKeyIterator<K>(map)
        ret.entry = entry
@@ -408,7 +408,7 @@ class TreeMapKeyIterator<K>(map : TreeMap<K, _>) extends Iterator<K> {
    }
 }
 
-class MTreeMapKeySet<K>(weak map : MTreeMap<K, _>) extends TreeMapKeySet<K> {
+class MTreeMapKeySet<K>(weak val map : MTreeMap<K, _>) extends TreeMapKeySet<K> {
     override def count : uint = map.count
 
     override def iterator : Iterator<K> = TreeMapKeyIterator<K>(map, map.firstEntry)
@@ -416,7 +416,7 @@ class MTreeMapKeySet<K>(weak map : MTreeMap<K, _>) extends TreeMapKeySet<K> {
     override def iteratorHigherThan(key : K) : Iterator<K> = MTreeMapKeyIterator<K>(map, map.higherEntryThan(key))
 }
 
-class MTreeMapKeyIterator<K>(map : MTreeMap<K, _>) extends MIterator<K> {
+class MTreeMapKeyIterator<K>(val map : MTreeMap<K, _>) extends MIterator<K> {
     static def apply<K>(map : MTreeMap<K, _>, entry : TreeMapEntry<K, _>?) : MTreeMapKeyIterator<K> = {
         val ret = MTreeMapKeyIterator<K>(map)
         ret.entry = entry
@@ -447,7 +447,7 @@ class MTreeMapKeyIterator<K>(map : MTreeMap<K, _>) extends MIterator<K> {
 }
 
 
-class TreeMapValues<V>(weak map : TreeMap<_, V>) extends ImIterable<V> {
+class TreeMapValues<V>(weak val map : TreeMap<_, V>) extends ImIterable<V> {
     override def count : uint = map.count
 
     override def iterator : Iterator<V> = TreeMapValuesIterator<V>(map, map.firstEntry)
@@ -468,7 +468,7 @@ class TreeMapValuesIterator<V>(map : TreeMap<_, V>) extends Iterator<V> {
     }
 }
 
-class TreeMapIterator<K, V>(map : TreeMap<K, V>) extends Iterator<(K, V)> {
+class TreeMapIterator<K, V>(val map : TreeMap<K, V>) extends Iterator<(K, V)> {
     static def apply<K, V>(map : TreeMap<K, V>, entry : TreeMapEntry<K, V>?) : TreeMapIterator<K, V> = {
         val ret = TreeMapIterator<K, V>(map)
         ret.entry = entry
@@ -484,7 +484,7 @@ class TreeMapIterator<K, V>(map : TreeMap<K, V>) extends Iterator<(K, V)> {
     }
 }
 
-class MTreeMapIterator<K, V>(map : MTreeMap<K, V>) extends MIterator<(K, V)> {
+class MTreeMapIterator<K, V>(val map : MTreeMap<K, V>) extends MIterator<(K, V)> {
     static def apply<K, V>(map : MTreeMap<K, V>, entry : TreeMapEntry<K, V>?) : MTreeMapIterator<K, V> = {
         val ret = MTreeMapIterator<K, V>(map)
         ret.entry = entry

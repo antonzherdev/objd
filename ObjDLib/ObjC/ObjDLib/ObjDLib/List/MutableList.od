@@ -134,7 +134,7 @@ class MListItem<T>(var data : T) {
     weak var prev : MListItem<T>?
 }
 
-class MListIterator<T>(list : MList<T>) extends MIterator<T> {
+class MListIterator<T>(val list : MList<T>) extends MIterator<T> {
     private var prev : MListItem<T>?
     var item : MListItem<T>?
 

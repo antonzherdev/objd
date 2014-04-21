@@ -1,6 +1,6 @@
 package core.chain
 
-final case class Tuple<A, B>(a : A, b : B) extends Comparable<Tuple<A, B>> {
+final case class Tuple<A, B>(val a : A, val b : B) extends Comparable<Tuple<A, B>> {
     override def compare<AC extends Comparable<A>, BC extends Comparable<B>>(to : Tuple<AC, BC>) : int = {
         val r = to.a.compare(a)
         if(r == 0) -to.b.compare(b) else -r
@@ -10,7 +10,7 @@ final case class Tuple<A, B>(a : A, b : B) extends Comparable<Tuple<A, B>> {
     static def unapply<A, B>(tuple : Tuple<A, B>) : Tuple<A, B>? = tuple
 }
 
-final case class Tuple3<A, B, C>(a : A, b : B, c : C) extends Comparable<Tuple3<A, B, C>> {
+final case class Tuple3<A, B, C>(val a : A, val b : B, val c : C) extends Comparable<Tuple3<A, B, C>> {
     override def compare<AC extends Comparable<A>, BC extends Comparable<B>, CC extends Comparable<C>>(to : Tuple3<AC, BC, CC>) : int = {
         var r = to.a.compare(a)
         if(r == 0) {
@@ -23,7 +23,7 @@ final case class Tuple3<A, B, C>(a : A, b : B, c : C) extends Comparable<Tuple3<
     static def unapply<A, B, C>(tuple : Tuple3<A, B, C>) : Tuple3<A, B, C>? = tuple
 }
 
-final case class Tuple4<A, B, C, D>(a : A, b : B, c : C, d : D) extends Comparable<Tuple4<A, B, C, D>> {
+final case class Tuple4<A, B, C, D>(val a : A, val b : B, val c : C, val d : D) extends Comparable<Tuple4<A, B, C, D>> {
     override def compare<AC extends Comparable<A>
         , BC extends Comparable<B>
         , CC extends Comparable<C>
@@ -43,7 +43,7 @@ final case class Tuple4<A, B, C, D>(a : A, b : B, c : C, d : D) extends Comparab
     static def unapply<A, B, C, D>(tuple : Tuple4<A, B, C, D>) : Tuple4<A, B, C, D>? = tuple
 }
 
-final case class Tuple5<A, B, C, D, E>(a : A, b : B, c : C, d : D, e : E) extends Comparable<Tuple5<A, B, C, D, E>> {
+final case class Tuple5<A, B, C, D, E>(val a : A, val b : B, val c : C, val d : D, val e : E) extends Comparable<Tuple5<A, B, C, D, E>> {
     override def compare<AC extends Comparable<A>
     , BC extends Comparable<B>
     , CC extends Comparable<C>

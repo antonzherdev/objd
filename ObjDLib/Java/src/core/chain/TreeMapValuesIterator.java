@@ -1,7 +1,6 @@
 package core.chain;
 
 public class TreeMapValuesIterator<V> implements Iterator<V> {
-    public final TreeMap<?, V> map;
     public TreeMapEntry<?, V> entry;
     public static TreeMapValuesIterator<V> applyMapEntry(TreeMap<?, V> map,TreeMapEntry<?, V> entry) {
         ERROR: Unknown local ret : TreeMapValuesIterator#C<§V#G§> = <to>TreeMapValuesIterator\TreeMapValuesIterator#C.class\.<tcI>apply(map = <l>map\TreeMap#C<^_, V#G>\)\TreeMapValuesIterator#C<§V#G§>\;

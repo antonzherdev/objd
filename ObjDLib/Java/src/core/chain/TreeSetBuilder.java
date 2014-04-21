@@ -2,12 +2,12 @@ package core.chain;
 
 public class TreeSetBuilder<T> implements Builder<T, ImTreeSet<T>> {
     public final F2<T, T, Integer> comparator;
-    private final MTreeSet<T> set = MTreeSet().applyComparator<T>(this.comparator);
+    private final MTreeSet<T> set = MTreeSet().applyComparator<T>(comparator);
     public static TreeSetBuilder<T> apply() {
         return new TreeSetBuilder<T>(new F2<T, T, Integer>() {
             @Override
             public Integer apply(T a,T b) {
-                ERROR: Unknown weak return <l>a\T#G\.<rdI>compare(to = <l>b\T#G\)\int\;
+                ERROR: Unknown weak return <l>a\T#G\.<rdIb>compare(to = <l>b\T#G\)\int\;
             }
         });
     }

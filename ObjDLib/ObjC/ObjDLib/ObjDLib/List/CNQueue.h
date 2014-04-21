@@ -37,12 +37,10 @@
 
 @interface CNQueueIterator : NSObject<CNIterator> {
 @protected
-    CNImList* _in;
     CNImList* _out;
     id<CNIterator> _i;
     BOOL _isIn;
 }
-@property (nonatomic, readonly) CNImList* in;
 @property (nonatomic, readonly) CNImList* out;
 
 + (instancetype)queueIteratorWithIn:(CNImList*)in out:(CNImList*)out;

@@ -1,6 +1,6 @@
 package core.chain
 
-class MapLink<A, B>(f : A -> B) extends ChainLink<A, B> {
+class MapLink<A, B>(val f : A -> B) extends ChainLink<A, B> {
     override def build(yield : Yield<B>) : Yield<A> = {
         Yield.decorate<A>(
             base = yield,
@@ -11,7 +11,7 @@ class MapLink<A, B>(f : A -> B) extends ChainLink<A, B> {
     }
 }
 
-class MapOptLink<A, B>(f : A -> B?) extends ChainLink<A, B> {
+class MapOptLink<A, B>(val f : A -> B?) extends ChainLink<A, B> {
     override def build(yield : Yield<B>) : Yield<A> = {
         Yield.decorate<A>(
             base = yield,

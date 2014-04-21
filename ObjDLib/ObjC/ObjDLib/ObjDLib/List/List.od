@@ -17,7 +17,7 @@ abstract class ImList<T> extends ImSeq<T> {
     def insert<C extends Comparable<C>>(self : ImList<C>, item : C) : ImList<T>
 }
 
-case class FilledList<T>( _head : T, override tail : ImList<T>) extends ImList<T> {
+case class FilledList<T>(val _head : T, override val tail : ImList<T>) extends ImList<T> {
     override def head : T? = _head
     override val count : uint = tail.count + 1
     override def isEmpty = false

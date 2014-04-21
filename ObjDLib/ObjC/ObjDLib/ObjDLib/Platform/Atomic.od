@@ -19,15 +19,13 @@ stub class AtomicInt {
 }
 
 @ObjC
-stub class AtomicObject<T> {
-    static def apply<T>(value : T) : AtomicObject<T>
+stub class AtomicObject<T>(value : T) {
     def value : T
     def set(newValue : T)
     def compareAndSet(oldValue : T, newValue : T) : bool
 }
 
 @Java
-class AtomicObject<T> extends AtomicReference<T> {
-    static inline def apply<T>(value : T) : AtomicObject<T> = AtomicReference<T>(value)
+class AtomicObject<T>(value : T) extends AtomicReference<T>(value) {
     inline def value : T = get
 }

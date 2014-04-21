@@ -352,7 +352,7 @@ class DefaultPromise<T> extends Promise<T> {
 
 }
 
-final class KeptPromise<T>(value : Try<T>) extends Promise<T> {
+final class KeptPromise<T>(val value : Try<T>) extends Promise<T> {
     override def result : Try<T>? = value
 
     override def onComplete(f : Try<T> -> void) {

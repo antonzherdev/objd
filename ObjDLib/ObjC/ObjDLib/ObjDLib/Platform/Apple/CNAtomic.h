@@ -28,10 +28,9 @@
 @end
 
 @interface CNAtomicObject : NSObject
-+ (instancetype)atomicObject;
 - (instancetype)init;
 - (instancetype)initWithValue:(id)value;
-+ (instancetype)applyValue:(id)value;
++ (instancetype)atomicObjectWithValue:(id)value;
 - (ODClassType*)type;
 - (id)value;
 - (void)setNewValue:(id)newValue;

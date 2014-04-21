@@ -95,7 +95,6 @@ static ODClassType* _CNImQueue_type;
 
 @implementation CNQueueIterator
 static ODClassType* _CNQueueIterator_type;
-@synthesize in = _in;
 @synthesize out = _out;
 
 + (instancetype)queueIteratorWithIn:(CNImList*)in out:(CNImList*)out {
@@ -105,9 +104,8 @@ static ODClassType* _CNQueueIterator_type;
 - (instancetype)initWithIn:(CNImList*)in out:(CNImList*)out {
     self = [super init];
     if(self) {
-        _in = in;
         _out = out;
-        _i = [_in iterator];
+        _i = [in iterator];
         _isIn = YES;
     }
     

@@ -4,7 +4,7 @@ public class Range implements ImSeq<int> {
     public final int start;
     public final int end;
     public final int step;
-    public final int count = (this.step > ERROR: Unknown 0) ? ((this.start <= this.end) ? (ERROR: Unknown (((<Range#C>self.<eIU>end\int\ - <Range#C>self.<eIU>start\int\) / <Range#C>self.<eIU>step\int\) + 1).cast<uint>) : (ERROR: Unknown 0.cast<uint>)) : ((this.step < ERROR: Unknown 0) ? ((this.start >= this.end) ? (ERROR: Unknown (((<Range#C>self.<eIU>end\int\ - <Range#C>self.<eIU>start\int\) / <Range#C>self.<eIU>step\int\) + 1).cast<uint>) : (ERROR: Unknown 0.cast<uint>)) : (ERROR: Unknown 1.cast<uint>));
+    public final int count = (step > ERROR: Unknown 0) ? ((start <= end) ? (ERROR: Unknown (((<lw>end\int\ - <lw>start\int\) / <lw>step\int\) + 1).cast<uint>) : (ERROR: Unknown 0.cast<uint>)) : ((step < ERROR: Unknown 0) ? ((start >= end) ? (ERROR: Unknown (((<lw>end\int\ - <lw>start\int\) / <lw>step\int\) + 1).cast<uint>) : (ERROR: Unknown 0.cast<uint>)) : (ERROR: Unknown 1.cast<uint>));
     @Override
     public Integer applyIndex(int index) {
         if(index < this.count) {
@@ -121,7 +121,7 @@ public class Range implements ImSeq<int> {
         ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
     local v : T#G = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\
-    <to>DispatchQueue\DispatchQueue#C.class\.<eIt>default\DispatchQueue#C\.<dI>async(f =  -> void = <l>each\§T#G§ -> void\.<d>apply( = <l>v\§T#G§\)\void\)\void\
+    <to>DispatchQueue\DispatchQueue#C.class\.<eIt>default\DispatchQueue#C\.<dIb>async(f =  -> void = <l>each\§T#G§ -> void\.<d>apply( = <l>v\§T#G§\)\void\)\void\
 };
     }
     @Override
@@ -255,7 +255,7 @@ public class Range implements ImSeq<int> {
         ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
     local v : T#G = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\
-    <to>DispatchQueue\DispatchQueue#C.class\.<eIt>default\DispatchQueue#C\.<dI>async(f =  -> void = <l>each\§T#G§ -> void\.<d>apply( = <l>v\§T#G§\)\void\)\void\
+    <to>DispatchQueue\DispatchQueue#C.class\.<eIt>default\DispatchQueue#C\.<dIb>async(f =  -> void = <l>each\§T#G§ -> void\.<d>apply( = <l>v\§T#G§\)\void\)\void\
 };
     }
     @Override

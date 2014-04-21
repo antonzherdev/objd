@@ -234,10 +234,8 @@
 
 @interface CNTreeMapValuesIterator : NSObject<CNIterator> {
 @protected
-    CNTreeMap* _map;
     CNTreeMapEntry* _entry;
 }
-@property (nonatomic, readonly) CNTreeMap* map;
 @property (nonatomic) CNTreeMapEntry* entry;
 
 + (instancetype)treeMapValuesIteratorWithMap:(CNTreeMap*)map;

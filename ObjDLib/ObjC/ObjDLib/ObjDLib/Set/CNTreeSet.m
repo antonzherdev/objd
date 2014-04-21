@@ -217,7 +217,7 @@ static ODClassType* _CNTreeSetBuilder_type;
     self = [super init];
     if(self) {
         _comparator = [comparator copy];
-        _set = [CNMTreeSet applyComparator:_comparator];
+        _set = [CNMTreeSet applyComparator:comparator];
     }
     
     return self;

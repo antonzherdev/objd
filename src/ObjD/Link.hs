@@ -760,12 +760,9 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 		isStaticDecl d = isObject || D.isStatic d
 		fields :: [Def]
 		fields =  concatMap (linkField staticEnv (isObject, selfIsStruct)) (filter (isStaticDecl) decls)  ++
-			concatMap (linkField env (isObject, selfIsStruct)) (filter (not . isStaticDecl) decls)
-		decls = (map (\d -> d{D.defBody = D.Nop}) . filter (not . containsInSuper) )(D.classFields cl) ++ filter D.isDecl (D.classBody cl)
-		containsInSuper D.Def {D.defName = name} =  case superClass self of
-			Nothing -> False
-			Just super -> any (\d -> DefModField `elem` defMods d && defName d == name) $ allDefsInClass (super, M.empty)
-
+			concatMap (linkField (envAddVals (map fst constrPars) env) (isObject, selfIsStruct)) (filter (not . isStaticDecl) decls)
+		decls = (map (\d -> d{D.defBody = D.Nop}) . filter (\f -> D.isDecl f)) (D.classFields cl) 
+			++ filter D.isDecl (D.classBody cl)
 		defs = concatMap (\ def -> 
 			linkDef (envForDef def) def ([DefModStruct | selfIsStruct] ++ [DefModStatic | isObject] ++ [DefModStub | D.ClassModStub `elem` D.classMods cl])) 
 			. filter D.isDef $ D.classBody cl

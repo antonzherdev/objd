@@ -64,7 +64,7 @@ trait MMap<K, V> extends Map<K, V> with MIterable<(K, V)> {
     }
 }
 
-class ImMapDefault<K, V>(map : ImMap<K, V>, defaultFunc : K -> V) extends ImIterable<(K, V)> {
+class ImMapDefault<K, V>(val map : ImMap<K, V>, val defaultFunc : K -> V) extends ImIterable<(K, V)> {
     override def count : uint = map.count
     override def iterator : Iterator<(K, V)> = map.iterator
     def apply(key : K) : V = map.opt(key) .getOr (defaultFunc(key))
@@ -76,7 +76,7 @@ class ImMapDefault<K, V>(map : ImMap<K, V>, defaultFunc : K -> V) extends ImIter
     override def hash : uint = map.hash
     override def mCopy : MMapDefault<K, V> = MMapDefault<K, V>(map.mCopy, defaultFunc)
 }
-class MMapDefault<K, V>(map : MMap<K, V>, defaultFunc : K -> V) extends MIterable<(K, V)> {
+class MMapDefault<K, V>(val map : MMap<K, V>, val defaultFunc : K -> V) extends MIterable<(K, V)> {
     override def count : uint = map.count
     override def iterator : Iterator<(K, V)> = map.iterator
     override def mutableIterator : MIterator<(K, V)> = map.mutableIterator

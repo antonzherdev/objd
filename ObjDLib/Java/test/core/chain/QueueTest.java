@@ -1,5 +1,10 @@
 package core.chain;
 
+import test.;
+import test.Test;
+import test.TestCase;
+import test..*;
+
 public class QueueTest extends TestCase {
     public void testDeque() {
         ERROR: Unknown local var q : ImQueue#C<§^int§> = <to>ImQueue\ImQueue#C.class\.<dIt>apply\ImQueue#C<§^int§>\;

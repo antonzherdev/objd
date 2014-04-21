@@ -1,6 +1,6 @@
 package core.chain
 
-class SortBuilder<A>(chain : Chain<A>) {
+class SortBuilder<A>(val chain : Chain<A>) {
     private val functions = MArray<(A, A) -> int>()
 
     def asc<B extends Comparable<B>>(by : A -> B) : SortBuilder<A> = {
