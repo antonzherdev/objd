@@ -2749,15 +2749,23 @@ maybeInlineCall env e = let
 			gens = buildGenerics defClass $ fromJust $ upGenericsToClass defClass ((dataTypeClass env selfTp), (dataTypeGenerics env selfTp))
 				
 			mapDeclaredValsGenerics = map repGens declaredVals
-				where repGens d = (d, d{defType = replaceGenerics False gens $ unblockGenerics $ defType d, 
+				where repGens d = (d, d{defType = repgens $ defType d, 
 					defName = "__inline_" ++ envVarSuffix env ++ "_" ++ defName d})
+			
+			repgens = replaceGenerics False gens . unblockGenerics
 
 			replacedExp = mapExp rep $ defBody def
 			rep :: Exp -> Maybe Exp
 			rep (Dot (Call d _ [] _) (Call Def{defMods = mbLamdaMods} _ lambdaCallPars _)) 
 				| DefModApplyLambda `elem` mbLamdaMods = fmap (unwrapLambda (map (mapExp rep . snd) lambdaCallPars)) $ lookup d refs
 			rep (LambdaCall (Call d _ [] _)) = fmap (unwrapLambda []) $ lookup d refs
-			rep (Call d _ [] _) = if DefModField `elem` defMods d then Nothing else lookup d refs
+			rep (Call d _ [] _) 
+				| DefModField `elem` defMods d = lookup d refs
+			rep (Call d tp cpars cgens) =
+				Just $ Call d 
+					(repgens tp) 
+					(map (second $ mapExp rep) cpars)
+					(map repgens cgens)
 			rep (Val b dd) = 
 				fmap (\d -> Val b $ d{defBody = mapExp rep (defBody d)} ) $ lookup dd mapDeclaredValsGenerics
 			rep (Self _) = lookup (fst selfPar) refs
