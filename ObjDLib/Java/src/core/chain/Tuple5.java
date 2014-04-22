@@ -8,7 +8,7 @@ public class Tuple5<A, B, C, D, E> implements Comparable<Tuple5<A, B, C, D, E>> 
     public final E e;
     @Override
     public int compareTo(Tuple5<AC, BC, CC, DC, EC> to) {
-        ERROR: Unknown local var r : int = <l>to\^Tuple5#C<AC#G, BC#G, CC#G, DC#G, EC#G>\.<eIU>a\AC#G\.<rdIb>compare(to = <Tuple5#C<A#G, B#G, C#G, D#G, E#G>>self.<eIU>a\§A#G§\)\int\;
+        int r = to.a.compareTo(this.a);
         if(r.equals(ERROR: Unknown 0)) {
             r = to.b.compareTo(this.b);
             if(r.equals(ERROR: Unknown 0)) {

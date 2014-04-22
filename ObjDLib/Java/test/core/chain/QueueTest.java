@@ -7,7 +7,7 @@ import test..*;
 
 public class QueueTest extends TestCase {
     public void testDeque() {
-        ERROR: Unknown local var q : ImQueue#C<§^int§> = <to>ImQueue\ImQueue#C.class\.<dIt>apply\ImQueue#C<§^int§>\;
+        ImQueue<Integer> q = ImQueue().apply<Integer>();
         ().assertTrueValue(q.isEmpty());
         ().assertEqualsAB<Integer>(ERROR: Unknown 0, ERROR: Unknown <lm>q\ImQueue#C<§^int§>\.<dI>count\uint\.cast<int>);
         q = q.enqueueItem(ERROR: Unknown 1);
@@ -17,7 +17,7 @@ public class QueueTest extends TestCase {
         ().assertEqualsAB<Integer>(ERROR: Unknown 2, ERROR: Unknown <lm>q\ImQueue#C<§^int§>\.<dI>count\uint\.cast<int>);
         q = q.enqueueItem(ERROR: Unknown 3);
         ().assertEqualsAB<Integer>(ERROR: Unknown 3, ERROR: Unknown <lm>q\ImQueue#C<§^int§>\.<dI>count\uint\.cast<int>);
-        ERROR: Unknown local var p : (^(§^int§)?, ^ImQueue#C<§^int§>) = <lm>q\ImQueue#C<§^int§>\.<dI>dequeue\(^(§^int§)?, ^ImQueue#C<§^int§>)\;
+        Tuple2<Integer, ImQueue<Integer>> p = q.dequeue();
         q = p.b;
         ().assertEqualsAB<Integer>(ERROR: Unknown 1, ERROR: Unknown {
     local __tmp_12 : ^(§^int§)? = <lm>p\(^(§^int§)?, ^ImQueue#C<§^int§>)\.<eIU>a\^(§^int§)?\

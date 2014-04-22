@@ -10,7 +10,7 @@ public class ImTreeMap<K, V> extends TreeMap<K, V> {
     }
     @Override
     public MTreeMap<K, V> mCopy() {
-        ERROR: Unknown local m : MTreeMap#C<§K#G§, §V#G§> = <to>MTreeMap\MTreeMap#C.class\.<tcI>apply(comparator = <ImTreeMap#C<K#G, V#G>>self.<reIU>comparator\(§K#G§, §K#G§) -> int\)\MTreeMap#C<§K#G§, §V#G§>\;
+        MTreeMap<K, V> m = new MTreeMap<K, V>(this.comparator);
         m.assignImMap(this);
         return m;
     }

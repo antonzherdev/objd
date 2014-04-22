@@ -11,7 +11,7 @@ public class FutureEnd<T> {
         return this._promise;
     }
     public Yield<Future<T>> yield() {
-        ERROR: Unknown local var _i : int = 0;
+        int _i = ERROR: Unknown 0;
         return new Yield<Future<T>>(new F<Integer, Integer>() {
             @Override
             public Integer apply(Integer size) {
@@ -29,7 +29,7 @@ public class FutureEnd<T> {
                         FutureEnd.this._array;
                     }
                     .appendItem(null);
-                    ERROR: Unknown local i : int = <lm>_i\int\;
+                    int i = _i;
                     ERROR: Unknown <lm>_i\int\++;
                     fut.onCompleteF(new P<Try<T>>() {
                         @Override
@@ -47,7 +47,7 @@ public class FutureEnd<T> {
                                         }
                                         .setIndexItem(ERROR: Unknown <l>i\int\.cast<uint>, tr.get());
                                         Memory().memoryBarrier();
-                                        ERROR: Unknown local r : int4 = <FutureEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dIb>decrementAndGet\int4\;
+                                        int r = FutureEnd.this._counter.decrementAndGet();
                                         Memory().memoryBarrier();
                                         if(FutureEnd.this._ended && r.equals(ERROR: Unknown 0)) {
                                             Memory().memoryBarrier();

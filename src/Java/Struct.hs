@@ -112,7 +112,7 @@ showAnnotation (DefAnnotation nm pars) = ["@" ++ nm ++ "("] `glue` (glueAll ", "
 showStmsInBrackets :: [Stm] -> [String]
 showStmsInBrackets stms = ["{"] ++ (map ind . concatMap showStm) stms ++ ["}"]
 
-data Stm = Stm Exp | Braces [Stm] | Return Exp | If Exp [Stm] [Stm] | Throw Exp | Set (Maybe MathTp) Exp Exp deriving (Eq)
+data Stm = Stm Exp | Braces [Stm] | Return Exp | If Exp [Stm] [Stm] | Throw Exp | Set (Maybe MathTp) Exp Exp | Val TP String Exp deriving (Eq)
 
 showStm :: Stm -> [String]
 showStm (Stm Nop) = []
@@ -123,6 +123,8 @@ showStm (Throw e) = ["throw "] `glue` showExp e `appp` ";"
 showStm (If cond t []) = (["if("] `glue` showExp cond `appp` ") ") `glue` showStmsInBrackets t
 showStm (If cond t f) = (showStm (If cond t []) `appp` " else ") `glue` showStmsInBrackets f 
 showStm (Braces stms) = showStmsInBrackets stms
+showStm (Val tp nm Nop) = [show tp ++ " " ++ nm ++ ";"]
+showStm (Val tp nm e) = [show tp ++ " " ++ nm ++ " = "] `glue` showExp e `appp` ";"
 
 
 data Exp = Nop | IntConst Int | ExpError String | Call String [TP] [Exp] | New [Def] Exp | Dot Exp Exp | Ref String | InlineIf Exp Exp Exp | This

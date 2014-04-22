@@ -304,5 +304,10 @@ genStm env (D.Set tp l r) = let
 		tellImports limps
 		tellImports rimps
 		return $ lstm ++ rstm ++ [J.Set tp l' r']
+genStm env (D.Val True d) = do
+	t <- genStm env $ D.defBody d
+	return (J.Val (genTp $ D.defType d) (D.defName d) J.Nop:t)
+genStm env (D.Val False d) = genExpStm env (D.defBody d) (J.Val (genTp $ D.defType d) (D.defName d))
+
 genStm env e = genExpStm env e J.Stm 
 

@@ -7,12 +7,15 @@ public class MapOptLink<A, B> implements ChainLink<A, B> {
         return Yield().decorateBaseYield<A>(yield, new F<A, Integer>() {
             @Override
             public Integer apply(A item) {
-                ERROR: Unknown val __tmp_0 : ^(^int)?
-{
-    local _ : §(B#G)¿§ = <MapOptLink#C<A#G, B#G>>self.<eIU>f\§A#G§ -> (§B#G§)?\.<d>apply( = <l>item\§A#G§\)\(§B#G§)?\
-    if((<l>_\§(B#G)¿§\ != none<§B#G§>)) (<l>__tmp_0\^(^int)?\ = some(<l>yield\Yield#C<§B#G§>\.<dIb>yield(item = <l>_\§(B#G)¿§\)\int\)\(^int)?\)
-else (<l>__tmp_0\^(^int)?\ = none<^int>)
-};
+                Integer __tmp_0;
+                {
+                    B _ = MapOptLink.this.f.apply(item);
+                    if(_ != null) {
+                        __tmp_0 = yield.yieldItem(_);
+                    } else {
+                        __tmp_0 = null;
+                    }
+                }
                 if(__tmp_0 != null) {
                     return __tmp_0;
                 } else {

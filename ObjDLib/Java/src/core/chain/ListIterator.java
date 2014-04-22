@@ -8,7 +8,7 @@ public class ListIterator<T> implements Iterator<T> {
     }
     @Override
     public T next() {
-        ERROR: Unknown local ret : (§T#G§)? = <ListIterator#C<T#G>>self.<eIm>list\ImList#C<§T#G§>\.<rdIo>head\(§T#G§)?\;
+        T ret = this.list.head();
         this.list = this.list.tail();
         if(ret == null) {
             throw new RuntimeException("Not null");

@@ -29,7 +29,7 @@ public class FutureVoidEnd<T> {
                                     FutureVoidEnd.this._promise.failureReason(tr);
                                 } else {
                                     if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_stopped\bool\)) {
-                                        ERROR: Unknown local r : int4 = <FutureVoidEnd#C<T#G>>self.<emp>_counter\AtomicInt#C\.<dIb>decrementAndGet\int4\;
+                                        int r = FutureVoidEnd.this._counter.decrementAndGet();
                                         Memory().memoryBarrier();
                                         if(FutureVoidEnd.this._ended && r.equals(ERROR: Unknown 0)) {
                                             Memory().memoryBarrier();
@@ -52,7 +52,7 @@ public class FutureVoidEnd<T> {
         }, new F<Integer, Integer>() {
             @Override
             public Integer apply(Integer res) {
-                ERROR: Unknown local var ret : int = <l>res\int\;
+                int ret = res;
                 FutureVoidEnd.this._ended = ERROR: Unknown True;
                 Memory().memoryBarrier();
                 if(FutureVoidEnd.this._counter.intValue().equals(ERROR: Unknown 0)) {

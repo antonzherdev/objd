@@ -12,7 +12,7 @@ public class ImMapDefault<K, V> implements ImIterable<Tuple2<K, V>> {
         return this.map.iterator();
     }
     public V applyKey(K key) {
-        ERROR: Unknown local __tmp : §(V#G)?§ = <ImMapDefault#C<K#G, V#G>>self.<eIU>map\ImMap#T<§K#G§, §V#G§>\.<rdIa>opt(key = <l>key\§K#G§\)\(§V#G§)?\;
+        V __tmp = this.map.optKey(key);
         if(__tmp != null) {
             return __tmp;
         } else {
@@ -59,12 +59,12 @@ public class ImMapDefault<K, V> implements ImIterable<Tuple2<K, V>> {
     }
     @Override
     public void forEach(P<T> each) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) <l>each\§T#G§ -> void\.<d>apply( = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\void\;
     }
     @Override
     public void parForEach(P<T> each) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
     local v : T#G = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\
     <to>DispatchQueue\DispatchQueue#C.class\.<eIt>default\DispatchQueue#C\.<dIb>async(f =  -> void = <l>each\§T#G§ -> void\.<d>apply( = <l>v\§T#G§\)\void\)\void\
@@ -72,12 +72,12 @@ public class ImMapDefault<K, V> implements ImIterable<Tuple2<K, V>> {
     }
     @Override
     public boolean goOn(F<T, Boolean> on) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) if(!(<l>on\§T#G§ -> bool\.<d>apply( = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\bool\)) return False;
         return ERROR: Unknown True;
     }
     public boolean containsItem(T item) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) if((<l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\ == <l>i\Iterator#T<§T#G§>\)) return True;
         return ERROR: Unknown False;
     }
@@ -108,7 +108,7 @@ public class ImMapDefault<K, V> implements ImIterable<Tuple2<K, V>> {
         return Chain().chainWithCollection<T>(this);
     }
     public T findWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : (T#G)? = none<T#G>;
+        T ret = null;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -123,7 +123,7 @@ public class ImMapDefault<K, V> implements ImIterable<Tuple2<K, V>> {
         return ret;
     }
     public boolean existsWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : bool = False;
+        boolean ret = ERROR: Unknown False;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -138,7 +138,7 @@ public class ImMapDefault<K, V> implements ImIterable<Tuple2<K, V>> {
         return ret;
     }
     public boolean allConfirm(F<T, Boolean> confirm) {
-        ERROR: Unknown local var ret : bool = True;
+        boolean ret = ERROR: Unknown True;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -153,7 +153,6 @@ public class ImMapDefault<K, V> implements ImIterable<Tuple2<K, V>> {
         return ret;
     }
     public T head() {
-        ERROR: Unknown local var ret : (T#G)? = ;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T on) {
@@ -199,7 +198,7 @@ public class ImMapDefault<K, V> implements ImIterable<Tuple2<K, V>> {
         return Chain().chainWithCollection<T>(this);
     }
     public T findWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : (T#G)? = none<T#G>;
+        T ret = null;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -214,7 +213,7 @@ public class ImMapDefault<K, V> implements ImIterable<Tuple2<K, V>> {
         return ret;
     }
     public boolean existsWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : bool = False;
+        boolean ret = ERROR: Unknown False;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -229,7 +228,7 @@ public class ImMapDefault<K, V> implements ImIterable<Tuple2<K, V>> {
         return ret;
     }
     public boolean allConfirm(F<T, Boolean> confirm) {
-        ERROR: Unknown local var ret : bool = True;
+        boolean ret = ERROR: Unknown True;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -244,7 +243,6 @@ public class ImMapDefault<K, V> implements ImIterable<Tuple2<K, V>> {
         return ret;
     }
     public T head() {
-        ERROR: Unknown local var ret : (T#G)? = ;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T on) {

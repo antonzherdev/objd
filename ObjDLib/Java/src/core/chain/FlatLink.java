@@ -12,7 +12,7 @@ public class FlatLink<T> implements ChainLink<Traversable<T>, T> {
         }, new F<Traversable<T>, Integer>() {
             @Override
             public Integer apply(Traversable<T> col) {
-                ERROR: Unknown local var result : int = 0;
+                int result = ERROR: Unknown 0;
                 col.goOn(new F<T, Boolean>() {
                     @Override
                     public Boolean apply(T item) {

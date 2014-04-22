@@ -6,7 +6,7 @@ public class MQueue<T> implements Queue<T> {
         this._queue = this._queue.addItem(item);
     }
     public T dequeue() {
-        ERROR: Unknown local p : (^(§T#G§)?, ^ImQueue#C<§T#G§>) = <MQueue#C<T#G>>self.<emp>_queue\ImQueue#C<§T#G§>\.<dI>dequeue\(^(§T#G§)?, ^ImQueue#C<§T#G§>)\;
+        Tuple2<T, ImQueue<T>> p = this._queue.dequeue();
         this._queue = p.b;
         return p.a;
     }

@@ -3,7 +3,7 @@ package core.chain;
 public class TreeMapValuesIterator<V> implements Iterator<V> {
     public TreeMapEntry<?, V> entry;
     public static TreeMapValuesIterator<V> applyMapEntry(TreeMap<?, V> map,TreeMapEntry<?, V> entry) {
-        ERROR: Unknown local ret : TreeMapValuesIterator#C<§V#G§> = <to>TreeMapValuesIterator\TreeMapValuesIterator#C.class\.<tcI>apply(map = <l>map\TreeMap#C<^_, V#G>\)\TreeMapValuesIterator#C<§V#G§>\;
+        TreeMapValuesIterator<V> ret = new TreeMapValuesIterator<V>(map);
         ret.entry = entry;
         return ret;
     }
@@ -13,7 +13,12 @@ public class TreeMapValuesIterator<V> implements Iterator<V> {
     }
     @Override
     public V next() {
-        ERROR: Unknown local ret : V#G = <TreeMapValuesIterator#C<V#G>>self.<eIm>entry\(^TreeMapEntry#C<^_, §V#G§>)?\.get.<eIUm>value\§V#G§\;
+        if(this.entry == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            this.entry;
+        }
+        V ret = .value;
         if(this.entry == null) {
             throw new RuntimeException("Not null");
         } else {

@@ -10,7 +10,7 @@ public class IndexFunSeqIterator<T> implements Iterator<T> {
     }
     @Override
     public T next() {
-        ERROR: Unknown local ret : T#G = <IndexFunSeqIterator#C<T#G>>self.<eIU>f\uint -> §T#G§\.<d>apply( = <IndexFunSeqIterator#C<T#G>>self.<emp>i\uint\)\§T#G§\;
+        T ret = this.f.apply(this.i);
         ERROR: Unknown <IndexFunSeqIterator#C<T#G>>self.<emp>i\uint\++;
         return ret;
     }

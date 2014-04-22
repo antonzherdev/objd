@@ -36,7 +36,7 @@ public class MMapDefault<K, V> implements MIterable<Tuple2<K, V>> {
         this.map.setKeyValue(key, value);
     }
     public V modifyKeyBy(K key,F<V, V> by) {
-        ERROR: Unknown local value : V#G = <l>by\§V#G§ -> §V#G§\.<d>apply( = <MMapDefault#C<K#G, V#G>>self.<dI>apply(key = <l>key\§K#G§\)\§V#G§\)\§V#G§\;
+        V value = by.apply(applyKey(key));
         this.map.setKeyValue(key, value);
         return value;
     }
@@ -65,7 +65,7 @@ public class MMapDefault<K, V> implements MIterable<Tuple2<K, V>> {
         this.defaultFunc = defaultFunc;
     }
     public void mutableFilterBy(F<T, Boolean> by) {
-        ERROR: Unknown local i : MIterator#T<§T#G§> = <MIterable#T<T#G>>self.<dIa>mutableIterator\MIterator#T<§T#G§>\;
+        MIterator<T> i = this.mutableIterator();
         ERROR: Unknown while(<l>i\MIterator#T<§T#G§>\.<rdIa>hasNext\bool\) {
     if(<l>by\§T#G§ -> bool\.<d>apply( = <l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\)\bool\) <l>i\MIterator#T<§T#G§>\.<dIa>remove\void\
 };
@@ -83,12 +83,12 @@ public class MMapDefault<K, V> implements MIterable<Tuple2<K, V>> {
     }
     @Override
     public void forEach(P<T> each) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) <l>each\§T#G§ -> void\.<d>apply( = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\void\;
     }
     @Override
     public void parForEach(P<T> each) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
     local v : T#G = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\
     <to>DispatchQueue\DispatchQueue#C.class\.<eIt>default\DispatchQueue#C\.<dIb>async(f =  -> void = <l>each\§T#G§ -> void\.<d>apply( = <l>v\§T#G§\)\void\)\void\
@@ -96,12 +96,12 @@ public class MMapDefault<K, V> implements MIterable<Tuple2<K, V>> {
     }
     @Override
     public boolean goOn(F<T, Boolean> on) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) if(!(<l>on\§T#G§ -> bool\.<d>apply( = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\bool\)) return False;
         return ERROR: Unknown True;
     }
     public boolean containsItem(T item) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) if((<l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\ == <l>i\Iterator#T<§T#G§>\)) return True;
         return ERROR: Unknown False;
     }
@@ -132,7 +132,7 @@ public class MMapDefault<K, V> implements MIterable<Tuple2<K, V>> {
         return Chain().chainWithCollection<T>(this);
     }
     public T findWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : (T#G)? = none<T#G>;
+        T ret = null;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -147,7 +147,7 @@ public class MMapDefault<K, V> implements MIterable<Tuple2<K, V>> {
         return ret;
     }
     public boolean existsWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : bool = False;
+        boolean ret = ERROR: Unknown False;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -162,7 +162,7 @@ public class MMapDefault<K, V> implements MIterable<Tuple2<K, V>> {
         return ret;
     }
     public boolean allConfirm(F<T, Boolean> confirm) {
-        ERROR: Unknown local var ret : bool = True;
+        boolean ret = ERROR: Unknown True;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -177,7 +177,6 @@ public class MMapDefault<K, V> implements MIterable<Tuple2<K, V>> {
         return ret;
     }
     public T head() {
-        ERROR: Unknown local var ret : (T#G)? = ;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T on) {
@@ -223,7 +222,7 @@ public class MMapDefault<K, V> implements MIterable<Tuple2<K, V>> {
         return Chain().chainWithCollection<T>(this);
     }
     public T findWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : (T#G)? = none<T#G>;
+        T ret = null;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -238,7 +237,7 @@ public class MMapDefault<K, V> implements MIterable<Tuple2<K, V>> {
         return ret;
     }
     public boolean existsWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : bool = False;
+        boolean ret = ERROR: Unknown False;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -253,7 +252,7 @@ public class MMapDefault<K, V> implements MIterable<Tuple2<K, V>> {
         return ret;
     }
     public boolean allConfirm(F<T, Boolean> confirm) {
-        ERROR: Unknown local var ret : bool = True;
+        boolean ret = ERROR: Unknown True;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -268,7 +267,6 @@ public class MMapDefault<K, V> implements MIterable<Tuple2<K, V>> {
         return ret;
     }
     public T head() {
-        ERROR: Unknown local var ret : (T#G)? = ;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T on) {

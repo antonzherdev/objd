@@ -7,12 +7,12 @@ import test..*;
 
 public class FutureTest extends TestCase {
     public void testPromiseOnComplete() {
-        ERROR: Unknown local n : AtomicInt#C = <to>AtomicInt\AtomicInt#C.class\.<tcI>apply\AtomicInt#C\;
-        ERROR: Unknown local count : int = 100000;
+        AtomicInt n = new AtomicInt();
+        int count = ERROR: Unknown 100000;
         ERROR: Unknown 1.to(count).forEach(new P<Integer>() {
             @Override
             public void apply(Integer i) {
-                ERROR: Unknown local p : Promise#C<§^int§> = <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§^int§>\;
+                Promise<Integer> p = Promise().apply<Integer>();
                 DispatchQueue().default.asyncF(new P0() {
                     @Override
                     public void apply() {
@@ -31,14 +31,19 @@ public class FutureTest extends TestCase {
         ().assertEqualsAB<Integer>(n.intValue(), ERROR: Unknown <l>count\int\.cast<int4>);
     }
     public void testMap() {
-        ERROR: Unknown local n : AtomicInt#C = <to>AtomicInt\AtomicInt#C.class\.<tcI>apply\AtomicInt#C\;
-        ERROR: Unknown local count : int = 100;
-        ERROR: Unknown local var result : AtomicInt#C = <to>AtomicInt\AtomicInt#C.class\.<tcI>apply\AtomicInt#C\;
+        AtomicInt n = new AtomicInt();
+        int count = ERROR: Unknown 100;
+        AtomicInt result = new AtomicInt();
         ERROR: Unknown 1.to(count).parForEach(new P<Integer>() {
             @Override
             public void apply(Integer i) {
-                ERROR: Unknown local p : Promise#C<§^int§> = <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§^int§>\;
-                ERROR: Unknown local m : Future#C<§^int§> = <l>p\Promise#C<§^int§>\.<rdI>map(f = _ : §^int§ -> ^int = return (<l>_\§^int§\ + 1))\Future#C<§^int§>\;
+                Promise<Integer> p = Promise().apply<Integer>();
+                Future<Integer> m = p.mapF<Integer>(new F<Integer, Integer>() {
+                    @Override
+                    public Integer apply(Integer _) {
+                        return _ + ERROR: Unknown 1;
+                    }
+                });
                 result.addAndGetValue(ERROR: Unknown (<l>i\§^int§\ + 1).cast<int4>);
                 DispatchQueue().default.asyncF(new P0() {
                     @Override
@@ -58,14 +63,24 @@ public class FutureTest extends TestCase {
         ().assertEqualsAB<AtomicInt>(n, result);
     }
     public void testFlatMap() {
-        ERROR: Unknown local n : AtomicInt#C = <to>AtomicInt\AtomicInt#C.class\.<tcI>apply\AtomicInt#C\;
-        ERROR: Unknown local count : int = 100;
-        ERROR: Unknown local var result : int = 0;
+        AtomicInt n = new AtomicInt();
+        int count = ERROR: Unknown 100;
+        int result = ERROR: Unknown 0;
         ERROR: Unknown 1.to(count).forEach(new P<Integer>() {
             @Override
             public void apply(Integer i) {
-                ERROR: Unknown local p : Promise#C<§^int§> = <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§^int§>\;
-                ERROR: Unknown local m : Future#C<§^int§> = <l>p\Promise#C<§^int§>\.<rdI>flatMap(f = _ : §^int§ -> ^Future#C<§^int§> = return <to>Future\Future#C.class\.<dIt>apply(f =  -> §^int§ = return (<l>_\§^int§\ + 1))\Future#C<§^int§>\)\Future#C<§^int§>\;
+                Promise<Integer> p = Promise().apply<Integer>();
+                Future<Integer> m = p.flatMapF<Integer>(new F<Integer, Future<Integer>>() {
+                    @Override
+                    public Future<Integer> apply(Integer _) {
+                        return Future().applyF<Integer>(new F0<Integer>() {
+                            @Override
+                            public Integer apply() {
+                                return _ + ERROR: Unknown 1;
+                            }
+                        });
+                    }
+                });
                 result += i + ERROR: Unknown 1;
                 DispatchQueue().default.asyncF(new P0() {
                     @Override

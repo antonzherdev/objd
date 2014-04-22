@@ -34,7 +34,7 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
         });
     }
     public MTreeSet<T> reorder() {
-        ERROR: Unknown local ret : MTreeSet#C<§T#G§> = <to>MTreeSet\MTreeSet#C.class\.<tcI>apply(mmap = <to>MTreeMap\MTreeMap#C.class\.<tcI>apply(comparator = <MTreeSet#C<T#G>>self.<eIU>mmap\MTreeMap#C<§T#G§, ^Object#C>\.<reIU>comparator\(§T#G§, §T#G§) -> int\)\MTreeMap#C<§T#G§, §^Object#C§>\)\MTreeSet#C<§T#G§>\;
+        MTreeSet<T> ret = new MTreeSet<T>(new MTreeMap<T, Object>(this.mmap.comparator));
         ret.addAllObjects(this);
         return ret;
     }
@@ -51,7 +51,7 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
         this.mmap = mmap;
     }
     public void mutableFilterBy(F<T, Boolean> by) {
-        ERROR: Unknown local i : MIterator#T<§T#G§> = <MIterable#T<T#G>>self.<dIa>mutableIterator\MIterator#T<§T#G§>\;
+        MIterator<T> i = this.mutableIterator();
         ERROR: Unknown while(<l>i\MIterator#T<§T#G§>\.<rdIa>hasNext\bool\) {
     if(<l>by\§T#G§ -> bool\.<d>apply( = <l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\)\bool\) <l>i\MIterator#T<§T#G§>\.<dIa>remove\void\
 };

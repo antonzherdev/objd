@@ -23,7 +23,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     @Override
     public void assignImMap(ImMap<K, V> imMap) {
         if(imMap.ERROR: Unknown is<ImTreeMap#C<K#G, V#G>>) {
-            ERROR: Unknown local m : ImTreeMap#C<K#G, V#G> = <l>imMap\ImMap#T<§K#G§, §V#G§>\.cast<ImTreeMap#C<K#G, V#G>>;
+            ImTreeMap<K, V> m = imMap.ERROR: Unknown cast<ImTreeMap#C<K#G, V#G>>;
             this._root = ERROR: Unknown <l>m\ImTreeMap#C<§K#G§, §V#G§>\.<eIUo>root\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<dI>copy(parent = none<^TreeMapEntry#C<§K#G§, §V#G§>>)\TreeMapEntry#C<§K#G§, §V#G§>\;
             this._size = m.count;
         } else {
@@ -55,14 +55,14 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     }
     @Override
     public void setKeyValue(K key,V value) {
-        ERROR: Unknown local __comparator : (§K#G§, §K#G§) -> int = <MTreeMap#C<K#G, V#G>>self.<reIU>comparator\(§K#G§, §K#G§) -> int\;
-        ERROR: Unknown local var t : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <MTreeMap#C<K#G, V#G>>self.<emp>_root\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+        F2<K, K, Integer> __comparator = this.comparator;
+        TreeMapEntry<K, V> t = this._root;
         if(t == null) {
             this._root = new TreeMapEntry<K, V>(key, value, null);
             this._size = ERROR: Unknown 1.cast<uint>;
         } else {
-            ERROR: Unknown local var cmp : int = 0;
-            ERROR: Unknown local var parent : (^TreeMapEntry#C<K#G, V#G>)? = none<^TreeMapEntry#C<K#G, V#G>>;
+            int cmp = ERROR: Unknown 0;
+            TreeMapEntry<K, V> parent = null;
             ERROR: Unknown do{
     (<lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ = <lm>t\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.cast<(^TreeMapEntry#C<§K#G§, §V#G§>)?>)
     (<lm>cmp\int\ = <l>__comparator\(§K#G§, §K#G§) -> int\.<d>apply( = <l>key\§K#G§\,  = <lm>t\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUm>key\§K#G§\)\int\)
@@ -73,7 +73,7 @@ else {
     return nil
 }
 } while((<lm>t\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>));
-            ERROR: Unknown local e : TreeMapEntry#C<§K#G§, §V#G§> = <to>TreeMapEntry\TreeMapEntry#C.class\.<tcI>apply(key = <l>key\§K#G§\, value = <l>value\§V#G§\, parent = <lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)\TreeMapEntry#C<§K#G§, §V#G§>\;
+            TreeMapEntry<K, V> e = new TreeMapEntry<K, V>(key, value, parent);
             if(cmp < ERROR: Unknown 0) {
                 if(parent == null) {
                     throw new RuntimeException("Not null");
@@ -95,7 +95,7 @@ else {
     }
     @Override
     public V removeForKey(K key) {
-        ERROR: Unknown local _ : ^(^TreeMapEntry#C<§K#G§, §V#G§>)¿ = <MTreeMap#C<K#G, V#G>>self.<rdI>entryFor(key = <l>key\§K#G§\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+        TreeMapEntry<K, V> _ = entryForKey(key);
         if(_ != null) {
             return deleteEntry(_);
         } else {
@@ -103,16 +103,19 @@ else {
         }
     }
     private V deleteEntry(TreeMapEntry<K, V> entry) {
-        ERROR: Unknown local var p : TreeMapEntry#C<§K#G§, §V#G§> = <l>entry\TreeMapEntry#C<§K#G§, §V#G§>\;
+        TreeMapEntry<K, V> p = entry;
         ERROR: Unknown <MTreeMap#C<K#G, V#G>>self.<emp>_size\uint\--;
         if(p.left != null && p.right != null) {
-            ERROR: Unknown local s : TreeMapEntry#C<§K#G§, §V#G§> = <lm>p\TreeMapEntry#C<§K#G§, §V#G§>\.<dI>next\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get;
+            TreeMapEntry<K, V> s = ERROR: Unknown {
+    local __tmp_2_0 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>p\TreeMapEntry#C<§K#G§, §V#G§>\.<dI>next\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
+    if((<l>__tmp_2_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == none<^TreeMapEntry#C<§K#G§, §V#G§>>)) throw "Not null"
+else <l>__tmp_2_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
+};
             p.key = s.key;
             p.value = s.value;
             p = s;
         }
-        ERROR: Unknown local replacement : (^TreeMapEntry#C<§K#G§, §V#G§>)? = if((<lm>p\TreeMapEntry#C<§K#G§, §V#G§>\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) <lm>p\TreeMapEntry#C<§K#G§, §V#G§>\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-else <lm>p\TreeMapEntry#C<§K#G§, §V#G§>\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+        TreeMapEntry<K, V> replacement = (p.left != null) ? (p.left) : (p.right);
         if(replacement != null) {
             replacement.parent = p.parent;
             if(p.parent == null) {
@@ -178,7 +181,7 @@ else <l>__tmp_4_1_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     }
     private void fixAfterInsertionEntry(TreeMapEntry<K, V> entry) {
         entry.color = this.RED;
-        ERROR: Unknown local var x : (^TreeMapEntry#C<K#G, V#G>)? = some(<l>entry\TreeMapEntry#C<§K#G§, §V#G§>\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+        TreeMapEntry<K, V> x = entry;
         ERROR: Unknown while((((<lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && ((<MTreeMap#C<K#G, V#G>>self.<emp>_root\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == none<^TreeMapEntry#C<§K#G§, §V#G§>>) || (<MTreeMap#C<K#G, V#G>>self.<emp>_root\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\))) && (<lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIm>color\int\ == <MTreeMap#C<K#G, V#G>>self.<reIt>RED\int\))) {
     if({
     local __tmp_2_0_l : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
@@ -256,7 +259,7 @@ else {
         }
     }
     private void fixAfterDeletionEntry(TreeMapEntry<K, V> entry) {
-        ERROR: Unknown local var x : (^TreeMapEntry#C<K#G, V#G>)? = some(<l>entry\TreeMapEntry#C<§K#G§, §V#G§>\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+        TreeMapEntry<K, V> x = entry;
         ERROR: Unknown while((((<lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && ((<MTreeMap#C<K#G, V#G>>self.<emp>_root\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == none<^TreeMapEntry#C<§K#G§, §V#G§>>) || (<MTreeMap#C<K#G, V#G>>self.<emp>_root\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\))) && (<lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>color\int\ == <MTreeMap#C<K#G, V#G>>self.<reIt>BLACK\int\))) {
     if({
     local __tmp_1_0 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
@@ -376,10 +379,14 @@ else return <MTreeMap#C<K#G, V#G>>self.<reIt>BLACK\int\
     }
     private void rotateLeftP(TreeMapEntry<K, V> p) {
         if(p != null) {
-            ERROR: Unknown local r : TreeMapEntry#C<§K#G§, §V#G§> = <l>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get;
+            TreeMapEntry<K, V> r = ERROR: Unknown {
+    local __tmp_0_0 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <l>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
+    if((<l>__tmp_0_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == none<^TreeMapEntry#C<§K#G§, §V#G§>>)) throw "Not null"
+else <l>__tmp_0_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
+};
             p.right = r.left;
             {
-                ERROR: Unknown local __tmp_0_2 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <l>r\TreeMapEntry#C<§K#G§, §V#G§>\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                TreeMapEntry<K, V> __tmp_0_2 = r.left;
                 if(__tmp_0_2 != null) {
                     __tmp_0_2.parent = ERROR: Unknown <l>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.cast<(^TreeMapEntry#C<§K#G§, §V#G§>)?>;
                 }
@@ -411,10 +418,14 @@ else <l>__tmp_0_4\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     }
     private void rotateRightP(TreeMapEntry<K, V> p) {
         if(p != null) {
-            ERROR: Unknown local l : TreeMapEntry#C<§K#G§, §V#G§> = <l>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get;
+            TreeMapEntry<K, V> l = ERROR: Unknown {
+    local __tmp_0_0 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <l>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
+    if((<l>__tmp_0_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == none<^TreeMapEntry#C<§K#G§, §V#G§>>)) throw "Not null"
+else <l>__tmp_0_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
+};
             p.left = l.right;
             {
-                ERROR: Unknown local __tmp_0_2 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <l>l\TreeMapEntry#C<§K#G§, §V#G§>\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                TreeMapEntry<K, V> __tmp_0_2 = l.right;
                 if(__tmp_0_2 != null) {
                     __tmp_0_2.parent = ERROR: Unknown <l>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.cast<(^TreeMapEntry#C<§K#G§, §V#G§>)?>;
                 }
@@ -445,7 +456,7 @@ else <l>__tmp_0_4\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
         }
     }
     public Tuple2<K, V> pollFirst() {
-        ERROR: Unknown local entry : ^(^TreeMapEntry#C<§K#G§, §V#G§>)¿ = <MTreeMap#C<K#G, V#G>>self.<rdI>firstEntry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+        TreeMapEntry<K, V> entry = this.firstEntry();
         if(entry != null) {
             deleteEntry(entry);
             return ERROR: Unknown (<l>entry\^(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUm>key\§K#G§\, <l>entry\^(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUm>value\§V#G§\);
@@ -457,17 +468,17 @@ else <l>__tmp_0_4\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
         super(comparator);
     }
     public V objectForKeyOrUpdateWith(K key,F<Void, V> orUpdateWith) {
-        ERROR: Unknown local __tmp : §(V#G)?§ = <MMap#T<K#G, V#G>>self.<rdIa>opt(key = <l>key\§K#G§\)\(§V#G§)?\;
+        V __tmp = optKey(key);
         if(__tmp != null) {
             return __tmp;
         } else {
-            ERROR: Unknown local init : V#G = <l>orUpdateWith\void -> §V#G§\();
+            V init = ERROR: Unknown <l>orUpdateWith\void -> §V#G§\();
             setKeyValue(key, init);
             return init;
         }
     }
     public V modifyKeyBy(K key,F<V, V> by) {
-        ERROR: Unknown local newObject : (§V#G§)? = <l>by\(§V#G§)? -> (§V#G§)?\.<d>apply( = <MMap#T<K#G, V#G>>self.<rdIa>opt(key = <l>key\§K#G§\)\(§V#G§)?\)\(§V#G§)?\;
+        V newObject = by.apply(optKey(key));
         if(newObject == null) {
             removeForKey(key);
         } else {
@@ -476,7 +487,7 @@ else <l>__tmp_0_4\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
         return newObject;
     }
     public V takeKey(K key) {
-        ERROR: Unknown local ret : (§V#G§)? = <MMap#T<K#G, V#G>>self.<rdIa>opt(key = <l>key\§K#G§\)\(§V#G§)?\;
+        V ret = optKey(key);
         removeForKey(key);
         return ret;
     }
@@ -490,8 +501,8 @@ else <l>__tmp_0_4\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     }
     @Override
     public boolean removeItem(T item) {
-        ERROR: Unknown local i : MIterator#T<§T#G§> = <MIterable#T<T#G>>self.<dIa>mutableIterator\MIterator#T<§T#G§>\;
-        ERROR: Unknown local var ret : bool = False;
+        MIterator<T> i = this.mutableIterator();
+        boolean ret = ERROR: Unknown False;
         ERROR: Unknown while(<l>i\MIterator#T<§T#G§>\.<rdIa>hasNext\bool\) {
     if((<l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\ == <l>item\§T#G§\)) {
     <l>i\MIterator#T<§T#G§>\.<dIa>remove\void\
@@ -501,7 +512,7 @@ else <l>__tmp_0_4\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
         return ret;
     }
     public void mutableFilterBy(F<T, Boolean> by) {
-        ERROR: Unknown local i : MIterator#T<§T#G§> = <MIterable#T<T#G>>self.<dIa>mutableIterator\MIterator#T<§T#G§>\;
+        MIterator<T> i = this.mutableIterator();
         ERROR: Unknown while(<l>i\MIterator#T<§T#G§>\.<rdIa>hasNext\bool\) {
     if(<l>by\§T#G§ -> bool\.<d>apply( = <l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\)\bool\) <l>i\MIterator#T<§T#G§>\.<dIa>remove\void\
 };

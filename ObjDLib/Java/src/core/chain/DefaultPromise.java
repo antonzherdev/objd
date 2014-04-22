@@ -6,7 +6,7 @@ public class DefaultPromise<T> extends Promise<T> {
     private final AtomicObject<Object> _state = new AtomicObject<Object>(Arrays.asList());
     @Override
     public Try<T> result() {
-        ERROR: Unknown local v : T#G = return <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<rdIb>get\§T#G§\;
+        T v = this._state.get();
         if(v.ERROR: Unknown is<Try#C<T#G>>) {
             return v.ERROR: Unknown cast<Try#C<T#G>>;
         } else {

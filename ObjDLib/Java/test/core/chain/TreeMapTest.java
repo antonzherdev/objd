@@ -8,12 +8,12 @@ import test..*;
 
 public class TreeMapTest extends TestCase {
     public void testMain() {
-        ERROR: Unknown local map : MTreeMap#C<§^int§, §^string§> = <to>MTreeMap\MTreeMap#C.class\.<dIt>apply\MTreeMap#C<§^int§, §^string§>\;
+        MTreeMap<Integer, String> map = MTreeMap().apply<Integer, String>();
         ().assertEqualsAB<Integer>(ERROR: Unknown 0, ERROR: Unknown <l>map\MTreeMap#C<§^int§, §^string§>\.<dIo>count\uint\.cast<int>);
         ().assertTrueValue(map.optKey(ERROR: Unknown 0) == null);
         map.setKeyValue(ERROR: Unknown 0, "test");
         ().assertEqualsAB<String>("test", map.applyKey(ERROR: Unknown 0));
-        ERROR: Unknown local tests : [^int] = [-10, -20, -30, 10, 20, -15, 20, 0, 11, 13, -18];
+        ImArray<Integer> tests = Arrays.asList(ERROR: Unknown -10, ERROR: Unknown -20, ERROR: Unknown -30, ERROR: Unknown 10, ERROR: Unknown 20, ERROR: Unknown -15, ERROR: Unknown 20, ERROR: Unknown 0, ERROR: Unknown 11, ERROR: Unknown 13, ERROR: Unknown -18);
         tests.forEach(new P<Integer>() {
             @Override
             public void apply(Integer i) {

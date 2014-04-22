@@ -11,7 +11,7 @@ public class IterableF<T> implements ImIterable<T> {
     }
     @Override
     public MIterable<T> mCopy() {
-        ERROR: Unknown local arr : MArray#C<§T#G§> = <to>MArray\MArray#C.class\.<tcI>apply\MArray#C<§T#G§>\;
+        MArray<T> arr = new MArray<T>();
         forEach(new P<T>() {
             @Override
             public void apply(T item) {
@@ -21,8 +21,8 @@ public class IterableF<T> implements ImIterable<T> {
         return arr;
     }
     public int count() {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
-        ERROR: Unknown local var n : uint = 0.cast<uint>;
+        Iterator<T> i = this.iterator();
+        int n = ERROR: Unknown 0.cast<uint>;
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
     <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\
     <lm>n\uint\++
@@ -42,12 +42,12 @@ public class IterableF<T> implements ImIterable<T> {
     }
     @Override
     public void forEach(P<T> each) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) <l>each\§T#G§ -> void\.<d>apply( = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\void\;
     }
     @Override
     public void parForEach(P<T> each) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
     local v : T#G = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\
     <to>DispatchQueue\DispatchQueue#C.class\.<eIt>default\DispatchQueue#C\.<dIb>async(f =  -> void = <l>each\§T#G§ -> void\.<d>apply( = <l>v\§T#G§\)\void\)\void\
@@ -55,12 +55,12 @@ public class IterableF<T> implements ImIterable<T> {
     }
     @Override
     public boolean goOn(F<T, Boolean> on) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) if(!(<l>on\§T#G§ -> bool\.<d>apply( = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\bool\)) return False;
         return ERROR: Unknown True;
     }
     public boolean containsItem(T item) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) if((<l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\ == <l>i\Iterator#T<§T#G§>\)) return True;
         return ERROR: Unknown False;
     }
@@ -91,7 +91,7 @@ public class IterableF<T> implements ImIterable<T> {
         return Chain().chainWithCollection<T>(this);
     }
     public T findWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : (T#G)? = none<T#G>;
+        T ret = null;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -106,7 +106,7 @@ public class IterableF<T> implements ImIterable<T> {
         return ret;
     }
     public boolean existsWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : bool = False;
+        boolean ret = ERROR: Unknown False;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -121,7 +121,7 @@ public class IterableF<T> implements ImIterable<T> {
         return ret;
     }
     public boolean allConfirm(F<T, Boolean> confirm) {
-        ERROR: Unknown local var ret : bool = True;
+        boolean ret = ERROR: Unknown True;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -136,7 +136,6 @@ public class IterableF<T> implements ImIterable<T> {
         return ret;
     }
     public T head() {
-        ERROR: Unknown local var ret : (T#G)? = ;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T on) {
@@ -156,7 +155,7 @@ public class IterableF<T> implements ImIterable<T> {
         return builder.build();
     }
     public MTraversable<T> mCopy() {
-        ERROR: Unknown local arr : MArray#C<§T#G§> = <to>MArray\MArray#C.class\.<tcI>apply\MArray#C<§T#G§>\;
+        MArray<T> arr = new MArray<T>();
         forEach(new P<T>() {
             @Override
             public void apply(T item) {
@@ -192,7 +191,7 @@ public class IterableF<T> implements ImIterable<T> {
         return Chain().chainWithCollection<T>(this);
     }
     public T findWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : (T#G)? = none<T#G>;
+        T ret = null;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -207,7 +206,7 @@ public class IterableF<T> implements ImIterable<T> {
         return ret;
     }
     public boolean existsWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : bool = False;
+        boolean ret = ERROR: Unknown False;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -222,7 +221,7 @@ public class IterableF<T> implements ImIterable<T> {
         return ret;
     }
     public boolean allConfirm(F<T, Boolean> confirm) {
-        ERROR: Unknown local var ret : bool = True;
+        boolean ret = ERROR: Unknown True;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -237,7 +236,6 @@ public class IterableF<T> implements ImIterable<T> {
         return ret;
     }
     public T head() {
-        ERROR: Unknown local var ret : (T#G)? = ;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T on) {

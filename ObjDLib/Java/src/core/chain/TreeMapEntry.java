@@ -9,12 +9,12 @@ public class TreeMapEntry<K, V> {
     public int color = ERROR: Unknown 0;
     public TreeMapEntry<K, V> next() {
         if(this.right != null) {
-            ERROR: Unknown local var p : (^TreeMapEntry#C<§K#G§, §V#G§>)¿ = <TreeMapEntry#C<K#G, V#G>>self.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\;
+            TreeMapEntry<K, V> p = this.right;
             ERROR: Unknown while((<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) (<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = some(<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get)\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\);
             return ERROR: Unknown <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.cast<^(^TreeMapEntry#C<§K#G§, §V#G§>)?>;
         } else {
-            ERROR: Unknown local var p : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <TreeMapEntry#C<K#G, V#G>>self.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
-            ERROR: Unknown local var ch : TreeMapEntry#C<K#G, V#G> = <TreeMapEntry#C<K#G, V#G>>self;
+            TreeMapEntry<K, V> p = this.parent;
+            TreeMapEntry<K, V> ch = this;
             ERROR: Unknown while(((<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && {
     local __tmp_0_2 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     return ((<l>__tmp_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && (<l>__tmp_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == <lm>ch\TreeMapEntry#C<§K#G§, §V#G§>\))
@@ -26,7 +26,7 @@ public class TreeMapEntry<K, V> {
         }
     }
     public TreeMapEntry<K, V> copyParent(TreeMapEntry<K, V> parent) {
-        ERROR: Unknown local c : TreeMapEntry#C<§K#G§, §V#G§> = <to>TreeMapEntry\TreeMapEntry#C.class\.<tcI>apply(key = <TreeMapEntry#C<K#G, V#G>>self.<eIUm>key\§K#G§\, value = <TreeMapEntry#C<K#G, V#G>>self.<eIUm>value\§V#G§\, parent = <l>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)\TreeMapEntry#C<§K#G§, §V#G§>\;
+        TreeMapEntry<K, V> c = new TreeMapEntry<K, V>(this.key, this.value, parent);
         c.left = ERROR: Unknown <TreeMapEntry#C<K#G, V#G>>self.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<dI>copy(parent = some(<l>c\TreeMapEntry#C<§K#G§, §V#G§>\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)\TreeMapEntry#C<§K#G§, §V#G§>\;
         c.right = ERROR: Unknown <TreeMapEntry#C<K#G, V#G>>self.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<dI>copy(parent = some(<l>c\TreeMapEntry#C<§K#G§, §V#G§>\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)\TreeMapEntry#C<§K#G§, §V#G§>\;
         c.color = this.color;

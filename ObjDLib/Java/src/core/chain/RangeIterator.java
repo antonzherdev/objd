@@ -11,7 +11,7 @@ public class RangeIterator implements Iterator<int> {
     }
     @Override
     public Integer next() {
-        ERROR: Unknown local ret : int = <RangeIterator#C>self.<emp>i\int\;
+        int ret = this.i;
         this.i += this.step;
         return ret;
     }

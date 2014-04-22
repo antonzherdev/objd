@@ -5,7 +5,7 @@ public class MTreeMapKeyIterator<K> implements MIterator<K> {
     private TreeMapEntry<K, ?> prev;
     public TreeMapEntry<K, ?> entry;
     public static MTreeMapKeyIterator<K> applyMapEntry(MTreeMap<K, ?> map,TreeMapEntry<K, ?> entry) {
-        ERROR: Unknown local ret : MTreeMapKeyIterator#C<§K#G§> = <to>MTreeMapKeyIterator\MTreeMapKeyIterator#C.class\.<tcI>apply(map = <l>map\MTreeMap#C<K#G, ^_>\)\MTreeMapKeyIterator#C<§K#G§>\;
+        MTreeMapKeyIterator<K> ret = new MTreeMapKeyIterator<K>(map);
         ret.entry = entry;
         return ret;
     }
@@ -15,7 +15,12 @@ public class MTreeMapKeyIterator<K> implements MIterator<K> {
     }
     @Override
     public K next() {
-        ERROR: Unknown local ret : K#G = <MTreeMapKeyIterator#C<K#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, ^_>)?\.get.<eIUm>key\§K#G§\;
+        if(this.entry == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            this.entry;
+        }
+        K ret = .key;
         this.prev = this.entry;
         if(this.entry == null) {
             throw new RuntimeException("Not null");
@@ -28,7 +33,7 @@ public class MTreeMapKeyIterator<K> implements MIterator<K> {
     @Override
     public void remove() {
         {
-            ERROR: Unknown local _ : ^(^TreeMapEntry#C<§K#G§, ^_>)¿ = <MTreeMapKeyIterator#C<K#G>>self.<emp>prev\(^TreeMapEntry#C<§K#G§, ^_>)?\;
+            TreeMapEntry<K, ?> _ = this.prev;
             if(_ != null) {
                 this.map.deleteEntry(_);
             }
@@ -37,7 +42,7 @@ public class MTreeMapKeyIterator<K> implements MIterator<K> {
     @Override
     public void setValue(K value) {
         {
-            ERROR: Unknown local p : ^(^TreeMapEntry#C<§K#G§, ^_>)¿ = <MTreeMapKeyIterator#C<K#G>>self.<emp>prev\(^TreeMapEntry#C<§K#G§, ^_>)?\;
+            TreeMapEntry<K, ?> p = this.prev;
             if(p != null) {
                 if(p.key.equals(value)) {
                     this.map.deleteEntry(p);

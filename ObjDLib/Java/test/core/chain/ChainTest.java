@@ -28,7 +28,12 @@ public class ChainTest extends TestCase {
         repeatTimesF(ERROR: Unknown 1000.cast<uint>, new P0() {
             @Override
             public void apply() {
-                ERROR: Unknown local arr : [^(^int, ^Promise#C<^int>)] = 0.<dIsb>to( = 1000)\Range#C\.<rdI>chain\Chain#C<§^int§>\.<dIub>map( = i : §^int§ -> ^(§^int§, ^Promise#C<§^int§>) = return (<l>i\§^int§\, <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§^int§>\))\Chain#C<§^(§^int§, ^Promise#C<§^int§>)§>\.<dIub>toArray\[§^(§^int§, ^Promise#C<§^int§>)§]\;
+                ImArray<Tuple2<Integer, Promise<Integer>>> arr = ERROR: Unknown 0.to(ERROR: Unknown 1000).chain().map<Tuple2<Integer, Promise<Integer>>>(new F<Integer, Tuple2<Integer, Promise<Integer>>>() {
+                    @Override
+                    public Tuple2<Integer, Promise<Integer>> apply(Integer i) {
+                        return ERROR: Unknown (<l>i\§^int§\, <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§^int§>\);
+                    }
+                }).toArray();
                 arr.forEach(new P<Tuple2<Integer, Promise<Integer>>>() {
                     @Override
                     public void apply(Tuple2<Integer, Promise<Integer>> t) {
@@ -40,16 +45,41 @@ public class ChainTest extends TestCase {
                         });
                     }
                 });
-                ERROR: Unknown local fut : Future#C<^[^int]> = <l>arr\[^(^int, ^Promise#C<^int>)]\.<rdI>chain\Chain#C<§^(^int, ^Promise#C<^int>)§>\.<dIub>map( = _ : §^(^int, ^Promise#C<^int>)§ -> ^Promise#C<^int> = return <l>_\§^(^int, ^Promise#C<^int>)§\.<eIU>b\^Promise#C<^int>\)\Chain#C<§^Promise#C<^int>§>\.<dIub>future(f = chain : Chain#C<§^int§> -> ^[§^int§] = return <l>chain\Chain#C<§^int§>\.<dIub>toArray\[§^int§]\)\Future#C<§^[§^int§]§>\;
-                ERROR: Unknown local set : [^int] = <l>arr\[^(^int, ^Promise#C<^int>)]\.<rdI>chain\Chain#C<§^(^int, ^Promise#C<^int>)§>\.<dIub>map( = _ : §^(^int, ^Promise#C<^int>)§ -> ^int = return <l>_\§^(^int, ^Promise#C<^int>)§\.<eIU>a\^int\)\Chain#C<§^int§>\.<dIub>map( = _ : §^int§ -> ^int = return (<l>_\§^int§\ * <l>_\§^int§\))\Chain#C<§^int§>\.<dIub>toArray\[§^int§]\;
+                Future<ImArray<Integer>> fut = arr.chain().map<Promise<Integer>>(new F<Tuple2<Integer, Promise<Integer>>, Promise<Integer>>() {
+                    @Override
+                    public Promise<Integer> apply(Tuple2<Integer, Promise<Integer>> _) {
+                        return _.b;
+                    }
+                }).futureF<Integer, ImArray<Integer>>(new F<Chain<Integer>, ImArray<Integer>>() {
+                    @Override
+                    public ImArray<Integer> apply(Chain<Integer> chain) {
+                        return chain.toArray();
+                    }
+                });
+                ImArray<Integer> set = arr.chain().map<Integer>(new F<Tuple2<Integer, Promise<Integer>>, Integer>() {
+                    @Override
+                    public Integer apply(Tuple2<Integer, Promise<Integer>> _) {
+                        return _.a;
+                    }
+                }).map<Integer>(new F<Integer, Integer>() {
+                    @Override
+                    public Integer apply(Integer _) {
+                        return _ * _;
+                    }
+                }).toArray();
                 ().assertEqualsAB<ImArray<Integer>>(set, fut.getResultAwait(ERROR: Unknown 5.cast<float>));
             }
         });
     }
     public void testVoidFuture() {
-        ERROR: Unknown local arr : [^Promise#C<^void>] = 0.<dIsb>to( = 1000)\Range#C\.<rdI>chain\Chain#C<§^int§>\.<dIub>map( = i : §^int§ -> ^Promise#C<§^void§> = return <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§^void§>\)\Chain#C<§^Promise#C<§^void§>§>\.<dIub>toArray\[§^Promise#C<§^void§>§]\;
-        ERROR: Unknown local fut : Future#C<^void> = <l>arr\[^Promise#C<^void>]\.<rdI>chain\Chain#C<§^Promise#C<^void>§>\.<dIub>voidFuture\Future#C<^void>\;
-        ERROR: Unknown local var count : AtomicInt#C = <to>AtomicInt\AtomicInt#C.class\.<tcI>apply\AtomicInt#C\;
+        ImArray<Promise<Void>> arr = ERROR: Unknown 0.to(ERROR: Unknown 1000).chain().map<Promise<Void>>(new F<Integer, Promise<Void>>() {
+            @Override
+            public Promise<Void> apply(Integer i) {
+                return Promise().apply<Void>();
+            }
+        }).toArray();
+        Future<Void> fut = arr.chain().voidFuture();
+        AtomicInt count = new AtomicInt();
         arr.forEach(new P<Promise<Void>>() {
             @Override
             public void apply(Promise<Void> p) {
@@ -85,7 +115,7 @@ public class ChainTest extends TestCase {
         }).toArray());
     }
     public void testZipFor() {
-        ERROR: Unknown local var arr : [^int] = [];
+        ImArray<Integer> arr = Arrays.asList();
         Arrays.asList(ERROR: Unknown 1, ERROR: Unknown 0, ERROR: Unknown 3).chain().zipForABy<Integer>(Arrays.asList(ERROR: Unknown 1, ERROR: Unknown 3), new P2<Integer, Integer>() {
             @Override
             public void apply(Integer a,Integer b) {

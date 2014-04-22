@@ -6,8 +6,8 @@ public class Zip3Link<T, A, B, R> implements ChainLink<T, R> {
     public final F3<T, A, B, R> f;
     @Override
     public Yield<A> buildYield(Yield<R> yield) {
-        ERROR: Unknown local ai : Iterator#T<§A#G§> = <Zip3Link#C<T#G, A#G, B#G, R#G>>self.<eIU>a\Iterable#T<§A#G§>\.<dIa>iterator\Iterator#T<§A#G§>\;
-        ERROR: Unknown local bi : Iterator#T<§B#G§> = <Zip3Link#C<T#G, A#G, B#G, R#G>>self.<eIU>b\Iterable#T<§B#G§>\.<dIa>iterator\Iterator#T<§B#G§>\;
+        Iterator<A> ai = this.a.iterator();
+        Iterator<B> bi = this.b.iterator();
         return Yield().decorateBaseYield<A>(yield, new F<A, Integer>() {
             @Override
             public Integer apply(A item) {

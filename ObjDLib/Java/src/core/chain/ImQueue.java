@@ -37,7 +37,7 @@ public class ImQueue<T> implements Queue<T> {
             if(this.in.isEmpty()) {
                 return ERROR: Unknown (none<T#G>, <ImQueue#C<T#G>>self).cast<(^(§T#G§)?, ^ImQueue#C<T#G>)>;
             } else {
-                ERROR: Unknown local rev : ImList#C<§T#G§> = <ImQueue#C<T#G>>self.<eIU>in\ImList#C<§T#G§>\.<dIa>reverse\ImList#C<§T#G§>\;
+                ImList<T> rev = this.in.reverse();
                 return ERROR: Unknown (<l>rev\ImList#C<§T#G§>\.<rdIo>head\(§T#G§)?\, <to>ImQueue\ImQueue#C.class\.<tcI>apply(in = <to>ImList\ImList#C.class\.<dIt>apply\ImList#C<§T#G§>\, out = <l>rev\ImList#C<§T#G§>\.<dIoa>tail\ImList#C<§T#G§>\)\ImQueue#C<§T#G§>\).cast<(^(§T#G§)?, ^ImQueue#C<T#G>)>;
             }
         }

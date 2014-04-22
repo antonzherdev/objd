@@ -8,7 +8,7 @@ public class MListImmutableIterator<T> implements Iterator<T> {
     }
     @Override
     public T next() {
-        ERROR: Unknown local r : (^MListItem#C<§T#G§>)? = <MListImmutableIterator#C<T#G>>self.<eImw>item\(^MListItem#C<§T#G§>)?\;
+        MListItem<T> r = this.item;
         if(this.item == null) {
             throw new RuntimeException("Not null");
         } else {

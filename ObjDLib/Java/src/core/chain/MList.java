@@ -10,13 +10,13 @@ public class MList<T> implements MSeq<T> {
     }
     @Override
     public Iterator<T> iterator() {
-        ERROR: Unknown local i : MListImmutableIterator#C<§T#G§> = <to>MListImmutableIterator\MListImmutableIterator#C.class\.<tcI>apply\MListImmutableIterator#C<§T#G§>\;
+        MListImmutableIterator<T> i = new MListImmutableIterator<T>();
         i.item = this.headItem;
         return i;
     }
     @Override
     public MIterator<T> mutableIterator() {
-        ERROR: Unknown local i : MListIterator#C<§T#G§> = <to>MListIterator\MListIterator#C.class\.<tcI>apply(list = <MList#C<T#G>>self)\MListIterator#C<§T#G§>\;
+        MListIterator<T> i = new MListIterator<T>(this);
         i.item = this.headItem;
         return i;
     }
@@ -28,15 +28,15 @@ public class MList<T> implements MSeq<T> {
             if(index >= this._count) {
                 appendItem(item);
             } else {
-                ERROR: Unknown local var c : (^MListItem#C<§T#G§>)? = <MList#C<T#G>>self.<emp>headItem\(^MListItem#C<§T#G§>)?\;
-                ERROR: Unknown local var i : uint = <l>index\uint\;
+                MListItem<T> c = this.headItem;
+                int i = index;
                 ERROR: Unknown while(((<lm>c\(^MListItem#C<§T#G§>)?\ != none<^MListItem#C<§T#G§>>) && (<lm>i\uint\ > 0))) {
     (<lm>c\(^MListItem#C<§T#G§>)¿\ = <lm>c\(^MListItem#C<§T#G§>)¿\.<eIm>next\(^MListItem#C<§T#G§>)?\)
 };
                 if(c != null) {
-                    ERROR: Unknown local li : MListItem#C<§T#G§> = <to>MListItem\MListItem#C.class\.<tcI>apply(data = <l>item\§T#G§\)\MListItem#C<§T#G§>\;
+                    MListItem<T> li = new MListItem<T>(item);
                     {
-                        ERROR: Unknown local __tmp_0_3_1 : (^MListItem#C<§T#G§>)? = <lm>c\(^MListItem#C<§T#G§>)¿\.<eIm>next\(^MListItem#C<§T#G§>)?\;
+                        MListItem<T> __tmp_0_3_1 = c.next;
                         if(__tmp_0_3_1 != null) {
                             __tmp_0_3_1.prev = li;
                         }
@@ -50,7 +50,7 @@ public class MList<T> implements MSeq<T> {
     }
     @Override
     public void prependItem(T item) {
-        ERROR: Unknown local i : MListItem#C<§T#G§> = <to>MListItem\MListItem#C.class\.<tcI>apply(data = <l>item\§T#G§\)\MListItem#C<§T#G§>\;
+        MListItem<T> i = new MListItem<T>(item);
         if(this.headItem == null) {
             this.headItem = i;
             this.lastItem = i;
@@ -64,7 +64,7 @@ public class MList<T> implements MSeq<T> {
     }
     @Override
     public void appendItem(T item) {
-        ERROR: Unknown local i : MListItem#C<§T#G§> = <to>MListItem\MListItem#C.class\.<tcI>apply(data = <l>item\§T#G§\)\MListItem#C<§T#G§>\;
+        MListItem<T> i = new MListItem<T>(item);
         if(this.lastItem == null) {
             this.headItem = i;
             this.lastItem = i;
@@ -86,13 +86,13 @@ public class MList<T> implements MSeq<T> {
                 this.lastItem.next = null;
             } else {
                 {
-                    ERROR: Unknown local __tmp_0_0 : (^MListItem#C<§T#G§>)? = <l>listItem\MListItem#C<§T#G§>\.<eImw>prev\(^MListItem#C<§T#G§>)?\;
+                    MListItem<T> __tmp_0_0 = listItem.prev;
                     if(__tmp_0_0 != null) {
                         __tmp_0_0.next = listItem.next;
                     }
                 }
                 {
-                    ERROR: Unknown local __tmp_0_1 : (^MListItem#C<§T#G§>)? = <l>listItem\MListItem#C<§T#G§>\.<eIm>next\(^MListItem#C<§T#G§>)?\;
+                    MListItem<T> __tmp_0_1 = listItem.next;
                     if(__tmp_0_1 != null) {
                         __tmp_0_1.prev = listItem.prev;
                     }
@@ -108,7 +108,7 @@ public class MList<T> implements MSeq<T> {
     }
     public void removeHead() {
         {
-            ERROR: Unknown local _ : ^(^MListItem#C<§T#G§>)¿ = <MList#C<T#G>>self.<emp>headItem\(^MListItem#C<§T#G§>)?\;
+            MListItem<T> _ = this.headItem;
             if(_ != null) {
                 removeListItem(_);
             }
@@ -116,16 +116,16 @@ public class MList<T> implements MSeq<T> {
     }
     public void removeLast() {
         {
-            ERROR: Unknown local _ : ^(^MListItem#C<§T#G§>)¿ = <MList#C<T#G>>self.<emp>lastItem\(^MListItem#C<§T#G§>)?\;
+            MListItem<T> _ = this.lastItem;
             if(_ != null) {
                 removeListItem(_);
             }
         }
     }
     public T takeHead() {
-        ERROR: Unknown local h : ^(^MListItem#C<§T#G§>)¿ = <MList#C<T#G>>self.<emp>headItem\(^MListItem#C<§T#G§>)?\;
+        MListItem<T> h = this.headItem;
         if(h != null) {
-            ERROR: Unknown local r : T#G = <l>h\^(^MListItem#C<§T#G§>)¿\.<eIUm>data\§T#G§\;
+            T r = h.data;
             removeListItem(h);
             return r;
         } else {
@@ -137,9 +137,9 @@ public class MList<T> implements MSeq<T> {
         return ERROR: Unknown <MList#C<T#G>>self.<emp>lastItem\(^MListItem#C<§T#G§>)?\?.<eIUm>data\§T#G§\;
     }
     public T takeLast() {
-        ERROR: Unknown local h : ^(^MListItem#C<§T#G§>)¿ = <MList#C<T#G>>self.<emp>lastItem\(^MListItem#C<§T#G§>)?\;
+        MListItem<T> h = this.lastItem;
         if(h != null) {
-            ERROR: Unknown local r : T#G = <l>h\^(^MListItem#C<§T#G§>)¿\.<eIUm>data\§T#G§\;
+            T r = h.data;
             removeListItem(h);
             return r;
         } else {
@@ -148,7 +148,7 @@ public class MList<T> implements MSeq<T> {
     }
     @Override
     public void forEach(P<T> each) {
-        ERROR: Unknown local var i : (^MListItem#C<§T#G§>)? = <MList#C<T#G>>self.<emp>headItem\(^MListItem#C<§T#G§>)?\;
+        MListItem<T> i = this.headItem;
         ERROR: Unknown while((<lm>i\(^MListItem#C<§T#G§>)?\ != none<^MListItem#C<§T#G§>>)) {
     <l>each\§T#G§ -> void\.<d>apply( = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIUm>data\§T#G§\)\void\
     (<lm>i\(^MListItem#C<§T#G§>)¿\ = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIm>next\(^MListItem#C<§T#G§>)?\)
@@ -156,7 +156,7 @@ public class MList<T> implements MSeq<T> {
     }
     @Override
     public boolean goOn(F<T, Boolean> on) {
-        ERROR: Unknown local var i : (^MListItem#C<§T#G§>)? = <MList#C<T#G>>self.<emp>headItem\(^MListItem#C<§T#G§>)?\;
+        MListItem<T> i = this.headItem;
         ERROR: Unknown while((<lm>i\(^MListItem#C<§T#G§>)?\ != none<^MListItem#C<§T#G§>>)) {
     if(!(<l>on\§T#G§ -> bool\.<d>apply( = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIUm>data\§T#G§\)\bool\)) return False
     (<lm>i\(^MListItem#C<§T#G§>)¿\ = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIm>next\(^MListItem#C<§T#G§>)?\)
@@ -165,7 +165,7 @@ public class MList<T> implements MSeq<T> {
     }
     @Override
     public void mutableFilterBy(F<T, Boolean> by) {
-        ERROR: Unknown local var i : (^MListItem#C<§T#G§>)? = <MList#C<T#G>>self.<emp>headItem\(^MListItem#C<§T#G§>)?\;
+        MListItem<T> i = this.headItem;
         ERROR: Unknown while((<lm>i\(^MListItem#C<§T#G§>)?\ != none<^MListItem#C<§T#G§>>)) {
     if(!(<l>by\§T#G§ -> bool\.<d>apply( = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIUm>data\§T#G§\)\bool\)) <MList#C<T#G>>self.<dI>remove(listItem = <lm>i\(^MListItem#C<§T#G§>)¿\)\void\
     (<lm>i\(^MListItem#C<§T#G§>)¿\ = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIm>next\(^MListItem#C<§T#G§>)?\)
@@ -178,9 +178,9 @@ public class MList<T> implements MSeq<T> {
     public MList() {
     }
     public boolean removeIndex(int index) {
-        ERROR: Unknown local i : MIterator#T<§T#G§> = <MSeq#T<T#G>>self.<rdIa>mutableIterator\MIterator#T<§T#G§>\;
-        ERROR: Unknown local var j : uint = <l>index\uint\;
-        ERROR: Unknown local var ret : bool = False;
+        MIterator<T> i = this.mutableIterator();
+        int j = index;
+        boolean ret = ERROR: Unknown False;
         ERROR: Unknown while(<l>i\MIterator#T<§T#G§>\.<rdIa>hasNext\bool\) {
     <l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\
     if((<lm>j\uint\ == 0)) {
@@ -193,8 +193,8 @@ public class MList<T> implements MSeq<T> {
         return ret;
     }
     public void setIndexItem(int index,T item) {
-        ERROR: Unknown local i : MIterator#T<§T#G§> = <MSeq#T<T#G>>self.<rdIa>mutableIterator\MIterator#T<§T#G§>\;
-        ERROR: Unknown local var n : uint = <l>index\uint\;
+        MIterator<T> i = this.mutableIterator();
+        int n = index;
         ERROR: Unknown while(<l>i\MIterator#T<§T#G§>\.<rdIa>hasNext\bool\) {
     if((<lm>n\uint\ == 0)) {
     <l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\
@@ -212,7 +212,7 @@ public class MList<T> implements MSeq<T> {
     }
     @Override
     public ImSeq<T> imCopy() {
-        ERROR: Unknown local arr : MArray#C<§T#G§> = <to>MArray\MArray#C.class\.<tcI>apply\MArray#C<§T#G§>\;
+        MArray<T> arr = new MArray<T>();
         forEach(new P<T>() {
             @Override
             public void apply(T item) {
@@ -225,8 +225,8 @@ public class MList<T> implements MSeq<T> {
         if(index >= this.count()) {
             return null;
         }
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Seq#T<T#G>>self.<rdIa>iterator\Iterator#T<§T#G§>\;
-        ERROR: Unknown local var n : uint = <l>index\uint\;
+        Iterator<T> i = this.iterator();
+        int n = index;
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
     if((<lm>n\uint\ == 0)) return <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\
     <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\
@@ -241,8 +241,8 @@ public class MList<T> implements MSeq<T> {
         if(this.count().equals(seq.count())) {
             return ERROR: Unknown False;
         }
-        ERROR: Unknown local ia : Iterator#T<§T#G§> = <Seq#T<T#G>>self.<rdIa>iterator\Iterator#T<§T#G§>\;
-        ERROR: Unknown local ib : Iterator#T<§T#G§> = <l>seq\Seq#T<§T#G§>\.<rdIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> ia = this.iterator();
+        Iterator<T> ib = seq.iterator();
         ERROR: Unknown while((<l>ia\Iterator#T<§T#G§>\.<dIa>hasNext\bool\ && <l>ib\Iterator#T<§T#G§>\.<dIa>hasNext\bool\)) {
     if((<l>ia\Iterator#T<§T#G§>\.<dIa>next\§T#G§\ != <l>ib\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)) return False
 };
@@ -253,8 +253,8 @@ public class MList<T> implements MSeq<T> {
         return this.count().equals(ERROR: Unknown 0);
     }
     public ImSeq<T> tail() {
-        ERROR: Unknown local builder : ArrayBuilder#C<§T#G§> = <to>ArrayBuilder\ArrayBuilder#C.class\.<tcI>apply\ArrayBuilder#C<§T#G§>\;
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Seq#T<T#G>>self.<rdIa>iterator\Iterator#T<§T#G§>\;
+        ArrayBuilder<T> builder = new ArrayBuilder<T>();
+        Iterator<T> i = this.iterator();
         if(i.hasNext()) {
             i.next();
             ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
@@ -268,14 +268,14 @@ public class MList<T> implements MSeq<T> {
     }
     @Override
     public void parForEach(P<T> each) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
     local v : T#G = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\
     <to>DispatchQueue\DispatchQueue#C.class\.<eIt>default\DispatchQueue#C\.<dIb>async(f =  -> void = <l>each\§T#G§ -> void\.<d>apply( = <l>v\§T#G§\)\void\)\void\
 };
     }
     public boolean containsItem(T item) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) if((<l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\ == <l>i\Iterator#T<§T#G§>\)) return True;
         return ERROR: Unknown False;
     }
@@ -297,7 +297,7 @@ public class MList<T> implements MSeq<T> {
         return Chain().chainWithCollection<T>(this);
     }
     public T findWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : (T#G)? = none<T#G>;
+        T ret = null;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -312,7 +312,7 @@ public class MList<T> implements MSeq<T> {
         return ret;
     }
     public boolean existsWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : bool = False;
+        boolean ret = ERROR: Unknown False;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -327,7 +327,7 @@ public class MList<T> implements MSeq<T> {
         return ret;
     }
     public boolean allConfirm(F<T, Boolean> confirm) {
-        ERROR: Unknown local var ret : bool = True;
+        boolean ret = ERROR: Unknown True;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -352,8 +352,8 @@ public class MList<T> implements MSeq<T> {
     }
     @Override
     public boolean removeItem(T item) {
-        ERROR: Unknown local i : MIterator#T<§T#G§> = <MIterable#T<T#G>>self.<dIa>mutableIterator\MIterator#T<§T#G§>\;
-        ERROR: Unknown local var ret : bool = False;
+        MIterator<T> i = this.mutableIterator();
+        boolean ret = ERROR: Unknown False;
         ERROR: Unknown while(<l>i\MIterator#T<§T#G§>\.<rdIa>hasNext\bool\) {
     if((<l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\ == <l>item\§T#G§\)) {
     <l>i\MIterator#T<§T#G§>\.<dIa>remove\void\
@@ -368,7 +368,7 @@ public class MList<T> implements MSeq<T> {
     }
     @Override
     public ImIterable<T> imCopy() {
-        ERROR: Unknown local arr : MArray#C<§T#G§> = <to>MArray\MArray#C.class\.<tcI>apply\MArray#C<§T#G§>\;
+        MArray<T> arr = new MArray<T>();
         forEach(new P<T>() {
             @Override
             public void apply(T item) {
@@ -382,14 +382,14 @@ public class MList<T> implements MSeq<T> {
     }
     @Override
     public void parForEach(P<T> each) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
     local v : T#G = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\
     <to>DispatchQueue\DispatchQueue#C.class\.<eIt>default\DispatchQueue#C\.<dIb>async(f =  -> void = <l>each\§T#G§ -> void\.<d>apply( = <l>v\§T#G§\)\void\)\void\
 };
     }
     public boolean containsItem(T item) {
-        ERROR: Unknown local i : Iterator#T<§T#G§> = <Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\;
+        Iterator<T> i = this.iterator();
         ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) if((<l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\ == <l>i\Iterator#T<§T#G§>\)) return True;
         return ERROR: Unknown False;
     }
@@ -411,7 +411,7 @@ public class MList<T> implements MSeq<T> {
         return Chain().chainWithCollection<T>(this);
     }
     public T findWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : (T#G)? = none<T#G>;
+        T ret = null;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -426,7 +426,7 @@ public class MList<T> implements MSeq<T> {
         return ret;
     }
     public boolean existsWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : bool = False;
+        boolean ret = ERROR: Unknown False;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -441,7 +441,7 @@ public class MList<T> implements MSeq<T> {
         return ret;
     }
     public boolean allConfirm(F<T, Boolean> confirm) {
-        ERROR: Unknown local var ret : bool = True;
+        boolean ret = ERROR: Unknown True;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -468,7 +468,7 @@ public class MList<T> implements MSeq<T> {
         return this.imCopy();
     }
     public ImTraversable<T> imCopy() {
-        ERROR: Unknown local arr : MArray#C<§T#G§> = <to>MArray\MArray#C.class\.<tcI>apply\MArray#C<§T#G§>\;
+        MArray<T> arr = new MArray<T>();
         forEach(new P<T>() {
             @Override
             public void apply(T item) {
@@ -495,7 +495,7 @@ public class MList<T> implements MSeq<T> {
         return Chain().chainWithCollection<T>(this);
     }
     public T findWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : (T#G)? = none<T#G>;
+        T ret = null;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -510,7 +510,7 @@ public class MList<T> implements MSeq<T> {
         return ret;
     }
     public boolean existsWhere(F<T, Boolean> where) {
-        ERROR: Unknown local var ret : bool = False;
+        boolean ret = ERROR: Unknown False;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
@@ -525,7 +525,7 @@ public class MList<T> implements MSeq<T> {
         return ret;
     }
     public boolean allConfirm(F<T, Boolean> confirm) {
-        ERROR: Unknown local var ret : bool = True;
+        boolean ret = ERROR: Unknown True;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {

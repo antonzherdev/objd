@@ -2,7 +2,7 @@ package core.chain;
 
 public class Future<T> {
     public static Future<T> applyF(F<Void, T> f) {
-        ERROR: Unknown local p : Promise#C<§T#G§> = <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§T#G§>\;
+        Promise<T> p = Promise().apply<T>();
         DispatchQueue().default.asyncF(new P0() {
             @Override
             public void apply() {
@@ -44,10 +44,10 @@ public class Future<T> {
         });
     }
     public static Future<R> mapABF(Future<A> a,Future<B> b,F2<A, B, R> f) {
-        ERROR: Unknown local p : Promise#C<§R#G§> = <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§R#G§>\;
-        ERROR: Unknown local var _a : A#G = nil;
-        ERROR: Unknown local var _b : B#G = nil;
-        ERROR: Unknown local n : AtomicInt#C = <to>AtomicInt\AtomicInt#C.class\.<tcI>apply\AtomicInt#C\;
+        Promise<R> p = Promise().apply<R>();
+        A _a = null;
+        B _b = null;
+        AtomicInt n = new AtomicInt();
         a.onCompleteF(new P<Try<A>>() {
             @Override
             public void apply(Try<A> t) {
@@ -79,11 +79,11 @@ public class Future<T> {
         return p;
     }
     public static Future<R> mapABCF(Future<A> a,Future<B> b,Future<C> c,F3<A, B, C, R> f) {
-        ERROR: Unknown local p : Promise#C<§R#G§> = <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§R#G§>\;
-        ERROR: Unknown local var _a : A#G = nil;
-        ERROR: Unknown local var _b : B#G = nil;
-        ERROR: Unknown local var _c : C#G = nil;
-        ERROR: Unknown local n : AtomicInt#C = <to>AtomicInt\AtomicInt#C.class\.<tcI>apply\AtomicInt#C\;
+        Promise<R> p = Promise().apply<R>();
+        A _a = null;
+        B _b = null;
+        C _c = null;
+        AtomicInt n = new AtomicInt();
         a.onCompleteF(new P<Try<A>>() {
             @Override
             public void apply(Try<A> t) {
@@ -129,12 +129,12 @@ public class Future<T> {
         return p;
     }
     public static Future<R> mapABCDF(Future<A> a,Future<B> b,Future<C> c,Future<D> d,F4<A, B, C, D, R> f) {
-        ERROR: Unknown local p : Promise#C<§R#G§> = <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§R#G§>\;
-        ERROR: Unknown local var _a : A#G = nil;
-        ERROR: Unknown local var _b : B#G = nil;
-        ERROR: Unknown local var _c : C#G = nil;
-        ERROR: Unknown local var _d : D#G = nil;
-        ERROR: Unknown local n : AtomicInt#C = <to>AtomicInt\AtomicInt#C.class\.<tcI>apply\AtomicInt#C\;
+        Promise<R> p = Promise().apply<R>();
+        A _a = null;
+        B _b = null;
+        C _c = null;
+        D _d = null;
+        AtomicInt n = new AtomicInt();
         a.onCompleteF(new P<Try<A>>() {
             @Override
             public void apply(Try<A> t) {
@@ -194,13 +194,13 @@ public class Future<T> {
         return p;
     }
     public static Future<R> mapABCDEF(Future<A> a,Future<B> b,Future<C> c,Future<D> d,Future<E> e,F5<A, B, C, D, E, R> f) {
-        ERROR: Unknown local p : Promise#C<§R#G§> = <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§R#G§>\;
-        ERROR: Unknown local var _a : A#G = nil;
-        ERROR: Unknown local var _b : B#G = nil;
-        ERROR: Unknown local var _c : C#G = nil;
-        ERROR: Unknown local var _d : D#G = nil;
-        ERROR: Unknown local var _e : D#G = nil;
-        ERROR: Unknown local n : AtomicInt#C = <to>AtomicInt\AtomicInt#C.class\.<tcI>apply\AtomicInt#C\;
+        Promise<R> p = Promise().apply<R>();
+        A _a = null;
+        B _b = null;
+        C _c = null;
+        D _d = null;
+        D _e = null;
+        AtomicInt n = new AtomicInt();
         a.onCompleteF(new P<Try<A>>() {
             @Override
             public void apply(Try<A> t) {
@@ -281,7 +281,7 @@ public class Future<T> {
         return this.result() != null;
     }
     public boolean isSucceeded() {
-        ERROR: Unknown local __tmp : (^Try#C<§T#G§>)? = <Future#C<T#G>>self.<dIa>result\(^Try#C<§T#G§>)?\;
+        Try<T> __tmp = this.result();
         if(__tmp != null) {
             return this.result().isSuccess();
         } else {
@@ -289,7 +289,7 @@ public class Future<T> {
         }
     }
     public boolean isFailed() {
-        ERROR: Unknown local __tmp : (^Try#C<§T#G§>)? = <Future#C<T#G>>self.<dIa>result\(^Try#C<§T#G§>)?\;
+        Try<T> __tmp = this.result();
         if(__tmp != null) {
             return this.result().isFailure();
         } else {
@@ -298,7 +298,7 @@ public class Future<T> {
     }
     public abstract void onCompleteF(P<Try<T>> f);
     public Future<R> mapF(F<T, R> f) {
-        ERROR: Unknown local p : Promise#C<§R#G§> = <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§R#G§>\;
+        Promise<R> p = Promise().apply<R>();
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(Try<T> tr) {
@@ -308,7 +308,7 @@ public class Future<T> {
         return p;
     }
     public Future<Void> forF(P<T> f) {
-        ERROR: Unknown local p : Promise#C<§^void§> = <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§^void§>\;
+        Promise<Void> p = Promise().apply<Void>();
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(Try<T> tr) {
@@ -323,14 +323,14 @@ public class Future<T> {
         return p;
     }
     public Future<R> flatMapF(F<T, Future<R>> f) {
-        ERROR: Unknown local p : Promise#C<§R#G§> = <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§R#G§>\;
+        Promise<R> p = Promise().apply<R>();
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(Try<T> tr) {
                 if(tr.isFailure()) {
                     p.completeValue(tr.ERROR: Unknown cast<Try#C<R#G>>);
                 } else {
-                    ERROR: Unknown local fut : Future#C<R#G> = <l>f\§T#G§ -> Future#C<R#G>\.<d>apply( = <l>tr\Try#C<§T#G§>\.<dIa>get\§T#G§\)\Future#C<R#G>\;
+                    Future<R> fut = f.apply(tr.get());
                     fut.onCompleteF(new P<Try<R>>() {
                         @Override
                         public void apply(Try<R> ftr) {
@@ -343,7 +343,7 @@ public class Future<T> {
         return p;
     }
     public Try<T> waitResultPeriod(float period) {
-        ERROR: Unknown local lock : ConditionLock#P = <to>ConditionLock\ConditionLock#P.class\.<tcI>apply(condition = 0)\ConditionLock#P\;
+        ConditionLock lock = new ConditionLock(ERROR: Unknown 0);
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(Try<T> _) {
@@ -357,7 +357,7 @@ public class Future<T> {
         return this.result();
     }
     public Try<T> waitResult() {
-        ERROR: Unknown local lock : ConditionLock#P = <to>ConditionLock\ConditionLock#P.class\.<tcI>apply(condition = 0)\ConditionLock#P\;
+        ConditionLock lock = new ConditionLock(ERROR: Unknown 0);
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(Try<T> _) {
@@ -381,10 +381,10 @@ else <l>__tmp\§(T#G)?§\
 };
     }
     public Future<Tuple2<T, R>> joinAnother(Future<R> another) {
-        ERROR: Unknown local p : Promise#C<§^(T#G, R#G)§> = <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§^(T#G, R#G)§>\;
-        ERROR: Unknown local var a : T#G = nil;
-        ERROR: Unknown local var b : R#G = nil;
-        ERROR: Unknown local n : AtomicInt#C = <to>AtomicInt\AtomicInt#C.class\.<tcI>apply\AtomicInt#C\;
+        Promise<Tuple2<T, R>> p = Promise().apply<Tuple2<T, R>>();
+        T a = null;
+        R b = null;
+        AtomicInt n = new AtomicInt();
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(Try<T> t) {
