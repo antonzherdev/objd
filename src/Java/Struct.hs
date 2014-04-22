@@ -126,7 +126,7 @@ showStm (Braces stms) = showStmsInBrackets stms
 
 
 data Exp = Nop | IntConst Int | ExpError String | Call String [TP] [Exp] | New [Def] Exp | Dot Exp Exp | Ref String | InlineIf Exp Exp Exp | This
-	| BoolOp BoolTp Exp Exp | MathOp MathTp Exp Exp | Null
+	| BoolOp BoolTp Exp Exp | MathOp MathTp Exp Exp | Null 
 	| StringConst String deriving (Eq)
 
 showExp :: Exp -> [String]

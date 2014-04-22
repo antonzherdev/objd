@@ -1,5 +1,6 @@
 package core.chain;
 
+import java.util.Arrays;
 import test.;
 import test.Test;
 import test.TestCase;
@@ -26,7 +27,7 @@ public class TreeMapTest extends TestCase {
                 ().assertEqualsAB<String>("test" + i, map.applyKey(i));
             }
         });
-        ().assertEqualsAB<ImArray<Integer>>(ERROR: Unknown [-30, -20, -18, -15, -10, 0, 10, 11, 13, 20], map.keys.chain().toArray());
+        ().assertEqualsAB<ImArray<Integer>>(Arrays.asList(ERROR: Unknown -30, ERROR: Unknown -20, ERROR: Unknown -18, ERROR: Unknown -15, ERROR: Unknown -10, ERROR: Unknown 0, ERROR: Unknown 10, ERROR: Unknown 11, ERROR: Unknown 13, ERROR: Unknown 20), map.keys.chain().toArray());
         tests.chain().distinct().forEach(new P<Integer>() {
             @Override
             public void apply(Integer i) {

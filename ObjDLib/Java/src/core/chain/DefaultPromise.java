@@ -1,7 +1,9 @@
 package core.chain;
 
+import java.util.Arrays;
+
 public class DefaultPromise<T> extends Promise<T> {
-    private final AtomicObject<Object> _state = new AtomicObject<Object>(ERROR: Unknown []);
+    private final AtomicObject<Object> _state = new AtomicObject<Object>(Arrays.asList());
     @Override
     public Try<T> result() {
         ERROR: Unknown local v : T#G = return <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<rdIb>get\§T#G§\;
