@@ -5,6 +5,175 @@
 #import "CNChain.h"
 #import "CNPlat.h"
 #import "ODType.h"
+@implementation CNMap_impl
+
+- (id)applyKey:(id)key {
+    @throw @"Method apply is abstract";
+}
+
+- (id)optKey:(id)key {
+    @throw @"Method opt is abstract";
+}
+
+- (id)getKey:(id)key orValue:(id)orValue {
+    id __tmp = [self optKey:key];
+    if(__tmp != nil) return ((id)(__tmp));
+    else return orValue;
+}
+
+- (id<CNIterable>)keys {
+    @throw @"Method keys is abstract";
+}
+
+- (id<CNIterable>)values {
+    @throw @"Method values is abstract";
+}
+
+- (BOOL)containsKey:(id)key {
+    return [self optKey:key] != nil;
+}
+
+- (BOOL)isValueEqualKey:(id)key value:(id)value {
+    id __tmp;
+    {
+        id _ = [self optKey:key];
+        if(_ != nil) __tmp = numb([_ isEqual:value]);
+        else __tmp = nil;
+    }
+    if(__tmp != nil) return unumb(__tmp);
+    else return NO;
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    return self;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendString:@">"];
+    return description;
+}
+
+@end
+
+
+@implementation CNImMap_impl
+
+- (id<CNMMap>)mCopy {
+    CNMHashMap* m = [CNMHashMap hashMap];
+    [m assignImMap:self];
+    return m;
+}
+
+- (id<CNImMap>)addItem:(CNTuple*)item {
+    CNHashMapBuilder* builder = [CNHashMapBuilder hashMapBuilder];
+    [builder appendAllItems:self];
+    [builder appendItem:item];
+    return [builder build];
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    return self;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendString:@">"];
+    return description;
+}
+
+@end
+
+
+@implementation CNMMap_impl
+
+- (void)appendItem:(CNTuple*)item {
+    [self setKey:((CNTuple*)(item)).b value:((CNTuple*)(item)).a];
+}
+
+- (BOOL)removeItem:(CNTuple*)item {
+    return [self removeForKey:((CNTuple*)(item)).a] != nil;
+}
+
+- (id<CNImMap>)im {
+    return [self imCopy];
+}
+
+- (id<CNImMap>)imCopy {
+    CNMHashMap* arr = [CNMHashMap hashMap];
+    [self forEach:^void(CNTuple* item) {
+        [arr setKey:((CNTuple*)(item)).a value:((CNTuple*)(item)).b];
+    }];
+    return [arr im];
+}
+
+- (void)setKey:(id)key value:(id)value {
+    @throw @"Method set is abstract";
+}
+
+- (id)removeForKey:(id)key {
+    @throw @"Method removeFor is abstract";
+}
+
+- (id)objectForKey:(id)key orUpdateWith:(id(^)())orUpdateWith {
+    id __tmp = [self optKey:key];
+    if(__tmp != nil) {
+        return ((id)(__tmp));
+    } else {
+        id init = orUpdateWith();
+        [self setKey:key value:init];
+        return init;
+    }
+}
+
+- (id)modifyKey:(id)key by:(id(^)(id))by {
+    id newObject = by([self optKey:key]);
+    if(newObject == nil) [self removeForKey:key];
+    else [self setKey:key value:newObject];
+    return newObject;
+}
+
+- (id)takeKey:(id)key {
+    id ret = [self optKey:key];
+    [self removeForKey:key];
+    return ret;
+}
+
+- (void)assignImMap:(id<CNImMap>)imMap {
+    [self clear];
+    [imMap forEach:^void(CNTuple* _) {
+        [self appendItem:_];
+    }];
+}
+
+- (id<CNMIterator>)mutableIterator {
+    @throw @"Method mutableIterator is abstract";
+}
+
+- (void)mutableFilterBy:(BOOL(^)(id))by {
+    id<CNMIterator> i = [self mutableIterator];
+    while([i hasNext]) {
+        if(by([i next])) [i remove];
+    }
+}
+
+- (void)clear {
+    @throw @"Method clear is abstract";
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    return self;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendString:@">"];
+    return description;
+}
+
+@end
+
+
 @implementation CNImMapDefault
 static ODClassType* _CNImMapDefault_type;
 @synthesize map = _map;
@@ -69,98 +238,6 @@ static ODClassType* _CNImMapDefault_type;
 
 - (CNMMapDefault*)mCopy {
     return [CNMMapDefault mapDefaultWithMap:[_map mCopy] defaultFunc:_defaultFunc];
-}
-
-- (id)head {
-    if([self isEmpty]) return nil;
-    else return [[self iterator] next];
-}
-
-- (BOOL)isEmpty {
-    return !([[self iterator] hasNext]);
-}
-
-- (void)forEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        each([i next]);
-    }
-}
-
-- (void)parForEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        id v = [i next];
-        [CNDispatchQueue.aDefault asyncF:^void() {
-            each(v);
-        }];
-    }
-}
-
-- (BOOL)goOn:(BOOL(^)(id))on {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if(!(on([i next]))) return NO;
-    }
-    return YES;
-}
-
-- (BOOL)containsItem:(id)item {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if([[i next] isEqual:i]) return YES;
-    }
-    return NO;
-}
-
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
-}
-
-- (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = nil;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = x;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)existsWhere:(BOOL(^)(id))where {
-    __block BOOL ret = NO;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = YES;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)allConfirm:(BOOL(^)(id))confirm {
-    __block BOOL ret = YES;
-    [self goOn:^BOOL(id x) {
-        if(!(confirm(x))) {
-            ret = NO;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (id)convertWithBuilder:(id<CNBuilder>)builder {
-    [self forEach:^void(id x) {
-        [builder appendItem:x];
-    }];
-    return [builder build];
 }
 
 - (ODClassType*)type {
@@ -277,105 +354,6 @@ static ODClassType* _CNMMapDefault_type;
     return [CNImMapDefault imMapDefaultWithMap:[_map imCopy] defaultFunc:_defaultFunc];
 }
 
-- (void)mutableFilterBy:(BOOL(^)(id))by {
-    id<CNMIterator> i = [self mutableIterator];
-    while([i hasNext]) {
-        if(by([i next])) [i remove];
-    }
-}
-
-- (id)head {
-    if([self isEmpty]) return nil;
-    else return [[self iterator] next];
-}
-
-- (BOOL)isEmpty {
-    return !([[self iterator] hasNext]);
-}
-
-- (void)forEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        each([i next]);
-    }
-}
-
-- (void)parForEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        id v = [i next];
-        [CNDispatchQueue.aDefault asyncF:^void() {
-            each(v);
-        }];
-    }
-}
-
-- (BOOL)goOn:(BOOL(^)(id))on {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if(!(on([i next]))) return NO;
-    }
-    return YES;
-}
-
-- (BOOL)containsItem:(id)item {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if([[i next] isEqual:i]) return YES;
-    }
-    return NO;
-}
-
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
-}
-
-- (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = nil;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = x;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)existsWhere:(BOOL(^)(id))where {
-    __block BOOL ret = NO;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = YES;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)allConfirm:(BOOL(^)(id))confirm {
-    __block BOOL ret = YES;
-    [self goOn:^BOOL(id x) {
-        if(!(confirm(x))) {
-            ret = NO;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (id)convertWithBuilder:(id<CNBuilder>)builder {
-    [self forEach:^void(id x) {
-        [builder appendItem:x];
-    }];
-    return [builder build];
-}
-
 - (ODClassType*)type {
     return [CNMMapDefault type];
 }
@@ -423,12 +401,6 @@ static ODClassType* _CNHashMapBuilder_type;
 
 - (CNImHashMap*)build {
     return [_map im];
-}
-
-- (void)appendAllItems:(id<CNTraversable>)items {
-    [items forEach:^void(id _) {
-        [self appendItem:_];
-    }];
 }
 
 - (ODClassType*)type {

@@ -1,11 +1,5 @@
 package core.chain;
 
-import java.util.Arrays;
-import java.util.Arrays;
-import java.util.Arrays;
-import java.util.Arrays;
-import java.util.Arrays;
-import java.util.Arrays;
 import test.;
 import test.Test;
 import test.TestCase;
@@ -15,13 +9,13 @@ public class ChainTest extends TestCase {
     public void testAnd() {
         ().assertTrueValue(ERROR: Unknown !([True, False, True].<rdI>chain\Chain#C<§^bool§>\.<dIub>and\bool\));
         ().assertTrueValue(ERROR: Unknown !([False, False, False].<rdI>chain\Chain#C<§^bool§>\.<dIub>and\bool\));
-        ().assertTrueValue(Arrays.asList(ERROR: Unknown True, ERROR: Unknown True, ERROR: Unknown True).chain().and());
-        ().assertTrueValue(Arrays.asList().chain().and());
+        ().assertTrueValue(ImArray.fromObjects(ERROR: Unknown True, ERROR: Unknown True, ERROR: Unknown True).chain().and());
+        ().assertTrueValue(ImArray.fromObjects().chain().and());
     }
     public void testOr() {
-        ().assertTrueValue(Arrays.asList(ERROR: Unknown False, ERROR: Unknown False, ERROR: Unknown True).chain().or());
+        ().assertTrueValue(ImArray.fromObjects(ERROR: Unknown False, ERROR: Unknown False, ERROR: Unknown True).chain().or());
         ().assertTrueValue(ERROR: Unknown !([False, False, False].<rdI>chain\Chain#C<§^bool§>\.<dIub>or\bool\));
-        ().assertTrueValue(Arrays.asList(ERROR: Unknown True, ERROR: Unknown True, ERROR: Unknown True).chain().or());
+        ().assertTrueValue(ImArray.fromObjects(ERROR: Unknown True, ERROR: Unknown True, ERROR: Unknown True).chain().or());
         ().assertTrueValue(ERROR: Unknown !([].<rdI>chain\Chain#C<§^_unset§>\.<dIub>or\bool\));
     }
     public void testFuture() {
@@ -96,10 +90,10 @@ public class ChainTest extends TestCase {
         ().assertEqualsAB<Integer>(count.intValue(), ERROR: Unknown <l>arr\[^Promise#C<^void>]\.<rdI>count\uint\.cast<int4>);
     }
     public void testFlat() {
-        ().assertEqualsAB<ImArray<Integer>>(Arrays.asList(ERROR: Unknown 1, ERROR: Unknown 5, ERROR: Unknown 2, ERROR: Unknown 3, ERROR: Unknown 2), Arrays.asList(ERROR: Unknown [1, 5].cast<^int[1]>, ERROR: Unknown [2, 3].cast<^int[1]>, Arrays.asList(ERROR: Unknown 2)).chain().flat<Integer>().toArray());
+        ().assertEqualsAB<ImArray<Integer>>(ImArray.fromObjects(ERROR: Unknown 1, ERROR: Unknown 5, ERROR: Unknown 2, ERROR: Unknown 3, ERROR: Unknown 2), ImArray.fromObjects(ERROR: Unknown [1, 5].cast<^int[1]>, ERROR: Unknown [2, 3].cast<^int[1]>, ImArray.fromObjects(ERROR: Unknown 2)).chain().flat<Integer>().toArray());
     }
     public void testZip() {
-        ().assertEqualsAB<ImArray<Integer>>(Arrays.asList(ERROR: Unknown 2, ERROR: Unknown 3), Arrays.asList(ERROR: Unknown 1, ERROR: Unknown 0, ERROR: Unknown 3).chain().zipABy<Integer, Integer>(Arrays.asList(ERROR: Unknown 1, ERROR: Unknown 3), new F2<Integer, Integer, Integer>() {
+        ().assertEqualsAB<ImArray<Integer>>(ImArray.fromObjects(ERROR: Unknown 2, ERROR: Unknown 3), ImArray.fromObjects(ERROR: Unknown 1, ERROR: Unknown 0, ERROR: Unknown 3).chain().zipABy<Integer, Integer>(ImArray.fromObjects(ERROR: Unknown 1, ERROR: Unknown 3), new F2<Integer, Integer, Integer>() {
             @Override
             public Integer apply(Integer a,Integer b) {
                 return a + b;
@@ -107,7 +101,7 @@ public class ChainTest extends TestCase {
         }).toArray());
     }
     public void testZip3() {
-        ().assertEqualsAB<ImArray<Integer>>(Arrays.asList(ERROR: Unknown 3, ERROR: Unknown 4), Arrays.asList(ERROR: Unknown 1, ERROR: Unknown 0, ERROR: Unknown 3).chain().zip3ABBy<Integer, Integer, Integer>(Arrays.asList(ERROR: Unknown 1, ERROR: Unknown 3), Arrays.asList(ERROR: Unknown 1, ERROR: Unknown 1, ERROR: Unknown 2, ERROR: Unknown 4), new F3<Integer, Integer, Integer, Integer>() {
+        ().assertEqualsAB<ImArray<Integer>>(ImArray.fromObjects(ERROR: Unknown 3, ERROR: Unknown 4), ImArray.fromObjects(ERROR: Unknown 1, ERROR: Unknown 0, ERROR: Unknown 3).chain().zip3ABBy<Integer, Integer, Integer>(ImArray.fromObjects(ERROR: Unknown 1, ERROR: Unknown 3), ImArray.fromObjects(ERROR: Unknown 1, ERROR: Unknown 1, ERROR: Unknown 2, ERROR: Unknown 4), new F3<Integer, Integer, Integer, Integer>() {
             @Override
             public Integer apply(Integer a,Integer b,Integer c) {
                 return a + b + c;
@@ -115,14 +109,14 @@ public class ChainTest extends TestCase {
         }).toArray());
     }
     public void testZipFor() {
-        ImArray<Integer> arr = Arrays.asList();
-        Arrays.asList(ERROR: Unknown 1, ERROR: Unknown 0, ERROR: Unknown 3).chain().zipForABy<Integer>(Arrays.asList(ERROR: Unknown 1, ERROR: Unknown 3), new P2<Integer, Integer>() {
+        ImArray<Integer> arr = ImArray.fromObjects();
+        ImArray.fromObjects(ERROR: Unknown 1, ERROR: Unknown 0, ERROR: Unknown 3).chain().zipForABy<Integer>(ImArray.fromObjects(ERROR: Unknown 1, ERROR: Unknown 3), new P2<Integer, Integer>() {
             @Override
             public void apply(Integer a,Integer b) {
                 arr = arr.addItem(a + b);
             }
         });
-        ().assertEqualsAB<ImArray<Integer>>(Arrays.asList(ERROR: Unknown 2, ERROR: Unknown 3), arr);
+        ().assertEqualsAB<ImArray<Integer>>(ImArray.fromObjects(ERROR: Unknown 2, ERROR: Unknown 3), arr);
     }
     public ChainTest() {
     }

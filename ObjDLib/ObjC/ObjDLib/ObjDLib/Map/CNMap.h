@@ -6,6 +6,9 @@
 @class ODClassType;
 @class CNImHashMap;
 
+@class CNMap_impl;
+@class CNImMap_impl;
+@class CNMMap_impl;
 @class CNImMapDefault;
 @class CNMMapDefault;
 @class CNHashMapBuilder;
@@ -24,8 +27,17 @@
 @end
 
 
+@interface CNMap_impl : CNIterable_impl<CNMap>
+@end
+
+
 @protocol CNImMap<CNMap, CNImIterable>
 - (id<CNImMap>)addItem:(CNTuple*)item;
+- (id<CNMMap>)mCopy;
+@end
+
+
+@interface CNImMap_impl : CNMap_impl<CNImMap>
 - (id<CNMMap>)mCopy;
 @end
 
@@ -44,7 +56,15 @@
 @end
 
 
-@interface CNImMapDefault : NSObject<CNImIterable> {
+@interface CNMMap_impl : CNMap_impl<CNMMap>
+- (void)appendItem:(CNTuple*)item;
+- (BOOL)removeItem:(CNTuple*)item;
+- (id<CNImMap>)im;
+- (id<CNImMap>)imCopy;
+@end
+
+
+@interface CNImMapDefault : CNImIterable_impl {
 @protected
     id<CNImMap> _map;
     id(^_defaultFunc)(id);
@@ -69,7 +89,7 @@
 @end
 
 
-@interface CNMMapDefault : NSObject<CNMIterable> {
+@interface CNMMapDefault : CNMIterable_impl {
 @protected
     id<CNMMap> _map;
     id(^_defaultFunc)(id);
@@ -98,7 +118,7 @@
 @end
 
 
-@interface CNHashMapBuilder : NSObject<CNBuilder> {
+@interface CNHashMapBuilder : CNBuilder_impl {
 @protected
     CNMHashMap* _map;
 }

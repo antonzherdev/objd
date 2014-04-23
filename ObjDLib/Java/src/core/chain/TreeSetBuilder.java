@@ -1,6 +1,6 @@
 package core.chain;
 
-public class TreeSetBuilder<T> implements Builder<T, ImTreeSet<T>> {
+public class TreeSetBuilder<T> extends Builder_impl<T, ImTreeSet<T>> {
     public final F2<T, T, Integer> comparator;
     private final MTreeSet<T> set = MTreeSet().applyComparator<T>(comparator);
     public static TreeSetBuilder<T> apply() {
@@ -21,13 +21,5 @@ public class TreeSetBuilder<T> implements Builder<T, ImTreeSet<T>> {
     }
     public TreeSetBuilder(F2<T, T, Integer> comparator) {
         this.comparator = comparator;
-    }
-    public void appendAllItems(Traversable<T> items) {
-        items.forEach(new P<T>() {
-            @Override
-            public void apply(T _) {
-                appendItem(_);
-            }
-        });
     }
 }

@@ -1,6 +1,6 @@
 package core.chain;
 
-public class HashMapBuilder<K, V> implements Builder<Tuple2<K, V>, ImHashMap<K, V>> {
+public class HashMapBuilder<K, V> extends Builder_impl<Tuple2<K, V>, ImHashMap<K, V>> {
     private final MHashMap<K, V> map = new MHashMap<K, V>();
     @Override
     public void appendItem(Tuple2<K, V> item) {
@@ -11,13 +11,5 @@ public class HashMapBuilder<K, V> implements Builder<Tuple2<K, V>, ImHashMap<K, 
         return this.map.im();
     }
     public HashMapBuilder() {
-    }
-    public void appendAllItems(Traversable<T> items) {
-        items.forEach(new P<T>() {
-            @Override
-            public void apply(T _) {
-                appendItem(_);
-            }
-        });
     }
 }

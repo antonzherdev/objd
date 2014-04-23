@@ -1,6 +1,6 @@
 package core.chain;
 
-public class TreeMapKeyIterator<K> implements Iterator<K> {
+public class TreeMapKeyIterator<K> extends Iterator_impl<K> {
     public final TreeMap<K, ?> map;
     public TreeMapEntry<K, ?> entry;
     public static TreeMapKeyIterator<K> applyMapEntry(TreeMap<K, ?> map,TreeMapEntry<K, ?> entry) {

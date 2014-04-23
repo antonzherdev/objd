@@ -1,6 +1,6 @@
 package core.chain;
 
-public class Tuple<A, B> implements Comparable<Tuple<A, B>> {
+public final final class Tuple<A, B> implements Comparable<Tuple<A, B>> {
     public final A a;
     public final B b;
     @Override

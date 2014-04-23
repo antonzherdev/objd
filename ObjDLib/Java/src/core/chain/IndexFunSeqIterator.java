@@ -1,6 +1,6 @@
 package core.chain;
 
-public class IndexFunSeqIterator<T> implements Iterator<T> {
+public class IndexFunSeqIterator<T> extends Iterator_impl<T> {
     public final int count;
     public final F<Integer, T> f;
     private int i = ERROR: Unknown 0.cast<uint>;

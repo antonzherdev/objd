@@ -1,6 +1,6 @@
 package core.chain;
 
-public class PArrayIterator<T> implements Iterator<T> {
+public class PArrayIterator<T> extends Iterator_impl<T> {
     public final PArray<T> array;
     private int i = ERROR: Unknown 0;
     @Override

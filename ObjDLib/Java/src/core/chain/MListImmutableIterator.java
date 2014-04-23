@@ -1,6 +1,6 @@
 package core.chain;
 
-public class MListImmutableIterator<T> implements Iterator<T> {
+public class MListImmutableIterator<T> extends Iterator_impl<T> {
     public MListItem<T> item;
     @Override
     public boolean hasNext() {

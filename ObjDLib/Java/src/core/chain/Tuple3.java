@@ -1,6 +1,6 @@
 package core.chain;
 
-public class Tuple3<A, B, C> implements Comparable<Tuple3<A, B, C>> {
+public final final class Tuple3<A, B, C> implements Comparable<Tuple3<A, B, C>> {
     public final A a;
     public final B b;
     public final C c;

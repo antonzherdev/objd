@@ -1,6 +1,6 @@
 package core.chain;
 
-public class ImQueue<T> implements Queue<T> {
+public class ImQueue<T> extends Queue_impl<T> {
     private static final ImQueue<Object> empty = new ImQueue<Object>(ImList().apply<Object>(), ImList().apply<Object>());
     public final ImList<T> in;
     public final ImList<T> out;

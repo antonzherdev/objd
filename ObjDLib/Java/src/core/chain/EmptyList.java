@@ -1,6 +1,6 @@
 package core.chain;
 
-public class EmptyList<T> extends ImList<T> {
+public final class EmptyList<T> extends ImList<T> {
     public static final EmptyList<Object> instance = new EmptyList<Object>();
     @Override
     public int count() {

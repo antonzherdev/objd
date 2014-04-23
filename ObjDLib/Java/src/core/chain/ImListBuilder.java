@@ -1,6 +1,6 @@
 package core.chain;
 
-public class ImListBuilder<T> implements Builder<T, ImList<T>> {
+public class ImListBuilder<T> extends Builder_impl<T, ImList<T>> {
     private ImList<T> list = ImList().apply<T>();
     @Override
     public void appendItem(T item) {
@@ -11,13 +11,5 @@ public class ImListBuilder<T> implements Builder<T, ImList<T>> {
         return this.list.reverse();
     }
     public ImListBuilder() {
-    }
-    public void appendAllItems(Traversable<T> items) {
-        items.forEach(new P<T>() {
-            @Override
-            public void apply(T _) {
-                appendItem(_);
-            }
-        });
     }
 }

@@ -1,6 +1,6 @@
 package core.chain;
 
-public class Success<T> extends Try<T> {
+public final class Success<T> extends Try<T> {
     public final T get;
     @Override
     public boolean isSuccess() {

@@ -2,11 +2,6 @@
 #import "CNSeq.h"
 #import "CNCollection.h"
 @class ODClassType;
-@class CNChain;
-@class CNMArray;
-@protocol CNSet;
-@class CNHashSetBuilder;
-@class CNDispatchQueue;
 
 @class CNImList;
 @class CNFilledList;
@@ -14,7 +9,7 @@
 @class CNListIterator;
 @class CNImListBuilder;
 
-@interface CNImList : NSObject<CNImSeq>
+@interface CNImList : CNImSeq_impl
 + (instancetype)imList;
 - (instancetype)init;
 - (ODClassType*)type;
@@ -70,7 +65,7 @@
 @end
 
 
-@interface CNListIterator : NSObject<CNIterator> {
+@interface CNListIterator : CNIterator_impl {
 @protected
     CNImList* _list;
 }
@@ -85,7 +80,7 @@
 @end
 
 
-@interface CNImListBuilder : NSObject<CNBuilder> {
+@interface CNImListBuilder : CNBuilder_impl {
 @protected
     CNImList* _list;
 }

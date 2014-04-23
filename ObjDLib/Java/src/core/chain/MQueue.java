@@ -1,6 +1,6 @@
 package core.chain;
 
-public class MQueue<T> implements Queue<T> {
+public class MQueue<T> extends Queue_impl<T> {
     private ImQueue<T> _queue = ImQueue().apply<T>();
     public void enqueueItem(T item) {
         this._queue = this._queue.addItem(item);

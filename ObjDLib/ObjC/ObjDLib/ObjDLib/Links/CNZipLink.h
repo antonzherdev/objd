@@ -1,4 +1,5 @@
 #import "objdcore.h"
+#import "ODObject.h"
 #import "CNChain.h"
 @protocol CNIterable;
 @class CNYield;

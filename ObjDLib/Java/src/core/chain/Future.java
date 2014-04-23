@@ -1,6 +1,6 @@
 package core.chain;
 
-public class Future<T> {
+public abstract class Future<T> {
     public static Future<T> applyF(F<Void, T> f) {
         Promise<T> p = Promise().apply<T>();
         DispatchQueue().default.asyncF(new P0() {

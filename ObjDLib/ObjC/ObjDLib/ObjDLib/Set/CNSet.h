@@ -6,6 +6,9 @@
 @class CNImHashSet;
 @class ODClassType;
 
+@class CNSet_impl;
+@class CNImSet_impl;
+@class CNMSet_impl;
 @class CNHashSetBuilder;
 @protocol CNSet;
 @protocol CNImSet;
@@ -15,7 +18,16 @@
 @end
 
 
+@interface CNSet_impl : CNIterable_impl<CNSet>
+@end
+
+
 @protocol CNImSet<CNSet, CNImIterable>
+- (id<CNMSet>)mCopy;
+@end
+
+
+@interface CNImSet_impl : CNSet_impl<CNImSet>
 - (id<CNMSet>)mCopy;
 @end
 
@@ -26,7 +38,13 @@
 @end
 
 
-@interface CNHashSetBuilder : NSObject<CNBuilder> {
+@interface CNMSet_impl : CNSet_impl<CNMSet>
+- (id<CNImSet>)im;
+- (id<CNImSet>)imCopy;
+@end
+
+
+@interface CNHashSetBuilder : CNBuilder_impl {
 @protected
     CNMHashSet* _set;
 }

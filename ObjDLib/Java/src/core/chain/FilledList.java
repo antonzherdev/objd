@@ -1,6 +1,6 @@
 package core.chain;
 
-public class FilledList<T> extends ImList<T> {
+public final class FilledList<T> extends ImList<T> {
     public final T _head;
     public final ImList<T> tail;
     public final int count = tail.count() + ERROR: Unknown 1;

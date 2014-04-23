@@ -78,7 +78,9 @@ classImports _ = []
 classNameWithPrefix :: Class -> String
 classNameWithPrefix cl = packagePrefix (classPackage cl) ++ cap (className cl)
 classFieldsForEquals :: Class -> [Def]
-classFieldsForEquals cl = maybe [] defPars $ classConstructor cl
+classFieldsForEquals cl = 
+	let defs = map defName $ maybe [] defPars $ classConstructor cl
+	in filter (\d -> DefModField `elem` defMods d && defName d `elem` defs) $ classDefs cl
 needIsEqualForClass :: Class -> Bool
 needIsEqualForClass cl = ClassModCase `elem` classMods cl || any ( ("isEqual" == ). defName) (classDefs cl)
 needHashForClass :: Class -> Bool
@@ -89,7 +91,7 @@ fullClassName cl = strs "." (packageName $ classPackage cl) ++ case className cl
 	nm -> "." ++ nm
 
 data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType | 
-	ClassModAbstract | ClassModFinal | ClassModCase | ClassModPackageObject deriving (Eq)
+	ClassModAbstract | ClassModFinal | ClassModCase | ClassModPackageObject | ClassModTraitImpl deriving (Eq)
 
 type ExtendsRef = (Class, [DataType])
 data Extends = Extends {extendsClass :: Maybe ExtendsClass, extendsTraits :: [ExtendsRef]}
@@ -123,6 +125,7 @@ instance Show ClassMod where
 	show ClassModFinal = "final"
 	show ClassModCase = "case"
 	show ClassModPackageObject = "package"
+	show ClassModTraitImpl = "impl"
 			
 instance Show Extends where
 	show (Extends Nothing []) = ""
@@ -434,14 +437,15 @@ findDefWithName name cl = find ((name ==) . defName) $ classDefs cl
 findValWithName :: String -> Class -> Maybe Def
 findValWithName name cl = find (\d -> name == defName d && DefModField `elem` defMods d && null (defPars d)) $ classDefs cl
 
-classDefsWithTraits :: Class -> [Def]
-classDefsWithTraits cl = classDefs cl ++ notOverloadedTraitDefs
+classDefsWithTraits :: Bool -> Class -> [Def]
+classDefsWithTraits withAbstract cl = classDefs cl ++ notOverloadedTraitDefs
 	where	
 		notOverloadedTraitDefs = filter (\def -> not $ any (== def) notAbstractClassDefs) notAbstractTraitDefs
 		--notOverloadedTraitDefs = notAbstractTraitDefs
 		notAbstractTraitDefs = notAbstractDefs True
 		notAbstractClassDefs = notAbstractDefs False
-		notAbstractDefs trait = (filter ( (DefModAbstract `notElem`). defMods) . map fst . filter (\t -> trait == snd t)) allDefsWithLine
+		notAbstractDefs trait = ( (if withAbstract then id else filter ( (DefModAbstract `notElem`). defMods) ) 
+			. map fst . filter (\t -> trait == snd t)) allDefsWithLine
 		allDefsWithLine :: [(Def, Bool)]
 		allDefsWithLine = allDefsWithLine' False True cl
 		allDefsWithLine' :: Bool -> Bool -> Class -> [(Def, Bool)] -- (Def, traitLine - True/classLine - False)
@@ -453,6 +457,27 @@ classDefsWithTraits cl = classDefs cl ++ notOverloadedTraitDefs
 				nextRec (nextClass, _) = 
 					let line = traitLine && isTrait nextClass
 					in allDefsWithLine' line line nextClass
+
+traitImplClass :: Env -> Class -> Class
+traitImplClass env cl = let 
+	base = baseClassExtends $ envIndex env 
+	ext = Extends {
+		extendsClass = Just $ case extendsRefs $ classExtends cl of
+			[] -> base
+			(xcl, xgens):_ -> maybe base (\c -> ExtendsClass (c, xgens) []) $ M.lookup (className xcl ++ "_impl") (envIndex env),
+		extendsTraits = [(cl, map (TPClass TPMGeneric []) $ classGenerics cl)]
+	}
+	in cl {
+		className = className cl ++ "_impl",
+		_classExtends = ext, 
+		_classMods = ClassModTraitImpl : ClassModAbstract : delete ClassModTrait (classMods cl), 
+		_classDefs = filter( (DefModOverride `elem`) .defMods) $ classDefs cl,
+		_classImports = []
+	}
+
+getTraitImplClass :: Env -> Class -> Maybe Class
+getTraitImplClass env cl = M.lookup (className cl ++ "_impl") (envIndex env)
+
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - Def 
  -----------------------------------------------------------------------------------------------------------------------------------------}
@@ -620,7 +645,7 @@ linkFile lang files (D.File name package stms) = fl
 		isOtherLangAnnotation (D.Annotation nm [] []) = nm `elem` otherLangs
 		isOtherLangAnnotation _ = False
 
-		classes = (map linkCl . filter isCls) stms'
+		classes = (concatMap linkCl . filter isCls) stms'
 		linkCl cl = linkClass (cidx cl, glidx cl, fl, package', clImports cl) cl
 		isCls s = D.isClass s || D.isStub s || D.isEnum s || D.isType s
 		cidx cl =  M.fromList . map (idx className) $ classes ++ importClasses cl ++ (concatMap fileClasses $ kernelFiles ++ packageFiles)
@@ -686,9 +711,9 @@ linkImport files name
 baseClassExtends :: ClassIndex -> ExtendsClass
 baseClassExtends cidx = ExtendsClass (classFind cidx "Object", []) []
 
-linkClass :: (ClassIndex, ObjectIndex, File, Package, [Import]) -> D.FileStm -> Class
+linkClass :: (ClassIndex, ObjectIndex, File, Package, [Import]) -> D.FileStm -> [Class]
 -- linkClass (_, _, _, _, _) D.Class{D.className = cls} | trace ("Class " ++ cls) False = undefined
-linkClass (ocidx, glidx, file, package, clImports) cl = self
+linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not isSeltStub then [self, traitImplClass env self] else [self]
 	where
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
 		env = Env selfType cidx glidx [] False TPVoid ""
@@ -738,7 +763,13 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 				_classImports = [],
 				classAnnotations = annotations
 			}
-		isSeltTrait = D.ClassModTrait `elem` D.classMods cl
+		isSeltTrait = case cl of 
+			D.Class{} -> D.ClassModTrait `elem` D.classMods cl
+			_ -> False
+		isSeltStub = case cl of 
+			D.Class{} -> D.ClassModStub `elem` D.classMods cl
+			D.Type{} -> True
+			_ -> False
 		annotations = map (linkAnnotations env) $ D.stmAnnotations cl
 		enumOrdinal = Def "ordinal" [] uint Nop [] Nothing
 		enumName = Def "name" [] TPString Nop [] Nothing
@@ -753,7 +784,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 		clsMod D.ClassModPackageObject = [ClassModPackageObject]
 		clsMod D.ClassModCase = [ClassModFinal, ClassModCase]
 		-- clsMod _ = []
-		extends = fmap (linkExtends env (map fst constrPars)) (D.classExtends cl) 
+		extends = fmap (linkExtends env isSeltTrait (map fst constrPars)) (D.classExtends cl) 
 		selfIsStruct = case cl of
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
 			_ -> False
@@ -810,8 +841,8 @@ linkClass (ocidx, glidx, file, package, clImports) cl = self
 			defGenerics = Nothing, defPars = []}
 			where 
 				typeName = if selfIsStruct then "PType" else "ClassType"
-linkExtends :: Env -> [Def] -> D.Extends -> Extends
-linkExtends env constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
+linkExtends :: Env -> Bool -> [Def] -> D.Extends -> Extends
+linkExtends env isSeltTrait constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
 	let 
 		env' = env {envVals = constrPars, envSelf = objectType $ envSelf env}
 		superCall = D.Dot D.Super $ D.Call "apply" (Just $ pars) gens
@@ -822,7 +853,14 @@ linkExtends env constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs
 		mainExt = linkExtendsRef env eref
 		withs' = map (linkExtendsRef env) withs
 		isMainTrait = isTrait (fst mainExt)
-	in Extends (if isMainTrait then Nothing else Just $ ExtendsClass mainExt superCallPars) (if isMainTrait then mainExt:withs' else withs')
+	in 
+		if isSeltTrait then Extends Nothing (mainExt:withs')
+		else 
+			if isMainTrait then 
+				case getTraitImplClass env (fst mainExt) of
+					Just me -> Extends (Just $ ExtendsClass (me, snd mainExt) []) withs'
+					Nothing -> Extends (Just $ baseClassExtends $ envIndex env) (mainExt:withs')
+			else Extends (Just $ ExtendsClass mainExt superCallPars) withs'
 
 linkAnnotations :: Env -> D.Annotation -> Annotation
 linkAnnotations env (D.Annotation nm pars tps) = case expr env (D.Call nm (Just pars) tps) of

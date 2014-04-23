@@ -1,6 +1,6 @@
 module Java.Struct ( 
 	File(..), Class(..), Visibility(..), ClassType(..),
-	TP(..), Generic(..), tpRef, Def(..), DefPar, DefMod(..), Stm(..), Exp(..), DefAnnotation(..), Import
+	TP(..), Generic(..), tpRef, Def(..), DefPar, DefMod(..), Stm(..), Exp(..), DefAnnotation(..), Import, ClassMod(..)
 ) where
 
 import           Ex.String
@@ -23,10 +23,10 @@ instance Show File where
  - Class
  -----------------------------------------------------------------------------------------------------------------------------------------------}
 
-data Class = Class {classVisibility :: Visibility, classType :: ClassType, className :: String, classGenerics :: [Generic]
+data Class = Class {classMods :: [ClassMod], classType :: ClassType, className :: String, classGenerics :: [Generic]
 	, classExtends :: Maybe TP, classImplements :: [TP], classDefs :: [Def]} 
 instance Show Class where
-	show cl@Class{} = wrapStr "" " " (show (classVisibility cl)) ++ show (classType cl) ++ " " ++ className cl 
+	show cl@Class{} = wrapStr "" " " (strs' " " (classMods cl)) ++ show (classType cl) ++ " " ++ className cl 
 		++ pstrs' "<" ", " ">" (classGenerics cl) 
 		++ maybe "" ((" extends " ++ ). show)  (classExtends cl)
 		++ pstrs' (if classType cl == ClassTypeClass then " implements " else " extends ") ", " "" (classImplements cl)
@@ -34,6 +34,11 @@ instance Show Class where
 		++ (unlines . map ind . concatMap (showDef (classType cl, className cl)) )  (classDefs cl)
 		++ "}"
 
+data ClassMod = ClassModVisibility Visibility | ClassModAbstract | ClassModFinal
+instance Show ClassMod where
+	show (ClassModVisibility v) = show v
+	show ClassModAbstract = "abstract"
+	show ClassModFinal = "final"
 data Visibility = Private | Protected | Public | Package deriving (Eq)
 instance Show Visibility where
 	show Private = "private"

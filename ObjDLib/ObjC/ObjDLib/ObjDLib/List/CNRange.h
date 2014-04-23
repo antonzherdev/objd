@@ -2,16 +2,11 @@
 #import "CNSeq.h"
 #import "CNCollection.h"
 @class ODClassType;
-@class CNChain;
-@class CNMArray;
-@protocol CNSet;
-@class CNHashSetBuilder;
-@class CNDispatchQueue;
 
 @class CNRange;
 @class CNRangeIterator;
 
-@interface CNRange : NSObject<CNImSeq> {
+@interface CNRange : CNImSeq_impl {
 @protected
     NSInteger _start;
     NSInteger _end;
@@ -35,7 +30,7 @@
 @end
 
 
-@interface CNRangeIterator : NSObject<CNIterator> {
+@interface CNRangeIterator : CNIterator_impl {
 @protected
     NSInteger _start;
     NSInteger _end;

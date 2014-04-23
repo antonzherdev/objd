@@ -3,8 +3,6 @@
 
 #import "CNTreeMap.h"
 #import "ODType.h"
-#import "CNDispatchQueue.h"
-#import "CNChain.h"
 #import "ODObject.h"
 @implementation CNTreeSet
 static ODClassType* _CNTreeSet_type;
@@ -56,85 +54,6 @@ static ODClassType* _CNTreeSet_type;
 
 - (BOOL)containsItem:(id)item {
     return [_map containsKey:item];
-}
-
-- (BOOL)isEmpty {
-    return !([[self iterator] hasNext]);
-}
-
-- (void)forEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        each([i next]);
-    }
-}
-
-- (void)parForEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        id v = [i next];
-        [CNDispatchQueue.aDefault asyncF:^void() {
-            each(v);
-        }];
-    }
-}
-
-- (BOOL)goOn:(BOOL(^)(id))on {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if(!(on([i next]))) return NO;
-    }
-    return YES;
-}
-
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
-}
-
-- (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = nil;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = x;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)existsWhere:(BOOL(^)(id))where {
-    __block BOOL ret = NO;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = YES;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)allConfirm:(BOOL(^)(id))confirm {
-    __block BOOL ret = YES;
-    [self goOn:^BOOL(id x) {
-        if(!(confirm(x))) {
-            ret = NO;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (id)convertWithBuilder:(id<CNBuilder>)builder {
-    [self forEach:^void(id x) {
-        [builder appendItem:x];
-    }];
-    return [builder build];
 }
 
 - (ODClassType*)type {
@@ -240,12 +159,6 @@ static ODClassType* _CNTreeSetBuilder_type;
 
 - (CNImTreeSet*)build {
     return [_set im];
-}
-
-- (void)appendAllItems:(id<CNTraversable>)items {
-    [items forEach:^void(id _) {
-        [self appendItem:_];
-    }];
 }
 
 - (ODClassType*)type {

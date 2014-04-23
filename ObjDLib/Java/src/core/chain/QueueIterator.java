@@ -1,6 +1,6 @@
 package core.chain;
 
-public class QueueIterator<T> implements Iterator<T> {
+public class QueueIterator<T> extends Iterator_impl<T> {
     public final ImList<T> out;
     private Iterator<T> i = in.iterator();
     private boolean isIn = ERROR: Unknown True;

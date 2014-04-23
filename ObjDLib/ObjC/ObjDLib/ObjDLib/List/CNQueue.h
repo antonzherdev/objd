@@ -4,6 +4,7 @@
 @class CNImList;
 @class ODClassType;
 
+@class CNQueue_impl;
 @class CNImQueue;
 @class CNQueueIterator;
 @class CNMQueue;
@@ -13,7 +14,11 @@
 @end
 
 
-@interface CNImQueue : NSObject<CNQueue> {
+@interface CNQueue_impl : NSObject<CNQueue>
+@end
+
+
+@interface CNImQueue : CNQueue_impl {
 @protected
     CNImList* _in;
     CNImList* _out;
@@ -35,7 +40,7 @@
 @end
 
 
-@interface CNQueueIterator : NSObject<CNIterator> {
+@interface CNQueueIterator : CNIterator_impl {
 @protected
     CNImList* _out;
     id<CNIterator> _i;
@@ -52,7 +57,7 @@
 @end
 
 
-@interface CNMQueue : NSObject<CNQueue> {
+@interface CNMQueue : CNQueue_impl {
 @protected
     CNImQueue* __queue;
 }

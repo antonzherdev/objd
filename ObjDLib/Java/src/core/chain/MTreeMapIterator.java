@@ -1,6 +1,6 @@
 package core.chain;
 
-public class MTreeMapIterator<K, V> implements MIterator<Tuple2<K, V>> {
+public class MTreeMapIterator<K, V> extends MIterator_impl<Tuple2<K, V>> {
     public final MTreeMap<K, V> map;
     private TreeMapEntry<K, V> prev;
     public TreeMapEntry<K, V> entry;

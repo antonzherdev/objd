@@ -1,6 +1,6 @@
 package core.chain;
 
-public class Failure<T> extends Try<T> {
+public final class Failure<T> extends Try<T> {
     public final Object reason;
     @Override
     public T get() {

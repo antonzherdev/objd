@@ -1,6 +1,6 @@
 package core.chain;
 
-public class Promise<T> extends Future<T> {
+public abstract class Promise<T> extends Future<T> {
     public static Promise<T> apply() {
         return new DefaultPromise<T>();
     }

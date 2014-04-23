@@ -1,6 +1,6 @@
 package core.chain;
 
-public class EmptyIterator<T> implements Iterator<T> {
+public class EmptyIterator<T> extends Iterator_impl<T> {
     public static final EmptyIterator<Object> instance = new EmptyIterator<Object>();
     @Override
     public boolean hasNext() {

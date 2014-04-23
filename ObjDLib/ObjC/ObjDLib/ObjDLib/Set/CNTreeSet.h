@@ -4,8 +4,6 @@
 @class CNTreeMap;
 @protocol CNTreeMapKeySet;
 @class ODClassType;
-@class CNDispatchQueue;
-@class CNChain;
 @class CNImTreeMap;
 @class ODObject;
 @class CNMTreeMap;
@@ -16,7 +14,7 @@
 @class CNTreeSetBuilder;
 @class CNMTreeSet;
 
-@interface CNTreeSet : NSObject<CNSet> {
+@interface CNTreeSet : CNSet_impl {
 @protected
     CNTreeMap* _map;
 }
@@ -51,7 +49,7 @@
 @end
 
 
-@interface CNTreeSetBuilder : NSObject<CNBuilder> {
+@interface CNTreeSetBuilder : CNBuilder_impl {
 @protected
     NSInteger(^_comparator)(id, id);
     CNMTreeSet* _set;

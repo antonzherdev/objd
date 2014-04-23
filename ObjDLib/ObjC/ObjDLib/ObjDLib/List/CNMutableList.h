@@ -3,18 +3,13 @@
 #import "ODObject.h"
 #import "CNCollection.h"
 @class ODClassType;
-@class CNMArray;
-@protocol CNSet;
-@class CNHashSetBuilder;
-@class CNDispatchQueue;
-@class CNChain;
 
 @class CNMList;
 @class CNMListItem;
 @class CNMListIterator;
 @class CNMListImmutableIterator;
 
-@interface CNMList : NSObject<CNMSeq> {
+@interface CNMList : CNMSeq_impl {
 @protected
     NSUInteger __count;
     CNMListItem* _headItem;
@@ -61,7 +56,7 @@
 @end
 
 
-@interface CNMListIterator : NSObject<CNMIterator> {
+@interface CNMListIterator : CNMIterator_impl {
 @protected
     CNMList* _list;
     CNMListItem* _prev;
@@ -81,7 +76,7 @@
 @end
 
 
-@interface CNMListImmutableIterator : NSObject<CNIterator> {
+@interface CNMListImmutableIterator : CNIterator_impl {
 @protected
     __weak CNMListItem* _item;
 }

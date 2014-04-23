@@ -1,6 +1,6 @@
 package core.chain;
 
-public class TreeMapBuilder<K, V> implements Builder<Tuple2<K, V>, TreeMap<K, V>> {
+public class TreeMapBuilder<K, V> extends Builder_impl<Tuple2<K, V>, TreeMap<K, V>> {
     public final F2<K, K, Integer> comparator;
     private final MTreeMap<K, V> map = new MTreeMap<K, V>(comparator);
     public static TreeMapBuilder<K, V> apply() {
@@ -21,13 +21,5 @@ public class TreeMapBuilder<K, V> implements Builder<Tuple2<K, V>, TreeMap<K, V>
     }
     public TreeMapBuilder(F2<K, K, Integer> comparator) {
         this.comparator = comparator;
-    }
-    public void appendAllItems(Traversable<T> items) {
-        items.forEach(new P<T>() {
-            @Override
-            public void apply(T _) {
-                appendItem(_);
-            }
-        });
     }
 }

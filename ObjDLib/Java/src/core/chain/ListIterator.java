@@ -1,6 +1,6 @@
 package core.chain;
 
-public class ListIterator<T> implements Iterator<T> {
+public class ListIterator<T> extends Iterator_impl<T> {
     public ImList<T> list = EmptyList().instance.ERROR: Unknown cast<ImList#C<T#G>>;
     @Override
     public boolean hasNext() {

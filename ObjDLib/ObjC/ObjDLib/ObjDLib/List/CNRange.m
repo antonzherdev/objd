@@ -2,10 +2,6 @@
 #import "CNRange.h"
 
 #import "ODType.h"
-#import "CNChain.h"
-#import "CNPlat.h"
-#import "CNSet.h"
-#import "CNDispatchQueue.h"
 @implementation CNRange
 static ODClassType* _CNRange_type;
 @synthesize start = _start;
@@ -60,151 +56,6 @@ static ODClassType* _CNRange_type;
     return [CNRange rangeWithStart:i end:i step:1];
 }
 
-- (id<CNImSeq>)addItem:(id)item {
-    CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
-    [builder appendAllItems:self];
-    [builder appendItem:item];
-    return [builder build];
-}
-
-- (id<CNImSeq>)addSeq:(id<CNSeq>)seq {
-    CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
-    [builder appendAllItems:self];
-    [builder appendAllItems:seq];
-    return [builder build];
-}
-
-- (id<CNImSeq>)subItem:(id)item {
-    return [[[self chain] filter:^BOOL(id _) {
-        return !([_ isEqual:item]);
-    }] toArray];
-}
-
-- (id<CNMSeq>)mCopy {
-    CNMArray* arr = [CNMArray array];
-    [self forEach:^void(id item) {
-        [arr appendItem:item];
-    }];
-    return arr;
-}
-
-- (id<CNSet>)toSet {
-    return [self convertWithBuilder:[CNHashSetBuilder hashSetBuilder]];
-}
-
-- (BOOL)isEqualSeq:(id<CNSeq>)seq {
-    if([self count] != [seq count]) return NO;
-    id<CNIterator> ia = [self iterator];
-    id<CNIterator> ib = [seq iterator];
-    while([ia hasNext] && [ib hasNext]) {
-        if(!([[ia next] isEqual:[ib next]])) return NO;
-    }
-    return YES;
-}
-
-- (id)head {
-    return [self applyIndex:0];
-}
-
-- (id)last {
-    return [self applyIndex:[self count] - 1];
-}
-
-- (id<CNImSeq>)tail {
-    CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
-    id<CNIterator> i = [self iterator];
-    if([i hasNext]) {
-        [i next];
-        while([i hasNext]) {
-            [builder appendItem:[i next]];
-        }
-    }
-    return [builder build];
-}
-
-- (void)forEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        each([i next]);
-    }
-}
-
-- (void)parForEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        id v = [i next];
-        [CNDispatchQueue.aDefault asyncF:^void() {
-            each(v);
-        }];
-    }
-}
-
-- (BOOL)goOn:(BOOL(^)(id))on {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if(!(on([i next]))) return NO;
-    }
-    return YES;
-}
-
-- (BOOL)containsItem:(id)item {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if([[i next] isEqual:i]) return YES;
-    }
-    return NO;
-}
-
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
-}
-
-- (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = nil;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = x;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)existsWhere:(BOOL(^)(id))where {
-    __block BOOL ret = NO;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = YES;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)allConfirm:(BOOL(^)(id))confirm {
-    __block BOOL ret = YES;
-    [self goOn:^BOOL(id x) {
-        if(!(confirm(x))) {
-            ret = NO;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (id)convertWithBuilder:(id<CNBuilder>)builder {
-    [self forEach:^void(id x) {
-        [builder appendItem:x];
-    }];
-    return [builder build];
-}
-
 - (ODClassType*)type {
     return [CNRange type];
 }
@@ -219,9 +70,9 @@ static ODClassType* _CNRange_type;
 
 - (BOOL)isEqual:(id)other {
     if(self == other) return YES;
-    if(!(other)) return NO;
-    if([other conformsToProtocol:@protocol(CNSeq)]) return [self isEqualSeq:((id<CNSeq>)(other))];
-    return NO;
+    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
+    CNRange* o = ((CNRange*)(other));
+    return self.start == o.start && self.end == o.end && self.step == o.step;
 }
 
 - (NSUInteger)hash {

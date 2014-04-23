@@ -2,9 +2,6 @@
 #import "CNPair.h"
 
 #import "ODType.h"
-#import "CNPlat.h"
-#import "CNDispatchQueue.h"
-#import "CNChain.h"
 @implementation CNPair
 static ODClassType* _CNPair_type;
 @synthesize a = _a;
@@ -48,93 +45,6 @@ static ODClassType* _CNPair_type;
 
 - (id)head {
     return _a;
-}
-
-- (id<CNMSet>)mCopy {
-    CNMHashSet* arr = [CNMHashSet hashSet];
-    [self forEach:^void(id item) {
-        [arr appendItem:item];
-    }];
-    return arr;
-}
-
-- (BOOL)isEmpty {
-    return !([[self iterator] hasNext]);
-}
-
-- (void)forEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        each([i next]);
-    }
-}
-
-- (void)parForEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        id v = [i next];
-        [CNDispatchQueue.aDefault asyncF:^void() {
-            each(v);
-        }];
-    }
-}
-
-- (BOOL)goOn:(BOOL(^)(id))on {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if(!(on([i next]))) return NO;
-    }
-    return YES;
-}
-
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
-}
-
-- (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = nil;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = x;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)existsWhere:(BOOL(^)(id))where {
-    __block BOOL ret = NO;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = YES;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)allConfirm:(BOOL(^)(id))confirm {
-    __block BOOL ret = YES;
-    [self goOn:^BOOL(id x) {
-        if(!(confirm(x))) {
-            ret = NO;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (id)convertWithBuilder:(id<CNBuilder>)builder {
-    [self forEach:^void(id x) {
-        [builder appendItem:x];
-    }];
-    return [builder build];
 }
 
 - (ODClassType*)type {

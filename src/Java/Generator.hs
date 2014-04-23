@@ -28,11 +28,15 @@ genImport (D.ImportObjectDefs cl) = D.packageName (D.classPackage cl) ++ [D.clas
 
 genClass :: D.Class -> Writer [J.Import] J.Class
 genClass cl = do
-	let defs = filter (\f -> not (D.isSpecial f) && not (D.isInline f)) 
-			$ if D.isTrait cl then filter (not . D.isConstructor) (D.classDefs cl) else D.classDefsWithTraits cl
+	let 
+		defs = filter (\f -> not (D.isSpecial f) && not (D.isInline f)) 
+			$ if D.isTrait cl then filter (not . D.isConstructor) (D.classDefs cl) else D.classDefsWithTraits False cl
+		trMod D.ClassModAbstract = Just J.ClassModAbstract
+		trMod D.ClassModFinal = Just J.ClassModFinal
+		trMod _ = Nothing
 	defs' <- mapM (genDef cl) defs
 	return J.Class {
-		J.classVisibility = J.Public,
+		J.classMods = [J.ClassModVisibility J.Public] ++ mapMaybe trMod (D.classMods cl),
 		J.classType = if D.isTrait cl then J.ClassTypeInterface else J.ClassTypeClass,
 		J.className = D.className cl,
 		J.classGenerics = map genGeneric $ D.classGenerics cl,
@@ -40,7 +44,7 @@ genClass cl = do
 		J.classImplements = map genExtendsRef $ filter (not . D.isBaseClass . fst) $ D.traitExtendsRefs $ D.classExtends cl,
 		J.classDefs = defs'
 	}
-		
+
 
 genGeneric :: D.Class -> J.Generic
 genGeneric cl = J.Generic {
@@ -81,10 +85,11 @@ genDef cl d =
  				let  (e', Wrt{wrtImports = imps}) = runWriter $ genExp defaultEnv $ snd p
  				tell imps
  				return e'
+ 		body = if D.isTrait cl then D.Nop else D.defBody d	
  		mods = mapMaybe genMod (D.defMods d)
  	in if D.isField d then 
  			do 
- 				let (e', Wrt{wrtImports = imps}) = runWriter $ genExp defaultEnv $ D.defBody d	
+ 				let (e', Wrt{wrtImports = imps}) = runWriter $ genExp defaultEnv body
  				tell imps
 	 			return J.Field {
 	 				J.defAnnotations = [],
@@ -104,7 +109,7 @@ genDef cl d =
 	 			}
  		else 
  			do
- 				let (stms', Wrt{wrtImports = imps}) = runWriter $ getStms defaultEnv $ D.defBody d
+ 				let (stms', Wrt{wrtImports = imps}) = runWriter $ getStms defaultEnv body
  				tell imps
  				return J.Def {
 	 				J.defAnnotations = [overrideAnnotation| D.DefModOverride `elem` D.defMods d],
@@ -175,8 +180,8 @@ instance Monoid Wrt where
 	mempty = Wrt {wrtStms = [], wrtImports = []}
 	l `mappend` r = Wrt {wrtStms = wrtStms l ++ wrtStms r, wrtImports = nub (wrtImports l ++ wrtImports r)}
 
-tellImport :: J.Import -> Writer Wrt ()
-tellImport imp = tell Wrt{wrtStms = [], wrtImports = [imp]}
+{-tellImport :: J.Import -> Writer Wrt ()
+tellImport imp = tell Wrt{wrtStms = [], wrtImports = [imp]}-}
 tellImports :: [J.Import] -> Writer Wrt ()
 tellImports imps = tell Wrt{wrtStms = [], wrtImports = imps}
 
@@ -258,9 +263,8 @@ genExp env e@D.Throw{} = do
 genExp env (D.Some _ e) = genExp env e
 genExp env (D.Return False e) = genExp env e
 genExp env (D.Arr exps) = do
-	tellImport ["java", "util", "Arrays"]
 	exps' <- mapM (genExp env) exps
-	return $ J.Dot (J.Ref "Arrays") (J.Call "asList" [] exps')
+	return $ J.Dot (J.Ref "ImArray") (J.Call "fromObjects" [] exps')
 genExp _ e = return $ J.ExpError $ "Unknown " ++ show e
 
 

@@ -1,6 +1,6 @@
 package core.chain;
 
-public class KeptPromise<T> extends Promise<T> {
+public final class KeptPromise<T> extends Promise<T> {
     public final Try<T> value;
     @Override
     public Try<T> result() {

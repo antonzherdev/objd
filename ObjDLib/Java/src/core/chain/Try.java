@@ -1,6 +1,6 @@
 package core.chain;
 
-public class Try<T> {
+public abstract class Try<T> {
     public abstract T get();
     public abstract Object reason();
     public abstract boolean isSuccess();

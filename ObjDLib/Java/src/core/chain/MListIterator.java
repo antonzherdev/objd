@@ -1,6 +1,6 @@
 package core.chain;
 
-public class MListIterator<T> implements MIterator<T> {
+public class MListIterator<T> extends MIterator_impl<T> {
     public final MList<T> list;
     private MListItem<T> prev;
     public MListItem<T> item;

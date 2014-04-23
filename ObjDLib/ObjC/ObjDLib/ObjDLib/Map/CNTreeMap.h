@@ -3,16 +3,16 @@
 #import "CNCollection.h"
 #import "ODObject.h"
 @class ODClassType;
-@class CNMHashMap;
+@class CNMArray;
 @class CNDispatchQueue;
 @class CNChain;
-@class CNMArray;
 
 @class CNTreeMap;
 @class CNImTreeMap;
 @class CNTreeMapBuilder;
 @class CNMTreeMap;
 @class CNTreeMapEntry;
+@class CNTreeMapKeySet_impl;
 @class CNImTreeMapKeySet;
 @class CNTreeMapKeyIterator;
 @class CNMTreeMapKeySet;
@@ -23,7 +23,7 @@
 @class CNMTreeMapIterator;
 @protocol CNTreeMapKeySet;
 
-@interface CNTreeMap : NSObject<CNImMap> {
+@interface CNTreeMap : CNImMap_impl {
 @protected
     NSInteger(^_comparator)(id, id);
     CNTreeMapValues* _values;
@@ -72,7 +72,7 @@
 @end
 
 
-@interface CNTreeMapBuilder : NSObject<CNBuilder> {
+@interface CNTreeMapBuilder : CNBuilder_impl {
 @protected
     NSInteger(^_comparator)(id, id);
     CNMTreeMap* _map;
@@ -145,7 +145,11 @@
 @end
 
 
-@interface CNImTreeMapKeySet : NSObject<CNTreeMapKeySet> {
+@interface CNTreeMapKeySet_impl : CNImIterable_impl<CNTreeMapKeySet>
+@end
+
+
+@interface CNImTreeMapKeySet : CNTreeMapKeySet_impl {
 @protected
     __weak CNTreeMap* _map;
 }
@@ -161,7 +165,7 @@
 @end
 
 
-@interface CNTreeMapKeyIterator : NSObject<CNIterator> {
+@interface CNTreeMapKeyIterator : CNIterator_impl {
 @protected
     CNTreeMap* _map;
     CNTreeMapEntry* _entry;
@@ -179,7 +183,7 @@
 @end
 
 
-@interface CNMTreeMapKeySet : NSObject<CNTreeMapKeySet> {
+@interface CNMTreeMapKeySet : CNTreeMapKeySet_impl {
 @protected
     __weak CNMTreeMap* _map;
 }
@@ -196,7 +200,7 @@
 @end
 
 
-@interface CNMTreeMapKeyIterator : NSObject<CNMIterator> {
+@interface CNMTreeMapKeyIterator : CNMIterator_impl {
 @protected
     CNMTreeMap* _map;
     CNTreeMapEntry* _prev;
@@ -217,7 +221,7 @@
 @end
 
 
-@interface CNTreeMapValues : NSObject<CNImIterable> {
+@interface CNTreeMapValues : CNImIterable_impl {
 @protected
     __weak CNTreeMap* _map;
 }
@@ -232,7 +236,7 @@
 @end
 
 
-@interface CNTreeMapValuesIterator : NSObject<CNIterator> {
+@interface CNTreeMapValuesIterator : CNIterator_impl {
 @protected
     CNTreeMapEntry* _entry;
 }
@@ -248,7 +252,7 @@
 @end
 
 
-@interface CNTreeMapIterator : NSObject<CNIterator> {
+@interface CNTreeMapIterator : CNIterator_impl {
 @protected
     CNTreeMap* _map;
     CNTreeMapEntry* _entry;
@@ -266,7 +270,7 @@
 @end
 
 
-@interface CNMTreeMapIterator : NSObject<CNMIterator> {
+@interface CNMTreeMapIterator : CNMIterator_impl {
 @protected
     CNMTreeMap* _map;
     CNTreeMapEntry* _prev;

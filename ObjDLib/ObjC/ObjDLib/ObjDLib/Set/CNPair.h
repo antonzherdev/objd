@@ -2,15 +2,11 @@
 #import "CNSet.h"
 #import "CNCollection.h"
 @class ODClassType;
-@class CNMHashSet;
-@class CNDispatchQueue;
-@class CNChain;
-@class CNMArray;
 
 @class CNPair;
 @class CNPairIterator;
 
-@interface CNPair : NSObject<CNImSet> {
+@interface CNPair : CNImSet_impl {
 @protected
     id _a;
     id _b;
@@ -30,7 +26,7 @@
 @end
 
 
-@interface CNPairIterator : NSObject<CNIterator> {
+@interface CNPairIterator : CNIterator_impl {
 @protected
     CNPair* _pair;
     NSInteger _state;

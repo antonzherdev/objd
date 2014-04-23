@@ -3,6 +3,21 @@
 
 #import "CNList.h"
 #import "ODType.h"
+@implementation CNQueue_impl
+
+- (id)copyWithZone:(NSZone*)zone {
+    return self;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendString:@">"];
+    return description;
+}
+
+@end
+
+
 @implementation CNImQueue
 static CNImQueue* _CNImQueue_empty;
 static ODClassType* _CNImQueue_type;
@@ -153,8 +168,7 @@ static ODClassType* _CNQueueIterator_type;
 
 - (NSString*)description {
     NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"in=%@", self.in];
-    [description appendFormat:@", out=%@", self.out];
+    [description appendFormat:@"out=%@", self.out];
     [description appendString:@">"];
     return description;
 }

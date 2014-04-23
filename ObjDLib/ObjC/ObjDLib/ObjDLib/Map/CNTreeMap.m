@@ -159,138 +159,6 @@ static ODClassType* _CNTreeMap_type;
     return p;
 }
 
-- (id<CNImMap>)addItem:(CNTuple*)item {
-    CNHashMapBuilder* builder = [CNHashMapBuilder hashMapBuilder];
-    [builder appendAllItems:self];
-    [builder appendItem:item];
-    return [builder build];
-}
-
-- (id<CNMMap>)mCopy {
-    CNMHashMap* m = [CNMHashMap hashMap];
-    [m assignImMap:self];
-    return m;
-}
-
-- (id)getKey:(id)key orValue:(id)orValue {
-    id __tmp = [self optKey:key];
-    if(__tmp != nil) return ((id)(__tmp));
-    else return orValue;
-}
-
-- (BOOL)containsKey:(id)key {
-    return [self optKey:key] != nil;
-}
-
-- (BOOL)isValueEqualKey:(id)key value:(id)value {
-    id __tmp;
-    {
-        id _ = [self optKey:key];
-        if(_ != nil) __tmp = numb([_ isEqual:value]);
-        else __tmp = nil;
-    }
-    if(__tmp != nil) return unumb(__tmp);
-    else return NO;
-}
-
-- (NSUInteger)count {
-    id<CNIterator> i = [self iterator];
-    NSUInteger n = 0;
-    while([i hasNext]) {
-        [i next];
-        n++;
-    }
-    return n;
-}
-
-- (id)head {
-    if([self isEmpty]) return nil;
-    else return [[self iterator] next];
-}
-
-- (void)forEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        each([i next]);
-    }
-}
-
-- (void)parForEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        id v = [i next];
-        [CNDispatchQueue.aDefault asyncF:^void() {
-            each(v);
-        }];
-    }
-}
-
-- (BOOL)goOn:(BOOL(^)(id))on {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if(!(on([i next]))) return NO;
-    }
-    return YES;
-}
-
-- (BOOL)containsItem:(id)item {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if([[i next] isEqual:i]) return YES;
-    }
-    return NO;
-}
-
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
-}
-
-- (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = nil;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = x;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)existsWhere:(BOOL(^)(id))where {
-    __block BOOL ret = NO;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = YES;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)allConfirm:(BOOL(^)(id))confirm {
-    __block BOOL ret = YES;
-    [self goOn:^BOOL(id x) {
-        if(!(confirm(x))) {
-            ret = NO;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (id)convertWithBuilder:(id<CNBuilder>)builder {
-    [self forEach:^void(id x) {
-        [builder appendItem:x];
-    }];
-    return [builder build];
-}
-
 - (ODClassType*)type {
     return [CNTreeMap type];
 }
@@ -414,12 +282,6 @@ static ODClassType* _CNTreeMapBuilder_type;
 
 - (CNTreeMap*)build {
     return _map;
-}
-
-- (void)appendAllItems:(id<CNTraversable>)items {
-    [items forEach:^void(id _) {
-        [self appendItem:_];
-    }];
 }
 
 - (ODClassType*)type {
@@ -980,6 +842,25 @@ static ODClassType* _CNTreeMapEntry_type;
 @end
 
 
+@implementation CNTreeMapKeySet_impl
+
+- (id<CNIterator>)iteratorHigherThanKey:(id)key {
+    @throw @"Method iteratorHigherThan is abstract";
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    return self;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendString:@">"];
+    return description;
+}
+
+@end
+
+
 @implementation CNImTreeMapKeySet
 static ODClassType* _CNImTreeMapKeySet_type;
 @synthesize map = _map;
@@ -1010,106 +891,6 @@ static ODClassType* _CNImTreeMapKeySet_type;
 
 - (id<CNIterator>)iteratorHigherThanKey:(id)key {
     return [CNTreeMapKeyIterator applyMap:_map entry:[_map higherEntryThanKey:key]];
-}
-
-- (id<CNMIterable>)mCopy {
-    CNMArray* arr = [CNMArray array];
-    [self forEach:^void(id item) {
-        [arr appendItem:item];
-    }];
-    return arr;
-}
-
-- (id)head {
-    if([self isEmpty]) return nil;
-    else return [[self iterator] next];
-}
-
-- (BOOL)isEmpty {
-    return !([[self iterator] hasNext]);
-}
-
-- (void)forEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        each([i next]);
-    }
-}
-
-- (void)parForEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        id v = [i next];
-        [CNDispatchQueue.aDefault asyncF:^void() {
-            each(v);
-        }];
-    }
-}
-
-- (BOOL)goOn:(BOOL(^)(id))on {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if(!(on([i next]))) return NO;
-    }
-    return YES;
-}
-
-- (BOOL)containsItem:(id)item {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if([[i next] isEqual:i]) return YES;
-    }
-    return NO;
-}
-
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
-}
-
-- (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = nil;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = x;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)existsWhere:(BOOL(^)(id))where {
-    __block BOOL ret = NO;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = YES;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)allConfirm:(BOOL(^)(id))confirm {
-    __block BOOL ret = YES;
-    [self goOn:^BOOL(id x) {
-        if(!(confirm(x))) {
-            ret = NO;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (id)convertWithBuilder:(id<CNBuilder>)builder {
-    [self forEach:^void(id x) {
-        [builder appendItem:x];
-    }];
-    return [builder build];
 }
 
 - (ODClassType*)type {
@@ -1227,106 +1008,6 @@ static ODClassType* _CNMTreeMapKeySet_type;
 
 - (id<CNIterator>)iteratorHigherThanKey:(id)key {
     return [CNMTreeMapKeyIterator applyMap:_map entry:[_map higherEntryThanKey:key]];
-}
-
-- (id<CNMIterable>)mCopy {
-    CNMArray* arr = [CNMArray array];
-    [self forEach:^void(id item) {
-        [arr appendItem:item];
-    }];
-    return arr;
-}
-
-- (id)head {
-    if([self isEmpty]) return nil;
-    else return [[self iterator] next];
-}
-
-- (BOOL)isEmpty {
-    return !([[self iterator] hasNext]);
-}
-
-- (void)forEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        each([i next]);
-    }
-}
-
-- (void)parForEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        id v = [i next];
-        [CNDispatchQueue.aDefault asyncF:^void() {
-            each(v);
-        }];
-    }
-}
-
-- (BOOL)goOn:(BOOL(^)(id))on {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if(!(on([i next]))) return NO;
-    }
-    return YES;
-}
-
-- (BOOL)containsItem:(id)item {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if([[i next] isEqual:i]) return YES;
-    }
-    return NO;
-}
-
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
-}
-
-- (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = nil;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = x;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)existsWhere:(BOOL(^)(id))where {
-    __block BOOL ret = NO;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = YES;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)allConfirm:(BOOL(^)(id))confirm {
-    __block BOOL ret = YES;
-    [self goOn:^BOOL(id x) {
-        if(!(confirm(x))) {
-            ret = NO;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (id)convertWithBuilder:(id<CNBuilder>)builder {
-    [self forEach:^void(id x) {
-        [builder appendItem:x];
-    }];
-    return [builder build];
 }
 
 - (ODClassType*)type {
@@ -1454,106 +1135,6 @@ static ODClassType* _CNTreeMapValues_type;
     return [CNTreeMapValuesIterator applyMap:_map entry:[_map firstEntry]];
 }
 
-- (id<CNMIterable>)mCopy {
-    CNMArray* arr = [CNMArray array];
-    [self forEach:^void(id item) {
-        [arr appendItem:item];
-    }];
-    return arr;
-}
-
-- (id)head {
-    if([self isEmpty]) return nil;
-    else return [[self iterator] next];
-}
-
-- (BOOL)isEmpty {
-    return !([[self iterator] hasNext]);
-}
-
-- (void)forEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        each([i next]);
-    }
-}
-
-- (void)parForEach:(void(^)(id))each {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        id v = [i next];
-        [CNDispatchQueue.aDefault asyncF:^void() {
-            each(v);
-        }];
-    }
-}
-
-- (BOOL)goOn:(BOOL(^)(id))on {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if(!(on([i next]))) return NO;
-    }
-    return YES;
-}
-
-- (BOOL)containsItem:(id)item {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if([[i next] isEqual:i]) return YES;
-    }
-    return NO;
-}
-
-- (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
-}
-
-- (id)findWhere:(BOOL(^)(id))where {
-    __block id ret = nil;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = x;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)existsWhere:(BOOL(^)(id))where {
-    __block BOOL ret = NO;
-    [self goOn:^BOOL(id x) {
-        if(where(x)) {
-            ret = YES;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (BOOL)allConfirm:(BOOL(^)(id))confirm {
-    __block BOOL ret = YES;
-    [self goOn:^BOOL(id x) {
-        if(!(confirm(x))) {
-            ret = NO;
-            return NO;
-        } else {
-            return YES;
-        }
-    }];
-    return ret;
-}
-
-- (id)convertWithBuilder:(id<CNBuilder>)builder {
-    [self forEach:^void(id x) {
-        [builder appendItem:x];
-    }];
-    return [builder build];
-}
-
 - (ODClassType*)type {
     return [CNTreeMapValues type];
 }
@@ -1625,7 +1206,6 @@ static ODClassType* _CNTreeMapValuesIterator_type;
 
 - (NSString*)description {
     NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"map=%@", self.map];
     [description appendString:@">"];
     return description;
 }

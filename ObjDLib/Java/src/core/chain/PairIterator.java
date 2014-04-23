@@ -1,6 +1,6 @@
 package core.chain;
 
-public class PairIterator<T> implements Iterator<T> {
+public class PairIterator<T> extends Iterator_impl<T> {
     public final Pair<T> pair;
     private int state = ERROR: Unknown 0;
     @Override

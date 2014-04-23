@@ -1,9 +1,7 @@
 package core.chain;
 
-import java.util.Arrays;
-
 public class DefaultPromise<T> extends Promise<T> {
-    private final AtomicObject<Object> _state = new AtomicObject<Object>(Arrays.asList());
+    private final AtomicObject<Object> _state = new AtomicObject<Object>(ImArray.fromObjects());
     @Override
     public Try<T> result() {
         Object v = this._state.get();

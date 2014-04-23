@@ -1,6 +1,6 @@
 package core.chain;
 
-public class TreeSet<T> implements Set<T> {
+public class TreeSet<T> extends Set_impl<T> {
     public final TreeMap<T, Object> map;
     public T higherThanItem(T item) {
         return this.map.higherKeyThanKey(item);
@@ -32,107 +32,5 @@ public class TreeSet<T> implements Set<T> {
     }
     public TreeSet(TreeMap<T, Object> map) {
         this.map = map;
-    }
-    public boolean isEmpty() {
-        return ERROR: Unknown !(<Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\.<dIa>hasNext\bool\);
-    }
-    @Override
-    public void forEach(P<T> each) {
-        Iterator<T> i = this.iterator();
-        ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) <l>each\§T#G§ -> void\.<d>apply( = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\void\;
-    }
-    @Override
-    public void parForEach(P<T> each) {
-        Iterator<T> i = this.iterator();
-        ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
-    local v : T#G = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\
-    <to>DispatchQueue\DispatchQueue#C.class\.<eIt>default\DispatchQueue#C\.<dIb>async(f =  -> void = <l>each\§T#G§ -> void\.<d>apply( = <l>v\§T#G§\)\void\)\void\
-};
-    }
-    @Override
-    public boolean goOn(F<T, Boolean> on) {
-        Iterator<T> i = this.iterator();
-        ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) if(!(<l>on\§T#G§ -> bool\.<d>apply( = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\bool\)) return False;
-        return ERROR: Unknown True;
-    }
-    public void forEach(P<T> each) {
-        goOn(new F<T, Boolean>() {
-            @Override
-            public Boolean apply(T item) {
-                each.apply(item);
-                return ERROR: Unknown True;
-            }
-        });
-    }
-    public void parForEach(P<T> each) {
-        goOn(new F<T, Boolean>() {
-            @Override
-            public Boolean apply(T item) {
-                DispatchQueue().default.asyncF(new P0() {
-                    @Override
-                    public void apply() {
-                        each.apply(item);
-                    }
-                });
-                return ERROR: Unknown True;
-            }
-        });
-    }
-    public Chain<T> chain() {
-        return Chain().chainWithCollection<T>(this);
-    }
-    public T findWhere(F<T, Boolean> where) {
-        T ret = null;
-        goOn(new F<T, Boolean>() {
-            @Override
-            public Boolean apply(T x) {
-                if(where.apply(x)) {
-                    ret = x;
-                    return ERROR: Unknown False;
-                } else {
-                    return ERROR: Unknown True;
-                }
-            }
-        });
-        return ret;
-    }
-    public boolean existsWhere(F<T, Boolean> where) {
-        boolean ret = ERROR: Unknown False;
-        goOn(new F<T, Boolean>() {
-            @Override
-            public Boolean apply(T x) {
-                if(where.apply(x)) {
-                    ret = ERROR: Unknown True;
-                    return ERROR: Unknown False;
-                } else {
-                    return ERROR: Unknown True;
-                }
-            }
-        });
-        return ret;
-    }
-    public boolean allConfirm(F<T, Boolean> confirm) {
-        boolean ret = ERROR: Unknown True;
-        goOn(new F<T, Boolean>() {
-            @Override
-            public Boolean apply(T x) {
-                if(ERROR: Unknown !(<l>confirm\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\)) {
-                    ret = ERROR: Unknown False;
-                    return ERROR: Unknown False;
-                } else {
-                    return ERROR: Unknown True;
-                }
-            }
-        });
-        return ret;
-    }
-    public C convertWithBuilder(Builder<T, C> builder) {
-        forEach(new P<T>() {
-            @Override
-            public void apply(T x) {
-                builder.appendItem(x);
-            }
-        });
-        return builder.build();
     }
 }

@@ -69,7 +69,7 @@ stmToInterface cl =
 		C.interfaceName = name,
 		C.interfaceExtends = classExtends cl,
 		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs,
-		C.interfaceFuns = constrFuns ++ [typeInstanceFun]
+		C.interfaceFuns = constrFuns ++ [typeInstanceFun | D.ClassModTraitImpl `notElem` D.classMods cl]
 			++ intefaceFuns defs ++ staticGetters,
 		C.interfaceFields = [(C.Protected, map (implField env) implFields)]
 	}
@@ -77,7 +77,7 @@ stmToInterface cl =
 		env = Env cl 0 D.TPVoid False
 		name = D.classNameWithPrefix cl
 		defs = filter (not . D.isInline) $ D.classDefs cl
-		implFields = filter needField (D.classDefsWithTraits cl)
+		implFields = filter needField (D.classDefs cl)
 		needField f = D.isField f && not (D.isStatic f)
 		constrFuns = fromMaybe [] $ fmap (\constr -> [createFun name constr, initFun constr]) (D.classConstructor cl)
 		staticGetters = (map staticGetterFun .filter (\f -> 
@@ -186,8 +186,8 @@ stmToImpl cl =
 		C.implName = clsName,
 		C.implFields = [],
 		C.implSynthesizes = (map (synthesize env) . filter needProperty) implFields,
-		C.implFuns = nub $ constrFuns ++ [implInitialize env] ++ dealoc env 
-			++ implFuns env defs ++ [instanceType] ++ staticGetters ++ copyImpls 
+		C.implFuns = nub $ constrFuns ++ maybeToList (implInitialize env) ++ dealoc env 
+			++ implFuns env defs ++ [instanceType | D.ClassModTraitImpl `notElem` D.classMods cl] ++ staticGetters ++ copyImpls 
 			++ [equal | D.needIsEqualForClass cl] ++ [hash | D.needHashForClass cl] ++ [description],
 		C.implStaticFields = map (implField env) staticFields
 	}
@@ -195,7 +195,7 @@ stmToImpl cl =
 		clsName = D.classNameWithPrefix cl
 		env = Env cl 0 D.TPVoid False
 		defs :: [D.Def]
-		defs = filter (not . D.isInline) $ D.classDefsWithTraits cl
+		defs = filter (not . D.isInline) $ D.classDefsWithTraits True cl
 					
 		constrFuns = fromMaybe [] $ fmap (\constr -> [implCreate cl constr, implInit env constr]) (D.classConstructor cl)
 		implFields = filter needField defs
@@ -295,17 +295,18 @@ dealoc env@Env{envClass = cl}
 		releaseField d@D.Def{D.defType = D.TPClass{}} = Just $ C.Stm $ C.Call (C.Ref $ fieldName env d) "release" [] []
 		releaseField _ = Nothing
 
-implInitialize :: Env ->  C.ImplFun 		
+implInitialize :: Env -> Maybe C.ImplFun 		
 implInitialize env@Env{envClass = cl} = let 
 	fields = filter hasInitialize (D.classFields cl)
 	hasInitialize D.Def{D.defBody = D.Nop} = False
 	hasInitialize d@D.Def{D.defBody = b} = not (D.isConst b) && D.isField d && D.isStatic d
 	selfClass = C.Call (C.Ref $ D.classNameWithPrefix cl) "class" [] []
-	typeInit = C.Set Nothing (C.Ref $ staticName env "type") $ 
-		C.Call (C.Ref "ODClassType") "classTypeWith" [("cls", selfClass)] []
-	in C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
+	typeInit = [C.Set Nothing (C.Ref $ staticName env "type") $ 
+		C.Call (C.Ref "ODClassType") "classTypeWith" [("cls", selfClass)] [] | D.ClassModTraitImpl `notElem` D.classMods cl]
+	stms = typeInit ++ map (implInitField env) fields
+	in if null stms then Nothing else Just $ C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
 			(C.Stm $ C.Call C.Super "initialize" [] []) : [C.If (C.BoolOp Eq C.Self selfClass)
-				(typeInit : map (implInitField env) fields)
+				stms
 				[]
 				])
 				
@@ -314,7 +315,7 @@ implInitialize env@Env{envClass = cl} = let
 implInit :: Env -> D.Def -> C.ImplFun
 implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
 			[C.Set Nothing C.Self (superInit $ D.extendsClass $ D.classExtends cl)]
-			++ declareWeakSelf env (implInitFields (filter hasField constrPars) (filter hasInit (D.classDefsWithTraits cl)))
+			++ declareWeakSelf env (implInitFields (filter hasField constrPars) (filter hasInit (D.classDefsWithTraits False cl)))
 			++ [C.Stm C.Nop, C.Return C.Self]
 			)
 	where
@@ -623,7 +624,7 @@ procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
 		procClasses = concatMap procClass classes
 		procClass :: D.Class -> [(D.Class, Bool)]
 		procClass cl = procExtends (D.classExtends cl) 
-			++ concatMap procDef (D.classDefsWithTraits cl)
+			++ concatMap procDef (D.classDefsWithTraits False cl)
 		procDef :: D.Def -> [(D.Class, Bool)]
 		procDef def = procDataType (D.defType def) ++ procExp (D.defBody def) ++ concatMap procDef (D.defPars def)
 		procExtends :: D.Extends -> [(D.Class, Bool)]

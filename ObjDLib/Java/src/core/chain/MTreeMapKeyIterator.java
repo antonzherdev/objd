@@ -1,6 +1,6 @@
 package core.chain;
 
-public class MTreeMapKeyIterator<K> implements MIterator<K> {
+public class MTreeMapKeyIterator<K> extends MIterator_impl<K> {
     public final MTreeMap<K, ?> map;
     private TreeMapEntry<K, ?> prev;
     public TreeMapEntry<K, ?> entry;

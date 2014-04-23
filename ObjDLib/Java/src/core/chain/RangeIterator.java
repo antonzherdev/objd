@@ -1,6 +1,6 @@
 package core.chain;
 
-public class RangeIterator implements Iterator<int> {
+public class RangeIterator extends Iterator_impl<int> {
     public final int start;
     public final int end;
     public final int step;
