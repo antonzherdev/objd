@@ -45,7 +45,7 @@ public class FutureEnd<T> {
                                         } else {
                                             FutureEnd.this._array;
                                         }
-                                        .setIndexItem(ERROR: Unknown <l>i\int\.cast<uint>, tr.get());
+                                        .setIndexItem(((int)i), tr.get());
                                         Memory().memoryBarrier();
                                         int r = FutureEnd.this._counter.decrementAndGet();
                                         Memory().memoryBarrier();

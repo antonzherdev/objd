@@ -45,7 +45,7 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
     }
     @Override
     public int hashCode() {
-        int ret = ERROR: Unknown 13.cast<uint>;
+        int ret = ((int)13);
         Iterator<T> i = this.iterator();
         while(i.hasNext()) {
             ret = ret * 31 + i.next().hashCode();
@@ -54,7 +54,7 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
     }
     public int count() {
         Iterator<T> i = this.iterator();
-        int n = ERROR: Unknown 0.cast<uint>;
+        int n = ((int)0);
         while(i.hasNext()) {
             i.next();
             ERROR: Unknown <lm>n\uint\++;

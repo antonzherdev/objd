@@ -2,7 +2,7 @@ package core.chain;
 
 public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     private TreeMapEntry<K, V> _root = null;
-    private int _size = ERROR: Unknown 0.cast<uint>;
+    private int _size = ((int)0);
     public final MTreeMapKeySet<K> keys = new MTreeMapKeySet<K>(this);
     public static MTreeMap<K, V> apply() {
         return new MTreeMap<K, V>(new F2<K, K, Integer>() {
@@ -22,8 +22,8 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     }
     @Override
     public void assignImMap(ImMap<K, V> imMap) {
-        if(imMap.ERROR: Unknown is<ImTreeMap#C<K#G, V#G>>) {
-            ImTreeMap<K, V> m = imMap.ERROR: Unknown cast<ImTreeMap#C<K#G, V#G>>;
+        if(imMap instanceof ImTreeMap) {
+            ImTreeMap<K, V> m = ((ImTreeMap<K, V>)imMap);
             this._root = ERROR: Unknown <l>m\ImTreeMap#C<§K#G§, §V#G§>\.<eIUo>root\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<dI>copy(parent = none<^TreeMapEntry#C<§K#G§, §V#G§>>)\TreeMapEntry#C<§K#G§, §V#G§>\;
             this._size = m.count;
         } else {
@@ -47,7 +47,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     }
     @Override
     public void clear() {
-        this._size = ERROR: Unknown 0.cast<uint>;
+        this._size = ((int)0);
         this._root = null;
     }
     @Override
@@ -60,7 +60,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
         TreeMapEntry<K, V> t = this._root;
         if(t == null) {
             this._root = new TreeMapEntry<K, V>(key, value, null);
-            this._size = ERROR: Unknown 1.cast<uint>;
+            this._size = ((int)1);
         } else {
             int cmp = 0;
             TreeMapEntry<K, V> parent = null;
@@ -120,7 +120,7 @@ else <l>__tmp_2_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
         if(replacement != null) {
             replacement.parent = p.parent;
             if(p.parent == null) {
-                this._root = ERROR: Unknown <l>replacement\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.cast<(^TreeMapEntry#C<§K#G§, §V#G§>)?>;
+                this._root = ((TreeMapEntry<K, V>)replacement);
             } else {
                 if(ERROR: Unknown {
     local __tmp_4_1 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>p\TreeMapEntry#C<§K#G§, §V#G§>\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
@@ -130,13 +130,13 @@ else <l>__tmp_2_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     local __tmp_4_1 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>p\TreeMapEntry#C<§K#G§, §V#G§>\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     if((<l>__tmp_4_1\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == none<^TreeMapEntry#C<§K#G§, §V#G§>>)) throw "Not null"
 else <l>__tmp_4_1\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-}.left = ERROR: Unknown <l>replacement\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.cast<(^TreeMapEntry#C<§K#G§, §V#G§>)?>;
+}.left = ((TreeMapEntry<K, V>)replacement);
                 } else {
                     ERROR: Unknown {
     local __tmp_4_1 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>p\TreeMapEntry#C<§K#G§, §V#G§>\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     if((<l>__tmp_4_1\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == none<^TreeMapEntry#C<§K#G§, §V#G§>>)) throw "Not null"
 else <l>__tmp_4_1\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-}.right = ERROR: Unknown <l>replacement\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.cast<(^TreeMapEntry#C<§K#G§, §V#G§>)?>;
+}.right = ((TreeMapEntry<K, V>)replacement);
                 }
             }
             p.left = null;
@@ -431,7 +431,7 @@ else <l>__tmp_0_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
             {
                 TreeMapEntry<K, V> __tmp_0_2 = r.left;
                 if(__tmp_0_2 != null) {
-                    __tmp_0_2.parent = ERROR: Unknown <l>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.cast<(^TreeMapEntry#C<§K#G§, §V#G§>)?>;
+                    __tmp_0_2.parent = ((TreeMapEntry<K, V>)p);
                 }
             }
             r.parent = p.parent;
@@ -455,7 +455,7 @@ else <l>__tmp_0_4\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
 }.right = r;
                 }
             }
-            r.left = ERROR: Unknown <l>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.cast<(^TreeMapEntry#C<§K#G§, §V#G§>)?>;
+            r.left = ((TreeMapEntry<K, V>)p);
             p.parent = r;
         }
     }
@@ -470,7 +470,7 @@ else <l>__tmp_0_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
             {
                 TreeMapEntry<K, V> __tmp_0_2 = l.right;
                 if(__tmp_0_2 != null) {
-                    __tmp_0_2.parent = ERROR: Unknown <l>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.cast<(^TreeMapEntry#C<§K#G§, §V#G§>)?>;
+                    __tmp_0_2.parent = ((TreeMapEntry<K, V>)p);
                 }
             }
             l.parent = p.parent;
@@ -494,7 +494,7 @@ else <l>__tmp_0_4\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
 }.left = l;
                 }
             }
-            l.right = ERROR: Unknown <l>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.cast<(^TreeMapEntry#C<§K#G§, §V#G§>)?>;
+            l.right = ((TreeMapEntry<K, V>)p);
             p.parent = l;
         }
     }

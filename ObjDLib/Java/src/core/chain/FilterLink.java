@@ -8,7 +8,7 @@ public class FilterLink<T> implements ChainLink<T, T> {
         return Yield().decorateBaseBeginYield<Traversable<T>>(yield, new F<Integer, Integer>() {
             @Override
             public Integer apply(Integer size) {
-                return yield.beginYieldWithSize(ERROR: Unknown (<l>size\uint\ * <FilterLink#C<T#G>>self.<eIU>selectivity\float4\).cast<uint>);
+                return yield.beginYieldWithSize(((int)size * FilterLink.this.selectivity));
             }
         }, new F<Traversable<T>, Integer>() {
             @Override

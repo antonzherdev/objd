@@ -3,7 +3,7 @@ package core.chain;
 public class IndexFunSeqIterator<T> extends Iterator_impl<T> {
     public final int count;
     public final F<Integer, T> f;
-    private int i = ERROR: Unknown 0.cast<uint>;
+    private int i = ((int)0);
     @Override
     public boolean hasNext() {
         return this.i < this.count;

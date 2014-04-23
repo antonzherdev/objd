@@ -30,8 +30,8 @@ public class FutureTest extends TestCase {
                 }
             }
         }
-        Thread().sleepPeriod(ERROR: Unknown 1.cast<float>);
-        ().assertEqualsAB<Integer>(n.intValue(), ERROR: Unknown <l>count\int\.cast<int4>);
+        Thread().sleepPeriod(((float)1));
+        ().assertEqualsAB<Integer>(n.intValue(), ((int)count));
     }
     public void testMap() {
         AtomicInt n = new AtomicInt();
@@ -51,7 +51,7 @@ public class FutureTest extends TestCase {
                                 return _ + 1;
                             }
                         });
-                        result.addAndGetValue(ERROR: Unknown (<l>__inline__3_v\§^int§\ + 1).cast<int4>);
+                        result.addAndGetValue(((int)__inline__3_v + 1));
                         DispatchQueue().default.asyncF(new P0() {
                             @Override
                             public void apply() {
@@ -61,14 +61,14 @@ public class FutureTest extends TestCase {
                         m.onCompleteF(new P<Try<Integer>>() {
                             @Override
                             public void apply(Try<Integer> _) {
-                                n.addAndGetValue(ERROR: Unknown <l>_\Try#C<§^int§>\.<dIa>get\§^int§\.cast<int4>);
+                                n.addAndGetValue(((int)_.get()));
                             }
                         });
                     }
                 });
             }
         }
-        Thread().sleepPeriod(ERROR: Unknown 3.cast<float>);
+        Thread().sleepPeriod(((float)3));
         ().assertEqualsAB<AtomicInt>(n, result);
     }
     public void testFlatMap() {
@@ -102,14 +102,14 @@ public class FutureTest extends TestCase {
                     m.onCompleteF(new P<Try<Integer>>() {
                         @Override
                         public void apply(Try<Integer> _) {
-                            n.addAndGetValue(ERROR: Unknown <l>_\Try#C<§^int§>\.<dIa>get\§^int§\.cast<int4>);
+                            n.addAndGetValue(((int)_.get()));
                         }
                     });
                 }
             }
         }
-        Thread().sleepPeriod(ERROR: Unknown 3.cast<float>);
-        ().assertEqualsAB<Integer>(n.intValue(), ERROR: Unknown <lm>result\int\.cast<int4>);
+        Thread().sleepPeriod(((float)3));
+        ().assertEqualsAB<Integer>(n.intValue(), ((int)result));
     }
     public FutureTest() {
     }

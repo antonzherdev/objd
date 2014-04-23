@@ -4,7 +4,7 @@ public final class EmptyList<T> extends ImList<T> {
     public static final EmptyList<Object> instance = new EmptyList<Object>();
     @Override
     public int count() {
-        return ERROR: Unknown 0.cast<uint>;
+        return ((int)0);
     }
     @Override
     public T head() {
@@ -31,7 +31,7 @@ public final class EmptyList<T> extends ImList<T> {
     }
     @Override
     public ImList<T> insertItem(C item) {
-        return ImList().applyItem<T>(item.ERROR: Unknown cast<T#G>);
+        return ImList().applyItem<T>(((T)item));
     }
     public EmptyList() {
     }

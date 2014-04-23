@@ -17,7 +17,7 @@ public class TreeMapEntry<K, V> {
 else <l>__tmp_0_1\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
 };
             }
-            return ERROR: Unknown <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.cast<^(^TreeMapEntry#C<§K#G§, §V#G§>)?>;
+            return ((TreeMapEntry<K, V>)p);
         } else {
             TreeMapEntry<K, V> p = this.parent;
             TreeMapEntry<K, V> ch = this;

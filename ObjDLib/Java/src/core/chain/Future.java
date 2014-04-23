@@ -58,7 +58,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a, _b));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)t));
                 }
             }
         });
@@ -72,7 +72,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a, _b));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)t));
                 }
             }
         });
@@ -94,7 +94,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a, _b, _c));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)t));
                 }
             }
         });
@@ -108,7 +108,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a, _b, _c));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)t));
                 }
             }
         });
@@ -122,7 +122,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a, _b, _c));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)t));
                 }
             }
         });
@@ -145,7 +145,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a, _b, _c, _d));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)t));
                 }
             }
         });
@@ -159,7 +159,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a, _b, _c, _d));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)t));
                 }
             }
         });
@@ -173,7 +173,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a, _b, _c, _d));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)t));
                 }
             }
         });
@@ -187,7 +187,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a, _b, _c, _d));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)t));
                 }
             }
         });
@@ -211,7 +211,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)t));
                 }
             }
         });
@@ -225,7 +225,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)t));
                 }
             }
         });
@@ -239,7 +239,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)t));
                 }
             }
         });
@@ -253,7 +253,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)t));
                 }
             }
         });
@@ -267,7 +267,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)t));
                 }
             }
         });
@@ -336,7 +336,7 @@ public abstract class Future<T> {
                     f.apply(tr.get());
                     p.successValue(null);
                 } else {
-                    p.completeValue(tr.ERROR: Unknown cast<Try#C<^void>>);
+                    p.completeValue(((Try<Void>)tr));
                 }
             }
         });
@@ -348,7 +348,7 @@ public abstract class Future<T> {
             @Override
             public void apply(Try<T> tr) {
                 if(tr.isFailure()) {
-                    p.completeValue(tr.ERROR: Unknown cast<Try#C<R#G>>);
+                    p.completeValue(((Try<R>)tr));
                 } else {
                     Future<R> fut = f.apply(tr.get());
                     fut.onCompleteF(new P<Try<R>>() {
@@ -411,7 +411,7 @@ else <l>__tmp_4\(^Try#C<§T#G§>)?\
                     if(__inline__0___tr.isSuccess()) {
                         {
                             T __tr2 = __inline__0___tr.get();
-                            __tr2.ERROR: Unknown cast<Traversable#T<I#G>>.forEach(f);
+                            ((Traversable<I>)__tr2).forEach(f);
                         }
                     }
                 }
@@ -440,7 +440,7 @@ else <l>__tmp\§(T#G)?§\
                         p.successValue(new Tuple<T, R>(a, b));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<^(T#G, R#G)>>);
+                    p.completeValue(((Try<Tuple2<T, R>>)t));
                 }
             }
         });
@@ -454,7 +454,7 @@ else <l>__tmp\§(T#G)?§\
                         p.successValue(new Tuple<T, R>(a, b));
                     }
                 } else {
-                    p.completeValue(t.ERROR: Unknown cast<Try#C<^(T#G, R#G)>>);
+                    p.completeValue(((Try<Tuple2<T, R>>)t));
                 }
             }
         });

@@ -16,7 +16,7 @@ public final class Pair<T> extends ImSet_impl<T> {
     }
     @Override
     public int count() {
-        return ERROR: Unknown 2.cast<uint>;
+        return ((int)2);
     }
     @Override
     public Iterator<T> iterator() {

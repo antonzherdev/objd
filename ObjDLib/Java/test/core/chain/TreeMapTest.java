@@ -8,7 +8,7 @@ import test..*;
 public class TreeMapTest extends TestCase {
     public void testMain() {
         MTreeMap<Integer, String> map = MTreeMap().apply<Integer, String>();
-        ().assertEqualsAB<Integer>(0, ERROR: Unknown <l>map\MTreeMap#C<§^int§, §^string§>\.<dIo>count\uint\.cast<int>);
+        ().assertEqualsAB<Integer>(0, ((int)map.count()));
         ().assertTrueValue(map.optKey(0) == null);
         map.setKeyValue(0, "test");
         ().assertEqualsAB<String>("test", map.applyKey(0));
@@ -36,7 +36,7 @@ public class TreeMapTest extends TestCase {
                 ().assertTrueValue(map.optKey(i) == null);
             }
         });
-        ().assertEqualsAB<Integer>(0, ERROR: Unknown <l>map\MTreeMap#C<§^int§, §^string§>\.<dIo>count\uint\.cast<int>);
+        ().assertEqualsAB<Integer>(0, ((int)map.count()));
     }
     public TreeMapTest() {
     }

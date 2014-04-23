@@ -1,7 +1,7 @@
 package core.chain;
 
 public class MList<T> extends MSeq_impl<T> {
-    private int _count = ERROR: Unknown 0.cast<uint>;
+    private int _count = ((int)0);
     private MListItem<T> headItem;
     private MListItem<T> lastItem;
     @Override
@@ -54,9 +54,9 @@ public class MList<T> extends MSeq_impl<T> {
         if(this.headItem == null) {
             this.headItem = i;
             this.lastItem = i;
-            this._count = ERROR: Unknown 1.cast<uint>;
+            this._count = ((int)1);
         } else {
-            i.next = ERROR: Unknown <MList#C<T#G>>self.<emp>headItem\(^MListItem#C<§T#G§>)¿\.cast<(^MListItem#C<§T#G§>)?>;
+            i.next = ((MListItem<T>)this.headItem);
             this.headItem.prev = i;
             this.headItem = i;
             ERROR: Unknown <MList#C<T#G>>self.<emp>_count\uint\++;
@@ -68,9 +68,9 @@ public class MList<T> extends MSeq_impl<T> {
         if(this.lastItem == null) {
             this.headItem = i;
             this.lastItem = i;
-            this._count = ERROR: Unknown 1.cast<uint>;
+            this._count = ((int)1);
         } else {
-            i.prev = ERROR: Unknown <MList#C<T#G>>self.<emp>lastItem\(^MListItem#C<§T#G§>)¿\.cast<(^MListItem#C<§T#G§>)?>;
+            i.prev = ((MListItem<T>)this.lastItem);
             this.lastItem.next = i;
             this.lastItem = i;
             ERROR: Unknown <MList#C<T#G>>self.<emp>_count\uint\++;

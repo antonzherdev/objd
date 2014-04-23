@@ -2,7 +2,7 @@ package core.chain;
 
 public abstract class ImList<T> extends ImSeq_impl<T> {
     public static ImList<T> apply() {
-        return EmptyList().instance.ERROR: Unknown cast<ImList#C<T#G>>;
+        return ((ImList<T>)EmptyList().instance);
     }
     public static ImList<T> applyItem(T item) {
         return new FilledList<T>(item, EmptyList().instance);

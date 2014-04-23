@@ -15,20 +15,20 @@ public final class FilledList<T> extends ImList<T> {
     @Override
     public ImList<T> filterF(F<T, Boolean> f) {
         if(f.apply(this._head)) {
-            return ERROR: Unknown <to>FilledList\FilledList#C.class\.<tcI>apply(_head = <FilledList#C<T#G>>self.<eIU>_head\§T#G§\, tail = <FilledList#C<T#G>>self.<eIUo>tail\ImList#C<§T#G§>\.<dIa>filter(f = <l>f\§T#G§ -> bool\)\ImList#C<§T#G§>\)\FilledList#C<§T#G§>\.cast<ImList#C<§T#G§>>;
+            return ((ImList<T>)new FilledList<T>(this._head, this.tail.filterF(f)));
         } else {
             return this.tail.filterF(f);
         }
     }
     @Override
     public ImList<T> reverse() {
-        return reverseAndAddList(EmptyList().instance.ERROR: Unknown cast<ImList#C<T#G>>);
+        return reverseAndAddList(((ImList<T>)EmptyList().instance));
     }
     private ImList<T> reverseAndAddList(ImList<T> list) {
         FilledList<T> ret = new FilledList<T>(this._head, list);
         ImList<T> l = this.tail;
         while(ERROR: Unknown !(<lm>l\ImList#C<§T#G§>\.<rdIo>isEmpty\bool\)) {
-            ret = new FilledList<T>(l.ERROR: Unknown cast<FilledList#C<T#G>>._head, ret);
+            ret = new FilledList<T>(((FilledList<T>)l)._head, ret);
             l = l.tail();
         }
         return ret;
@@ -42,7 +42,7 @@ public final class FilledList<T> extends ImList<T> {
             if(tail.isEmpty()) {
                 return null;
             }
-            list = tail.ERROR: Unknown cast<FilledList#C<T#G>>;
+            list = ((FilledList<T>)tail);
         }
     }
     @Override
@@ -52,13 +52,13 @@ public final class FilledList<T> extends ImList<T> {
         while(true) {
             T h = list._head;
             if(item.compareTo(h) < 0) {
-                return new FilledList<T>(item.ERROR: Unknown cast<T#G>, before).reverseAndAddList(list);
+                return new FilledList<T>(((T)item), before).reverseAndAddList(list);
             }
             before = ImList().applyItemTail<T>(h, before);
             if(list.tail.isEmpty()) {
-                return new FilledList<T>(item.ERROR: Unknown cast<T#G>, before).reverse();
+                return new FilledList<T>(((T)item), before).reverse();
             }
-            list = list.tail.ERROR: Unknown cast<FilledList#C<T#G>>;
+            list = ((FilledList<T>)list.tail);
         }
         return list;
     }

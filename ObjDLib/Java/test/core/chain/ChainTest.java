@@ -19,7 +19,7 @@ public class ChainTest extends TestCase {
         ().assertTrueValue(ERROR: Unknown !([].<rdI>chain\Chain#C<§^_unset§>\.<dIub>or\bool\));
     }
     public void testFuture() {
-        repeatTimesF(ERROR: Unknown 1000.cast<uint>, new P0() {
+        repeatTimesF(((int)1000), new P0() {
             @Override
             public void apply() {
                 ImArray<Tuple2<Integer, Promise<Integer>>> arr = 0.to(1000).chain().map<Tuple2<Integer, Promise<Integer>>>(new F<Integer, Tuple2<Integer, Promise<Integer>>>() {
@@ -62,7 +62,7 @@ public class ChainTest extends TestCase {
                         return _ * _;
                     }
                 }).toArray();
-                ().assertEqualsAB<ImArray<Integer>>(set, fut.getResultAwait(ERROR: Unknown 5.cast<float>));
+                ().assertEqualsAB<ImArray<Integer>>(set, fut.getResultAwait(((float)5)));
             }
         });
     }
@@ -88,11 +88,11 @@ public class ChainTest extends TestCase {
                 });
             }
         }
-        ().assertTrueValue(fut.waitResultPeriod(ERROR: Unknown 5.cast<float>) != null);
-        ().assertEqualsAB<Integer>(count.intValue(), ERROR: Unknown <l>arr\[^Promise#C<^void>]\.<rdI>count\uint\.cast<int4>);
+        ().assertTrueValue(fut.waitResultPeriod(((float)5)) != null);
+        ().assertEqualsAB<Integer>(count.intValue(), ((int)arr.count()));
     }
     public void testFlat() {
-        ().assertEqualsAB<ImArray<Integer>>(ImArray.fromObjects(1, 5, 2, 3, 2), ImArray.fromObjects(ERROR: Unknown [1, 5].cast<^int[1]>, ERROR: Unknown [2, 3].cast<^int[1]>, ImArray.fromObjects(2)).chain().flat<Integer>().toArray());
+        ().assertEqualsAB<ImArray<Integer>>(ImArray.fromObjects(1, 5, 2, 3, 2), ImArray.fromObjects(((ImArray<Integer>)ImArray.fromObjects(1, 5)), ((ImArray<Integer>)ImArray.fromObjects(2, 3)), ImArray.fromObjects(2)).chain().flat<Integer>().toArray());
     }
     public void testZip() {
         ().assertEqualsAB<ImArray<Integer>>(ImArray.fromObjects(2, 3), ImArray.fromObjects(1, 0, 3).chain().zipABy<Integer, Integer>(ImArray.fromObjects(1, 3), new F2<Integer, Integer, Integer>() {

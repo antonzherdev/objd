@@ -1,6 +1,7 @@
 package core.chain;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class ImArray<T> extends Array<T> implements ImSeq<T> {
     public ImArray() {
@@ -36,5 +37,11 @@ public class ImArray<T> extends Array<T> implements ImSeq<T> {
     @Override
     public MArray<T> mCopy() {
         return new MArray<T>(new ArrayList<T>(list));
+    }
+
+    public static <T> ImArray<T> fromObjects(T ... items) {
+        ArrayList<T> ts = new ArrayList<T>(items.length);
+        Collections.addAll(ts, items);
+        return new ImArray<T>(ts);
     }
 }

@@ -4,7 +4,7 @@ public final class Range extends ImSeq_impl<int> {
     public final int start;
     public final int end;
     public final int step;
-    public final int count = (step > 0) ? ((start <= end) ? (ERROR: Unknown (((<lw>end\int\ - <lw>start\int\) / <lw>step\int\) + 1).cast<uint>) : (ERROR: Unknown 0.cast<uint>)) : ((step < 0) ? ((start >= end) ? (ERROR: Unknown (((<lw>end\int\ - <lw>start\int\) / <lw>step\int\) + 1).cast<uint>) : (ERROR: Unknown 0.cast<uint>)) : (ERROR: Unknown 1.cast<uint>));
+    public final int count = (step > 0) ? ((start <= end) ? (((int)(end - start) / step + 1)) : (((int)0))) : ((step < 0) ? ((start >= end) ? (((int)(end - start) / step + 1)) : (((int)0))) : (((int)1)));
     @Override
     public Integer applyIndex(int index) {
         if(index < this.count) {

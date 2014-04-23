@@ -7,7 +7,7 @@ public class FlatLink<T> implements ChainLink<Traversable<T>, T> {
         return Yield().decorateBaseBeginYield<Traversable<T>>(yield, new F<Integer, Integer>() {
             @Override
             public Integer apply(Integer size) {
-                return yield.beginYieldWithSize(ERROR: Unknown (<l>size\uint\ * <FlatLink#C<T#G>>self.<eIU>factor\float\).cast<uint>);
+                return yield.beginYieldWithSize(((int)size * FlatLink.this.factor));
             }
         }, new F<Traversable<T>, Integer>() {
             @Override

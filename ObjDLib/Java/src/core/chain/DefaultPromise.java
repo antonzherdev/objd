@@ -5,8 +5,8 @@ public class DefaultPromise<T> extends Promise<T> {
     @Override
     public Try<T> result() {
         Object v = this._state.get();
-        if(v.ERROR: Unknown is<Try#C<T#G>>) {
-            return v.ERROR: Unknown cast<Try#C<T#G>>;
+        if(v instanceof Try) {
+            return ((Try<T>)v);
         } else {
             return null;
         }
@@ -15,12 +15,12 @@ public class DefaultPromise<T> extends Promise<T> {
     public boolean completeValue(Try<T> value) {
         while(true) {
             Object v = this._state.get();
-            if(v.ERROR: Unknown is<Try#C<T#G>>) {
+            if(v instanceof Try) {
                 return false;
             } else {
                 if(this._state.compareAndSetOldValueNewValue(v, value)) {
                     {
-                        Iterator<P<Try<T>>> __inline__0_1_0_0_i = v.ERROR: Unknown cast<[^Try#C<T#G> -> void]>.iterator();
+                        Iterator<P<Try<T>>> __inline__0_1_0_0_i = ((ImArray<P<Try<T>>>)v).iterator();
                         while(__inline__0_1_0_0_i.hasNext()) {
                             P<Try<T>> f = __inline__0_1_0_0_i.next();
                             f.apply(value);
@@ -44,11 +44,11 @@ public class DefaultPromise<T> extends Promise<T> {
     public void onCompleteF(P<Try<T>> f) {
         while(true) {
             Object v = this._state.get();
-            if(v.ERROR: Unknown is<Try#C<T#G>>) {
-                f.apply(v.ERROR: Unknown cast<Try#C<T#G>>);
+            if(v instanceof Try) {
+                f.apply(((Try<T>)v));
                 return null;
             } else {
-                ImArray<P<Try<T>>> vv = v.ERROR: Unknown cast<[^Try#C<T#G> -> void]>;
+                ImArray<P<Try<T>>> vv = ((ImArray<P<Try<T>>>)v);
                 if(this._state.compareAndSetOldValueNewValue(vv, vv.addItem(f))) {
                     return null;
                 }
