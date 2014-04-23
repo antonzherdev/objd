@@ -52,6 +52,16 @@ static ODClassType* _CNPArray_type;
     else return _wrap(_bytes, index);
 }
 
+- (void)forRefEach:(void(^)(void*))each {
+    void* __b = _bytes;
+    NSInteger __i = 0;
+    while(__i < _count) {
+        each(__b);
+        __i++;
+        __b++;
+    }
+}
+
 - (ODClassType*)type {
     return [CNPArray type];
 }

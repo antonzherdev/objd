@@ -195,7 +195,7 @@ stmToImpl cl =
 		clsName = D.classNameWithPrefix cl
 		env = Env cl 0 D.TPVoid False
 		defs :: [D.Def]
-		defs = filter (not . D.isInline) $ D.classDefsWithTraits True cl
+		defs = D.classDefsWithTraits True cl
 					
 		constrFuns = fromMaybe [] $ fmap (\constr -> [implCreate cl constr, implInit env constr]) (D.classConstructor cl)
 		implFields = filter needField defs
@@ -367,7 +367,7 @@ genStruct cl =
 	where
 		name = D.classNameWithPrefix cl
 		clDefs = D.classDefs cl
-		defs = filter (\d -> D.isDef d && not (D.isInline d)) clDefs
+		defs = filter (\d -> D.isDef d) clDefs
 		env = Env cl 0 D.TPVoid False
 		fields = filter (\d -> not (D.isStatic d) && D.isField d) clDefs
 		staticFields = filter (\d -> (D.isStatic d) && D.isField d) clDefs
@@ -863,11 +863,14 @@ tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars _)
 		 isStubObject = case ltp of
 		 	D.TPObject _  cl -> D.ClassModStub `elem` D.classMods cl && D.ClassModObject `elem` D.classMods cl
 		 	_ -> False
-tExp env (D.Dot l (D.Is dtp)) = C.Call (castGeneric l $ tExp env l) "isKindOf" 
-	[("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] [])] []
+tExp env (D.Dot l (D.Is dtp)) = case dtp of
+	D.TPClass D.TPMTrait _ _ -> C.Call (castGeneric l $ tExp env l) "conformsTo" 
+		[("protocol", C.ProtocolRef $ C.Ref $ D.dataTypeClassNameWithPrefix dtp)] []
+	_ -> C.Call (castGeneric l $ tExp env l) "isKindOf" 
+		[("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] [])] []
 tExp env (D.Dot l (D.As dtp)) = case dtp of
 	D.TPClass D.TPMTrait _ _ -> C.Call (C.Ref "ODObject") "asKindOf" 
-		[("Protocol", C.ProtocolRef $ C.Ref $ D.dataTypeClassNameWithPrefix dtp), ("object", castGeneric l $ tExp env l)] []
+		[("protocol", C.ProtocolRef $ C.Ref $ D.dataTypeClassNameWithPrefix dtp), ("object", castGeneric l $ tExp env l)] []
 	_ -> C.Call (C.Ref "ODObject") "asKindOf" 
 		[("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] []), ("object", castGeneric l $ tExp env l)] []
 tExp env (D.Dot l (D.CastDot dtp)) = tExp env (D.Cast dtp l)

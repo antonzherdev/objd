@@ -28,9 +28,10 @@ public class ChainTest extends TestCase {
                         return ERROR: Unknown (<l>i\§^int§\, <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§^int§>\);
                     }
                 }).toArray();
-                arr.forEach(new P<Tuple2<Integer, Promise<Integer>>>() {
-                    @Override
-                    public void apply(Tuple2<Integer, Promise<Integer>> t) {
+                {
+                    Iterator<Tuple2<Integer, Promise<Integer>>> __inline__0_1_i = arr.iterator();
+                    while(__inline__0_1_i.hasNext()) {
+                        Tuple2<Integer, Promise<Integer>> t = __inline__0_1_i.next();
                         DispatchQueue().default.asyncF(new P0() {
                             @Override
                             public void apply() {
@@ -38,7 +39,7 @@ public class ChainTest extends TestCase {
                             }
                         });
                     }
-                });
+                }
                 Future<ImArray<Integer>> fut = arr.chain().map<Promise<Integer>>(new F<Tuple2<Integer, Promise<Integer>>, Promise<Integer>>() {
                     @Override
                     public Promise<Integer> apply(Tuple2<Integer, Promise<Integer>> _) {
@@ -74,9 +75,10 @@ public class ChainTest extends TestCase {
         }).toArray();
         Future<Void> fut = arr.chain().voidFuture();
         AtomicInt count = new AtomicInt();
-        arr.forEach(new P<Promise<Void>>() {
-            @Override
-            public void apply(Promise<Void> p) {
+        {
+            Iterator<Promise<Void>> __inline__3_i = arr.iterator();
+            while(__inline__3_i.hasNext()) {
+                Promise<Void> p = __inline__3_i.next();
                 DispatchQueue().default.asyncF(new P0() {
                     @Override
                     public void apply() {
@@ -85,7 +87,7 @@ public class ChainTest extends TestCase {
                     }
                 });
             }
-        });
+        }
         ().assertTrueValue(fut.waitResultPeriod(ERROR: Unknown 5.cast<float>) != null);
         ().assertEqualsAB<Integer>(count.intValue(), ERROR: Unknown <l>arr\[^Promise#C<^void>]\.<rdI>count\uint\.cast<int4>);
     }

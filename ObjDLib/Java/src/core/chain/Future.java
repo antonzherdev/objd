@@ -297,6 +297,26 @@ public abstract class Future<T> {
         }
     }
     public abstract void onCompleteF(P<Try<T>> f);
+    public void onSuccessF(P<T> f) {
+        onCompleteF(new P<Try<T>>() {
+            @Override
+            public void apply(Try<T> t) {
+                if(t.isSuccess()) {
+                    f.apply(t.get());
+                }
+            }
+        });
+    }
+    public void onFailureF(P<Object> f) {
+        onCompleteF(new P<Try<T>>() {
+            @Override
+            public void apply(Try<T> t) {
+                if(t.isFailure()) {
+                    f.apply(t.reason());
+                }
+            }
+        });
+    }
     public Future<R> mapF(F<T, R> f) {
         Promise<R> p = Promise().apply<R>();
         onCompleteF(new P<Try<T>>() {
@@ -372,6 +392,31 @@ public abstract class Future<T> {
     if((<l>__tmp_4\(^Try#C<§T#G§>)?\ == none<^Try#C<§T#G§>>)) throw "Not null"
 else <l>__tmp_4\(^Try#C<§T#G§>)?\
 };
+    }
+    public void waitAndOnSuccessAwaitF(float await,P<T> f) {
+        {
+            Try<T> __tr = waitResultPeriod(await);
+            if(__tr != null) {
+                if(__tr.isSuccess()) {
+                    f.apply(__tr.get());
+                }
+            }
+        }
+    }
+    public void waitAndOnSuccessFlatAwaitF(float await,P<I> f) {
+        {
+            {
+                Try<T> __inline__0___tr = waitResultPeriod(await);
+                if(__inline__0___tr != null) {
+                    if(__inline__0___tr.isSuccess()) {
+                        {
+                            T __tr2 = __inline__0___tr.get();
+                            __tr2.ERROR: Unknown cast<Traversable#T<I#G>>.forEach(f);
+                        }
+                    }
+                }
+            }
+        }
     }
     public T getResultAwait(float await) {
         return ERROR: Unknown {

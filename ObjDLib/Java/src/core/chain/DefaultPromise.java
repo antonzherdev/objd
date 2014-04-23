@@ -19,12 +19,13 @@ public class DefaultPromise<T> extends Promise<T> {
                 return false;
             } else {
                 if(this._state.compareAndSetOldValueNewValue(v, value)) {
-                    v.ERROR: Unknown cast<[^Try#C<T#G> -> void]>.forEach(new P<P<Try<T>>>() {
-                        @Override
-                        public void apply(P<Try<T>> f) {
+                    {
+                        Iterator<P<Try<T>>> __inline__0_1_0_0_i = v.ERROR: Unknown cast<[^Try#C<T#G> -> void]>.iterator();
+                        while(__inline__0_1_0_0_i.hasNext()) {
+                            P<Try<T>> f = __inline__0_1_0_0_i.next();
                             f.apply(value);
                         }
-                    });
+                    }
                     return true;
                 }
             }

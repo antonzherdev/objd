@@ -102,14 +102,14 @@ class MList<T> extends MSeq<T> {
         r
     }
 
-    override def for(each : T -> void) {
+    override inline def for(each : T -> void) {
         var i = headItem
         while(i != nil) {
             each(i.data)
             i = i.next
         }
     }
-    override def go(on : T -> bool) : bool = {
+    override inline def go(on : T -> bool) : bool = {
         var i = headItem
         while(i != nil) {
             if(!on(i.data)) return false

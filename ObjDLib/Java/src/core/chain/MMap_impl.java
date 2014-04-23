@@ -16,12 +16,13 @@ public abstract class MMap_impl<K, V> extends Map_impl<K, V> implements MMap<K, 
     @Override
     public ImMap<K, V> imCopy() {
         MHashMap<K, V> arr = new MHashMap<K, V>();
-        forEach(new P<Tuple2<K, V>>() {
-            @Override
-            public void apply(Tuple2<K, V> item) {
+        {
+            Iterator<Tuple2<K, V>> __inline__1_i = this.iterator();
+            while(__inline__1_i.hasNext()) {
+                Tuple2<K, V> item = __inline__1_i.next();
                 arr.setKeyValue(item.a, item.b);
             }
-        });
+        }
         return arr.im();
     }
     public V objectForKeyOrUpdateWith(K key,F<Void, V> orUpdateWith) {
@@ -50,12 +51,13 @@ public abstract class MMap_impl<K, V> extends Map_impl<K, V> implements MMap<K, 
     }
     public void assignImMap(ImMap<K, V> imMap) {
         this.clear();
-        imMap.forEach(new P<Tuple2<K, V>>() {
-            @Override
-            public void apply(Tuple2<K, V> _) {
+        {
+            Iterator<Tuple2<K, V>> __inline__1_i = imMap.iterator();
+            while(__inline__1_i.hasNext()) {
+                Tuple2<K, V> _ = __inline__1_i.next();
                 appendItem(_);
             }
-        });
+        }
     }
     public void mutableFilterBy(F<T, Boolean> by) {
         MIterator<T> i = this.mutableIterator();

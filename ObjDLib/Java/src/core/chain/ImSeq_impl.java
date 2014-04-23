@@ -4,12 +4,13 @@ public abstract class ImSeq_impl<T> extends Seq_impl<T> implements ImSeq<T> {
     @Override
     public MSeq<T> mCopy() {
         MArray<T> arr = new MArray<T>();
-        forEach(new P<T>() {
-            @Override
-            public void apply(T item) {
+        {
+            Iterator<T> __inline__1_i = this.iterator();
+            while(__inline__1_i.hasNext()) {
+                T item = __inline__1_i.next();
                 arr.appendItem(item);
             }
-        });
+        }
         return arr;
     }
     public ImSeq<T> addItem(T item) {

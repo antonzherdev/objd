@@ -20,12 +20,13 @@ public abstract class MIterable_impl<T> extends Iterable_impl<T> implements MIte
     @Override
     public ImIterable<T> imCopy() {
         MArray<T> arr = new MArray<T>();
-        forEach(new P<T>() {
-            @Override
-            public void apply(T item) {
+        {
+            Iterator<T> __inline__1_i = this.iterator();
+            while(__inline__1_i.hasNext()) {
+                T item = __inline__1_i.next();
                 arr.appendItem(item);
             }
-        });
+        }
         return arr.im();
     }
     public void mutableFilterBy(F<T, Boolean> by) {

@@ -28,12 +28,13 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
             this._size = m.count;
         } else {
             this.clear();
-            imMap.forEach(new P<Tuple2<K, V>>() {
-                @Override
-                public void apply(Tuple2<K, V> _) {
+            {
+                Iterator<Tuple2<K, V>> __inline__0_1_i = imMap.iterator();
+                while(__inline__0_1_i.hasNext()) {
+                    Tuple2<K, V> _ = __inline__0_1_i.next();
                     appendItem(_);
                 }
-            });
+            }
         }
     }
     @Override

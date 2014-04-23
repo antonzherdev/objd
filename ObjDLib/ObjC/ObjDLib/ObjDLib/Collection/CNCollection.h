@@ -112,9 +112,6 @@
 
 @interface CNIterable_impl : CNTraversable_impl<CNIterable>
 - (id)head;
-- (void)forEach:(void(^)(id))each;
-- (void)parForEach:(void(^)(id))each;
-- (BOOL)goOn:(BOOL(^)(id))on;
 - (NSString*)description;
 - (NSUInteger)hash;
 @end

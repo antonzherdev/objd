@@ -31,8 +31,6 @@
 - (id)takeHead;
 - (id)last;
 - (id)takeLast;
-- (void)forEach:(void(^)(id))each;
-- (BOOL)goOn:(BOOL(^)(id))on;
 - (void)mutableFilterBy:(BOOL(^)(id))by;
 - (id)head;
 + (ODClassType*)type;

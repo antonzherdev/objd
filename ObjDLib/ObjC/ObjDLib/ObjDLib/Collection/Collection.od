@@ -14,7 +14,11 @@ trait Builder<T, C extends Traversable<T>> {
     def append(item : T)
     def build : C
     def appendAll(items : Traversable<T>) {
-        items.for(append(_))
+        if(items.is<Iterable<T>>) {
+            items.cast<Iterable<T>>.for(append(_))
+        } else {
+            items.for(append(_))
+        }
     }
 }
 
@@ -126,12 +130,12 @@ trait Iterable<T> extends Traversable<T> {
     override def head : T? = if(isEmpty) nil else iterator.next
     def isEmpty : bool = !iterator.hasNext
 
-    override def for(each : T -> void) {
+    override inline def for(each : T -> void) {
         val i = iterator
         while(i.hasNext) each(i.next)
     }
 
-    override def parFor(each : T -> void) {
+    override inline def parFor(each : T -> void) {
         val i = iterator
         while(i.hasNext) {
             val v = i.next
@@ -141,7 +145,7 @@ trait Iterable<T> extends Traversable<T> {
         }
     }
 
-    override def go(on : T -> bool) : bool = {
+    override inline def go(on : T -> bool) : bool = {
         val i = iterator
         while(i.hasNext) if(!on(i.next)) return false
         true

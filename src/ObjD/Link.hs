@@ -2798,7 +2798,7 @@ maybeInlineCall env e = let
 				| DefModApplyLambda `elem` mbLamdaMods = fmap (unwrapLambda (map (mapExp rep . snd) lambdaCallPars)) $ lookup d refs
 			rep (LambdaCall (Call d _ [] _)) = fmap (unwrapLambda []) $ lookup d refs
 			rep (Call d _ [] _) 
-				| DefModField `elem` defMods d = lookup d refs
+				| DefModField `elem` defMods d || DefModLocal `elem` defMods d = lookup d refs
 			rep (Call d tp cpars cgens) =
 				Just $ Call d 
 					(repgens tp) 

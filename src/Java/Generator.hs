@@ -29,7 +29,7 @@ genImport (D.ImportObjectDefs cl) = D.packageName (D.classPackage cl) ++ [D.clas
 genClass :: D.Class -> Writer [J.Import] J.Class
 genClass cl = do
 	let 
-		defs = filter (\f -> not (D.isSpecial f) && not (D.isInline f)) 
+		defs = filter (\f -> not (D.isSpecial f)) 
 			$ if D.isTrait cl then filter (not . D.isConstructor) (D.classDefs cl) else D.classDefsWithTraits False cl
 		trMod D.ClassModAbstract = Just J.ClassModAbstract
 		trMod D.ClassModFinal = Just J.ClassModFinal

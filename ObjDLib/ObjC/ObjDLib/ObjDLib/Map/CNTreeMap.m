@@ -350,9 +350,13 @@ static ODClassType* _CNMTreeMap_type;
         __size = m.count;
     } else {
         [self clear];
-        [imMap forEach:^void(CNTuple* _) {
-            [self appendItem:_];
-        }];
+        {
+            id<CNIterator> __inline__0_1_i = [imMap iterator];
+            while([__inline__0_1_i hasNext]) {
+                CNTuple* _ = [__inline__0_1_i next];
+                [self appendItem:_];
+            }
+        }
     }
 }
 

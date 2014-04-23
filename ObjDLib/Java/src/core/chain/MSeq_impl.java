@@ -8,12 +8,13 @@ public abstract class MSeq_impl<T> extends Seq_impl<T> implements MSeq<T> {
     @Override
     public ImSeq<T> imCopy() {
         MArray<T> arr = new MArray<T>();
-        forEach(new P<T>() {
-            @Override
-            public void apply(T item) {
+        {
+            Iterator<T> __inline__1_i = this.iterator();
+            while(__inline__1_i.hasNext()) {
+                T item = __inline__1_i.next();
                 arr.appendItem(item);
             }
-        });
+        }
         return arr.im();
     }
     public boolean removeIndex(int index) {

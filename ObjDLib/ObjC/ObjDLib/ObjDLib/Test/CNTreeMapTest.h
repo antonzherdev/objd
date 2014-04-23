@@ -1,6 +1,7 @@
 #import "objdcore.h"
 #import "TSTestCase.h"
 @class CNMTreeMap;
+@protocol CNIterator;
 @class CNChain;
 @class CNMTreeMapKeySet;
 @class ODClassType;

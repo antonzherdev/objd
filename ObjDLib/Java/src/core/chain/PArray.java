@@ -29,6 +29,15 @@ public final class PArray<T> extends ImSeq_impl<T> {
             return this.wrap.apply(this.bytes, index);
         }
     }
+    public void forRefEach(P<Pointer> each) {
+        Pointer __b = this.bytes;
+        int __i = 0;
+        while(__i < this.count) {
+            each.apply(__b);
+            ERROR: Unknown <lm>__i\int\++;
+            ERROR: Unknown <lm>__b\§T#G§*\++;
+        }
+    }
     public PArray(int stride,F2<Pointer, Integer, T> wrap,int count,int length,Pointer bytes,boolean copied) {
         this.stride = stride;
         this.wrap = wrap;

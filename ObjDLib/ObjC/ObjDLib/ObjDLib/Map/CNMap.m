@@ -101,9 +101,13 @@
 
 - (id<CNImMap>)imCopy {
     CNMHashMap* arr = [CNMHashMap hashMap];
-    [self forEach:^void(CNTuple* item) {
-        [arr setKey:((CNTuple*)(item)).a value:((CNTuple*)(item)).b];
-    }];
+    {
+        id<CNIterator> __inline__1_i = [self iterator];
+        while([__inline__1_i hasNext]) {
+            CNTuple* item = [__inline__1_i next];
+            [arr setKey:((CNTuple*)(item)).a value:((CNTuple*)(item)).b];
+        }
+    }
     return [arr im];
 }
 
@@ -141,9 +145,13 @@
 
 - (void)assignImMap:(id<CNImMap>)imMap {
     [self clear];
-    [imMap forEach:^void(CNTuple* _) {
-        [self appendItem:_];
-    }];
+    {
+        id<CNIterator> __inline__1_i = [imMap iterator];
+        while([__inline__1_i hasNext]) {
+            CNTuple* _ = [__inline__1_i next];
+            [self appendItem:_];
+        }
+    }
 }
 
 - (id<CNMIterator>)mutableIterator {

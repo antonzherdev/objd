@@ -4,6 +4,7 @@
 #import "CNChain.h"
 #import "CNRange.h"
 #import "CNFuture.h"
+#import "CNCollection.h"
 #import "CNDispatchQueue.h"
 #import "CNAtomic.h"
 #import "CNTry.h"
@@ -45,10 +46,14 @@ static ODClassType* _CNChainTest_type;
         NSArray* arr = [[[intTo(0, 1000) chain] map:^CNTuple*(id i) {
             return tuple(i, [CNPromise apply]);
         }] toArray];
-        for(CNTuple* t in arr) {
-            [CNDispatchQueue.aDefault asyncF:^void() {
-                [((CNPromise*)(((CNTuple*)(t)).b)) successValue:numi(unumi(((CNTuple*)(t)).a) * unumi(((CNTuple*)(t)).a))];
-            }];
+        {
+            id<CNIterator> __inline__0_1_i = [arr iterator];
+            while([__inline__0_1_i hasNext]) {
+                CNTuple* t = [__inline__0_1_i next];
+                [CNDispatchQueue.aDefault asyncF:^void() {
+                    [((CNPromise*)(((CNTuple*)(t)).b)) successValue:numi(unumi(((CNTuple*)(t)).a) * unumi(((CNTuple*)(t)).a))];
+                }];
+            }
         }
         CNFuture* fut = [[[arr chain] map:^CNPromise*(CNTuple* _) {
             return ((CNTuple*)(_)).b;
@@ -70,11 +75,15 @@ static ODClassType* _CNChainTest_type;
     }] toArray];
     CNFuture* fut = [[arr chain] voidFuture];
     CNAtomicInt* count = [CNAtomicInt atomicInt];
-    for(CNPromise* p in arr) {
-        [CNDispatchQueue.aDefault asyncF:^void() {
-            [count incrementAndGet];
-            [((CNPromise*)(p)) successValue:nil];
-        }];
+    {
+        id<CNIterator> __inline__3_i = [arr iterator];
+        while([__inline__3_i hasNext]) {
+            CNPromise* p = [__inline__3_i next];
+            [CNDispatchQueue.aDefault asyncF:^void() {
+                [count incrementAndGet];
+                [((CNPromise*)(p)) successValue:nil];
+            }];
+        }
     }
     assertTrue([fut waitResultPeriod:5.0] != nil);
     assertEquals(numi4([count intValue]), numi4(((int)([arr count]))));

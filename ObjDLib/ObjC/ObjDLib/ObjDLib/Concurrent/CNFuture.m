@@ -250,6 +250,18 @@ static ODClassType* _CNFuture_type;
     @throw @"Method onComplete is abstract";
 }
 
+- (void)onSuccessF:(void(^)(id))f {
+    [self onCompleteF:^void(CNTry* t) {
+        if([t isSuccess]) f([t get]);
+    }];
+}
+
+- (void)onFailureF:(void(^)(id))f {
+    [self onCompleteF:^void(CNTry* t) {
+        if([t isFailure]) f([t reason]);
+    }];
+}
+
 - (CNFuture*)mapF:(id(^)(id))f {
     CNPromise* p = [CNPromise apply];
     [self onCompleteF:^void(CNTry* tr) {
@@ -305,6 +317,23 @@ static ODClassType* _CNFuture_type;
     [lock lockWhenCondition:1];
     [lock unlock];
     return ((CNTry*)(nonnil([self result])));
+}
+
+- (void)waitAndOnSuccessAwait:(CGFloat)await f:(void(^)(id))f {
+    CNTry* __tr = [self waitResultPeriod:await];
+    if(__tr != nil) {
+        if([__tr isSuccess]) f([__tr get]);
+    }
+}
+
+- (void)waitAndOnSuccessFlatAwait:(CGFloat)await f:(void(^)(id))f {
+    CNTry* __inline__0___tr = [self waitResultPeriod:await];
+    if(__inline__0___tr != nil) {
+        if([__inline__0___tr isSuccess]) {
+            id __tr2 = [__inline__0___tr get];
+            [((id<CNTraversable>)(__tr2)) forEach:f];
+        }
+    }
 }
 
 - (id)getResultAwait:(CGFloat)await {
@@ -445,8 +474,12 @@ static ODClassType* _CNDefaultPromise_type;
             return NO;
         } else {
             if([__state compareAndSetOldValue:v newValue:value]) {
-                for(void(^f)(CNTry*) in ((NSArray*)(v))) {
-                    f(value);
+                {
+                    id<CNIterator> __inline__0_1_0_0_i = [((NSArray*)(v)) iterator];
+                    while([__inline__0_1_0_0_i hasNext]) {
+                        void(^f)(CNTry*) = [__inline__0_1_0_0_i next];
+                        f(value);
+                    }
                 }
                 return YES;
             }
