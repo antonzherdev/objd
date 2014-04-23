@@ -29,12 +29,12 @@ public class SortBuilder<A> {
         return this.chain.sort(new F2<A, A, Integer>() {
             @Override
             public Integer apply(A x,A y) {
-                int ret = ERROR: Unknown 0;
+                int ret = 0;
                 Iterator<F2<A, A, Integer>> i = SortBuilder.this.functions.iterator();
-                ERROR: Unknown while(((<lm>ret\int\ == 0) && <l>i\Iterator#T<§^(A#G, A#G) -> int§>\.<dIa>hasNext\bool\)) {
-    local f : (A#G, A#G) -> int = <l>i\Iterator#T<§^(A#G, A#G) -> int§>\.<dIa>next\§^(A#G, A#G) -> int§\
-    (<lm>ret\int\ = <l>f\(§A#G§, §A#G§) -> int\.<d>apply( = <l>x\§A#G§\,  = <l>y\§A#G§\)\int\)
-};
+                while(ret.equals(0) && i.hasNext()) {
+                    F2<A, A, Integer> f = i.next();
+                    ret = f.apply(x, y);
+                }
                 return ret;
             }
         });

@@ -8,11 +8,11 @@ public final class Failure<T> extends Try<T> {
     }
     @Override
     public boolean isSuccess() {
-        return ERROR: Unknown False;
+        return false;
     }
     @Override
     public boolean isFailure() {
-        return ERROR: Unknown True;
+        return true;
     }
     @Override
     public Try<R> mapF(F<T, R> f) {

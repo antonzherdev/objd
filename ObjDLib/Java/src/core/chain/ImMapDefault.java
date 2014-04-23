@@ -35,8 +35,8 @@ public class ImMapDefault<K, V> extends ImIterable_impl<Tuple2<K, V>> {
         return this.map.equals(mapDefault.map);
     }
     @Override
-    public int hash() {
-        return this.map.hash();
+    public int hashCode() {
+        return this.map.hashCode();
     }
     @Override
     public MMapDefault<K, V> mCopy() {

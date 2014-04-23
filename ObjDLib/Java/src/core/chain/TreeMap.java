@@ -1,8 +1,8 @@
 package core.chain;
 
 public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
-    public static final int BLACK = ERROR: Unknown 0;
-    public static final int RED = ERROR: Unknown 1;
+    public static final int BLACK = 0;
+    public static final int RED = 1;
     public final F2<K, K, Integer> comparator;
     public final TreeMapValues<V> values = new TreeMapValues<V>(this);
     @Override
@@ -24,12 +24,18 @@ else <l>__tmp\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     }
     public TreeMapEntry<K, V> entryForKey(K key) {
         TreeMapEntry<K, V> p = this.root();
-        ERROR: Unknown while((<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) {
-    local cmp : int = <TreeMap#C<K#G, V#G>>self.<eIU>comparator\(§K#G§, §K#G§) -> int\.<d>apply( = <l>key\§K#G§\,  = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUm>key\§K#G§\)\int\
-    if((<l>cmp\int\ < 0)) (<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)
-else if((<l>cmp\int\ > 0)) (<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)
-else break
-};
+        while(p != null) {
+            int cmp = this.comparator.apply(key, p.key);
+            if(cmp < 0) {
+                p = p.left;
+            } else {
+                if(cmp > 0) {
+                    p = p.right;
+                } else {
+                    break;
+                }
+            }
+        }
         return p;
     }
     @Override
@@ -44,7 +50,9 @@ else break
     public TreeMapEntry<K, V> firstEntry() {
         TreeMapEntry<K, V> p = this.root();
         if(p != null) {
-            ERROR: Unknown while((<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) (<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\);
+            while(p.left != null) {
+                p = p.left;
+            }
         }
         return p;
     }
@@ -62,64 +70,68 @@ else break
     }
     private TreeMapEntry<K, V> lowerEntryThanKey(K key) {
         TreeMapEntry<K, V> p = this.root();
-        ERROR: Unknown while((<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) {
-    local cmp : int = <TreeMap#C<K#G, V#G>>self.<eIU>comparator\(§K#G§, §K#G§) -> int\.<d>apply( = <l>key\§K#G§\,  = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUm>key\§K#G§\)\int\
-    if((<l>cmp\int\ > 0)) {
-    if((<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) (<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)
-else return <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\
-}
-else {
-    if((<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) {
-    (<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)
-}
-else {
-    local var parent : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-    local var ch : (^TreeMapEntry#C<§K#G§, §V#G§>)¿ = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\
-    while(((<lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && {
+        while(p != null) {
+            int cmp = this.comparator.apply(key, p.key);
+            if(cmp > 0) {
+                if(p.right != null) {
+                    p = p.right;
+                } else {
+                    return p;
+                }
+            } else {
+                if(p.left != null) {
+                    p = p.left;
+                } else {
+                    TreeMapEntry<K, V> parent = p.parent;
+                    TreeMapEntry<K, V> ch = p;
+                    while(parent != null && ERROR: Unknown {
     local __tmp_1_1_0_2 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     return ((<l>__tmp_1_1_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && (<l>__tmp_1_1_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == <lm>ch\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\))
-})) {
-    (<lm>ch\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\)
-    (<lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)
-}
-    return <lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-}
-}
-};
+}) {
+                        ch = parent;
+                        parent = parent.parent;
+                    }
+                    return parent;
+                }
+            }
+        }
         return null;
     }
     private TreeMapEntry<K, V> higherEntryThanKey(K key) {
         TreeMapEntry<K, V> p = this.root();
-        ERROR: Unknown while((<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) {
-    local cmp : int = <TreeMap#C<K#G, V#G>>self.<eIU>comparator\(§K#G§, §K#G§) -> int\.<d>apply( = <l>key\§K#G§\,  = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUm>key\§K#G§\)\int\
-    if((<l>cmp\int\ < 0)) {
-    if((<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) (<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)
-else return <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\
-}
-else {
-    if((<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) {
-    (<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)
-}
-else {
-    local var parent : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-    local var ch : (^TreeMapEntry#C<§K#G§, §V#G§>)¿ = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\
-    while(((<lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && {
+        while(p != null) {
+            int cmp = this.comparator.apply(key, p.key);
+            if(cmp < 0) {
+                if(p.left != null) {
+                    p = p.left;
+                } else {
+                    return p;
+                }
+            } else {
+                if(p.right != null) {
+                    p = p.right;
+                } else {
+                    TreeMapEntry<K, V> parent = p.parent;
+                    TreeMapEntry<K, V> ch = p;
+                    while(parent != null && ERROR: Unknown {
     local __tmp_1_1_0_2 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     return ((<l>__tmp_1_1_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && (<l>__tmp_1_1_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == <lm>ch\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\))
-})) {
-    (<lm>ch\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\)
-    (<lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)
-}
-    return <lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-}
-}
-};
+}) {
+                        ch = parent;
+                        parent = parent.parent;
+                    }
+                    return parent;
+                }
+            }
+        }
         return null;
     }
     private TreeMapEntry<K, V> lastEntry() {
         TreeMapEntry<K, V> p = this.root();
         if(p != null) {
-            ERROR: Unknown while((<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) (<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\);
+            while(p.right != null) {
+                p = p.right;
+            }
         }
         return p;
     }

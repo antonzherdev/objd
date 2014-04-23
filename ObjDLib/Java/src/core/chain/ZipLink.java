@@ -10,7 +10,7 @@ public class ZipLink<T, A, R> implements ChainLink<T, R> {
             @Override
             public Integer apply(A item) {
                 if(ERROR: Unknown !(<l>ai\Iterator#T<§A#G§>\.<dIa>hasNext\bool\)) {
-                    return ERROR: Unknown 1;
+                    return 1;
                 } else {
                     return yield.yieldItem(ZipLink.this.f.apply(item, ai.next()));
                 }

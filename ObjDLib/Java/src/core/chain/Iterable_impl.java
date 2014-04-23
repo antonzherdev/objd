@@ -12,42 +12,53 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
     @Override
     public void forEach(P<T> each) {
         Iterator<T> i = this.iterator();
-        ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) <l>each\§T#G§ -> void\.<d>apply( = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\void\;
+        while(i.hasNext()) {
+            each.apply(i.next());
+        }
     }
     @Override
     public void parForEach(P<T> each) {
         Iterator<T> i = this.iterator();
-        ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
-    local v : T#G = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\
-    <to>DispatchQueue\DispatchQueue#C.class\.<eIt>default\DispatchQueue#C\.<dIb>async(f =  -> void = <l>each\§T#G§ -> void\.<d>apply( = <l>v\§T#G§\)\void\)\void\
-};
+        while(i.hasNext()) {
+            T v = i.next();
+            DispatchQueue().default.asyncF(new P0() {
+                @Override
+                public void apply() {
+                    each.apply(v);
+                }
+            });
+        }
     }
     @Override
     public boolean goOn(F<T, Boolean> on) {
         Iterator<T> i = this.iterator();
-        ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) if(!(<l>on\§T#G§ -> bool\.<d>apply( = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\bool\)) return False;
-        return ERROR: Unknown True;
+        while(i.hasNext()) {
+            if(ERROR: Unknown !(<l>on\§T#G§ -> bool\.<d>apply( = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\bool\)) {
+                return false;
+            }
+        }
+        return true;
     }
     @Override
-    public String description() {
+    public String toString() {
         return this.chain().toStringWithStartDelimiterEnd("[", ", ", "]");
     }
     @Override
-    public int hash() {
+    public int hashCode() {
         int ret = ERROR: Unknown 13.cast<uint>;
         Iterator<T> i = this.iterator();
-        ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
-    (<lm>ret\uint\ = ((<lm>ret\uint\ * 31) + <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\.<rdIb>hash\uint\))
-};
+        while(i.hasNext()) {
+            ret = ret * 31 + i.next().hashCode();
+        }
         return ret;
     }
     public int count() {
         Iterator<T> i = this.iterator();
         int n = ERROR: Unknown 0.cast<uint>;
-        ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) {
-    <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\
-    <lm>n\uint\++
-};
+        while(i.hasNext()) {
+            i.next();
+            ERROR: Unknown <lm>n\uint\++;
+        }
         return n;
     }
     public boolean isEmpty() {
@@ -55,7 +66,11 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
     }
     public boolean containsItem(T item) {
         Iterator<T> i = this.iterator();
-        ERROR: Unknown while(<l>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) if((<l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\ == <l>i\Iterator#T<§T#G§>\)) return True;
-        return ERROR: Unknown False;
+        while(i.hasNext()) {
+            if(i.next().equals(i)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

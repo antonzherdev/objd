@@ -6,7 +6,7 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
             @Override
             public Boolean apply(T item) {
                 each.apply(item);
-                return ERROR: Unknown True;
+                return true;
             }
         });
     }
@@ -20,7 +20,7 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
                         each.apply(item);
                     }
                 });
-                return ERROR: Unknown True;
+                return true;
             }
         });
     }
@@ -34,39 +34,39 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
             public Boolean apply(T x) {
                 if(where.apply(x)) {
                     ret = x;
-                    return ERROR: Unknown False;
+                    return false;
                 } else {
-                    return ERROR: Unknown True;
+                    return true;
                 }
             }
         });
         return ret;
     }
     public boolean existsWhere(F<T, Boolean> where) {
-        boolean ret = ERROR: Unknown False;
+        boolean ret = false;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
                 if(where.apply(x)) {
-                    ret = ERROR: Unknown True;
-                    return ERROR: Unknown False;
+                    ret = true;
+                    return false;
                 } else {
-                    return ERROR: Unknown True;
+                    return true;
                 }
             }
         });
         return ret;
     }
     public boolean allConfirm(F<T, Boolean> confirm) {
-        boolean ret = ERROR: Unknown True;
+        boolean ret = true;
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
                 if(ERROR: Unknown !(<l>confirm\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\)) {
-                    ret = ERROR: Unknown False;
-                    return ERROR: Unknown False;
+                    ret = false;
+                    return false;
                 } else {
-                    return ERROR: Unknown True;
+                    return true;
                 }
             }
         });
@@ -77,7 +77,7 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
             @Override
             public Boolean apply(T on) {
                 ret = on;
-                return ERROR: Unknown False;
+                return false;
             }
         });
         return ret;

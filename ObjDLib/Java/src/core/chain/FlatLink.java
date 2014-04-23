@@ -12,15 +12,15 @@ public class FlatLink<T> implements ChainLink<Traversable<T>, T> {
         }, new F<Traversable<T>, Integer>() {
             @Override
             public Integer apply(Traversable<T> col) {
-                int result = ERROR: Unknown 0;
+                int result = 0;
                 col.goOn(new F<T, Boolean>() {
                     @Override
                     public Boolean apply(T item) {
-                        if(yield.yieldItem(item).equals(ERROR: Unknown 0)) {
-                            result = ERROR: Unknown 1;
-                            return ERROR: Unknown False;
+                        if(yield.yieldItem(item).equals(0)) {
+                            result = 1;
+                            return false;
                         } else {
-                            return ERROR: Unknown True;
+                            return true;
                         }
                     }
                 });

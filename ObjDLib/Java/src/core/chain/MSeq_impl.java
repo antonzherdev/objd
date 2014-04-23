@@ -19,48 +19,50 @@ public abstract class MSeq_impl<T> extends Seq_impl<T> implements MSeq<T> {
     public boolean removeIndex(int index) {
         MIterator<T> i = this.mutableIterator();
         int j = index;
-        boolean ret = ERROR: Unknown False;
-        ERROR: Unknown while(<l>i\MIterator#T<§T#G§>\.<rdIa>hasNext\bool\) {
-    <l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\
-    if((<lm>j\uint\ == 0)) {
-    <l>i\MIterator#T<§T#G§>\.<dIa>remove\void\
-    (<lm>ret\bool\ = True)
-    break
-}
-    <lm>j\uint\--
-};
+        boolean ret = false;
+        while(i.hasNext()) {
+            i.next();
+            if(j.equals(0)) {
+                i.remove();
+                ret = true;
+                break;
+            }
+            ERROR: Unknown <lm>j\uint\--;
+        }
         return ret;
     }
     public void setIndexItem(int index,T item) {
         MIterator<T> i = this.mutableIterator();
         int n = index;
-        ERROR: Unknown while(<l>i\MIterator#T<§T#G§>\.<rdIa>hasNext\bool\) {
-    if((<lm>n\uint\ == 0)) {
-    <l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\
-    <l>i\MIterator#T<§T#G§>\.<dIa>set(value = <l>item\§T#G§\)\void\
-    return nil
-}
-    <l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\
-    <lm>n\uint\--
-};
+        while(i.hasNext()) {
+            if(n.equals(0)) {
+                i.next();
+                i.setValue(item);
+                return null;
+            }
+            i.next();
+            ERROR: Unknown <lm>n\uint\--;
+        }
         throw new RuntimeException("Incorrect index");
     }
     @Override
     public boolean removeItem(T item) {
         MIterator<T> i = this.mutableIterator();
-        boolean ret = ERROR: Unknown False;
-        ERROR: Unknown while(<l>i\MIterator#T<§T#G§>\.<rdIa>hasNext\bool\) {
-    if((<l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\ == <l>item\§T#G§\)) {
-    <l>i\MIterator#T<§T#G§>\.<dIa>remove\void\
-    (<lm>ret\bool\ = True)
-}
-};
+        boolean ret = false;
+        while(i.hasNext()) {
+            if(i.next().equals(item)) {
+                i.remove();
+                ret = true;
+            }
+        }
         return ret;
     }
     public void mutableFilterBy(F<T, Boolean> by) {
         MIterator<T> i = this.mutableIterator();
-        ERROR: Unknown while(<l>i\MIterator#T<§T#G§>\.<rdIa>hasNext\bool\) {
-    if(<l>by\§T#G§ -> bool\.<d>apply( = <l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\)\bool\) <l>i\MIterator#T<§T#G§>\.<dIa>remove\void\
-};
+        while(i.hasNext()) {
+            if(by.apply(i.next())) {
+                i.remove();
+            }
+        }
     }
 }

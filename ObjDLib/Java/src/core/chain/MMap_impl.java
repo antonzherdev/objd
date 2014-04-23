@@ -59,8 +59,10 @@ public abstract class MMap_impl<K, V> extends Map_impl<K, V> implements MMap<K, 
     }
     public void mutableFilterBy(F<T, Boolean> by) {
         MIterator<T> i = this.mutableIterator();
-        ERROR: Unknown while(<l>i\MIterator#T<§T#G§>\.<rdIa>hasNext\bool\) {
-    if(<l>by\§T#G§ -> bool\.<d>apply( = <l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\)\bool\) <l>i\MIterator#T<§T#G§>\.<dIa>remove\void\
-};
+        while(i.hasNext()) {
+            if(by.apply(i.next())) {
+                i.remove();
+            }
+        }
     }
 }

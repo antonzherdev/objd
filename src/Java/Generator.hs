@@ -59,8 +59,14 @@ genExtendsRef (cl, gens) = J.TPRef (map genTp gens) (D.className cl)
  - Defs
  -----------------------------------------------------------------------------------------------------------------------------------------------}
 
-fullDefName :: D.Def -> String
-fullDefName d = D.defName d ++ concatMap (cap . D.defName) (D.defPars d)
+defName' :: D.Def -> String
+defName' d = case D.defPars d of
+	[] -> case D.defName d of
+		"hash" -> "hashCode"
+		"description" -> "toString"
+		"isEqual" -> "equals"
+		o -> o
+	_ -> D.defName d ++ concatMap (cap . D.defName) (D.defPars d)
 
 overrideAnnotation :: J.DefAnnotation
 overrideAnnotation = J.DefAnnotation "Override" []
@@ -74,7 +80,7 @@ genDef cl d =
  		genMod D.DefModStatic = Just J.DefModStatic
  		genMod D.DefModAbstract = Just J.DefModAbstract
  		genMod _ = Nothing
- 		constrSet D.Def{D.defName = nm} = J.Set Nothing (J.Dot J.This (J.Ref nm)) (J.Ref nm)
+ 		constrSet dd = let nm = defName' dd in J.Set Nothing (J.Dot J.This (J.Ref nm)) (J.Ref nm)
  		callSuperConstructor = case D.extendsClass $ D.classExtends cl of
  			Just (ExtendsClass _ []) -> return []
  			Just (ExtendsClass _ pars) -> do
@@ -94,7 +100,7 @@ genDef cl d =
 	 			return J.Field {
 	 				J.defAnnotations = [],
 	 				J.defMods = mods ++ [J.DefModFinal | D.DefModMutable `notElem` D.defMods d],
-	 				J.defName = D.defName d,
+	 				J.defName = defName' d,
 	 				J.defTp = genTp $ D.defType d,
 	 				J.defExp = e'
 		 		}
@@ -114,7 +120,7 @@ genDef cl d =
  				return J.Def {
 	 				J.defAnnotations = [overrideAnnotation| D.DefModOverride `elem` D.defMods d],
 	 				J.defMods = mods,
-	 				J.defName = fullDefName d,
+	 				J.defName = defName' d,
 	 				J.defTp = genTp $ D.defType d,
 	 				J.defPars = map genPar $ D.defPars d,
 	 				J.defStms = stms'
@@ -190,6 +196,8 @@ genExp _ D.Nop = return J.Nop
 genExp _ (D.None _) = return J.Null
 genExp _ D.Nil = return J.Null
 genExp _ (D.StringConst s) = return $ J.StringConst s
+genExp _ (D.BoolConst s) = return $ J.BoolConst s
+genExp _ (D.IntConst s) = return $ J.IntConst s
 genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
 	| D.DefModConstructor `elem` D.defMods constr 
 		|| (D.defName constr == "apply" && D.DefModStub `elem` D.defMods constr && D.DefModStatic `elem` D.defMods constr) 
@@ -206,7 +214,7 @@ genExp _ (D.Call d _ [] [])
 	| D.DefModField `elem` D.defMods d || D.DefModLocal `elem` D.defMods d = return $ J.Ref $ D.defName d
 genExp env (D.Call d _ pars gens) = do
 	pars' <- mapM ((genExp env) . snd) pars
-	return $ J.Call (fullDefName d) (map genTp gens) pars'
+	return $ J.Call (defName' d) (map genTp gens) pars'
 genExp env (D.Lambda pars e dtp) = do
 	stms <- getStms env{envInnerClass = True} e
 	let 
@@ -292,6 +300,7 @@ getStms env e = case e of
 
 genStm :: Env -> D.Exp -> Writer Wrt [J.Stm]
 genStm _ D.Nop = return []
+genStm _ D.Break = return [J.Break]
 genStm env (D.Braces bs) = do
 	bs' <- mapM (genStm env) bs
 	return [J.Braces $ join bs']
@@ -300,6 +309,9 @@ genStm env (D.If cond t f) = do
 	t' <- getStms env t
 	f' <- getStms env f
 	genExpStm env cond (\cond' -> J.If cond' t' f')
+genStm env (D.While cond w) = do
+	w' <- getStms env w
+	genExpStm env cond (\cond' -> J.While cond' w')
 genStm env (D.Throw e) = genExpStm env e (\e' -> J.Throw $ J.New [] $ J.Call "RuntimeException" [] [e'])
 genStm env (D.Set tp l r) = let
 	(l', Wrt{wrtStms = lstm, wrtImports = limps}) = runWriter $ genExp env l

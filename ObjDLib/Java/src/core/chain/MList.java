@@ -22,7 +22,7 @@ public class MList<T> extends MSeq_impl<T> {
     }
     @Override
     public void insertIndexItem(int index,T item) {
-        if(index.equals(ERROR: Unknown 0)) {
+        if(index.equals(0)) {
             prependItem(item);
         } else {
             if(index >= this._count) {
@@ -30,9 +30,9 @@ public class MList<T> extends MSeq_impl<T> {
             } else {
                 MListItem<T> c = this.headItem;
                 int i = index;
-                ERROR: Unknown while(((<lm>c\(^MListItem#C<§T#G§>)?\ != none<^MListItem#C<§T#G§>>) && (<lm>i\uint\ > 0))) {
-    (<lm>c\(^MListItem#C<§T#G§>)¿\ = <lm>c\(^MListItem#C<§T#G§>)¿\.<eIm>next\(^MListItem#C<§T#G§>)?\)
-};
+                while(c != null && i > 0) {
+                    c = c.next;
+                }
                 if(c != null) {
                     MListItem<T> li = new MListItem<T>(item);
                     {
@@ -149,27 +149,31 @@ public class MList<T> extends MSeq_impl<T> {
     @Override
     public void forEach(P<T> each) {
         MListItem<T> i = this.headItem;
-        ERROR: Unknown while((<lm>i\(^MListItem#C<§T#G§>)?\ != none<^MListItem#C<§T#G§>>)) {
-    <l>each\§T#G§ -> void\.<d>apply( = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIUm>data\§T#G§\)\void\
-    (<lm>i\(^MListItem#C<§T#G§>)¿\ = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIm>next\(^MListItem#C<§T#G§>)?\)
-};
+        while(i != null) {
+            each.apply(i.data);
+            i = i.next;
+        }
     }
     @Override
     public boolean goOn(F<T, Boolean> on) {
         MListItem<T> i = this.headItem;
-        ERROR: Unknown while((<lm>i\(^MListItem#C<§T#G§>)?\ != none<^MListItem#C<§T#G§>>)) {
-    if(!(<l>on\§T#G§ -> bool\.<d>apply( = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIUm>data\§T#G§\)\bool\)) return False
-    (<lm>i\(^MListItem#C<§T#G§>)¿\ = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIm>next\(^MListItem#C<§T#G§>)?\)
-};
-        return ERROR: Unknown True;
+        while(i != null) {
+            if(ERROR: Unknown !(<l>on\§T#G§ -> bool\.<d>apply( = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIUm>data\§T#G§\)\bool\)) {
+                return false;
+            }
+            i = i.next;
+        }
+        return true;
     }
     @Override
     public void mutableFilterBy(F<T, Boolean> by) {
         MListItem<T> i = this.headItem;
-        ERROR: Unknown while((<lm>i\(^MListItem#C<§T#G§>)?\ != none<^MListItem#C<§T#G§>>)) {
-    if(!(<l>by\§T#G§ -> bool\.<d>apply( = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIUm>data\§T#G§\)\bool\)) <MList#C<T#G>>self.<dI>remove(listItem = <lm>i\(^MListItem#C<§T#G§>)¿\)\void\
-    (<lm>i\(^MListItem#C<§T#G§>)¿\ = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIm>next\(^MListItem#C<§T#G§>)?\)
-};
+        while(i != null) {
+            if(ERROR: Unknown !(<l>by\§T#G§ -> bool\.<d>apply( = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIUm>data\§T#G§\)\bool\)) {
+                removeListItem(i);
+            }
+            i = i.next;
+        }
     }
     @Override
     public T head() {

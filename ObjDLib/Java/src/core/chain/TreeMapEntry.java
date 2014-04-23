@@ -6,22 +6,28 @@ public class TreeMapEntry<K, V> {
     public TreeMapEntry<K, V> parent;
     public TreeMapEntry<K, V> left = null;
     public TreeMapEntry<K, V> right = null;
-    public int color = ERROR: Unknown 0;
+    public int color = 0;
     public TreeMapEntry<K, V> next() {
         if(this.right != null) {
             TreeMapEntry<K, V> p = this.right;
-            ERROR: Unknown while((<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) (<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = some(<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get)\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\);
+            while(p.left != null) {
+                p = ERROR: Unknown {
+    local __tmp_0_1 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
+    if((<l>__tmp_0_1\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == none<^TreeMapEntry#C<§K#G§, §V#G§>>)) throw "Not null"
+else <l>__tmp_0_1\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
+};
+            }
             return ERROR: Unknown <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.cast<^(^TreeMapEntry#C<§K#G§, §V#G§>)?>;
         } else {
             TreeMapEntry<K, V> p = this.parent;
             TreeMapEntry<K, V> ch = this;
-            ERROR: Unknown while(((<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && {
+            while(p != null && ERROR: Unknown {
     local __tmp_0_2 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     return ((<l>__tmp_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && (<l>__tmp_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == <lm>ch\TreeMapEntry#C<§K#G§, §V#G§>\))
-})) {
-    (<lm>ch\TreeMapEntry#C<§K#G§, §V#G§>\ = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\)
-    (<lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)
-};
+}) {
+                ch = p;
+                p = p.parent;
+            }
             return p;
         }
     }

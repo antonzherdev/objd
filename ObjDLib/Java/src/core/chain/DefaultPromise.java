@@ -13,17 +13,23 @@ public class DefaultPromise<T> extends Promise<T> {
     }
     @Override
     public boolean completeValue(Try<T> value) {
-        ERROR: Unknown while(True) {
-    local v : any = return <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<rdIb>get\§^any§\
-    if(<l>v\any\.is<Try#C<T#G>>) return False
-else {
-    if(<DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<rdIb>compareAndSet(oldValue = <l>v\any\, newValue = <l>value\Try#C<§T#G§>\)\bool\) {
-    <l>v\any\.cast<[^Try#C<T#G> -> void]>.<rdIo>for(each = f : §^Try#C<T#G> -> void§ -> void = <l>f\§^Try#C<T#G> -> void§\.<d>apply( = <l>value\Try#C<§T#G§>\)\void\)\void\
-    return True
-}
-}
-};
-        return ERROR: Unknown False;
+        while(true) {
+            Object v = this._state.get();
+            if(v.ERROR: Unknown is<Try#C<T#G>>) {
+                return false;
+            } else {
+                if(this._state.compareAndSetOldValueNewValue(v, value)) {
+                    v.ERROR: Unknown cast<[^Try#C<T#G> -> void]>.forEach(new P<P<Try<T>>>() {
+                        @Override
+                        public void apply(P<Try<T>> f) {
+                            f.apply(value);
+                        }
+                    });
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     @Override
     public boolean successValue(T value) {
@@ -35,19 +41,18 @@ else {
     }
     @Override
     public void onCompleteF(P<Try<T>> f) {
-        ERROR: Unknown while(True) {
-    local v : any = return <DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<rdIb>get\§^any§\
-    if(<l>v\any\.is<Try#C<T#G>>) {
-    <l>f\Try#C<§T#G§> -> void\.<d>apply( = <l>v\any\.cast<Try#C<T#G>>)\void\
-    return nil
-}
-else {
-    local vv : [^Try#C<T#G> -> void] = <l>v\any\.cast<[^Try#C<T#G> -> void]>
-    if(<DefaultPromise#C<T#G>>self.<ep>_state\AtomicObject#C<§^any§>\.<rdIb>compareAndSet(oldValue = <l>vv\[^Try#C<§T#G§> -> void]\, newValue = <l>vv\[^Try#C<§T#G§> -> void]\.<dIob>add(item = <l>f\Try#C<§T#G§> -> void\)\[^Try#C<§T#G§> -> void]\)\bool\) {
-    return nil
-}
-}
-};
+        while(true) {
+            Object v = this._state.get();
+            if(v.ERROR: Unknown is<Try#C<T#G>>) {
+                f.apply(v.ERROR: Unknown cast<Try#C<T#G>>);
+                return null;
+            } else {
+                ImArray<P<Try<T>>> vv = v.ERROR: Unknown cast<[^Try#C<T#G> -> void]>;
+                if(this._state.compareAndSetOldValueNewValue(vv, vv.addItem(f))) {
+                    return null;
+                }
+            }
+        }
     }
     public DefaultPromise() {
     }

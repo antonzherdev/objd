@@ -4,7 +4,7 @@ public final class Range extends ImSeq_impl<int> {
     public final int start;
     public final int end;
     public final int step;
-    public final int count = (step > ERROR: Unknown 0) ? ((start <= end) ? (ERROR: Unknown (((<lw>end\int\ - <lw>start\int\) / <lw>step\int\) + 1).cast<uint>) : (ERROR: Unknown 0.cast<uint>)) : ((step < ERROR: Unknown 0) ? ((start >= end) ? (ERROR: Unknown (((<lw>end\int\ - <lw>start\int\) / <lw>step\int\) + 1).cast<uint>) : (ERROR: Unknown 0.cast<uint>)) : (ERROR: Unknown 1.cast<uint>));
+    public final int count = (step > 0) ? ((start <= end) ? (ERROR: Unknown (((<lw>end\int\ - <lw>start\int\) / <lw>step\int\) + 1).cast<uint>) : (ERROR: Unknown 0.cast<uint>)) : ((step < 0) ? ((start >= end) ? (ERROR: Unknown (((<lw>end\int\ - <lw>start\int\) / <lw>step\int\) + 1).cast<uint>) : (ERROR: Unknown 0.cast<uint>)) : (ERROR: Unknown 1.cast<uint>));
     @Override
     public Integer applyIndex(int index) {
         if(index < this.count) {
@@ -22,18 +22,18 @@ public final class Range extends ImSeq_impl<int> {
     }
     @Override
     public boolean isEmpty() {
-        if(this.step > ERROR: Unknown 0) {
+        if(this.step > 0) {
             return this.start > this.end;
         } else {
-            if(this.step < ERROR: Unknown 0) {
+            if(this.step < 0) {
                 return this.start < this.end;
             } else {
-                return ERROR: Unknown False;
+                return false;
             }
         }
     }
     public static Range applyI(int i) {
-        return new Range(i, i, ERROR: Unknown 1);
+        return new Range(i, i, 1);
     }
     public Range(int start,int end,int step) {
         this.start = start;

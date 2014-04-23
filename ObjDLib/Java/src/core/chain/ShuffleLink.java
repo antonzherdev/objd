@@ -8,7 +8,7 @@ public class ShuffleLink<T> implements ChainLink<T, T> {
             @Override
             public Integer apply(Integer size) {
                 ShuffleLink.this._array = new MArray<T>(size);
-                return ERROR: Unknown 0;
+                return 0;
             }
         }, new F<T, Integer>() {
             @Override
@@ -24,7 +24,7 @@ public class ShuffleLink<T> implements ChainLink<T, T> {
                     ShuffleLink.this._array;
                 }
                 .insertIndexItem(UInt().rndMax(.count()), item);
-                return ERROR: Unknown 0;
+                return 0;
             }
         }, new F<Integer, Integer>() {
             @Override
@@ -34,8 +34,8 @@ public class ShuffleLink<T> implements ChainLink<T, T> {
                 } else {
                     ShuffleLink.this._array;
                 }
-                if(yield.yieldAll().equals(ERROR: Unknown 1)) {
-                    return ERROR: Unknown 1;
+                if(yield.yieldAll().equals(1)) {
+                    return 1;
                 } else {
                     return r;
                 }

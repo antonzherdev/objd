@@ -14,7 +14,7 @@ public interface Iterable<T> extends Traversable<T> {
     boolean goOn(F<T, Boolean> on);
     boolean containsItem(T item);
     @Override
-    String description();
+    String toString();
     @Override
-    int hash();
+    int hashCode();
 }

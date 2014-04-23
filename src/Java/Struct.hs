@@ -117,15 +117,18 @@ showAnnotation (DefAnnotation nm pars) = ["@" ++ nm ++ "("] `glue` (glueAll ", "
 showStmsInBrackets :: [Stm] -> [String]
 showStmsInBrackets stms = ["{"] ++ (map ind . concatMap showStm) stms ++ ["}"]
 
-data Stm = Stm Exp | Braces [Stm] | Return Exp | If Exp [Stm] [Stm] | Throw Exp | Set (Maybe MathTp) Exp Exp | Val TP String Exp deriving (Eq)
+data Stm = Stm Exp | Braces [Stm] | Return Exp | If Exp [Stm] [Stm] | While Exp [Stm]
+	| Throw Exp | Set (Maybe MathTp) Exp Exp | Val TP String Exp | Break deriving (Eq)
 
 showStm :: Stm -> [String]
 showStm (Stm Nop) = []
+showStm (Break) = ["break;"]
 showStm (Stm e) = showExp e `appp` ";"
 showStm (Return e) = ["return "] `glue` showExp e `appp` ";"
 showStm (Set tp l r) = showExp l `appp` maybe " = " (\t -> " " ++ show t ++ "= ") tp `glue` showExp r `appp` ";"
 showStm (Throw e) = ["throw "] `glue` showExp e `appp` ";"
 showStm (If cond t []) = (["if("] `glue` showExp cond `appp` ") ") `glue` showStmsInBrackets t
+showStm (While cond w) = (["while("] `glue` showExp cond `appp` ") ") `glue` showStmsInBrackets w
 showStm (If cond t f) = (showStm (If cond t []) `appp` " else ") `glue` showStmsInBrackets f 
 showStm (Braces stms) = showStmsInBrackets stms
 showStm (Val tp nm Nop) = [show tp ++ " " ++ nm ++ ";"]
@@ -133,13 +136,15 @@ showStm (Val tp nm e) = [show tp ++ " " ++ nm ++ " = "] `glue` showExp e `appp` 
 
 
 data Exp = Nop | IntConst Int | ExpError String | Call String [TP] [Exp] | New [Def] Exp | Dot Exp Exp | Ref String | InlineIf Exp Exp Exp | This
-	| BoolOp BoolTp Exp Exp | MathOp MathTp Exp Exp | Null 
+	| BoolOp BoolTp Exp Exp | MathOp MathTp Exp Exp | Null | BoolConst Bool
 	| StringConst String deriving (Eq)
 
 showExp :: Exp -> [String]
 showExp Nop = []
 showExp Null = ["null"]
 showExp This = ["this"]
+showExp (BoolConst True) = ["true"]
+showExp (BoolConst False) = ["false"]
 showExp (IntConst i) = [show i]
 showExp (StringConst s) = [show s]
 showExp (Ref s) = [s]

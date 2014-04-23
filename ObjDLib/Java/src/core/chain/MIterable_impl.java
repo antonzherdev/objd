@@ -4,13 +4,13 @@ public abstract class MIterable_impl<T> extends Iterable_impl<T> implements MIte
     @Override
     public boolean removeItem(T item) {
         MIterator<T> i = this.mutableIterator();
-        boolean ret = ERROR: Unknown False;
-        ERROR: Unknown while(<l>i\MIterator#T<§T#G§>\.<rdIa>hasNext\bool\) {
-    if((<l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\ == <l>item\§T#G§\)) {
-    <l>i\MIterator#T<§T#G§>\.<dIa>remove\void\
-    (<lm>ret\bool\ = True)
-}
-};
+        boolean ret = false;
+        while(i.hasNext()) {
+            if(i.next().equals(item)) {
+                i.remove();
+                ret = true;
+            }
+        }
         return ret;
     }
     @Override
@@ -30,8 +30,10 @@ public abstract class MIterable_impl<T> extends Iterable_impl<T> implements MIte
     }
     public void mutableFilterBy(F<T, Boolean> by) {
         MIterator<T> i = this.mutableIterator();
-        ERROR: Unknown while(<l>i\MIterator#T<§T#G§>\.<rdIa>hasNext\bool\) {
-    if(<l>by\§T#G§ -> bool\.<d>apply( = <l>i\MIterator#T<§T#G§>\.<rdIa>next\§T#G§\)\bool\) <l>i\MIterator#T<§T#G§>\.<dIa>remove\void\
-};
+        while(i.hasNext()) {
+            if(by.apply(i.next())) {
+                i.remove();
+            }
+        }
     }
 }

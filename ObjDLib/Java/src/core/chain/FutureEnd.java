@@ -2,21 +2,21 @@ package core.chain;
 
 public class FutureEnd<T> {
     private final Promise<Seq<T>> _promise = Promise().apply<Seq<T>>();
-    private boolean _stopped = ERROR: Unknown False;
+    private boolean _stopped = false;
     private AtomicInt _counter = new AtomicInt();
-    private boolean _ended = ERROR: Unknown False;
+    private boolean _ended = false;
     private AtomicBool _yielded = new AtomicBool();
     private MArray<T> _array;
     public Future<Seq<T>> future() {
         return this._promise;
     }
     public Yield<Future<T>> yield() {
-        int _i = ERROR: Unknown 0;
+        int _i = 0;
         return new Yield<Future<T>>(new F<Integer, Integer>() {
             @Override
             public Integer apply(Integer size) {
                 FutureEnd.this._array = new MArray<T>(size);
-                return ERROR: Unknown 0;
+                return 0;
             }
         }, new F<Future<T>, Integer>() {
             @Override
@@ -36,7 +36,7 @@ public class FutureEnd<T> {
                         public void apply(Try<T> tr) {
                             if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\)) {
                                 if(tr.isFailure()) {
-                                    FutureEnd.this._stopped = ERROR: Unknown True;
+                                    FutureEnd.this._stopped = true;
                                     FutureEnd.this._promise.failureReason(tr);
                                 } else {
                                     if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\)) {
@@ -49,7 +49,7 @@ public class FutureEnd<T> {
                                         Memory().memoryBarrier();
                                         int r = FutureEnd.this._counter.decrementAndGet();
                                         Memory().memoryBarrier();
-                                        if(FutureEnd.this._ended && r.equals(ERROR: Unknown 0)) {
+                                        if(FutureEnd.this._ended && r.equals(0)) {
                                             Memory().memoryBarrier();
                                             if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dIb>getAndSet(newValue = True)\bool\)) {
                                                 if(FutureEnd.this._array == null) {
@@ -67,17 +67,17 @@ public class FutureEnd<T> {
                     });
                 }
                 if(FutureEnd.this._stopped) {
-                    return ERROR: Unknown 1;
+                    return 1;
                 } else {
-                    return ERROR: Unknown 0;
+                    return 0;
                 }
             }
         }, new F<Integer, Integer>() {
             @Override
             public Integer apply(Integer res) {
-                FutureEnd.this._ended = ERROR: Unknown True;
+                FutureEnd.this._ended = true;
                 Memory().memoryBarrier();
-                if(FutureEnd.this._counter.intValue().equals(ERROR: Unknown 0)) {
+                if(FutureEnd.this._counter.intValue().equals(0)) {
                     Memory().memoryBarrier();
                     if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dIb>getAndSet(newValue = True)\bool\)) {
                         if(FutureEnd.this._array == null) {

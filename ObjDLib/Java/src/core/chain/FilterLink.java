@@ -16,7 +16,7 @@ public class FilterLink<T> implements ChainLink<T, T> {
                 if(FilterLink.this.predicate.apply(item)) {
                     return yield.yieldItem(item);
                 } else {
-                    return ERROR: Unknown 0;
+                    return 0;
                 }
             }
         });

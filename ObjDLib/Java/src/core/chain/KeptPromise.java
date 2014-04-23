@@ -20,15 +20,15 @@ public final class KeptPromise<T> extends Promise<T> {
     }
     @Override
     public boolean completeValue(Try<T> value) {
-        return ERROR: Unknown False;
+        return false;
     }
     @Override
     public boolean successValue(T value) {
-        return ERROR: Unknown False;
+        return false;
     }
     @Override
     public boolean failureReason(Object reason) {
-        return ERROR: Unknown False;
+        return false;
     }
     public KeptPromise(Try<T> value) {
         this.value = value;

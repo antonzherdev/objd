@@ -7,7 +7,7 @@ public class RangeIterator extends Iterator_impl<int> {
     private int i = start;
     @Override
     public boolean hasNext() {
-        return (this.step > ERROR: Unknown 0 && this.i <= this.end) || (this.step < ERROR: Unknown 0 && this.i >= this.end);
+        return (this.step > 0 && this.i <= this.end) || (this.step < 0 && this.i >= this.end);
     }
     @Override
     public Integer next() {

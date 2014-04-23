@@ -54,7 +54,7 @@ public abstract class Future<T> {
                 if(t.isSuccess()) {
                     _a = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 2)) {
+                    if(n.incrementAndGet().equals(2)) {
                         p.successValue(f.apply(_a, _b));
                     }
                 } else {
@@ -68,7 +68,7 @@ public abstract class Future<T> {
                 if(t.isSuccess()) {
                     _b = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 2)) {
+                    if(n.incrementAndGet().equals(2)) {
                         p.successValue(f.apply(_a, _b));
                     }
                 } else {
@@ -90,7 +90,7 @@ public abstract class Future<T> {
                 if(t.isSuccess()) {
                     _a = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 3)) {
+                    if(n.incrementAndGet().equals(3)) {
                         p.successValue(f.apply(_a, _b, _c));
                     }
                 } else {
@@ -104,7 +104,7 @@ public abstract class Future<T> {
                 if(t.isSuccess()) {
                     _b = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 3)) {
+                    if(n.incrementAndGet().equals(3)) {
                         p.successValue(f.apply(_a, _b, _c));
                     }
                 } else {
@@ -118,7 +118,7 @@ public abstract class Future<T> {
                 if(t.isSuccess()) {
                     _c = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 3)) {
+                    if(n.incrementAndGet().equals(3)) {
                         p.successValue(f.apply(_a, _b, _c));
                     }
                 } else {
@@ -141,7 +141,7 @@ public abstract class Future<T> {
                 if(t.isSuccess()) {
                     _a = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 4)) {
+                    if(n.incrementAndGet().equals(4)) {
                         p.successValue(f.apply(_a, _b, _c, _d));
                     }
                 } else {
@@ -155,7 +155,7 @@ public abstract class Future<T> {
                 if(t.isSuccess()) {
                     _b = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 4)) {
+                    if(n.incrementAndGet().equals(4)) {
                         p.successValue(f.apply(_a, _b, _c, _d));
                     }
                 } else {
@@ -169,7 +169,7 @@ public abstract class Future<T> {
                 if(t.isSuccess()) {
                     _c = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 4)) {
+                    if(n.incrementAndGet().equals(4)) {
                         p.successValue(f.apply(_a, _b, _c, _d));
                     }
                 } else {
@@ -183,7 +183,7 @@ public abstract class Future<T> {
                 if(t.isSuccess()) {
                     _d = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 4)) {
+                    if(n.incrementAndGet().equals(4)) {
                         p.successValue(f.apply(_a, _b, _c, _d));
                     }
                 } else {
@@ -207,7 +207,7 @@ public abstract class Future<T> {
                 if(t.isSuccess()) {
                     _a = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 5)) {
+                    if(n.incrementAndGet().equals(5)) {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
                 } else {
@@ -221,7 +221,7 @@ public abstract class Future<T> {
                 if(t.isSuccess()) {
                     _b = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 5)) {
+                    if(n.incrementAndGet().equals(5)) {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
                 } else {
@@ -235,7 +235,7 @@ public abstract class Future<T> {
                 if(t.isSuccess()) {
                     _c = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 5)) {
+                    if(n.incrementAndGet().equals(5)) {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
                 } else {
@@ -249,7 +249,7 @@ public abstract class Future<T> {
                 if(t.isSuccess()) {
                     _d = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 5)) {
+                    if(n.incrementAndGet().equals(5)) {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
                 } else {
@@ -263,7 +263,7 @@ public abstract class Future<T> {
                 if(t.isSuccess()) {
                     _e = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 5)) {
+                    if(n.incrementAndGet().equals(5)) {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
                 } else {
@@ -285,7 +285,7 @@ public abstract class Future<T> {
         if(__tmp != null) {
             return this.result().isSuccess();
         } else {
-            return ERROR: Unknown False;
+            return false;
         }
     }
     public boolean isFailed() {
@@ -293,7 +293,7 @@ public abstract class Future<T> {
         if(__tmp != null) {
             return this.result().isFailure();
         } else {
-            return ERROR: Unknown True;
+            return true;
         }
     }
     public abstract void onCompleteF(P<Try<T>> f);
@@ -343,29 +343,29 @@ public abstract class Future<T> {
         return p;
     }
     public Try<T> waitResultPeriod(float period) {
-        ConditionLock lock = new ConditionLock(ERROR: Unknown 0);
+        ConditionLock lock = new ConditionLock(0);
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(Try<T> _) {
                 lock.lock();
-                lock.unlockWithCondition(ERROR: Unknown 1);
+                lock.unlockWithCondition(1);
             }
         });
-        if(lock.lockWhenConditionPeriod(ERROR: Unknown 1, period)) {
+        if(lock.lockWhenConditionPeriod(1, period)) {
             lock.unlock();
         }
         return this.result();
     }
     public Try<T> waitResult() {
-        ConditionLock lock = new ConditionLock(ERROR: Unknown 0);
+        ConditionLock lock = new ConditionLock(0);
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(Try<T> _) {
                 lock.lock();
-                lock.unlockWithCondition(ERROR: Unknown 1);
+                lock.unlockWithCondition(1);
             }
         });
-        lock.lockWhenCondition(ERROR: Unknown 1);
+        lock.lockWhenCondition(1);
         lock.unlock();
         return ERROR: Unknown {
     local __tmp_4 : (^Try#C<§T#G§>)? = <Future#C<T#G>>self.<dIa>result\(^Try#C<§T#G§>)?\
@@ -391,7 +391,7 @@ else <l>__tmp\§(T#G)?§\
                 if(t.isSuccess()) {
                     a = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 2)) {
+                    if(n.incrementAndGet().equals(2)) {
                         p.successValue(new Tuple<T, R>(a, b));
                     }
                 } else {
@@ -405,7 +405,7 @@ else <l>__tmp\§(T#G)?§\
                 if(t.isSuccess()) {
                     b = t.get();
                     Memory().memoryBarrier();
-                    if(n.incrementAndGet().equals(ERROR: Unknown 2)) {
+                    if(n.incrementAndGet().equals(2)) {
                         p.successValue(new Tuple<T, R>(a, b));
                     }
                 } else {

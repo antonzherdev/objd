@@ -4,11 +4,11 @@ public final class Success<T> extends Try<T> {
     public final T get;
     @Override
     public boolean isSuccess() {
-        return ERROR: Unknown True;
+        return true;
     }
     @Override
     public boolean isFailure() {
-        return ERROR: Unknown False;
+        return false;
     }
     @Override
     public Object reason() {

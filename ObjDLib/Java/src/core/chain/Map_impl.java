@@ -25,7 +25,7 @@ public abstract class Map_impl<K, V> extends Iterable_impl<Tuple2<K, V>> impleme
         if(__tmp != null) {
             return __tmp;
         } else {
-            return ERROR: Unknown False;
+            return false;
         }
     }
 }

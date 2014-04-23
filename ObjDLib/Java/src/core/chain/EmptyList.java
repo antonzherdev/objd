@@ -16,7 +16,7 @@ public final class EmptyList<T> extends ImList<T> {
     }
     @Override
     public boolean isEmpty() {
-        return ERROR: Unknown True;
+        return true;
     }
     @Override
     public ImList<T> filterF(F<T, Boolean> f) {

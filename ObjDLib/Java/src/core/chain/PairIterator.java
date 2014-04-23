@@ -2,15 +2,15 @@ package core.chain;
 
 public class PairIterator<T> extends Iterator_impl<T> {
     public final Pair<T> pair;
-    private int state = ERROR: Unknown 0;
+    private int state = 0;
     @Override
     public boolean hasNext() {
-        return this.state < ERROR: Unknown 2;
+        return this.state < 2;
     }
     @Override
     public T next() {
         ERROR: Unknown <PairIterator#C<T#G>>self.<emp>state\int\++;
-        if(this.state.equals(ERROR: Unknown 1)) {
+        if(this.state.equals(1)) {
             return this.pair.a;
         } else {
             return this.pair.b;

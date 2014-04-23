@@ -8,8 +8,8 @@ import test..*;
 public class FutureTest extends TestCase {
     public void testPromiseOnComplete() {
         AtomicInt n = new AtomicInt();
-        int count = ERROR: Unknown 100000;
-        ERROR: Unknown 1.to(count).forEach(new P<Integer>() {
+        int count = 100000;
+        1.to(count).forEach(new P<Integer>() {
             @Override
             public void apply(Integer i) {
                 Promise<Integer> p = Promise().apply<Integer>();
@@ -32,16 +32,16 @@ public class FutureTest extends TestCase {
     }
     public void testMap() {
         AtomicInt n = new AtomicInt();
-        int count = ERROR: Unknown 100;
+        int count = 100;
         AtomicInt result = new AtomicInt();
-        ERROR: Unknown 1.to(count).parForEach(new P<Integer>() {
+        1.to(count).parForEach(new P<Integer>() {
             @Override
             public void apply(Integer i) {
                 Promise<Integer> p = Promise().apply<Integer>();
                 Future<Integer> m = p.mapF<Integer>(new F<Integer, Integer>() {
                     @Override
                     public Integer apply(Integer _) {
-                        return _ + ERROR: Unknown 1;
+                        return _ + 1;
                     }
                 });
                 result.addAndGetValue(ERROR: Unknown (<l>i\§^int§\ + 1).cast<int4>);
@@ -64,9 +64,9 @@ public class FutureTest extends TestCase {
     }
     public void testFlatMap() {
         AtomicInt n = new AtomicInt();
-        int count = ERROR: Unknown 100;
-        int result = ERROR: Unknown 0;
-        ERROR: Unknown 1.to(count).forEach(new P<Integer>() {
+        int count = 100;
+        int result = 0;
+        1.to(count).forEach(new P<Integer>() {
             @Override
             public void apply(Integer i) {
                 Promise<Integer> p = Promise().apply<Integer>();
@@ -76,12 +76,12 @@ public class FutureTest extends TestCase {
                         return Future().applyF<Integer>(new F0<Integer>() {
                             @Override
                             public Integer apply() {
-                                return _ + ERROR: Unknown 1;
+                                return _ + 1;
                             }
                         });
                     }
                 });
-                result += i + ERROR: Unknown 1;
+                result += i + 1;
                 DispatchQueue().default.asyncF(new P0() {
                     @Override
                     public void apply() {
