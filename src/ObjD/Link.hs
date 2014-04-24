@@ -1,7 +1,7 @@
 module ObjD.Link (
 	Sources, File(..), Class(..), Extends(..), Def(..), DataType(..), Exp(..), CImport(..), 
 	DefMod(..), MathTp(..), DataTypeMod(..), ClassMod(..), Error(..), ExtendsClass(..), ExtendsRef, CallPar, Package(..),
-	WrapReason(..), Annotation(..), Lang(..),
+	WrapReason(..), Annotation(..), Lang(..), DefGenerics(..),
 	Import(..), link, isClass, isType, isDef, isField, isEnum, isVoid, isStub, isStruct, isRealClass, isTrait, exprDataType, isStatic, enumItems,
 	classConstructor, classFields, checkErrors, dataTypeClassName, dataTypeClassNameWithPrefix,
 	isCoreFile, unwrapGeneric, forExp, extendsRefs, extendsClassClass, isConstructor,
@@ -814,7 +814,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 				case b of
 					D.Nop -> Nothing
 					_ -> Just $ exprTo env' tp' b)
-		generics = map (linkGeneric env) (D.classGenerics cl) 
+		generics = linkGenerics env (D.classGenerics cl) 
 		
 		
 		enumItem :: Int -> D.EnumItem -> (Int, Def)
@@ -870,13 +870,19 @@ linkAnnotation env (D.Annotation nm pars tps) = case expr env (D.Call nm (Just p
 linkExtendsRef :: Env -> D.ExtendsRef -> ExtendsRef
 linkExtendsRef env (ecls, gens) = (classFind (envIndex env) ecls, map (dataType env) gens) 
 
-linkGeneric :: Env -> D.Generic -> Class
-linkGeneric env (D.Generic name ext) = Generic{className = name,
-	_classExtendsRef = (classFind (envIndex env) "Object", []) : map (linkExtendsRef env) genExtendsRefs}
+linkGenerics :: Env -> [D.Generic] -> [Class]
+linkGenerics env gens = cls
 	where 
-		genExtendsRefs = case ext of
-			Nothing -> []
-			Just (D.Extends (D.ExtendsClass firstExtends []) nextExtends) -> firstExtends : nextExtends
+		linkGeneric (D.Generic name ext) = let
+			genExtendsRefs = case ext of
+				Nothing -> []
+				Just (D.Extends (D.ExtendsClass firstExtends []) nextExtends) -> firstExtends : nextExtends
+			in Generic{
+				className = name,
+				_classExtendsRef = (classFind (envIndex env) "Object", []) : map (linkExtendsRef env') genExtendsRefs}
+		cls = map linkGeneric gens
+		env' = envAddClasses cls env
+		
 
 linkField :: Env -> (Bool, Bool) -> D.ClassStm -> [Def]
 --linkField _ _ D.Def{D.defName = nm} | trace ("Field " ++ nm) False = undefined
@@ -947,7 +953,7 @@ linkDef env dd@D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.de
 	resolveDefPar env' mainDef pars''
 	where 
 		env' = addEnvInit $ envAddClasses generics' env
-		generics' = map (linkGeneric env) generics
+		generics' = linkGenerics env generics
 		isInit = name == "init" && null opars
 		addEnvInit e = if isInit then e {envInit = True} else e
 		
@@ -2939,7 +2945,7 @@ checkErrorsInFile File{fileName = name, fileClasses = classes} =
 
 checkErrorsInClass :: Class -> [Error]
 checkErrorsInClass e@ClassError{} = [Error (show e)]
-checkErrorsInClass Generic{} = []
+checkErrorsInClass Generic{_classExtendsRef = extends} = concatMap checkErrorsInExtendsRef extends
 checkErrorsInClass cl@Class{className = name, _classExtends = extends, _classGenerics = gens, _classDefs = defs, _classMods = mods} = 
 	map (ErrorParent $ "class " ++ name) (
 		checkErrorsInExtends extends
@@ -3018,6 +3024,7 @@ checkErrorsInDefGenerics DefGenerics{defGenericsClasses = classes, defGenericsSe
 checkErrorsInDataType :: DataType -> [Error]
 checkErrorsInDataType = forDataType (\t -> case t of
 	e@TPUnknown{} -> [Error (show e)]
+	TPClass _ gens _ -> concatMap checkErrorsInDataType gens
 	_ -> []
 	)
 

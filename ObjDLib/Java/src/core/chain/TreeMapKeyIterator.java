@@ -3,7 +3,7 @@ package core.chain;
 public class TreeMapKeyIterator<K> extends Iterator_impl<K> {
     public final TreeMap<K, ?> map;
     public TreeMapEntry<K, ?> entry;
-    public static TreeMapKeyIterator<K> applyMapEntry(TreeMap<K, ?> map,TreeMapEntry<K, ?> entry) {
+    public static  <K> TreeMapKeyIterator<K> applyMapEntry(TreeMap<K, ?> map,TreeMapEntry<K, ?> entry) {
         TreeMapKeyIterator<K> ret = new TreeMapKeyIterator<K>(map);
         ret.entry = entry;
         return ret;

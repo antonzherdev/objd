@@ -15,7 +15,7 @@ public final class Failure<T> extends Try<T> {
         return true;
     }
     @Override
-    public Try<R> mapF(F<T, R> f) {
+    public  <R> Try<R> mapF(F<T, R> f) {
         return ((Try<R>)this);
     }
     public Failure(Object reason) {

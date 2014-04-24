@@ -2,7 +2,7 @@ package core.chain;
 
 public class TreeMapValuesIterator<V> extends Iterator_impl<V> {
     public TreeMapEntry<?, V> entry;
-    public static TreeMapValuesIterator<V> applyMapEntry(TreeMap<?, V> map,TreeMapEntry<?, V> entry) {
+    public static  <V> TreeMapValuesIterator<V> applyMapEntry(TreeMap<?, V> map,TreeMapEntry<?, V> entry) {
         TreeMapValuesIterator<V> ret = new TreeMapValuesIterator<V>(map);
         ret.entry = entry;
         return ret;

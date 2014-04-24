@@ -9,5 +9,5 @@ public interface Traversable<T> {
     boolean existsWhere(F<T, Boolean> where);
     boolean allConfirm(F<T, Boolean> confirm);
     T head();
-    C convertWithBuilder(Builder<T, C> builder);
+     <C extends Traversable<T>> C convertWithBuilder(Builder<T, C> builder);
 }

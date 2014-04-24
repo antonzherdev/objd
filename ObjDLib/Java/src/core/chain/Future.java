@@ -1,7 +1,7 @@
 package core.chain;
 
 public abstract class Future<T> {
-    public static Future<T> applyF(F<Void, T> f) {
+    public static  <T> Future<T> applyF(F<Void, T> f) {
         Promise<T> p = Promise().apply<T>();
         DispatchQueue().default.asyncF(new P0() {
             @Override
@@ -11,7 +11,7 @@ public abstract class Future<T> {
         });
         return p;
     }
-    public static Future<Tuple2<A, B>> joinAB(Future<A> a,Future<B> b) {
+    public static  <A, B> Future<Tuple2<A, B>> joinAB(Future<A> a,Future<B> b) {
         return Future().mapABF<A, B, Tuple2<A, B>>(a, b, new F2<A, B, Tuple2<A, B>>() {
             @Override
             public Tuple2<A, B> apply(A _a,B _b) {
@@ -19,7 +19,7 @@ public abstract class Future<T> {
             }
         });
     }
-    public static Future<Tuple3<A, B, C>> joinABC(Future<A> a,Future<B> b,Future<C> c) {
+    public static  <A, B, C> Future<Tuple3<A, B, C>> joinABC(Future<A> a,Future<B> b,Future<C> c) {
         return Future().mapABCF<A, B, C, Tuple3<A, B, C>>(a, b, c, new F3<A, B, C, Tuple3<A, B, C>>() {
             @Override
             public Tuple3<A, B, C> apply(A _a,B _b,C _c) {
@@ -27,7 +27,7 @@ public abstract class Future<T> {
             }
         });
     }
-    public static Future<Tuple4<A, B, C, D>> joinABCD(Future<A> a,Future<B> b,Future<C> c,Future<D> d) {
+    public static  <A, B, C, D> Future<Tuple4<A, B, C, D>> joinABCD(Future<A> a,Future<B> b,Future<C> c,Future<D> d) {
         return Future().mapABCDF<A, B, C, D, Tuple4<A, B, C, D>>(a, b, c, d, new F4<A, B, C, D, Tuple4<A, B, C, D>>() {
             @Override
             public Tuple4<A, B, C, D> apply(A _a,B _b,C _c,D _d) {
@@ -35,7 +35,7 @@ public abstract class Future<T> {
             }
         });
     }
-    public static Future<Tuple5<A, B, C, D, E>> joinABCDE(Future<A> a,Future<B> b,Future<C> c,Future<D> d,Future<E> e) {
+    public static  <A, B, C, D, E> Future<Tuple5<A, B, C, D, E>> joinABCDE(Future<A> a,Future<B> b,Future<C> c,Future<D> d,Future<E> e) {
         return Future().mapABCDEF<A, B, C, D, E, Tuple5<A, B, C, D, E>>(a, b, c, d, e, new F5<A, B, C, D, E, Tuple5<A, B, C, D, E>>() {
             @Override
             public Tuple5<A, B, C, D, E> apply(A _a,B _b,C _c,D _d,E _e) {
@@ -43,7 +43,7 @@ public abstract class Future<T> {
             }
         });
     }
-    public static Future<R> mapABF(Future<A> a,Future<B> b,F2<A, B, R> f) {
+    public static  <A, B, R> Future<R> mapABF(Future<A> a,Future<B> b,F2<A, B, R> f) {
         Promise<R> p = Promise().apply<R>();
         A _a = null;
         B _b = null;
@@ -78,7 +78,7 @@ public abstract class Future<T> {
         });
         return p;
     }
-    public static Future<R> mapABCF(Future<A> a,Future<B> b,Future<C> c,F3<A, B, C, R> f) {
+    public static  <A, B, C, R> Future<R> mapABCF(Future<A> a,Future<B> b,Future<C> c,F3<A, B, C, R> f) {
         Promise<R> p = Promise().apply<R>();
         A _a = null;
         B _b = null;
@@ -128,7 +128,7 @@ public abstract class Future<T> {
         });
         return p;
     }
-    public static Future<R> mapABCDF(Future<A> a,Future<B> b,Future<C> c,Future<D> d,F4<A, B, C, D, R> f) {
+    public static  <A, B, C, D, R> Future<R> mapABCDF(Future<A> a,Future<B> b,Future<C> c,Future<D> d,F4<A, B, C, D, R> f) {
         Promise<R> p = Promise().apply<R>();
         A _a = null;
         B _b = null;
@@ -193,7 +193,7 @@ public abstract class Future<T> {
         });
         return p;
     }
-    public static Future<R> mapABCDEF(Future<A> a,Future<B> b,Future<C> c,Future<D> d,Future<E> e,F5<A, B, C, D, E, R> f) {
+    public static  <A, B, C, D, E, R> Future<R> mapABCDEF(Future<A> a,Future<B> b,Future<C> c,Future<D> d,Future<E> e,F5<A, B, C, D, E, R> f) {
         Promise<R> p = Promise().apply<R>();
         A _a = null;
         B _b = null;
@@ -273,7 +273,7 @@ public abstract class Future<T> {
         });
         return p;
     }
-    public static Future<T> successfulResult(T result) {
+    public static  <T> Future<T> successfulResult(T result) {
         return new KeptPromise<T>(new Success<T>(result));
     }
     public abstract Try<T> result();
@@ -317,7 +317,7 @@ public abstract class Future<T> {
             }
         });
     }
-    public Future<R> mapF(F<T, R> f) {
+    public  <R> Future<R> mapF(F<T, R> f) {
         Promise<R> p = Promise().apply<R>();
         onCompleteF(new P<Try<T>>() {
             @Override
@@ -342,7 +342,7 @@ public abstract class Future<T> {
         });
         return p;
     }
-    public Future<R> flatMapF(F<T, Future<R>> f) {
+    public  <R> Future<R> flatMapF(F<T, Future<R>> f) {
         Promise<R> p = Promise().apply<R>();
         onCompleteF(new P<Try<T>>() {
             @Override
@@ -403,7 +403,7 @@ else <l>__tmp_4\(^Try#C<§T#G§>)?\
             }
         }
     }
-    public void waitAndOnSuccessFlatAwaitF(float await,P<I> f) {
+    public  <I> void waitAndOnSuccessFlatAwaitF(float await,P<I> f) {
         {
             {
                 Try<T> __inline__0___tr = waitResultPeriod(await);
@@ -425,7 +425,7 @@ else <l>__tmp_4\(^Try#C<§T#G§>)?\
 else <l>__tmp\§(T#G)?§\
 };
     }
-    public Future<Tuple2<T, R>> joinAnother(Future<R> another) {
+    public  <R> Future<Tuple2<T, R>> joinAnother(Future<R> another) {
         Promise<Tuple2<T, R>> p = Promise().apply<Tuple2<T, R>>();
         T a = null;
         R b = null;

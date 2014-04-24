@@ -4,7 +4,7 @@ public class MTreeMapKeyIterator<K> extends MIterator_impl<K> {
     public final MTreeMap<K, ?> map;
     private TreeMapEntry<K, ?> prev;
     public TreeMapEntry<K, ?> entry;
-    public static MTreeMapKeyIterator<K> applyMapEntry(MTreeMap<K, ?> map,TreeMapEntry<K, ?> entry) {
+    public static  <K> MTreeMapKeyIterator<K> applyMapEntry(MTreeMap<K, ?> map,TreeMapEntry<K, ?> entry) {
         MTreeMapKeyIterator<K> ret = new MTreeMapKeyIterator<K>(map);
         ret.entry = entry;
         return ret;

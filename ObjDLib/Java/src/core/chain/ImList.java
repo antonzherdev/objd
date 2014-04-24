@@ -1,13 +1,13 @@
 package core.chain;
 
 public abstract class ImList<T> extends ImSeq_impl<T> {
-    public static ImList<T> apply() {
+    public static  <T> ImList<T> apply() {
         return ((ImList<T>)EmptyList().instance);
     }
-    public static ImList<T> applyItem(T item) {
+    public static  <T> ImList<T> applyItem(T item) {
         return new FilledList<T>(item, EmptyList().instance);
     }
-    public static ImList<T> applyItemTail(T item,ImList<T> tail) {
+    public static  <T> ImList<T> applyItemTail(T item,ImList<T> tail) {
         return new FilledList<T>(item, tail);
     }
     @Override
@@ -20,7 +20,7 @@ public abstract class ImList<T> extends ImSeq_impl<T> {
     public abstract ImList<T> tail();
     public abstract ImList<T> filterF(F<T, Boolean> f);
     public abstract ImList<T> reverse();
-    public abstract ImList<T> insertItem(C item);
+    public abstract  <C extends Comparable<C>> ImList<T> insertItem(C item);
     public ImList() {
     }
 }

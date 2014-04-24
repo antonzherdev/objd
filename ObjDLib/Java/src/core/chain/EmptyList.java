@@ -30,7 +30,7 @@ public final class EmptyList<T> extends ImList<T> {
     public void forEach(P<T> each) {
     }
     @Override
-    public ImList<T> insertItem(C item) {
+    public  <C extends Comparable<C>> ImList<T> insertItem(C item) {
         return ImList().applyItem<T>(((T)item));
     }
     public EmptyList() {

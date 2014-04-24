@@ -51,7 +51,7 @@ case class FilledList<T>(val _head : T, override val tail : ImList<T>) extends I
         var list : FilledList<T> = self
         while(true) {
             val h = list._head
-            if(item.compare(h) < 0) {
+            if(item.compare(h.cast<C>) < 0) {
                 return FilledList(item.cast<T>, before).reverseAndAdd(list)
             }
             before = ImList<T>(h, before)

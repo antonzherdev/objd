@@ -15,7 +15,7 @@ public final class Success<T> extends Try<T> {
         throw new RuntimeException("Getting reason for success try");
     }
     @Override
-    public Try<R> mapF(F<T, R> f) {
+    public  <R> Try<R> mapF(F<T, R> f) {
         return new Success<R>(f.apply(this.get));
     }
     public Success(T get) {

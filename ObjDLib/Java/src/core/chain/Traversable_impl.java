@@ -82,7 +82,7 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
         });
         return ret;
     }
-    public C convertWithBuilder(Builder<T, C> builder) {
+    public  <C extends Traversable<T>> C convertWithBuilder(Builder<T, C> builder) {
         forEach(new P<T>() {
             @Override
             public void apply(T x) {

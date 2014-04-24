@@ -7,7 +7,7 @@ public abstract class Try<T> {
     public boolean isFailure() {
         return ERROR: Unknown !(<Try#C<T#G>>self.<dIa>isSuccess\bool\);
     }
-    public abstract Try<R> mapF(F<T, R> f);
+    public abstract  <R> Try<R> mapF(F<T, R> f);
     public Try() {
     }
 }

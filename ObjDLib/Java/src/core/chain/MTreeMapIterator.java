@@ -4,7 +4,7 @@ public class MTreeMapIterator<K, V> extends MIterator_impl<Tuple2<K, V>> {
     public final MTreeMap<K, V> map;
     private TreeMapEntry<K, V> prev;
     public TreeMapEntry<K, V> entry;
-    public static MTreeMapIterator<K, V> applyMapEntry(MTreeMap<K, V> map,TreeMapEntry<K, V> entry) {
+    public static  <K, V> MTreeMapIterator<K, V> applyMapEntry(MTreeMap<K, V> map,TreeMapEntry<K, V> entry) {
         MTreeMapIterator<K, V> ret = new MTreeMapIterator<K, V>(map);
         ret.entry = entry;
         return ret;

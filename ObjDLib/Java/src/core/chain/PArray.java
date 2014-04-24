@@ -7,7 +7,7 @@ public final class PArray<T> extends ImSeq_impl<T> {
     public final int length;
     public final Pointer bytes;
     public final boolean copied;
-    public static PArray<T> applyStrideWrapCountCopyBytes(int stride,F2<Pointer, Integer, T> wrap,int count,Pointer copyBytes) {
+    public static  <T> PArray<T> applyStrideWrapCountCopyBytes(int stride,F2<Pointer, Integer, T> wrap,int count,Pointer copyBytes) {
         int len = count * stride;
         return new PArray<T>(stride, wrap, count, len, copyBytes.copyBytes(count * stride), true);
     }

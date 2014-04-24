@@ -4,7 +4,7 @@ public class ImQueue<T> extends Queue_impl<T> {
     private static final ImQueue<Object> empty = new ImQueue<Object>(ImList().apply<Object>(), ImList().apply<Object>());
     public final ImList<T> in;
     public final ImList<T> out;
-    public static ImQueue<T> apply() {
+    public static  <T> ImQueue<T> apply() {
         return this.empty;
     }
     public Iterator<T> iterator() {

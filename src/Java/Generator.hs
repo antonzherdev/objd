@@ -123,6 +123,7 @@ genDef cl d =
  				return J.Def {
 	 				J.defAnnotations = [overrideAnnotation| D.DefModOverride `elem` D.defMods d],
 	 				J.defMods = mods,
+	 				J.defGenerics = maybe [] (map genGeneric . D.defGenericsClasses) $ D.defGenerics d,
 	 				J.defName = defName' d,
 	 				J.defTp = genTp $ D.defType d,
 	 				J.defPars = map genPar $ D.defPars d,
@@ -173,6 +174,7 @@ genTp (D.TPOption _ tp) = genTp tp
 genTp D.TPAnyGeneric = J.TPAnyGeneric
 genTp (D.TPPointer _) = J.tpRef "Pointer"
 genTp (D.TPNil) = J.tpRef "Object"
+genTp (D.TPUnknown e) = J.TPUnknown e
 
 genTp tp = error $ "genTp: " ++ show tp
 
@@ -233,6 +235,7 @@ genExp env (D.Lambda pars e dtp) = do
 		def = J.Def {
 			J.defAnnotations = [overrideAnnotation],
 			J.defMods = [J.DefModVisability J.Public],
+			J.defGenerics = [],
 			J.defName = "apply",
 			J.defTp = if dtp == D.TPVoid then J.tpRef "void" else genTp (D.wrapGeneric dtp),
 			J.defPars = map funPar pars,

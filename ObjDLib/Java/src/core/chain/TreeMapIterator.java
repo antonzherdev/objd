@@ -3,7 +3,7 @@ package core.chain;
 public class TreeMapIterator<K, V> extends Iterator_impl<Tuple2<K, V>> {
     public final TreeMap<K, V> map;
     public TreeMapEntry<K, V> entry;
-    public static TreeMapIterator<K, V> applyMapEntry(TreeMap<K, V> map,TreeMapEntry<K, V> entry) {
+    public static  <K, V> TreeMapIterator<K, V> applyMapEntry(TreeMap<K, V> map,TreeMapEntry<K, V> entry) {
         TreeMapIterator<K, V> ret = new TreeMapIterator<K, V>(map);
         ret.entry = entry;
         return ret;

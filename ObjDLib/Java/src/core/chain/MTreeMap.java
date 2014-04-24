@@ -4,7 +4,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     private TreeMapEntry<K, V> _root = null;
     private int _size = ((int)0);
     public final MTreeMapKeySet<K> keys = new MTreeMapKeySet<K>(this);
-    public static MTreeMap<K, V> apply() {
+    public static  <K extends Comparable<K>, V> MTreeMap<K, V> apply() {
         return new MTreeMap<K, V>(new F2<K, K, Integer>() {
             @Override
             public Integer apply(K a,K b) {

@@ -6,7 +6,7 @@ public final final class Tuple4<A, B, C, D> implements Comparable<Tuple4<A, B, C
     public final C c;
     public final D d;
     @Override
-    public int compareTo(Tuple4<AC, BC, CC, DC> to) {
+    public  <AC extends Comparable<A>, BC extends Comparable<B>, CC extends Comparable<C>, DC extends Comparable<D>> int compareTo(Tuple4<AC, BC, CC, DC> to) {
         int r = to.a.compareTo(this.a);
         if(r.equals(0)) {
             r = to.b.compareTo(this.b);
@@ -28,7 +28,7 @@ public final final class Tuple4<A, B, C, D> implements Comparable<Tuple4<A, B, C
     public String toString() {
         return ERROR: Unknown "($<Tuple4#C<A#G, B#G, C#G, D#G>>self.<eIU>a\§A#G§\, $<Tuple4#C<A#G, B#G, C#G, D#G>>self.<eIU>b\§B#G§\, $<Tuple4#C<A#G, B#G, C#G, D#G>>self.<eIU>c\§C#G§\, $<Tuple4#C<A#G, B#G, C#G, D#G>>self.<eIU>d\§D#G§\)";
     }
-    public static Tuple4<A, B, C, D> unapplyTuple(Tuple4<A, B, C, D> tuple) {
+    public static  <A, B, C, D> Tuple4<A, B, C, D> unapplyTuple(Tuple4<A, B, C, D> tuple) {
         return tuple;
     }
     public Tuple4(A a,B b,C c,D d) {

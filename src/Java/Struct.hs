@@ -50,7 +50,7 @@ instance Show ClassType where
 	show ClassTypeClass = "class"
 	show ClassTypeInterface = "interface"
 	
-data Generic = Generic{genericExtends :: [TP], genericName :: String}
+data Generic = Generic{genericExtends :: [TP], genericName :: String} deriving (Eq)
 instance Show Generic where
 	show (Generic [] nm) = nm
 	show (Generic exts nm ) = nm ++ " extends " ++ strs' " & " exts
@@ -58,7 +58,7 @@ instance Show Generic where
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - DataType
  -----------------------------------------------------------------------------------------------------------------------------------------------}
-data TP = TPRef [TP] String | TPArr TP Int | TPAnyGeneric deriving (Eq)
+data TP = TPRef [TP] String | TPArr TP Int | TPAnyGeneric | TPUnknown String deriving (Eq)
 tpRef :: String -> TP
 tpRef = TPRef []
 instance Show TP where
@@ -66,6 +66,7 @@ instance Show TP where
 	show (TPRef [] nm) = nm
 	show (TPRef exts nm) = nm ++ "<" ++ strs' ", " exts ++ ">"
 	show (TPArr tp n) = show tp ++ "[" ++ show n ++ "]"
+	show (TPUnknown e) = e
 removeGenerics :: TP -> TP
 removeGenerics (TPRef _ nm) = TPRef [] nm
 removeGenerics t = t
@@ -73,7 +74,8 @@ removeGenerics t = t
  - Def
  -----------------------------------------------------------------------------------------------------------------------------------------------}
 data Def = 
-	  Def{defAnnotations :: [DefAnnotation], defMods :: [DefMod], defTp :: TP, defName :: String, defPars :: [DefPar], defStms :: [Stm]}
+	  Def{defAnnotations :: [DefAnnotation], defMods :: [DefMod], defGenerics :: [Generic]
+	  , defTp :: TP, defName :: String, defPars :: [DefPar], defStms :: [Stm]}
 	| Constructor {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defPars :: [DefPar], defStms :: [Stm]}
 	| Field {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defTp :: TP, defName :: String, defExp :: Exp} deriving (Eq)
 type DefPar = (TP, String)
@@ -88,7 +90,7 @@ showDef _ d@Field{} = concatMap showAnnotation (defAnnotations d)
 			Nop -> [";"] 
 			e -> [" = "] `glue` mapNotFirst ind (showExp e) `appp` ";"
 showDef (clTp, _) d@Def{} = concatMap showAnnotation (defAnnotations d)
-	 ++ [wrapStr "" " " mods ++ show (defTp d) ++ " " ++ defName d ++ showPars d] `glue` body
+	 ++ [wrapStr "" " " mods ++ pstrs' " <" ", " "> " (defGenerics d) ++ show (defTp d) ++ " " ++ defName d ++ showPars d] `glue` body
 	where 
 		mods = strs' " " (if clTp == ClassTypeInterface then filter isValidModForInterface (defMods d) else defMods d)
 		isValidModForInterface _ = False

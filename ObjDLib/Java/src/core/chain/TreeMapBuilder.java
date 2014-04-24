@@ -3,7 +3,7 @@ package core.chain;
 public class TreeMapBuilder<K, V> extends Builder_impl<Tuple2<K, V>, TreeMap<K, V>> {
     public final F2<K, K, Integer> comparator;
     private final MTreeMap<K, V> map = new MTreeMap<K, V>(comparator);
-    public static TreeMapBuilder<K, V> apply() {
+    public static  <K extends Comparable<K>, V> TreeMapBuilder<K, V> apply() {
         return new TreeMapBuilder<K, V>(new F2<K, K, Integer>() {
             @Override
             public Integer apply(K a,K b) {

@@ -3,7 +3,7 @@ package core.chain;
 public final class Pair<T> extends ImSet_impl<T> {
     public final T a;
     public final T b;
-    public static Pair<T> newWithAB(T a,T b) {
+    public static  <T> Pair<T> newWithAB(T a,T b) {
         if(a < b) {
             return new Pair<T>(a, b);
         } else {
