@@ -2725,6 +2725,11 @@ correctCallPar env gens (d@Def{defType = tp@(TPFun _ _)}, FirstTry e e')
 	| otherwise = correctCallPar env gens (d, ExpDError "" $ 
 		D.Lambda (map (\(n, _) -> (n, Nothing)) $ lambdaImplicitParameters tp) e)
 correctCallPar env gens (d, FirstTry _ e) = correctCallPar env gens (d, e)
+correctCallPar _ _ (d@Def{defType = (TPFun _ TPVoid)}, Lambda lpars e dtp) = (d, Lambda lpars (mapExp removeReturn e) dtp)
+	where
+		removeReturn ee@(Return _ Nil) = Just ee
+		removeReturn (Return _ ee) = Just ee
+		removeReturn _ = Nothing
 correctCallPar _ _ (d@Def{defType = (TPFun _ (TPClass TPMGeneric _ _) )}, Lambda lpars e dtp) = checkCallParOnWeak (d, Lambda lpars e dtp)
 correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, ExpDError _ (D.Lambda lambdaPars lambdaExpr)) = checkCallParOnWeak (d, Lambda lpars' expr' tp')
 	where

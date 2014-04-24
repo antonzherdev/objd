@@ -25,17 +25,17 @@ public class ChainTest extends TestCase {
                 final ImArray<Tuple<Integer, Promise<Integer>>> arr = 0.to(1000).chain().map<Tuple<Integer, Promise<Integer>>>(new F<Integer, Tuple<Integer, Promise<Integer>>>() {
                     @Override
                     public Tuple<Integer, Promise<Integer>> apply(final Integer i) {
-                        return new Tuple<Integer, Promise<Integer>>(i, Promise.<Integer>apply());
+                        new Tuple<Integer, Promise<Integer>>(i, Promise.<Integer>apply());
                     }
                 }).toArray();
                 {
                     final Iterator<Tuple<Integer, Promise<Integer>>> __inline__0_1_i = arr.iterator();
                     while(__inline__0_1_i.hasNext()) {
                         final Tuple<Integer, Promise<Integer>> t = __inline__0_1_i.next();
-                        DispatchQueue.default.asyncF(new P0() {
+                        DispatchQueue.aDefault.asyncF(new P0() {
                             @Override
                             public void apply() {
-                                return t.b.successValue(t.a * t.a);
+                                t.b.successValue(t.a * t.a);
                             }
                         });
                     }
@@ -43,23 +43,23 @@ public class ChainTest extends TestCase {
                 final Future<ImArray<Integer>> fut = arr.chain().map<Promise<Integer>>(new F<Tuple<Integer, Promise<Integer>>, Promise<Integer>>() {
                     @Override
                     public Promise<Integer> apply(final Tuple<Integer, Promise<Integer>> _) {
-                        return _.b;
+                        _.b;
                     }
                 }).futureF<Integer, ImArray<Integer>>(new F<Chain<Integer>, ImArray<Integer>>() {
                     @Override
                     public ImArray<Integer> apply(final Chain<Integer> chain) {
-                        return chain.toArray();
+                        chain.toArray();
                     }
                 });
                 final ImArray<Integer> set = arr.chain().map<Integer>(new F<Tuple<Integer, Promise<Integer>>, Integer>() {
                     @Override
                     public Integer apply(final Tuple<Integer, Promise<Integer>> _) {
-                        return _.a;
+                        _.a;
                     }
                 }).map<Integer>(new F<Integer, Integer>() {
                     @Override
                     public Integer apply(final Integer _) {
-                        return _ * _;
+                        _ * _;
                     }
                 }).toArray();
                 .<ImArray<Integer>>assertEqualsAB(set, fut.getResultAwait(((float)5)));
@@ -79,11 +79,11 @@ public class ChainTest extends TestCase {
             final Iterator<Promise<Void>> __inline__3_i = arr.iterator();
             while(__inline__3_i.hasNext()) {
                 final Promise<Void> p = __inline__3_i.next();
-                DispatchQueue.default.asyncF(new P0() {
+                DispatchQueue.aDefault.asyncF(new P0() {
                     @Override
                     public void apply() {
                         count.incrementAndGet();
-                        return p.successValue(null);
+                        p.successValue(null);
                     }
                 });
             }

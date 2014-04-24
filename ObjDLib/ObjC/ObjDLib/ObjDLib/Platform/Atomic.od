@@ -9,6 +9,7 @@ stub class AtomicBool {
     def compareAndSet(oldValue : bool, newValue : bool) : bool
 }
 
+@ObjC
 stub class AtomicInt {
     def intValue : int4
     def set(newValue : int4)
@@ -28,4 +29,9 @@ stub class AtomicObject<T>(value : T) {
 @Java
 class AtomicObject<T>(value : T) extends AtomicReference<T>(value) {
     inline def value : T = get
+}
+
+@Java
+class AtomicInt extends AtomicInteger {
+
 }

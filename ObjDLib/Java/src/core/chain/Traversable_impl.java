@@ -14,7 +14,7 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(final T item) {
-                DispatchQueue.default.asyncF(new P0() {
+                DispatchQueue.aDefault.asyncF(new P0() {
                     @Override
                     public void apply() {
                         each.apply(item);

@@ -21,7 +21,7 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
         final Iterator<T> i = this.iterator();
         while(i.hasNext()) {
             final T v = i.next();
-            DispatchQueue.default.asyncF(new P0() {
+            DispatchQueue.aDefault.asyncF(new P0() {
                 @Override
                 public void apply() {
                     each.apply(v);

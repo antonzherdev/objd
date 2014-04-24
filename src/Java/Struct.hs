@@ -22,6 +22,9 @@ instance Show File where
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - Class
  -----------------------------------------------------------------------------------------------------------------------------------------------}
+kw :: String -> String
+kw "default" = "aDefault"
+kw s = s
 
 data Class = Class {classMods :: [ClassMod], classType :: ClassType, className :: String, classGenerics :: [Generic]
 	, classExtends :: Maybe TP, classImplements :: [TP], classDefs :: [Def]} 
@@ -83,14 +86,14 @@ data DefMod = DefModStatic | DefModAbstract | DefModFinal | DefModOverride | Def
 
 showDef :: (ClassType, String) -> Def -> [String]
 showDef _ d@Field{} = concatMap showAnnotation (defAnnotations d) 
-	++ [mods ++ " " ++ show (defTp d) ++ " " ++ defName d] `glue` body
+	++ [mods ++ " " ++ show (defTp d) ++ " " ++ kw (defName d)] `glue` body
 	where 
 		mods = strs' " " (defMods d)
 		body = case defExp d of
 			Nop -> [";"] 
 			e -> [" = "] `glue` mapNotFirst ind (showExp e) `appp` ";"
 showDef (clTp, _) d@Def{} = concatMap showAnnotation (defAnnotations d)
-	 ++ [wrapStr "" " " mods ++ pstrs' "<" ", " "> " (defGenerics d) ++ show (defTp d) ++ " " ++ defName d ++ showPars d] `glue` body
+	 ++ [wrapStr "" " " mods ++ pstrs' "<" ", " "> " (defGenerics d) ++ show (defTp d) ++ " " ++ kw (defName d) ++ showPars d] `glue` body
 	where 
 		mods = strs' " " (if clTp == ClassTypeInterface then filter isValidModForInterface (defMods d) else defMods d)
 		isValidModForInterface _ = False
@@ -101,7 +104,7 @@ showDef (_, clNm) d@Constructor{} = concatMap showAnnotation (defAnnotations d)
 
 showPars :: Def -> String
 showPars d = "(" ++ mkString showDefPar ", " (defPars d) ++ ")"
-	where showDefPar (mods, tp, nm) = pstrs' "" " " " " mods ++ show tp ++ " " ++ nm
+	where showDefPar (mods, tp, nm) = pstrs' "" " " " " mods ++ show tp ++ " " ++ kw nm
 
 instance Show DefMod where
 	show DefModStatic = "static"
@@ -135,8 +138,8 @@ showStm (If cond t []) = (["if("] `glue` showExp cond `appp` ") ") `glue` showSt
 showStm (While cond w) = (["while("] `glue` showExp cond `appp` ") ") `glue` showStmsInBrackets w
 showStm (If cond t f) = (showStm (If cond t []) `appp` " else ") `glue` showStmsInBrackets f 
 showStm (Braces stms) = showStmsInBrackets stms
-showStm (Val mods tp nm Nop) = [pstrs' "" " " " " mods ++ show tp ++ " " ++ nm ++ ";"]
-showStm (Val mods tp nm e) = [pstrs' "" " " " " mods ++ show tp ++ " " ++ nm ++ " = "] `glue` showExp e `appp` ";"
+showStm (Val mods tp nm Nop) = [pstrs' "" " " " " mods ++ show tp ++ " " ++ kw nm ++ ";"]
+showStm (Val mods tp nm e) = [pstrs' "" " " " " mods ++ show tp ++ " " ++ kw nm ++ " = "] `glue` showExp e `appp` ";"
 
 
 data Exp = Nop | IntConst Int | ExpError String 
@@ -152,8 +155,8 @@ showExp (BoolConst True) = ["true"]
 showExp (BoolConst False) = ["false"]
 showExp (IntConst i) = [show i]
 showExp (StringConst s) = [show s]
-showExp (Ref s) = [s]
-showExp (Call isStatic name gens pars) = [(if isStatic then pstrs' "<" ", " ">" gens ++ name else name ++ pstrs' "<" ", " ">" gens)++ "("] 
+showExp (Ref s) = [kw s]
+showExp (Call isStatic name gens pars) = [(if isStatic then pstrs' "<" ", " ">" gens ++ kw name else kw name ++ pstrs' "<" ", " ">" gens)++ "("] 
 	`glue` (glueAll ", " . map showExp) pars `appp` ")"
 showExp (New [] e) = ["new "] `glue` showExp e
 showExp (New defs e) = (["new "] `glue` showExp e `appp` " {") ++  (map ind . concatMap (showDef (ClassTypeClass, ""))) defs ++ ["}"]

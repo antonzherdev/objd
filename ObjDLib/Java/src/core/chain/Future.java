@@ -3,10 +3,10 @@ package core.chain;
 public abstract class Future<T> {
     public static <T> Future<T> applyF(final F0<T> f) {
         final Promise<T> p = Promise.<T>apply();
-        DispatchQueue.default.asyncF(new P0() {
+        DispatchQueue.aDefault.asyncF(new P0() {
             @Override
             public void apply() {
-                return p.successValue(f.apply());
+                p.successValue(f.apply());
             }
         });
         return p;

@@ -10,3 +10,13 @@ stub class AtomicReference<T>(get : T) {
     @GenName("compareAndSet")
     def compareAndSet(oldValue : T, newValue : T) : bool
 }
+
+@Java
+stub class AtomicInteger {
+    def intValue : int4
+    def set(newValue : int4)
+    def incrementAndGet : int4
+    def decrementAndGet : int4
+    def addAndGet(value : int4) : int4
+    def compareAndSet(oldValue : int4, newValue : int4) : bool
+}

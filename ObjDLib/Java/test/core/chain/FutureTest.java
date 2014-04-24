@@ -15,10 +15,10 @@ public class FutureTest extends TestCase {
                 final Integer i = __inline__2_i.next();
                 {
                     final Promise<Integer> p = Promise.<Integer>apply();
-                    DispatchQueue.default.asyncF(new P0() {
+                    DispatchQueue.aDefault.asyncF(new P0() {
                         @Override
                         public void apply() {
-                            return p.successValue(i);
+                            p.successValue(i);
                         }
                     });
                     p.onCompleteF(new P<Try<Integer>>() {
@@ -41,7 +41,7 @@ public class FutureTest extends TestCase {
             final Iterator<Integer> __inline__3_i = 1.to(count).iterator();
             while(__inline__3_i.hasNext()) {
                 final Integer __inline__3_v = __inline__3_i.next();
-                DispatchQueue.default.asyncF(new P0() {
+                DispatchQueue.aDefault.asyncF(new P0() {
                     @Override
                     public void apply() {
                         final Promise<Integer> p = Promise.<Integer>apply();
@@ -52,10 +52,10 @@ public class FutureTest extends TestCase {
                             }
                         });
                         result.addAndGetValue(((int)__inline__3_v + 1));
-                        DispatchQueue.default.asyncF(new P0() {
+                        DispatchQueue.aDefault.asyncF(new P0() {
                             @Override
                             public void apply() {
-                                return p.successValue(__inline__3_v);
+                                p.successValue(__inline__3_v);
                             }
                         });
                         m.onCompleteF(new P<Try<Integer>>() {
@@ -93,10 +93,10 @@ public class FutureTest extends TestCase {
                         }
                     });
                     result += i + 1;
-                    DispatchQueue.default.asyncF(new P0() {
+                    DispatchQueue.aDefault.asyncF(new P0() {
                         @Override
                         public void apply() {
-                            return p.successValue(i);
+                            p.successValue(i);
                         }
                     });
                     m.onCompleteF(new P<Try<Integer>>() {
