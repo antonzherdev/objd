@@ -2,7 +2,7 @@ package core.chain;
 
 public class PArrayIterator<T> extends Iterator_impl<T> {
     public final PArray<T> array;
-    private int i = 0;
+    private int i;
     @Override
     public boolean hasNext() {
         return this.i < this.array.count;
@@ -19,5 +19,6 @@ else <l>__tmp_0\(§T#G§)?\
     }
     public PArrayIterator(PArray<T> array) {
         this.array = array;
+        this.i = 0;
     }
 }

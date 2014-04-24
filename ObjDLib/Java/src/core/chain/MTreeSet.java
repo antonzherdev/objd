@@ -1,7 +1,7 @@
 package core.chain;
 
 public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
-    private static final Object obj = new Object();
+    private static final Object obj;
     public final MTreeMap<T, Object> mmap;
     public static  <T> MTreeSet<T> applyComparator(F2<T, T, Integer> comparator) {
         return new MTreeSet<T>(new MTreeMap<T, Object>(comparator));
@@ -49,6 +49,7 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
     public MTreeSet(MTreeMap<T, Object> mmap) {
         super(mmap);
         this.mmap = mmap;
+        this.obj = new Object();
     }
     public void mutableFilterBy(F<T, Boolean> by) {
         MIterator<T> i = this.mutableIterator();

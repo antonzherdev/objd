@@ -4,7 +4,7 @@ public final class Range extends ImSeq_impl<int> {
     public final int start;
     public final int end;
     public final int step;
-    public final int count = (step > 0) ? ((start <= end) ? (((int)(end - start) / step + 1)) : (((int)0))) : ((step < 0) ? ((start >= end) ? (((int)(end - start) / step + 1)) : (((int)0))) : (((int)1)));
+    public final int count;
     @Override
     public int count() {
         return count;
@@ -43,5 +43,6 @@ public final class Range extends ImSeq_impl<int> {
         this.start = start;
         this.end = end;
         this.step = step;
+        this.count = (step > 0) ? ((start <= end) ? (((int)(end - start) / step + 1)) : (((int)0))) : ((step < 0) ? ((start >= end) ? (((int)(end - start) / step + 1)) : (((int)0))) : (((int)1)));
     }
 }

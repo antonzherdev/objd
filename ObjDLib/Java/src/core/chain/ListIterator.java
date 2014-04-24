@@ -1,7 +1,7 @@
 package core.chain;
 
 public class ListIterator<T> extends Iterator_impl<T> {
-    public ImList<T> list = ((ImList<T>)EmptyList.instance);
+    public ImList<T> list;
     @Override
     public boolean hasNext() {
         return !(this.list.isEmpty());
@@ -17,5 +17,6 @@ public class ListIterator<T> extends Iterator_impl<T> {
         }
     }
     public ListIterator() {
+        this.list = ((ImList<T>)EmptyList.instance);
     }
 }

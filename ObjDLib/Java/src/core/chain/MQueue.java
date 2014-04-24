@@ -1,7 +1,7 @@
 package core.chain;
 
 public class MQueue<T> extends Queue_impl<T> {
-    private ImQueue<T> _queue = ImQueue.<T>apply();
+    private ImQueue<T> _queue;
     public void enqueueItem(T item) {
         this._queue = this._queue.addItem(item);
     }
@@ -14,5 +14,6 @@ public class MQueue<T> extends Queue_impl<T> {
         return this._queue.count();
     }
     public MQueue() {
+        this._queue = ImQueue.<T>apply();
     }
 }

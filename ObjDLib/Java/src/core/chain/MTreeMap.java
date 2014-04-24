@@ -1,9 +1,9 @@
 package core.chain;
 
 public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
-    private TreeMapEntry<K, V> _root = null;
-    private int _size = ((int)0);
-    public final MTreeMapKeySet<K> keys = new MTreeMapKeySet<K>(this);
+    private TreeMapEntry<K, V> _root;
+    private int _size;
+    public final MTreeMapKeySet<K> keys;
     @Override
     public MTreeMapKeySet<K> keys() {
         return keys;
@@ -513,6 +513,9 @@ else <l>__tmp_0_4\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     }
     public MTreeMap(F2<K, K, Integer> comparator) {
         super(comparator);
+        this._root = null;
+        this._size = ((int)0);
+        this.keys = new MTreeMapKeySet<K>(this);
     }
     public V objectForKeyOrUpdateWith(K key,F<Void, V> orUpdateWith) {
         V __tmp = optKey(key);

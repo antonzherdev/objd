@@ -1,11 +1,11 @@
 package core.chain;
 
 public class FutureVoidEnd<T> {
-    private final Promise<Void> _promise = Promise.<Void>apply();
-    private boolean _stopped = false;
-    private AtomicInt _counter = new AtomicInt();
-    private boolean _ended = false;
-    private AtomicBool _yielded = new AtomicBool();
+    private final Promise<Void> _promise;
+    private boolean _stopped;
+    private AtomicInt _counter;
+    private boolean _ended;
+    private AtomicBool _yielded;
     public Future<Void> future() {
         return this._promise;
     }
@@ -66,5 +66,10 @@ public class FutureVoidEnd<T> {
         });
     }
     public FutureVoidEnd() {
+        this._promise = Promise.<Void>apply();
+        this._stopped = false;
+        this._counter = new AtomicInt();
+        this._ended = false;
+        this._yielded = new AtomicBool();
     }
 }

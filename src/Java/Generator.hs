@@ -42,7 +42,7 @@ genClass cl = do
 		J.classGenerics = map genGeneric $ D.classGenerics cl,
 		J.classExtends = D.mainExtendsRef (D.classExtends cl) >>= \e -> if D.isBaseClass (fst e) then Nothing else Just (genExtendsRef e),
 		J.classImplements = map genExtendsRef $ filter (not . D.isBaseClass . fst) $ D.traitExtendsRefs $ D.classExtends cl,
-		J.classDefs = defs'
+		J.classDefs = join defs'
 	}
 
 
@@ -74,7 +74,7 @@ defName' d = case D.defPars d of
 overrideAnnotation :: J.DefAnnotation
 overrideAnnotation = J.DefAnnotation "Override" []
 
-genDef :: D.Class -> D.Def -> Writer [J.Import] J.Def
+genDef :: D.Class -> D.Def -> Writer [J.Import] [J.Def]
 genDef cl d =
  	let 
  		genMod D.DefModPrivate = Just $ J.DefModVisability J.Private
@@ -96,39 +96,54 @@ genDef cl d =
  				return e'
  		body = if D.isTrait cl then D.Nop else D.defBody d	
  		mods = mapMaybe genMod (D.defMods d)
+ 		tp = genTp $ D.defType d
+ 		name = defName' d
+ 		genSet dd = do
+			let (e', Wrt{wrtImports = imps}) = runWriter $ genExp defaultEnv (D.defBody dd)
+ 			tell imps
+ 			return $ J.Set Nothing (J.Dot J.This $ J.Ref (D.defName dd)) e'
  	in if D.isField d then 
- 			do 
- 				let (e', Wrt{wrtImports = imps}) = runWriter $ genExp defaultEnv body
- 				tell imps
-	 			return J.Field {
+ 			return $ [J.Field {
 	 				J.defAnnotations = [],
 	 				J.defMods = mods ++ [J.DefModFinal | D.DefModMutable `notElem` D.defMods d],
-	 				J.defName = defName' d,
-	 				J.defTp = genTp $ D.defType d,
-	 				J.defExp = e'
-		 		}
+	 				J.defName = name,
+	 				J.defTp = tp,
+	 				J.defExp = J.Nop
+		 		}] ++ [J.Def {
+	 				J.defAnnotations = [overrideAnnotation],
+	 				J.defMods = mods,
+	 				J.defGenerics = [],
+	 				J.defName = name,
+	 				J.defTp = tp,
+	 				J.defPars = [],
+	 				J.defStms = [J.Return $ J.Ref name]
+	 			}| D.DefModOverride `elem` D.defMods d]
  		else if D.isConstructor d then
  			do
  				super <- callSuperConstructor
- 				return J.Constructor {
+ 				let fields = filter (\ f -> 
+ 					D.isField f && D.defBody f /= D.Nop && D.DefModConstructorField `notElem` D.defMods f) 
+ 					(D.classDefs cl)
+ 				sets <- mapM genSet fields
+ 				return [J.Constructor {
 	 				J.defAnnotations = [],
 	 				J.defMods = mods,
 	 				J.defPars = map genPar $ D.defPars d,
-	 				J.defStms = super ++ (map constrSet . filter ((D.DefModConstructorField `elem` ). D.defMods)) (D.classDefs cl)
-	 			}
+	 				J.defStms = super ++ (map constrSet . filter ((D.DefModConstructorField `elem` ). D.defMods)) (D.classDefs cl) ++ sets
+	 			}]
  		else 
  			do
  				let (stms', Wrt{wrtImports = imps}) = runWriter $ getStms defaultEnv body
  				tell imps
- 				return J.Def {
+ 				return [J.Def {
 	 				J.defAnnotations = [overrideAnnotation| D.DefModOverride `elem` D.defMods d],
 	 				J.defMods = mods,
 	 				J.defGenerics = maybe [] (map genGeneric . D.defGenericsClasses) $ D.defGenerics d,
-	 				J.defName = defName' d,
-	 				J.defTp = genTp $ D.defType d,
+	 				J.defName = name,
+	 				J.defTp = tp,
 	 				J.defPars = map genPar $ D.defPars d,
 	 				J.defStms = stms'
-	 			}
+	 			}]
 
 genPar :: D.Def -> J.DefPar
 genPar D.Def{D.defName = nm, D.defType = tp} = (genTp tp, nm)
@@ -224,6 +239,10 @@ genExp env (D.Dot l r) = do
 	l' <- genExp env l
 	r' <- genExp env r
 	return $ J.Dot l' r'
+genExp env (D.Index l r) = do
+	l' <- genExp env l
+	r' <- genExp env r
+	return $ J.Index l' r'
 genExp _ (D.Call d _ [] []) 
 	| D.DefModField `elem` D.defMods d || D.DefModLocal `elem` D.defMods d || D.DefModObject `elem` D.defMods d = return $ J.Ref $ D.defName d
 genExp env (D.Call d _ pars gens) = do
@@ -250,6 +269,10 @@ genExp env (D.MathOp tp l r) = do
 	l' <- genExp env l
 	r' <- genExp env r
 	return $ J.MathOp tp l' r'
+genExp env (D.Not e) = genExp env e >>= return . J.Not
+genExp env (D.Negative e) = genExp env e >>= return . J.Negative
+genExp env (D.PlusPlus e) = genExp env e >>= return . J.PlusPlus
+genExp env (D.MinusMinus e) = genExp env e >>= return . J.MinusMinus
 genExp env (D.BoolOp tp l r) = do
 	l' <- genExp env l
 	r' <- genExp env r
@@ -288,8 +311,39 @@ genExp env (D.Return False e) = genExp env e
 genExp env (D.Arr exps) = do
 	exps' <- mapM (genExp env) exps
 	return $ J.Dot (J.Ref "ImArray") (J.Call True "fromObjects" [] exps')
+genExp env (D.StringBuild pars lastString) = do
+	pars' <- mapM (par' . snd) pars
+	return $ J.Dot (J.Ref  "String") $ J.Call True "format" [] (J.StringConst format : join pars')
+	where
+		format = concatMap (\(prev, e) -> prev ++ stringFormatForType (D.exprDataType e) ) pars ++ lastString
+		par' expr = do
+			expr' <- genExp env expr
+			return $ stringExpressionsForTp (D.exprDataType expr) expr'
 genExp _ e = return $ J.ExpError $ "Unknown " ++ show e
 
+
+
+stringFormatForType :: D.DataType -> String
+stringFormatForType (D.TPNumber False 8) = "%ld"
+stringFormatForType (D.TPNumber True 8) = "%lu"
+stringFormatForType (D.TPNumber False 0) = "%ld"
+stringFormatForType (D.TPNumber True 0) = "%lu"
+stringFormatForType (D.TPNumber False _)= "%d"
+stringFormatForType (D.TPNumber True _)= "%u"
+stringFormatForType (D.TPChar)= "%d"
+stringFormatForType (D.TPFloatNumber _) = "%f"
+stringFormatForType D.TPBool = "%d"
+stringFormatForType D.TPPointer{} = "%p"
+stringFormatForType (D.TPEArr n tp)  = "[" ++ strs ", " (replicate n (stringFormatForType tp)) ++ "]"
+stringFormatForType _ = "%s"
+
+stringExpressionsForTp :: D.DataType -> J.Exp -> [J.Exp]
+stringExpressionsForTp rtp ref = (case rtp of
+			D.TPEArr n etp -> concatMap (\j -> stringExpressionsForTp etp $ J.Index ref (J.IntConst j)) [0..n - 1]
+			--D.TPNumber False 0 -> [C.ShortCast (C.TPSimple "long" []) ref]
+			--D.TPNumber True 0 -> [C.ShortCast (C.TPSimple "unsigned long" []) ref]
+			_ -> [ref]
+			)
 
 tellGenStms :: Env -> D.Exp -> Writer Wrt ()
 tellGenStms env e = 

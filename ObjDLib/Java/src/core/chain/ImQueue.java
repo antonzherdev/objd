@@ -1,7 +1,7 @@
 package core.chain;
 
 public class ImQueue<T> extends Queue_impl<T> {
-    private static final ImQueue<Object> empty = new ImQueue<Object>(ImList.<Object>apply(), ImList.<Object>apply());
+    private static final ImQueue<Object> empty;
     public final ImList<T> in;
     public final ImList<T> out;
     public static  <T> ImQueue<T> apply() {
@@ -45,5 +45,6 @@ public class ImQueue<T> extends Queue_impl<T> {
     public ImQueue(ImList<T> in,ImList<T> out) {
         this.in = in;
         this.out = out;
+        this.empty = new ImQueue<Object>(ImList.<Object>apply(), ImList.<Object>apply());
     }
 }

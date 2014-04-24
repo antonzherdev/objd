@@ -1,11 +1,11 @@
 package core.chain;
 
 public class FutureEnd<T> {
-    private final Promise<Seq<T>> _promise = Promise.<Seq<T>>apply();
-    private boolean _stopped = false;
-    private AtomicInt _counter = new AtomicInt();
-    private boolean _ended = false;
-    private AtomicBool _yielded = new AtomicBool();
+    private final Promise<Seq<T>> _promise;
+    private boolean _stopped;
+    private AtomicInt _counter;
+    private boolean _ended;
+    private AtomicBool _yielded;
     private MArray<T> _array;
     public Future<Seq<T>> future() {
         return this._promise;
@@ -93,5 +93,10 @@ public class FutureEnd<T> {
         });
     }
     public FutureEnd() {
+        this._promise = Promise.<Seq<T>>apply();
+        this._stopped = false;
+        this._counter = new AtomicInt();
+        this._ended = false;
+        this._yielded = new AtomicBool();
     }
 }

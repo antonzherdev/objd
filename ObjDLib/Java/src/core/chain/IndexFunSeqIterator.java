@@ -3,7 +3,7 @@ package core.chain;
 public class IndexFunSeqIterator<T> extends Iterator_impl<T> {
     public final int count;
     public final F<Integer, T> f;
-    private int i = ((int)0);
+    private int i;
     @Override
     public boolean hasNext() {
         return this.i < this.count;
@@ -17,5 +17,6 @@ public class IndexFunSeqIterator<T> extends Iterator_impl<T> {
     public IndexFunSeqIterator(int count,F<Integer, T> f) {
         this.count = count;
         this.f = f;
+        this.i = ((int)0);
     }
 }

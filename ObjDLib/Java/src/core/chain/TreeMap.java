@@ -1,10 +1,10 @@
 package core.chain;
 
 public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
-    public static final int BLACK = 0;
-    public static final int RED = 1;
+    public static final int BLACK;
+    public static final int RED;
     public final F2<K, K, Integer> comparator;
-    public final TreeMapValues<V> values = new TreeMapValues<V>(this);
+    public final TreeMapValues<V> values;
     @Override
     public TreeMapValues<V> values() {
         return values;
@@ -141,5 +141,8 @@ else <l>__tmp\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     }
     public TreeMap(F2<K, K, Integer> comparator) {
         this.comparator = comparator;
+        this.BLACK = 0;
+        this.RED = 1;
+        this.values = new TreeMapValues<V>(this);
     }
 }

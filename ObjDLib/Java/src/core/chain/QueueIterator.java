@@ -2,8 +2,8 @@ package core.chain;
 
 public class QueueIterator<T> extends Iterator_impl<T> {
     public final ImList<T> out;
-    private Iterator<T> i = in.iterator();
-    private boolean isIn = true;
+    private Iterator<T> i;
+    private boolean isIn;
     @Override
     public boolean hasNext() {
         if(this.i.hasNext()) {
@@ -28,5 +28,7 @@ public class QueueIterator<T> extends Iterator_impl<T> {
     }
     public QueueIterator(ImList<T> in,ImList<T> out) {
         this.out = out;
+        this.i = in.iterator();
+        this.isIn = true;
     }
 }

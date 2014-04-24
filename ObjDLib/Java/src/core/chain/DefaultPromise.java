@@ -1,7 +1,7 @@
 package core.chain;
 
 public class DefaultPromise<T> extends Promise<T> {
-    private final AtomicObject<Object> _state = new AtomicObject<Object>(ImArray.fromObjects());
+    private final AtomicObject<Object> _state;
     @Override
     public Try<T> result() {
         Object v = this._state.get();
@@ -55,5 +55,6 @@ public class DefaultPromise<T> extends Promise<T> {
         }
     }
     public DefaultPromise() {
+        this._state = new AtomicObject<Object>(ImArray.fromObjects());
     }
 }

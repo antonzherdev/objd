@@ -2,7 +2,7 @@ package core.chain;
 
 public class SortBuilder<A> {
     public final Chain<A> chain;
-    private final MArray<F2<A, A, Integer>> functions = new MArray<F2<A, A, Integer>>();
+    private final MArray<F2<A, A, Integer>> functions;
     public  <B extends Comparable<B>> SortBuilder<A> ascBy(F<A, B> by) {
         this.functions.appendItem(new F2<A, A, Integer>() {
             @Override
@@ -41,5 +41,6 @@ public class SortBuilder<A> {
     }
     public SortBuilder(Chain<A> chain) {
         this.chain = chain;
+        this.functions = new MArray<F2<A, A, Integer>>();
     }
 }

@@ -11,7 +11,7 @@ public class ImTreeMap<K, V> extends TreeMap<K, V> {
     public int count() {
         return count;
     }
-    public final TreeMapKeySet<K> keys = new ImTreeMapKeySet<K>(this);
+    public final TreeMapKeySet<K> keys;
     @Override
     public TreeMapKeySet<K> keys() {
         return keys;
@@ -30,5 +30,6 @@ public class ImTreeMap<K, V> extends TreeMap<K, V> {
         super(comparator);
         this.root = root;
         this.count = count;
+        this.keys = new ImTreeMapKeySet<K>(this);
     }
 }

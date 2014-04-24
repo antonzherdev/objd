@@ -7,7 +7,7 @@ public final class FilledList<T> extends ImList<T> {
     public ImList<T> tail() {
         return tail;
     }
-    public final int count = tail.count() + 1;
+    public final int count;
     @Override
     public int count() {
         return count;
@@ -68,10 +68,10 @@ public final class FilledList<T> extends ImList<T> {
             }
             list = ((FilledList<T>)list.tail);
         }
-        return list;
     }
     public FilledList(T _head,ImList<T> tail) {
         this._head = _head;
         this.tail = tail;
+        this.count = tail.count() + 1;
     }
 }

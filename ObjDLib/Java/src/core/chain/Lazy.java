@@ -3,7 +3,7 @@ package core.chain;
 public class Lazy<T> {
     public final F<Void, T> f;
     private T _value;
-    private boolean _calculated = false;
+    private boolean _calculated;
     public boolean isCalculated() {
         return this._calculated;
     }
@@ -26,5 +26,6 @@ public class Lazy<T> {
     }
     public Lazy(F<Void, T> f) {
         this.f = f;
+        this._calculated = false;
     }
 }

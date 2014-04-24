@@ -1,7 +1,7 @@
 package core.chain;
 
 public class MList<T> extends MSeq_impl<T> {
-    private int _count = ((int)0);
+    private int _count;
     private MListItem<T> headItem;
     private MListItem<T> lastItem;
     @Override
@@ -180,5 +180,6 @@ public class MList<T> extends MSeq_impl<T> {
         return ERROR: Unknown <MList#C<T#G>>self.<emp>headItem\(^MListItem#C<§T#G§>)?\?.<eIUm>data\§T#G§\;
     }
     public MList() {
+        this._count = ((int)0);
     }
 }

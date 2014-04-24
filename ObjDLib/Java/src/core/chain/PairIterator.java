@@ -2,7 +2,7 @@ package core.chain;
 
 public class PairIterator<T> extends Iterator_impl<T> {
     public final Pair<T> pair;
-    private int state = 0;
+    private int state;
     @Override
     public boolean hasNext() {
         return this.state < 2;
@@ -18,5 +18,6 @@ public class PairIterator<T> extends Iterator_impl<T> {
     }
     public PairIterator(Pair<T> pair) {
         this.pair = pair;
+        this.state = 0;
     }
 }

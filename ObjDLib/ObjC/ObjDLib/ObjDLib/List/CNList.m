@@ -148,7 +148,6 @@ static ODClassType* _CNFilledList_type;
         if([list.tail isEmpty]) return [[CNFilledList filledListWith_head:((id)(item)) tail:before] reverse];
         list = ((CNFilledList*)(list.tail));
     }
-    return list;
 }
 
 - (ODClassType*)type {

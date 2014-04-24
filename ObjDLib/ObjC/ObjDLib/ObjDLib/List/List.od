@@ -61,7 +61,6 @@ case class FilledList<T>(val _head : T, override val tail : ImList<T>) extends I
             }
             list = list.tail.cast<FilledList<T>>
         }
-        list
     }
 }
 

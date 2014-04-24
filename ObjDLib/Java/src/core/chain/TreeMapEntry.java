@@ -4,9 +4,9 @@ public class TreeMapEntry<K, V> {
     public K key;
     public V value;
     public TreeMapEntry<K, V> parent;
-    public TreeMapEntry<K, V> left = null;
-    public TreeMapEntry<K, V> right = null;
-    public int color = 0;
+    public TreeMapEntry<K, V> left;
+    public TreeMapEntry<K, V> right;
+    public int color;
     public TreeMapEntry<K, V> next() {
         if(this.right != null) {
             TreeMapEntry<K, V> p = this.right;
@@ -42,5 +42,8 @@ else <l>__tmp_0_1\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
         this.key = key;
         this.value = value;
         this.parent = parent;
+        this.left = null;
+        this.right = null;
+        this.color = 0;
     }
 }

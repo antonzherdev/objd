@@ -139,9 +139,10 @@ showStm (Val tp nm Nop) = [show tp ++ " " ++ nm ++ ";"]
 showStm (Val tp nm e) = [show tp ++ " " ++ nm ++ " = "] `glue` showExp e `appp` ";"
 
 
-data Exp = Nop | IntConst Int | ExpError String | Call Bool String [TP] [Exp] | New [Def] Exp | Dot Exp Exp | Ref String | InlineIf Exp Exp Exp | This
+data Exp = Nop | IntConst Int | ExpError String 
+	| Call Bool String [TP] [Exp] | New [Def] Exp | Dot Exp Exp | Ref String | InlineIf Exp Exp Exp | This
 	| BoolOp BoolTp Exp Exp | MathOp MathTp Exp Exp | Null | BoolConst Bool | InstanceOf Exp TP | Cast TP Exp
-	| StringConst String deriving (Eq)
+	| StringConst String | Index Exp Exp | Not Exp | Negative Exp | MinusMinus Exp | PlusPlus Exp  deriving (Eq)
 
 showExp :: Exp -> [String]
 showExp Nop = []
@@ -157,9 +158,14 @@ showExp (Call isStatic name gens pars) = [(if isStatic then pstrs' "<" ", " ">" 
 showExp (New [] e) = ["new "] `glue` showExp e
 showExp (New defs e) = (["new "] `glue` showExp e `appp` " {") ++  (map ind . concatMap (showDef (ClassTypeClass, ""))) defs ++ ["}"]
 showExp (Dot l r) = showExp l `appp` "." `glue` showExp r
+showExp (Index e i) = (showExp e `appp` "[") `glue` (showExp i `appp` "]")
 showExp (InlineIf cond t f) = ((["("] `glue` showExp cond `appp` ") ? (") `glue` showExp t `appp` ") : (")  `glue` showExp f `appp` ")"
 showExp (InstanceOf e tp) = showExp e `appp` (" instanceof " ++ show (removeGenerics tp))
 showExp (Cast tp e) = ["((" ++ show tp ++ ")"] `glue` showExp e `appp` ")"
+showExp (Not e) = ["!("] `glue` showExp e `appp` ")"
+showExp (Negative e) = ["-("] `glue` showExp e `appp` ")"
+showExp (MinusMinus e) = showExp e `appp` "--"
+showExp (PlusPlus e) = showExp e `appp` "++"
 showExp (ExpError e) = ["ERROR: " ++ e]
 showExp (BoolOp t l r) = (mbb l `appp` (" " ++ show t ++ " ")) `glue` mbb r
 	where 
