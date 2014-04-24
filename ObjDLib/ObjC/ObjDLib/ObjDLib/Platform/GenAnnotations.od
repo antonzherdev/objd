@@ -4,3 +4,5 @@ package core.gen
 stub class Java
 
 stub class ObjC
+
+stub class GenName(name : string)

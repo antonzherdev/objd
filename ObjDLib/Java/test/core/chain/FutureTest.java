@@ -15,7 +15,7 @@ public class FutureTest extends TestCase {
                 Integer i = __inline__2_i.next();
                 {
                     Promise<Integer> p = Promise().apply<Integer>();
-                    DispatchQueue().default.asyncF(new P0() {
+                    DispatchQueue().default.async(new P0() {
                         @Override
                         public void apply() {
                             return p.successValue(i);
@@ -30,8 +30,8 @@ public class FutureTest extends TestCase {
                 }
             }
         }
-        Thread().sleepPeriod(((float)1));
-        ().assertEqualsAB<Integer>(n.intValue(), ((int)count));
+        Thread().sleep(((float)1));
+        ().assertEquals<Integer>(n.intValue(), ((int)count));
     }
     public void testMap() {
         AtomicInt n = new AtomicInt();
@@ -41,7 +41,7 @@ public class FutureTest extends TestCase {
             Iterator<Integer> __inline__3_i = 1.to(count).iterator();
             while(__inline__3_i.hasNext()) {
                 Integer __inline__3_v = __inline__3_i.next();
-                DispatchQueue().default.asyncF(new P0() {
+                DispatchQueue().default.async(new P0() {
                     @Override
                     public void apply() {
                         Promise<Integer> p = Promise().apply<Integer>();
@@ -51,8 +51,8 @@ public class FutureTest extends TestCase {
                                 return _ + 1;
                             }
                         });
-                        result.addAndGetValue(((int)__inline__3_v + 1));
-                        DispatchQueue().default.asyncF(new P0() {
+                        result.addAndGet(((int)__inline__3_v + 1));
+                        DispatchQueue().default.async(new P0() {
                             @Override
                             public void apply() {
                                 return p.successValue(__inline__3_v);
@@ -61,15 +61,15 @@ public class FutureTest extends TestCase {
                         m.onCompleteF(new P<Try<Integer>>() {
                             @Override
                             public void apply(Try<Integer> _) {
-                                n.addAndGetValue(((int)_.get()));
+                                n.addAndGet(((int)_.get()));
                             }
                         });
                     }
                 });
             }
         }
-        Thread().sleepPeriod(((float)3));
-        ().assertEqualsAB<AtomicInt>(n, result);
+        Thread().sleep(((float)3));
+        ().assertEquals<AtomicInt>(n, result);
     }
     public void testFlatMap() {
         AtomicInt n = new AtomicInt();
@@ -93,7 +93,7 @@ public class FutureTest extends TestCase {
                         }
                     });
                     result += i + 1;
-                    DispatchQueue().default.asyncF(new P0() {
+                    DispatchQueue().default.async(new P0() {
                         @Override
                         public void apply() {
                             return p.successValue(i);
@@ -102,14 +102,14 @@ public class FutureTest extends TestCase {
                     m.onCompleteF(new P<Try<Integer>>() {
                         @Override
                         public void apply(Try<Integer> _) {
-                            n.addAndGetValue(((int)_.get()));
+                            n.addAndGet(((int)_.get()));
                         }
                     });
                 }
             }
         }
-        Thread().sleepPeriod(((float)3));
-        ().assertEqualsAB<Integer>(n.intValue(), ((int)result));
+        Thread().sleep(((float)3));
+        ().assertEquals<Integer>(n.intValue(), ((int)result));
     }
     public FutureTest() {
     }

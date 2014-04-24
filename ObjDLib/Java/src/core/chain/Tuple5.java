@@ -8,13 +8,13 @@ public final final class Tuple5<A, B, C, D, E> implements Comparable<Tuple5<A, B
     public final E e;
     @Override
     public int compareTo(Tuple5<AC, BC, CC, DC, EC> to) {
-        int r = to.a.compareTo(this.a);
+        int r = to.a.compare(this.a);
         if(r.equals(0)) {
-            r = to.b.compareTo(this.b);
+            r = to.b.compare(this.b);
             if(r.equals(0)) {
-                r = to.c.compareTo(this.c);
+                r = to.c.compare(this.c);
                 if(r.equals(0)) {
-                    r = to.d.compareTo(this.d);
+                    r = to.d.compare(this.d);
                     if(r.equals(0)) {
                         return ERROR: Unknown -<l>to\^Tuple5#C<AC#G, BC#G, CC#G, DC#G, EC#G>\.<eIU>e\EC#G\.<rdIb>compare(to = <Tuple5#C<A#G, B#G, C#G, D#G, E#G>>self.<eIU>e\§E#G§\)\int\;
                     } else {

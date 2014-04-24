@@ -324,7 +324,6 @@ class DefaultPromise<T> extends Promise<T> {
                 }
             }
         }
-        false
     }
 
     override def success(value : T) : bool = {

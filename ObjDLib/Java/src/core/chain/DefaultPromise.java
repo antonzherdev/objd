@@ -18,7 +18,7 @@ public class DefaultPromise<T> extends Promise<T> {
             if(v instanceof Try) {
                 return false;
             } else {
-                if(this._state.compareAndSetOldValueNewValue(v, value)) {
+                if(this._state.compareAndSet(v, value)) {
                     {
                         Iterator<P<Try<T>>> __inline__0_1_0_0_i = ((ImArray<P<Try<T>>>)v).iterator();
                         while(__inline__0_1_0_0_i.hasNext()) {
@@ -30,7 +30,6 @@ public class DefaultPromise<T> extends Promise<T> {
                 }
             }
         }
-        return false;
     }
     @Override
     public boolean successValue(T value) {
@@ -46,11 +45,11 @@ public class DefaultPromise<T> extends Promise<T> {
             Object v = this._state.get();
             if(v instanceof Try) {
                 f.apply(((Try<T>)v));
-                return null;
+                return ;
             } else {
                 ImArray<P<Try<T>>> vv = ((ImArray<P<Try<T>>>)v);
-                if(this._state.compareAndSetOldValueNewValue(vv, vv.addItem(f))) {
-                    return null;
+                if(this._state.compareAndSet(vv, vv.add(f))) {
+                    return ;
                 }
             }
         }

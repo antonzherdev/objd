@@ -7,7 +7,7 @@ public class SortBuilder<A> {
         this.functions.appendItem(new F2<A, A, Integer>() {
             @Override
             public Integer apply(A x,A y) {
-                return by.apply(x).compareTo(by.apply(y));
+                return by.apply(x).compare(by.apply(y));
             }
         });
         return this;
@@ -16,7 +16,7 @@ public class SortBuilder<A> {
         this.functions.appendItem(new F2<A, A, Integer>() {
             @Override
             public Integer apply(A x,A y) {
-                return by.apply(y).compareTo(by.apply(x));
+                return by.apply(y).compare(by.apply(x));
             }
         });
         return this;

@@ -7,19 +7,19 @@ import test..*;
 
 public class ChainTest extends TestCase {
     public void testAnd() {
-        ().assertTrueValue(ERROR: Unknown !([True, False, True].<rdI>chain\Chain#C<§^bool§>\.<dIub>and\bool\));
-        ().assertTrueValue(ERROR: Unknown !([False, False, False].<rdI>chain\Chain#C<§^bool§>\.<dIub>and\bool\));
-        ().assertTrueValue(ImArray.fromObjects(true, true, true).chain().and());
-        ().assertTrueValue(ImArray.fromObjects().chain().and());
+        ().assertTrue(ERROR: Unknown !([True, False, True].<rdI>chain\Chain#C<§^bool§>\.<dIub>and\bool\));
+        ().assertTrue(ERROR: Unknown !([False, False, False].<rdI>chain\Chain#C<§^bool§>\.<dIub>and\bool\));
+        ().assertTrue(ImArray.fromObjects(true, true, true).chain().and());
+        ().assertTrue(ImArray.fromObjects().chain().and());
     }
     public void testOr() {
-        ().assertTrueValue(ImArray.fromObjects(false, false, true).chain().or());
-        ().assertTrueValue(ERROR: Unknown !([False, False, False].<rdI>chain\Chain#C<§^bool§>\.<dIub>or\bool\));
-        ().assertTrueValue(ImArray.fromObjects(true, true, true).chain().or());
-        ().assertTrueValue(ERROR: Unknown !([].<rdI>chain\Chain#C<§^_unset§>\.<dIub>or\bool\));
+        ().assertTrue(ImArray.fromObjects(false, false, true).chain().or());
+        ().assertTrue(ERROR: Unknown !([False, False, False].<rdI>chain\Chain#C<§^bool§>\.<dIub>or\bool\));
+        ().assertTrue(ImArray.fromObjects(true, true, true).chain().or());
+        ().assertTrue(ERROR: Unknown !([].<rdI>chain\Chain#C<§^_unset§>\.<dIub>or\bool\));
     }
     public void testFuture() {
-        repeatTimesF(((int)1000), new P0() {
+        repeat(((int)1000), new P0() {
             @Override
             public void apply() {
                 ImArray<Tuple2<Integer, Promise<Integer>>> arr = 0.to(1000).chain().map<Tuple2<Integer, Promise<Integer>>>(new F<Integer, Tuple2<Integer, Promise<Integer>>>() {
@@ -32,7 +32,7 @@ public class ChainTest extends TestCase {
                     Iterator<Tuple2<Integer, Promise<Integer>>> __inline__0_1_i = arr.iterator();
                     while(__inline__0_1_i.hasNext()) {
                         Tuple2<Integer, Promise<Integer>> t = __inline__0_1_i.next();
-                        DispatchQueue().default.asyncF(new P0() {
+                        DispatchQueue().default.async(new P0() {
                             @Override
                             public void apply() {
                                 return t.b.successValue(t.a * t.a);
@@ -45,7 +45,7 @@ public class ChainTest extends TestCase {
                     public Promise<Integer> apply(Tuple2<Integer, Promise<Integer>> _) {
                         return _.b;
                     }
-                }).futureF<Integer, ImArray<Integer>>(new F<Chain<Integer>, ImArray<Integer>>() {
+                }).future<Integer, ImArray<Integer>>(new F<Chain<Integer>, ImArray<Integer>>() {
                     @Override
                     public ImArray<Integer> apply(Chain<Integer> chain) {
                         return chain.toArray();
@@ -62,7 +62,7 @@ public class ChainTest extends TestCase {
                         return _ * _;
                     }
                 }).toArray();
-                ().assertEqualsAB<ImArray<Integer>>(set, fut.getResultAwait(((float)5)));
+                ().assertEquals<ImArray<Integer>>(set, fut.getResultAwait(((float)5)));
             }
         });
     }
@@ -79,7 +79,7 @@ public class ChainTest extends TestCase {
             Iterator<Promise<Void>> __inline__3_i = arr.iterator();
             while(__inline__3_i.hasNext()) {
                 Promise<Void> p = __inline__3_i.next();
-                DispatchQueue().default.asyncF(new P0() {
+                DispatchQueue().default.async(new P0() {
                     @Override
                     public void apply() {
                         count.incrementAndGet();
@@ -88,14 +88,14 @@ public class ChainTest extends TestCase {
                 });
             }
         }
-        ().assertTrueValue(fut.waitResultPeriod(((float)5)) != null);
-        ().assertEqualsAB<Integer>(count.intValue(), ((int)arr.count()));
+        ().assertTrue(fut.waitResultPeriod(((float)5)) != null);
+        ().assertEquals<Integer>(count.intValue(), ((int)arr.count()));
     }
     public void testFlat() {
-        ().assertEqualsAB<ImArray<Integer>>(ImArray.fromObjects(1, 5, 2, 3, 2), ImArray.fromObjects(((ImArray<Integer>)ImArray.fromObjects(1, 5)), ((ImArray<Integer>)ImArray.fromObjects(2, 3)), ImArray.fromObjects(2)).chain().flat<Integer>().toArray());
+        ().assertEquals<ImArray<Integer>>(ImArray.fromObjects(1, 5, 2, 3, 2), ImArray.fromObjects(((ImArray<Integer>)ImArray.fromObjects(1, 5)), ((ImArray<Integer>)ImArray.fromObjects(2, 3)), ImArray.fromObjects(2)).chain().flat<Integer>().toArray());
     }
     public void testZip() {
-        ().assertEqualsAB<ImArray<Integer>>(ImArray.fromObjects(2, 3), ImArray.fromObjects(1, 0, 3).chain().zipABy<Integer, Integer>(ImArray.fromObjects(1, 3), new F2<Integer, Integer, Integer>() {
+        ().assertEquals<ImArray<Integer>>(ImArray.fromObjects(2, 3), ImArray.fromObjects(1, 0, 3).chain().zip<Integer, Integer>(ImArray.fromObjects(1, 3), new F2<Integer, Integer, Integer>() {
             @Override
             public Integer apply(Integer a,Integer b) {
                 return a + b;
@@ -103,7 +103,7 @@ public class ChainTest extends TestCase {
         }).toArray());
     }
     public void testZip3() {
-        ().assertEqualsAB<ImArray<Integer>>(ImArray.fromObjects(3, 4), ImArray.fromObjects(1, 0, 3).chain().zip3ABBy<Integer, Integer, Integer>(ImArray.fromObjects(1, 3), ImArray.fromObjects(1, 1, 2, 4), new F3<Integer, Integer, Integer, Integer>() {
+        ().assertEquals<ImArray<Integer>>(ImArray.fromObjects(3, 4), ImArray.fromObjects(1, 0, 3).chain().zip3<Integer, Integer, Integer>(ImArray.fromObjects(1, 3), ImArray.fromObjects(1, 1, 2, 4), new F3<Integer, Integer, Integer, Integer>() {
             @Override
             public Integer apply(Integer a,Integer b,Integer c) {
                 return a + b + c;
@@ -112,13 +112,13 @@ public class ChainTest extends TestCase {
     }
     public void testZipFor() {
         ImArray<Integer> arr = ImArray.fromObjects();
-        ImArray.fromObjects(1, 0, 3).chain().zipForABy<Integer>(ImArray.fromObjects(1, 3), new P2<Integer, Integer>() {
+        ImArray.fromObjects(1, 0, 3).chain().zipFor<Integer>(ImArray.fromObjects(1, 3), new P2<Integer, Integer>() {
             @Override
             public void apply(Integer a,Integer b) {
-                arr = arr.addItem(a + b);
+                arr = arr.add(a + b);
             }
         });
-        ().assertEqualsAB<ImArray<Integer>>(ImArray.fromObjects(2, 3), arr);
+        ().assertEquals<ImArray<Integer>>(ImArray.fromObjects(2, 3), arr);
     }
     public ChainTest() {
     }

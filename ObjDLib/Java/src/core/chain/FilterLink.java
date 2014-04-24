@@ -5,16 +5,16 @@ public class FilterLink<T> implements ChainLink<T, T> {
     public final float selectivity;
     @Override
     public Yield<T> buildYield(Yield<T> yield) {
-        return Yield().decorateBaseBeginYield<Traversable<T>>(yield, new F<Integer, Integer>() {
+        return Yield().decorate<Traversable<T>>(yield, new F<Integer, Integer>() {
             @Override
             public Integer apply(Integer size) {
-                return yield.beginYieldWithSize(((int)size * FilterLink.this.selectivity));
+                return yield.beginYieldWith(((int)size * FilterLink.this.selectivity));
             }
         }, new F<Traversable<T>, Integer>() {
             @Override
             public Integer apply(Traversable<T> item) {
                 if(FilterLink.this.predicate.apply(item)) {
-                    return yield.yieldItem(item);
+                    return yield.yield(item);
                 } else {
                     return 0;
                 }

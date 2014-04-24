@@ -40,7 +40,7 @@ public final class FilledList<T> extends ImList<T> {
             each.apply(list._head);
             ImList<T> tail = list.tail;
             if(tail.isEmpty()) {
-                return null;
+                return ;
             }
             list = ((FilledList<T>)tail);
         }
@@ -51,7 +51,7 @@ public final class FilledList<T> extends ImList<T> {
         FilledList<T> list = this;
         while(true) {
             T h = list._head;
-            if(item.compareTo(h) < 0) {
+            if(item.compare(h) < 0) {
                 return new FilledList<T>(((T)item), before).reverseAndAddList(list);
             }
             before = ImList().applyItemTail<T>(h, before);

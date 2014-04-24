@@ -66,7 +66,9 @@ instance Show TP where
 	show (TPRef [] nm) = nm
 	show (TPRef exts nm) = nm ++ "<" ++ strs' ", " exts ++ ">"
 	show (TPArr tp n) = show tp ++ "[" ++ show n ++ "]"
-
+removeGenerics :: TP -> TP
+removeGenerics (TPRef _ nm) = TPRef [] nm
+removeGenerics t = t
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - Def
  -----------------------------------------------------------------------------------------------------------------------------------------------}
@@ -136,7 +138,7 @@ showStm (Val tp nm e) = [show tp ++ " " ++ nm ++ " = "] `glue` showExp e `appp` 
 
 
 data Exp = Nop | IntConst Int | ExpError String | Call String [TP] [Exp] | New [Def] Exp | Dot Exp Exp | Ref String | InlineIf Exp Exp Exp | This
-	| BoolOp BoolTp Exp Exp | MathOp MathTp Exp Exp | Null | BoolConst Bool
+	| BoolOp BoolTp Exp Exp | MathOp MathTp Exp Exp | Null | BoolConst Bool | InstanceOf Exp TP | Cast TP Exp
 	| StringConst String deriving (Eq)
 
 showExp :: Exp -> [String]
@@ -153,6 +155,8 @@ showExp (New [] e) = ["new "] `glue` showExp e
 showExp (New defs e) = (["new "] `glue` showExp e `appp` " {") ++  (map ind . concatMap (showDef (ClassTypeClass, ""))) defs ++ ["}"]
 showExp (Dot l r) = showExp l `appp` "." `glue` showExp r
 showExp (InlineIf cond t f) = ((["("] `glue` showExp cond `appp` ") ? (") `glue` showExp t `appp` ") : (")  `glue` showExp f `appp` ")"
+showExp (InstanceOf e tp) = showExp e `appp` (" instanceof " ++ show (removeGenerics tp))
+showExp (Cast tp e) = ["((" ++ show tp ++ ")"] `glue` showExp e `appp` ")"
 showExp (ExpError e) = ["ERROR: " ++ e]
 showExp (BoolOp t l r) = (mbb l `appp` (" " ++ show t ++ " ")) `glue` mbb r
 	where 

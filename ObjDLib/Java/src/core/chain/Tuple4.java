@@ -7,11 +7,11 @@ public final final class Tuple4<A, B, C, D> implements Comparable<Tuple4<A, B, C
     public final D d;
     @Override
     public int compareTo(Tuple4<AC, BC, CC, DC> to) {
-        int r = to.a.compareTo(this.a);
+        int r = to.a.compare(this.a);
         if(r.equals(0)) {
-            r = to.b.compareTo(this.b);
+            r = to.b.compare(this.b);
             if(r.equals(0)) {
-                r = to.c.compareTo(this.c);
+                r = to.c.compare(this.c);
                 if(r.equals(0)) {
                     return ERROR: Unknown -<l>to\^Tuple4#C<AC#G, BC#G, CC#G, DC#G>\.<eIU>d\DC#G\.<rdIb>compare(to = <Tuple4#C<A#G, B#G, C#G, D#G>>self.<eIU>d\§D#G§\)\int\;
                 } else {

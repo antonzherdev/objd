@@ -66,7 +66,7 @@ defName' d = case D.defPars d of
 		"description" -> "toString"
 		"isEqual" -> "equals"
 		o -> o
-	_ -> D.defName d ++ concatMap (cap . D.defName) (D.defPars d)
+	_ -> if D.DefModStub `elem` D.defMods d then D.defName d else (D.defName d ++ concatMap (cap . D.defName) (D.defPars d))
 
 overrideAnnotation :: J.DefAnnotation
 overrideAnnotation = J.DefAnnotation "Override" []
@@ -198,6 +198,15 @@ genExp _ D.Nil = return J.Null
 genExp _ (D.StringConst s) = return $ J.StringConst s
 genExp _ (D.BoolConst s) = return $ J.BoolConst s
 genExp _ (D.IntConst s) = return $ J.IntConst s
+genExp env (D.Dot l (D.Is dtp)) = do 
+	l' <- genExp env l
+	return $ J.InstanceOf l' (genTp dtp)
+genExp env (D.Dot l (D.CastDot dtp)) = do 
+	l' <- genExp env l
+	return $ J.Cast (genTp dtp) l'
+genExp env (D.Cast dtp l) = do 
+	l' <- genExp env l
+	return $ J.Cast (genTp dtp) l'
 genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
 	| D.DefModConstructor `elem` D.defMods constr 
 		|| (D.defName constr == "apply" && D.DefModStub `elem` D.defMods constr && D.DefModStatic `elem` D.defMods constr) 
@@ -304,6 +313,7 @@ genStm _ D.Break = return [J.Break]
 genStm env (D.Braces bs) = do
 	bs' <- mapM (genStm env) bs
 	return [J.Braces $ join bs']
+genStm _ (D.Return _ D.Nil) = return $ [J.Return J.Nop]
 genStm env (D.Return _ e) = genExpStm env e J.Return 
 genStm env (D.If cond t f) = do
 	t' <- getStms env t

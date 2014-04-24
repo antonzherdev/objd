@@ -39,7 +39,7 @@ public abstract class MSeq_impl<T> extends Seq_impl<T> implements MSeq<T> {
             if(n.equals(0)) {
                 i.next();
                 i.setValue(item);
-                return null;
+                return ;
             }
             i.next();
             ERROR: Unknown <lm>n\uint\--;

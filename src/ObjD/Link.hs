@@ -1609,6 +1609,7 @@ addReturnBy by hard (Braces es) = Braces $ map (addReturnBy by False) (init es) 
 addReturnBy _ True Nop = ExpLError "Return NOP" Nop
 addReturnBy _ _ e@(Throw _) = e
 addReturnBy by _ (Return _ e) = by True e
+addReturnBy _ _ e@While{} = e
 addReturnBy by True e = by False e
 addReturnBy _ _ e = e
 

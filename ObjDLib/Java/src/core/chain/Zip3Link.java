@@ -8,13 +8,13 @@ public class Zip3Link<T, A, B, R> implements ChainLink<T, R> {
     public Yield<A> buildYield(Yield<R> yield) {
         Iterator<A> ai = this.a.iterator();
         Iterator<B> bi = this.b.iterator();
-        return Yield().decorateBaseYield<A>(yield, new F<A, Integer>() {
+        return Yield().decorate<A>(yield, new F<A, Integer>() {
             @Override
             public Integer apply(A item) {
                 if(ERROR: Unknown !(<l>ai\Iterator#T<§A#G§>\.<dIa>hasNext\bool\) || ERROR: Unknown !(<l>bi\Iterator#T<§B#G§>\.<dIa>hasNext\bool\)) {
                     return 1;
                 } else {
-                    return yield.yieldItem(Zip3Link.this.f.apply(item, ai.next(), bi.next()));
+                    return yield.yield(Zip3Link.this.f.apply(item, ai.next(), bi.next()));
                 }
             }
         });

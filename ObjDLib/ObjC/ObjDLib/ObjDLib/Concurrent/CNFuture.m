@@ -485,7 +485,6 @@ static ODClassType* _CNDefaultPromise_type;
             }
         }
     }
-    return NO;
 }
 
 - (BOOL)successValue:(id)value {
