@@ -3,7 +3,7 @@ package core.chain;
 public class HashSetBuilder<T> extends Builder_impl<T, ImHashSet<T>> {
     public final MHashSet<T> set;
     @Override
-    public void appendItem(T item) {
+    public void appendItem(final T item) {
         this.set.appendItem(item);
     }
     @Override

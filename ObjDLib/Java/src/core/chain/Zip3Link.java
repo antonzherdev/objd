@@ -5,12 +5,12 @@ public class Zip3Link<T, A, B, R> implements ChainLink<T, R> {
     public final Iterable<B> b;
     public final F3<T, A, B, R> f;
     @Override
-    public Yield<A> buildYield(Yield<R> yield) {
-        Iterator<A> ai = this.a.iterator();
-        Iterator<B> bi = this.b.iterator();
+    public Yield<A> buildYield(final Yield<R> yield) {
+        final Iterator<A> ai = this.a.iterator();
+        final Iterator<B> bi = this.b.iterator();
         return Yield.<A>decorateBaseYield(yield, new F<A, Integer>() {
             @Override
-            public Integer apply(A item) {
+            public Integer apply(final A item) {
                 if(!(ai.hasNext()) || !(bi.hasNext())) {
                     return 1;
                 } else {
@@ -19,7 +19,7 @@ public class Zip3Link<T, A, B, R> implements ChainLink<T, R> {
             }
         });
     }
-    public Zip3Link(Iterable<A> a,Iterable<B> b,F3<T, A, B, R> f) {
+    public Zip3Link(final Iterable<A> a, final Iterable<B> b, final F3<T, A, B, R> f) {
         this.a = a;
         this.b = b;
         this.f = f;

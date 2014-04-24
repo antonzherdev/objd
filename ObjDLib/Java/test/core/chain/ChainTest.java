@@ -22,16 +22,16 @@ public class ChainTest extends TestCase {
         repeatTimesF(((int)1000), new P0() {
             @Override
             public void apply() {
-                ImArray<Tuple2<Integer, Promise<Integer>>> arr = 0.to(1000).chain().map<Tuple2<Integer, Promise<Integer>>>(new F<Integer, Tuple2<Integer, Promise<Integer>>>() {
+                final ImArray<Tuple<Integer, Promise<Integer>>> arr = 0.to(1000).chain().map<Tuple<Integer, Promise<Integer>>>(new F<Integer, Tuple<Integer, Promise<Integer>>>() {
                     @Override
-                    public Tuple2<Integer, Promise<Integer>> apply(Integer i) {
-                        return ERROR: Unknown (<l>i\§^int§\, <to>Promise\Promise#C.class\.<dIt>apply\Promise#C<§^int§>\);
+                    public Tuple<Integer, Promise<Integer>> apply(final Integer i) {
+                        return new Tuple<Integer, Promise<Integer>>(i, Promise.<Integer>apply());
                     }
                 }).toArray();
                 {
-                    Iterator<Tuple2<Integer, Promise<Integer>>> __inline__0_1_i = arr.iterator();
+                    final Iterator<Tuple<Integer, Promise<Integer>>> __inline__0_1_i = arr.iterator();
                     while(__inline__0_1_i.hasNext()) {
-                        Tuple2<Integer, Promise<Integer>> t = __inline__0_1_i.next();
+                        final Tuple<Integer, Promise<Integer>> t = __inline__0_1_i.next();
                         DispatchQueue.default.asyncF(new P0() {
                             @Override
                             public void apply() {
@@ -40,25 +40,25 @@ public class ChainTest extends TestCase {
                         });
                     }
                 }
-                Future<ImArray<Integer>> fut = arr.chain().map<Promise<Integer>>(new F<Tuple2<Integer, Promise<Integer>>, Promise<Integer>>() {
+                final Future<ImArray<Integer>> fut = arr.chain().map<Promise<Integer>>(new F<Tuple<Integer, Promise<Integer>>, Promise<Integer>>() {
                     @Override
-                    public Promise<Integer> apply(Tuple2<Integer, Promise<Integer>> _) {
+                    public Promise<Integer> apply(final Tuple<Integer, Promise<Integer>> _) {
                         return _.b;
                     }
                 }).futureF<Integer, ImArray<Integer>>(new F<Chain<Integer>, ImArray<Integer>>() {
                     @Override
-                    public ImArray<Integer> apply(Chain<Integer> chain) {
+                    public ImArray<Integer> apply(final Chain<Integer> chain) {
                         return chain.toArray();
                     }
                 });
-                ImArray<Integer> set = arr.chain().map<Integer>(new F<Tuple2<Integer, Promise<Integer>>, Integer>() {
+                final ImArray<Integer> set = arr.chain().map<Integer>(new F<Tuple<Integer, Promise<Integer>>, Integer>() {
                     @Override
-                    public Integer apply(Tuple2<Integer, Promise<Integer>> _) {
+                    public Integer apply(final Tuple<Integer, Promise<Integer>> _) {
                         return _.a;
                     }
                 }).map<Integer>(new F<Integer, Integer>() {
                     @Override
-                    public Integer apply(Integer _) {
+                    public Integer apply(final Integer _) {
                         return _ * _;
                     }
                 }).toArray();
@@ -67,18 +67,18 @@ public class ChainTest extends TestCase {
         });
     }
     public void testVoidFuture() {
-        ImArray<Promise<Void>> arr = 0.to(1000).chain().map<Promise<Void>>(new F<Integer, Promise<Void>>() {
+        final ImArray<Promise<Void>> arr = 0.to(1000).chain().map<Promise<Void>>(new F<Integer, Promise<Void>>() {
             @Override
-            public Promise<Void> apply(Integer i) {
+            public Promise<Void> apply(final Integer i) {
                 return Promise.<Void>apply();
             }
         }).toArray();
-        Future<Void> fut = arr.chain().voidFuture();
+        final Future<Void> fut = arr.chain().voidFuture();
         AtomicInt count = new AtomicInt();
         {
-            Iterator<Promise<Void>> __inline__3_i = arr.iterator();
+            final Iterator<Promise<Void>> __inline__3_i = arr.iterator();
             while(__inline__3_i.hasNext()) {
-                Promise<Void> p = __inline__3_i.next();
+                final Promise<Void> p = __inline__3_i.next();
                 DispatchQueue.default.asyncF(new P0() {
                     @Override
                     public void apply() {
@@ -97,7 +97,7 @@ public class ChainTest extends TestCase {
     public void testZip() {
         .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(2, 3), ImArray.fromObjects(1, 0, 3).chain().zipABy<Integer, Integer>(ImArray.fromObjects(1, 3), new F2<Integer, Integer, Integer>() {
             @Override
-            public Integer apply(Integer a,Integer b) {
+            public Integer apply(final Integer a, final Integer b) {
                 return a + b;
             }
         }).toArray());
@@ -105,7 +105,7 @@ public class ChainTest extends TestCase {
     public void testZip3() {
         .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(3, 4), ImArray.fromObjects(1, 0, 3).chain().zip3ABBy<Integer, Integer, Integer>(ImArray.fromObjects(1, 3), ImArray.fromObjects(1, 1, 2, 4), new F3<Integer, Integer, Integer, Integer>() {
             @Override
-            public Integer apply(Integer a,Integer b,Integer c) {
+            public Integer apply(final Integer a, final Integer b, final Integer c) {
                 return a + b + c;
             }
         }).toArray());
@@ -114,7 +114,7 @@ public class ChainTest extends TestCase {
         ImArray<Integer> arr = ImArray.fromObjects();
         ImArray.fromObjects(1, 0, 3).chain().zipForABy<Integer>(ImArray.fromObjects(1, 3), new P2<Integer, Integer>() {
             @Override
-            public void apply(Integer a,Integer b) {
+            public void apply(final Integer a, final Integer b) {
                 arr = arr.addItem(a + b);
             }
         });

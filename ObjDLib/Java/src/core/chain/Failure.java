@@ -19,10 +19,10 @@ public final class Failure<T> extends Try<T> {
         return true;
     }
     @Override
-    public  <R> Try<R> mapF(F<T, R> f) {
+    public <R> Try<R> mapF(final F<T, R> f) {
         return ((Try<R>)this);
     }
-    public Failure(Object reason) {
+    public Failure(final Object reason) {
         this.reason = reason;
     }
 }

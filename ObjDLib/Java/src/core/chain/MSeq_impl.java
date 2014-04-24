@@ -7,18 +7,18 @@ public abstract class MSeq_impl<T> extends Seq_impl<T> implements MSeq<T> {
     }
     @Override
     public ImSeq<T> imCopy() {
-        MArray<T> arr = new MArray<T>();
+        final MArray<T> arr = new MArray<T>();
         {
-            Iterator<T> __inline__1_i = this.iterator();
+            final Iterator<T> __inline__1_i = this.iterator();
             while(__inline__1_i.hasNext()) {
-                T item = __inline__1_i.next();
+                final T item = __inline__1_i.next();
                 arr.appendItem(item);
             }
         }
         return arr.im();
     }
-    public boolean removeIndex(int index) {
-        MIterator<T> i = this.mutableIterator();
+    public boolean removeIndex(final int index) {
+        final MIterator<T> i = this.mutableIterator();
         int j = index;
         boolean ret = false;
         while(i.hasNext()) {
@@ -32,8 +32,8 @@ public abstract class MSeq_impl<T> extends Seq_impl<T> implements MSeq<T> {
         }
         return ret;
     }
-    public void setIndexItem(int index,T item) {
-        MIterator<T> i = this.mutableIterator();
+    public void setIndexItem(final int index, final T item) {
+        final MIterator<T> i = this.mutableIterator();
         int n = index;
         while(i.hasNext()) {
             if(n.equals(0)) {
@@ -47,8 +47,8 @@ public abstract class MSeq_impl<T> extends Seq_impl<T> implements MSeq<T> {
         throw new RuntimeException("Incorrect index");
     }
     @Override
-    public boolean removeItem(T item) {
-        MIterator<T> i = this.mutableIterator();
+    public boolean removeItem(final T item) {
+        final MIterator<T> i = this.mutableIterator();
         boolean ret = false;
         while(i.hasNext()) {
             if(i.next().equals(item)) {
@@ -58,8 +58,8 @@ public abstract class MSeq_impl<T> extends Seq_impl<T> implements MSeq<T> {
         }
         return ret;
     }
-    public void mutableFilterBy(F<T, Boolean> by) {
-        MIterator<T> i = this.mutableIterator();
+    public void mutableFilterBy(final F<T, Boolean> by) {
+        final MIterator<T> i = this.mutableIterator();
         while(i.hasNext()) {
             if(by.apply(i.next())) {
                 i.remove();

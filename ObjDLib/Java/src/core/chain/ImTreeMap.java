@@ -22,11 +22,11 @@ public class ImTreeMap<K, V> extends TreeMap<K, V> {
     }
     @Override
     public MTreeMap<K, V> mCopy() {
-        MTreeMap<K, V> m = new MTreeMap<K, V>(this.comparator);
+        final MTreeMap<K, V> m = new MTreeMap<K, V>(this.comparator);
         m.assignImMap(this);
         return m;
     }
-    public ImTreeMap(F2<K, K, Integer> comparator,TreeMapEntry<K, V> root,int count) {
+    public ImTreeMap(final F2<K, K, Integer> comparator, final TreeMapEntry<K, V> root, final int count) {
         super(comparator);
         this.root = root;
         this.count = count;

@@ -10,7 +10,7 @@ public class TreeMapValues<V> extends ImIterable_impl<V> {
     public Iterator<V> iterator() {
         return TreeMapValuesIterator.<V>applyMapEntry(this.map, this.map.firstEntry());
     }
-    public TreeMapValues(TreeMap<?, V> map) {
+    public TreeMapValues(final TreeMap<?, V> map) {
         this.map = map;
     }
 }

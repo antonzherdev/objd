@@ -3,13 +3,13 @@ package core.chain;
 public class MapOptLink<A, B> implements ChainLink<A, B> {
     public final F<A, B> f;
     @Override
-    public Yield<A> buildYield(Yield<B> yield) {
+    public Yield<A> buildYield(final Yield<B> yield) {
         return Yield.<A>decorateBaseYield(yield, new F<A, Integer>() {
             @Override
-            public Integer apply(A item) {
-                Integer __tmp_0;
+            public Integer apply(final A item) {
+                final Integer __tmp_0;
                 {
-                    B _ = MapOptLink.this.f.apply(item);
+                    final B _ = MapOptLink.this.f.apply(item);
                     if(_ != null) {
                         __tmp_0 = yield.yieldItem(_);
                     } else {
@@ -24,7 +24,7 @@ public class MapOptLink<A, B> implements ChainLink<A, B> {
             }
         });
     }
-    public MapOptLink(F<A, B> f) {
+    public MapOptLink(final F<A, B> f) {
         this.f = f;
     }
 }

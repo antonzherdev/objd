@@ -34,7 +34,7 @@ public class MListIterator<T> extends MIterator_impl<T> {
         this.list.removeListItem();
     }
     @Override
-    public void setValue(T value) {
+    public void setValue(final T value) {
         if(this.prev == null) {
             throw new RuntimeException("Not null");
         } else {
@@ -42,7 +42,7 @@ public class MListIterator<T> extends MIterator_impl<T> {
         }
         .data = value;
     }
-    public MListIterator(MList<T> list) {
+    public MListIterator(final MList<T> list) {
         this.list = list;
     }
 }

@@ -725,7 +725,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 			D.Class{} -> Class {
 				_classFile = file,
 				_classPackage = package,
-				_classMods = concatMap clsMod (D.classMods cl), 
+				_classMods =  nub $ concatMap clsMod (D.classMods cl), 
 				className = D.className cl, 
 				_classExtends = if D.className cl == "Object" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
 				_classDefs = 

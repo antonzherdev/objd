@@ -10,18 +10,18 @@ public class MList<T> extends MSeq_impl<T> {
     }
     @Override
     public Iterator<T> iterator() {
-        MListImmutableIterator<T> i = new MListImmutableIterator<T>();
+        final MListImmutableIterator<T> i = new MListImmutableIterator<T>();
         i.item = this.headItem;
         return i;
     }
     @Override
     public MIterator<T> mutableIterator() {
-        MListIterator<T> i = new MListIterator<T>(this);
+        final MListIterator<T> i = new MListIterator<T>(this);
         i.item = this.headItem;
         return i;
     }
     @Override
-    public void insertIndexItem(int index,T item) {
+    public void insertIndexItem(final int index, final T item) {
         if(index.equals(0)) {
             prependItem(item);
         } else {
@@ -34,9 +34,9 @@ public class MList<T> extends MSeq_impl<T> {
                     c = c.next;
                 }
                 if(c != null) {
-                    MListItem<T> li = new MListItem<T>(item);
+                    final MListItem<T> li = new MListItem<T>(item);
                     {
-                        MListItem<T> __tmp_0_3_1 = c.next;
+                        final MListItem<T> __tmp_0_3_1 = c.next;
                         if(__tmp_0_3_1 != null) {
                             __tmp_0_3_1.prev = li;
                         }
@@ -49,8 +49,8 @@ public class MList<T> extends MSeq_impl<T> {
         }
     }
     @Override
-    public void prependItem(T item) {
-        MListItem<T> i = new MListItem<T>(item);
+    public void prependItem(final T item) {
+        final MListItem<T> i = new MListItem<T>(item);
         if(this.headItem == null) {
             this.headItem = i;
             this.lastItem = i;
@@ -63,8 +63,8 @@ public class MList<T> extends MSeq_impl<T> {
         }
     }
     @Override
-    public void appendItem(T item) {
-        MListItem<T> i = new MListItem<T>(item);
+    public void appendItem(final T item) {
+        final MListItem<T> i = new MListItem<T>(item);
         if(this.lastItem == null) {
             this.headItem = i;
             this.lastItem = i;
@@ -76,7 +76,7 @@ public class MList<T> extends MSeq_impl<T> {
             this._count++;
         }
     }
-    public void removeListItem(MListItem<T> listItem) {
+    public void removeListItem(final MListItem<T> listItem) {
         if(this.headItem != null && this.headItem.equals(listItem)) {
             this.headItem = this.headItem.next;
             this.headItem.prev = null;
@@ -86,13 +86,13 @@ public class MList<T> extends MSeq_impl<T> {
                 this.lastItem.next = null;
             } else {
                 {
-                    MListItem<T> __tmp_0_0 = listItem.prev;
+                    final MListItem<T> __tmp_0_0 = listItem.prev;
                     if(__tmp_0_0 != null) {
                         __tmp_0_0.next = listItem.next;
                     }
                 }
                 {
-                    MListItem<T> __tmp_0_1 = listItem.next;
+                    final MListItem<T> __tmp_0_1 = listItem.next;
                     if(__tmp_0_1 != null) {
                         __tmp_0_1.prev = listItem.prev;
                     }
@@ -108,7 +108,7 @@ public class MList<T> extends MSeq_impl<T> {
     }
     public void removeHead() {
         {
-            MListItem<T> _ = this.headItem;
+            final MListItem<T> _ = this.headItem;
             if(_ != null) {
                 removeListItem(_);
             }
@@ -116,16 +116,16 @@ public class MList<T> extends MSeq_impl<T> {
     }
     public void removeLast() {
         {
-            MListItem<T> _ = this.lastItem;
+            final MListItem<T> _ = this.lastItem;
             if(_ != null) {
                 removeListItem(_);
             }
         }
     }
     public T takeHead() {
-        MListItem<T> h = this.headItem;
+        final MListItem<T> h = this.headItem;
         if(h != null) {
-            T r = h.data;
+            final T r = h.data;
             removeListItem(h);
             return r;
         } else {
@@ -137,9 +137,9 @@ public class MList<T> extends MSeq_impl<T> {
         return ERROR: Unknown <MList#C<T#G>>self.<emp>lastItem\(^MListItem#C<§T#G§>)?\?.<eIUm>data\§T#G§\;
     }
     public T takeLast() {
-        MListItem<T> h = this.lastItem;
+        final MListItem<T> h = this.lastItem;
         if(h != null) {
-            T r = h.data;
+            final T r = h.data;
             removeListItem(h);
             return r;
         } else {
@@ -147,7 +147,7 @@ public class MList<T> extends MSeq_impl<T> {
         }
     }
     @Override
-    public void forEach(P<T> each) {
+    public void forEach(final P<T> each) {
         MListItem<T> i = this.headItem;
         while(i != null) {
             each.apply(i.data);
@@ -155,7 +155,7 @@ public class MList<T> extends MSeq_impl<T> {
         }
     }
     @Override
-    public boolean goOn(F<T, Boolean> on) {
+    public boolean goOn(final F<T, Boolean> on) {
         MListItem<T> i = this.headItem;
         while(i != null) {
             if(!(on.apply(i.data))) {
@@ -166,7 +166,7 @@ public class MList<T> extends MSeq_impl<T> {
         return true;
     }
     @Override
-    public void mutableFilterBy(F<T, Boolean> by) {
+    public void mutableFilterBy(final F<T, Boolean> by) {
         MListItem<T> i = this.headItem;
         while(i != null) {
             if(!(by.apply(i.data))) {

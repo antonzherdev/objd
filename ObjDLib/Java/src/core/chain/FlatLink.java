@@ -3,19 +3,19 @@ package core.chain;
 public class FlatLink<T> implements ChainLink<Traversable<T>, T> {
     public final float factor;
     @Override
-    public Yield<Traversable<T>> buildYield(Yield<T> yield) {
+    public Yield<Traversable<T>> buildYield(final Yield<T> yield) {
         return Yield.<Traversable<T>>decorateBaseBeginYield(yield, new F<Integer, Integer>() {
             @Override
-            public Integer apply(Integer size) {
+            public Integer apply(final Integer size) {
                 return yield.beginYieldWithSize(((int)size * FlatLink.this.factor));
             }
         }, new F<Traversable<T>, Integer>() {
             @Override
-            public Integer apply(Traversable<T> col) {
+            public Integer apply(final Traversable<T> col) {
                 int result = 0;
                 col.goOn(new F<T, Boolean>() {
                     @Override
-                    public Boolean apply(T item) {
+                    public Boolean apply(final T item) {
                         if(yield.yieldItem(item).equals(0)) {
                             result = 1;
                             return false;
@@ -28,7 +28,7 @@ public class FlatLink<T> implements ChainLink<Traversable<T>, T> {
             }
         });
     }
-    public FlatLink(float factor) {
+    public FlatLink(final float factor) {
         this.factor = factor;
     }
 }

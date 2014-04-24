@@ -1,18 +1,18 @@
 package core.chain;
 
-public interface MMap<K, V> extends Map<K, V>, MIterable<Tuple2<K, V>> {
-    void setKeyValue(K key,V value);
-    V removeForKey(K key);
-    V objectForKeyOrUpdateWith(K key,F<Void, V> orUpdateWith);
-    V modifyKeyBy(K key,F<V, V> by);
-    V takeKey(K key);
+public interface MMap<K, V> extends Map<K, V>, MIterable<Tuple<K, V>> {
+    void setKeyValue(final K key, final V value);
+    V removeForKey(final K key);
+    V objectForKeyOrUpdateWith(final K key, final F0<V> orUpdateWith);
+    V modifyKeyBy(final K key, final F<V, V> by);
+    V takeKey(final K key);
     @Override
-    void appendItem(Tuple2<K, V> item);
+    void appendItem(final Tuple<K, V> item);
     @Override
-    boolean removeItem(Tuple2<K, V> item);
+    boolean removeItem(final Tuple<K, V> item);
     @Override
     ImMap<K, V> im();
     @Override
     ImMap<K, V> imCopy();
-    void assignImMap(ImMap<K, V> imMap);
+    void assignImMap(final ImMap<K, V> imMap);
 }

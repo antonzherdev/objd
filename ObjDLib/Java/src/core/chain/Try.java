@@ -7,7 +7,7 @@ public abstract class Try<T> {
     public boolean isFailure() {
         return !(this.isSuccess());
     }
-    public abstract  <R> Try<R> mapF(F<T, R> f);
+    public abstract <R> Try<R> mapF(final F<T, R> f);
     public Try() {
     }
 }

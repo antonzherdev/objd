@@ -1,6 +1,6 @@
 package core.chain;
 
-public class MMapDefault<K, V> extends MIterable_impl<Tuple2<K, V>> {
+public class MMapDefault<K, V> extends MIterable_impl<Tuple<K, V>> {
     public final MMap<K, V> map;
     public final F<K, V> defaultFunc;
     @Override
@@ -8,14 +8,14 @@ public class MMapDefault<K, V> extends MIterable_impl<Tuple2<K, V>> {
         return this.map.count();
     }
     @Override
-    public Iterator<Tuple2<K, V>> iterator() {
+    public Iterator<Tuple<K, V>> iterator() {
         return this.map.iterator();
     }
     @Override
-    public MIterator<Tuple2<K, V>> mutableIterator() {
+    public MIterator<Tuple<K, V>> mutableIterator() {
         return this.map.mutableIterator();
     }
-    public V applyKey(K key) {
+    public V applyKey(final K key) {
         return this.map.objectForKeyOrUpdateWith(key, new F0<V>() {
             @Override
             public V apply() {
@@ -29,23 +29,23 @@ public class MMapDefault<K, V> extends MIterable_impl<Tuple2<K, V>> {
     public Iterable<V> values() {
         return this.map.values();
     }
-    public boolean containsKey(K key) {
+    public boolean containsKey(final K key) {
         return this.map.containsKey(key);
     }
-    public void setKeyValue(K key,V value) {
+    public void setKeyValue(final K key, final V value) {
         this.map.setKeyValue(key, value);
     }
-    public V modifyKeyBy(K key,F<V, V> by) {
-        V value = by.apply(applyKey(key));
+    public V modifyKeyBy(final K key, final F<V, V> by) {
+        final V value = by.apply(applyKey(key));
         this.map.setKeyValue(key, value);
         return value;
     }
     @Override
-    public void appendItem(Tuple2<K, V> item) {
+    public void appendItem(final Tuple<K, V> item) {
         this.map.appendItem(item);
     }
     @Override
-    public boolean removeItem(Tuple2<K, V> item) {
+    public boolean removeItem(final Tuple<K, V> item) {
         return this.map.removeItem(item);
     }
     @Override
@@ -60,7 +60,7 @@ public class MMapDefault<K, V> extends MIterable_impl<Tuple2<K, V>> {
     public ImMapDefault<K, V> imCopy() {
         return new ImMapDefault<K, V>(this.map.imCopy(), this.defaultFunc);
     }
-    public MMapDefault(MMap<K, V> map,F<K, V> defaultFunc) {
+    public MMapDefault(final MMap<K, V> map, final F<K, V> defaultFunc) {
         this.map = map;
         this.defaultFunc = defaultFunc;
     }

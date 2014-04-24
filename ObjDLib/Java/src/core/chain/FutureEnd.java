@@ -14,13 +14,13 @@ public class FutureEnd<T> {
         int _i = 0;
         return new Yield<Future<T>>(new F<Integer, Integer>() {
             @Override
-            public Integer apply(Integer size) {
+            public Integer apply(final Integer size) {
                 FutureEnd.this._array = new MArray<T>(size);
                 return 0;
             }
         }, new F<Future<T>, Integer>() {
             @Override
-            public Integer apply(Future<T> fut) {
+            public Integer apply(final Future<T> fut) {
                 if(!(FutureEnd.this._stopped)) {
                     FutureEnd.this._counter.incrementAndGet();
                     if(FutureEnd.this._array == null) {
@@ -29,11 +29,11 @@ public class FutureEnd<T> {
                         FutureEnd.this._array;
                     }
                     .appendItem(null);
-                    int i = _i;
+                    final int i = _i;
                     _i++;
                     fut.onCompleteF(new P<Try<T>>() {
                         @Override
-                        public void apply(Try<T> tr) {
+                        public void apply(final Try<T> tr) {
                             if(!(FutureEnd.this._stopped)) {
                                 if(tr.isFailure()) {
                                     FutureEnd.this._stopped = true;
@@ -47,7 +47,7 @@ public class FutureEnd<T> {
                                         }
                                         .setIndexItem(((int)i), tr.get());
                                         Memory.memoryBarrier();
-                                        int r = FutureEnd.this._counter.decrementAndGet();
+                                        final int r = FutureEnd.this._counter.decrementAndGet();
                                         Memory.memoryBarrier();
                                         if(FutureEnd.this._ended && r.equals(0)) {
                                             Memory.memoryBarrier();
@@ -74,7 +74,7 @@ public class FutureEnd<T> {
             }
         }, new F<Integer, Integer>() {
             @Override
-            public Integer apply(Integer res) {
+            public Integer apply(final Integer res) {
                 FutureEnd.this._ended = true;
                 Memory.memoryBarrier();
                 if(FutureEnd.this._counter.intValue().equals(0)) {

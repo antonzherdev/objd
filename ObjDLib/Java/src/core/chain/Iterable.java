@@ -7,12 +7,12 @@ public interface Iterable<T> extends Traversable<T> {
     T head();
     boolean isEmpty();
     @Override
-    void forEach(P<T> each);
+    void forEach(final P<T> each);
     @Override
-    void parForEach(P<T> each);
+    void parForEach(final P<T> each);
     @Override
-    boolean goOn(F<T, Boolean> on);
-    boolean containsItem(T item);
+    boolean goOn(final F<T, Boolean> on);
+    boolean containsItem(final T item);
     @Override
     String toString();
     @Override

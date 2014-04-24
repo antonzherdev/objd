@@ -3,8 +3,8 @@ package core.chain;
 public class TreeMapKeyIterator<K> extends Iterator_impl<K> {
     public final TreeMap<K, ?> map;
     public TreeMapEntry<K, ?> entry;
-    public static  <K> TreeMapKeyIterator<K> applyMapEntry(TreeMap<K, ?> map,TreeMapEntry<K, ?> entry) {
-        TreeMapKeyIterator<K> ret = new TreeMapKeyIterator<K>(map);
+    public static <K> TreeMapKeyIterator<K> applyMapEntry(final TreeMap<K, ?> map, final TreeMapEntry<K, ?> entry) {
+        final TreeMapKeyIterator<K> ret = new TreeMapKeyIterator<K>(map);
         ret.entry = entry;
         return ret;
     }
@@ -19,7 +19,7 @@ public class TreeMapKeyIterator<K> extends Iterator_impl<K> {
         } else {
             this.entry;
         }
-        K ret = .key;
+        final K ret = .key;
         if(this.entry == null) {
             throw new RuntimeException("Not null");
         } else {
@@ -28,7 +28,7 @@ public class TreeMapKeyIterator<K> extends Iterator_impl<K> {
         this.entry = .next();
         return ret;
     }
-    public TreeMapKeyIterator(TreeMap<K, ?> map) {
+    public TreeMapKeyIterator(final TreeMap<K, ?> map) {
         this.map = map;
     }
 }

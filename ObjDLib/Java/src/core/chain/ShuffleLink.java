@@ -3,16 +3,16 @@ package core.chain;
 public class ShuffleLink<T> implements ChainLink<T, T> {
     private MArray<T> _array;
     @Override
-    public Yield<T> buildYield(Yield<T> yield) {
+    public Yield<T> buildYield(final Yield<T> yield) {
         return Yield.<T>decorateBaseBeginYieldEnd(yield, new F<Integer, Integer>() {
             @Override
-            public Integer apply(Integer size) {
+            public Integer apply(final Integer size) {
                 ShuffleLink.this._array = new MArray<T>(size);
                 return 0;
             }
         }, new F<T, Integer>() {
             @Override
-            public Integer apply(T item) {
+            public Integer apply(final T item) {
                 if(ShuffleLink.this._array == null) {
                     throw new RuntimeException("Not null");
                 } else {
@@ -28,7 +28,7 @@ public class ShuffleLink<T> implements ChainLink<T, T> {
             }
         }, new F<Integer, Integer>() {
             @Override
-            public Integer apply(Integer r) {
+            public Integer apply(final Integer r) {
                 if(ShuffleLink.this._array == null) {
                     throw new RuntimeException("Not null");
                 } else {

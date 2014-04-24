@@ -4,7 +4,7 @@ public class Cache<X, R> {
     public final F<X, R> f;
     private X _lastX;
     private R _lastF;
-    public R applyX(X x) {
+    public R applyX(final X x) {
         if(this._lastX != null && this._lastX.equals(x)) {
             if(this._lastF == null) {
                 throw new RuntimeException("Not null");
@@ -21,7 +21,7 @@ public class Cache<X, R> {
             }
         }
     }
-    public Cache(F<X, R> f) {
+    public Cache(final F<X, R> f) {
         this.f = f;
     }
 }

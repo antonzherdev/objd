@@ -21,7 +21,7 @@ public final class FilledList<T> extends ImList<T> {
         return false;
     }
     @Override
-    public ImList<T> filterF(F<T, Boolean> f) {
+    public ImList<T> filterF(final F<T, Boolean> f) {
         if(f.apply(this._head)) {
             return ((ImList<T>)new FilledList<T>(this._head, this.tail.filterF(f)));
         } else {
@@ -32,7 +32,7 @@ public final class FilledList<T> extends ImList<T> {
     public ImList<T> reverse() {
         return reverseAndAddList(((ImList<T>)EmptyList.instance));
     }
-    private ImList<T> reverseAndAddList(ImList<T> list) {
+    private ImList<T> reverseAndAddList(final ImList<T> list) {
         FilledList<T> ret = new FilledList<T>(this._head, list);
         ImList<T> l = this.tail;
         while(!(l.isEmpty())) {
@@ -42,11 +42,11 @@ public final class FilledList<T> extends ImList<T> {
         return ret;
     }
     @Override
-    public void forEach(P<T> each) {
+    public void forEach(final P<T> each) {
         FilledList<T> list = this;
         while(true) {
             each.apply(list._head);
-            ImList<T> tail = list.tail;
+            final ImList<T> tail = list.tail;
             if(tail.isEmpty()) {
                 return ;
             }
@@ -54,11 +54,11 @@ public final class FilledList<T> extends ImList<T> {
         }
     }
     @Override
-    public  <C extends Comparable<C>> ImList<T> insertItem(C item) {
+    public <C extends Comparable<C>> ImList<T> insertItem(final C item) {
         ImList<T> before = ImList.<T>apply();
         FilledList<T> list = this;
         while(true) {
-            T h = list._head;
+            final T h = list._head;
             if(item.compareTo(((C)h)) < 0) {
                 return new FilledList<T>(((T)item), before).reverseAndAddList(list);
             }
@@ -69,7 +69,7 @@ public final class FilledList<T> extends ImList<T> {
             list = ((FilledList<T>)list.tail);
         }
     }
-    public FilledList(T _head,ImList<T> tail) {
+    public FilledList(final T _head, final ImList<T> tail) {
         this._head = _head;
         this.tail = tail;
         this.count = tail.count() + 1;

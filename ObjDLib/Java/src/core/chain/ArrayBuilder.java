@@ -3,7 +3,7 @@ package core.chain;
 public class ArrayBuilder<T> extends Builder_impl<T, ImArray<T>> {
     private final MArray<T> array;
     @Override
-    public void appendItem(T item) {
+    public void appendItem(final T item) {
         this.array.appendItem(item);
     }
     @Override

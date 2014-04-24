@@ -4,8 +4,8 @@ public class MTreeMapKeyIterator<K> extends MIterator_impl<K> {
     public final MTreeMap<K, ?> map;
     private TreeMapEntry<K, ?> prev;
     public TreeMapEntry<K, ?> entry;
-    public static  <K> MTreeMapKeyIterator<K> applyMapEntry(MTreeMap<K, ?> map,TreeMapEntry<K, ?> entry) {
-        MTreeMapKeyIterator<K> ret = new MTreeMapKeyIterator<K>(map);
+    public static <K> MTreeMapKeyIterator<K> applyMapEntry(final MTreeMap<K, ?> map, final TreeMapEntry<K, ?> entry) {
+        final MTreeMapKeyIterator<K> ret = new MTreeMapKeyIterator<K>(map);
         ret.entry = entry;
         return ret;
     }
@@ -20,7 +20,7 @@ public class MTreeMapKeyIterator<K> extends MIterator_impl<K> {
         } else {
             this.entry;
         }
-        K ret = .key;
+        final K ret = .key;
         this.prev = this.entry;
         if(this.entry == null) {
             throw new RuntimeException("Not null");
@@ -33,16 +33,16 @@ public class MTreeMapKeyIterator<K> extends MIterator_impl<K> {
     @Override
     public void remove() {
         {
-            TreeMapEntry<K, ?> _ = this.prev;
+            final TreeMapEntry<K, ?> _ = this.prev;
             if(_ != null) {
                 this.map.deleteEntry(_);
             }
         }
     }
     @Override
-    public void setValue(K value) {
+    public void setValue(final K value) {
         {
-            TreeMapEntry<K, ?> p = this.prev;
+            final TreeMapEntry<K, ?> p = this.prev;
             if(p != null) {
                 if(p.key.equals(value)) {
                     this.map.deleteEntry(p);
@@ -51,7 +51,7 @@ public class MTreeMapKeyIterator<K> extends MIterator_impl<K> {
             }
         }
     }
-    public MTreeMapKeyIterator(MTreeMap<K, ?> map) {
+    public MTreeMapKeyIterator(final MTreeMap<K, ?> map) {
         this.map = map;
     }
 }

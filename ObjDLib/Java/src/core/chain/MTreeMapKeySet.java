@@ -14,10 +14,10 @@ public class MTreeMapKeySet<K> extends TreeMapKeySet_impl<K> {
         return MTreeMapKeyIterator.<K>applyMapEntry(this.map, this.map.firstEntry());
     }
     @Override
-    public Iterator<K> iteratorHigherThanKey(K key) {
+    public Iterator<K> iteratorHigherThanKey(final K key) {
         return MTreeMapKeyIterator.<K>applyMapEntry(this.map, this.map.higherEntryThanKey(key));
     }
-    public MTreeMapKeySet(MTreeMap<K, ?> map) {
+    public MTreeMapKeySet(final MTreeMap<K, ?> map) {
         this.map = map;
     }
 }

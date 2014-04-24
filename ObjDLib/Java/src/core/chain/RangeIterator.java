@@ -11,11 +11,11 @@ public class RangeIterator extends Iterator_impl<int> {
     }
     @Override
     public Integer next() {
-        int ret = this.i;
+        final int ret = this.i;
         this.i += this.step;
         return ret;
     }
-    public RangeIterator(int start,int end,int step) {
+    public RangeIterator(final int start, final int end, final int step) {
         this.start = start;
         this.end = end;
         this.step = step;

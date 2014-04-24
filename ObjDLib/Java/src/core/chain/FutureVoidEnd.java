@@ -12,24 +12,24 @@ public class FutureVoidEnd<T> {
     public Yield<Future<T>> yield() {
         return new Yield<Future<T>>(new F<Integer, Integer>() {
             @Override
-            public Integer apply(Integer size) {
+            public Integer apply(final Integer size) {
                 return 0;
             }
         }, new F<Future<T>, Integer>() {
             @Override
-            public Integer apply(Future<T> fut) {
+            public Integer apply(final Future<T> fut) {
                 if(!(FutureVoidEnd.this._stopped)) {
                     FutureVoidEnd.this._counter.incrementAndGet();
                     fut.onCompleteF(new P<Try<T>>() {
                         @Override
-                        public void apply(Try<T> tr) {
+                        public void apply(final Try<T> tr) {
                             if(!(FutureVoidEnd.this._stopped)) {
                                 if(tr.isFailure()) {
                                     FutureVoidEnd.this._stopped = true;
                                     FutureVoidEnd.this._promise.failureReason(tr);
                                 } else {
                                     if(!(FutureVoidEnd.this._stopped)) {
-                                        int r = FutureVoidEnd.this._counter.decrementAndGet();
+                                        final int r = FutureVoidEnd.this._counter.decrementAndGet();
                                         Memory.memoryBarrier();
                                         if(FutureVoidEnd.this._ended && r.equals(0)) {
                                             Memory.memoryBarrier();
@@ -51,7 +51,7 @@ public class FutureVoidEnd<T> {
             }
         }, new F<Integer, Integer>() {
             @Override
-            public Integer apply(Integer res) {
+            public Integer apply(final Integer res) {
                 int ret = res;
                 FutureVoidEnd.this._ended = true;
                 Memory.memoryBarrier();

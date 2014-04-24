@@ -1,7 +1,7 @@
 package core.chain;
 
 public class Lazy<T> {
-    public final F<Void, T> f;
+    public final F0<T> f;
     private T _value;
     private boolean _calculated;
     public boolean isCalculated() {
@@ -15,7 +15,7 @@ public class Lazy<T> {
                 return this._value;
             }
         } else {
-            this._value = ERROR: Unknown <Lazy#C<T#G>>self.<eIU>f\void -> §T#G§\();
+            this._value = this.f.apply();
             this._calculated = true;
             if(this._value == null) {
                 throw new RuntimeException("Not null");
@@ -24,7 +24,7 @@ public class Lazy<T> {
             }
         }
     }
-    public Lazy(F<Void, T> f) {
+    public Lazy(final F0<T> f) {
         this.f = f;
         this._calculated = false;
     }

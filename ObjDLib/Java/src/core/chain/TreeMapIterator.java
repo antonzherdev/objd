@@ -1,10 +1,10 @@
 package core.chain;
 
-public class TreeMapIterator<K, V> extends Iterator_impl<Tuple2<K, V>> {
+public class TreeMapIterator<K, V> extends Iterator_impl<Tuple<K, V>> {
     public final TreeMap<K, V> map;
     public TreeMapEntry<K, V> entry;
-    public static  <K, V> TreeMapIterator<K, V> applyMapEntry(TreeMap<K, V> map,TreeMapEntry<K, V> entry) {
-        TreeMapIterator<K, V> ret = new TreeMapIterator<K, V>(map);
+    public static <K, V> TreeMapIterator<K, V> applyMapEntry(final TreeMap<K, V> map, final TreeMapEntry<K, V> entry) {
+        final TreeMapIterator<K, V> ret = new TreeMapIterator<K, V>(map);
         ret.entry = entry;
         return ret;
     }
@@ -13,8 +13,18 @@ public class TreeMapIterator<K, V> extends Iterator_impl<Tuple2<K, V>> {
         return this.entry != null;
     }
     @Override
-    public Tuple2<K, V> next() {
-        Tuple2<K, V> ret = ERROR: Unknown (<TreeMapIterator#C<K#G, V#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIUm>key\§K#G§\, <TreeMapIterator#C<K#G, V#G>>self.<eIm>entry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIUm>value\§V#G§\);
+    public Tuple<K, V> next() {
+        if(this.entry == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            this.entry;
+        }
+        if(this.entry == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            this.entry;
+        }
+        final Tuple<K, V> ret = new Tuple<K, V>(.key, .value);
         if(this.entry == null) {
             throw new RuntimeException("Not null");
         } else {
@@ -23,7 +33,7 @@ public class TreeMapIterator<K, V> extends Iterator_impl<Tuple2<K, V>> {
         this.entry = .next();
         return ret;
     }
-    public TreeMapIterator(TreeMap<K, V> map) {
+    public TreeMapIterator(final TreeMap<K, V> map) {
         this.map = map;
     }
 }

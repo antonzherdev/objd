@@ -1,13 +1,13 @@
 package core.chain;
 
 public interface Traversable<T> {
-    void forEach(P<T> each);
-    void parForEach(P<T> each);
-    boolean goOn(F<T, Boolean> on);
+    void forEach(final P<T> each);
+    void parForEach(final P<T> each);
+    boolean goOn(final F<T, Boolean> on);
     Chain<T> chain();
-    T findWhere(F<T, Boolean> where);
-    boolean existsWhere(F<T, Boolean> where);
-    boolean allConfirm(F<T, Boolean> confirm);
+    T findWhere(final F<T, Boolean> where);
+    boolean existsWhere(final F<T, Boolean> where);
+    boolean allConfirm(final F<T, Boolean> confirm);
     T head();
-     <C extends Traversable<T>> C convertWithBuilder(Builder<T, C> builder);
+    <C extends Traversable<T>> C convertWithBuilder(final Builder<T, C> builder);
 }

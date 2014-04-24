@@ -17,7 +17,7 @@ public class QueueTest extends TestCase {
         .<Integer>assertEqualsAB(2, ((int)q.count()));
         q = q.enqueueItem(3);
         .<Integer>assertEqualsAB(3, ((int)q.count()));
-        Tuple2<Integer, ImQueue<Integer>> p = q.dequeue();
+        Tuple<Integer, ImQueue<Integer>> p = q.dequeue();
         q = p.b;
         .<Integer>assertEqualsAB(1, ERROR: Unknown {
     local __tmp_12 : ^(§^int§)? = <lm>p\(^(§^int§)?, ^ImQueue#C<§^int§>)\.<eIU>a\^(§^int§)?\

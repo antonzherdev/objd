@@ -6,7 +6,7 @@ public class AtomicObject<T> extends AtomicReference<T> {
     public T value() {
         return this.get();
     }
-    public AtomicObject(T value) {
+    public AtomicObject(final T value) {
         super(value);
     }
 }

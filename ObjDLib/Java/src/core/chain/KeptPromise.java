@@ -7,11 +7,11 @@ public final class KeptPromise<T> extends Promise<T> {
         return this.value;
     }
     @Override
-    public void onCompleteF(P<Try<T>> f) {
+    public void onCompleteF(final P<Try<T>> f) {
         f.apply(this.value);
     }
     @Override
-    public Try<T> waitResultPeriod(float period) {
+    public Try<T> waitResultPeriod(final float period) {
         return this.value;
     }
     @Override
@@ -19,18 +19,18 @@ public final class KeptPromise<T> extends Promise<T> {
         return this.value;
     }
     @Override
-    public boolean completeValue(Try<T> value) {
+    public boolean completeValue(final Try<T> value) {
         return false;
     }
     @Override
-    public boolean successValue(T value) {
+    public boolean successValue(final T value) {
         return false;
     }
     @Override
-    public boolean failureReason(Object reason) {
+    public boolean failureReason(final Object reason) {
         return false;
     }
-    public KeptPromise(Try<T> value) {
+    public KeptPromise(final Try<T> value) {
         this.value = value;
     }
 }

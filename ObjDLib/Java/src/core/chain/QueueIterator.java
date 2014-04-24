@@ -26,7 +26,7 @@ public class QueueIterator<T> extends Iterator_impl<T> {
         }
         return this.i.next();
     }
-    public QueueIterator(ImList<T> in,ImList<T> out) {
+    public QueueIterator(final ImList<T> in, final ImList<T> out) {
         this.out = out;
         this.i = in.iterator();
         this.isIn = true;

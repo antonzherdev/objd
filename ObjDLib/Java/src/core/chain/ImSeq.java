@@ -1,9 +1,9 @@
 package core.chain;
 
 public interface ImSeq<T> extends Seq<T>, ImIterable<T> {
-    ImSeq<T> addItem(T item);
-    ImSeq<T> addSeq(Seq<T> seq);
-    ImSeq<T> subItem(T item);
+    ImSeq<T> addItem(final T item);
+    ImSeq<T> addSeq(final Seq<T> seq);
+    ImSeq<T> subItem(final T item);
     @Override
     MSeq<T> mCopy();
 }

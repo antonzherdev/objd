@@ -146,7 +146,7 @@ genDef cl d =
 	 			}]
 
 genPar :: D.Def -> J.DefPar
-genPar D.Def{D.defName = nm, D.defType = tp} = (genTp tp, nm)
+genPar D.Def{D.defName = nm, D.defType = tp} = ([J.DefModFinal], genTp tp, nm)
 
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - DataType
@@ -172,9 +172,11 @@ genTp (D.TPGenericWrap _ D.TPBool) = J.tpRef "Boolean"
 
 genTp (D.TPFun (D.TPTuple [stp]) D.TPVoid) = J.TPRef [genTp $ D.wrapGeneric stp] "P"
 genTp (D.TPFun (D.TPTuple stps) D.TPVoid) = J.TPRef (map (genTp . D.wrapGeneric) stps) ("P" ++ show (length stps))
+genTp (D.TPFun D.TPVoid D.TPVoid) = J.TPRef [] "P0"
 genTp (D.TPFun stp D.TPVoid) = J.TPRef [genTp $ D.wrapGeneric stp] "P"
 genTp (D.TPFun (D.TPTuple [stp]) dtp) = J.TPRef [genTp $ D.wrapGeneric stp, genTp $ D.wrapGeneric dtp] "F"
 genTp (D.TPFun (D.TPTuple stps) dtp) = J.TPRef (map (genTp . D.wrapGeneric) stps ++ [genTp $ D.wrapGeneric dtp]) ("F" ++ show (length stps))
+genTp (D.TPFun D.TPVoid dtp) = J.TPRef [genTp $ D.wrapGeneric dtp] "F0"
 genTp (D.TPFun stp dtp) = J.TPRef [genTp $ D.wrapGeneric stp, genTp $ D.wrapGeneric dtp] "F"
 
 genTp (D.TPGenericWrap _ w) = genTp w
@@ -182,7 +184,7 @@ genTp D.TPString = J.tpRef "String"
 genTp (D.TPEArr n tp)  = J.TPArr (genTp tp) n
 genTp D.TPAny = J.tpRef "Object"
 genTp (D.TPArr _ tp) = J.TPRef [genTp tp] "ImArray"
-genTp (D.TPTuple tps) = J.TPRef (map genTp tps) ("Tuple" ++ show (length tps))
+genTp (D.TPTuple tps) = J.TPRef (map genTp tps) (tupleClassName $ length tps)
 genTp (D.TPSelf cl) = J.TPRef (map (J.tpRef . D.className) (D.classGenerics cl) ) (D.className cl)
 genTp (D.TPMap key value) = J.TPRef [genTp key, genTp value] "HashMap"
 genTp (D.TPOption _ tp) = genTp tp
@@ -193,6 +195,9 @@ genTp (D.TPUnknown e) = J.TPUnknown e
 
 genTp tp = error $ "genTp: " ++ show tp
 
+tupleClassName :: Int -> String
+tupleClassName 2 = "Tuple"
+tupleClassName i = "Tuple" ++ show i
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - Stm
  -----------------------------------------------------------------------------------------------------------------------------------------------}
@@ -260,7 +265,7 @@ genExp env (D.Lambda pars e dtp) = do
 			J.defPars = map funPar pars,
 			J.defStms = stms
 		}
-		funPar (nm, tp) = (genTp (D.wrapGeneric tp), nm)
+		funPar (nm, tp) = ([J.DefModFinal], genTp (D.wrapGeneric tp), nm)
 		clNm = (if dtp == D.TPVoid then "P" else "F") ++ if length pars == 1 then "" else show (length pars)
 	return $ J.New [def] $ J.Call False clNm (map (genTp . D.wrapGeneric . snd) pars ++ [genTp (D.wrapGeneric dtp) | dtp /= D.TPVoid]) []
 genExp Env{envInnerClass = False} (D.Self _) = return J.This
@@ -273,6 +278,9 @@ genExp env (D.Not e) = genExp env e >>= return . J.Not
 genExp env (D.Negative e) = genExp env e >>= return . J.Negative
 genExp env (D.PlusPlus e) = genExp env e >>= return . J.PlusPlus
 genExp env (D.MinusMinus e) = genExp env e >>= return . J.MinusMinus
+genExp env (D.LambdaCall e) = do
+	e' <- genExp env e
+	return $ J.Dot e' $ J.Call False "apply" [] []
 genExp env (D.BoolOp tp l r) = do
 	l' <- genExp env l
 	r' <- genExp env r
@@ -319,6 +327,9 @@ genExp env (D.StringBuild pars lastString) = do
 		par' expr = do
 			expr' <- genExp env expr
 			return $ stringExpressionsForTp (D.exprDataType expr) expr'
+genExp env (D.Tuple exps) = do
+	exps' <- mapM (genExp env) exps
+	return $ J.New [] $ J.Call False (tupleClassName $ length exps') (map (genTp . D.exprDataType) exps) exps'
 genExp _ e = return $ J.ExpError $ "Unknown " ++ show e
 
 
@@ -392,8 +403,9 @@ genStm env (D.Set tp l r) = let
 		return $ lstm ++ rstm ++ [J.Set tp l' r']
 genStm env (D.Val True d) = do
 	t <- genStm env $ D.defBody d
-	return (J.Val (genTp $ D.defType d) (D.defName d) J.Nop:t)
-genStm env (D.Val False d) = genExpStm env (D.defBody d) (J.Val (genTp $ D.defType d) (D.defName d))
+	return (J.Val [J.DefModFinal | D.DefModMutable `notElem` D.defMods d] (genTp $ D.defType d) (D.defName d) J.Nop:t)
+genStm env (D.Val False d) = genExpStm env (D.defBody d) 
+	(J.Val [J.DefModFinal | D.DefModMutable `notElem` D.defMods d] (genTp $ D.defType d) (D.defName d))
 
 genStm env e = genExpStm env e J.Stm 
 

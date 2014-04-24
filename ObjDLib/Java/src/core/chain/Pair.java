@@ -3,7 +3,7 @@ package core.chain;
 public final class Pair<T> extends ImSet_impl<T> {
     public final T a;
     public final T b;
-    public static  <T> Pair<T> newWithAB(T a,T b) {
+    public static <T> Pair<T> newWithAB(final T a, final T b) {
         if(a < b) {
             return new Pair<T>(a, b);
         } else {
@@ -11,7 +11,7 @@ public final class Pair<T> extends ImSet_impl<T> {
         }
     }
     @Override
-    public boolean containsItem(T item) {
+    public boolean containsItem(final T item) {
         return this.a.equals(item) || this.b.equals(item);
     }
     @Override
@@ -26,7 +26,7 @@ public final class Pair<T> extends ImSet_impl<T> {
     public T head() {
         return this.a;
     }
-    public Pair(T a,T b) {
+    public Pair(final T a, final T b) {
         this.a = a;
         this.b = b;
     }

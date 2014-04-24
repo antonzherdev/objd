@@ -5,7 +5,7 @@ public class Weak<T> {
     public boolean isEmpty() {
         return this.value == null;
     }
-    public Weak(T value) {
+    public Weak(final T value) {
         this.value = value;
     }
 }

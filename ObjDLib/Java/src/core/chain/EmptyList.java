@@ -19,7 +19,7 @@ public final class EmptyList<T> extends ImList<T> {
         return true;
     }
     @Override
-    public ImList<T> filterF(F<T, Boolean> f) {
+    public ImList<T> filterF(final F<T, Boolean> f) {
         return this;
     }
     @Override
@@ -27,10 +27,10 @@ public final class EmptyList<T> extends ImList<T> {
         return this;
     }
     @Override
-    public void forEach(P<T> each) {
+    public void forEach(final P<T> each) {
     }
     @Override
-    public  <C extends Comparable<C>> ImList<T> insertItem(C item) {
+    public <C extends Comparable<C>> ImList<T> insertItem(final C item) {
         return ImList.<T>applyItem(((T)item));
     }
     public EmptyList() {

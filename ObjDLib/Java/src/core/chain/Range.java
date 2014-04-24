@@ -10,7 +10,7 @@ public final class Range extends ImSeq_impl<int> {
         return count;
     }
     @Override
-    public Integer applyIndex(int index) {
+    public Integer applyIndex(final int index) {
         if(index < this.count) {
             return this.start + this.step * index;
         } else {
@@ -21,7 +21,7 @@ public final class Range extends ImSeq_impl<int> {
     public Iterator<Integer> iterator() {
         return new RangeIterator(this.start, this.end, this.step);
     }
-    public Range setStep(int step) {
+    public Range setStep(final int step) {
         return new Range(this.start, this.end, step);
     }
     @Override
@@ -36,10 +36,10 @@ public final class Range extends ImSeq_impl<int> {
             }
         }
     }
-    public static Range applyI(int i) {
+    public static Range applyI(final int i) {
         return new Range(i, i, 1);
     }
-    public Range(int start,int end,int step) {
+    public Range(final int start, final int end, final int step) {
         this.start = start;
         this.end = end;
         this.step = step;

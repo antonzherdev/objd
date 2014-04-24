@@ -10,7 +10,7 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
         return values;
     }
     @Override
-    public V applyKey(K key) {
+    public V applyKey(final K key) {
         return ERROR: Unknown {
     local __tmp : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <TreeMap#C<K#G, V#G>>self.<dI>entryFor(key = <l>key\§K#G§\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     if((<l>__tmp\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == none<^TreeMapEntry#C<§K#G§, §V#G§>>)) throw "Not null"
@@ -18,7 +18,7 @@ else <l>__tmp\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
 }.value;
     }
     @Override
-    public V optKey(K key) {
+    public V optKey(final K key) {
         return ERROR: Unknown <TreeMap#C<K#G, V#G>>self.<dI>entryFor(key = <l>key\§K#G§\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUm>value\§V#G§\;
     }
     public abstract TreeMapEntry<K, V> root();
@@ -26,10 +26,10 @@ else <l>__tmp\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     public boolean isEmpty() {
         return this.root() == null;
     }
-    public TreeMapEntry<K, V> entryForKey(K key) {
+    public TreeMapEntry<K, V> entryForKey(final K key) {
         TreeMapEntry<K, V> p = this.root();
         while(p != null) {
-            int cmp = this.comparator.apply(key, p.key);
+            final int cmp = this.comparator.apply(key, p.key);
             if(cmp < 0) {
                 p = p.left;
             } else {
@@ -45,10 +45,10 @@ else <l>__tmp\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     @Override
     public abstract TreeMapKeySet<K> keys();
     @Override
-    public Iterator<Tuple2<K, V>> iterator() {
+    public Iterator<Tuple<K, V>> iterator() {
         return TreeMapIterator.<K, V>applyMapEntry(this, this.firstEntry());
     }
-    public TreeMapIterator<K, V> iteratorHigherThanKey(K key) {
+    public TreeMapIterator<K, V> iteratorHigherThanKey(final K key) {
         return TreeMapIterator.<K, V>applyMapEntry(this, higherEntryThanKey(key));
     }
     public TreeMapEntry<K, V> firstEntry() {
@@ -66,16 +66,16 @@ else <l>__tmp\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     public K lastKey() {
         return ERROR: Unknown <TreeMap#C<K#G, V#G>>self.<dp>lastEntry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUm>key\§K#G§\;
     }
-    public K lowerKeyThanKey(K key) {
+    public K lowerKeyThanKey(final K key) {
         return ERROR: Unknown <TreeMap#C<K#G, V#G>>self.<dp>lowerEntryThan(key = <l>key\§K#G§\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUm>key\§K#G§\;
     }
-    public K higherKeyThanKey(K key) {
+    public K higherKeyThanKey(final K key) {
         return ERROR: Unknown <TreeMap#C<K#G, V#G>>self.<dp>higherEntryThan(key = <l>key\§K#G§\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUm>key\§K#G§\;
     }
-    private TreeMapEntry<K, V> lowerEntryThanKey(K key) {
+    private TreeMapEntry<K, V> lowerEntryThanKey(final K key) {
         TreeMapEntry<K, V> p = this.root();
         while(p != null) {
-            int cmp = this.comparator.apply(key, p.key);
+            final int cmp = this.comparator.apply(key, p.key);
             if(cmp > 0) {
                 if(p.right != null) {
                     p = p.right;
@@ -101,10 +101,10 @@ else <l>__tmp\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
         }
         return null;
     }
-    private TreeMapEntry<K, V> higherEntryThanKey(K key) {
+    private TreeMapEntry<K, V> higherEntryThanKey(final K key) {
         TreeMapEntry<K, V> p = this.root();
         while(p != null) {
-            int cmp = this.comparator.apply(key, p.key);
+            final int cmp = this.comparator.apply(key, p.key);
             if(cmp < 0) {
                 if(p.left != null) {
                     p = p.left;
@@ -139,7 +139,7 @@ else <l>__tmp\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
         }
         return p;
     }
-    public TreeMap(F2<K, K, Integer> comparator) {
+    public TreeMap(final F2<K, K, Integer> comparator) {
         this.comparator = comparator;
         this.BLACK = 0;
         this.RED = 1;

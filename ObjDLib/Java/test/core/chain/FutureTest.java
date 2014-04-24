@@ -7,14 +7,14 @@ import test..*;
 
 public class FutureTest extends TestCase {
     public void testPromiseOnComplete() {
-        AtomicInt n = new AtomicInt();
-        int count = 100000;
+        final AtomicInt n = new AtomicInt();
+        final int count = 100000;
         {
-            Iterator<Integer> __inline__2_i = 1.to(count).iterator();
+            final Iterator<Integer> __inline__2_i = 1.to(count).iterator();
             while(__inline__2_i.hasNext()) {
-                Integer i = __inline__2_i.next();
+                final Integer i = __inline__2_i.next();
                 {
-                    Promise<Integer> p = Promise.<Integer>apply();
+                    final Promise<Integer> p = Promise.<Integer>apply();
                     DispatchQueue.default.asyncF(new P0() {
                         @Override
                         public void apply() {
@@ -23,7 +23,7 @@ public class FutureTest extends TestCase {
                     });
                     p.onCompleteF(new P<Try<Integer>>() {
                         @Override
-                        public void apply(Try<Integer> _) {
+                        public void apply(final Try<Integer> _) {
                             n.incrementAndGet();
                         }
                     });
@@ -34,20 +34,20 @@ public class FutureTest extends TestCase {
         .<Integer>assertEqualsAB(n.intValue(), ((int)count));
     }
     public void testMap() {
-        AtomicInt n = new AtomicInt();
-        int count = 100;
+        final AtomicInt n = new AtomicInt();
+        final int count = 100;
         AtomicInt result = new AtomicInt();
         {
-            Iterator<Integer> __inline__3_i = 1.to(count).iterator();
+            final Iterator<Integer> __inline__3_i = 1.to(count).iterator();
             while(__inline__3_i.hasNext()) {
-                Integer __inline__3_v = __inline__3_i.next();
+                final Integer __inline__3_v = __inline__3_i.next();
                 DispatchQueue.default.asyncF(new P0() {
                     @Override
                     public void apply() {
-                        Promise<Integer> p = Promise.<Integer>apply();
-                        Future<Integer> m = p.mapF<Integer>(new F<Integer, Integer>() {
+                        final Promise<Integer> p = Promise.<Integer>apply();
+                        final Future<Integer> m = p.mapF<Integer>(new F<Integer, Integer>() {
                             @Override
-                            public Integer apply(Integer _) {
+                            public Integer apply(final Integer _) {
                                 return _ + 1;
                             }
                         });
@@ -60,7 +60,7 @@ public class FutureTest extends TestCase {
                         });
                         m.onCompleteF(new P<Try<Integer>>() {
                             @Override
-                            public void apply(Try<Integer> _) {
+                            public void apply(final Try<Integer> _) {
                                 n.addAndGetValue(((int)_.get()));
                             }
                         });
@@ -72,18 +72,18 @@ public class FutureTest extends TestCase {
         .<AtomicInt>assertEqualsAB(n, result);
     }
     public void testFlatMap() {
-        AtomicInt n = new AtomicInt();
-        int count = 100;
+        final AtomicInt n = new AtomicInt();
+        final int count = 100;
         int result = 0;
         {
-            Iterator<Integer> __inline__3_i = 1.to(count).iterator();
+            final Iterator<Integer> __inline__3_i = 1.to(count).iterator();
             while(__inline__3_i.hasNext()) {
-                Integer i = __inline__3_i.next();
+                final Integer i = __inline__3_i.next();
                 {
-                    Promise<Integer> p = Promise.<Integer>apply();
-                    Future<Integer> m = p.flatMapF<Integer>(new F<Integer, Future<Integer>>() {
+                    final Promise<Integer> p = Promise.<Integer>apply();
+                    final Future<Integer> m = p.flatMapF<Integer>(new F<Integer, Future<Integer>>() {
                         @Override
-                        public Future<Integer> apply(Integer _) {
+                        public Future<Integer> apply(final Integer _) {
                             return Future.<Integer>applyF(new F0<Integer>() {
                                 @Override
                                 public Integer apply() {
@@ -101,7 +101,7 @@ public class FutureTest extends TestCase {
                     });
                     m.onCompleteF(new P<Try<Integer>>() {
                         @Override
-                        public void apply(Try<Integer> _) {
+                        public void apply(final Try<Integer> _) {
                             n.addAndGetValue(((int)_.get()));
                         }
                     });

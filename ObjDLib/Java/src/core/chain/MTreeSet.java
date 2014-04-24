@@ -3,10 +3,10 @@ package core.chain;
 public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
     private static final Object obj;
     public final MTreeMap<T, Object> mmap;
-    public static  <T> MTreeSet<T> applyComparator(F2<T, T, Integer> comparator) {
+    public static <T> MTreeSet<T> applyComparator(final F2<T, T, Integer> comparator) {
         return new MTreeSet<T>(new MTreeMap<T, Object>(comparator));
     }
-    public static  <T> MTreeSet<T> apply() {
+    public static <T> MTreeSet<T> apply() {
         return new MTreeSet<T>(MTreeMap.<T, Object>apply());
     }
     @Override
@@ -14,27 +14,27 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
         return this.mmap.keys.mutableIterator();
     }
     @Override
-    public void appendItem(T item) {
+    public void appendItem(final T item) {
         this.mmap.setKeyValue(item, this.obj);
     }
     @Override
-    public boolean removeItem(T item) {
+    public boolean removeItem(final T item) {
         return this.mmap.removeForKey(item) != null;
     }
     @Override
     public void clear() {
         this.mmap.clear();
     }
-    public void addAllObjects(Traversable<T> objects) {
+    public void addAllObjects(final Traversable<T> objects) {
         objects.forEach(new P<T>() {
             @Override
-            public void apply(T _) {
+            public void apply(final T _) {
                 appendItem(_);
             }
         });
     }
     public MTreeSet<T> reorder() {
-        MTreeSet<T> ret = new MTreeSet<T>(new MTreeMap<T, Object>(this.mmap.comparator));
+        final MTreeSet<T> ret = new MTreeSet<T>(new MTreeMap<T, Object>(this.mmap.comparator));
         ret.addAllObjects(this);
         return ret;
     }
@@ -46,13 +46,13 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
     public ImTreeSet<T> imCopy() {
         return new ImTreeSet<T>(this.mmap.imCopy());
     }
-    public MTreeSet(MTreeMap<T, Object> mmap) {
+    public MTreeSet(final MTreeMap<T, Object> mmap) {
         super(mmap);
         this.mmap = mmap;
         this.obj = new Object();
     }
-    public void mutableFilterBy(F<T, Boolean> by) {
-        MIterator<T> i = this.mutableIterator();
+    public void mutableFilterBy(final F<T, Boolean> by) {
+        final MIterator<T> i = this.mutableIterator();
         while(i.hasNext()) {
             if(by.apply(i.next())) {
                 i.remove();

@@ -10,11 +10,11 @@ public class IndexFunSeqIterator<T> extends Iterator_impl<T> {
     }
     @Override
     public T next() {
-        T ret = this.f.apply(this.i);
+        final T ret = this.f.apply(this.i);
         this.i++;
         return ret;
     }
-    public IndexFunSeqIterator(int count,F<Integer, T> f) {
+    public IndexFunSeqIterator(final int count, final F<Integer, T> f) {
         this.count = count;
         this.f = f;
         this.i = ((int)0);

@@ -16,7 +16,7 @@ public class PairIterator<T> extends Iterator_impl<T> {
             return this.pair.b;
         }
     }
-    public PairIterator(Pair<T> pair) {
+    public PairIterator(final Pair<T> pair) {
         this.pair = pair;
         this.state = 0;
     }

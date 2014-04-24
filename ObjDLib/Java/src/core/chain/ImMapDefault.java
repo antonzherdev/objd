@@ -1,6 +1,6 @@
 package core.chain;
 
-public class ImMapDefault<K, V> extends ImIterable_impl<Tuple2<K, V>> {
+public class ImMapDefault<K, V> extends ImIterable_impl<Tuple<K, V>> {
     public final ImMap<K, V> map;
     public final F<K, V> defaultFunc;
     @Override
@@ -8,11 +8,11 @@ public class ImMapDefault<K, V> extends ImIterable_impl<Tuple2<K, V>> {
         return this.map.count();
     }
     @Override
-    public Iterator<Tuple2<K, V>> iterator() {
+    public Iterator<Tuple<K, V>> iterator() {
         return this.map.iterator();
     }
-    public V applyKey(K key) {
-        V __tmp = this.map.optKey(key);
+    public V applyKey(final K key) {
+        final V __tmp = this.map.optKey(key);
         if(__tmp != null) {
             return __tmp;
         } else {
@@ -25,13 +25,13 @@ public class ImMapDefault<K, V> extends ImIterable_impl<Tuple2<K, V>> {
     public Iterable<V> values() {
         return this.map.values();
     }
-    public boolean containsKey(K key) {
+    public boolean containsKey(final K key) {
         return this.map.containsKey(key);
     }
-    public boolean isEqualMap(Map<K, V> map) {
+    public boolean isEqualMap(final Map<K, V> map) {
         return this.map.equals(map);
     }
-    public boolean isEqualMapDefault(ImMapDefault<K, V> mapDefault) {
+    public boolean isEqualMapDefault(final ImMapDefault<K, V> mapDefault) {
         return this.map.equals(mapDefault.map);
     }
     @Override
@@ -42,7 +42,7 @@ public class ImMapDefault<K, V> extends ImIterable_impl<Tuple2<K, V>> {
     public MMapDefault<K, V> mCopy() {
         return new MMapDefault<K, V>(this.map.mCopy(), this.defaultFunc);
     }
-    public ImMapDefault(ImMap<K, V> map,F<K, V> defaultFunc) {
+    public ImMapDefault(final ImMap<K, V> map, final F<K, V> defaultFunc) {
         this.map = map;
         this.defaultFunc = defaultFunc;
     }

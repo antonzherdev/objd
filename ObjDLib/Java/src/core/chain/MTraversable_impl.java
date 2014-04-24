@@ -5,10 +5,10 @@ public abstract class MTraversable_impl<T> extends Traversable_impl<T> implement
         return this.imCopy();
     }
     public ImTraversable<T> imCopy() {
-        MArray<T> arr = new MArray<T>();
+        final MArray<T> arr = new MArray<T>();
         forEach(new P<T>() {
             @Override
-            public void apply(T item) {
+            public void apply(final T item) {
                 arr.appendItem(item);
             }
         });

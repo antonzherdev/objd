@@ -78,7 +78,7 @@ data Def =
 	  , defTp :: TP, defName :: String, defPars :: [DefPar], defStms :: [Stm]}
 	| Constructor {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defPars :: [DefPar], defStms :: [Stm]}
 	| Field {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defTp :: TP, defName :: String, defExp :: Exp} deriving (Eq)
-type DefPar = (TP, String)
+type DefPar = ([DefMod], TP, String)
 data DefMod = DefModStatic | DefModAbstract | DefModFinal | DefModOverride | DefModVisability Visibility deriving (Eq)
 
 showDef :: (ClassType, String) -> Def -> [String]
@@ -90,7 +90,7 @@ showDef _ d@Field{} = concatMap showAnnotation (defAnnotations d)
 			Nop -> [";"] 
 			e -> [" = "] `glue` mapNotFirst ind (showExp e) `appp` ";"
 showDef (clTp, _) d@Def{} = concatMap showAnnotation (defAnnotations d)
-	 ++ [wrapStr "" " " mods ++ pstrs' " <" ", " "> " (defGenerics d) ++ show (defTp d) ++ " " ++ defName d ++ showPars d] `glue` body
+	 ++ [wrapStr "" " " mods ++ pstrs' "<" ", " "> " (defGenerics d) ++ show (defTp d) ++ " " ++ defName d ++ showPars d] `glue` body
 	where 
 		mods = strs' " " (if clTp == ClassTypeInterface then filter isValidModForInterface (defMods d) else defMods d)
 		isValidModForInterface _ = False
@@ -100,8 +100,8 @@ showDef (_, clNm) d@Constructor{} = concatMap showAnnotation (defAnnotations d)
 	clNm ++ showPars d ++ " "] `glue` showStmsInBrackets (defStms d)
 
 showPars :: Def -> String
-showPars d = "(" ++ mkString showDefPar "," (defPars d) ++ ")"
-	where showDefPar (tp, nm) = show tp ++ " " ++ nm
+showPars d = "(" ++ mkString showDefPar ", " (defPars d) ++ ")"
+	where showDefPar (mods, tp, nm) = pstrs' "" " " " " mods ++ show tp ++ " " ++ nm
 
 instance Show DefMod where
 	show DefModStatic = "static"
@@ -122,7 +122,7 @@ showStmsInBrackets :: [Stm] -> [String]
 showStmsInBrackets stms = ["{"] ++ (map ind . concatMap showStm) stms ++ ["}"]
 
 data Stm = Stm Exp | Braces [Stm] | Return Exp | If Exp [Stm] [Stm] | While Exp [Stm]
-	| Throw Exp | Set (Maybe MathTp) Exp Exp | Val TP String Exp | Break deriving (Eq)
+	| Throw Exp | Set (Maybe MathTp) Exp Exp | Val [DefMod] TP String Exp | Break deriving (Eq)
 
 showStm :: Stm -> [String]
 showStm (Stm Nop) = []
@@ -135,8 +135,8 @@ showStm (If cond t []) = (["if("] `glue` showExp cond `appp` ") ") `glue` showSt
 showStm (While cond w) = (["while("] `glue` showExp cond `appp` ") ") `glue` showStmsInBrackets w
 showStm (If cond t f) = (showStm (If cond t []) `appp` " else ") `glue` showStmsInBrackets f 
 showStm (Braces stms) = showStmsInBrackets stms
-showStm (Val tp nm Nop) = [show tp ++ " " ++ nm ++ ";"]
-showStm (Val tp nm e) = [show tp ++ " " ++ nm ++ " = "] `glue` showExp e `appp` ";"
+showStm (Val mods tp nm Nop) = [pstrs' "" " " " " mods ++ show tp ++ " " ++ nm ++ ";"]
+showStm (Val mods tp nm e) = [pstrs' "" " " " " mods ++ show tp ++ " " ++ nm ++ " = "] `glue` showExp e `appp` ";"
 
 
 data Exp = Nop | IntConst Int | ExpError String 

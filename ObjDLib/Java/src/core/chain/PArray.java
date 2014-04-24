@@ -11,8 +11,8 @@ public final class PArray<T> extends ImSeq_impl<T> {
     public final int length;
     public final Pointer bytes;
     public final boolean copied;
-    public static  <T> PArray<T> applyStrideWrapCountCopyBytes(int stride,F2<Pointer, Integer, T> wrap,int count,Pointer copyBytes) {
-        int len = count * stride;
+    public static <T> PArray<T> applyStrideWrapCountCopyBytes(final int stride, final F2<Pointer, Integer, T> wrap, final int count, final Pointer copyBytes) {
+        final int len = count * stride;
         return new PArray<T>(stride, wrap, count, len, copyBytes.copyBytes(count * stride), true);
     }
     @Override
@@ -26,14 +26,14 @@ public final class PArray<T> extends ImSeq_impl<T> {
         }
     }
     @Override
-    public T applyIndex(int index) {
+    public T applyIndex(final int index) {
         if(index >= this.count) {
             return null;
         } else {
             return this.wrap.apply(this.bytes, index);
         }
     }
-    public void forRefEach(P<Pointer> each) {
+    public void forRefEach(final P<Pointer> each) {
         Pointer __b = this.bytes;
         int __i = 0;
         while(__i < this.count) {
@@ -42,7 +42,7 @@ public final class PArray<T> extends ImSeq_impl<T> {
             __b++;
         }
     }
-    public PArray(int stride,F2<Pointer, Integer, T> wrap,int count,int length,Pointer bytes,boolean copied) {
+    public PArray(final int stride, final F2<Pointer, Integer, T> wrap, final int count, final int length, final Pointer bytes, final boolean copied) {
         this.stride = stride;
         this.wrap = wrap;
         this.count = count;

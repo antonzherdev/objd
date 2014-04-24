@@ -8,7 +8,7 @@ public class MListImmutableIterator<T> extends Iterator_impl<T> {
     }
     @Override
     public T next() {
-        MListItem<T> r = this.item;
+        final MListItem<T> r = this.item;
         if(this.item == null) {
             throw new RuntimeException("Not null");
         } else {

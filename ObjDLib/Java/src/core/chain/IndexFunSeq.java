@@ -8,7 +8,7 @@ public final class IndexFunSeq<T> extends ImSeq_impl<T> {
     }
     public final F<Integer, T> f;
     @Override
-    public T applyIndex(int index) {
+    public T applyIndex(final int index) {
         if(index >= this.count) {
             return null;
         } else {
@@ -19,7 +19,7 @@ public final class IndexFunSeq<T> extends ImSeq_impl<T> {
     public Iterator<T> iterator() {
         return new IndexFunSeqIterator<T>(this.count, this.f);
     }
-    public IndexFunSeq(int count,F<Integer, T> f) {
+    public IndexFunSeq(final int count, final F<Integer, T> f) {
         this.count = count;
         this.f = f;
     }

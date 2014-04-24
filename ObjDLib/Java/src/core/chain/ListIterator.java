@@ -8,7 +8,7 @@ public class ListIterator<T> extends Iterator_impl<T> {
     }
     @Override
     public T next() {
-        T ret = this.list.head();
+        final T ret = this.list.head();
         this.list = this.list.tail();
         if(ret == null) {
             throw new RuntimeException("Not null");

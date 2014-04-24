@@ -9,11 +9,11 @@ public abstract class Seq_impl<T> extends Iterable_impl<T> implements Seq<T> {
     public T head() {
         return applyIndex(((int)0));
     }
-    public T applyIndex(int index) {
+    public T applyIndex(final int index) {
         if(index >= this.count()) {
             return null;
         }
-        Iterator<T> i = this.iterator();
+        final Iterator<T> i = this.iterator();
         int n = index;
         while(i.hasNext()) {
             if(n.equals(0)) {
@@ -27,12 +27,12 @@ public abstract class Seq_impl<T> extends Iterable_impl<T> implements Seq<T> {
     public Set<T> toSet() {
         return convertWithBuilder<Set<T>>(new HashSetBuilder<T>());
     }
-    public boolean isEqualSeq(Seq<T> seq) {
+    public boolean isEqualSeq(final Seq<T> seq) {
         if(this.count().equals(seq.count())) {
             return false;
         }
-        Iterator<T> ia = this.iterator();
-        Iterator<T> ib = seq.iterator();
+        final Iterator<T> ia = this.iterator();
+        final Iterator<T> ib = seq.iterator();
         while(ia.hasNext() && ib.hasNext()) {
             if(ia.next().equals(ib.next())) {
                 return false;
@@ -44,8 +44,8 @@ public abstract class Seq_impl<T> extends Iterable_impl<T> implements Seq<T> {
         return applyIndex(this.count() - 1);
     }
     public ImSeq<T> tail() {
-        ArrayBuilder<T> builder = new ArrayBuilder<T>();
-        Iterator<T> i = this.iterator();
+        final ArrayBuilder<T> builder = new ArrayBuilder<T>();
+        final Iterator<T> i = this.iterator();
         if(i.hasNext()) {
             i.next();
             while(i.hasNext()) {

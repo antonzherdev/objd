@@ -2,10 +2,10 @@ package core.chain;
 
 public class TreeSet<T> extends Set_impl<T> {
     public final TreeMap<T, Object> map;
-    public T higherThanItem(T item) {
+    public T higherThanItem(final T item) {
         return this.map.higherKeyThanKey(item);
     }
-    public T lowerThanItem(T item) {
+    public T lowerThanItem(final T item) {
         return this.map.lowerKeyThanKey(item);
     }
     @Override
@@ -16,7 +16,7 @@ public class TreeSet<T> extends Set_impl<T> {
     public Iterator<T> iterator() {
         return this.map.keys().iterator();
     }
-    public Iterator<T> iteratorHigherThanItem(T item) {
+    public Iterator<T> iteratorHigherThanItem(final T item) {
         return this.map.keys().iteratorHigherThanKey(item);
     }
     @Override
@@ -27,10 +27,10 @@ public class TreeSet<T> extends Set_impl<T> {
         return this.map.lastKey();
     }
     @Override
-    public boolean containsItem(T item) {
+    public boolean containsItem(final T item) {
         return this.map.containsKey(item);
     }
-    public TreeSet(TreeMap<T, Object> map) {
+    public TreeSet(final TreeMap<T, Object> map) {
         this.map = map;
     }
 }

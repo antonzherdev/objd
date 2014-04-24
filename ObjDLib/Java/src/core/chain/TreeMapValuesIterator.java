@@ -2,8 +2,8 @@ package core.chain;
 
 public class TreeMapValuesIterator<V> extends Iterator_impl<V> {
     public TreeMapEntry<?, V> entry;
-    public static  <V> TreeMapValuesIterator<V> applyMapEntry(TreeMap<?, V> map,TreeMapEntry<?, V> entry) {
-        TreeMapValuesIterator<V> ret = new TreeMapValuesIterator<V>(map);
+    public static <V> TreeMapValuesIterator<V> applyMapEntry(final TreeMap<?, V> map, final TreeMapEntry<?, V> entry) {
+        final TreeMapValuesIterator<V> ret = new TreeMapValuesIterator<V>(map);
         ret.entry = entry;
         return ret;
     }
@@ -18,7 +18,7 @@ public class TreeMapValuesIterator<V> extends Iterator_impl<V> {
         } else {
             this.entry;
         }
-        V ret = .value;
+        final V ret = .value;
         if(this.entry == null) {
             throw new RuntimeException("Not null");
         } else {
@@ -27,6 +27,6 @@ public class TreeMapValuesIterator<V> extends Iterator_impl<V> {
         this.entry = .next();
         return ret;
     }
-    public TreeMapValuesIterator(TreeMap<?, V> map) {
+    public TreeMapValuesIterator(final TreeMap<?, V> map) {
     }
 }
