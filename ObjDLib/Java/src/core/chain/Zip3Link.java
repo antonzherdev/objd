@@ -11,7 +11,7 @@ public class Zip3Link<T, A, B, R> implements ChainLink<T, R> {
         return Yield.<A>decorateBaseYield(yield, new F<A, Integer>() {
             @Override
             public Integer apply(A item) {
-                if(ERROR: Unknown !(<l>ai\Iterator#T<§A#G§>\.<dIa>hasNext\bool\) || ERROR: Unknown !(<l>bi\Iterator#T<§B#G§>\.<dIa>hasNext\bool\)) {
+                if(!(ai.hasNext()) || !(bi.hasNext())) {
                     return 1;
                 } else {
                     return yield.yieldItem(Zip3Link.this.f.apply(item, ai.next(), bi.next()));

@@ -21,7 +21,7 @@ public class FutureEnd<T> {
         }, new F<Future<T>, Integer>() {
             @Override
             public Integer apply(Future<T> fut) {
-                if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\)) {
+                if(!(FutureEnd.this._stopped)) {
                     FutureEnd.this._counter.incrementAndGet();
                     if(FutureEnd.this._array == null) {
                         throw new RuntimeException("Not null");
@@ -30,16 +30,16 @@ public class FutureEnd<T> {
                     }
                     .appendItem(null);
                     int i = _i;
-                    ERROR: Unknown <lm>_i\int\++;
+                    _i++;
                     fut.onCompleteF(new P<Try<T>>() {
                         @Override
                         public void apply(Try<T> tr) {
-                            if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\)) {
+                            if(!(FutureEnd.this._stopped)) {
                                 if(tr.isFailure()) {
                                     FutureEnd.this._stopped = true;
                                     FutureEnd.this._promise.failureReason(tr);
                                 } else {
-                                    if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_stopped\bool\)) {
+                                    if(!(FutureEnd.this._stopped)) {
                                         if(FutureEnd.this._array == null) {
                                             throw new RuntimeException("Not null");
                                         } else {
@@ -51,7 +51,7 @@ public class FutureEnd<T> {
                                         Memory.memoryBarrier();
                                         if(FutureEnd.this._ended && r.equals(0)) {
                                             Memory.memoryBarrier();
-                                            if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dIb>getAndSet(newValue = True)\bool\)) {
+                                            if(!(FutureEnd.this._yielded.getAndSetNewValue(true))) {
                                                 if(FutureEnd.this._array == null) {
                                                     throw new RuntimeException("Not null");
                                                 } else {
@@ -79,7 +79,7 @@ public class FutureEnd<T> {
                 Memory.memoryBarrier();
                 if(FutureEnd.this._counter.intValue().equals(0)) {
                     Memory.memoryBarrier();
-                    if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dIb>getAndSet(newValue = True)\bool\)) {
+                    if(!(FutureEnd.this._yielded.getAndSetNewValue(true))) {
                         if(FutureEnd.this._array == null) {
                             throw new RuntimeException("Not null");
                         } else {

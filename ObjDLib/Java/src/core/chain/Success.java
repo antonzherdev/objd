@@ -3,6 +3,10 @@ package core.chain;
 public final class Success<T> extends Try<T> {
     public final T get;
     @Override
+    public T get() {
+        return get;
+    }
+    @Override
     public boolean isSuccess() {
         return true;
     }

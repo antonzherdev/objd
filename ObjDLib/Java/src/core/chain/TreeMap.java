@@ -6,6 +6,10 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
     public final F2<K, K, Integer> comparator;
     public final TreeMapValues<V> values = new TreeMapValues<V>(this);
     @Override
+    public TreeMapValues<V> values() {
+        return values;
+    }
+    @Override
     public V applyKey(K key) {
         return ERROR: Unknown {
     local __tmp : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <TreeMap#C<K#G, V#G>>self.<dI>entryFor(key = <l>key\§K#G§\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\

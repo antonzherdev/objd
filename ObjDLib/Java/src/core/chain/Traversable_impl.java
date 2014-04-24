@@ -62,7 +62,7 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T x) {
-                if(ERROR: Unknown !(<l>confirm\§T#G§ -> bool\.<d>apply( = <l>x\§T#G§\)\bool\)) {
+                if(!(confirm.apply(x))) {
                     ret = false;
                     return false;
                 } else {

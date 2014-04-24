@@ -59,7 +59,7 @@ public class MList<T> extends MSeq_impl<T> {
             i.next = ((MListItem<T>)this.headItem);
             this.headItem.prev = i;
             this.headItem = i;
-            ERROR: Unknown <MList#C<T#G>>self.<emp>_count\uint\++;
+            this._count++;
         }
     }
     @Override
@@ -73,7 +73,7 @@ public class MList<T> extends MSeq_impl<T> {
             i.prev = ((MListItem<T>)this.lastItem);
             this.lastItem.next = i;
             this.lastItem = i;
-            ERROR: Unknown <MList#C<T#G>>self.<emp>_count\uint\++;
+            this._count++;
         }
     }
     public void removeListItem(MListItem<T> listItem) {
@@ -99,7 +99,7 @@ public class MList<T> extends MSeq_impl<T> {
                 }
             }
         }
-        ERROR: Unknown <MList#C<T#G>>self.<emp>_count\uint\--;
+        this._count--;
     }
     @Override
     public void clear() {
@@ -158,7 +158,7 @@ public class MList<T> extends MSeq_impl<T> {
     public boolean goOn(F<T, Boolean> on) {
         MListItem<T> i = this.headItem;
         while(i != null) {
-            if(ERROR: Unknown !(<l>on\§T#G§ -> bool\.<d>apply( = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIUm>data\§T#G§\)\bool\)) {
+            if(!(on.apply(i.data))) {
                 return false;
             }
             i = i.next;
@@ -169,7 +169,7 @@ public class MList<T> extends MSeq_impl<T> {
     public void mutableFilterBy(F<T, Boolean> by) {
         MListItem<T> i = this.headItem;
         while(i != null) {
-            if(ERROR: Unknown !(<l>by\§T#G§ -> bool\.<d>apply( = <lm>i\(^MListItem#C<§T#G§>)¿\.<eIUm>data\§T#G§\)\bool\)) {
+            if(!(by.apply(i.data))) {
                 removeListItem(i);
             }
             i = i.next;

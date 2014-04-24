@@ -14,7 +14,7 @@ public class PArrayIterator<T> extends Iterator_impl<T> {
     if((<l>__tmp_0\(§T#G§)?\ == none<§T#G§>)) throw "Not null"
 else <l>__tmp_0\(§T#G§)?\
 };
-        ERROR: Unknown <PArrayIterator#C<T#G>>self.<emp>i\int\++;
+        this.i++;
         return ret;
     }
     public PArrayIterator(PArray<T> array) {

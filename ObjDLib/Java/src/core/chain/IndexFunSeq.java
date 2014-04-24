@@ -2,6 +2,10 @@ package core.chain;
 
 public final class IndexFunSeq<T> extends ImSeq_impl<T> {
     public final int count;
+    @Override
+    public int count() {
+        return count;
+    }
     public final F<Integer, T> f;
     @Override
     public T applyIndex(int index) {

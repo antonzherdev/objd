@@ -7,16 +7,16 @@ import test..*;
 
 public class ChainTest extends TestCase {
     public void testAnd() {
-        .assertTrueValue(ERROR: Unknown !([True, False, True].<rdI>chain\Chain#C<§^bool§>\.<dIub>and\bool\));
-        .assertTrueValue(ERROR: Unknown !([False, False, False].<rdI>chain\Chain#C<§^bool§>\.<dIub>and\bool\));
+        .assertTrueValue(!(ImArray.fromObjects(true, false, true).chain().and()));
+        .assertTrueValue(!(ImArray.fromObjects(false, false, false).chain().and()));
         .assertTrueValue(ImArray.fromObjects(true, true, true).chain().and());
         .assertTrueValue(ImArray.fromObjects().chain().and());
     }
     public void testOr() {
         .assertTrueValue(ImArray.fromObjects(false, false, true).chain().or());
-        .assertTrueValue(ERROR: Unknown !([False, False, False].<rdI>chain\Chain#C<§^bool§>\.<dIub>or\bool\));
+        .assertTrueValue(!(ImArray.fromObjects(false, false, false).chain().or()));
         .assertTrueValue(ImArray.fromObjects(true, true, true).chain().or());
-        .assertTrueValue(ERROR: Unknown !([].<rdI>chain\Chain#C<§^_unset§>\.<dIub>or\bool\));
+        .assertTrueValue(!(ImArray.fromObjects().chain().or()));
     }
     public void testFuture() {
         repeatTimesF(((int)1000), new P0() {

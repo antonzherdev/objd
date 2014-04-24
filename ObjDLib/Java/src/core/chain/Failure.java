@@ -3,8 +3,12 @@ package core.chain;
 public final class Failure<T> extends Try<T> {
     public final Object reason;
     @Override
+    public Object reason() {
+        return reason;
+    }
+    @Override
     public T get() {
-        throw new RuntimeException(ERROR: Unknown "Getting failure try: $<Failure#C<T#G>>self.<eIUo>reason\any\");
+        throw new RuntimeException(String.format("Getting failure try: %s", this.reason));
     }
     @Override
     public boolean isSuccess() {

@@ -20,7 +20,7 @@ public class QueueIterator<T> extends Iterator_impl<T> {
     }
     @Override
     public T next() {
-        if(ERROR: Unknown !(<QueueIterator#C<T#G>>self.<emp>i\Iterator#T<§T#G§>\.<dIa>hasNext\bool\) && this.isIn) {
+        if(!(this.i.hasNext()) && this.isIn) {
             this.isIn = false;
             this.i = this.out.reverse().iterator();
         }

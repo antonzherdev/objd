@@ -20,7 +20,7 @@ public abstract class Seq_impl<T> extends Iterable_impl<T> implements Seq<T> {
                 return i.next();
             }
             i.next();
-            ERROR: Unknown <lm>n\uint\--;
+            n--;
         }
         return null;
     }

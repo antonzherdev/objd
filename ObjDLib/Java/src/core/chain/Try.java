@@ -5,7 +5,7 @@ public abstract class Try<T> {
     public abstract Object reason();
     public abstract boolean isSuccess();
     public boolean isFailure() {
-        return ERROR: Unknown !(<Try#C<T#G>>self.<dIa>isSuccess\bool\);
+        return !(this.isSuccess());
     }
     public abstract  <R> Try<R> mapF(F<T, R> f);
     public Try() {

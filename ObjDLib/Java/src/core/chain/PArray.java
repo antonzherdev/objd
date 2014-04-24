@@ -4,6 +4,10 @@ public final class PArray<T> extends ImSeq_impl<T> {
     public final int stride;
     public final F2<Pointer, Integer, T> wrap;
     public final int count;
+    @Override
+    public int count() {
+        return count;
+    }
     public final int length;
     public final Pointer bytes;
     public final boolean copied;
@@ -34,8 +38,8 @@ public final class PArray<T> extends ImSeq_impl<T> {
         int __i = 0;
         while(__i < this.count) {
             each.apply(__b);
-            ERROR: Unknown <lm>__i\int\++;
-            ERROR: Unknown <lm>__b\§T#G§*\++;
+            __i++;
+            __b++;
         }
     }
     public PArray(int stride,F2<Pointer, Integer, T> wrap,int count,int length,Pointer bytes,boolean copied) {

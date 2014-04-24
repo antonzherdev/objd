@@ -28,7 +28,7 @@ public abstract class MSeq_impl<T> extends Seq_impl<T> implements MSeq<T> {
                 ret = true;
                 break;
             }
-            ERROR: Unknown <lm>j\uint\--;
+            j--;
         }
         return ret;
     }
@@ -42,7 +42,7 @@ public abstract class MSeq_impl<T> extends Seq_impl<T> implements MSeq<T> {
                 return ;
             }
             i.next();
-            ERROR: Unknown <lm>n\uint\--;
+            n--;
         }
         throw new RuntimeException("Incorrect index");
     }

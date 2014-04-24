@@ -6,6 +6,10 @@ public final class Range extends ImSeq_impl<int> {
     public final int step;
     public final int count = (step > 0) ? ((start <= end) ? (((int)(end - start) / step + 1)) : (((int)0))) : ((step < 0) ? ((start >= end) ? (((int)(end - start) / step + 1)) : (((int)0))) : (((int)1)));
     @Override
+    public int count() {
+        return count;
+    }
+    @Override
     public Integer applyIndex(int index) {
         if(index < this.count) {
             return this.start + this.step * index;

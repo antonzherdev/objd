@@ -18,22 +18,22 @@ public class FutureVoidEnd<T> {
         }, new F<Future<T>, Integer>() {
             @Override
             public Integer apply(Future<T> fut) {
-                if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_stopped\bool\)) {
+                if(!(FutureVoidEnd.this._stopped)) {
                     FutureVoidEnd.this._counter.incrementAndGet();
                     fut.onCompleteF(new P<Try<T>>() {
                         @Override
                         public void apply(Try<T> tr) {
-                            if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_stopped\bool\)) {
+                            if(!(FutureVoidEnd.this._stopped)) {
                                 if(tr.isFailure()) {
                                     FutureVoidEnd.this._stopped = true;
                                     FutureVoidEnd.this._promise.failureReason(tr);
                                 } else {
-                                    if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_stopped\bool\)) {
+                                    if(!(FutureVoidEnd.this._stopped)) {
                                         int r = FutureVoidEnd.this._counter.decrementAndGet();
                                         Memory.memoryBarrier();
                                         if(FutureVoidEnd.this._ended && r.equals(0)) {
                                             Memory.memoryBarrier();
-                                            if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dIb>getAndSet(newValue = True)\bool\)) {
+                                            if(!(FutureVoidEnd.this._yielded.getAndSetNewValue(true))) {
                                                 FutureVoidEnd.this._promise.successValue(null);
                                             }
                                         }
@@ -57,7 +57,7 @@ public class FutureVoidEnd<T> {
                 Memory.memoryBarrier();
                 if(FutureVoidEnd.this._counter.intValue().equals(0)) {
                     Memory.memoryBarrier();
-                    if(ERROR: Unknown !(<FutureVoidEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dIb>getAndSet(newValue = True)\bool\)) {
+                    if(!(FutureVoidEnd.this._yielded.getAndSetNewValue(true))) {
                         FutureVoidEnd.this._promise.successValue(null);
                     }
                 }

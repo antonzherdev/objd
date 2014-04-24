@@ -10,17 +10,17 @@ public final final class Tuple3<A, B, C> implements Comparable<Tuple3<A, B, C>> 
         if(r.equals(0)) {
             r = to.b.compareTo(this.b);
             if(r.equals(0)) {
-                return ERROR: Unknown -<l>to\^Tuple3#C<AC#G, BC#G, CC#G>\.<eIU>c\CC#G\.<rdIb>compare(to = <Tuple3#C<A#G, B#G, C#G>>self.<eIU>c\§C#G§\)\int\;
+                return -(to.c.compareTo(this.c));
             } else {
-                return ERROR: Unknown -<lm>r\int\;
+                return -(r);
             }
         } else {
-            return ERROR: Unknown -<lm>r\int\;
+            return -(r);
         }
     }
     @Override
     public String toString() {
-        return ERROR: Unknown "($<Tuple3#C<A#G, B#G, C#G>>self.<eIU>a\§A#G§\, $<Tuple3#C<A#G, B#G, C#G>>self.<eIU>b\§B#G§\, $<Tuple3#C<A#G, B#G, C#G>>self.<eIU>c\§C#G§\)";
+        return String.format("(%s, %s, %s)", this.a, this.b, this.c);
     }
     public static  <A, B, C> Tuple3<A, B, C> unapplyTuple(Tuple3<A, B, C> tuple) {
         return tuple;

@@ -4,7 +4,7 @@ public class ListIterator<T> extends Iterator_impl<T> {
     public ImList<T> list = ((ImList<T>)EmptyList.instance);
     @Override
     public boolean hasNext() {
-        return ERROR: Unknown !(<ListIterator#C<T#G>>self.<eIm>list\ImList#C<§T#G§>\.<rdIo>isEmpty\bool\);
+        return !(this.list.isEmpty());
     }
     @Override
     public T next() {

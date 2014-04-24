@@ -4,6 +4,10 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     private TreeMapEntry<K, V> _root = null;
     private int _size = ((int)0);
     public final MTreeMapKeySet<K> keys = new MTreeMapKeySet<K>(this);
+    @Override
+    public MTreeMapKeySet<K> keys() {
+        return keys;
+    }
     public static  <K extends Comparable<K>, V> MTreeMap<K, V> apply() {
         return new MTreeMap<K, V>(new F2<K, K, Integer>() {
             @Override
@@ -91,7 +95,7 @@ else {
                 .right = e;
             }
             fixAfterInsertionEntry(e);
-            ERROR: Unknown <MTreeMap#C<K#G, V#G>>self.<emp>_size\uint\++;
+            this._size++;
         }
     }
     @Override
@@ -105,7 +109,7 @@ else {
     }
     private V deleteEntry(TreeMapEntry<K, V> entry) {
         TreeMapEntry<K, V> p = entry;
-        ERROR: Unknown <MTreeMap#C<K#G, V#G>>self.<emp>_size\uint\--;
+        this._size--;
         if(p.left != null && p.right != null) {
             TreeMapEntry<K, V> s = ERROR: Unknown {
     local __tmp_2_0 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>p\TreeMapEntry#C<§K#G§, §V#G§>\.<dI>next\(^TreeMapEntry#C<§K#G§, §V#G§>)?\

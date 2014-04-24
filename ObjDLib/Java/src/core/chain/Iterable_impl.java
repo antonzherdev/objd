@@ -33,7 +33,7 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
     public boolean goOn(F<T, Boolean> on) {
         Iterator<T> i = this.iterator();
         while(i.hasNext()) {
-            if(ERROR: Unknown !(<l>on\§T#G§ -> bool\.<d>apply( = <l>i\Iterator#T<§T#G§>\.<dIa>next\§T#G§\)\bool\)) {
+            if(!(on.apply(i.next()))) {
                 return false;
             }
         }
@@ -57,12 +57,12 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
         int n = ((int)0);
         while(i.hasNext()) {
             i.next();
-            ERROR: Unknown <lm>n\uint\++;
+            n++;
         }
         return n;
     }
     public boolean isEmpty() {
-        return ERROR: Unknown !(<Iterable#T<T#G>>self.<dIa>iterator\Iterator#T<§T#G§>\.<dIa>hasNext\bool\);
+        return !(this.iterator().hasNext());
     }
     public boolean containsItem(T item) {
         Iterator<T> i = this.iterator();

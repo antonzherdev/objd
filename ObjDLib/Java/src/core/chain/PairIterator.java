@@ -9,7 +9,7 @@ public class PairIterator<T> extends Iterator_impl<T> {
     }
     @Override
     public T next() {
-        ERROR: Unknown <PairIterator#C<T#G>>self.<emp>state\int\++;
+        this.state++;
         if(this.state.equals(1)) {
             return this.pair.a;
         } else {

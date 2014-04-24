@@ -11,7 +11,7 @@ public class IndexFunSeqIterator<T> extends Iterator_impl<T> {
     @Override
     public T next() {
         T ret = this.f.apply(this.i);
-        ERROR: Unknown <IndexFunSeqIterator#C<T#G>>self.<emp>i\uint\++;
+        this.i++;
         return ret;
     }
     public IndexFunSeqIterator(int count,F<Integer, T> f) {

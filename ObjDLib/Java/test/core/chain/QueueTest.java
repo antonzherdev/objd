@@ -11,7 +11,7 @@ public class QueueTest extends TestCase {
         .assertTrueValue(q.isEmpty());
         .<Integer>assertEqualsAB(0, ((int)q.count()));
         q = q.enqueueItem(1);
-        .assertTrueValue(ERROR: Unknown !(<lm>q\ImQueue#C<§^int§>\.<dI>isEmpty\bool\));
+        .assertTrueValue(!(q.isEmpty()));
         .<Integer>assertEqualsAB(1, ((int)q.count()));
         q = q.enqueueItem(2);
         .<Integer>assertEqualsAB(2, ((int)q.count()));

@@ -7,14 +7,14 @@ public final final class Tuple<A, B> implements Comparable<Tuple<A, B>> {
     public  <AC extends Comparable<A>, BC extends Comparable<B>> int compareTo(Tuple<AC, BC> to) {
         int r = to.a.compareTo(this.a);
         if(r.equals(0)) {
-            return ERROR: Unknown -<l>to\^Tuple#C<AC#G, BC#G>\.<eIU>b\BC#G\.<rdIb>compare(to = <Tuple#C<A#G, B#G>>self.<eIU>b\§B#G§\)\int\;
+            return -(to.b.compareTo(this.b));
         } else {
-            return ERROR: Unknown -<l>r\int\;
+            return -(r);
         }
     }
     @Override
     public String toString() {
-        return ERROR: Unknown "($<Tuple#C<A#G, B#G>>self.<eIU>a\§A#G§\, $<Tuple#C<A#G, B#G>>self.<eIU>b\§B#G§\)";
+        return String.format("(%s, %s)", this.a, this.b);
     }
     public static  <A, B> Tuple<A, B> unapplyTuple(Tuple<A, B> tuple) {
         return tuple;

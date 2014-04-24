@@ -3,7 +3,15 @@ package core.chain;
 public final class FilledList<T> extends ImList<T> {
     public final T _head;
     public final ImList<T> tail;
+    @Override
+    public ImList<T> tail() {
+        return tail;
+    }
     public final int count = tail.count() + 1;
+    @Override
+    public int count() {
+        return count;
+    }
     @Override
     public T head() {
         return this._head;
@@ -27,7 +35,7 @@ public final class FilledList<T> extends ImList<T> {
     private ImList<T> reverseAndAddList(ImList<T> list) {
         FilledList<T> ret = new FilledList<T>(this._head, list);
         ImList<T> l = this.tail;
-        while(ERROR: Unknown !(<lm>l\ImList#C<§T#G§>\.<rdIo>isEmpty\bool\)) {
+        while(!(l.isEmpty())) {
             ret = new FilledList<T>(((FilledList<T>)l)._head, ret);
             l = l.tail();
         }

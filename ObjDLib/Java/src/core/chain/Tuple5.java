@@ -16,23 +16,23 @@ public final final class Tuple5<A, B, C, D, E> implements Comparable<Tuple5<A, B
                 if(r.equals(0)) {
                     r = to.d.compareTo(this.d);
                     if(r.equals(0)) {
-                        return ERROR: Unknown -<l>to\^Tuple5#C<AC#G, BC#G, CC#G, DC#G, EC#G>\.<eIU>e\EC#G\.<rdIb>compare(to = <Tuple5#C<A#G, B#G, C#G, D#G, E#G>>self.<eIU>e\§E#G§\)\int\;
+                        return -(to.e.compareTo(this.e));
                     } else {
-                        return ERROR: Unknown -<lm>r\int\;
+                        return -(r);
                     }
                 } else {
-                    return ERROR: Unknown -<lm>r\int\;
+                    return -(r);
                 }
             } else {
-                return ERROR: Unknown -<lm>r\int\;
+                return -(r);
             }
         } else {
-            return ERROR: Unknown -<lm>r\int\;
+            return -(r);
         }
     }
     @Override
     public String toString() {
-        return ERROR: Unknown "($<Tuple5#C<A#G, B#G, C#G, D#G, E#G>>self.<eIU>a\§A#G§\, $<Tuple5#C<A#G, B#G, C#G, D#G, E#G>>self.<eIU>b\§B#G§\, $<Tuple5#C<A#G, B#G, C#G, D#G, E#G>>self.<eIU>c\§C#G§\, $<Tuple5#C<A#G, B#G, C#G, D#G, E#G>>self.<eIU>d\§D#G§\, $<Tuple5#C<A#G, B#G, C#G, D#G, E#G>>self.<eIU>e\§E#G§\)";
+        return String.format("(%s, %s, %s, %s, %s)", this.a, this.b, this.c, this.d, this.e);
     }
     public static  <A, B, C, D, E> Tuple5<A, B, C, D, E> unapplyTuple(Tuple5<A, B, C, D, E> tuple) {
         return tuple;
