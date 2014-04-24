@@ -52,7 +52,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     }
     @Override
     public MIterator<Tuple2<K, V>> mutableIterator() {
-        return MTreeMapIterator().applyMapEntry<K, V>(this, this.firstEntry());
+        return MTreeMapIterator.<K, V>applyMapEntry(this, this.firstEntry());
     }
     @Override
     public void setKeyValue(K key,V value) {

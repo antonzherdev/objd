@@ -2,10 +2,10 @@ package core.chain;
 
 public abstract class ImList<T> extends ImSeq_impl<T> {
     public static  <T> ImList<T> apply() {
-        return ((ImList<T>)EmptyList().instance);
+        return ((ImList<T>)EmptyList.instance);
     }
     public static  <T> ImList<T> applyItem(T item) {
-        return new FilledList<T>(item, EmptyList().instance);
+        return new FilledList<T>(item, EmptyList.instance);
     }
     public static  <T> ImList<T> applyItemTail(T item,ImList<T> tail) {
         return new FilledList<T>(item, tail);

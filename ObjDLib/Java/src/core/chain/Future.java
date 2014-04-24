@@ -2,8 +2,8 @@ package core.chain;
 
 public abstract class Future<T> {
     public static  <T> Future<T> applyF(F<Void, T> f) {
-        Promise<T> p = Promise().apply<T>();
-        DispatchQueue().default.asyncF(new P0() {
+        Promise<T> p = Promise.<T>apply();
+        DispatchQueue.default.asyncF(new P0() {
             @Override
             public void apply() {
                 return p.successValue(ERROR: Unknown <l>f\void -> T#G\());
@@ -12,7 +12,7 @@ public abstract class Future<T> {
         return p;
     }
     public static  <A, B> Future<Tuple2<A, B>> joinAB(Future<A> a,Future<B> b) {
-        return Future().mapABF<A, B, Tuple2<A, B>>(a, b, new F2<A, B, Tuple2<A, B>>() {
+        return Future.<A, B, Tuple2<A, B>>mapABF(a, b, new F2<A, B, Tuple2<A, B>>() {
             @Override
             public Tuple2<A, B> apply(A _a,B _b) {
                 return ERROR: Unknown (<l>_a\§A#G§\, <l>_b\§B#G§\);
@@ -20,7 +20,7 @@ public abstract class Future<T> {
         });
     }
     public static  <A, B, C> Future<Tuple3<A, B, C>> joinABC(Future<A> a,Future<B> b,Future<C> c) {
-        return Future().mapABCF<A, B, C, Tuple3<A, B, C>>(a, b, c, new F3<A, B, C, Tuple3<A, B, C>>() {
+        return Future.<A, B, C, Tuple3<A, B, C>>mapABCF(a, b, c, new F3<A, B, C, Tuple3<A, B, C>>() {
             @Override
             public Tuple3<A, B, C> apply(A _a,B _b,C _c) {
                 return ERROR: Unknown (<l>_a\§A#G§\, <l>_b\§B#G§\, <l>_c\§C#G§\);
@@ -28,7 +28,7 @@ public abstract class Future<T> {
         });
     }
     public static  <A, B, C, D> Future<Tuple4<A, B, C, D>> joinABCD(Future<A> a,Future<B> b,Future<C> c,Future<D> d) {
-        return Future().mapABCDF<A, B, C, D, Tuple4<A, B, C, D>>(a, b, c, d, new F4<A, B, C, D, Tuple4<A, B, C, D>>() {
+        return Future.<A, B, C, D, Tuple4<A, B, C, D>>mapABCDF(a, b, c, d, new F4<A, B, C, D, Tuple4<A, B, C, D>>() {
             @Override
             public Tuple4<A, B, C, D> apply(A _a,B _b,C _c,D _d) {
                 return ERROR: Unknown (<l>_a\§A#G§\, <l>_b\§B#G§\, <l>_c\§C#G§\, <l>_d\§D#G§\);
@@ -36,7 +36,7 @@ public abstract class Future<T> {
         });
     }
     public static  <A, B, C, D, E> Future<Tuple5<A, B, C, D, E>> joinABCDE(Future<A> a,Future<B> b,Future<C> c,Future<D> d,Future<E> e) {
-        return Future().mapABCDEF<A, B, C, D, E, Tuple5<A, B, C, D, E>>(a, b, c, d, e, new F5<A, B, C, D, E, Tuple5<A, B, C, D, E>>() {
+        return Future.<A, B, C, D, E, Tuple5<A, B, C, D, E>>mapABCDEF(a, b, c, d, e, new F5<A, B, C, D, E, Tuple5<A, B, C, D, E>>() {
             @Override
             public Tuple5<A, B, C, D, E> apply(A _a,B _b,C _c,D _d,E _e) {
                 return ERROR: Unknown (<l>_a\§A#G§\, <l>_b\§B#G§\, <l>_c\§C#G§\, <l>_d\§D#G§\, <l>_e\§E#G§\);
@@ -44,7 +44,7 @@ public abstract class Future<T> {
         });
     }
     public static  <A, B, R> Future<R> mapABF(Future<A> a,Future<B> b,F2<A, B, R> f) {
-        Promise<R> p = Promise().apply<R>();
+        Promise<R> p = Promise.<R>apply();
         A _a = null;
         B _b = null;
         AtomicInt n = new AtomicInt();
@@ -53,7 +53,7 @@ public abstract class Future<T> {
             public void apply(Try<A> t) {
                 if(t.isSuccess()) {
                     _a = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(2)) {
                         p.successValue(f.apply(_a, _b));
                     }
@@ -67,7 +67,7 @@ public abstract class Future<T> {
             public void apply(Try<B> t) {
                 if(t.isSuccess()) {
                     _b = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(2)) {
                         p.successValue(f.apply(_a, _b));
                     }
@@ -79,7 +79,7 @@ public abstract class Future<T> {
         return p;
     }
     public static  <A, B, C, R> Future<R> mapABCF(Future<A> a,Future<B> b,Future<C> c,F3<A, B, C, R> f) {
-        Promise<R> p = Promise().apply<R>();
+        Promise<R> p = Promise.<R>apply();
         A _a = null;
         B _b = null;
         C _c = null;
@@ -89,7 +89,7 @@ public abstract class Future<T> {
             public void apply(Try<A> t) {
                 if(t.isSuccess()) {
                     _a = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(3)) {
                         p.successValue(f.apply(_a, _b, _c));
                     }
@@ -103,7 +103,7 @@ public abstract class Future<T> {
             public void apply(Try<B> t) {
                 if(t.isSuccess()) {
                     _b = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(3)) {
                         p.successValue(f.apply(_a, _b, _c));
                     }
@@ -117,7 +117,7 @@ public abstract class Future<T> {
             public void apply(Try<C> t) {
                 if(t.isSuccess()) {
                     _c = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(3)) {
                         p.successValue(f.apply(_a, _b, _c));
                     }
@@ -129,7 +129,7 @@ public abstract class Future<T> {
         return p;
     }
     public static  <A, B, C, D, R> Future<R> mapABCDF(Future<A> a,Future<B> b,Future<C> c,Future<D> d,F4<A, B, C, D, R> f) {
-        Promise<R> p = Promise().apply<R>();
+        Promise<R> p = Promise.<R>apply();
         A _a = null;
         B _b = null;
         C _c = null;
@@ -140,7 +140,7 @@ public abstract class Future<T> {
             public void apply(Try<A> t) {
                 if(t.isSuccess()) {
                     _a = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(4)) {
                         p.successValue(f.apply(_a, _b, _c, _d));
                     }
@@ -154,7 +154,7 @@ public abstract class Future<T> {
             public void apply(Try<B> t) {
                 if(t.isSuccess()) {
                     _b = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(4)) {
                         p.successValue(f.apply(_a, _b, _c, _d));
                     }
@@ -168,7 +168,7 @@ public abstract class Future<T> {
             public void apply(Try<C> t) {
                 if(t.isSuccess()) {
                     _c = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(4)) {
                         p.successValue(f.apply(_a, _b, _c, _d));
                     }
@@ -182,7 +182,7 @@ public abstract class Future<T> {
             public void apply(Try<D> t) {
                 if(t.isSuccess()) {
                     _d = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(4)) {
                         p.successValue(f.apply(_a, _b, _c, _d));
                     }
@@ -194,7 +194,7 @@ public abstract class Future<T> {
         return p;
     }
     public static  <A, B, C, D, E, R> Future<R> mapABCDEF(Future<A> a,Future<B> b,Future<C> c,Future<D> d,Future<E> e,F5<A, B, C, D, E, R> f) {
-        Promise<R> p = Promise().apply<R>();
+        Promise<R> p = Promise.<R>apply();
         A _a = null;
         B _b = null;
         C _c = null;
@@ -206,7 +206,7 @@ public abstract class Future<T> {
             public void apply(Try<A> t) {
                 if(t.isSuccess()) {
                     _a = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(5)) {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
@@ -220,7 +220,7 @@ public abstract class Future<T> {
             public void apply(Try<B> t) {
                 if(t.isSuccess()) {
                     _b = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(5)) {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
@@ -234,7 +234,7 @@ public abstract class Future<T> {
             public void apply(Try<C> t) {
                 if(t.isSuccess()) {
                     _c = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(5)) {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
@@ -248,7 +248,7 @@ public abstract class Future<T> {
             public void apply(Try<D> t) {
                 if(t.isSuccess()) {
                     _d = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(5)) {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
@@ -262,7 +262,7 @@ public abstract class Future<T> {
             public void apply(Try<E> t) {
                 if(t.isSuccess()) {
                     _e = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(5)) {
                         p.successValue(f.apply(_a, _b, _c, _d, _e));
                     }
@@ -318,7 +318,7 @@ public abstract class Future<T> {
         });
     }
     public  <R> Future<R> mapF(F<T, R> f) {
-        Promise<R> p = Promise().apply<R>();
+        Promise<R> p = Promise.<R>apply();
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(Try<T> tr) {
@@ -328,7 +328,7 @@ public abstract class Future<T> {
         return p;
     }
     public Future<Void> forF(P<T> f) {
-        Promise<Void> p = Promise().apply<Void>();
+        Promise<Void> p = Promise.<Void>apply();
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(Try<T> tr) {
@@ -343,7 +343,7 @@ public abstract class Future<T> {
         return p;
     }
     public  <R> Future<R> flatMapF(F<T, Future<R>> f) {
-        Promise<R> p = Promise().apply<R>();
+        Promise<R> p = Promise.<R>apply();
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(Try<T> tr) {
@@ -426,7 +426,7 @@ else <l>__tmp\§(T#G)?§\
 };
     }
     public  <R> Future<Tuple2<T, R>> joinAnother(Future<R> another) {
-        Promise<Tuple2<T, R>> p = Promise().apply<Tuple2<T, R>>();
+        Promise<Tuple2<T, R>> p = Promise.<Tuple2<T, R>>apply();
         T a = null;
         R b = null;
         AtomicInt n = new AtomicInt();
@@ -435,7 +435,7 @@ else <l>__tmp\§(T#G)?§\
             public void apply(Try<T> t) {
                 if(t.isSuccess()) {
                     a = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(2)) {
                         p.successValue(new Tuple<T, R>(a, b));
                     }
@@ -449,7 +449,7 @@ else <l>__tmp\§(T#G)?§\
             public void apply(Try<R> t) {
                 if(t.isSuccess()) {
                     b = t.get();
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(2)) {
                         p.successValue(new Tuple<T, R>(a, b));
                     }

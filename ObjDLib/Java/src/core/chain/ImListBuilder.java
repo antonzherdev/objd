@@ -1,10 +1,10 @@
 package core.chain;
 
 public class ImListBuilder<T> extends Builder_impl<T, ImList<T>> {
-    private ImList<T> list = ImList().apply<T>();
+    private ImList<T> list = ImList.<T>apply();
     @Override
     public void appendItem(T item) {
-        this.list = ImList().applyItemTail<T>(item, this.list);
+        this.list = ImList.<T>applyItemTail(item, this.list);
     }
     @Override
     public ImList<T> build() {

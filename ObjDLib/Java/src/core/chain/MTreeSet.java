@@ -7,7 +7,7 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
         return new MTreeSet<T>(new MTreeMap<T, Object>(comparator));
     }
     public static  <T> MTreeSet<T> apply() {
-        return new MTreeSet<T>(MTreeMap().apply<T, Object>());
+        return new MTreeSet<T>(MTreeMap.<T, Object>apply());
     }
     @Override
     public MIterator<T> mutableIterator() {

@@ -14,7 +14,7 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(T item) {
-                DispatchQueue().default.asyncF(new P0() {
+                DispatchQueue.default.asyncF(new P0() {
                     @Override
                     public void apply() {
                         each.apply(item);
@@ -25,7 +25,7 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
         });
     }
     public Chain<T> chain() {
-        return Chain().chainWithCollection<T>(this);
+        return Chain.<T>chainWithCollection(this);
     }
     public T findWhere(F<T, Boolean> where) {
         T ret = null;

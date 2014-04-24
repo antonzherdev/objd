@@ -42,10 +42,10 @@ else <l>__tmp\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     public abstract TreeMapKeySet<K> keys();
     @Override
     public Iterator<Tuple2<K, V>> iterator() {
-        return TreeMapIterator().applyMapEntry<K, V>(this, this.firstEntry());
+        return TreeMapIterator.<K, V>applyMapEntry(this, this.firstEntry());
     }
     public TreeMapIterator<K, V> iteratorHigherThanKey(K key) {
-        return TreeMapIterator().applyMapEntry<K, V>(this, higherEntryThanKey(key));
+        return TreeMapIterator.<K, V>applyMapEntry(this, higherEntryThanKey(key));
     }
     public TreeMapEntry<K, V> firstEntry() {
         TreeMapEntry<K, V> p = this.root();

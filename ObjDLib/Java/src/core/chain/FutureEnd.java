@@ -1,7 +1,7 @@
 package core.chain;
 
 public class FutureEnd<T> {
-    private final Promise<Seq<T>> _promise = Promise().apply<Seq<T>>();
+    private final Promise<Seq<T>> _promise = Promise.<Seq<T>>apply();
     private boolean _stopped = false;
     private AtomicInt _counter = new AtomicInt();
     private boolean _ended = false;
@@ -46,11 +46,11 @@ public class FutureEnd<T> {
                                             FutureEnd.this._array;
                                         }
                                         .setIndexItem(((int)i), tr.get());
-                                        Memory().memoryBarrier();
+                                        Memory.memoryBarrier();
                                         int r = FutureEnd.this._counter.decrementAndGet();
-                                        Memory().memoryBarrier();
+                                        Memory.memoryBarrier();
                                         if(FutureEnd.this._ended && r.equals(0)) {
-                                            Memory().memoryBarrier();
+                                            Memory.memoryBarrier();
                                             if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dIb>getAndSet(newValue = True)\bool\)) {
                                                 if(FutureEnd.this._array == null) {
                                                     throw new RuntimeException("Not null");
@@ -76,9 +76,9 @@ public class FutureEnd<T> {
             @Override
             public Integer apply(Integer res) {
                 FutureEnd.this._ended = true;
-                Memory().memoryBarrier();
+                Memory.memoryBarrier();
                 if(FutureEnd.this._counter.intValue().equals(0)) {
-                    Memory().memoryBarrier();
+                    Memory.memoryBarrier();
                     if(ERROR: Unknown !(<FutureEnd#C<T#G>>self.<emp>_yielded\AtomicBool#C\.<dIb>getAndSet(newValue = True)\bool\)) {
                         if(FutureEnd.this._array == null) {
                             throw new RuntimeException("Not null");

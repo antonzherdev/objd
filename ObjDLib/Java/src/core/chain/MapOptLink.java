@@ -4,7 +4,7 @@ public class MapOptLink<A, B> implements ChainLink<A, B> {
     public final F<A, B> f;
     @Override
     public Yield<A> buildYield(Yield<B> yield) {
-        return Yield().decorateBaseYield<A>(yield, new F<A, Integer>() {
+        return Yield.<A>decorateBaseYield(yield, new F<A, Integer>() {
             @Override
             public Integer apply(A item) {
                 Integer __tmp_0;

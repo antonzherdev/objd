@@ -1,7 +1,7 @@
 package core.chain;
 
 public class ImQueue<T> extends Queue_impl<T> {
-    private static final ImQueue<Object> empty = new ImQueue<Object>(ImList().apply<Object>(), ImList().apply<Object>());
+    private static final ImQueue<Object> empty = new ImQueue<Object>(ImList.<Object>apply(), ImList.<Object>apply());
     public final ImList<T> in;
     public final ImList<T> out;
     public static  <T> ImQueue<T> apply() {
@@ -18,16 +18,16 @@ public class ImQueue<T> extends Queue_impl<T> {
     }
     public ImQueue<T> addItem(T item) {
         if(this.isEmpty()) {
-            return new ImQueue<T>(ImList().apply<T>(), ImList().applyItem<T>(item));
+            return new ImQueue<T>(ImList.<T>apply(), ImList.<T>applyItem(item));
         } else {
-            return new ImQueue<T>(ImList().applyItemTail<T>(item, this.in), this.out);
+            return new ImQueue<T>(ImList.<T>applyItemTail(item, this.in), this.out);
         }
     }
     public ImQueue<T> enqueueItem(T item) {
         if(this.isEmpty()) {
-            return new ImQueue<T>(ImList().apply<T>(), ImList().applyItem<T>(item));
+            return new ImQueue<T>(ImList.<T>apply(), ImList.<T>applyItem(item));
         } else {
-            return new ImQueue<T>(ImList().applyItemTail<T>(item, this.in), this.out);
+            return new ImQueue<T>(ImList.<T>applyItemTail(item, this.in), this.out);
         }
     }
     public Tuple2<T, ImQueue<T>> dequeue() {

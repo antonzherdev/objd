@@ -31,7 +31,7 @@ public final class EmptyList<T> extends ImList<T> {
     }
     @Override
     public  <C extends Comparable<C>> ImList<T> insertItem(C item) {
-        return ImList().applyItem<T>(((T)item));
+        return ImList.<T>applyItem(((T)item));
     }
     public EmptyList() {
     }

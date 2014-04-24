@@ -6,7 +6,7 @@ public class ZipLink<T, A, R> implements ChainLink<T, R> {
     @Override
     public Yield<A> buildYield(Yield<R> yield) {
         Iterator<A> ai = this.a.iterator();
-        return Yield().decorateBaseYield<A>(yield, new F<A, Integer>() {
+        return Yield.<A>decorateBaseYield(yield, new F<A, Integer>() {
             @Override
             public Integer apply(A item) {
                 if(ERROR: Unknown !(<l>ai\Iterator#T<§A#G§>\.<dIa>hasNext\bool\)) {

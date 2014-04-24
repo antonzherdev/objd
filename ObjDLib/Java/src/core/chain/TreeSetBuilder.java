@@ -2,7 +2,7 @@ package core.chain;
 
 public class TreeSetBuilder<T> extends Builder_impl<T, ImTreeSet<T>> {
     public final F2<T, T, Integer> comparator;
-    private final MTreeSet<T> set = MTreeSet().applyComparator<T>(comparator);
+    private final MTreeSet<T> set = MTreeSet.<T>applyComparator(comparator);
     public static  <T extends Comparable<T>> TreeSetBuilder<T> apply() {
         return new TreeSetBuilder<T>(new F2<T, T, Integer>() {
             @Override
