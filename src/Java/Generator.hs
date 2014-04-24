@@ -66,7 +66,10 @@ defName' d = case D.defPars d of
 		"description" -> "toString"
 		"isEqual" -> "equals"
 		o -> o
-	_ -> if D.DefModStub `elem` D.defMods d then D.defName d else (D.defName d ++ concatMap (cap . D.defName) (D.defPars d))
+	_ -> fromMaybe (D.defName d ++ concatMap (cap . D.defName) (D.defPars d)) $ 
+		D.findAnnotationWithClassName "core.gen.GenName" (D.defAnnotations d) >>= (\a -> case a of
+			D.Annotation _ [(_, D.StringConst s)] -> Just s
+			_ -> Nothing)
 
 overrideAnnotation :: J.DefAnnotation
 overrideAnnotation = J.DefAnnotation "Override" []

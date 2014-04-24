@@ -237,7 +237,7 @@ unblockGenerics tp = mapDataType f tp
 
 objectDef :: Class -> Def
 objectDef cl = Def {defName = className cl, defPars = [], defType = TPObject (refDataTypeMod cl) cl, defBody = Nop, 
-				defMods = [DefModStatic, DefModObject], defGenerics = Nothing}
+				defMods = [DefModStatic, DefModObject], defGenerics = Nothing, defAnnotations = []}
 
 replaceGenericsInDef :: Generics -> Def -> Def
 replaceGenericsInDef gens d = d {defType = replaceGenerics False gens (defType d), defPars = map (replaceGenericsInDef gens) (defPars d) }
@@ -483,15 +483,15 @@ getTraitImplClass env cl = M.lookup (className cl ++ "_impl") (envIndex env)
  -----------------------------------------------------------------------------------------------------------------------------------------}
 
 data Def = Def {defName :: String, defPars :: [Def], defType :: DataType, defBody :: Exp, defMods :: [DefMod]
-	, defGenerics :: Maybe DefGenerics}
+	, defGenerics :: Maybe DefGenerics, defAnnotations :: [Annotation]}
 unknownDef :: Def
-unknownDef = Def "???" [] TPVoid Nop [] Nothing
+unknownDef = Def "???" [] TPVoid Nop [] Nothing []
 localVal :: String -> DataType -> Def
-localVal name tp = Def name [] tp Nop [DefModLocal] Nothing
+localVal name tp = Def name [] tp Nop [DefModLocal] Nothing []
 localValE :: String -> DataType -> Exp -> Def
-localValE name tp e = Def name [] tp e [DefModLocal] Nothing
+localValE name tp e = Def name [] tp e [DefModLocal] Nothing []
 tmpVal :: Env -> String -> DataType -> Exp -> Def
-tmpVal env sf tp e = Def ("__tmp" ++ envVarSuffix env ++ sf) [] tp e [DefModLocal] Nothing 
+tmpVal env sf tp e = Def ("__tmp" ++ envVarSuffix env ++ sf) [] tp e [DefModLocal] Nothing []
 isStatic :: Def -> Bool
 isStatic = (DefModStatic `elem` ). defMods
 isDef :: Def -> Bool
@@ -747,7 +747,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 				_classDefs =  enumConstr ++
 					snd (mapAccumL enumItem 0 (D.enumItems cl)) ++ fields ++ defs ++ [Def{
 					defName = "values", defType = TPArr 0 (TPClass TPMEnum [] self), defBody = Nop,
-					defMods = [DefModStatic], defPars = [], defGenerics = Nothing}],
+					defMods = [DefModStatic], defPars = [], defGenerics = Nothing, defAnnotations = []}],
 				_classGenerics = generics,
 				_classImports = clImports,
 				classAnnotations = annotations
@@ -770,9 +770,9 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 			D.Class{} -> D.ClassModStub `elem` D.classMods cl
 			D.Type{} -> True
 			_ -> False
-		annotations = map (linkAnnotations env) $ D.stmAnnotations cl
-		enumOrdinal = Def "ordinal" [] uint Nop [] Nothing
-		enumName = Def "name" [] TPString Nop [] Nothing
+		annotations = map (linkAnnotation env) $ D.stmAnnotations cl
+		enumOrdinal = Def "ordinal" [] uint Nop [] Nothing []
+		enumName = Def "name" [] TPString Nop [] Nothing []
 		enumAdditionalDefs = [(enumOrdinal, Nothing), (enumName, Nothing)]
 		selfType = refDataType self (map (TPClass TPMGeneric []) generics)
 		clsMod D.ClassModStruct = [ClassModStruct]
@@ -802,7 +802,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 		constr :: [(Def, Maybe Exp)] -> [Def]
 		constr pars = let
 			mainDef = Def{defName = "apply", defMods = [DefModStatic, DefModConstructor, DefModPublic] ++ [DefModStruct | selfIsStruct], defBody = Nop,
-				defPars = map fst pars, defType = selfType, defGenerics = Just $ DefGenerics generics selfType}
+				defPars = map fst pars, defType = selfType, defGenerics = Just $ DefGenerics generics selfType, defAnnotations = []}
 			in resolveDefPar env mainDef pars 
 		constrPars :: [(Def, Maybe Exp)]
 		constrPars = map constrPar (D.classFields cl)
@@ -810,7 +810,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 		constrPar D.Def{D.defName = name, D.defRetType = Just tp, D.defBody = b} = let
 			tp' = dataType env tp
 			env' = envAddVals (map fst constrPars) env
-			in (Def name [] (dataType env tp) Nop [DefModLocal, DefModWeak] Nothing,
+			in (Def name [] (dataType env tp) Nop [DefModLocal, DefModWeak] Nothing [],
 				case b of
 					D.Nop -> Nothing
 					_ -> Just $ exprTo env' tp' b)
@@ -820,7 +820,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 		enumItem :: Int -> D.EnumItem -> (Int, Def)
 		enumItem ordinal (D.EnumItem name pars) = (ordinal + 1, Def{defName = name, defMods = [DefModStatic, DefModEnumItem, DefModField], 
 				defType = selfType, defGenerics = Nothing, defPars = [], 
-				defBody = enumConstrCall})
+				defBody = enumConstrCall, defAnnotations = []})
 			where
 				enumConstrCall = exprCall env Nothing enumConstrDCall
 				enumConstrDCall = D.Call 
@@ -838,7 +838,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 		typeField = Def{defMods = [DefModField, DefModStatic, DefModSpecial] ++ [DefModStruct | selfIsStruct], defName = "type", 
 			defType = TPClass TPMClass [mapDataTypeGenerics (map (\_ -> TPAnyGeneric)) selfType] (classFind cidx typeName), 
 			defBody = Nop, 
-			defGenerics = Nothing, defPars = []}
+			defGenerics = Nothing, defPars = [], defAnnotations = []}
 			where 
 				typeName = if selfIsStruct then "PType" else "ClassType"
 linkExtends :: Env -> Bool -> [Def] -> D.Extends -> Extends
@@ -862,8 +862,8 @@ linkExtends env isSeltTrait constrPars (D.Extends (D.ExtendsClass eref@(_, gens)
 					Nothing -> Extends (Just $ baseClassExtends $ envIndex env) (mainExt:withs')
 			else Extends (Just $ ExtendsClass mainExt superCallPars) withs'
 
-linkAnnotations :: Env -> D.Annotation -> Annotation
-linkAnnotations env (D.Annotation nm pars tps) = case expr env (D.Call nm (Just pars) tps) of
+linkAnnotation :: Env -> D.Annotation -> Annotation
+linkAnnotation env (D.Annotation nm pars tps) = case expr env (D.Call nm (Just pars) tps) of
 	Call d _ pars' _ -> Annotation d pars'
 	Dot _ (Call d _ pars' _ ) -> Annotation d pars'
 
@@ -889,12 +889,12 @@ linkField env (obj, _isStruct) dd@D.Def{D.defMods = mods, D.defName = name, D.de
 				TPArr n atp -> TPEArr n $ unwrapGeneric atp 
 				_ -> tp' 
 			else tp'
-	
+		ans = map (linkAnnotation env) (D.defAnnotations dd)
 		gtp = wrapGeneric tp''
 		def = Def{defMods = 
 			DefModField : translateMods mods ++ [DefModStruct | _isStruct] ++ [DefModStatic | obj] ++ checkOverrideMods mods (findOverridenDef env dd), 
 			defName = name, defType = tp'', 
-			defBody = i', defGenerics = Nothing, defPars = []}
+			defBody = i', defGenerics = Nothing, defPars = [], defAnnotations = ans}
 		isLazy = D.DefModLazy `elem` mods
 		lazyClass = classFind (envIndex env) "Lazy"
 		lazyGet = fromJust $ findDefWithName "get" lazyClass
@@ -903,10 +903,10 @@ linkField env (obj, _isStruct) dd@D.Def{D.defMods = mods, D.defName = name, D.de
 		defLazy = Def{defMods = [DefModField, DefModPrivate] ++ [DefModStatic | D.DefModStatic `elem` mods || obj], defName = "_lazy_" ++ name, 
 			defType = lazyTp, 
 			defBody = Dot (callRef (objectDef lazyClass)) $ Call lazyConstr lazyTp [(head $ defPars lazyConstr, Lambda [] (Return True (Weak i')) gtp)] [], 
-			defGenerics = Nothing, defPars = []}
+			defGenerics = Nothing, defPars = [], defAnnotations = []}
 		defLazyGet = Def{defMods = DefModDef : translateMods mods ++ [DefModStatic | obj], defName = name, 
 			defType = tp'', 
-			defBody = Return True $ Dot (callRef defLazy) (Call lazyGet gtp [] []), defGenerics = Nothing, defPars = []}
+			defBody = Return True $ Dot (callRef defLazy) (Call lazyGet gtp [] []), defGenerics = Nothing, defPars = [], defAnnotations = ans}
 		in if isLazy then [defLazyGet, defLazy] else [def]
 
 findOverridenDef :: Env -> D.ClassStm -> Maybe Def
@@ -963,6 +963,7 @@ linkDef env dd@D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.de
 				filterSelfPar ((Def{defName = "self"}, _):xs) = xs
 				filterSelfPar d = d
 
+		ans = map (linkAnnotation env) (D.defAnnotations dd)
 		checkParTypeAndWrapIfNeeded :: ((Def, Maybe Exp), Def) -> (Def, Maybe Exp)
 		checkParTypeAndWrapIfNeeded (p@(thisPar@Def{defType = thisTp}, de), Def{defType = superTp})
 			| isInstanceOfTp env thisTp superTp = case (thisTp, superTp) of
@@ -998,7 +999,7 @@ linkDef env dd@D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.de
 			D.Nop -> Def {defMods = DefModDef : mods' ++ [DefModAbstract | not isSelfStub] ++ additionalMods, 
 					defName = name, defGenerics = defGenerics',
 					defPars = parDefs,
-					defType = dataType env' (fromMaybe (D.DataType "void" []) tp), defBody = Nop} 
+					defType = dataType env' (fromMaybe (D.DataType "void" []) tp), defBody = Nop, defAnnotations = ans} 
 			_   -> 
 				let 
 					b = case tp of
@@ -1017,7 +1018,7 @@ linkDef env dd@D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.de
 						| otherwise = e
 				in Def {defMods = DefModDef : mods' ++ additionalMods, defName = name, defGenerics = defGenerics',
 					defPars = parDefs,
-					defType = tp'', defBody = addSuperInit $ maybeAddReturn env tp'' b})
+					defType = tp'', defBody = addSuperInit $ maybeAddReturn env tp'' b, defAnnotations = ans})
 
 resolveDefPar :: Env -> Def -> [(Def, Maybe Exp)] -> [Def]
 --resolveDefPar _ Def{defName = dn} _ | trace ("resolveDefPar: " ++ dn) False = undefined
@@ -1061,7 +1062,7 @@ linkDefPars env pars = let
 			defName = pnm, defPars = [], 
 			defType = tp', 
 			defBody = Nop, 
-			defMods = DefModLocal : map parMod mods, defGenerics = Nothing}, 
+			defMods = DefModLocal : map parMod mods, defGenerics = Nothing, defAnnotations = []}, 
 			case pd of
 				D.Nop -> Nothing
 				_ -> Just $ defaultExp)
@@ -1273,7 +1274,7 @@ dataTypeClass env f@TPFun{} = Class { _classMods = [], className = "", _classExt
 dataTypeClass _ x = ClassError (show x) ("No dataTypeClass for " ++ show x)
 
 applyLambdaDef :: DataType -> Def
-applyLambdaDef (TPFun stp dtp) = Def {defName = "apply", defPars = map (localVal "") sourceTypes, defType = dtp, defBody = Nop, defMods = [DefModApplyLambda], defGenerics = Nothing}
+applyLambdaDef (TPFun stp dtp) = Def {defName = "apply", defPars = map (localVal "") sourceTypes, defType = dtp, defBody = Nop, defMods = [DefModApplyLambda], defGenerics = Nothing, defAnnotations = []}
 	where
 		sourceTypes = case stp of
 			TPVoid -> []
@@ -2038,7 +2039,7 @@ expr env (D.Val name tp body mods) = let
 		defBody = if isTpOption tp'' then body'' else case body'' of
 			Nop -> ExpError $ name ++ ": no initialiazation value for non-option"
 			_ -> body'', 
-		defGenerics = Nothing}
+		defGenerics = Nothing, defAnnotations = []}
 	in declareVal env def'
 expr _ (D.Arr []) = Arr []
 expr env (D.Arr [e]) = Arr [expr env e]

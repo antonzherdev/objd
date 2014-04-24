@@ -46,7 +46,7 @@ type ExtendsRef =  (String, [DataType])
 
 data Annotation = Annotation {annotationName :: String, annotaionPars :: [CallPar], annotationGenerics :: [DataType]}
 
-data ClassStm = Def {defMods :: [DefMod],  defName :: String, defGenerics :: [Generic], defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp}
+data ClassStm = Def {defMods :: [DefMod],  defName :: String, defGenerics :: [Generic], defPars :: [Par], defRetType :: Maybe DataType, defBody :: Exp, defAnnotations :: [Annotation]}
 	| ClassImport [String]
 
 data DefMod = DefModPrivate | DefModProtected | 

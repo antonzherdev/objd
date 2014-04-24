@@ -227,12 +227,12 @@ pClassFields = option [] $ brackets $ pConstrField `sepBy` charSps ','
 
 
 pConstrField :: Parser ClassStm
-pConstrField = pDecl' (\p -> (optionMaybe p >>= (\mut -> return $ DefModConstructorField : [DefModField | isJust mut] ++ [DefModMutable| isJust mut && fromJust mut] ) ))
-pDecl :: Parser ClassStm
-pDecl = pDecl' (\ p -> p >>= (\mut -> return $ DefModField : [DefModMutable| mut]))
+pConstrField = pDecl' [] (\p -> (optionMaybe p >>= (\mut -> return $ DefModConstructorField : [DefModField | isJust mut] ++ [DefModMutable| isJust mut && fromJust mut] ) ))
+pDecl :: [Annotation] -> Parser ClassStm
+pDecl ans = pDecl' ans (\ p -> p >>= (\mut -> return $ DefModField : [DefModMutable| mut]))
 
-pDecl' :: (Parser Bool -> Parser [DefMod]) -> Parser ClassStm
-pDecl' mtf = do
+pDecl' :: [Annotation] -> (Parser Bool -> Parser [DefMod]) -> Parser ClassStm
+pDecl' ans mtf = do
 		mods <- many pMod
 		tpmd <- mtf mutableType
 		name <- ident
@@ -241,7 +241,7 @@ pDecl' mtf = do
 		sps
 		def <- oExp
 		sps
-		return Def{defName = name, defRetType = dataType, defMods = tpmd ++ mods, defBody = def, defGenerics = [], defPars = []}
+		return Def{defName = name, defRetType = dataType, defMods = tpmd ++ mods, defBody = def, defGenerics = [], defPars = [], defAnnotations = ans}
 	where
 		mutableType = var <|> val
 		val = try(string "val" >> sps1)  >> return False
@@ -273,10 +273,12 @@ pImport a = do
 	
 
 pStm :: Parser ClassStm
-pStm = pDef <|> pDecl <|> (pImport [] >>= \(Import name _) -> return $ ClassImport name) <?> "Class statement"
+pStm = do
+	ans <- pAnnotations
+	pDef ans  <|> pDecl ans <|> (pImport [] >>= \(Import name _) -> return $ ClassImport name) <?> "Class statement"
 	
-pDef :: Parser ClassStm
-pDef = do
+pDef :: [Annotation] -> Parser ClassStm
+pDef ans = do
 	mods <- try $ do 
 		mds <- many pMod 
 		sps
@@ -296,13 +298,13 @@ pDef = do
 			sps
 			body <- option Nop pExp 
 			sps
-			return $ Def mods name gens pars ret body
+			return $ Def mods name gens pars ret body ans
 		) <|> (do
 			body <- optionMaybe pBraces
 			sps
 			return $ Def mods name gens pars 
 				(Just $ calcTp ret body)
-				(fromMaybe Nop body)
+				(fromMaybe Nop body) ans
 		)
 		where
 			calcTp :: Maybe DataType -> Maybe Exp -> DataType
