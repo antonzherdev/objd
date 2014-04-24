@@ -3,7 +3,7 @@ package core.chain;
 public abstract class Future<T> {
     public static Future<T> applyF(F<Void, T> f) {
         Promise<T> p = Promise().apply<T>();
-        DispatchQueue().default.async(new P0() {
+        DispatchQueue().default.asyncF(new P0() {
             @Override
             public void apply() {
                 return p.successValue(ERROR: Unknown <l>f\void -> T#G\());
@@ -368,10 +368,10 @@ public abstract class Future<T> {
             @Override
             public void apply(Try<T> _) {
                 lock.lock();
-                lock.unlockWith(1);
+                lock.unlockWithCondition(1);
             }
         });
-        if(lock.lockWhen(1, period)) {
+        if(lock.lockWhenConditionPeriod(1, period)) {
             lock.unlock();
         }
         return this.result();
@@ -382,10 +382,10 @@ public abstract class Future<T> {
             @Override
             public void apply(Try<T> _) {
                 lock.lock();
-                lock.unlockWith(1);
+                lock.unlockWithCondition(1);
             }
         });
-        lock.lockWhen(1);
+        lock.lockWhenCondition(1);
         lock.unlock();
         return ERROR: Unknown {
     local __tmp_4 : (^Try#C<§T#G§>)? = <Future#C<T#G>>self.<dIa>result\(^Try#C<§T#G§>)?\

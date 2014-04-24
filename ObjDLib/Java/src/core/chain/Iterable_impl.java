@@ -21,7 +21,7 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
         Iterator<T> i = this.iterator();
         while(i.hasNext()) {
             T v = i.next();
-            DispatchQueue().default.async(new P0() {
+            DispatchQueue().default.asyncF(new P0() {
                 @Override
                 public void apply() {
                     each.apply(v);
@@ -41,7 +41,7 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
     }
     @Override
     public String toString() {
-        return this.chain().toStringWith("[", ", ", "]");
+        return this.chain().toStringWithStartDelimiterEnd("[", ", ", "]");
     }
     @Override
     public int hashCode() {

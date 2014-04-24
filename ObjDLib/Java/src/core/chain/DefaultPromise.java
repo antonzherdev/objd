@@ -48,7 +48,7 @@ public class DefaultPromise<T> extends Promise<T> {
                 return ;
             } else {
                 ImArray<P<Try<T>>> vv = ((ImArray<P<Try<T>>>)v);
-                if(this._state.compareAndSet(vv, vv.add(f))) {
+                if(this._state.compareAndSet(vv, vv.addItem(f))) {
                     return ;
                 }
             }

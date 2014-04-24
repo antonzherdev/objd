@@ -5,7 +5,7 @@ public final final class Tuple<A, B> implements Comparable<Tuple<A, B>> {
     public final B b;
     @Override
     public int compareTo(Tuple<AC, BC> to) {
-        int r = to.a.compare(this.a);
+        int r = to.a.compareTo(this.a);
         if(r.equals(0)) {
             return ERROR: Unknown -<l>to\^Tuple#C<AC#G, BC#G>\.<eIU>b\BC#G\.<rdIb>compare(to = <Tuple#C<A#G, B#G>>self.<eIU>b\§B#G§\)\int\;
         } else {
