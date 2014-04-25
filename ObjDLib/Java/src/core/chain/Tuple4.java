@@ -8,11 +8,11 @@ public final class Tuple4<A, B, C, D> implements Comparable<Tuple4<A, B, C, D>> 
     @Override
     public <AC extends Comparable<A>, BC extends Comparable<B>, CC extends Comparable<C>, DC extends Comparable<D>> int compareTo(final Tuple4<AC, BC, CC, DC> to) {
         int r = to.a.compareTo(this.a);
-        if(r.equals(0)) {
+        if(r == 0) {
             r = to.b.compareTo(this.b);
-            if(r.equals(0)) {
+            if(r == 0) {
                 r = to.c.compareTo(this.c);
-                if(r.equals(0)) {
+                if(r == 0) {
                     return -(to.d.compareTo(this.d));
                 } else {
                     return -(r);

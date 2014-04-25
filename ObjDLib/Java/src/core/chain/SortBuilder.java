@@ -31,7 +31,7 @@ public class SortBuilder<A> {
             public Integer apply(final A x, final A y) {
                 int ret = 0;
                 final Iterator<F2<A, A, Integer>> i = SortBuilder.this.functions.iterator();
-                while(ret.equals(0) && i.hasNext()) {
+                while(ret == 0 && i.hasNext()) {
                     final F2<A, A, Integer> f = i.next();
                     ret = f.apply(x, y);
                 }

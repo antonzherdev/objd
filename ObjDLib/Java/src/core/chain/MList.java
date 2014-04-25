@@ -22,7 +22,7 @@ public class MList<T> extends MSeq_impl<T> {
     }
     @Override
     public void insertIndexItem(final int index, final T item) {
-        if(index.equals(0)) {
+        if(index == 0) {
             prependItem(item);
         } else {
             if(index >= this._count) {

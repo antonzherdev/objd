@@ -34,7 +34,7 @@ public class ShuffleLink<T> implements ChainLink<T, T> {
                 } else {
                     ShuffleLink.this._array;
                 }
-                if(yield.yieldAll().equals(1)) {
+                if(yield.yieldAll() == 1) {
                     return 1;
                 } else {
                     return r;

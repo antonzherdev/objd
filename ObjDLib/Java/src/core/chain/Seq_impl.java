@@ -3,7 +3,7 @@ package core.chain;
 public abstract class Seq_impl<T> extends Iterable_impl<T> implements Seq<T> {
     @Override
     public boolean isEmpty() {
-        return this.count().equals(0);
+        return this.count() == 0;
     }
     @Override
     public T head() {
@@ -16,7 +16,7 @@ public abstract class Seq_impl<T> extends Iterable_impl<T> implements Seq<T> {
         final Iterator<T> i = this.iterator();
         int n = index;
         while(i.hasNext()) {
-            if(n.equals(0)) {
+            if(n == 0) {
                 return i.next();
             }
             i.next();
@@ -25,16 +25,16 @@ public abstract class Seq_impl<T> extends Iterable_impl<T> implements Seq<T> {
         return null;
     }
     public Set<T> toSet() {
-        return convertWithBuilder<Set<T>>(new HashSetBuilder<T>());
+        return <Set<T>>convertWithBuilder(new HashSetBuilder<T>());
     }
     public boolean isEqualSeq(final Seq<T> seq) {
-        if(this.count().equals(seq.count())) {
+        if(this.count() != seq.count()) {
             return false;
         }
         final Iterator<T> ia = this.iterator();
         final Iterator<T> ib = seq.iterator();
         while(ia.hasNext() && ib.hasNext()) {
-            if(ia.next().equals(ib.next())) {
+            if(!(ia.next().equals(ib.next()))) {
                 return false;
             }
         }

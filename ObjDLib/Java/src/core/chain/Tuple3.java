@@ -7,9 +7,9 @@ public final class Tuple3<A, B, C> implements Comparable<Tuple3<A, B, C>> {
     @Override
     public <AC extends Comparable<A>, BC extends Comparable<B>, CC extends Comparable<C>> int compareTo(final Tuple3<AC, BC, CC> to) {
         int r = to.a.compareTo(this.a);
-        if(r.equals(0)) {
+        if(r == 0) {
             r = to.b.compareTo(this.b);
-            if(r.equals(0)) {
+            if(r == 0) {
                 return -(to.c.compareTo(this.c));
             } else {
                 return -(r);

@@ -53,7 +53,7 @@ public abstract class Future<T> {
             public void apply(final Try<A> t) {
                 if(t.isSuccess()) {
                     _a.value = t.get();
-                    if(n.incrementAndGet().equals(2)) {
+                    if(n.incrementAndGet() == 2) {
                         p.successValue(f.apply(_a.value, _b.value));
                     }
                 } else {
@@ -66,7 +66,7 @@ public abstract class Future<T> {
             public void apply(final Try<B> t) {
                 if(t.isSuccess()) {
                     _b.value = t.get();
-                    if(n.incrementAndGet().equals(2)) {
+                    if(n.incrementAndGet() == 2) {
                         p.successValue(f.apply(_a.value, _b.value));
                     }
                 } else {
@@ -87,7 +87,7 @@ public abstract class Future<T> {
             public void apply(final Try<A> t) {
                 if(t.isSuccess()) {
                     _a.value = t.get();
-                    if(n.incrementAndGet().equals(3)) {
+                    if(n.incrementAndGet() == 3) {
                         p.successValue(f.apply(_a.value, _b.value, _c.value));
                     }
                 } else {
@@ -100,7 +100,7 @@ public abstract class Future<T> {
             public void apply(final Try<B> t) {
                 if(t.isSuccess()) {
                     _b.value = t.get();
-                    if(n.incrementAndGet().equals(3)) {
+                    if(n.incrementAndGet() == 3) {
                         p.successValue(f.apply(_a.value, _b.value, _c.value));
                     }
                 } else {
@@ -113,7 +113,7 @@ public abstract class Future<T> {
             public void apply(final Try<C> t) {
                 if(t.isSuccess()) {
                     _c.value = t.get();
-                    if(n.incrementAndGet().equals(3)) {
+                    if(n.incrementAndGet() == 3) {
                         p.successValue(f.apply(_a.value, _b.value, _c.value));
                     }
                 } else {
@@ -135,7 +135,7 @@ public abstract class Future<T> {
             public void apply(final Try<A> t) {
                 if(t.isSuccess()) {
                     _a.value = t.get();
-                    if(n.incrementAndGet().equals(4)) {
+                    if(n.incrementAndGet() == 4) {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value));
                     }
                 } else {
@@ -148,7 +148,7 @@ public abstract class Future<T> {
             public void apply(final Try<B> t) {
                 if(t.isSuccess()) {
                     _b.value = t.get();
-                    if(n.incrementAndGet().equals(4)) {
+                    if(n.incrementAndGet() == 4) {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value));
                     }
                 } else {
@@ -161,7 +161,7 @@ public abstract class Future<T> {
             public void apply(final Try<C> t) {
                 if(t.isSuccess()) {
                     _c.value = t.get();
-                    if(n.incrementAndGet().equals(4)) {
+                    if(n.incrementAndGet() == 4) {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value));
                     }
                 } else {
@@ -174,7 +174,7 @@ public abstract class Future<T> {
             public void apply(final Try<D> t) {
                 if(t.isSuccess()) {
                     _d.value = t.get();
-                    if(n.incrementAndGet().equals(4)) {
+                    if(n.incrementAndGet() == 4) {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value));
                     }
                 } else {
@@ -190,14 +190,14 @@ public abstract class Future<T> {
         final MutVolatile<B> _b = new MutVolatile<B>(null);
         final MutVolatile<C> _c = new MutVolatile<C>(null);
         final MutVolatile<D> _d = new MutVolatile<D>(null);
-        final MutVolatile<D> _e = new MutVolatile<D>(null);
+        final MutVolatile<E> _e = new MutVolatile<E>(null);
         final AtomicInt n = new AtomicInt();
         a.onCompleteF(new P<Try<A>>() {
             @Override
             public void apply(final Try<A> t) {
                 if(t.isSuccess()) {
                     _a.value = t.get();
-                    if(n.incrementAndGet().equals(5)) {
+                    if(n.incrementAndGet() == 5) {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
@@ -210,7 +210,7 @@ public abstract class Future<T> {
             public void apply(final Try<B> t) {
                 if(t.isSuccess()) {
                     _b.value = t.get();
-                    if(n.incrementAndGet().equals(5)) {
+                    if(n.incrementAndGet() == 5) {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
@@ -223,7 +223,7 @@ public abstract class Future<T> {
             public void apply(final Try<C> t) {
                 if(t.isSuccess()) {
                     _c.value = t.get();
-                    if(n.incrementAndGet().equals(5)) {
+                    if(n.incrementAndGet() == 5) {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
@@ -236,7 +236,7 @@ public abstract class Future<T> {
             public void apply(final Try<D> t) {
                 if(t.isSuccess()) {
                     _d.value = t.get();
-                    if(n.incrementAndGet().equals(5)) {
+                    if(n.incrementAndGet() == 5) {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
@@ -249,7 +249,7 @@ public abstract class Future<T> {
             public void apply(final Try<E> t) {
                 if(t.isSuccess()) {
                     _e.value = t.get();
-                    if(n.incrementAndGet().equals(5)) {
+                    if(n.incrementAndGet() == 5) {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
@@ -308,7 +308,7 @@ public abstract class Future<T> {
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(final Try<T> tr) {
-                p.completeValue(tr.mapF<R>(f));
+                p.completeValue(tr.<R>mapF(f));
             }
         });
         return p;
@@ -421,7 +421,7 @@ else <l>__tmp\§(T#G)?§\
             public void apply(final Try<T> t) {
                 if(t.isSuccess()) {
                     a.value = t.get();
-                    if(n.incrementAndGet().equals(2)) {
+                    if(n.incrementAndGet() == 2) {
                         p.successValue(new Tuple<T, R>(a.value, b.value));
                     }
                 } else {
@@ -434,7 +434,7 @@ else <l>__tmp\§(T#G)?§\
             public void apply(final Try<R> t) {
                 if(t.isSuccess()) {
                     b.value = t.get();
-                    if(n.incrementAndGet().equals(2)) {
+                    if(n.incrementAndGet() == 2) {
                         p.successValue(new Tuple<T, R>(a.value, b.value));
                     }
                 } else {

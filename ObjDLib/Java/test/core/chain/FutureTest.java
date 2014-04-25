@@ -45,7 +45,7 @@ public class FutureTest extends TestCase {
                     @Override
                     public void apply() {
                         final Promise<Integer> p = Promise.<Integer>apply();
-                        final Future<Integer> m = p.mapF<Integer>(new F<Integer, Integer>() {
+                        final Future<Integer> m = p.<Integer>mapF(new F<Integer, Integer>() {
                             @Override
                             public Integer apply(final Integer _) {
                                 return _ + 1;
@@ -81,7 +81,7 @@ public class FutureTest extends TestCase {
                 final Integer i = __inline__3_i.next();
                 {
                     final Promise<Integer> p = Promise.<Integer>apply();
-                    final Future<Integer> m = p.flatMapF<Integer>(new F<Integer, Future<Integer>>() {
+                    final Future<Integer> m = p.<Integer>flatMapF(new F<Integer, Future<Integer>>() {
                         @Override
                         public Future<Integer> apply(final Integer _) {
                             return Future.<Integer>applyF(new F0<Integer>() {

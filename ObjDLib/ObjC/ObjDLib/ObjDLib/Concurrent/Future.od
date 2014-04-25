@@ -117,7 +117,7 @@ abstract class Future<T> {
         volatile var _b : B = nil
         volatile var _c : C = nil
         volatile var _d : D = nil
-        volatile var _e : D = nil
+        volatile var _e : E = nil
         val n = AtomicInt()
         a.onComplete{t ->
             if(t.isSuccess) {

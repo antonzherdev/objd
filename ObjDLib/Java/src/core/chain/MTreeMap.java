@@ -146,14 +146,14 @@ else <l>__tmp_4_1\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
             p.left = null;
             p.right = null;
             p.parent = null;
-            if(p.color.equals(this.BLACK)) {
+            if(p.color == this.BLACK) {
                 fixAfterDeletionEntry(replacement);
             }
         } else {
             if(p.parent == null) {
                 this._root = null;
             } else {
-                if(p.color.equals(this.BLACK)) {
+                if(p.color == this.BLACK) {
                     fixAfterDeletionEntry(p);
                 }
                 if(p.parent != null) {
@@ -187,18 +187,18 @@ else <l>__tmp_4_1_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     private void fixAfterInsertionEntry(final TreeMapEntry<K, V> entry) {
         entry.color = this.RED;
         TreeMapEntry<K, V> x = entry;
-        while(x != null && (this._root == null || this._root.equals(x)) && ERROR: Unknown {
+        while(x != null && (this._root == null || !(this._root.equals(x))) && ERROR: Unknown {
     local __tmp_2 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     if((<l>__tmp_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == none<^TreeMapEntry#C<§K#G§, §V#G§>>)) throw "Not null"
 else <l>__tmp_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-}.color.equals(this.RED)) {
+}.color == this.RED) {
             if(ERROR: Unknown {
     local __tmp_2_0_l : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     local __tmp_2_0_r : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     return ((<l>__tmp_2_0_l\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ === <l>__tmp_2_0_r\(^TreeMapEntry#C<§K#G§, §V#G§>)?\) || (((<l>__tmp_2_0_l\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && (<l>__tmp_2_0_r\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>)) && (<l>__tmp_2_0_l\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == <l>__tmp_2_0_r\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)))
 }) {
                 final TreeMapEntry<K, V> y = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
-                if(y != null && y.color.equals(this.RED)) {
+                if(y != null && y.color == this.RED) {
                     {
                         final TreeMapEntry<K, V> __tmp_2_0_1_0 = x.parent;
                         if(__tmp_2_0_1_0 != null) {
@@ -237,7 +237,7 @@ else <l>__tmp_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
                 }
             } else {
                 final TreeMapEntry<K, V> y = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
-                if(y != null && y.color.equals(this.RED)) {
+                if(y != null && y.color == this.RED) {
                     {
                         final TreeMapEntry<K, V> __tmp_2_0_1_0 = x.parent;
                         if(__tmp_2_0_1_0 != null) {
@@ -282,13 +282,13 @@ else <l>__tmp_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     }
     private void fixAfterDeletionEntry(final TreeMapEntry<K, V> entry) {
         TreeMapEntry<K, V> x = entry;
-        while(x != null && (this._root == null || this._root.equals(x)) && x.color.equals(this.BLACK)) {
+        while(x != null && (this._root == null || !(this._root.equals(x))) && x.color == this.BLACK) {
             if(ERROR: Unknown {
     local __tmp_1_0 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     return ((<l>__tmp_1_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && (<l>__tmp_1_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\))
 }) {
                 TreeMapEntry<K, V> sib = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
-                if(sib != null && sib.color.equals(this.RED)) {
+                if(sib != null && sib.color == this.RED) {
                     sib.color = this.BLACK;
                     {
                         final TreeMapEntry<K, V> __tmp_1_0_1_1 = x.parent;
@@ -303,11 +303,11 @@ else <l>__tmp_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     local __tmp_1_0_2 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     if((<l>__tmp_1_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<(^TreeMapEntry#C<§K#G§, §V#G§>)?>)) <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIm>color\int\
 else <MTreeMap#C<K#G, V#G>>self.<reIt>BLACK\int\
-}.equals(this.BLACK) && ERROR: Unknown {
+} == this.BLACK && ERROR: Unknown {
     local __tmp_1_0_2 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     if((<l>__tmp_1_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<(^TreeMapEntry#C<§K#G§, §V#G§>)?>)) <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIm>color\int\
 else <MTreeMap#C<K#G, V#G>>self.<reIt>BLACK\int\
-}.equals(this.BLACK)) {
+} == this.BLACK) {
                     if(sib != null) {
                         sib.color = this.RED;
                     }
@@ -317,7 +317,7 @@ else <MTreeMap#C<K#G, V#G>>self.<reIt>BLACK\int\
     local __tmp_1_0_2_0 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     if((<l>__tmp_1_0_2_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<(^TreeMapEntry#C<§K#G§, §V#G§>)?>)) <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIm>color\int\
 else <MTreeMap#C<K#G, V#G>>self.<reIt>BLACK\int\
-}.equals(this.BLACK)) {
+} == this.BLACK) {
                         {
                             final TreeMapEntry<K, V> __tmp_1_0_2_0_0 = ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
                             if(__tmp_1_0_2_0_0 != null) {
@@ -354,7 +354,7 @@ else return <MTreeMap#C<K#G, V#G>>self.<reIt>BLACK\int\
                 }
             } else {
                 TreeMapEntry<K, V> sib = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
-                if(sib != null && sib.color.equals(this.RED)) {
+                if(sib != null && sib.color == this.RED) {
                     sib.color = this.BLACK;
                     {
                         final TreeMapEntry<K, V> __tmp_1_0_1_1 = x.parent;
@@ -369,11 +369,11 @@ else return <MTreeMap#C<K#G, V#G>>self.<reIt>BLACK\int\
     local __tmp_1_0_2 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     if((<l>__tmp_1_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<(^TreeMapEntry#C<§K#G§, §V#G§>)?>)) <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIm>color\int\
 else <MTreeMap#C<K#G, V#G>>self.<reIt>BLACK\int\
-}.equals(this.BLACK) && ERROR: Unknown {
+} == this.BLACK && ERROR: Unknown {
     local __tmp_1_0_2 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     if((<l>__tmp_1_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<(^TreeMapEntry#C<§K#G§, §V#G§>)?>)) <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIm>color\int\
 else <MTreeMap#C<K#G, V#G>>self.<reIt>BLACK\int\
-}.equals(this.BLACK)) {
+} == this.BLACK) {
                     if(sib != null) {
                         sib.color = this.RED;
                     }
@@ -383,7 +383,7 @@ else <MTreeMap#C<K#G, V#G>>self.<reIt>BLACK\int\
     local __tmp_1_0_2_0 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
     if((<l>__tmp_1_0_2_0\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<(^TreeMapEntry#C<§K#G§, §V#G§>)?>)) <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.get.<eIm>color\int\
 else <MTreeMap#C<K#G, V#G>>self.<reIt>BLACK\int\
-}.equals(this.BLACK)) {
+} == this.BLACK) {
                         {
                             final TreeMapEntry<K, V> __tmp_1_0_2_0_0 = ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
                             if(__tmp_1_0_2_0_0 != null) {

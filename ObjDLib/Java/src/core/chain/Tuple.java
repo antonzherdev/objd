@@ -6,7 +6,7 @@ public final class Tuple<A, B> implements Comparable<Tuple<A, B>> {
     @Override
     public <AC extends Comparable<A>, BC extends Comparable<B>> int compareTo(final Tuple<AC, BC> to) {
         final int r = to.a.compareTo(this.a);
-        if(r.equals(0)) {
+        if(r == 0) {
             return -(to.b.compareTo(this.b));
         } else {
             return -(r);

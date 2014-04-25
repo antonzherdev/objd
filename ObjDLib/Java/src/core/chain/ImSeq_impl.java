@@ -29,7 +29,7 @@ public abstract class ImSeq_impl<T> extends Seq_impl<T> implements ImSeq<T> {
         return this.chain().filter(new F<T, Boolean>() {
             @Override
             public Boolean apply(final T _) {
-                return _.equals(item);
+                return !(_.equals(item));
             }
         }).toArray();
     }

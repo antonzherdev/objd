@@ -88,7 +88,7 @@ genDef cl d =
  			Just (ExtendsClass _ []) -> return []
  			Just (ExtendsClass _ pars) -> do
  				pars' <- mapM superPar pars
- 				return [J.Stm $ J.Call False "super" [] pars']
+ 				return [J.Stm $ J.Call "super" [] pars']
  			_ -> return []
  			where superPar p = do
  				let  (e', Wrt{wrtImports = imps}) = runWriter $ genExp defaultEnv $ snd p
@@ -237,7 +237,7 @@ genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
 		|| (D.defName constr == "apply" && D.DefModStub `elem` D.defMods constr && D.DefModStatic `elem` D.defMods constr) 
 		= do
 			pars' <- mapM ((genExp env) . snd) pars
-			return $ J.New [] $ J.Call False (D.defName objDef) (map genTp gens) pars'
+			return $ J.New [] (D.defName objDef) (map genTp gens) pars'
 genExp env (D.Dot (Self _) r@(D.Call _ _ pars _) ) 
 	| not (null pars) = genExp env r
 genExp env (D.Dot l r) = do
@@ -253,7 +253,7 @@ genExp _ (D.Call d _ [] [])
 	| D.DefModField `elem` D.defMods d || D.DefModLocal `elem` D.defMods d || D.DefModObject `elem` D.defMods d = return $ J.Ref $ D.defName d
 genExp env (D.Call d _ pars gens) = do
 	pars' <- mapM ((genExp env) . snd) pars
-	return $ J.Call (D.DefModStatic `elem` D.defMods d) (defName' d) (map genTp gens) pars'
+	return $ J.Call (defName' d) (map genTp gens) pars'
 genExp env (D.Lambda pars e dtp) = do
 	stms <- getStms env{envInnerClass = True} e
 	let 
@@ -268,7 +268,7 @@ genExp env (D.Lambda pars e dtp) = do
 		}
 		funPar (nm, tp) = ([J.DefModFinal], genTp (D.wrapGeneric tp), nm)
 		clNm = (if dtp == D.TPVoid then "P" else "F") ++ if length pars == 1 then "" else show (length pars)
-	return $ J.New [def] $ J.Call False clNm (map (genTp . D.wrapGeneric . snd) pars ++ [genTp (D.wrapGeneric dtp) | dtp /= D.TPVoid]) []
+	return $ J.New [def] clNm (map (genTp . D.wrapGeneric . snd) pars ++ [genTp (D.wrapGeneric dtp) | dtp /= D.TPVoid]) []
 genExp Env{envInnerClass = False} (D.Self _) = return J.This
 genExp Env{envInnerClass = True} (D.Self tp) = return  $ J.Dot (J.Ref $ D.dataTypeClassName tp) J.This
 genExp env (D.MathOp tp l r) = do
@@ -281,7 +281,7 @@ genExp env (D.PlusPlus e) = genExp env e >>= return . J.PlusPlus
 genExp env (D.MinusMinus e) = genExp env e >>= return . J.MinusMinus
 genExp env (D.LambdaCall e) = do
 	e' <- genExp env e
-	return $ J.Dot e' $ J.Call False "apply" [] []
+	return $ J.Dot e' $ J.Call "apply" [] []
 genExp env (D.BoolOp tp l r) = do
 	l' <- genExp env l
 	r' <- genExp env r
@@ -291,7 +291,9 @@ genExp env (D.BoolOp tp l r) = do
 			(D.None _, _) -> bool
 			(_, D.None _) -> bool
 			_ -> case (D.exprDataType l, D.exprDataType r) of
-				_ -> J.Dot l' (J.Call False "equals" [] [r'])
+				(D.TPNumber{}, _) -> bool
+				(_, D.TPNumber{}) -> bool
+				_ -> (if tp == Eq then id else J.Not) $ J.Dot l' (J.Call "equals" [] [r'])
 		in return $ case tp of 
 			ExactEq -> J.BoolOp Eq l' r'
 			ExactNotEq -> J.BoolOp NotEq l' r'
@@ -319,10 +321,10 @@ genExp env (D.Some _ e) = genExp env e
 genExp env (D.Return False e) = genExp env e
 genExp env (D.Arr exps) = do
 	exps' <- mapM (genExp env) exps
-	return $ J.Dot (J.Ref "ImArray") (J.Call True "fromObjects" [] exps')
+	return $ J.Dot (J.Ref "ImArray") (J.Call "fromObjects" [] exps')
 genExp env (D.StringBuild pars lastString) = do
 	pars' <- mapM (par' . snd) pars
-	return $ J.Dot (J.Ref  "String") $ J.Call True "format" [] (J.StringConst format : join pars')
+	return $ J.Dot (J.Ref  "String") $ J.Call "format" [] (J.StringConst format : join pars')
 	where
 		format = concatMap (\(prev, e) -> prev ++ stringFormatForType (D.exprDataType e) ) pars ++ lastString
 		par' expr = do
@@ -330,7 +332,7 @@ genExp env (D.StringBuild pars lastString) = do
 			return $ stringExpressionsForTp (D.exprDataType expr) expr'
 genExp env (D.Tuple exps) = do
 	exps' <- mapM (genExp env) exps
-	return $ J.New [] $ J.Call False (tupleClassName $ length exps') (map (genTp . D.exprDataType) exps) exps'
+	return $ J.New [] (tupleClassName $ length exps') (map (genTp . D.exprDataType) exps) exps'
 genExp _ e = return $ J.ExpError $ "Unknown " ++ show e
 
 
@@ -394,7 +396,7 @@ genStm env (D.If cond t f) = do
 genStm env (D.While cond w) = do
 	w' <- getStms env w
 	genExpStm env cond (\cond' -> J.While cond' w')
-genStm env (D.Throw e) = genExpStm env e (\e' -> J.Throw $ J.New [] $ J.Call False "RuntimeException" [] [e'])
+genStm env (D.Throw e) = genExpStm env e (\e' -> J.Throw $ J.New [] "RuntimeException" [] [e'])
 genStm env (D.Set tp l r) = let
 	(l', Wrt{wrtStms = lstm, wrtImports = limps}) = runWriter $ genExp env l
 	(r', Wrt{wrtStms = rstm, wrtImports = rimps}) = runWriter $ genExp env r
@@ -414,7 +416,7 @@ declareVal d e
 	| D.DefModChangedInLambda `elem` D.defMods d = let
 		tp = genTp $ D.defType d
 		clnm = if D.DefModVolatile `elem` D.defMods d then "MutVolatile" else "Mut"
-		new = J.New [] $ J.Call False clnm [tp] $ case e of
+		new = J.New [] clnm [tp] $ case e of
 			J.Nop -> []
 			_ -> [e]
 		in J.Val [J.DefModFinal] (J.TPRef [tp] clnm) (D.defName d) new

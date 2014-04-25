@@ -44,7 +44,7 @@ public class MTreeMapKeyIterator<K> extends MIterator_impl<K> {
         {
             final TreeMapEntry<K, ?> p = this.prev;
             if(p != null) {
-                if(p.key.equals(value)) {
+                if(!(p.key.equals(value))) {
                     this.map.deleteEntry(p);
                     this.map.setKeyValue(value, p.value);
                 }

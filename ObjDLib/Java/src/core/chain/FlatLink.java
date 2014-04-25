@@ -16,7 +16,7 @@ public class FlatLink<T> implements ChainLink<Traversable<T>, T> {
                 col.goOn(new F<T, Boolean>() {
                     @Override
                     public Boolean apply(final T item) {
-                        if(yield.yieldItem(item).equals(0)) {
+                        if(yield.yieldItem(item) != 0) {
                             result.value = 1;
                             return false;
                         } else {

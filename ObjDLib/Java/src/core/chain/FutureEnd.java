@@ -49,7 +49,7 @@ public class FutureEnd<T> {
                                         .setIndexItem(((int)i), tr.get());
                                         _set.value = i;
                                         final int r = FutureEnd.this._counter.decrementAndGet();
-                                        if(FutureEnd.this._ended && r.equals(0)) {
+                                        if(FutureEnd.this._ended && r == 0) {
                                             if(!(FutureEnd.this._yielded.getAndSetNewValue(true))) {
                                                 if(FutureEnd.this._array == null) {
                                                     throw new RuntimeException("Not null");
@@ -75,7 +75,7 @@ public class FutureEnd<T> {
             @Override
             public Integer apply(final Integer res) {
                 FutureEnd.this._ended = true;
-                if(FutureEnd.this._counter.intValue().equals(0)) {
+                if(FutureEnd.this._counter.intValue() == 0) {
                     if(!(FutureEnd.this._yielded.getAndSetNewValue(true))) {
                         if(FutureEnd.this._array == null) {
                             throw new RuntimeException("Not null");

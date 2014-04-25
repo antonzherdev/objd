@@ -23,7 +23,7 @@ public abstract class MSeq_impl<T> extends Seq_impl<T> implements MSeq<T> {
         boolean ret = false;
         while(i.hasNext()) {
             i.next();
-            if(j.equals(0)) {
+            if(j == 0) {
                 i.remove();
                 ret = true;
                 break;
@@ -36,7 +36,7 @@ public abstract class MSeq_impl<T> extends Seq_impl<T> implements MSeq<T> {
         final MIterator<T> i = this.mutableIterator();
         int n = index;
         while(i.hasNext()) {
-            if(n.equals(0)) {
+            if(n == 0) {
                 i.next();
                 i.setValue(item);
                 return ;
