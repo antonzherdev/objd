@@ -52,7 +52,7 @@ data ClassStm = Def {defMods :: [DefMod],  defName :: String, defGenerics :: [Ge
 data DefMod = DefModPrivate | DefModProtected | 
 	DefModMutable | DefModField | DefModDef |
 	DefModStatic | DefModWeak | DefModDelegate | DefModLazy | DefModPure |
-	DefModFinal | DefModOverride | DefModConstructorField | DefModInline deriving (Eq)
+	DefModFinal | DefModOverride | DefModConstructorField | DefModInline | DefModVolatile deriving (Eq)
 isDef :: ClassStm -> Bool
 isDef d@Def{} = DefModDef `elem` defMods d
 isDef _ =  False

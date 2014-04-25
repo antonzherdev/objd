@@ -265,7 +265,7 @@ synthesize env d@D.Def{D.defName = x} = C.ImplSynthesize x $ fieldName env d
 
 implField :: Env -> D.Def -> C.ImplField
 implField env d@D.Def{D.defType = tp, D.defMods = mods, D.defBody = e} = 
-	C.ImplField (fieldName env d) (showDataType tp) ["__weak" | D.DefModWeak `elem` mods] $ 
+	C.ImplField (fieldName env d) (showDataType tp) (["__weak" | D.DefModWeak `elem` mods] ++ ["volatile" | D.DefModVolatile `elem` mods]) $ 
 		if D.DefModStatic `elem` mods && D.isConst e then tExpTo env{envCStruct = 1} tp e else C.Nop
 
 implCreate :: D.Class -> D.Def -> C.ImplFun
@@ -1044,7 +1044,7 @@ tStm env@Env{envDataType = D.TPVoid} (D.Return _ e) = [C.Stm $ tExp env{envCStru
 tStm env@Env{envDataType = tp} (D.Return _ e) = [C.Return $ tExpToType env{envCStruct = 0} tp e]
 tStm env (D.Val separate D.Def{D.defName = name, D.defType = tp, D.defBody = e, D.defMods = mods}) = 
 	[C.Var (showDataType tp) name (if separate then C.Nop else tExpToType env tp e)
-		 (["__block" | D.DefModChangedInLambda `elem` mods] ++ ["__weak" | D.DefModWeak `elem` mods])]
+		 (["__block" | D.DefModChangedInLambda `elem` mods] ++ ["__weak" | D.DefModWeak `elem` mods] ++ ["volatile" | D.DefModVolatile `elem` mods] )]
 	++ (if separate then tStm env e else [])
 tStm env (D.Throw e) = [C.Throw $ tExp env e]
 tStm _ D.Break = [C.Break]

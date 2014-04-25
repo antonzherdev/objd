@@ -519,7 +519,7 @@ eqPar (x, y) = defName x == defName y
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModPublic | DefModProtected | DefModGlobalVal | DefModWeak
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
 	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper | DefModInline 
-	| DefModPure | DefModFinal | DefModOverride | DefModError String | DefModConstructorField
+	| DefModPure | DefModFinal | DefModOverride | DefModError String | DefModConstructorField | DefModVolatile
 	| DefModChangedInLambda
 	deriving (Eq, Ord)
 instance Show DefMod where
@@ -541,6 +541,7 @@ instance Show DefMod where
 	show DefModSpecial = "special"
 	show DefModStruct = "struct"
 	show DefModInline = "inline"
+	show DefModVolatile = "volatile"
 	show DefModConstructorField = ""
 	show DefModSuper = "super"
 	show DefModApplyLambda = "applyLambda"
@@ -603,6 +604,7 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModApplyLambda = 'd'
 		ch DefModSuper = 'r'
 		ch DefModInline = 'i'
+		ch DefModVolatile = 'v'
 		ch DefModConstructorField = 'U'
 		ch (DefModError _) = 'E'
 		ch DefModChangedInLambda = 'k'
@@ -948,6 +950,7 @@ translateMods = fx . mapMaybe m
 		m D.DefModOverride = Just DefModOverride
 		m D.DefModConstructorField = Just DefModConstructorField
 		m D.DefModInline = Just DefModInline
+		m D.DefModVolatile = Just DefModVolatile
 		m _ = Nothing
 		
 linkDef :: Env -> D.ClassStm -> [DefMod] -> [Def]
@@ -2065,7 +2068,7 @@ expr env (D.Val name tp body mods) = let
 	body' = expr env{envTp = fromMaybe (baseDataType env) tp'} body
 	tp'' = unwrapGeneric $ fromMaybe (exprDataType body') tp'
 	body'' = if isJust tp then implicitConvertsion env tp'' body' else body'
-	mods' = DefModLocal : [DefModMutable | D.DefModMutable `elem` mods] ++ [DefModWeak | D.DefModWeak `elem` mods] 
+	mods' = DefModLocal : [DefModMutable | D.DefModMutable `elem` mods] ++ [DefModWeak | D.DefModWeak `elem` mods] ++ [DefModVolatile | D.DefModVolatile `elem` mods] 
 	def' = Def{defName = name, defType = tp'', defMods = mods', defPars = [], 
 		defBody = if isTpOption tp'' then body'' else case body'' of
 			Nop -> ExpError $ name ++ ": no initialiazation value for non-option"

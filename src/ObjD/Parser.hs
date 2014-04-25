@@ -258,7 +258,7 @@ pMod = do
 		<|> (try(string "static") >> return DefModStatic) 
 		<|> (try(string "weak") >> return DefModWeak) <|> (try(string "delegate") >> return DefModDelegate)
 		<|> (try(string "lazy") >> return DefModLazy) <|> (try(string "pure") >> return DefModPure)
-		<|> (try(string "inline") >> return DefModInline)
+		<|> (try(string "inline") >> return DefModInline) <|> (try(string "volatile") >> return DefModVolatile)
 	sps1
 	return v
 
@@ -464,8 +464,9 @@ pTerm = do
 			return $ Weak e
 		pVal = do
 			mods <- try $ do
-				mm <- many (string "weak" >> sps1 >> return DefModWeak)
-				m <- (try (string "val") >> return [] ) <|> (string "var" >> return [DefModMutable])
+				mm <- many ((try (string "weak") >> sps1 >> return DefModWeak) 
+					<|> (try (string "volatile") >> sps1 >> return DefModVolatile))
+				m <- (try (string "val") >> return [] ) <|> (string "var" >> return [DefModMutable]) 
 				sps1
 				return $ m ++ mm
 			name <- ident

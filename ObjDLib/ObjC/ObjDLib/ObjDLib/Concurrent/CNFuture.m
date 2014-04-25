@@ -60,13 +60,12 @@ static ODClassType* _CNFuture_type;
 
 + (CNFuture*)mapA:(CNFuture*)a b:(CNFuture*)b f:(id(^)(id, id))f {
     CNPromise* p = [CNPromise apply];
-    __block id _a = nil;
-    __block id _b = nil;
+    __block volatile id _a = nil;
+    __block volatile id _b = nil;
     CNAtomicInt* n = [CNAtomicInt atomicInt];
     [a onCompleteF:^void(CNTry* t) {
         if([t isSuccess]) {
             _a = [t get];
-            memoryBarrier();
             if([n incrementAndGet] == 2) [p successValue:f(_a, _b)];
         } else {
             [p completeValue:((CNTry*)(t))];
@@ -75,7 +74,6 @@ static ODClassType* _CNFuture_type;
     [b onCompleteF:^void(CNTry* t) {
         if([t isSuccess]) {
             _b = [t get];
-            memoryBarrier();
             if([n incrementAndGet] == 2) [p successValue:f(_a, _b)];
         } else {
             [p completeValue:((CNTry*)(t))];

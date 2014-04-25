@@ -53,7 +53,6 @@ public abstract class Future<T> {
             public void apply(final Try<A> t) {
                 if(t.isSuccess()) {
                     _a.value = t.get();
-                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(2)) {
                         p.successValue(f.apply(_a.value, _b.value));
                     }
@@ -67,7 +66,6 @@ public abstract class Future<T> {
             public void apply(final Try<B> t) {
                 if(t.isSuccess()) {
                     _b.value = t.get();
-                    Memory.memoryBarrier();
                     if(n.incrementAndGet().equals(2)) {
                         p.successValue(f.apply(_a.value, _b.value));
                     }
