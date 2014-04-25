@@ -44,7 +44,7 @@ static ODClassType* _CNChainTest_type;
 - (void)testFuture {
     [self repeatTimes:1000 f:^void() {
         NSArray* arr = [[[intTo(0, 1000) chain] map:^CNTuple*(id i) {
-            tuple(i, [CNPromise apply]);
+            return tuple(i, [CNPromise apply]);
         }] toArray];
         {
             id<CNIterator> __inline__0_1_i = [arr iterator];
@@ -56,14 +56,14 @@ static ODClassType* _CNChainTest_type;
             }
         }
         CNFuture* fut = [[[arr chain] map:^CNPromise*(CNTuple* _) {
-            ((CNTuple*)(_)).b;
+            return ((CNTuple*)(_)).b;
         }] futureF:^NSArray*(CNChain* chain) {
-            [chain toArray];
+            return [chain toArray];
         }];
         NSArray* set = [[[[arr chain] map:^id(CNTuple* _) {
-            ((CNTuple*)(_)).a;
+            return ((CNTuple*)(_)).a;
         }] map:^id(id _) {
-            unumi(_) * unumi(_);
+            return numi(unumi(_) * unumi(_));
         }] toArray];
         assertEquals(set, [fut getResultAwait:5.0]);
     }];

@@ -2757,6 +2757,7 @@ correctCallPar _ _ (d@Def{defType = (TPFun _ TPVoid)}, Lambda lpars e dtp) = (d,
 	where
 		removeReturn ee@(Return _ Nil) = Just ee
 		removeReturn (Return _ ee) = Just ee
+		removeReturn l@Lambda{} = Just l
 		removeReturn _ = Nothing
 correctCallPar _ _ (d@Def{defType = (TPFun _ (TPClass TPMGeneric _ _) )}, Lambda lpars e dtp) = checkCallParOnWeak (d, Lambda lpars e dtp)
 correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, ExpDError _ (D.Lambda lambdaPars lambdaExpr)) = checkCallParOnWeak (d, Lambda lpars' expr' tp')

@@ -25,7 +25,7 @@ public class ChainTest extends TestCase {
                 final ImArray<Tuple<Integer, Promise<Integer>>> arr = 0.to(1000).chain().map<Tuple<Integer, Promise<Integer>>>(new F<Integer, Tuple<Integer, Promise<Integer>>>() {
                     @Override
                     public Tuple<Integer, Promise<Integer>> apply(final Integer i) {
-                        new Tuple<Integer, Promise<Integer>>(i, Promise.<Integer>apply());
+                        return new Tuple<Integer, Promise<Integer>>(i, Promise.<Integer>apply());
                     }
                 }).toArray();
                 {
@@ -43,23 +43,23 @@ public class ChainTest extends TestCase {
                 final Future<ImArray<Integer>> fut = arr.chain().map<Promise<Integer>>(new F<Tuple<Integer, Promise<Integer>>, Promise<Integer>>() {
                     @Override
                     public Promise<Integer> apply(final Tuple<Integer, Promise<Integer>> _) {
-                        _.b;
+                        return _.b;
                     }
                 }).futureF<Integer, ImArray<Integer>>(new F<Chain<Integer>, ImArray<Integer>>() {
                     @Override
                     public ImArray<Integer> apply(final Chain<Integer> chain) {
-                        chain.toArray();
+                        return chain.toArray();
                     }
                 });
                 final ImArray<Integer> set = arr.chain().map<Integer>(new F<Tuple<Integer, Promise<Integer>>, Integer>() {
                     @Override
                     public Integer apply(final Tuple<Integer, Promise<Integer>> _) {
-                        _.a;
+                        return _.a;
                     }
                 }).map<Integer>(new F<Integer, Integer>() {
                     @Override
                     public Integer apply(final Integer _) {
-                        _ * _;
+                        return _ * _;
                     }
                 }).toArray();
                 .<ImArray<Integer>>assertEqualsAB(set, fut.getResultAwait(((float)5)));
