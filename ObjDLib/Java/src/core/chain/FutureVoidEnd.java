@@ -4,7 +4,7 @@ public class FutureVoidEnd<T> {
     private final Promise<Void> _promise;
     private boolean _stopped;
     private AtomicInt _counter;
-    private boolean _ended;
+    private volatile boolean _ended;
     private AtomicBool _yielded;
     public Future<Void> future() {
         return this._promise;
@@ -30,9 +30,7 @@ public class FutureVoidEnd<T> {
                                 } else {
                                     if(!(FutureVoidEnd.this._stopped)) {
                                         final int r = FutureVoidEnd.this._counter.decrementAndGet();
-                                        Memory.memoryBarrier();
                                         if(FutureVoidEnd.this._ended && r.equals(0)) {
-                                            Memory.memoryBarrier();
                                             if(!(FutureVoidEnd.this._yielded.getAndSetNewValue(true))) {
                                                 FutureVoidEnd.this._promise.successValue(null);
                                             }
@@ -54,9 +52,7 @@ public class FutureVoidEnd<T> {
             public Integer apply(final Integer res) {
                 int ret = res;
                 FutureVoidEnd.this._ended = true;
-                Memory.memoryBarrier();
                 if(FutureVoidEnd.this._counter.intValue().equals(0)) {
-                    Memory.memoryBarrier();
                     if(!(FutureVoidEnd.this._yielded.getAndSetNewValue(true))) {
                         FutureVoidEnd.this._promise.successValue(null);
                     }
