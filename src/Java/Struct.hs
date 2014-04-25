@@ -82,7 +82,8 @@ data Def =
 	| Constructor {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defPars :: [DefPar], defStms :: [Stm]}
 	| Field {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defTp :: TP, defName :: String, defExp :: Exp} deriving (Eq)
 type DefPar = ([DefMod], TP, String)
-data DefMod = DefModStatic | DefModAbstract | DefModFinal | DefModOverride | DefModVisability Visibility deriving (Eq)
+data DefMod = DefModStatic | DefModAbstract | DefModFinal | DefModOverride | DefModVisability Visibility 
+	| DefModVolatile deriving (Eq)
 
 showDef :: (ClassType, String) -> Def -> [String]
 showDef _ d@Field{} = concatMap showAnnotation (defAnnotations d) 
@@ -110,6 +111,7 @@ instance Show DefMod where
 	show DefModStatic = "static"
 	show DefModAbstract = "abstract"
 	show DefModFinal = "final"
+	show DefModVolatile = "volatile"
 	show DefModOverride = ""
 	show (DefModVisability v) = show v
 

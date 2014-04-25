@@ -6,7 +6,6 @@
 #import "CNPlat.h"
 #import "CNYield.h"
 #import "CNTry.h"
-#import "CNTypes.h"
 #import "ODType.h"
 @implementation CNFutureEnd
 static ODClassType* _CNFutureEnd_type;
@@ -39,6 +38,7 @@ static ODClassType* _CNFutureEnd_type;
 
 - (CNYield*)yield {
     __block NSInteger _i = 0;
+    __block volatile NSInteger _set = -1;
     return [CNYield applyBegin:^NSInteger(NSUInteger size) {
         __array = [CNMArray applyCapacity:size];
         return 0;
@@ -56,11 +56,9 @@ static ODClassType* _CNFutureEnd_type;
                     } else {
                         if(!(__stopped)) {
                             [((CNMArray*)(nonnil(__array))) setIndex:((NSUInteger)(i)) item:[tr get]];
-                            memoryBarrier();
+                            _set = i;
                             int r = [__counter decrementAndGet];
-                            memoryBarrier();
                             if(__ended && r == 0) {
-                                memoryBarrier();
                                 if(!([__yielded getAndSetNewValue:YES])) [__promise successValue:((CNMArray*)(nonnil(__array)))];
                             }
                         }
@@ -72,9 +70,7 @@ static ODClassType* _CNFutureEnd_type;
         else return 0;
     } end:^NSInteger(NSInteger res) {
         __ended = YES;
-        memoryBarrier();
         if([__counter intValue] == 0) {
-            memoryBarrier();
             if(!([__yielded getAndSetNewValue:YES])) [__promise successValue:((CNMArray*)(nonnil(__array)))];
         }
         return res;
@@ -145,9 +141,7 @@ static ODClassType* _CNFutureVoidEnd_type;
                     } else {
                         if(!(__stopped)) {
                             int r = [__counter decrementAndGet];
-                            memoryBarrier();
                             if(__ended && r == 0) {
-                                memoryBarrier();
                                 if(!([__yielded getAndSetNewValue:YES])) [__promise successValue:nil];
                             }
                         }
@@ -160,9 +154,7 @@ static ODClassType* _CNFutureVoidEnd_type;
     } end:^NSInteger(NSInteger res) {
         NSInteger ret = res;
         __ended = YES;
-        memoryBarrier();
         if([__counter intValue] == 0) {
-            memoryBarrier();
             if(!([__yielded getAndSetNewValue:YES])) [__promise successValue:nil];
         }
         return ret;

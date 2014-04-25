@@ -38,14 +38,13 @@ abstract class Future<T> {
 
     static def map<A, B, C, R>(a : Future<A>, b : Future<B>, c : Future<C>, f : (A, B, C) -> R) : Future<R> = {
         val p = Promise<R>()
-        var _a : A = nil
-        var _b : B = nil
-        var _c : C = nil
+        volatile var _a : A = nil
+        volatile var _b : B = nil
+        volatile var _c : C = nil
         val n = AtomicInt()
         a.onComplete{t ->
             if(t.isSuccess) {
                 _a = t.get
-                Memory.memoryBarrier
                 if(n.incrementAndGet == 3) p.success(f(_a, _b, _c))
             } else {
                 p.complete(t.cast<Try<R>>)
@@ -54,7 +53,6 @@ abstract class Future<T> {
         b.onComplete{t ->
             if(t.isSuccess) {
                 _b = t.get
-                Memory.memoryBarrier
                 if(n.incrementAndGet == 3) p.success(f(_a, _b, _c))
             } else {
                 p.complete(t.cast<Try<R>>)
@@ -63,7 +61,6 @@ abstract class Future<T> {
         c.onComplete{t ->
             if(t.isSuccess) {
                 _c = t.get
-                Memory.memoryBarrier
                 if(n.incrementAndGet == 3) p.success(f(_a, _b, _c))
             } else {
                 p.complete(t.cast<Try<R>>)
@@ -74,15 +71,14 @@ abstract class Future<T> {
 
     static def map<A, B, C, D, R>(a : Future<A>, b : Future<B>, c : Future<C>, d : Future<D>, f : (A, B, C, D) -> R) : Future<R> = {
         val p = Promise<R>()
-        var _a : A = nil
-        var _b : B = nil
-        var _c : C = nil
-        var _d : D = nil
+        volatile var _a : A = nil
+        volatile var _b : B = nil
+        volatile var _c : C = nil
+        volatile var _d : D = nil
         val n = AtomicInt()
         a.onComplete{t ->
             if(t.isSuccess) {
                 _a = t.get
-                Memory.memoryBarrier
                 if(n.incrementAndGet == 4) p.success(f(_a, _b, _c, _d))
             } else {
                 p.complete(t.cast<Try<R>>)
@@ -91,7 +87,6 @@ abstract class Future<T> {
         b.onComplete{t ->
             if(t.isSuccess) {
                 _b = t.get
-                Memory.memoryBarrier
                 if(n.incrementAndGet == 4) p.success(f(_a, _b, _c, _d))
             } else {
                 p.complete(t.cast<Try<R>>)
@@ -100,7 +95,6 @@ abstract class Future<T> {
         c.onComplete{t ->
             if(t.isSuccess) {
                 _c = t.get
-                Memory.memoryBarrier
                 if(n.incrementAndGet == 4) p.success(f(_a, _b, _c, _d))
             } else {
                 p.complete(t.cast<Try<R>>)
@@ -109,7 +103,6 @@ abstract class Future<T> {
         d.onComplete{t ->
             if(t.isSuccess) {
                 _d = t.get
-                Memory.memoryBarrier
                 if(n.incrementAndGet == 4) p.success(f(_a, _b, _c, _d))
             } else {
                 p.complete(t.cast<Try<R>>)
@@ -120,16 +113,15 @@ abstract class Future<T> {
 
     static def map<A, B, C, D, E, R>(a : Future<A>, b : Future<B>, c : Future<C>, d : Future<D>, e : Future<E>, f : (A, B, C, D, E) -> R) : Future<R> = {
         val p = Promise<R>()
-        var _a : A = nil
-        var _b : B = nil
-        var _c : C = nil
-        var _d : D = nil
-        var _e : D = nil
+        volatile var _a : A = nil
+        volatile var _b : B = nil
+        volatile var _c : C = nil
+        volatile var _d : D = nil
+        volatile var _e : D = nil
         val n = AtomicInt()
         a.onComplete{t ->
             if(t.isSuccess) {
                 _a = t.get
-                Memory.memoryBarrier
                 if(n.incrementAndGet == 5) p.success(f(_a, _b, _c, _d, _e))
             } else {
                 p.complete(t.cast<Try<R>>)
@@ -138,7 +130,6 @@ abstract class Future<T> {
         b.onComplete{t ->
             if(t.isSuccess) {
                 _b = t.get
-                Memory.memoryBarrier
                 if(n.incrementAndGet == 5) p.success(f(_a, _b, _c, _d, _e))
             } else {
                 p.complete(t.cast<Try<R>>)
@@ -147,7 +138,6 @@ abstract class Future<T> {
         c.onComplete{t ->
             if(t.isSuccess) {
                 _c = t.get
-                Memory.memoryBarrier
                 if(n.incrementAndGet == 5) p.success(f(_a, _b, _c, _d, _e))
             } else {
                 p.complete(t.cast<Try<R>>)
@@ -156,7 +146,6 @@ abstract class Future<T> {
         d.onComplete{t ->
             if(t.isSuccess) {
                 _d = t.get
-                Memory.memoryBarrier
                 if(n.incrementAndGet == 5) p.success(f(_a, _b, _c, _d, _e))
             } else {
                 p.complete(t.cast<Try<R>>)
@@ -165,7 +154,6 @@ abstract class Future<T> {
         e.onComplete{t ->
             if(t.isSuccess) {
                 _e = t.get
-                Memory.memoryBarrier
                 if(n.incrementAndGet == 5) p.success(f(_a, _b, _c, _d, _e))
             } else {
                 p.complete(t.cast<Try<R>>)
@@ -270,13 +258,12 @@ abstract class Future<T> {
 
     def join<R>(another : Future<R>) : Future<(T, R)> = {
         val p = Promise<(T, R)>()
-        var a : T = nil
-        var b : R = nil
+        volatile var a : T = nil
+        volatile var b : R = nil
         val n = AtomicInt()
         onComplete{t ->
             if(t.isSuccess) {
                 a = t.get
-                Memory.memoryBarrier
                 if(n.incrementAndGet == 2) p.success(Tuple(a, b))
             } else {
                 p.complete(t.cast<Try<(T, R)>>)
@@ -285,7 +272,6 @@ abstract class Future<T> {
         another.onComplete{t ->
             if(t.isSuccess) {
                 b = t.get
-                Memory.memoryBarrier
                 if(n.incrementAndGet == 2) p.success(Tuple(a, b))
             } else {
                 p.complete(t.cast<Try<(T, R)>>)

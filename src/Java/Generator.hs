@@ -105,7 +105,7 @@ genDef cl d =
  	in if D.isField d then 
  			return $ [J.Field {
 	 				J.defAnnotations = [],
-	 				J.defMods = mods ++ [J.DefModFinal | D.DefModMutable `notElem` D.defMods d],
+	 				J.defMods = mods ++ [J.DefModFinal | D.DefModMutable `notElem` D.defMods d] ++ [J.DefModVolatile | D.DefModVolatile `elem` D.defMods d],
 	 				J.defName = name,
 	 				J.defTp = tp,
 	 				J.defExp = J.Nop
@@ -413,8 +413,11 @@ declareVal :: D.Def -> J.Exp -> J.Stm
 declareVal d e
 	| D.DefModChangedInLambda `elem` D.defMods d = let
 		tp = genTp $ D.defType d
-		new = J.New [] $ J.Call False "Mut" [tp] $ case e of
+		clnm = if D.DefModVolatile `elem` D.defMods d then "MutVolatile" else "Mut"
+		new = J.New [] $ J.Call False clnm [tp] $ case e of
 			J.Nop -> []
 			_ -> [e]
-		in J.Val [J.DefModFinal] (J.TPRef [tp] "Mut") (D.defName d) new
-	| otherwise = J.Val [J.DefModFinal | D.DefModMutable `notElem` D.defMods d] (genTp $ D.defType d) (D.defName d) e
+		in J.Val [J.DefModFinal] (J.TPRef [tp] clnm) (D.defName d) new
+	| otherwise = J.Val 
+		([J.DefModFinal | D.DefModMutable `notElem` D.defMods d] ++ [J.DefModVolatile | D.DefModVolatile `elem` D.defMods d])
+		(genTp $ D.defType d) (D.defName d) e

@@ -17,7 +17,7 @@
     CNPromise* __promise;
     BOOL __stopped;
     CNAtomicInt* __counter;
-    BOOL __ended;
+    volatile BOOL __ended;
     CNAtomicBool* __yielded;
     CNMArray* __array;
 }
@@ -35,7 +35,7 @@
     CNPromise* __promise;
     BOOL __stopped;
     CNAtomicInt* __counter;
-    BOOL __ended;
+    volatile BOOL __ended;
     CNAtomicBool* __yielded;
 }
 + (instancetype)futureVoidEnd;
