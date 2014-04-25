@@ -520,6 +520,7 @@ data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | De
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
 	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper | DefModInline 
 	| DefModPure | DefModFinal | DefModOverride | DefModError String | DefModConstructorField
+	| DefModChangedInLambda
 	deriving (Eq, Ord)
 instance Show DefMod where
 	show DefModStatic = "static"
@@ -546,6 +547,7 @@ instance Show DefMod where
 	show DefModPure = "pure"
 	show DefModFinal = "final"
 	show DefModOverride = "override"
+	show DefModChangedInLambda = "block"
 	show (DefModError s) = "Error: " ++ s
 data DefGenerics = DefGenerics{defGenericsClasses :: [Class], defGenericsSelfType :: DataType}
 
@@ -603,6 +605,7 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModInline = 'i'
 		ch DefModConstructorField = 'U'
 		ch (DefModError _) = 'E'
+		ch DefModChangedInLambda = 'k'
 		
 
 dataTypePars :: DataType -> [Def]
@@ -1885,17 +1888,39 @@ expr env (D.Braces es) = Braces $ bracesRec env 0 es
 		bracesRec :: Env -> Int -> [D.Exp] -> [Exp]
 		bracesRec _  _ [] = []
 		bracesRec env' n [x] = [expr env'{envVarSuffix = envVarSuffix env ++ ('_' : show n)} x]
+		bracesRec env' n (x@D.Val{}:xs) = let
+			x'@(Val m d) = expr env'{envVarSuffix = envVarSuffix env ++ ('_' : show n), envTp = TPVoid} x 
+			env'' = (envAddVals [d] env')
+			xs' = (bracesRec env'' (n + 1) xs)
+			in 
+				if DefModMutable `elem` defMods d then 
+					let 
+						existsSetInLambda = any (isJust . setsInLambda) parLambdas
+						parLambdas = forExp isLambda (Braces xs')
+						isLambda ee@Lambda{} = [ee]
+						isLambda _ = []
+						setsInLambda (Lambda _ lambdaExpr _) = forExp isSet lambdaExpr
+						isSet ee@(Set _ (Call dd _ _ _) _) = if d == dd then Just ee else Nothing
+						isSet ee@(PlusPlus (Call dd _ _ _)) = if d == dd then Just ee else Nothing
+						isSet ee@(MinusMinus (Call dd _ _ _)) = if d == dd then Just ee else Nothing
+						isSet _ = Nothing
+						d' = d{defMods = DefModChangedInLambda :defMods d}
+						ch (Call dd t [] [])
+							| dd == d = Just $ Call d' t [] []
+						ch _ = Nothing
+					in if existsSetInLambda then (Val m d'):map (mapExp ch) xs' else x':xs'
+				else x':xs'
 		bracesRec env' n (x:xs) = let 
 				x' = expr env'{envVarSuffix = envVarSuffix env ++ ('_' : show n), envTp = TPVoid} x
 				env'' = case x' of
-					(Val _ d) -> (envAddVals [d] env')
 					(Set _ (Call d _ [] _) r) -> case unwrapGeneric (defType d) of
 						TPOption cl tpl -> case unwrapGeneric (exprDataType r) of
 							TPOption cr _ -> if cr == cl then env' else envChangeDefTp env' d (TPOption cr tpl)
 							_ -> env'
 						_ -> env'
 					_ -> env'
-			in x':(bracesRec env'' (n + 1) xs)
+				xs' = (bracesRec env'' (n + 1) xs)
+			in x':xs'
 expr _ D.Nop = Nop
 expr _ (D.IntConst i) = IntConst i
 expr _ (D.StringConst i) = StringConst i

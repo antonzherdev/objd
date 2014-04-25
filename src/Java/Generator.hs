@@ -249,6 +249,7 @@ genExp env (D.Index l r) = do
 	r' <- genExp env r
 	return $ J.Index l' r'
 genExp _ (D.Call d _ [] []) 
+	| D.DefModChangedInLambda `elem` D.defMods d = return $ J.Dot (J.Ref $ D.defName d) (J.Ref "value")
 	| D.DefModField `elem` D.defMods d || D.DefModLocal `elem` D.defMods d || D.DefModObject `elem` D.defMods d = return $ J.Ref $ D.defName d
 genExp env (D.Call d _ pars gens) = do
 	pars' <- mapM ((genExp env) . snd) pars
@@ -403,9 +404,17 @@ genStm env (D.Set tp l r) = let
 		return $ lstm ++ rstm ++ [J.Set tp l' r']
 genStm env (D.Val True d) = do
 	t <- genStm env $ D.defBody d
-	return (J.Val [J.DefModFinal | D.DefModMutable `notElem` D.defMods d] (genTp $ D.defType d) (D.defName d) J.Nop:t)
-genStm env (D.Val False d) = genExpStm env (D.defBody d) 
-	(J.Val [J.DefModFinal | D.DefModMutable `notElem` D.defMods d] (genTp $ D.defType d) (D.defName d))
-
+	return $ (declareVal d J.Nop):t
+genStm env (D.Val False d) = genExpStm env (D.defBody d) $ declareVal d
 genStm env e = genExpStm env e J.Stm 
 
+
+declareVal :: D.Def -> J.Exp -> J.Stm
+declareVal d e
+	| D.DefModChangedInLambda `elem` D.defMods d = let
+		tp = genTp $ D.defType d
+		new = J.New [] $ J.Call False "Mut" [tp] $ case e of
+			J.Nop -> []
+			_ -> [e]
+		in J.Val [J.DefModFinal] (J.TPRef [tp] "Mut") (D.defName d) new
+	| otherwise = J.Val [J.DefModFinal | D.DefModMutable `notElem` D.defMods d] (genTp $ D.defType d) (D.defName d) e

@@ -11,7 +11,7 @@ public class FutureEnd<T> {
         return this._promise;
     }
     public Yield<Future<T>> yield() {
-        int _i = 0;
+        final Mut<int> _i = new Mut<int>(0);
         return new Yield<Future<T>>(new F<Integer, Integer>() {
             @Override
             public Integer apply(final Integer size) {
@@ -29,8 +29,8 @@ public class FutureEnd<T> {
                         FutureEnd.this._array;
                     }
                     .appendItem(null);
-                    final int i = _i;
-                    _i++;
+                    final int i = _i.value;
+                    _i.value++;
                     fut.onCompleteF(new P<Try<T>>() {
                         @Override
                         public void apply(final Try<T> tr) {

@@ -984,7 +984,7 @@ tExp _ D.Nop = C.Nop
 tExp _ D.Null{} = C.Null
 tExp _ (D.Braces []) = C.Nop
 tExp env (D.Braces [x]) = tExp env x
-tExp env (D.Braces stms) = C.ExpBraces (concatMap (translate1 env stms) (init stms) ++ [C.Stm (tExp env $ last stms)])
+tExp env (D.Braces stms) = C.ExpBraces (concatMap (translate env) (init stms) ++ [C.Stm (tExp env $ last stms)])
 tExp env ee@(D.NonOpt ch e _) = let 
 		tp = D.unwrapGeneric $ D.exprDataType ee
 		check = ch && case tp of
@@ -1016,58 +1016,41 @@ tExpToType :: Env -> D.DataType -> D.Exp -> C.Exp
 tExpToType env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
 
 translate :: Env -> D.Exp -> [C.Stm]
-translate env e = case tStm env [] e of
+translate env e = case tStm env e of
 	[C.Braces r] -> r
 	r -> r
 
-translate1 :: Env -> [D.Exp] -> D.Exp -> [C.Stm]
-translate1 env parexps e = case tStm env parexps e of
-	[C.Braces r] -> r
-	r -> r
+tStm :: Env -> D.Exp -> [C.Stm]
+tStm _ (D.Nop) = []
 
-tStm :: Env -> [D.Exp] -> D.Exp -> [C.Stm]
-tStm _ _ (D.Nop) = []
+tStm _ (D.Braces []) = []
+tStm v (D.Braces [x]) = translate v x
+tStm v (D.Braces xs) = [C.Braces $ concatMap (tStm v) xs]
 
-tStm _ _ (D.Braces []) = []
-tStm v _ (D.Braces [x]) = translate v x
-tStm v _ (D.Braces xs) = [C.Braces $ concatMap (tStm v xs) xs]
+tStm v (D.If cond t (D.None _)) = [C.If (tExpTo v D.TPBool cond) (translate v t) []]
+tStm v (D.If cond t f) = [C.If (tExpTo v D.TPBool cond) (translate v t) (translate v f)]
+tStm v (D.While cond t) = [C.While (tExpTo v D.TPBool cond) (translate v t)]
+tStm v (D.Synchronized ref b) = [C.Synchronized (tExp v ref) (translate v b)]
+tStm v (D.Do cond t) = [C.Do (tExpTo v D.TPBool cond) (translate v t)]
 
-tStm v _ (D.If cond t (D.None _)) = [C.If (tExpTo v D.TPBool cond) (translate v t) []]
-tStm v _ (D.If cond t f) = [C.If (tExpTo v D.TPBool cond) (translate v t) (translate v f)]
-tStm v _ (D.While cond t) = [C.While (tExpTo v D.TPBool cond) (translate v t)]
-tStm v _ (D.Synchronized ref b) = [C.Synchronized (tExp v ref) (translate v b)]
-tStm v _ (D.Do cond t) = [C.Do (tExpTo v D.TPBool cond) (translate v t)]
-
-tStm env _ (D.Set tp l r) = let 
+tStm env (D.Set tp l r) = let 
 	l' = tExp env l
 	r' = tExp env r
 	ltp = D.exprDataType l
 	rtp = D.exprDataType r
 	in [C.Set tp l' (maybeVal (rtp, ltp) r')]
-tStm Env{envDataType = D.TPVoid} _ (D.Return True _) = [C.Return C.Nop]
-tStm env@Env{envDataType = D.TPVoid} _ (D.Return _ e) = [C.Stm $ tExp env{envCStruct = 0} e]
-tStm env@Env{envDataType = tp}  _ (D.Return _ e) = [C.Return $ tExpToType env{envCStruct = 0} tp e]
-tStm env parexps (D.Val separate def@D.Def{D.defName = name, D.defType = tp, D.defBody = e, D.defMods = mods}) = 
-	[C.Var (showDataType tp) name (if separate then C.Nop else tExpToType env tp e) (["__block" | needBlock] ++ ["__weak" | isWeak])]
-	++ (if separate then tStm env [] e else [])
-	where 
-		needBlock = D.DefModMutable `elem` mods && existsSetInLambda
-		existsSetInLambda = any (isJust . setsInLambda) parLambdas
-		parLambdas :: [D.Exp]
-		parLambdas = D.forExp isLambda (D.Braces parexps)
-		isLambda ee@D.Lambda{} = [ee]
-		isLambda _ = []
-		isWeak = D.DefModWeak `elem` mods
-		setsInLambda (D.Lambda _ lambdaExpr _) = D.forExp isSet lambdaExpr
-		isSet ee@(D.Set _ (D.Call d _ _ _) _) = if D.defName d == D.defName def then Just ee else Nothing
-		isSet ee@(D.PlusPlus (D.Call d _ _ _)) = if D.defName d == D.defName def then Just ee else Nothing
-		isSet ee@(D.MinusMinus (D.Call d _ _ _)) = if D.defName d == D.defName def then Just ee else Nothing
-		isSet _ = Nothing
-tStm env _ (D.Throw e) = [C.Throw $ tExp env e]
-tStm _ _ D.Break = [C.Break]
-tStm _ _ D.Continue = [C.Continue]
-tStm env pe (D.Weak expr) = tStm env{envWeakSelf = True} pe expr
-tStm env _ x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar, cycleTp)] cycleBody _)] _)) 
+tStm Env{envDataType = D.TPVoid} (D.Return True _) = [C.Return C.Nop]
+tStm env@Env{envDataType = D.TPVoid} (D.Return _ e) = [C.Stm $ tExp env{envCStruct = 0} e]
+tStm env@Env{envDataType = tp} (D.Return _ e) = [C.Return $ tExpToType env{envCStruct = 0} tp e]
+tStm env (D.Val separate D.Def{D.defName = name, D.defType = tp, D.defBody = e, D.defMods = mods}) = 
+	[C.Var (showDataType tp) name (if separate then C.Nop else tExpToType env tp e)
+		 (["__block" | D.DefModChangedInLambda `elem` mods] ++ ["__weak" | D.DefModWeak `elem` mods])]
+	++ (if separate then tStm env e else [])
+tStm env (D.Throw e) = [C.Throw $ tExp env e]
+tStm _ D.Break = [C.Break]
+tStm _ D.Continue = [C.Continue]
+tStm env (D.Weak expr) = tStm env{envWeakSelf = True} expr
+tStm env x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar, cycleTp)] cycleBody _)] _)) 
 	| dn == "for" || dn == "go" =
 		case D.exprDataType l of
 			D.TPArr _ _ -> forin
@@ -1082,8 +1065,8 @@ tStm env _ x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar
 		procGo (D.Return _ (D.BoolConst False)) = Just D.Break
 		procGo (D.Return _ e) = Just $ D.If e D.Continue D.Break
 		procGo _ = Nothing
-tStm env _ (D.Try e f) = [C.Try (translate env e) (translate env f)]
-tStm env _ (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars _)) 
+tStm env (D.Try e f) = [C.Try (translate env e) (translate env f)]
+tStm env (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars _)) 
 	| not (null pars) && D.DefModApplyLambda `elem` mods =
 		let 
 			tp = D.exprDataType l
@@ -1092,7 +1075,7 @@ tStm env _ (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars _))
 			C.If (C.BoolOp NotEq (C.Ref "__nd") C.Nil) [C.Stm $ C.CCall (C.Ref "__nd") ((map snd . tPars env dd) pars)] []
 		]]
 
-tStm env _ x = [C.Stm $ tExp env x]
+tStm env x = [C.Stm $ tExp env x]
 
 equals :: Bool -> (D.DataType, C.Exp) -> (D.DataType, C.Exp) -> C.Exp
 equals False (D.TPClass D.TPMEnum _ _, e1) (D.TPClass D.TPMEnum _ _, e2) = C.BoolOp NotEq e1 e2

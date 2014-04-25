@@ -111,14 +111,14 @@ public class ChainTest extends TestCase {
         }).toArray());
     }
     public void testZipFor() {
-        ImArray<Integer> arr = ImArray.fromObjects();
+        final Mut<ImArray<Integer>> arr = new Mut<ImArray<Integer>>(ImArray.fromObjects());
         ImArray.fromObjects(1, 0, 3).chain().zipForABy<Integer>(ImArray.fromObjects(1, 3), new P2<Integer, Integer>() {
             @Override
             public void apply(final Integer a, final Integer b) {
-                arr = arr.addItem(a + b);
+                arr.value = arr.value.addItem(a + b);
             }
         });
-        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(2, 3), arr);
+        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(2, 3), arr.value);
     }
     public ChainTest() {
     }

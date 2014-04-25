@@ -12,19 +12,19 @@ public class FlatLink<T> implements ChainLink<Traversable<T>, T> {
         }, new F<Traversable<T>, Integer>() {
             @Override
             public Integer apply(final Traversable<T> col) {
-                int result = 0;
+                final Mut<int> result = new Mut<int>(0);
                 col.goOn(new F<T, Boolean>() {
                     @Override
                     public Boolean apply(final T item) {
                         if(yield.yieldItem(item).equals(0)) {
-                            result = 1;
+                            result.value = 1;
                             return false;
                         } else {
                             return true;
                         }
                     }
                 });
-                return result;
+                return result.value;
             }
         });
     }
