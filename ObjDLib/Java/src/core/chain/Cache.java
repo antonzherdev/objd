@@ -8,17 +8,15 @@ public class Cache<X, R> {
         if(this._lastX != null && this._lastX.equals(x)) {
             if(this._lastF == null) {
                 throw new RuntimeException("Not null");
-            } else {
-                return this._lastF;
             }
+            return this._lastF;
         } else {
             this._lastX = x;
             this._lastF = this.f.apply(x);
             if(this._lastF == null) {
                 throw new RuntimeException("Not null");
-            } else {
-                return this._lastF;
             }
+            return this._lastF;
         }
     }
     public Cache(final F<X, R> f) {

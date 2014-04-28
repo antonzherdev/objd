@@ -15,16 +15,12 @@ public class TreeMapValuesIterator<V> extends Iterator_impl<V> {
     public V next() {
         if(this.entry == null) {
             throw new RuntimeException("Not null");
-        } else {
-            this.entry;
         }
-        final V ret = .value;
+        final V ret = this.entry.value;
         if(this.entry == null) {
             throw new RuntimeException("Not null");
-        } else {
-            this.entry;
         }
-        this.entry = .next();
+        this.entry = this.entry.next();
         return ret;
     }
     public TreeMapValuesIterator(final TreeMap<?, V> map) {

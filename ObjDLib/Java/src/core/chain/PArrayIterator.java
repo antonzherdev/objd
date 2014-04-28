@@ -12,9 +12,8 @@ public class PArrayIterator<T> extends Iterator_impl<T> {
         final T __tmp_0 = this.array.applyIndex(((int)this.i));
         if(__tmp_0 == null) {
             throw new RuntimeException("Not null");
-        } else {
-            final T ret = __tmp_0;
         }
+        final T ret = __tmp_0;
         this.i++;
         return ret;
     }

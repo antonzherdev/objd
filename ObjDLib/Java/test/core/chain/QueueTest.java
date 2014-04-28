@@ -22,30 +22,24 @@ public class QueueTest extends TestCase {
         final Integer __tmp_12 = p.a;
         if(__tmp_12 == null) {
             throw new RuntimeException("Not null");
-        } else {
-            __tmp_12;
         }
-        .<Integer>assertEqualsAB(1, );
+        .<Integer>assertEqualsAB(1, __tmp_12);
         .<Integer>assertEqualsAB(2, ((int)q.count()));
         p = q.dequeue();
         q = p.b;
         final Integer __tmp_16 = p.a;
         if(__tmp_16 == null) {
             throw new RuntimeException("Not null");
-        } else {
-            __tmp_16;
         }
-        .<Integer>assertEqualsAB(2, );
+        .<Integer>assertEqualsAB(2, __tmp_16);
         .<Integer>assertEqualsAB(1, ((int)q.count()));
         p = q.dequeue();
         q = p.b;
         final Integer __tmp_20 = p.a;
         if(__tmp_20 == null) {
             throw new RuntimeException("Not null");
-        } else {
-            __tmp_20;
         }
-        .<Integer>assertEqualsAB(3, );
+        .<Integer>assertEqualsAB(3, __tmp_20);
         .<Integer>assertEqualsAB(0, ((int)q.count()));
     }
     public QueueTest() {

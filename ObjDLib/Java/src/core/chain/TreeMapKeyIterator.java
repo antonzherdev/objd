@@ -16,16 +16,12 @@ public class TreeMapKeyIterator<K> extends Iterator_impl<K> {
     public K next() {
         if(this.entry == null) {
             throw new RuntimeException("Not null");
-        } else {
-            this.entry;
         }
-        final K ret = .key;
+        final K ret = this.entry.key;
         if(this.entry == null) {
             throw new RuntimeException("Not null");
-        } else {
-            this.entry;
         }
-        this.entry = .next();
+        this.entry = this.entry.next();
         return ret;
     }
     public TreeMapKeyIterator(final TreeMap<K, ?> map) {

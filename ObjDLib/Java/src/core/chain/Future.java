@@ -373,9 +373,8 @@ public abstract class Future<T> {
         final Try<T> __tmp_4 = this.result();
         if(__tmp_4 == null) {
             throw new RuntimeException("Not null");
-        } else {
-            return __tmp_4;
         }
+        return __tmp_4;
     }
     public void waitAndOnSuccessAwaitF(final float await, final P<T> f) {
         {
@@ -406,10 +405,8 @@ public abstract class Future<T> {
         final Try<T> __tmp = waitResultPeriod(await);
         if(__tmp == null) {
             throw new RuntimeException("Not null");
-        } else {
-            __tmp;
         }
-        return .get();
+        return __tmp.get();
     }
     public <R> Future<Tuple<T, R>> joinAnother(final Future<R> another) {
         final Promise<Tuple<T, R>> p = Promise.<Tuple<T, R>>apply();

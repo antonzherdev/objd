@@ -13,34 +13,26 @@ public class MListIterator<T> extends MIterator_impl<T> {
         this.prev = this.item;
         if(this.item == null) {
             throw new RuntimeException("Not null");
-        } else {
-            this.item;
         }
-        this.item = .next;
+        this.item = this.item.next;
         if(this.prev == null) {
             throw new RuntimeException("Not null");
-        } else {
-            this.prev;
         }
-        return .data;
+        return this.prev.data;
     }
     @Override
     public void remove() {
         if(this.prev == null) {
             throw new RuntimeException("Not null");
-        } else {
-            this.prev;
         }
-        this.list.removeListItem();
+        this.list.removeListItem(this.prev);
     }
     @Override
     public void setValue(final T value) {
         if(this.prev == null) {
             throw new RuntimeException("Not null");
-        } else {
-            this.prev;
         }
-        .data = value;
+        this.prev.data = value;
     }
     public MListIterator(final MList<T> list) {
         this.list = list;

@@ -11,17 +11,15 @@ public class Lazy<T> {
         if(this._calculated) {
             if(this._value == null) {
                 throw new RuntimeException("Not null");
-            } else {
-                return this._value;
             }
+            return this._value;
         } else {
             this._value = this.f.apply();
             this._calculated = true;
             if(this._value == null) {
                 throw new RuntimeException("Not null");
-            } else {
-                return this._value;
             }
+            return this._value;
         }
     }
     public Lazy(final F0<T> f) {

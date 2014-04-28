@@ -15,15 +15,11 @@ public class ShuffleLink<T> implements ChainLink<T, T> {
             public Integer apply(final T item) {
                 if(ShuffleLink.this._array == null) {
                     throw new RuntimeException("Not null");
-                } else {
-                    ShuffleLink.this._array;
                 }
                 if(ShuffleLink.this._array == null) {
                     throw new RuntimeException("Not null");
-                } else {
-                    ShuffleLink.this._array;
                 }
-                .insertIndexItem(UInt.rndMax(.count()), item);
+                ShuffleLink.this._array.insertIndexItem(UInt.rndMax(ShuffleLink.this._array.count()), item);
                 return 0;
             }
         }, new F<Integer, Integer>() {
@@ -31,10 +27,8 @@ public class ShuffleLink<T> implements ChainLink<T, T> {
             public Integer apply(final Integer r) {
                 if(ShuffleLink.this._array == null) {
                     throw new RuntimeException("Not null");
-                } else {
-                    ShuffleLink.this._array;
                 }
-                if(yield.yieldAll() == 1) {
+                if(yield.yieldAll(ShuffleLink.this._array) == 1) {
                     return 1;
                 } else {
                     return r;

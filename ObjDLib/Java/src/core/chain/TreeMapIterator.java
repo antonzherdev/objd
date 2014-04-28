@@ -16,21 +16,15 @@ public class TreeMapIterator<K, V> extends Iterator_impl<Tuple<K, V>> {
     public Tuple<K, V> next() {
         if(this.entry == null) {
             throw new RuntimeException("Not null");
-        } else {
-            this.entry;
         }
         if(this.entry == null) {
             throw new RuntimeException("Not null");
-        } else {
-            this.entry;
         }
-        final Tuple<K, V> ret = new Tuple<K, V>(.key, .value);
+        final Tuple<K, V> ret = new Tuple<K, V>(this.entry.key, this.entry.value);
         if(this.entry == null) {
             throw new RuntimeException("Not null");
-        } else {
-            this.entry;
         }
-        this.entry = .next();
+        this.entry = this.entry.next();
         return ret;
     }
     public TreeMapIterator(final TreeMap<K, V> map) {

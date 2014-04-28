@@ -14,10 +14,8 @@ public class TreeMapEntry<K, V> {
                 final TreeMapEntry<K, V> __tmp_0_1 = p.left;
                 if(__tmp_0_1 == null) {
                     throw new RuntimeException("Not null");
-                } else {
-                    __tmp_0_1;
                 }
-                p = ;
+                p = __tmp_0_1;
             }
             return ((TreeMapEntry<K, V>)p);
         } else {

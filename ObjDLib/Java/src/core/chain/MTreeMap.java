@@ -83,17 +83,13 @@ else {
             if(cmp < 0) {
                 if(parent == null) {
                     throw new RuntimeException("Not null");
-                } else {
-                    parent;
                 }
-                .left = e;
+                parent.left = e;
             } else {
                 if(parent == null) {
                     throw new RuntimeException("Not null");
-                } else {
-                    parent;
                 }
-                .right = e;
+                parent.right = e;
             }
             fixAfterInsertionEntry(e);
             this._size++;
@@ -115,9 +111,8 @@ else {
             final TreeMapEntry<K, V> __tmp_2_0 = p.next();
             if(__tmp_2_0 == null) {
                 throw new RuntimeException("Not null");
-            } else {
-                final TreeMapEntry<K, V> s = __tmp_2_0;
             }
+            final TreeMapEntry<K, V> s = __tmp_2_0;
             p.key = s.key;
             p.value = s.value;
             p = s;
@@ -131,26 +126,20 @@ else {
                 final TreeMapEntry<K, V> __tmp_4_1 = p.parent;
                 if(__tmp_4_1 == null) {
                     throw new RuntimeException("Not null");
-                } else {
-                    __tmp_4_1;
                 }
-                final TreeMapEntry<K, V> __tmp_4_1 = .left;
+                final TreeMapEntry<K, V> __tmp_4_1 = __tmp_4_1.left;
                 if(__tmp_4_1 != null && __tmp_4_1.equals(p)) {
                     final TreeMapEntry<K, V> __tmp_4_1 = p.parent;
                     if(__tmp_4_1 == null) {
                         throw new RuntimeException("Not null");
-                    } else {
-                        __tmp_4_1;
                     }
-                    .left = ((TreeMapEntry<K, V>)replacement);
+                    __tmp_4_1.left = ((TreeMapEntry<K, V>)replacement);
                 } else {
                     final TreeMapEntry<K, V> __tmp_4_1 = p.parent;
                     if(__tmp_4_1 == null) {
                         throw new RuntimeException("Not null");
-                    } else {
-                        __tmp_4_1;
                     }
-                    .right = ((TreeMapEntry<K, V>)replacement);
+                    __tmp_4_1.right = ((TreeMapEntry<K, V>)replacement);
                 }
             }
             p.left = null;
@@ -170,34 +159,26 @@ else {
                     final TreeMapEntry<K, V> __tmp_4_1_0 = p.parent;
                     if(__tmp_4_1_0 == null) {
                         throw new RuntimeException("Not null");
-                    } else {
-                        __tmp_4_1_0;
                     }
-                    final TreeMapEntry<K, V> __tmp_4_1_0 = .left;
+                    final TreeMapEntry<K, V> __tmp_4_1_0 = __tmp_4_1_0.left;
                     if(__tmp_4_1_0 != null && __tmp_4_1_0.equals(p)) {
                         final TreeMapEntry<K, V> __tmp_4_1_0 = p.parent;
                         if(__tmp_4_1_0 == null) {
                             throw new RuntimeException("Not null");
-                        } else {
-                            __tmp_4_1_0;
                         }
-                        .left = null;
+                        __tmp_4_1_0.left = null;
                     } else {
                         final TreeMapEntry<K, V> __tmp_4_1_0 = p.parent;
                         if(__tmp_4_1_0 == null) {
                             throw new RuntimeException("Not null");
-                        } else {
-                            __tmp_4_1_0;
                         }
-                        final TreeMapEntry<K, V> __tmp_4_1_0 = .right;
+                        final TreeMapEntry<K, V> __tmp_4_1_0 = __tmp_4_1_0.right;
                         if(__tmp_4_1_0 != null && __tmp_4_1_0.equals(p)) {
                             final TreeMapEntry<K, V> __tmp_4_1_0 = p.parent;
                             if(__tmp_4_1_0 == null) {
                                 throw new RuntimeException("Not null");
-                            } else {
-                                __tmp_4_1_0;
                             }
-                            .right = null;
+                            __tmp_4_1_0.right = null;
                         }
                     }
                     p.parent = null;
@@ -212,10 +193,8 @@ else {
         final TreeMapEntry<K, V> __tmp_2 = x.parent;
         if(__tmp_2 == null) {
             throw new RuntimeException("Not null");
-        } else {
-            __tmp_2;
         }
-        while(x != null && (this._root == null || !(this._root.equals(x))) && .color == this.RED) {
+        while(x != null && (this._root == null || !(this._root.equals(x))) && __tmp_2.color == this.RED) {
             final TreeMapEntry<K, V> __tmp_2_0_l = x.parent;
             final TreeMapEntry<K, V> __tmp_2_0 = x.parent;
             final TreeMapEntry<K, V> __tmp_2_0 = (__tmp_2_0 == null) ? (null) : (__tmp_2_0.parent);
@@ -444,9 +423,8 @@ else {
             final TreeMapEntry<K, V> __tmp_0_0 = p.right;
             if(__tmp_0_0 == null) {
                 throw new RuntimeException("Not null");
-            } else {
-                final TreeMapEntry<K, V> r = __tmp_0_0;
             }
+            final TreeMapEntry<K, V> r = __tmp_0_0;
             p.right = r.left;
             {
                 final TreeMapEntry<K, V> __tmp_0_2 = r.left;
@@ -461,26 +439,20 @@ else {
                 final TreeMapEntry<K, V> __tmp_0_4 = p.parent;
                 if(__tmp_0_4 == null) {
                     throw new RuntimeException("Not null");
-                } else {
-                    __tmp_0_4;
                 }
-                final TreeMapEntry<K, V> __tmp_0_4 = .left;
+                final TreeMapEntry<K, V> __tmp_0_4 = __tmp_0_4.left;
                 if(__tmp_0_4 != null && __tmp_0_4.equals(p)) {
                     final TreeMapEntry<K, V> __tmp_0_4 = p.parent;
                     if(__tmp_0_4 == null) {
                         throw new RuntimeException("Not null");
-                    } else {
-                        __tmp_0_4;
                     }
-                    .left = r;
+                    __tmp_0_4.left = r;
                 } else {
                     final TreeMapEntry<K, V> __tmp_0_4 = p.parent;
                     if(__tmp_0_4 == null) {
                         throw new RuntimeException("Not null");
-                    } else {
-                        __tmp_0_4;
                     }
-                    .right = r;
+                    __tmp_0_4.right = r;
                 }
             }
             r.left = ((TreeMapEntry<K, V>)p);
@@ -492,9 +464,8 @@ else {
             final TreeMapEntry<K, V> __tmp_0_0 = p.left;
             if(__tmp_0_0 == null) {
                 throw new RuntimeException("Not null");
-            } else {
-                final TreeMapEntry<K, V> l = __tmp_0_0;
             }
+            final TreeMapEntry<K, V> l = __tmp_0_0;
             p.left = l.right;
             {
                 final TreeMapEntry<K, V> __tmp_0_2 = l.right;
@@ -509,26 +480,20 @@ else {
                 final TreeMapEntry<K, V> __tmp_0_4 = p.parent;
                 if(__tmp_0_4 == null) {
                     throw new RuntimeException("Not null");
-                } else {
-                    __tmp_0_4;
                 }
-                final TreeMapEntry<K, V> __tmp_0_4 = .right;
+                final TreeMapEntry<K, V> __tmp_0_4 = __tmp_0_4.right;
                 if(__tmp_0_4 != null && __tmp_0_4.equals(p)) {
                     final TreeMapEntry<K, V> __tmp_0_4 = p.parent;
                     if(__tmp_0_4 == null) {
                         throw new RuntimeException("Not null");
-                    } else {
-                        __tmp_0_4;
                     }
-                    .right = l;
+                    __tmp_0_4.right = l;
                 } else {
                     final TreeMapEntry<K, V> __tmp_0_4 = p.parent;
                     if(__tmp_0_4 == null) {
                         throw new RuntimeException("Not null");
-                    } else {
-                        __tmp_0_4;
                     }
-                    .left = l;
+                    __tmp_0_4.left = l;
                 }
             }
             l.right = ((TreeMapEntry<K, V>)p);

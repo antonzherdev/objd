@@ -17,17 +17,13 @@ public class MTreeMapKeyIterator<K> extends MIterator_impl<K> {
     public K next() {
         if(this.entry == null) {
             throw new RuntimeException("Not null");
-        } else {
-            this.entry;
         }
-        final K ret = .key;
+        final K ret = this.entry.key;
         this.prev = this.entry;
         if(this.entry == null) {
             throw new RuntimeException("Not null");
-        } else {
-            this.entry;
         }
-        this.entry = .next();
+        this.entry = this.entry.next();
         return ret;
     }
     @Override

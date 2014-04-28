@@ -14,10 +14,8 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
         final TreeMapEntry<K, V> __tmp = entryForKey(key);
         if(__tmp == null) {
             throw new RuntimeException("Not null");
-        } else {
-            __tmp;
         }
-        return .value;
+        return __tmp.value;
     }
     @Override
     public V optKey(final K key) {

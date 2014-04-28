@@ -306,14 +306,22 @@ genExp env e@(D.If cond t f) = do
 	let 
 		(t', tstms) = runWriter $ genExp env t
 		(f', fstms) = runWriter $ genExp env f
-		in if t' == J.Nop || f' == J.Nop then (do 
-			tellGenStms env e
-			return J.Nop
-		) else (do 
-			tell tstms
-			tell fstms
-			return $ J.InlineIf cond' t' f'
-		)
+		in case (t', f') of
+			(J.Nop, J.Nop) -> do 
+				tellGenStms env e
+				return J.Nop
+			(J.Nop, _) -> do 
+				tell tstms{wrtStms = [J.If cond' (wrtStms tstms) []]}
+				tell fstms
+				return f'
+			(_, J.Nop) -> do 
+				tell tstms
+				tell fstms{wrtStms = [J.If (J.Not cond') (wrtStms fstms) []]}
+				return t'
+			_ -> do 
+				tell tstms
+				tell fstms
+				return $ J.InlineIf cond' t' f'
 genExp env e@D.Throw{} = do 
 	tellGenStms env e 
 	return J.Nop

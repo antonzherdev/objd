@@ -26,10 +26,8 @@ public class FutureEnd<T> {
                     FutureEnd.this._counter.incrementAndGet();
                     if(FutureEnd.this._array == null) {
                         throw new RuntimeException("Not null");
-                    } else {
-                        FutureEnd.this._array;
                     }
-                    .appendItem(null);
+                    FutureEnd.this._array.appendItem(null);
                     final int i = _i.value;
                     _i.value++;
                     fut.onCompleteF(new P<Try<T>>() {
@@ -43,20 +41,16 @@ public class FutureEnd<T> {
                                     if(!(FutureEnd.this._stopped)) {
                                         if(FutureEnd.this._array == null) {
                                             throw new RuntimeException("Not null");
-                                        } else {
-                                            FutureEnd.this._array;
                                         }
-                                        .setIndexItem(((int)i), tr.get());
+                                        FutureEnd.this._array.setIndexItem(((int)i), tr.get());
                                         _set.value = i;
                                         final int r = FutureEnd.this._counter.decrementAndGet();
                                         if(FutureEnd.this._ended && r == 0) {
                                             if(!(FutureEnd.this._yielded.getAndSetNewValue(true))) {
                                                 if(FutureEnd.this._array == null) {
                                                     throw new RuntimeException("Not null");
-                                                } else {
-                                                    FutureEnd.this._array;
                                                 }
-                                                FutureEnd.this._promise.successValue();
+                                                FutureEnd.this._promise.successValue(FutureEnd.this._array);
                                             }
                                         }
                                     }
@@ -79,10 +73,8 @@ public class FutureEnd<T> {
                     if(!(FutureEnd.this._yielded.getAndSetNewValue(true))) {
                         if(FutureEnd.this._array == null) {
                             throw new RuntimeException("Not null");
-                        } else {
-                            FutureEnd.this._array;
                         }
-                        FutureEnd.this._promise.successValue();
+                        FutureEnd.this._promise.successValue(FutureEnd.this._array);
                     }
                 }
                 return res;
