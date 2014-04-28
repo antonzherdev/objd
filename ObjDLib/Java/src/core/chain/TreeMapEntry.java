@@ -11,20 +11,20 @@ public class TreeMapEntry<K, V> {
         if(this.right != null) {
             TreeMapEntry<K, V> p = this.right;
             while(p.left != null) {
-                p = ERROR: Unknown {
-    local __tmp_0_1 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-    if((<l>__tmp_0_1\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == none<^TreeMapEntry#C<§K#G§, §V#G§>>)) throw "Not null"
-else <l>__tmp_0_1\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-};
+                final TreeMapEntry<K, V> __tmp_0_1 = p.left;
+                if(__tmp_0_1 == null) {
+                    throw new RuntimeException("Not null");
+                } else {
+                    __tmp_0_1;
+                }
+                p = ;
             }
             return ((TreeMapEntry<K, V>)p);
         } else {
             TreeMapEntry<K, V> p = this.parent;
             TreeMapEntry<K, V> ch = this;
-            while(p != null && ERROR: Unknown {
-    local __tmp_0_2 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>p\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-    return ((<l>__tmp_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && (<l>__tmp_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == <lm>ch\TreeMapEntry#C<§K#G§, §V#G§>\))
-}) {
+            final TreeMapEntry<K, V> __tmp_0_2 = p.right;
+            while(p != null && __tmp_0_2 != null && __tmp_0_2.equals(ch)) {
                 ch = p;
                 p = p.parent;
             }

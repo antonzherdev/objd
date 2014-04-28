@@ -7,7 +7,7 @@ public class TreeMapBuilder<K, V> extends Builder_impl<Tuple<K, V>, TreeMap<K, V
         return new TreeMapBuilder<K, V>(new F2<K, K, Integer>() {
             @Override
             public Integer apply(final K a, final K b) {
-                ERROR: Unknown weak return <l>a\K#G\.<rdIb>compare(to = <l>b\K#G\)\int\;
+                return a.compareTo(b);
             }
         });
     }

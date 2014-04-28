@@ -211,8 +211,8 @@ instance Monoid Wrt where
 	mempty = Wrt {wrtStms = [], wrtImports = []}
 	l `mappend` r = Wrt {wrtStms = wrtStms l ++ wrtStms r, wrtImports = nub (wrtImports l ++ wrtImports r)}
 
-{-tellImport :: J.Import -> Writer Wrt ()
-tellImport imp = tell Wrt{wrtStms = [], wrtImports = [imp]}-}
+tellStms :: [J.Stm] -> Writer Wrt ()
+tellStms stms = tell Wrt{wrtStms = stms, wrtImports = []}
 tellImports :: [J.Import] -> Writer Wrt ()
 tellImports imps = tell Wrt{wrtStms = [], wrtImports = imps}
 
@@ -333,6 +333,12 @@ genExp env (D.StringBuild pars lastString) = do
 genExp env (D.Tuple exps) = do
 	exps' <- mapM (genExp env) exps
 	return $ J.New [] (tupleClassName $ length exps') (map (genTp . D.exprDataType) exps) exps'
+genExp env (D.Weak x) = genExp env x
+genExp env (D.Braces [x]) = genExp env x
+genExp env (D.Braces exps) = do
+	stms <- mapM (getStms env) (init exps)
+	tellStms $ join stms
+	genExp env $ last exps
 genExp _ e = return $ J.ExpError $ "Unknown " ++ show e
 
 
@@ -408,6 +414,7 @@ genStm env (D.Val True d) = do
 	t <- genStm env $ D.defBody d
 	return $ (declareVal d J.Nop):t
 genStm env (D.Val False d) = genExpStm env (D.defBody d) $ declareVal d
+genStm env (D.Weak x) = genStm env x
 genStm env e = genExpStm env e J.Stm 
 
 

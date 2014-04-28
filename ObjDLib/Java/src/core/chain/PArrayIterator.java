@@ -9,11 +9,12 @@ public class PArrayIterator<T> extends Iterator_impl<T> {
     }
     @Override
     public T next() {
-        final T ret = ERROR: Unknown {
-    local __tmp_0 : (§T#G§)? = <PArrayIterator#C<T#G>>self.<eIU>array\PArray#C<§T#G§>\.<dIo>apply(index = <PArrayIterator#C<T#G>>self.<emp>i\int\.cast<uint>)\(§T#G§)?\
-    if((<l>__tmp_0\(§T#G§)?\ == none<§T#G§>)) throw "Not null"
-else <l>__tmp_0\(§T#G§)?\
-};
+        final T __tmp_0 = this.array.applyIndex(((int)this.i));
+        if(__tmp_0 == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            final T ret = __tmp_0;
+        }
         this.i++;
         return ret;
     }

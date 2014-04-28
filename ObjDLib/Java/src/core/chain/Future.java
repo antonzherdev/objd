@@ -370,11 +370,12 @@ public abstract class Future<T> {
             }
         });
         cond.unlockedAwait();
-        return ERROR: Unknown {
-    local __tmp_4 : (^Try#C<§T#G§>)? = <Future#C<T#G>>self.<dIa>result\(^Try#C<§T#G§>)?\
-    if((<l>__tmp_4\(^Try#C<§T#G§>)?\ == none<^Try#C<§T#G§>>)) throw "Not null"
-else <l>__tmp_4\(^Try#C<§T#G§>)?\
-};
+        final Try<T> __tmp_4 = this.result();
+        if(__tmp_4 == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            return __tmp_4;
+        }
     }
     public void waitAndOnSuccessAwaitF(final float await, final P<T> f) {
         {
@@ -402,11 +403,12 @@ else <l>__tmp_4\(^Try#C<§T#G§>)?\
         }
     }
     public T getResultAwait(final float await) {
-        return ERROR: Unknown {
-    local __tmp : §(T#G)?§ = <Future#C<T#G>>self.<dI>waitResult(period = <l>await\float\)\(^Try#C<§T#G§>)?\?.<dIa>get\§T#G§\
-    if((<l>__tmp\§(T#G)?§\ == none<T#G>)) throw "Not null"
-else <l>__tmp\§(T#G)?§\
-};
+        final T __tmp = ERROR: Unknown <Future#C<T#G>>self.<dI>waitResult(period = <l>await\float\)\(^Try#C<§T#G§>)?\?.<dIa>get\§T#G§\;
+        if(__tmp == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            return __tmp;
+        }
     }
     public <R> Future<Tuple<T, R>> joinAnother(final Future<R> another) {
         final Promise<Tuple<T, R>> p = Promise.<Tuple<T, R>>apply();

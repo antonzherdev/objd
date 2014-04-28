@@ -7,7 +7,7 @@ public class TreeSetBuilder<T> extends Builder_impl<T, ImTreeSet<T>> {
         return new TreeSetBuilder<T>(new F2<T, T, Integer>() {
             @Override
             public Integer apply(final T a, final T b) {
-                ERROR: Unknown weak return <l>a\T#G\.<rdIb>compare(to = <l>b\T#G\)\int\;
+                return a.compareTo(b);
             }
         });
     }

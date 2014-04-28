@@ -19,27 +19,33 @@ public class QueueTest extends TestCase {
         .<Integer>assertEqualsAB(3, ((int)q.count()));
         Tuple<Integer, ImQueue<Integer>> p = q.dequeue();
         q = p.b;
-        .<Integer>assertEqualsAB(1, ERROR: Unknown {
-    local __tmp_12 : ^(§^int§)? = <lm>p\(^(§^int§)?, ^ImQueue#C<§^int§>)\.<eIU>a\^(§^int§)?\
-    if((<l>__tmp_12\^(§^int§)?\ == none<§^int§>)) throw "Not null"
-else <l>__tmp_12\^(§^int§)?\
-});
+        final Integer __tmp_12 = p.a;
+        if(__tmp_12 == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            __tmp_12;
+        }
+        .<Integer>assertEqualsAB(1, );
         .<Integer>assertEqualsAB(2, ((int)q.count()));
         p = q.dequeue();
         q = p.b;
-        .<Integer>assertEqualsAB(2, ERROR: Unknown {
-    local __tmp_16 : ^(§^int§)? = <lm>p\(^(§^int§)?, ^ImQueue#C<§^int§>)\.<eIU>a\^(§^int§)?\
-    if((<l>__tmp_16\^(§^int§)?\ == none<§^int§>)) throw "Not null"
-else <l>__tmp_16\^(§^int§)?\
-});
+        final Integer __tmp_16 = p.a;
+        if(__tmp_16 == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            __tmp_16;
+        }
+        .<Integer>assertEqualsAB(2, );
         .<Integer>assertEqualsAB(1, ((int)q.count()));
         p = q.dequeue();
         q = p.b;
-        .<Integer>assertEqualsAB(3, ERROR: Unknown {
-    local __tmp_20 : ^(§^int§)? = <lm>p\(^(§^int§)?, ^ImQueue#C<§^int§>)\.<eIU>a\^(§^int§)?\
-    if((<l>__tmp_20\^(§^int§)?\ == none<§^int§>)) throw "Not null"
-else <l>__tmp_20\^(§^int§)?\
-});
+        final Integer __tmp_20 = p.a;
+        if(__tmp_20 == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            __tmp_20;
+        }
+        .<Integer>assertEqualsAB(3, );
         .<Integer>assertEqualsAB(0, ((int)q.count()));
     }
     public QueueTest() {

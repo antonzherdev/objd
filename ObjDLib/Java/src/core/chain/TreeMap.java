@@ -11,11 +11,13 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
     }
     @Override
     public V applyKey(final K key) {
-        return ERROR: Unknown {
-    local __tmp : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <TreeMap#C<K#G, V#G>>self.<dI>entryFor(key = <l>key\§K#G§\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-    if((<l>__tmp\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == none<^TreeMapEntry#C<§K#G§, §V#G§>>)) throw "Not null"
-else <l>__tmp\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-}.value;
+        final TreeMapEntry<K, V> __tmp = entryForKey(key);
+        if(__tmp == null) {
+            throw new RuntimeException("Not null");
+        } else {
+            __tmp;
+        }
+        return .value;
     }
     @Override
     public V optKey(final K key) {
@@ -88,10 +90,8 @@ else <l>__tmp\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
                 } else {
                     TreeMapEntry<K, V> parent = p.parent;
                     TreeMapEntry<K, V> ch = p;
-                    while(parent != null && ERROR: Unknown {
-    local __tmp_1_1_0_2 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-    return ((<l>__tmp_1_1_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && (<l>__tmp_1_1_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == <lm>ch\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\))
-}) {
+                    final TreeMapEntry<K, V> __tmp_1_1_0_2 = parent.left;
+                    while(parent != null && __tmp_1_1_0_2 != null && __tmp_1_1_0_2.equals(ch)) {
                         ch = parent;
                         parent = parent.parent;
                     }
@@ -117,10 +117,8 @@ else <l>__tmp\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
                 } else {
                     TreeMapEntry<K, V> parent = p.parent;
                     TreeMapEntry<K, V> ch = p;
-                    while(parent != null && ERROR: Unknown {
-    local __tmp_1_1_0_2 : (^TreeMapEntry#C<§K#G§, §V#G§>)? = <lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\
-    return ((<l>__tmp_1_1_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>) && (<l>__tmp_1_1_0_2\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ == <lm>ch\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\))
-}) {
+                    final TreeMapEntry<K, V> __tmp_1_1_0_2 = parent.right;
+                    while(parent != null && __tmp_1_1_0_2 != null && __tmp_1_1_0_2.equals(ch)) {
                         ch = parent;
                         parent = parent.parent;
                     }
