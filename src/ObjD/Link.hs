@@ -1484,7 +1484,7 @@ data Exp = Nop
 	| MinusMinus Exp
 	| Dot Exp Exp
 	| Arrow Exp Exp
-	| NullDot Exp Exp
+	| NullDot Exp Exp Exp -- The last is expanded expression
 	| NonOpt Bool Exp Exp -- Need to check. The second is expanded expression
 	| Set (Maybe MathTp) Exp Exp
 	| Call Def DataType [CallPar] [DataType]
@@ -1537,7 +1537,7 @@ instance Show Exp where
 	show (MinusMinus e) = show e ++ "--"
 	show (Dot l r) = showOp' l "." r
 	show (Arrow l r) = showOp' l "->" r
-	show (NullDot l r) = showOp' l "?." r
+	show (NullDot l r _) = showOp' l "?." r
 	show (Call dd tp pars _) = defRefPrep dd ++ defName dd ++ showCallPars pars ++ "\\" ++ show tp ++ "\\" 
 	show (IntConst i) = show i
 	show (StringConst i) = show i
@@ -1646,7 +1646,7 @@ forExp f ee = mplus (go ee) (f ee)
 		go (Set _ l r) = mplus (forExp f l) (forExp f r)
 		go (Dot l r) = mplus (forExp f l) (forExp f r)
 		go (Arrow l r) = mplus (forExp f l) (forExp f r)
-		go (NullDot l r) = mplus (forExp f l) (forExp f r)
+		go (NullDot l r e) = mplus (mplus (forExp f l) (forExp f r)) (forExp f e)
 		go (Index l r) = mplus (forExp f l) (forExp f r)
 		go (PlusPlus e) = forExp f e
 		go (MinusMinus e) = forExp f e
@@ -1684,7 +1684,7 @@ mapExp f ee = fromMaybe (go ee) (f ee)
 		go (Set t l r) = Set t (mapExp f l) (mapExp f r)
 		go (Dot l r) = Dot (mapExp f l) (mapExp f r)
 		go (Arrow l r) = Arrow (mapExp f l) (mapExp f r)
-		go (NullDot l r) = NullDot (mapExp f l) (mapExp f r)
+		go (NullDot l r e) = NullDot (mapExp f l) (mapExp f r) (mapExp f e)
 		go (Index l r) = Index (mapExp f l) (mapExp f r)
 		go (PlusPlus e) = PlusPlus $ mapExp f e
 		go (MinusMinus e) = MinusMinus $ mapExp f e
@@ -1719,7 +1719,7 @@ isConst (Map exps) = all (\(a, b) -> isConst a && isConst b) exps
 isConst (Cast _ e) = isConst e
 isConst (Dot l r) = isConst l && isConst r
 isConst (Arrow l r) = isConst l && isConst r
-isConst (NullDot l r) = isConst l && isConst r
+isConst (NullDot l r _) = isConst l && isConst r
 isConst (Call Def {defMods = mods, defBody = b} _ pars _) = 
 	(DefModStruct `elem` mods  &&  DefModConstructor `elem` mods && all (isConst . snd) pars)
 	|| (DefModObject `elem` mods && null pars)
@@ -1778,7 +1778,7 @@ exprDataType (MathOp _ l r) = case(unwrapGeneric $ exprDataType l, unwrapGeneric
 	(lt, _) -> lt
 exprDataType (PlusPlus e) = exprDataType e
 exprDataType (MinusMinus e) = exprDataType e
-exprDataType (NullDot _ b) = option False $ exprDataType b 
+exprDataType (NullDot _ b _) = option False $ exprDataType b 
 exprDataType (Dot _ b) = exprDataType b
 exprDataType (Arrow _ b) = exprDataType b
 exprDataType Set{} = TPVoid
@@ -1993,7 +1993,7 @@ expr env (D.Set tp a b) =
 	let 
 		aa = exprToSome env a
 		ltp = case aa of
-			NullDot _ r -> exprDataType r
+			NullDot _ r _ -> exprDataType r
 			_ -> exprDataType aa
 		simpleSet = if isNothing tp then set Nothing aa math
 			else case unwrapGeneric ltp of
@@ -2003,7 +2003,7 @@ expr env (D.Set tp a b) =
 				TPPointer{} -> set tp aa math
 				_ -> set Nothing aa callOp
 
-		set tp' (NullDot dl dr) r = 
+		set tp' (NullDot dl dr _) r = 
 			let 
 				dltp = exprDataType dl
 				tmp = tmpVal env "" dltp dl
@@ -2020,7 +2020,7 @@ expr env (D.Set tp a b) =
 		lcall = case aa of
 				Dot _ c@(Call {}) -> Just c
 				Arrow _ c@(Call {}) -> Just c
-				NullDot _ c@(Call {}) -> Just c
+				NullDot _ c@(Call {}) _ -> Just c
 				c@Call {} -> Just c
 				_ -> Nothing
 		isSelfSet = case aa of 
@@ -2035,7 +2035,7 @@ expr env (D.Set tp a b) =
 				else if envInit env && isSelfSet then simpleSet
 				else case aa of
 					Dot ref _ ->  Dot ref $ callSet ldef ref
-					NullDot ref _ ->  NullDot ref $ callSet ldef ref
+					NullDot ref _ _ ->  nullDot env ref $ callSet ldef ref
 					_ -> exprCall env Nothing $ D.Call "set" (Just [(Just $ defName ldef, bToProcCall)]) []
 			_ -> Set tp (ExpLError "Unassinable left" aa) (expr env b)
 expr env (D.PlusPlus e) = PlusPlus (exprToSome env e)
@@ -2120,6 +2120,17 @@ nonOpt env True e = let
 	val = tmpVal env "" tp e
 	in NonOpt True e $ if isElementaryExpression e then rt e else Braces [Val False val, rt (callRef val)]
 
+nullDot :: Env -> Exp -> Exp -> Exp
+nullDot env l r = let
+	ltp = exprDataType l
+	ltp' = unoptionHard ltp
+	rtp = exprDataType r
+	val = tmpVal env "" ltp l
+	f l' = If (BoolOp Eq l' (None ltp')) (None rtp) (Some True $ Dot (nonOpt env False l') r) 
+	uw 
+		| isElementaryExpression l = f l
+		| otherwise = Braces [Val False val, f (callRef val)]
+	in NullDot l r uw
 linkOptionCall :: Env -> (D.Exp, Exp) -> D.Exp -> Exp
 linkOptionCall env (_, leftExp) (D.Call "get" Nothing []) = nonOpt env True $ leftExp
 linkOptionCall env (_ ,leftExp) e@(D.Call "cast" Nothing [tp]) = case tp of
@@ -2171,7 +2182,7 @@ linkOptionAlt env alt tp = implicitConvertsion env tp $ expr env{envVarSuffix = 
 			_ -> alt
 
 linkOrElse :: Env -> (DataType, Bool) -> (D.Exp, Exp) -> Exp -> Exp
-linkOrElse env _ ((D.NullDot dl dr), (NullDot dl' dr')) alt =
+linkOrElse env _ ((D.NullDot dl dr), (NullDot dl' dr' _)) alt =
 	let
 		l'' = Dot (nonOpt env False dl') dr'
 		dltp = exprDataType dl'
@@ -2198,12 +2209,12 @@ linkNullDot env d@(D.NullDot a b) = let
 	bb = case aTp of
 		TPOption _ tp -> exprCall env (Just tp) b
 		TPGenericWrap _ (TPOption _ tp) -> exprCall env (Just tp) b
-		tp -> ExpDError ("Null safe operation for the non-nullable datatype " ++ show tp) b			
+		tp -> ExpDError ("Null safe operation for the non-nullable datatype " ++ show tp) b	
 	in case aa of
 		ExpDError s _ -> ExpDError s d
 		_ -> case bb of
-			Dot l r -> NullDot (NullDot aa l) r
-			_ -> NullDot aa bb
+			Dot l r -> nullDot env (nullDot env{envVarSuffix = envVarSuffix env ++ "i"} aa l) r
+			_ -> nullDot env aa bb
 
 optChecking :: Env -> Exp -> (Env, Env)
 optChecking env e =  rec (env, env) e

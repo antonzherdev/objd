@@ -251,7 +251,7 @@ abstract class Future<T> {
         }
     }
 
-    def getResult(await : float) : T = waitResult(await)?.get.get
+    def getResult(await : float) : T = waitResult(await).get.get
 
     def join<R>(another : Future<R>) : Future<(T, R)> = {
         val p = Promise<(T, R)>()

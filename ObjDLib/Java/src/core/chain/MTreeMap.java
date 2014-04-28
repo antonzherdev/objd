@@ -18,7 +18,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     }
     @Override
     public ImTreeMap<K, V> imCopy() {
-        return new ImTreeMap<K, V>(this.comparator, ERROR: Unknown <MTreeMap#C<K#G, V#G>>self.<emp>_root\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<dI>copy(parent = none<^TreeMapEntry#C<§K#G§, §V#G§>>)\TreeMapEntry#C<§K#G§, §V#G§>\, this._size);
+        return new ImTreeMap<K, V>(this.comparator, (this._root == null) ? (null) : (this._root.copyParent(null)), this._size);
     }
     @Override
     public ImTreeMap<K, V> im() {
@@ -28,7 +28,8 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     public void assignImMap(final ImMap<K, V> imMap) {
         if(imMap instanceof ImTreeMap) {
             final ImTreeMap<K, V> m = ((ImTreeMap<K, V>)imMap);
-            this._root = ERROR: Unknown <l>m\ImTreeMap#C<§K#G§, §V#G§>\.<eIUo>root\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<dI>copy(parent = none<^TreeMapEntry#C<§K#G§, §V#G§>>)\TreeMapEntry#C<§K#G§, §V#G§>\;
+            final TreeMapEntry<K, V> __tmp_0_1 = m.root;
+            this._root = (__tmp_0_1 == null) ? (null) : (__tmp_0_1.copyParent(null));
             this._size = m.count;
         } else {
             this.clear();
@@ -216,9 +217,13 @@ else {
         }
         while(x != null && (this._root == null || !(this._root.equals(x))) && .color == this.RED) {
             final TreeMapEntry<K, V> __tmp_2_0_l = x.parent;
-            final TreeMapEntry<K, V> __tmp_2_0_r = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+            final TreeMapEntry<K, V> __tmp_2_0 = x.parent;
+            final TreeMapEntry<K, V> __tmp_2_0 = (__tmp_2_0 == null) ? (null) : (__tmp_2_0.parent);
+            final TreeMapEntry<K, V> __tmp_2_0_r = (__tmp_2_0 == null) ? (null) : (__tmp_2_0.left);
             if(__tmp_2_0_l == __tmp_2_0_r || (__tmp_2_0_l != null && __tmp_2_0_r != null && __tmp_2_0_l.equals(__tmp_2_0_r))) {
-                final TreeMapEntry<K, V> y = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                final TreeMapEntry<K, V> __tmp_2_0_0 = x.parent;
+                final TreeMapEntry<K, V> __tmp_2_0_0 = (__tmp_2_0_0 == null) ? (null) : (__tmp_2_0_0.parent);
+                final TreeMapEntry<K, V> y = (__tmp_2_0_0 == null) ? (null) : (__tmp_2_0_0.right);
                 if(y != null && y.color == this.RED) {
                     {
                         final TreeMapEntry<K, V> __tmp_2_0_1_0 = x.parent;
@@ -228,14 +233,17 @@ else {
                     }
                     y.color = this.BLACK;
                     {
-                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = x.parent;
+                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = (__tmp_2_0_1_2 == null) ? (null) : (__tmp_2_0_1_2.parent);
                         if(__tmp_2_0_1_2 != null) {
                             __tmp_2_0_1_2.color = this.RED;
                         }
                     }
-                    x = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                    final TreeMapEntry<K, V> __tmp_2_0_1_3 = x.parent;
+                    x = (__tmp_2_0_1_3 == null) ? (null) : (__tmp_2_0_1_3.parent);
                 } else {
-                    final TreeMapEntry<K, V> __tmp_2_0_1_0 = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                    final TreeMapEntry<K, V> __tmp_2_0_1_0 = x.parent;
+                    final TreeMapEntry<K, V> __tmp_2_0_1_0 = (__tmp_2_0_1_0 == null) ? (null) : (__tmp_2_0_1_0.right);
                     if(__tmp_2_0_1_0 != null && __tmp_2_0_1_0.equals(x)) {
                         x = x.parent;
                         rotateLeftP(x);
@@ -247,15 +255,19 @@ else {
                         }
                     }
                     {
-                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = x.parent;
+                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = (__tmp_2_0_1_2 == null) ? (null) : (__tmp_2_0_1_2.parent);
                         if(__tmp_2_0_1_2 != null) {
                             __tmp_2_0_1_2.color = this.RED;
                         }
                     }
-                    rotateRightP(ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\);
+                    final TreeMapEntry<K, V> __tmp_2_0_1_3 = x.parent;
+                    rotateRightP((__tmp_2_0_1_3 == null) ? (null) : (__tmp_2_0_1_3.parent));
                 }
             } else {
-                final TreeMapEntry<K, V> y = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                final TreeMapEntry<K, V> __tmp_2_0_0 = x.parent;
+                final TreeMapEntry<K, V> __tmp_2_0_0 = (__tmp_2_0_0 == null) ? (null) : (__tmp_2_0_0.parent);
+                final TreeMapEntry<K, V> y = (__tmp_2_0_0 == null) ? (null) : (__tmp_2_0_0.left);
                 if(y != null && y.color == this.RED) {
                     {
                         final TreeMapEntry<K, V> __tmp_2_0_1_0 = x.parent;
@@ -265,14 +277,17 @@ else {
                     }
                     y.color = this.BLACK;
                     {
-                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = x.parent;
+                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = (__tmp_2_0_1_2 == null) ? (null) : (__tmp_2_0_1_2.parent);
                         if(__tmp_2_0_1_2 != null) {
                             __tmp_2_0_1_2.color = this.RED;
                         }
                     }
-                    x = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                    final TreeMapEntry<K, V> __tmp_2_0_1_3 = x.parent;
+                    x = (__tmp_2_0_1_3 == null) ? (null) : (__tmp_2_0_1_3.parent);
                 } else {
-                    final TreeMapEntry<K, V> __tmp_2_0_1_0 = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                    final TreeMapEntry<K, V> __tmp_2_0_1_0 = x.parent;
+                    final TreeMapEntry<K, V> __tmp_2_0_1_0 = (__tmp_2_0_1_0 == null) ? (null) : (__tmp_2_0_1_0.left);
                     if(__tmp_2_0_1_0 != null && __tmp_2_0_1_0.equals(x)) {
                         x = x.parent;
                         rotateRightP(x);
@@ -284,12 +299,14 @@ else {
                         }
                     }
                     {
-                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = x.parent;
+                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = (__tmp_2_0_1_2 == null) ? (null) : (__tmp_2_0_1_2.parent);
                         if(__tmp_2_0_1_2 != null) {
                             __tmp_2_0_1_2.color = this.RED;
                         }
                     }
-                    rotateLeftP(ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\);
+                    final TreeMapEntry<K, V> __tmp_2_0_1_3 = x.parent;
+                    rotateLeftP((__tmp_2_0_1_3 == null) ? (null) : (__tmp_2_0_1_3.parent));
                 }
             }
         }
@@ -300,9 +317,11 @@ else {
     private void fixAfterDeletionEntry(final TreeMapEntry<K, V> entry) {
         TreeMapEntry<K, V> x = entry;
         while(x != null && (this._root == null || !(this._root.equals(x))) && x.color == this.BLACK) {
-            final TreeMapEntry<K, V> __tmp_1_0 = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+            final TreeMapEntry<K, V> __tmp_1_0 = x.parent;
+            final TreeMapEntry<K, V> __tmp_1_0 = (__tmp_1_0 == null) ? (null) : (__tmp_1_0.left);
             if(__tmp_1_0 != null && __tmp_1_0.equals(x)) {
-                TreeMapEntry<K, V> sib = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                final TreeMapEntry<K, V> __tmp_1_0_0 = x.parent;
+                TreeMapEntry<K, V> sib = (__tmp_1_0_0 == null) ? (null) : (__tmp_1_0_0.right);
                 if(sib != null && sib.color == this.RED) {
                     sib.color = this.BLACK;
                     {
@@ -312,20 +331,21 @@ else {
                         }
                     }
                     rotateLeftP(x.parent);
-                    sib = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                    final TreeMapEntry<K, V> __tmp_1_0_1_3 = x.parent;
+                    sib = (__tmp_1_0_1_3 == null) ? (null) : (__tmp_1_0_1_3.right);
                 }
-                final TreeMapEntry<K, V> __tmp_1_0_2 = ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
-                final TreeMapEntry<K, V> __tmp_1_0_2 = ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
-                if((__tmp_1_0_2 != null) ? (ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.color) : (this.BLACK) == this.BLACK && (__tmp_1_0_2 != null) ? (ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.color) : (this.BLACK) == this.BLACK) {
+                final TreeMapEntry<K, V> __tmp_1_0_2 = (sib == null) ? (null) : (sib.left);
+                final TreeMapEntry<K, V> __tmp_1_0_2 = (sib == null) ? (null) : (sib.right);
+                if((__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.left).color) : (this.BLACK) == this.BLACK && (__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.right).color) : (this.BLACK) == this.BLACK) {
                     if(sib != null) {
                         sib.color = this.RED;
                     }
                     x = x.parent;
                 } else {
-                    final TreeMapEntry<K, V> __tmp_1_0_2_0 = ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
-                    if((__tmp_1_0_2_0 != null) ? (ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.color) : (this.BLACK) == this.BLACK) {
+                    final TreeMapEntry<K, V> __tmp_1_0_2_0 = (sib == null) ? (null) : (sib.right);
+                    if((__tmp_1_0_2_0 != null) ? ((sib == null) ? (null) : (sib.right).color) : (this.BLACK) == this.BLACK) {
                         {
-                            final TreeMapEntry<K, V> __tmp_1_0_2_0_0 = ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                            final TreeMapEntry<K, V> __tmp_1_0_2_0_0 = (sib == null) ? (null) : (sib.left);
                             if(__tmp_1_0_2_0_0 != null) {
                                 __tmp_1_0_2_0_0.color = this.BLACK;
                             }
@@ -334,7 +354,8 @@ else {
                             sib.color = this.RED;
                         }
                         rotateRightP(sib);
-                        sib = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                        final TreeMapEntry<K, V> __tmp_1_0_2_0_3 = x.parent;
+                        sib = (__tmp_1_0_2_0_3 == null) ? (null) : (__tmp_1_0_2_0_3.right);
                     }
                     if(sib != null) {
                         final TreeMapEntry<K, V> __tmp_1_0_2_1 = x.parent;
@@ -347,7 +368,7 @@ else {
                         }
                     }
                     {
-                        final TreeMapEntry<K, V> __tmp_1_0_2_3 = ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                        final TreeMapEntry<K, V> __tmp_1_0_2_3 = (sib == null) ? (null) : (sib.right);
                         if(__tmp_1_0_2_3 != null) {
                             __tmp_1_0_2_3.color = this.BLACK;
                         }
@@ -356,7 +377,8 @@ else {
                     x = this._root;
                 }
             } else {
-                TreeMapEntry<K, V> sib = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                final TreeMapEntry<K, V> __tmp_1_0_0 = x.parent;
+                TreeMapEntry<K, V> sib = (__tmp_1_0_0 == null) ? (null) : (__tmp_1_0_0.left);
                 if(sib != null && sib.color == this.RED) {
                     sib.color = this.BLACK;
                     {
@@ -366,20 +388,21 @@ else {
                         }
                     }
                     rotateRightP(x.parent);
-                    sib = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                    final TreeMapEntry<K, V> __tmp_1_0_1_3 = x.parent;
+                    sib = (__tmp_1_0_1_3 == null) ? (null) : (__tmp_1_0_1_3.left);
                 }
-                final TreeMapEntry<K, V> __tmp_1_0_2 = ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
-                final TreeMapEntry<K, V> __tmp_1_0_2 = ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
-                if((__tmp_1_0_2 != null) ? (ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.color) : (this.BLACK) == this.BLACK && (__tmp_1_0_2 != null) ? (ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.color) : (this.BLACK) == this.BLACK) {
+                final TreeMapEntry<K, V> __tmp_1_0_2 = (sib == null) ? (null) : (sib.right);
+                final TreeMapEntry<K, V> __tmp_1_0_2 = (sib == null) ? (null) : (sib.left);
+                if((__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.right).color) : (this.BLACK) == this.BLACK && (__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.left).color) : (this.BLACK) == this.BLACK) {
                     if(sib != null) {
                         sib.color = this.RED;
                     }
                     x = x.parent;
                 } else {
-                    final TreeMapEntry<K, V> __tmp_1_0_2_0 = ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
-                    if((__tmp_1_0_2_0 != null) ? (ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\.color) : (this.BLACK) == this.BLACK) {
+                    final TreeMapEntry<K, V> __tmp_1_0_2_0 = (sib == null) ? (null) : (sib.left);
+                    if((__tmp_1_0_2_0 != null) ? ((sib == null) ? (null) : (sib.left).color) : (this.BLACK) == this.BLACK) {
                         {
-                            final TreeMapEntry<K, V> __tmp_1_0_2_0_0 = ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                            final TreeMapEntry<K, V> __tmp_1_0_2_0_0 = (sib == null) ? (null) : (sib.right);
                             if(__tmp_1_0_2_0_0 != null) {
                                 __tmp_1_0_2_0_0.color = this.BLACK;
                             }
@@ -388,7 +411,8 @@ else {
                             sib.color = this.RED;
                         }
                         rotateLeftP(sib);
-                        sib = ERROR: Unknown <lm>x\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUmw>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                        final TreeMapEntry<K, V> __tmp_1_0_2_0_3 = x.parent;
+                        sib = (__tmp_1_0_2_0_3 == null) ? (null) : (__tmp_1_0_2_0_3.left);
                     }
                     if(sib != null) {
                         final TreeMapEntry<K, V> __tmp_1_0_2_1 = x.parent;
@@ -401,7 +425,7 @@ else {
                         }
                     }
                     {
-                        final TreeMapEntry<K, V> __tmp_1_0_2_3 = ERROR: Unknown <lm>sib\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\;
+                        final TreeMapEntry<K, V> __tmp_1_0_2_3 = (sib == null) ? (null) : (sib.left);
                         if(__tmp_1_0_2_3 != null) {
                             __tmp_1_0_2_3.color = this.BLACK;
                         }

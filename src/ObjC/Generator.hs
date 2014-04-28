@@ -819,7 +819,7 @@ tExp env (D.MinusMinus e) = C.MinusMinus (tExp env e)
 
 
 {- Dot -}
-tExp env (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars _)) 
+tExp env (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars _) _) 
 	| not (null pars) && D.DefModApplyLambda `elem` mods =
 		let 
 			tp = D.exprDataType l
@@ -827,7 +827,7 @@ tExp env (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars _))
 			C.Var (showDataType tp) "__nd" (tExp env l) [],
 			C.Stm $ C.InlineIf (C.BoolOp Eq (C.Ref "__nd") C.Nil) C.Nil (C.CCall (C.Ref "__nd") ((map snd . tPars env dd) pars))
 		]
-tExp env (D.NullDot l r) = tExpToType env (D.wrapGeneric $ D.exprDataType r) (D.Dot l r)
+tExp env (D.NullDot l r _) = tExpToType env (D.wrapGeneric $ D.exprDataType r) (D.Dot l r)
 tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call d@D.Def {D.defName = name, D.defMods = mods} _ pars _)) 
 	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
 	| otherwise = C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) d) (C.Ref "self" : (map snd . tPars env d) pars)
@@ -1066,7 +1066,7 @@ tStm env x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar, 
 		procGo (D.Return _ e) = Just $ D.If e D.Continue D.Break
 		procGo _ = Nothing
 tStm env (D.Try e f) = [C.Try (translate env e) (translate env f)]
-tStm env (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars _)) 
+tStm env (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars _) _) 
 	| not (null pars) && D.DefModApplyLambda `elem` mods =
 		let 
 			tp = D.exprDataType l

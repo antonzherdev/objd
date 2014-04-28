@@ -134,7 +134,7 @@ public class MList<T> extends MSeq_impl<T> {
     }
     @Override
     public T last() {
-        return ERROR: Unknown <MList#C<T#G>>self.<emp>lastItem\(^MListItem#C<§T#G§>)?\?.<eIUm>data\§T#G§\;
+        return (this.lastItem == null) ? (null) : (this.lastItem.data);
     }
     public T takeLast() {
         final MListItem<T> h = this.lastItem;
@@ -177,7 +177,7 @@ public class MList<T> extends MSeq_impl<T> {
     }
     @Override
     public T head() {
-        return ERROR: Unknown <MList#C<T#G>>self.<emp>headItem\(^MListItem#C<§T#G§>)?\?.<eIUm>data\§T#G§\;
+        return (this.headItem == null) ? (null) : (this.headItem.data);
     }
     public MList() {
         this._count = ((int)0);

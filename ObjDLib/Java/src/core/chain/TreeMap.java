@@ -21,7 +21,8 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
     }
     @Override
     public V optKey(final K key) {
-        return ERROR: Unknown <TreeMap#C<K#G, V#G>>self.<dI>entryFor(key = <l>key\§K#G§\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUm>value\§V#G§\;
+        final TreeMapEntry<K, V> __tmp = entryForKey(key);
+        return (__tmp == null) ? (null) : (__tmp.value);
     }
     public abstract TreeMapEntry<K, V> root();
     @Override
@@ -63,16 +64,20 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
         return p;
     }
     public K firstKey() {
-        return ERROR: Unknown <TreeMap#C<K#G, V#G>>self.<dI>firstEntry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUm>key\§K#G§\;
+        final TreeMapEntry<K, V> __tmp = this.firstEntry();
+        return (__tmp == null) ? (null) : (__tmp.key);
     }
     public K lastKey() {
-        return ERROR: Unknown <TreeMap#C<K#G, V#G>>self.<dp>lastEntry\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUm>key\§K#G§\;
+        final TreeMapEntry<K, V> __tmp = this.lastEntry();
+        return (__tmp == null) ? (null) : (__tmp.key);
     }
     public K lowerKeyThanKey(final K key) {
-        return ERROR: Unknown <TreeMap#C<K#G, V#G>>self.<dp>lowerEntryThan(key = <l>key\§K#G§\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUm>key\§K#G§\;
+        final TreeMapEntry<K, V> __tmp = lowerEntryThanKey(key);
+        return (__tmp == null) ? (null) : (__tmp.key);
     }
     public K higherKeyThanKey(final K key) {
-        return ERROR: Unknown <TreeMap#C<K#G, V#G>>self.<dp>higherEntryThan(key = <l>key\§K#G§\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<eIUm>key\§K#G§\;
+        final TreeMapEntry<K, V> __tmp = higherEntryThanKey(key);
+        return (__tmp == null) ? (null) : (__tmp.key);
     }
     private TreeMapEntry<K, V> lowerEntryThanKey(final K key) {
         TreeMapEntry<K, V> p = this.root();

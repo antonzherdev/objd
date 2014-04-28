@@ -33,8 +33,8 @@ public class TreeMapEntry<K, V> {
     }
     public TreeMapEntry<K, V> copyParent(final TreeMapEntry<K, V> parent) {
         final TreeMapEntry<K, V> c = new TreeMapEntry<K, V>(this.key, this.value, parent);
-        c.left = ERROR: Unknown <TreeMapEntry#C<K#G, V#G>>self.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<dI>copy(parent = some(<l>c\TreeMapEntry#C<§K#G§, §V#G§>\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)\TreeMapEntry#C<§K#G§, §V#G§>\;
-        c.right = ERROR: Unknown <TreeMapEntry#C<K#G, V#G>>self.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\?.<dI>copy(parent = some(<l>c\TreeMapEntry#C<§K#G§, §V#G§>\)\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)\TreeMapEntry#C<§K#G§, §V#G§>\;
+        c.left = (this.left == null) ? (null) : (this.left.copyParent(c));
+        c.right = (this.right == null) ? (null) : (this.right.copyParent(c));
         c.color = this.color;
         return c;
     }

@@ -403,12 +403,13 @@ public abstract class Future<T> {
         }
     }
     public T getResultAwait(final float await) {
-        final T __tmp = ERROR: Unknown <Future#C<T#G>>self.<dI>waitResult(period = <l>await\float\)\(^Try#C<§T#G§>)?\?.<dIa>get\§T#G§\;
+        final Try<T> __tmp = waitResultPeriod(await);
         if(__tmp == null) {
             throw new RuntimeException("Not null");
         } else {
-            return __tmp;
+            __tmp;
         }
+        return .get();
     }
     public <R> Future<Tuple<T, R>> joinAnother(final Future<R> another) {
         final Promise<Tuple<T, R>> p = Promise.<Tuple<T, R>>apply();
