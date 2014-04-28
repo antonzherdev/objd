@@ -339,6 +339,7 @@ genExp env (D.Braces exps) = do
 	stms <- mapM (getStms env) (init exps)
 	tellStms $ join stms
 	genExp env $ last exps
+genExp env (D.NullDot _ _ e) = genExp env e
 genExp _ e = return $ J.ExpError $ "Unknown " ++ show e
 
 
