@@ -31,13 +31,16 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
     }
     @Override
     public boolean goOn(final F<T, Boolean> on) {
+        boolean ret = true;
         final Iterator<T> i = this.iterator();
         while(i.hasNext()) {
-            if(!(on.apply(i.next()))) {
-                return false;
+            final boolean b = on.apply(i.next());
+            if(!(b)) {
+                ret = false;
+                break;
             }
         }
-        return true;
+        return ret;
     }
     @Override
     public String toString() {

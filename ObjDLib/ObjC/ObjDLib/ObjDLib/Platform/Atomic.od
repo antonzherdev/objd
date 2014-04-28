@@ -2,6 +2,7 @@ package core.chain
 
 import java.util.concurrent.atomic._
 
+@ObjC
 stub class AtomicBool {
     def boolValue : bool
     def set(newValue : bool)
@@ -32,6 +33,6 @@ class AtomicObject<T>(value : T) extends AtomicReference<T>(value) {
 }
 
 @Java
-class AtomicInt extends AtomicInteger {
-
-}
+class AtomicInt extends AtomicInteger
+@Java
+class AtomicBool extends AtomicBoolean

@@ -12,7 +12,7 @@ public class Zip3Link<T, A, B, R> implements ChainLink<T, R> {
             @Override
             public Integer apply(final A item) {
                 if(!(ai.hasNext()) || !(bi.hasNext())) {
-                    return 1;
+                    return ((int)1);
                 } else {
                     return yield.yieldItem(Zip3Link.this.f.apply(item, ai.next(), bi.next()));
                 }

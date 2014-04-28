@@ -15,15 +15,15 @@
 }
 
 - (CNYield *)buildYield:(CNYield *)yield {
-    return [CNYield decorateBase:yield begin:^CNYieldResult(NSUInteger size) {
+    return [CNYield decorateBase:yield begin:^int(NSUInteger size) {
         return [yield beginYieldWithSize:size + [_collection count]];
 
-    }                      yield:nil end:^CNYieldResult(CNYieldResult r) {
-        __block CNYieldResult result = r;
-        if (result != cnYieldBreak) {
+    }                      yield:nil end:^int(int r) {
+        __block int result = r;
+        if (result != 1) {
             [_collection goOn:^BOOL(id item) {
                 result = [yield yieldItem:item];
-                if (result == cnYieldBreak) return NO;
+                if (result == 1) return NO;
                 return YES;
             }];
         }

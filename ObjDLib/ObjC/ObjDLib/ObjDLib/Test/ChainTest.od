@@ -22,7 +22,6 @@ class ChainTest extends TestCase {
         repeat(1000){
             val arr : [(int, Promise<int>)] = 0.to(1000).chain.map{i -> (i, Promise<int>())}.toArray
 
-
             arr.for {t ->
                 DispatchQueue.default.async {
                     t.b.success(t.a * t.a)

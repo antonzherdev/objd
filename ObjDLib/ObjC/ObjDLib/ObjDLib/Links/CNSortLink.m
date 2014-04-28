@@ -33,12 +33,12 @@
 
 - (CNYield *)buildYield:(CNYield *)yield {
     __block CNMTreeSet* ret = [CNMTreeSet applyComparator:_comparator];
-    return [CNYield decorateBase:yield begin:nil yield:^CNYieldResult(id item) {
+    return [CNYield decorateBase:yield begin:nil yield:^int(id item) {
         [ret appendItem:item];
-        return cnYieldContinue;
-    }                        end:^CNYieldResult(CNYieldResult result) {
-        if (result != cnYieldBreak) {
-            [yield yieldAll:ret];
+        return 0;
+    }                        end:^int(int result) {
+        if (result != 1) {
+            [yield yieldAllItems:ret];
         }
         return [yield endYieldWithResult:result];
     }                        all:nil];

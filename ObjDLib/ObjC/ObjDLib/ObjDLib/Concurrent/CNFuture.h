@@ -10,7 +10,6 @@
 @class CNTuple;
 @class ODClassType;
 @class CNAtomicObject;
-@protocol CNIterator;
 @class CNFailure;
 
 @class CNFuture;

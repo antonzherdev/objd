@@ -10,10 +10,10 @@ public class FutureVoidEnd<T> {
         return this._promise;
     }
     public Yield<Future<T>> yield() {
-        return new Yield<Future<T>>(new F<Integer, Integer>() {
+        return Yield.<Future<T>>makeBeginYieldEnd(new F<Integer, Integer>() {
             @Override
             public Integer apply(final Integer size) {
-                return 0;
+                return ((int)0);
             }
         }, new F<Future<T>, Integer>() {
             @Override
@@ -42,9 +42,9 @@ public class FutureVoidEnd<T> {
                     });
                 }
                 if(FutureVoidEnd.this._stopped) {
-                    return 1;
+                    return ((int)1);
                 } else {
-                    return 0;
+                    return ((int)0);
                 }
             }
         }, new F<Integer, Integer>() {

@@ -15,11 +15,11 @@
 }
 
 - (CNYield *)buildYield:(CNYield *)yield {
-    return [CNYield decorateBase:yield begin:^CNYieldResult(NSUInteger size) {
-        if ([yield beginYieldWithSize:size + [_collection count]] == cnYieldBreak) return cnYieldBreak;
+    return [CNYield decorateBase:yield begin:^int(NSUInteger size) {
+        if ([yield beginYieldWithSize:size + [_collection count]] == 1) return 1;
         return [_collection goOn:^BOOL(id item) {
-            return [yield yieldItem:item] == cnYieldContinue;
-        }] ? cnYieldContinue : cnYieldBreak;
+            return [yield yieldItem:item] == 0;
+        }] ? 0 : 1;
     }                      yield:nil end:nil all:nil];
 }
 

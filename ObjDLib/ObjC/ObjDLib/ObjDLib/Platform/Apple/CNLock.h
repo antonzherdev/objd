@@ -18,9 +18,9 @@
 @end
 
 @interface CNLockCondition : NSObject
-- (id)initWithLock:(NSConditionLock *)lock number:(NSInteger)number;
+- (id)initWithLock:(NSConditionLock *)lock number:(int)number;
 
-- (void)awaitPeriod:(CGFloat)period;
+- (BOOL)awaitPeriod:(CGFloat)period;
 
 - (void)signal;
 
@@ -28,7 +28,7 @@
 
 - (void)unlockedSignal;
 
-- (void)unlockedAwaitPeriod:(CGFloat)period;
+- (BOOL)unlockedAwaitPeriod:(CGFloat)period;
 
 - (void)unlockedAwait;
 @end

@@ -30,7 +30,7 @@ static ODClassType* _CNZipLink_type;
 
 - (CNYield*)buildYield:(CNYield*)yield {
     id<CNIterator> ai = [_a iterator];
-    return [CNYield decorateBase:yield yield:^NSInteger(id item) {
+    return [CNYield decorateBase:yield yield:^int(id item) {
         if(!([ai hasNext])) return 1;
         else return [yield yieldItem:_f(item, [ai next])];
     }];
@@ -87,7 +87,7 @@ static ODClassType* _CNZip3Link_type;
 - (CNYield*)buildYield:(CNYield*)yield {
     id<CNIterator> ai = [_a iterator];
     id<CNIterator> bi = [_b iterator];
-    return [CNYield decorateBase:yield yield:^NSInteger(id item) {
+    return [CNYield decorateBase:yield yield:^int(id item) {
         if(!([ai hasNext]) || !([bi hasNext])) return 1;
         else return [yield yieldItem:_f(item, [ai next], [bi next])];
     }];

@@ -28,10 +28,9 @@ public class ChainTest extends TestCase {
                         return new Tuple<Integer, Promise<Integer>>(i, Promise.<Integer>apply());
                     }
                 }).toArray();
-                {
-                    final Iterator<Tuple<Integer, Promise<Integer>>> __inline__0_1_i = arr.iterator();
-                    while(__inline__0_1_i.hasNext()) {
-                        final Tuple<Integer, Promise<Integer>> t = __inline__0_1_i.next();
+                arr.forEach(new P<Tuple<Integer, Promise<Integer>>>() {
+                    @Override
+                    public void apply(final Tuple<Integer, Promise<Integer>> t) {
                         DispatchQueue.aDefault.asyncF(new P0() {
                             @Override
                             public void apply() {
@@ -39,7 +38,7 @@ public class ChainTest extends TestCase {
                             }
                         });
                     }
-                }
+                });
                 final Future<ImArray<Integer>> fut = arr.chain().<Promise<Integer>>map(new F<Tuple<Integer, Promise<Integer>>, Promise<Integer>>() {
                     @Override
                     public Promise<Integer> apply(final Tuple<Integer, Promise<Integer>> _) {
@@ -75,10 +74,9 @@ public class ChainTest extends TestCase {
         }).toArray();
         final Future<Void> fut = arr.chain().voidFuture();
         AtomicInt count = new AtomicInt();
-        {
-            final Iterator<Promise<Void>> __inline__3_i = arr.iterator();
-            while(__inline__3_i.hasNext()) {
-                final Promise<Void> p = __inline__3_i.next();
+        arr.forEach(new P<Promise<Void>>() {
+            @Override
+            public void apply(final Promise<Void> p) {
                 DispatchQueue.aDefault.asyncF(new P0() {
                     @Override
                     public void apply() {
@@ -87,7 +85,7 @@ public class ChainTest extends TestCase {
                     }
                 });
             }
-        }
+        });
         .assertTrueValue(fut.waitResultPeriod(((float)5)) != null);
         .<Integer>assertEqualsAB(count.intValue(), ((int)arr.count()));
     }

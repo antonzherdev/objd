@@ -14,11 +14,11 @@
 }
 
 - (CNYield *)buildYield:(CNYield *)yield {
-    return [CNYield yieldWithBegin:nil yield:nil end:^CNYieldResult(CNYieldResult result) {
-        if (result == cnYieldContinue) {
-            [yield yieldAll:_collection];
+    return [CNYield yieldWithBegin:nil yield:nil end:^int(int result) {
+        if (result == 0) {
+            [yield yieldAllItems:_collection];
         }
-        return cnYieldContinue;
+        return 0;
     } all:nil];
 }
 

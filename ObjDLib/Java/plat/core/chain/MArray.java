@@ -12,6 +12,10 @@ public class MArray<T> extends Array<T> implements MSeq<T> {
         super(list);
     }
 
+    public MArray(int capacity) {
+        super(new ArrayList<T>(capacity));
+    }
+
     @Override
     public void insertIndexItem(int index, T item) {
         list.add(index, item);

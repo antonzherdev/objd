@@ -43,7 +43,7 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
         return ret.value;
     }
     public boolean existsWhere(final F<T, Boolean> where) {
-        final Mut<boolean> ret = new Mut<boolean>(false);
+        final Mut<Boolean> ret = new Mut<Boolean>(false);
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(final T x) {
@@ -58,7 +58,7 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
         return ret.value;
     }
     public boolean allConfirm(final F<T, Boolean> confirm) {
-        final Mut<boolean> ret = new Mut<boolean>(true);
+        final Mut<Boolean> ret = new Mut<Boolean>(true);
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(final T x) {

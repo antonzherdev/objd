@@ -16,12 +16,12 @@
 
 - (CNYield *)buildYield:(CNYield *)yield {
     __block CNImList* ret = [CNImList apply];
-    return [CNYield decorateBase:yield begin:nil yield:^CNYieldResult(id item) {
+    return [CNYield decorateBase:yield begin:nil yield:^int(id item) {
         ret = [CNImList applyItem:item tail:ret];
-        return cnYieldContinue;
-    }                        end:^CNYieldResult(CNYieldResult result) {
-        if (result != cnYieldBreak) {
-            return [yield yieldAll:ret];
+        return 0;
+    }                        end:^int(int result) {
+        if (result != 1) {
+            return [yield yieldAllItems:ret];
         }
         return result;
     }                        all:nil];

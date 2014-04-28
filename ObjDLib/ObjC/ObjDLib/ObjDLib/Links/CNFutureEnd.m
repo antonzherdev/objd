@@ -39,10 +39,10 @@ static ODClassType* _CNFutureEnd_type;
 - (CNYield*)yield {
     __block NSInteger _i = 0;
     __block volatile NSInteger _set = -1;
-    return [CNYield applyBegin:^NSInteger(NSUInteger size) {
+    return [CNYield makeBegin:^int(NSUInteger size) {
         __array = [CNMArray applyCapacity:size];
         return 0;
-    } yield:^NSInteger(CNFuture* fut) {
+    } yield:^int(CNFuture* fut) {
         if(!(__stopped)) {
             [__counter incrementAndGet];
             [((CNMArray*)(nonnil(__array))) appendItem:nil];
@@ -68,7 +68,7 @@ static ODClassType* _CNFutureEnd_type;
         }
         if(__stopped) return 1;
         else return 0;
-    } end:^NSInteger(NSInteger res) {
+    } end:^int(int res) {
         __ended = YES;
         if([__counter intValue] == 0) {
             if(!([__yielded getAndSetNewValue:YES])) [__promise successValue:((CNMArray*)(nonnil(__array)))];
@@ -128,9 +128,9 @@ static ODClassType* _CNFutureVoidEnd_type;
 }
 
 - (CNYield*)yield {
-    return [CNYield applyBegin:^NSInteger(NSUInteger size) {
+    return [CNYield makeBegin:^int(NSUInteger size) {
         return 0;
-    } yield:^NSInteger(CNFuture* fut) {
+    } yield:^int(CNFuture* fut) {
         if(!(__stopped)) {
             [__counter incrementAndGet];
             [((CNFuture*)(fut)) onCompleteF:^void(CNTry* tr) {
@@ -151,8 +151,8 @@ static ODClassType* _CNFutureVoidEnd_type;
         }
         if(__stopped) return 1;
         else return 0;
-    } end:^NSInteger(NSInteger res) {
-        NSInteger ret = res;
+    } end:^int(int res) {
+        int ret = res;
         __ended = YES;
         if([__counter intValue] == 0) {
             if(!([__yielded getAndSetNewValue:YES])) [__promise successValue:nil];

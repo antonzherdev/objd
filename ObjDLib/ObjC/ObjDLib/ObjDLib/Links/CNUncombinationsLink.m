@@ -18,17 +18,17 @@
 
 - (CNYield *)buildYield:(CNYield *)yield {
     __block NSMutableSet * previous = nil;
-    return [CNYield decorateBase:yield begin:^CNYieldResult(NSUInteger size) {
+    return [CNYield decorateBase:yield begin:^int(NSUInteger size) {
         previous = [NSMutableSet setWithCapacity:size + 1];
         return [yield beginYieldWithSize:size + 1];
-    }                      yield:^CNYieldResult(id item) {
-        CNYieldResult ret = cnYieldContinue;
+    }                      yield:^int(id item) {
+        int ret = 0;
         id a = [item a];
         if (![previous containsObject:a]) {
             ret = [yield yieldItem:a];
             [previous addObject:a];
         }
-        if (ret == cnYieldContinue) {
+        if (ret == 0) {
             id b = [item b];
             if (![previous containsObject:b]) {
                 ret = [yield yieldItem:b];

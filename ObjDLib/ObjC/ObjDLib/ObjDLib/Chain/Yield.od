@@ -1,14 +1,56 @@
 package core.chain
 
-stub class Yield<T>(begin : uint -> int, yield : T -> int, end : int -> int, all : Traversable<T> -> int) {
-    static def apply<T>(begin : uint -> int, yield : T -> int, end : int -> int) : Yield<T>
-    static def decorate<T>(base : Yield<_>, begin : uint -> int, yield : T -> int, end : int -> int, all : Traversable<T> -> int) : Yield<T>
-    static def decorate<T>(base : Yield<_>, begin : uint -> int, yield : T -> int, end : int -> int) : Yield<T>
-    static def decorate<T>(base : Yield<_>, begin : uint -> int, yield : T -> int) : Yield<T>
-    static def decorate<T>(base : Yield<_>, yield : T -> int, end : int -> int) : Yield<T>
-    static def decorate<T>(base : Yield<_>, yield : T -> int) : Yield<T>
-    def beginYieldWith(size : uint) : int
-    def yield(item : T) : int
-    def endYieldWith(result : int) : int
-    def yieldAll( : Traversable<T>) : int
+class Yield<T>(val begin : (uint -> int4)? = nil, val yield : (T -> int4)? = nil, val end : (int4 -> int4)? = nil, val all : (Traversable<T> -> int4)? = nil) {
+    static inline def Continue : byte = 0
+    static inline def Break : byte = 1
+
+    static def make<T>(begin : (uint -> int4)? = nil, yield : (T -> int4)? = nil, end : (int4 -> int4)? = nil, all : (Traversable<T> -> int4)? = nil) : Yield<T> =
+        Yield<T>(begin, yield, end, all)
+    static def decorate<T>(base : Yield<_>, begin : (uint -> int4)? = nil, yield : (T -> int4)? = nil, end : (int4 -> int4)? = nil, all : (Traversable<T> -> int4)? = nil) : Yield<T> =
+        Yield<T>(
+            begin = begin.getOr{size : uint -> base.beginYieldWith(size)},
+            yield = yield.getOr{item : T -> base.yield(item)},
+              end = end.getOr{result : int4 -> base.endYieldWith(result)},
+              all = all)
+    def beginYieldWith(size : uint) : int4 =
+        if(begin == nil) Continue
+        else begin.apply(size)
+
+    def yield(item : T) : int4 =
+        if(yield == nil) Continue
+        else yield.apply(item)
+
+    def endYieldWith(result : int4) : int4 =
+        if(end == nil) result
+        else end(result)
+
+    def yieldAll(items : Traversable<T>) : int4 =
+        if(all != nil) all(items)
+        else stdYieldAll(items)
+
+    def stdYieldAll(items : Traversable<T>) : int4 = {
+        var result : int = Continue
+        if(items.is<Array<T>>) {
+            val _items = items.cast<Array<T>>
+            if(beginYieldWith(size = _items.count) == Break) Break
+            else _items.go{item ->
+                result = yield(item)
+                result == Continue
+            }
+        } else if(items.is<Iterable<T>>) {
+            val _items = items.cast<Iterable<T>>
+            if(beginYieldWith(size = _items.count) == Break) Break
+            else items.go{item ->
+                result = yield(item)
+                result == Continue
+            }
+        } else {
+            if(beginYieldWith(size = 0) == Break) Break
+            else items.go{item ->
+                result = yield(item)
+                result == Continue
+            }
+        }
+        endYieldWith(result)
+    }
 }

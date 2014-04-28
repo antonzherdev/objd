@@ -9,7 +9,12 @@ stub class MHashSet<T> extends MSet<T> {
     override def imCopy : ImHashSet<T>
 }
 
-stub class ImArray<T> extends ImSeq<T> {
+stub class Array<T> extends Seq<T> {
+    override def for(each : T -> void)
+    override def go(on : T -> bool) : bool
+}
+
+stub class ImArray<T> extends Array<T> with ImSeq<T>  {
     static def apply<T>(mArray : MArray) : [T]
     override def mCopy : MArray<T>
 
@@ -18,7 +23,7 @@ stub class ImArray<T> extends ImSeq<T> {
     override def sub(item : T) : [T]
     override def tail : [T]
 }
-stub class MArray<T> extends MSeq<T> {
+stub class MArray<T> extends Array<T> with MSeq<T> {
     static def apply<T>(capacity : uint) : MArray<T>
     override def im : [T]
     override def imCopy : [T]

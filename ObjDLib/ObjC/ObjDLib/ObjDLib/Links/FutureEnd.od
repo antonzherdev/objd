@@ -13,7 +13,7 @@ class FutureEnd<T> {
     def yield : Yield<Future<T>> = {
         var _i = 0
         volatile var _set = -1
-        Yield<Future<T>>(
+        Yield.make<Future<T>>(
             begin = size -> {
                 _array = MArray<T>(capacity = size)
                 0
@@ -66,8 +66,7 @@ class FutureVoidEnd<T> {
 
     def future : Future<void> = _promise
 
-    def yield : Yield<Future<T>> = {
-        Yield<Future<T>>(
+    def yield : Yield<Future<T>> = Yield.make<Future<T>>(
         begin = size -> {
             0
         },
@@ -102,6 +101,5 @@ class FutureVoidEnd<T> {
             }
             ret
         }
-        )
-    }
+    )
 }

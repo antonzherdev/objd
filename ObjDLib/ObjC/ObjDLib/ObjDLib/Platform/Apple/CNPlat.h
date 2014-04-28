@@ -1,4 +1,5 @@
 
+#define CNArray NSArray
 #define CNImArray NSArray
 #define CNMArray NSMutableArray
 #define CNImHashMap NSDictionary

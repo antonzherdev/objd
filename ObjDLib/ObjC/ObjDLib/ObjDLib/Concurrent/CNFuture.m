@@ -457,12 +457,8 @@ static ODClassType* _CNDefaultPromise_type;
             return NO;
         } else {
             if([__state compareAndSetOldValue:v newValue:value]) {
-                {
-                    id<CNIterator> __inline__0_1_0_0_i = [((NSArray*)(v)) iterator];
-                    while([__inline__0_1_0_0_i hasNext]) {
-                        void(^f)(CNTry*) = [__inline__0_1_0_0_i next];
-                        f(value);
-                    }
+                for(void(^f)(CNTry*) in ((NSArray*)(v))) {
+                    f(value);
                 }
                 return YES;
             }

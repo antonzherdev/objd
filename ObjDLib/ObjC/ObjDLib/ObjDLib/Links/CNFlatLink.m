@@ -25,9 +25,9 @@ static ODClassType* _CNFlatLink_type;
 }
 
 - (CNYield*)buildYield:(CNYield*)yield {
-    return [CNYield decorateBase:yield begin:^NSInteger(NSUInteger size) {
+    return [CNYield decorateBase:yield begin:^int(NSUInteger size) {
         return [yield beginYieldWithSize:((NSUInteger)(size * _factor))];
-    } yield:^NSInteger(id<CNTraversable> col) {
+    } yield:^int(id<CNTraversable> col) {
         __block NSInteger result = 0;
         [((id<CNTraversable>)(col)) goOn:^BOOL(id item) {
             if([yield yieldItem:item] != 0) {
@@ -37,7 +37,7 @@ static ODClassType* _CNFlatLink_type;
                 return YES;
             }
         }];
-        return result;
+        return ((int)(result));
     }];
 }
 

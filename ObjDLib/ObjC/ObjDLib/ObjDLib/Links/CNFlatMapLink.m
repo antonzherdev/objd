@@ -23,22 +23,22 @@
 
 
 - (CNYield *)buildYield:(CNYield *)yield {
-    return [CNYield decorateBase:yield begin:^CNYieldResult(NSUInteger size) {
+    return [CNYield decorateBase:yield begin:^int(NSUInteger size) {
         return [yield beginYieldWithSize:(NSUInteger) (size * _factor)];
-    }                      yield:^CNYieldResult(id item) {
+    }                      yield:^int(id item) {
         id o = _f(item);
         if ([o isKindOfClass:[CNChain class]]) {
-            __block CNYieldResult ret = cnYieldContinue;
-            [((CNChain *) o) apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id x) {
+            __block int ret = 0;
+            [((CNChain *) o) apply:[CNYield yieldWithBegin:nil yield:^int(id x) {
                 ret = [yield yieldItem:x];
                 return ret;
             }                                          end:nil all:nil]];
             return ret;
         } else {
-            __block CNYieldResult result = cnYieldContinue;
+            __block int result = 0;
             [o goOn:^BOOL(id x) {
                 result = [yield yieldItem:x];
-                if (result == cnYieldBreak) return NO;
+                if (result == 1) return NO;
                 return YES;
             }];
             return result;

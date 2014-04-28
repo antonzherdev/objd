@@ -16,14 +16,14 @@
 }
 
 - (CNYield *)buildYield:(CNYield *)yield {
-    return [CNYield decorateBase:yield begin:^CNYieldResult(NSUInteger size) {
+    return [CNYield decorateBase:yield begin:^int(NSUInteger size) {
         return [yield beginYieldWithSize:size * [_collection count]];
 
-    }                      yield:^CNYieldResult(id a) {
+    }                      yield:^int(id a) {
         return [_collection goOn:^BOOL(id b) {
             CNTuple *item = [CNTuple tupleWithA:a b:b];
-            return [yield yieldItem:item] == cnYieldContinue;
-        }] ? cnYieldContinue : cnYieldBreak;
+            return [yield yieldItem:item] == 0;
+        }] ? 0 : 1;
     }                        end:nil all:nil];
 }
 

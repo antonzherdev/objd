@@ -24,7 +24,7 @@ static ODClassType* _CNMapLink_type;
 }
 
 - (CNYield*)buildYield:(CNYield*)yield {
-    return [CNYield decorateBase:yield yield:^NSInteger(id item) {
+    return [CNYield decorateBase:yield yield:^int(id item) {
         return [yield yieldItem:_f(item)];
     }];
 }
@@ -71,14 +71,14 @@ static ODClassType* _CNMapOptLink_type;
 }
 
 - (CNYield*)buildYield:(CNYield*)yield {
-    return [CNYield decorateBase:yield yield:^NSInteger(id item) {
+    return [CNYield decorateBase:yield yield:^int(id item) {
         id __tmp_0;
         {
             id _ = _f(item);
-            if(_ != nil) __tmp_0 = numi([yield yieldItem:_]);
+            if(_ != nil) __tmp_0 = numi4([yield yieldItem:_]);
             else __tmp_0 = nil;
         }
-        if(__tmp_0 != nil) return unumi(__tmp_0);
+        if(__tmp_0 != nil) return unumi4(__tmp_0);
         else return 0;
     }];
 }

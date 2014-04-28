@@ -1056,6 +1056,7 @@ tStm env x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar, 
 			D.TPArr _ _ -> forin
 			D.TPClass _ _ D.Class{D.className = "MArray"} -> forin 
 			D.TPClass _ _ D.Class{D.className = "Array"} -> forin 
+			D.TPClass _ _ D.Class{D.className = "ImArray"} -> forin 
 			_ -> [C.Stm $ tExp env x]
 	where
 		forin = [C.ForIn (showDataType cycleTp) cycleVar (tExp env l) (translate env ((if dn == "go" then processGo else id) cycleBody) )]

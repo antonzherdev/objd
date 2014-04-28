@@ -19,7 +19,7 @@ public class MapOptLink<A, B> implements ChainLink<A, B> {
                 if(__tmp_0 != null) {
                     return __tmp_0;
                 } else {
-                    return 0;
+                    return ((int)0);
                 }
             }
         });

@@ -19,13 +19,12 @@ public class DefaultPromise<T> extends Promise<T> {
                 return false;
             } else {
                 if(this._state.compareAndSet(v, value)) {
-                    {
-                        final Iterator<P<Try<T>>> __inline__0_1_0_0_i = ((ImArray<P<Try<T>>>)v).iterator();
-                        while(__inline__0_1_0_0_i.hasNext()) {
-                            final P<Try<T>> f = __inline__0_1_0_0_i.next();
+                    ((ImArray<P<Try<T>>>)v).forEach(new P<P<Try<T>>>() {
+                        @Override
+                        public void apply(final P<Try<T>> f) {
                             f.apply(value);
                         }
-                    }
+                    });
                     return true;
                 }
             }

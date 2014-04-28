@@ -9,7 +9,7 @@
 
 @implementation CNLock {
     NSConditionLock *_lock;
-    NSInteger _conditionCounter;
+    int _conditionCounter;
 }
 + (CNLock *)lock {
     return [[CNLock alloc] init];
@@ -40,11 +40,11 @@
 @end
 
 @implementation CNLockCondition {
-    NSInteger _number;
+    int _number;
     NSConditionLock* _lock;
 }
 
-- (id)initWithLock:(NSConditionLock *)lock number:(NSInteger)number {
+- (id)initWithLock:(NSConditionLock *)lock number:(int)number {
     self = [super init];
     if (self) {
         _number = number;
@@ -55,9 +55,11 @@
 }
 
 
-- (void)awaitPeriod:(CGFloat)period {
+- (BOOL)awaitPeriod:(CGFloat)period {
     [_lock unlock];
-    [_lock lockWhenCondition:_number period:period];
+    BOOL lock = [_lock lockWhenCondition:_number period:period];
+    if(!lock) [_lock lock];
+    return lock;
 }
 
 - (void)signal {
@@ -75,9 +77,14 @@
     [_lock unlockWithCondition:_number];
 }
 
-- (void)unlockedAwaitPeriod:(CGFloat)period {
-    [_lock lockWhenCondition:_number period:period];
-    [_lock unlock];
+- (BOOL)unlockedAwaitPeriod:(CGFloat)period {
+    BOOL lock = [_lock lockWhenCondition:_number period:period];
+    if(lock) {
+        [_lock unlock];
+        return YES;
+    } else {
+        return NO;
+    }
 }
 
 - (void)unlockedAwait {

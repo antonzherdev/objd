@@ -146,9 +146,16 @@ trait Iterable<T> extends Traversable<T> {
     }
 
     override inline def go(on : T -> bool) : bool = {
+        var ret = true
         val i = iterator
-        while(i.hasNext) if(!on(i.next)) return false
-        true
+        while(i.hasNext) {
+            val b = on(i.next)
+            if(!b) {
+                ret = false
+                break
+            }
+        }
+        ret
     }
 
     def contains(item : T) : bool = {

@@ -430,7 +430,7 @@ genStm env e = genExpStm env e J.Stm
 declareVal :: D.Def -> J.Exp -> J.Stm
 declareVal d e
 	| D.DefModChangedInLambda `elem` D.defMods d = let
-		tp = genTp $ D.defType d
+		tp = genTp $ D.wrapGeneric $ D.defType d
 		clnm = if D.DefModVolatile `elem` D.defMods d then "MutVolatile" else "Mut"
 		new = J.New [] clnm [tp] $ case e of
 			J.Nop -> []

@@ -13,10 +13,22 @@ stub class AtomicReference<T>(get : T) {
 
 @Java
 stub class AtomicInteger {
+    @GenName("get")
     def intValue : int4
+    @GenName("set")
     def set(newValue : int4)
     def incrementAndGet : int4
     def decrementAndGet : int4
     def addAndGet(value : int4) : int4
     def compareAndSet(oldValue : int4, newValue : int4) : bool
+}
+
+@Java
+stub class AtomicBoolean {
+    @GenName("get")
+    def boolValue : bool
+    @GenName("set")
+    def set(newValue : bool)
+    def getAndSet(newValue : bool) : bool
+    def compareAndSet(oldValue : bool, newValue : bool) : bool
 }

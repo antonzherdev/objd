@@ -23,14 +23,14 @@ static ODClassType* _CNShuffleLink_type;
 }
 
 - (CNYield*)buildYield:(CNYield*)yield {
-    return [CNYield decorateBase:yield begin:^NSInteger(NSUInteger size) {
+    return [CNYield decorateBase:yield begin:^int(NSUInteger size) {
         __array = [CNMArray applyCapacity:size];
         return 0;
-    } yield:^NSInteger(id item) {
+    } yield:^int(id item) {
         [((CNMArray*)(nonnil(__array))) insertIndex:oduIntRndMax([((CNMArray*)(nonnil(__array))) count]) item:item];
         return 0;
-    } end:^NSInteger(NSInteger r) {
-        if([yield yieldAll:((CNMArray*)(nonnil(__array)))] == 1) return 1;
+    } end:^int(int r) {
+        if([yield yieldAllItems:((CNMArray*)(nonnil(__array)))] == 1) return 1;
         else return r;
     }];
 }

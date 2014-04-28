@@ -12,7 +12,7 @@ public class FlatLink<T> implements ChainLink<Traversable<T>, T> {
         }, new F<Traversable<T>, Integer>() {
             @Override
             public Integer apply(final Traversable<T> col) {
-                final Mut<int> result = new Mut<int>(0);
+                final Mut<Integer> result = new Mut<Integer>(0);
                 col.goOn(new F<T, Boolean>() {
                     @Override
                     public Boolean apply(final T item) {
@@ -24,7 +24,7 @@ public class FlatLink<T> implements ChainLink<Traversable<T>, T> {
                         }
                     }
                 });
-                return result.value;
+                return ((int)result.value);
             }
         });
     }

@@ -2,7 +2,6 @@
 #import "CNTreeMapTest.h"
 
 #import "CNTreeMap.h"
-#import "CNCollection.h"
 #import "CNChain.h"
 #import "ODType.h"
 @implementation CNTreeMapTest
@@ -30,12 +29,8 @@ static ODClassType* _CNTreeMapTest_type;
     [map setKey:@0 value:@"test"];
     assertEquals(@"test", [map applyKey:@0]);
     NSArray* tests = (@[@-10, @-20, @-30, @10, @20, @-15, @20, @0, @11, @13, @-18]);
-    {
-        id<CNIterator> __inline__6_i = [tests iterator];
-        while([__inline__6_i hasNext]) {
-            id i = [__inline__6_i next];
-            [map setKey:i value:[@"test" stringByAppendingFormat:@"%ld", unumi(i)]];
-        }
+    for(id i in tests) {
+        [map setKey:i value:[@"test" stringByAppendingFormat:@"%ld", unumi(i)]];
     }
     assertEquals(numui([[[tests chain] distinct] count]), numui([map count]));
     [[[tests chain] distinct] forEach:^void(id i) {

@@ -269,11 +269,16 @@
 }
 
 - (BOOL)goOn:(BOOL(^)(id))on {
+    BOOL ret = YES;
     id<CNIterator> i = [self iterator];
     while([i hasNext]) {
-        if(!(on([i next]))) return NO;
+        BOOL b = on([i next]);
+        if(!(b)) {
+            ret = NO;
+            break;
+        }
     }
-    return YES;
+    return ret;
 }
 
 - (NSString*)description {

@@ -3,7 +3,6 @@
 @class CNChain;
 @class CNRange;
 @class CNPromise;
-@protocol CNIterator;
 @class CNDispatchQueue;
 @class CNFuture;
 @class CNAtomicInt;

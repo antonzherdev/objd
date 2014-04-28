@@ -1144,9 +1144,11 @@ isVoid :: DataType -> Bool
 isVoid TPVoid = True
 isVoid _ = False
 isTpFun :: DataType -> Bool
+isTpFun (TPGenericWrap _ TPFun{}) = True
 isTpFun TPFun{} = True
 isTpFun _ = False
 isTpOption :: DataType -> Bool
+isTpOption (TPGenericWrap _ TPOption{}) = True
 isTpOption TPOption{} = True
 isTpOption _ = False
 isTpClass :: DataType -> Bool
@@ -1175,6 +1177,11 @@ unoptionHard TPVoid = TPVoid
 unoptionHard (TPOption _ o) = o
 unoptionHard (TPGenericWrap _ (TPOption _ o)) = o
 unoptionHard tp = TPUnknown $ show tp ++ " is not option"
+
+unoption :: DataType -> DataType
+unoption (TPOption _ o) = o
+unoption (TPGenericWrap _ (TPOption _ o)) = o
+unoption tp = tp
 
 option :: Bool -> DataType -> DataType
 option _ TPVoid = TPVoid
@@ -2579,7 +2586,7 @@ exprCall env strictClass cll@(D.Call name pars gens) =
 		err@ExpDError{} -> if isNothing pars then err else
 			case tryExprCall env strictClass (D.Call name Nothing gens) of
 				ExpDError es _ -> ExpLError es err
-				e -> case tryExprCall env (Just $ exprDataType e) (D.Call "apply" pars gens) of
+				e -> case tryExprCall env (Just $ unoptionIfChecked $ exprDataType e) (D.Call "apply" pars gens) of
 					ExpDError es _ -> ExpLError es err
 					ee -> Dot e ee
 		e -> e
@@ -2632,7 +2639,9 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 		pars'' = case snd call' of
 			Call _ _ r _ -> r
 		pars''' :: [(Def, Exp)]
-		pars''' = (map (correctCallPar env gens') pars'')
+		pars''' = (map (correctCallPar . md ) pars'')
+			where 
+				md (d, e) = (unwrapGeneric $ unoption $ defType d, d, e)
 		
 		gens' :: Generics
 		gens' = resolveGenerics pars''
@@ -2741,6 +2750,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 				def' d = Call d (resolveTp d) (zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars') []
 				resolveTp d = case defType d of
 					TPSelf _ -> self
+					TPOption True tp@(TPFun _ dtp)-> if length pars' == length (defPars d) then tp else dtp
 					tp@(TPFun _ dtp)-> if length pars' == length (defPars d) then tp else dtp
 					tp -> tp
 				defPars' :: Def -> [Def]
@@ -2753,39 +2763,36 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 				checkParameter ((_, e), Def{defType = tp}) = checkDataType tp (exprDataType e)
 				checkDataType dtp tp = if hard then isInstanceOfTp env tp dtp else True
 
-
-
-
-correctCallPar :: Env -> Generics -> (Def, Exp) -> (Def, Exp)
-correctCallPar env gens (d@Def{defType = (TPFun _ _)}, FirstTry _ e'@Lambda{}) = correctCallPar env gens (d, e')
-correctCallPar env gens (d@Def{defType = (TPFun _ _)}, FirstTry D.Lambda{} e') = correctCallPar env gens (d, e')
-correctCallPar env gens (d@Def{defType = tp@(TPFun _ _)}, FirstTry e e')
-	| isTpFun (exprDataType e') = checkCallParOnWeak (d, e')
-	| otherwise = correctCallPar env gens (d, ExpDError "" $ 
-		D.Lambda (map (\(n, _) -> (n, Nothing)) $ lambdaImplicitParameters tp) e)
-correctCallPar env gens (d, FirstTry _ e) = correctCallPar env gens (d, e)
-correctCallPar _ _ (d@Def{defType = (TPFun _ TPVoid)}, Lambda lpars e dtp) = (d, Lambda lpars (mapExp removeReturn e) dtp)
-	where
-		removeReturn ee@(Return _ Nil) = Just ee
-		removeReturn (Return _ ee) = Just ee
-		removeReturn l@Lambda{} = Just l
-		removeReturn _ = Nothing
-correctCallPar _ _ (d@Def{defType = (TPFun _ (TPClass TPMGeneric _ _) )}, Lambda lpars e dtp) = checkCallParOnWeak (d, Lambda lpars e dtp)
-correctCallPar env gens(d@Def{defType = (TPFun stp dtp)}, ExpDError _ (D.Lambda lambdaPars lambdaExpr)) = checkCallParOnWeak (d, Lambda lpars' expr' tp')
-	where
-		lpars' :: [(String, DataType)]
-		lpars' = map (second (replaceGenerics True gens)) $ zip (map fst lambdaPars) (stps stp)
-		stps :: DataType -> [DataType]
-		stps (TPTuple tps) = tps
-		stps tp = [tp]
-		env' = envAddVals (map (uncurry localVal) lpars') $ env{envTp = dtp'}
-		dtp' = replaceGenerics True gens dtp
-		expr' = if dtp' == TPVoid then expr env' lambdaExpr else maybeAddReturn env dtp' $ expr env' lambdaExpr
-		tp' = if containsGeneric dtp then wrapGeneric (exprDataType expr') else dtp
-		containsGeneric = fromMaybe False . forDataType (\t -> case t of
-			TPClass TPMGeneric _ _ -> Just True
-			_ -> Nothing)
-correctCallPar _ _ e = checkCallParOnWeak e
+		correctCallPar :: (DataType, Def, Exp) -> (Def, Exp)
+		correctCallPar (tp@(TPFun _ _), d, FirstTry _ e'@Lambda{}) = correctCallPar (tp, d, e')
+		correctCallPar (tp@(TPFun _ _), d, FirstTry D.Lambda{} e') = correctCallPar (tp, d, e')
+		correctCallPar (tp@(TPFun _ _), d, FirstTry e e')
+			| isTpFun (exprDataType e') || (isTpOption (defType d) && isTpFun (unoption $ exprDataType e')) = checkCallParOnWeak (d, e')
+			| otherwise = correctCallPar (tp, d, ExpDError "" $ 
+				D.Lambda (map (\(n, _) -> (n, Nothing)) $ lambdaImplicitParameters tp) e)
+		correctCallPar (tp, d, FirstTry _ e) = correctCallPar (tp, d, e)
+		correctCallPar (TPFun _ TPVoid, d, Lambda lpars e dtp) = (d, Lambda lpars (mapExp removeReturn e) dtp)
+			where
+				removeReturn ee@(Return _ Nil) = Just ee
+				removeReturn (Return _ ee) = Just ee
+				removeReturn l@Lambda{} = Just l
+				removeReturn _ = Nothing
+		correctCallPar (TPFun _ (TPClass TPMGeneric _ _), d, Lambda lpars e dtp) = checkCallParOnWeak (d, Lambda lpars e dtp)
+		correctCallPar (TPFun stp dtp, d, ExpDError _ (D.Lambda lambdaPars lambdaExpr)) = checkCallParOnWeak (d, Lambda lpars' expr' tp')
+			where
+				lpars' :: [(String, DataType)]
+				lpars' = map (second (replaceGenerics True gens' )) $ zip (map fst lambdaPars) (stps stp)
+				stps :: DataType -> [DataType]
+				stps (TPTuple tps) = tps
+				stps tp = [tp]
+				env' = envAddVals (map (uncurry localVal) lpars') $ env{envTp = dtp'}
+				dtp' = replaceGenerics True gens' dtp
+				expr' = if dtp' == TPVoid then expr env' lambdaExpr else maybeAddReturn env dtp' $ expr env' lambdaExpr
+				tp' = if containsGeneric dtp then wrapGeneric (exprDataType expr') else dtp
+				containsGeneric = fromMaybe False . forDataType (\t -> case t of
+					TPClass TPMGeneric _ _ -> Just True
+					_ -> Nothing)
+		correctCallPar (_, d, e) = checkCallParOnWeak (d, e)
 
 checkCallParOnWeak :: (Def, Exp) -> (Def, Exp)
 checkCallParOnWeak (d@Def{defMods = mods}, e) = 

@@ -18,15 +18,15 @@
 
 - (CNYield *)buildYield:(CNYield *)yield {
     __block NSMutableArray * previous = nil;
-    return [CNYield decorateBase:yield begin:^CNYieldResult(NSUInteger size) {
+    return [CNYield decorateBase:yield begin:^int(NSUInteger size) {
         previous = [NSMutableArray arrayWithCapacity:size];
         return [yield beginYieldWithSize:size <= 1 ? 0 : size - 1];
-    }                      yield:^CNYieldResult(id item) {
+    }                      yield:^int(id item) {
         for (id prev in previous) {
-            if ([yield yieldItem:tuple(prev, item)] == cnYieldBreak) return cnYieldBreak;
+            if ([yield yieldItem:tuple(prev, item)] == 1) return 1;
         }
         [previous addObject:item];
-        return cnYieldContinue;
+        return 0;
     }                        end:nil all:nil];
 }
 

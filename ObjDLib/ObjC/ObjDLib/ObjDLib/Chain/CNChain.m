@@ -60,18 +60,18 @@
     __block id ret;
     CNYield *yield = [CNYield alloc];
     __weak CNYield * wy = yield;
-    yield = [yield initWithBegin:^CNYieldResult(NSUInteger size) {
+    yield = [yield initWithBegin:^int(NSUInteger size) {
         ret = [NSMutableArray arrayWithCapacity:size];
-        return cnYieldContinue;
-    } yield:^CNYieldResult(id item) {
+        return 0;
+    } yield:^int(id item) {
         [ret addObject:item];
-        return cnYieldContinue;
-    } end:nil all:^CNYieldResult(id collection) {
+        return 0;
+    } end:nil all:^int(id collection) {
         if([collection isKindOfClass:[NSArray class]]) {
             ret = collection;
-            return cnYieldContinue;
+            return 0;
         }
-        return [CNYield yieldAll:collection byItemsTo:wy];
+        return [wy stdYieldAllItems:collection];
     }];
     [self apply:yield];
     return ret;
@@ -81,18 +81,18 @@
     __block id ret;
     CNYield *yield = [CNYield alloc];
     __weak CNYield * wy = yield;
-    yield = [yield initWithBegin:^CNYieldResult(NSUInteger size) {
+    yield = [yield initWithBegin:^int(NSUInteger size) {
         ret = [NSMutableSet setWithCapacity:size];
-        return cnYieldContinue;
-    } yield:^CNYieldResult(id item) {
+        return 0;
+    } yield:^int(id item) {
         [ret addObject:item];
-        return cnYieldContinue;
-    } end:nil all:^CNYieldResult(id collection) {
+        return 0;
+    } end:nil all:^int(id collection) {
         if ([collection isKindOfClass:[NSSet class]]) {
             ret = collection;
-            return cnYieldContinue;
+            return 0;
         }
-        return [CNYield yieldAll:collection byItemsTo:wy];
+        return [wy stdYieldAllItems:collection];
     }];
     [self apply:yield];
     return ret;
@@ -101,9 +101,9 @@
 - (id)foldStart:(id)start by:(cnF2)by {
     __block id ret = start;
     CNYield *yield = [CNYield alloc];
-    yield = [yield initWithBegin:nil yield:^CNYieldResult(id item) {
+    yield = [yield initWithBegin:nil yield:^int(id item) {
         ret = by(ret, item);
-        return cnYieldContinue;
+        return 0;
     } end:nil all:nil];
     [self apply:yield];
     return ret;
@@ -112,12 +112,12 @@
 - (id )findWhere:(cnPredicate)predicate {
     __block id ret = nil;
     CNYield *yield = [CNYield alloc];
-    yield = [yield initWithBegin:nil yield:^CNYieldResult(id item) {
+    yield = [yield initWithBegin:nil yield:^int(id item) {
         if(predicate(item)) {
             ret = item;
-            return cnYieldBreak;
+            return 1;
         }
-        return cnYieldContinue;
+        return 0;
     } end:nil all:nil];
     [self apply:yield];
     return ret;
@@ -216,11 +216,11 @@
 
 - (void)zipForA:(id <CNIterable>)a by:(void (^)(id, id))by {
     id <CNIterator> ai = [a iterator];
-    [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
-        if(![ai hasNext]) return cnYieldBreak;
+    [self apply:[CNYield yieldWithBegin:nil yield:^int(id item) {
+        if(![ai hasNext]) return 1;
         else {
             by(item, [ai next]);
-            return cnYieldContinue;
+            return 0;
         }
     } end:nil all:nil]];
 }
@@ -284,26 +284,26 @@
 }
 
 - (void)forEach:(cnP)p {
-    [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
+    [self apply:[CNYield yieldWithBegin:nil yield:^int(id item) {
         p(item);
-        return cnYieldContinue;
+        return 0;
     } end:nil all:nil]];
 }
 
 - (void)parForEach:(void (^)(id))each {
-    [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
+    [self apply:[CNYield yieldWithBegin:nil yield:^int(id item) {
         [[CNDispatchQueue aDefault] asyncF:^{
             each(item);
         }];
-        return cnYieldContinue;
+        return 0;
     } end:nil all:nil]];
 }
 
 
 - (BOOL)goOn:(BOOL(^)(id))on {
-    return [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
-        return on(item) ? cnYieldContinue : cnYieldBreak;
-    } end:nil all:nil]] == cnYieldContinue;
+    return [self apply:[CNYield yieldWithBegin:nil yield:^int(id item) {
+        return on(item) ? 0 : 1;
+    } end:nil all:nil]] == 0;
 }
 
 - (CNChain *)chain {
@@ -312,18 +312,18 @@
 
 - (id)head {
     __block id ret = nil;
-    [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
+    [self apply:[CNYield yieldWithBegin:nil yield:^int(id item) {
         ret = item;
-        return cnYieldBreak;
+        return 1;
     } end:nil all:nil]];
     return ret;
 }
 
 - (id)last {
     __block id ret = nil;
-    [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
+    [self apply:[CNYield yieldWithBegin:nil yield:^int(id item) {
         ret = item;
-        return cnYieldContinue;
+        return 0;
     } end:nil all:nil]];
     return ret;
 }
@@ -373,17 +373,17 @@
 
 - (NSUInteger)count {
     __block NSUInteger ret = 0;
-    [self apply:[CNYield yieldWithBegin:nil yield:^CNYieldResult(id item) {
+    [self apply:[CNYield yieldWithBegin:nil yield:^int(id item) {
         ret++;
-        return cnYieldContinue;
+        return 0;
     } end:nil all:nil]];
     return ret;
 }
 
 
-- (CNYieldResult)apply:(CNYield *)yield {
+- (int)apply:(CNYield *)yield {
     CNYield *y = [self buildYield:yield];
-    CNYieldResult result = [y beginYieldWithSize:0];
+    int result = [y beginYieldWithSize:0];
     return [y endYieldWithResult:result];
 }
 
@@ -414,12 +414,12 @@
 - (NSMutableDictionary *)toMutableMap {
     __block NSMutableDictionary* ret;
     CNYield *yield = [CNYield alloc];
-    yield = [yield initWithBegin:^CNYieldResult(NSUInteger size) {
+    yield = [yield initWithBegin:^int(NSUInteger size) {
         ret = [NSMutableDictionary dictionaryWithCapacity:size];
-        return cnYieldContinue;
-    } yield:^CNYieldResult(CNTuple* item) {
+        return 0;
+    } yield:^int(CNTuple* item) {
         [ret setObject:item.b forKey:item.a];
-        return cnYieldContinue;
+        return 0;
     } end:nil all:nil];
     [self apply:yield];
     return ret;
@@ -466,12 +466,12 @@
 - (BOOL)existsWhere:(BOOL (^)(id))f {
     __block BOOL ret = NO;
     CNYield *yield = [CNYield alloc];
-    yield = [yield initWithBegin:nil yield:^CNYieldResult(id item) {
+    yield = [yield initWithBegin:nil yield:^int(id item) {
         if(f(item)) {
             ret = YES;
-            return cnYieldBreak;
+            return 1;
         }
-        return cnYieldContinue;
+        return 0;
     } end:nil all:nil];
     [self apply:yield];
     return ret;
@@ -480,12 +480,12 @@
 - (BOOL)allConfirm:(BOOL (^)(id))f {
     __block BOOL ret = YES;
     CNYield *yield = [CNYield alloc];
-    yield = [yield initWithBegin:nil yield:^CNYieldResult(id item) {
+    yield = [yield initWithBegin:nil yield:^int(id item) {
         if(!f(item)) {
             ret = NO;
-            return cnYieldBreak;
+            return 1;
         }
-        return cnYieldContinue;
+        return 0;
     } end:nil all:nil];
     [self apply:yield];
     return ret;
@@ -528,12 +528,12 @@
 - (BOOL)or {
     __block BOOL ret = NO;
     CNYield *yield = [CNYield alloc];
-    yield = [yield initWithBegin:nil yield:^CNYieldResult(id item) {
+    yield = [yield initWithBegin:nil yield:^int(id item) {
         if(unumb(item)) {
             ret = YES;
-            return cnYieldBreak;
+            return 1;
         }
-        return cnYieldContinue;
+        return 0;
     } end:nil all:nil];
     [self apply:yield];
     return ret;
@@ -542,12 +542,12 @@
 - (BOOL)and {
     __block BOOL ret = YES;
     CNYield *yield = [CNYield alloc];
-    yield = [yield initWithBegin:nil yield:^CNYieldResult(id item) {
+    yield = [yield initWithBegin:nil yield:^int(id item) {
         if(!unumb(item)) {
             ret = NO;
-            return cnYieldBreak;
+            return 1;
         }
-        return cnYieldContinue;
+        return 0;
     } end:nil all:nil];
     [self apply:yield];
     return ret;

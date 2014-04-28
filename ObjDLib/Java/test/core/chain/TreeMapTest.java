@@ -13,13 +13,12 @@ public class TreeMapTest extends TestCase {
         map.setKeyValue(0, "test");
         .<String>assertEqualsAB("test", map.applyKey(0));
         final ImArray<Integer> tests = ImArray.fromObjects(-10, -20, -30, 10, 20, -15, 20, 0, 11, 13, -18);
-        {
-            final Iterator<Integer> __inline__6_i = tests.iterator();
-            while(__inline__6_i.hasNext()) {
-                final Integer i = __inline__6_i.next();
+        tests.forEach(new P<Integer>() {
+            @Override
+            public void apply(final Integer i) {
                 map.setKeyValue(i, "test" + i);
             }
-        }
+        });
         .<Integer>assertEqualsAB(tests.chain().distinct().count(), map.count());
         tests.chain().distinct().forEach(new P<Integer>() {
             @Override

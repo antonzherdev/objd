@@ -11,13 +11,13 @@ public class FutureEnd<T> {
         return this._promise;
     }
     public Yield<Future<T>> yield() {
-        final Mut<int> _i = new Mut<int>(0);
-        final MutVolatile<int> _set = new MutVolatile<int>(-1);
-        return new Yield<Future<T>>(new F<Integer, Integer>() {
+        final Mut<Integer> _i = new Mut<Integer>(0);
+        final MutVolatile<Integer> _set = new MutVolatile<Integer>(-1);
+        return Yield.<Future<T>>makeBeginYieldEnd(new F<Integer, Integer>() {
             @Override
             public Integer apply(final Integer size) {
                 FutureEnd.this._array = new MArray<T>(size);
-                return 0;
+                return ((int)0);
             }
         }, new F<Future<T>, Integer>() {
             @Override
@@ -60,9 +60,9 @@ public class FutureEnd<T> {
                     });
                 }
                 if(FutureEnd.this._stopped) {
-                    return 1;
+                    return ((int)1);
                 } else {
-                    return 0;
+                    return ((int)0);
                 }
             }
         }, new F<Integer, Integer>() {

@@ -23,12 +23,12 @@
 
 - (CNYield *)buildYield:(CNYield *)yield {
     __block NSMutableSet* set;
-    return [CNYield decorateBase:yield begin:^CNYieldResult(NSUInteger size) {
+    return [CNYield decorateBase:yield begin:^int(NSUInteger size) {
         NSUInteger newSize = (NSUInteger) (size * _selectivity);
         set = [NSMutableSet setWithCapacity:newSize];
         return [yield beginYieldWithSize:newSize];
-    }                      yield:^CNYieldResult(id item) {
-        if ([set containsObject:item]) return cnYieldContinue;
+    }                      yield:^int(id item) {
+        if ([set containsObject:item]) return 0;
         [set addObject:item];
         return [yield yieldItem:item];
     }                        end:nil all:nil];

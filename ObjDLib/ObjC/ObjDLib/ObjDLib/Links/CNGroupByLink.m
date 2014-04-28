@@ -34,11 +34,11 @@
 
 - (CNYield *)buildYield:(CNYield *)yield {
     __block NSMutableDictionary * dictionary = nil;
-    return [CNYield decorateBase:yield begin:^CNYieldResult(NSUInteger size) {
+    return [CNYield decorateBase:yield begin:^int(NSUInteger size) {
         NSUInteger newSize = (NSUInteger) (size * _factor);
         dictionary = [NSMutableDictionary dictionaryWithCapacity:newSize];
         return [yield beginYieldWithSize:newSize];
-    }                      yield:^CNYieldResult(id item) {
+    }                      yield:^int(id item) {
         id key = _by(item);
         id r = [dictionary objectForKey:key];
         if (r == nil) {
@@ -47,20 +47,20 @@
         }
         r = _fold(r, item);
         if (!_mutableMode) [dictionary setObject:r forKey:key];
-        return cnYieldContinue;
-    }                        end:^CNYieldResult(CNYieldResult result) {
-        if (result != cnYieldBreak) {
+        return 0;
+    }                        end:^int(int result) {
+        if (result != 1) {
             if (_mapAfter != nil) {
-                __block CNYieldResult r = cnYieldContinue;
+                __block int r = 0;
                 [dictionary enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
-                    if ([yield yieldItem:tuple(key, _mapAfter(obj))] == cnYieldBreak) {
-                        r = cnYieldBreak;
+                    if ([yield yieldItem:tuple(key, _mapAfter(obj))] == 1) {
+                        r = 1;
                         *stop = YES;
                     }
                 }];
                 result = r;
             } else {
-                result = [yield yieldAll:dictionary];
+                result = [yield yieldAllItems:dictionary];
             }
         }
         return [yield endYieldWithResult:result];
