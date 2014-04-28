@@ -1,23 +1,28 @@
-package core.objc
+package core.chain
 
-stub class NSLock {
-    def lock
-    def unlock
-    def tryLock : bool
-}
-
-stub class NSConditionLock(condition : int) {
+stub class Lock {
     def lock
     def unlock
     def tryLock : bool
 
-    def tryLockWhen(condition : int) : bool
-    def lockWhen(condition : int)
-    def lockWhen(condition : int, period : float) : bool
-    def unlockWith(condition : int)
+    inline def locked<T>(f : () -> T) : T = {
+        lock
+        val ret = f()
+        unlock
+        ret
+    }
+
+    def newCondition : LockCondition
 }
 
+stub class LockCondition {
+    def await
+    def unlockedAwait
 
+    def await(period : float) : bool
+    def unlockedAwait(period : float) : bool
 
-typedef Lock = NSLock
-typedef ConditionLock = NSConditionLock
+    def signal //Signal when the lock is locked
+    def signalAndUnlock //Signal when the lock is locked and unlock
+    def unlockedSignal //Signal when the lock is NOT locked
+}

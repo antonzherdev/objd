@@ -349,30 +349,27 @@ public abstract class Future<T> {
         return p;
     }
     public Try<T> waitResultPeriod(final float period) {
-        final ConditionLock lock = new ConditionLock(0);
+        final Lock lock = new Lock();
+        final LockCondition cond = lock.newCondition();
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(final Try<T> _) {
-                lock.lock();
-                lock.unlockWithCondition(1);
+                cond.unlockedSignal();
             }
         });
-        if(lock.lockWhenConditionPeriod(1, period)) {
-            lock.unlock();
-        }
+        cond.unlockedAwaitPeriod(period);
         return this.result();
     }
     public Try<T> waitResult() {
-        final ConditionLock lock = new ConditionLock(0);
+        final Lock lock = new Lock();
+        final LockCondition cond = lock.newCondition();
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(final Try<T> _) {
-                lock.lock();
-                lock.unlockWithCondition(1);
+                cond.unlockedSignal();
             }
         });
-        lock.lockWhenCondition(1);
-        lock.unlock();
+        cond.unlockedAwait();
         return ERROR: Unknown {
     local __tmp_4 : (^Try#C<§T#G§>)? = <Future#C<T#G>>self.<dIa>result\(^Try#C<§T#G§>)?\
     if((<l>__tmp_4\(^Try#C<§T#G§>)?\ == none<^Try#C<§T#G§>>)) throw "Not null"

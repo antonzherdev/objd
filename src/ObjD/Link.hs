@@ -2798,13 +2798,11 @@ maybeInlineCall env e = let
 		Dot _ c@Call{} -> Just c
 		Call{} -> Just e
 		_ -> Nothing
-	callExp = fromJust callExpOpt
-	pars = case callExp of
-		Call _ _ p _ -> if DefModStatic `notElem` defMods def then selfPar : p else p
+	(Call def _ pars callGens) = fromJust callExpOpt 
+	pars' = if DefModStatic `notElem` defMods def then selfPar : pars else pars
 	defOpt = case callExpOpt of 
 		Just (Call dd _ _ _) -> Just dd
 		Nothing -> Nothing
-	def = fromJust defOpt
 	selfExp = case e of Dot l _ -> l
 	selfTp = exprDataType selfExp
 	selfClass = dataTypeClass env selfTp
@@ -2825,8 +2823,12 @@ maybeInlineCall env e = let
 				where defClassRec cl
 					| def `elem` classDefs cl = Just cl
 					| otherwise = listToMaybe $ mapMaybe defClassRec $ map fst $ extendsRefs $ classExtends cl
+
 			gens :: Generics
-			gens = buildGenerics defClass $ fromJust $ upGenericsToClass defClass ((dataTypeClass env selfTp), (dataTypeGenerics env selfTp))
+			gens = M.union classGensMap defGensMap
+				where
+					classGensMap = buildGenerics defClass $ fromJust $ upGenericsToClass defClass ((dataTypeClass env selfTp), (dataTypeGenerics env selfTp))
+					defGensMap = M.fromList $ zip (maybe [] (map className . defGenericsClasses) $ defGenerics def) callGens
 				
 			mapDeclaredValsGenerics = map repGens declaredVals
 				where repGens d = (d, d{defType = repgens $ defType d, 
@@ -2851,7 +2853,7 @@ maybeInlineCall env e = let
 			rep (Self _) = lookup (fst selfPar) refs
 			rep _ = Nothing
 			refs :: [(Def, Exp)]
-			refs = (map (second callRef) vals) ++ pars ++ map (second callRef) mapDeclaredValsGenerics
+			refs = (map (second callRef) vals) ++ pars' ++ map (second callRef) mapDeclaredValsGenerics
 			vals = (map dec parsForDeclareVars)
 			dec (d, pe) = (d, tmpVal env (defName d) (defType d) pe)
 			unwrapLambda :: [Exp] -> Exp -> Exp
@@ -2871,7 +2873,7 @@ maybeInlineCall env e = let
 
 	parsForDeclareVars = filter (checkCountOfUsing . fst) unelementaryPars
 		where 
-			unelementaryPars = filter (not . isElementaryExpression . snd) pars
+			unelementaryPars = filter (not . isElementaryExpression . snd) pars'
 			checkCountOfUsing d = (length $ filter (d ==) usingDefs) > 1
 			usingDefs = forExp findUsage (defBody def)
 			findUsage (Call d _ [] _) = [d]

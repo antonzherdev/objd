@@ -4,6 +4,7 @@
 #import "CNDispatchQueue.h"
 #import "CNAtomic.h"
 #import "CNTry.h"
+#import "CNLock.h"
 #import "CNCollection.h"
 #import "CNTuple.h"
 #import "ODType.h"
@@ -284,23 +285,22 @@ static ODClassType* _CNFuture_type;
 }
 
 - (CNTry*)waitResultPeriod:(CGFloat)period {
-    NSConditionLock* lock = [NSConditionLock conditionLockWithCondition:0];
+    CNLock* lock = [CNLock lock];
+    CNLockCondition* cond = [lock newCondition];
     [self onCompleteF:^void(CNTry* _) {
-        [lock lock];
-        [lock unlockWithCondition:1];
+        [cond unlockedSignal];
     }];
-    if([lock lockWhenCondition:1 period:period]) [lock unlock];
+    [cond unlockedAwaitPeriod:period];
     return [self result];
 }
 
 - (CNTry*)waitResult {
-    NSConditionLock* lock = [NSConditionLock conditionLockWithCondition:0];
+    CNLock* lock = [CNLock lock];
+    CNLockCondition* cond = [lock newCondition];
     [self onCompleteF:^void(CNTry* _) {
-        [lock lock];
-        [lock unlockWithCondition:1];
+        [cond unlockedSignal];
     }];
-    [lock lockWhenCondition:1];
-    [lock unlock];
+    [cond unlockedAwait];
     return ((CNTry*)(nonnil([self result])));
 }
 

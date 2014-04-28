@@ -4,6 +4,8 @@
 @class CNAtomicInt;
 @class CNTry;
 @class CNSuccess;
+@class CNLock;
+@class CNLockCondition;
 @protocol CNTraversable;
 @class CNTuple;
 @class ODClassType;
