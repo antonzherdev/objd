@@ -52,7 +52,6 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
     public MTreeSet(final MTreeMap<T, Object> mmap) {
         super(mmap);
         this.mmap = mmap;
-        this.obj = new Object();
     }
     public void mutableFilterBy(final F<T, Boolean> by) {
         final MIterator<T> i = this.mutableIterator();
@@ -61,5 +60,8 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
                 i.remove();
             }
         }
+    }
+    static {
+        obj = new Object();
     }
 }

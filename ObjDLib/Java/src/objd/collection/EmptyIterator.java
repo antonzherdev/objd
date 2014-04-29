@@ -1,7 +1,5 @@
 package objd.collection;
 
-import objd.lang.*;
-
 public class EmptyIterator<T> extends Iterator_impl<T> {
     public static final EmptyIterator<Object> instance;
     @Override
@@ -13,6 +11,8 @@ public class EmptyIterator<T> extends Iterator_impl<T> {
         throw new RuntimeException("Iterator is empty");
     }
     public EmptyIterator() {
-        this.instance = new EmptyIterator<Object>();
+    }
+    static {
+        instance = new EmptyIterator<Object>();
     }
 }

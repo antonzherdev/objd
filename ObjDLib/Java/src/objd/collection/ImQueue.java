@@ -47,6 +47,8 @@ public class ImQueue<T> extends Queue_impl<T> {
     public ImQueue(final ImList<T> in, final ImList<T> out) {
         this.in = in;
         this.out = out;
-        this.empty = new ImQueue<Object>(ImList.<Object>apply(), ImList.<Object>apply());
+    }
+    static {
+        empty = new ImQueue<Object>(ImList.<Object>apply(), ImList.<Object>apply());
     }
 }

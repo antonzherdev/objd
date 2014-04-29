@@ -36,6 +36,8 @@ public final class EmptyList<T> extends ImList<T> {
         return ImList.<T>applyItem(((T)(item)));
     }
     public EmptyList() {
-        this.instance = new EmptyList<Object>();
+    }
+    static {
+        instance = new EmptyList<Object>();
     }
 }

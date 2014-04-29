@@ -9,12 +9,12 @@ public class Zip3Link<T, A, B, R> extends ChainLink_impl<T, R> {
     public final Iterable<B> b;
     public final F3<T, A, B, R> f;
     @Override
-    public Yield<A> buildYield(final Yield<R> yield) {
+    public Yield<T> buildYield(final Yield<R> yield) {
         final Iterator<A> ai = this.a.iterator();
         final Iterator<B> bi = this.b.iterator();
-        return Yield.<A, R>decorateBaseYield(yield, new F<A, Integer>() {
+        return Yield.<T, R>decorateBaseYield(yield, new F<T, Integer>() {
             @Override
-            public Integer apply(final A item) {
+            public Integer apply(final T item) {
                 if(!(ai.hasNext()) || !(bi.hasNext())) {
                     return ((int)(1));
                 } else {

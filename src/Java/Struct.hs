@@ -80,7 +80,8 @@ data Def =
 	  Def{defAnnotations :: [DefAnnotation], defMods :: [DefMod], defGenerics :: [Generic]
 	  , defTp :: TP, defName :: String, defPars :: [DefPar], defStms :: [Stm]}
 	| Constructor {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defPars :: [DefPar], defStms :: [Stm]}
-	| Field {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defTp :: TP, defName :: String, defExp :: Exp} deriving (Eq)
+	| Field {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defTp :: TP, defName :: String, defExp :: Exp}
+	| StaticConstructor{defStms :: [Stm]} deriving (Eq)
 type DefPar = ([DefMod], TP, String)
 data DefMod = DefModStatic | DefModAbstract | DefModFinal | DefModOverride | DefModVisability Visibility 
 	| DefModVolatile deriving (Eq)
@@ -102,6 +103,7 @@ showDef (clTp, _) d@Def{} = concatMap showAnnotation (defAnnotations d)
 showDef (_, clNm) d@Constructor{} = concatMap showAnnotation (defAnnotations d) 
 	++ [wrapStr "" " " (strs' " " (delete DefModStatic (defMods d))) ++ 
 	clNm ++ showPars d ++ " "] `glue` showStmsInBrackets (defStms d)
+showDef _ (StaticConstructor stms) = ["static "] `glue` showStmsInBrackets stms 
 
 showPars :: Def -> String
 showPars d = "(" ++ mkString showDefPar ", " (defPars d) ++ ")"

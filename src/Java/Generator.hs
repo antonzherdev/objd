@@ -34,12 +34,17 @@ genClass cl = do
 		trMod D.ClassModAbstract = Just J.ClassModAbstract
 		trMod D.ClassModFinal = Just J.ClassModFinal
 		trMod _ = Nothing
+		staticInitFields = filter (\ f -> D.isField f && D.defBody f /= D.Nop && D.DefModStatic `elem` D.defMods f) (D.classDefs cl)
+		genStaticSet d = do
+			e' <- genExp defaultEnv $ D.defBody d
+			return $ J.Set Nothing (J.Ref $ D.defName d) e'
 	defs' <- mapM (genDef cl) defs
 	gens' <- mapM genGeneric $ D.classGenerics cl
 	ext' <- case D.mainExtendsRef (D.classExtends cl) of
 		Just e -> if D.isBaseClass (fst e) then return Nothing else fmap Just (genExtendsRef e)
 		Nothing -> return Nothing
 	impls' <- mapM genExtendsRef $ filter (not . D.isBaseClass . fst) $ D.traitExtendsRefs $ D.classExtends cl
+	staticInitFields' <- mapM genStaticSet staticInitFields
 	return J.Class {
 		J.classMods = [J.ClassModVisibility J.Public] ++ mapMaybe trMod (D.classMods cl),
 		J.classType = if D.isTrait cl then J.ClassTypeInterface else J.ClassTypeClass,
@@ -47,7 +52,7 @@ genClass cl = do
 		J.classGenerics = gens',
 		J.classExtends = ext',
 		J.classImplements = impls',
-		J.classDefs = join defs'
+		J.classDefs = join defs' ++ [J.StaticConstructor staticInitFields' | not (null staticInitFields')]
 	}
 
 
@@ -127,7 +132,7 @@ genDef cl d =
  			do
  				super <- callSuperConstructor
  				let fields = filter (\ f -> 
- 					D.isField f && D.defBody f /= D.Nop && D.DefModConstructorField `notElem` D.defMods f) 
+ 					D.isField f && D.defBody f /= D.Nop && D.DefModConstructorField `notElem` D.defMods f && D.DefModStatic `notElem` D.defMods f) 
  					(D.classDefs cl)
  				sets <- mapM genSet fields
  				pars' <- mapM genPar $ D.defPars d
