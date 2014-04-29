@@ -30,9 +30,9 @@ static CNClassType* _CNFutureTest_type;
     CNAtomicInt* n = [CNAtomicInt atomicInt];
     NSInteger count = 100000;
     {
-        id<CNIterator> __inline__2_i = [intTo(1, count) iterator];
-        while([__inline__2_i hasNext]) {
-            id i = [__inline__2_i next];
+        id<CNIterator> __il__2i = [intTo(1, count) iterator];
+        while([__il__2i hasNext]) {
+            id i = [__il__2i next];
             {
                 CNPromise* p = [CNPromise apply];
                 [CNDispatchQueue.aDefault asyncF:^void() {
@@ -53,17 +53,17 @@ static CNClassType* _CNFutureTest_type;
     NSInteger count = 100;
     CNAtomicInt* result = [CNAtomicInt atomicInt];
     {
-        id<CNIterator> __inline__3_i = [intTo(1, count) iterator];
-        while([__inline__3_i hasNext]) {
-            id __inline__3_v = [__inline__3_i next];
+        id<CNIterator> __il__3i = [intTo(1, count) iterator];
+        while([__il__3i hasNext]) {
+            id __il__3v = [__il__3i next];
             [CNDispatchQueue.aDefault asyncF:^void() {
                 CNPromise* p = [CNPromise apply];
                 CNFuture* m = [p mapF:^id(id _) {
                     return numi(unumi(_) + 1);
                 }];
-                [result addAndGetValue:((int)(unumi(__inline__3_v) + 1))];
+                [result addAndGetValue:((int)(unumi(__il__3v) + 1))];
                 [CNDispatchQueue.aDefault asyncF:^void() {
-                    [p successValue:__inline__3_v];
+                    [p successValue:__il__3v];
                 }];
                 [m onCompleteF:^void(CNTry* _) {
                     [n addAndGetValue:((int)(unumi([_ get])))];
@@ -80,9 +80,9 @@ static CNClassType* _CNFutureTest_type;
     NSInteger count = 100;
     NSInteger result = 0;
     {
-        id<CNIterator> __inline__3_i = [intTo(1, count) iterator];
-        while([__inline__3_i hasNext]) {
-            id i = [__inline__3_i next];
+        id<CNIterator> __il__3i = [intTo(1, count) iterator];
+        while([__il__3i hasNext]) {
+            id i = [__il__3i next];
             {
                 CNPromise* p = [CNPromise apply];
                 CNFuture* m = [p flatMapF:^CNFuture*(id _) {

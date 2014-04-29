@@ -12,9 +12,9 @@ public class FutureTest extends TestCase {
         final AtomicInt n = new AtomicInt();
         final int count = 100000;
         {
-            final Iterator<Integer> __inline__2_i = 1.to(count).iterator();
-            while(__inline__2_i.hasNext()) {
-                final Integer i = __inline__2_i.next();
+            final Iterator<Integer> __il__2i = 1.to(count).iterator();
+            while(__il__2i.hasNext()) {
+                final Integer i = __il__2i.next();
                 {
                     final Promise<Integer> p = Promise.<Integer>apply();
                     DispatchQueue.aDefault.asyncF(new P0() {
@@ -40,9 +40,9 @@ public class FutureTest extends TestCase {
         final int count = 100;
         AtomicInt result = new AtomicInt();
         {
-            final Iterator<Integer> __inline__3_i = 1.to(count).iterator();
-            while(__inline__3_i.hasNext()) {
-                final Integer __inline__3_v = __inline__3_i.next();
+            final Iterator<Integer> __il__3i = 1.to(count).iterator();
+            while(__il__3i.hasNext()) {
+                final Integer __il__3v = __il__3i.next();
                 DispatchQueue.aDefault.asyncF(new P0() {
                     @Override
                     public void apply() {
@@ -53,11 +53,11 @@ public class FutureTest extends TestCase {
                                 return _ + 1;
                             }
                         });
-                        result.addAndGet(((int)(__inline__3_v + 1)));
+                        result.addAndGet(((int)(__il__3v + 1)));
                         DispatchQueue.aDefault.asyncF(new P0() {
                             @Override
                             public void apply() {
-                                p.successValue(__inline__3_v);
+                                p.successValue(__il__3v);
                             }
                         });
                         m.onCompleteF(new P<Try<Integer>>() {
@@ -78,9 +78,9 @@ public class FutureTest extends TestCase {
         final int count = 100;
         int result = 0;
         {
-            final Iterator<Integer> __inline__3_i = 1.to(count).iterator();
-            while(__inline__3_i.hasNext()) {
-                final Integer i = __inline__3_i.next();
+            final Iterator<Integer> __il__3i = 1.to(count).iterator();
+            while(__il__3i.hasNext()) {
+                final Integer i = __il__3i.next();
                 {
                     final Promise<Integer> p = Promise.<Integer>apply();
                     final Future<Integer> m = p.<Integer>flatMapF(new F<Integer, Future<Integer>>() {

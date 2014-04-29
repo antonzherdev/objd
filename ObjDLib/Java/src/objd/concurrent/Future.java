@@ -392,11 +392,11 @@ public abstract class Future<T> {
     public <I> void waitAndOnSuccessFlatAwaitF(final float await, final P<I> f) {
         {
             {
-                final Try<T> __inline__0___tr = waitResultPeriod(await);
-                if(__inline__0___tr != null) {
-                    if(__inline__0___tr.isSuccess()) {
+                final Try<T> __il__0__tr = waitResultPeriod(await);
+                if(__il__0__tr != null) {
+                    if(__il__0__tr.isSuccess()) {
                         {
-                            final T __tr2 = __inline__0___tr.get();
+                            final T __tr2 = __il__0__tr.get();
                             ((Traversable<I>)(__tr2)).forEach(f);
                         }
                     }

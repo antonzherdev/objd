@@ -63,9 +63,9 @@
 
 - (void)appendAllItems:(id<CNTraversable>)items {
     if([items conformsToProtocol:@protocol(CNIterable)]) {
-        id<CNIterator> __inline__0_0_i = [((id<CNIterable>)(items)) iterator];
-        while([__inline__0_0_i hasNext]) {
-            id _ = [__inline__0_0_i next];
+        id<CNIterator> __il__0_0i = [((id<CNIterable>)(items)) iterator];
+        while([__il__0_0i hasNext]) {
+            id _ = [__il__0_0i next];
             [self appendItem:_];
         }
     } else {
@@ -332,9 +332,9 @@
 - (id<CNMIterable>)mCopy {
     CNMArray* arr = [CNMArray array];
     {
-        id<CNIterator> __inline__1_i = [self iterator];
-        while([__inline__1_i hasNext]) {
-            id item = [__inline__1_i next];
+        id<CNIterator> __il__1i = [self iterator];
+        while([__il__1i hasNext]) {
+            id item = [__il__1i next];
             [arr appendItem:item];
         }
     }
@@ -375,9 +375,9 @@
 - (id<CNImIterable>)imCopy {
     CNMArray* arr = [CNMArray array];
     {
-        id<CNIterator> __inline__1_i = [self iterator];
-        while([__inline__1_i hasNext]) {
-            id item = [__inline__1_i next];
+        id<CNIterator> __il__1i = [self iterator];
+        while([__il__1i hasNext]) {
+            id item = [__il__1i next];
             [arr appendItem:item];
         }
     }

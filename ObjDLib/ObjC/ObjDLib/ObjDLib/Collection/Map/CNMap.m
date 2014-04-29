@@ -92,9 +92,9 @@
 - (id<CNImMap>)imCopy {
     CNMHashMap* arr = [CNMHashMap hashMap];
     {
-        id<CNIterator> __inline__1_i = [self iterator];
-        while([__inline__1_i hasNext]) {
-            CNTuple* item = [__inline__1_i next];
+        id<CNIterator> __il__1i = [self iterator];
+        while([__il__1i hasNext]) {
+            CNTuple* item = [__il__1i next];
             [arr setKey:((CNTuple*)(item)).a value:((CNTuple*)(item)).b];
         }
     }
@@ -130,9 +130,9 @@
 - (void)assignImMap:(id<CNImMap>)imMap {
     [self clear];
     {
-        id<CNIterator> __inline__1_i = [imMap iterator];
-        while([__inline__1_i hasNext]) {
-            CNTuple* _ = [__inline__1_i next];
+        id<CNIterator> __il__1i = [imMap iterator];
+        while([__il__1i hasNext]) {
+            CNTuple* _ = [__il__1i next];
             [self appendItem:_];
         }
     }
@@ -142,7 +142,7 @@
     @throw @"Method mutableIterator is abstract";
 }
 
-- (void)mutableFilterBy:(BOOL(^)(id))by {
+- (void)mutableFilterBy:(BOOL(^)(CNTuple*))by {
     id<CNMIterator> i = [self mutableIterator];
     while([i hasNext]) {
         if(by([i next])) [i remove];

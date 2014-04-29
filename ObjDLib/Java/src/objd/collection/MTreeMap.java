@@ -36,9 +36,9 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
         } else {
             this.clear();
             {
-                final Iterator<Tuple<K, V>> __inline__0_1_i = imMap.iterator();
-                while(__inline__0_1_i.hasNext()) {
-                    final Tuple<K, V> _ = __inline__0_1_i.next();
+                final Iterator<Tuple<K, V>> __il__0_1i = imMap.iterator();
+                while(__il__0_1i.hasNext()) {
+                    final Tuple<K, V> _ = __il__0_1i.next();
                     appendItem(_);
                 }
             }
@@ -545,7 +545,7 @@ else {
         return removeKey(item.a) != null;
     }
     @Override
-    public boolean removeItem(final T item) {
+    public boolean removeItem(final Tuple<K, V> item) {
         final MIterator<T> i = this.mutableIterator();
         boolean ret = false;
         while(i.hasNext()) {
@@ -556,8 +556,8 @@ else {
         }
         return ret;
     }
-    public void mutableFilterBy(final F<T, Boolean> by) {
-        final MIterator<T> i = this.mutableIterator();
+    public void mutableFilterBy(final F<Tuple<K, V>, Boolean> by) {
+        final MIterator<Tuple<K, V>> i = this.mutableIterator();
         while(i.hasNext()) {
             if(by.apply(i.next())) {
                 i.remove();

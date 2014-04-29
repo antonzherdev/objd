@@ -347,9 +347,9 @@ static CNClassType* _CNMTreeMap_type;
     } else {
         [self clear];
         {
-            id<CNIterator> __inline__0_1_i = [imMap iterator];
-            while([__inline__0_1_i hasNext]) {
-                CNTuple* _ = [__inline__0_1_i next];
+            id<CNIterator> __il__0_1i = [imMap iterator];
+            while([__il__0_1i hasNext]) {
+                CNTuple* _ = [__il__0_1i next];
                 [self appendItem:_];
             }
         }
@@ -723,7 +723,7 @@ static CNClassType* _CNMTreeMap_type;
     return [self removeKey:((CNTuple*)(item)).a] != nil;
 }
 
-- (void)mutableFilterBy:(BOOL(^)(id))by {
+- (void)mutableFilterBy:(BOOL(^)(CNTuple*))by {
     id<CNMIterator> i = [self mutableIterator];
     while([i hasNext]) {
         if(by([i next])) [i remove];

@@ -19,9 +19,9 @@ public abstract class MMap_impl<K, V> extends Map_impl<K, V> implements MMap<K, 
     public ImMap<K, V> imCopy() {
         final MHashMap<K, V> arr = new MHashMap<K, V>();
         {
-            final Iterator<Tuple<K, V>> __inline__1_i = this.iterator();
-            while(__inline__1_i.hasNext()) {
-                final Tuple<K, V> item = __inline__1_i.next();
+            final Iterator<Tuple<K, V>> __il__1i = this.iterator();
+            while(__il__1i.hasNext()) {
+                final Tuple<K, V> item = __il__1i.next();
                 arr.setKeyValue(item.a, item.b);
             }
         }
@@ -49,15 +49,15 @@ public abstract class MMap_impl<K, V> extends Map_impl<K, V> implements MMap<K, 
     public void assignImMap(final ImMap<K, V> imMap) {
         this.clear();
         {
-            final Iterator<Tuple<K, V>> __inline__1_i = imMap.iterator();
-            while(__inline__1_i.hasNext()) {
-                final Tuple<K, V> _ = __inline__1_i.next();
+            final Iterator<Tuple<K, V>> __il__1i = imMap.iterator();
+            while(__il__1i.hasNext()) {
+                final Tuple<K, V> _ = __il__1i.next();
                 appendItem(_);
             }
         }
     }
-    public void mutableFilterBy(final F<T, Boolean> by) {
-        final MIterator<T> i = this.mutableIterator();
+    public void mutableFilterBy(final F<Tuple<K, V>, Boolean> by) {
+        final MIterator<Tuple<K, V>> i = this.mutableIterator();
         while(i.hasNext()) {
             if(by.apply(i.next())) {
                 i.remove();

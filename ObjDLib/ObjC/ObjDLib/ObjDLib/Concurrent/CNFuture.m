@@ -312,10 +312,10 @@ static CNClassType* _CNFuture_type;
 }
 
 - (void)waitAndOnSuccessFlatAwait:(CGFloat)await f:(void(^)(id))f {
-    CNTry* __inline__0___tr = [self waitResultPeriod:await];
-    if(__inline__0___tr != nil) {
-        if([__inline__0___tr isSuccess]) {
-            id __tr2 = [__inline__0___tr get];
+    CNTry* __il__0__tr = [self waitResultPeriod:await];
+    if(__il__0__tr != nil) {
+        if([__il__0__tr isSuccess]) {
+            id __tr2 = [__il__0__tr get];
             [((id<CNTraversable>)(__tr2)) forEach:f];
         }
     }

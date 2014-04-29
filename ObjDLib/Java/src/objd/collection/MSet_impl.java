@@ -11,9 +11,9 @@ public abstract class MSet_impl<T> extends Set_impl<T> implements MSet<T> {
     public ImSet<T> imCopy() {
         final MHashSet<T> arr = new MHashSet<T>();
         {
-            final Iterator<T> __inline__1_i = this.iterator();
-            while(__inline__1_i.hasNext()) {
-                final T item = __inline__1_i.next();
+            final Iterator<T> __il__1i = this.iterator();
+            while(__il__1i.hasNext()) {
+                final T item = __il__1i.next();
                 arr.appendItem(item);
             }
         }

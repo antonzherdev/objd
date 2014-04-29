@@ -23,9 +23,9 @@ public abstract class MIterable_impl<T> extends Iterable_impl<T> implements MIte
     public ImIterable<T> imCopy() {
         final MArray<T> arr = new MArray<T>();
         {
-            final Iterator<T> __inline__1_i = this.iterator();
-            while(__inline__1_i.hasNext()) {
-                final T item = __inline__1_i.next();
+            final Iterator<T> __il__1i = this.iterator();
+            while(__il__1i.hasNext()) {
+                final T item = __il__1i.next();
                 arr.appendItem(item);
             }
         }

@@ -25,9 +25,9 @@
 - (id<CNMSet>)mCopy {
     CNMHashSet* arr = [CNMHashSet hashSet];
     {
-        id<CNIterator> __inline__1_i = [self iterator];
-        while([__inline__1_i hasNext]) {
-            id item = [__inline__1_i next];
+        id<CNIterator> __il__1i = [self iterator];
+        while([__il__1i hasNext]) {
+            id item = [__il__1i next];
             [arr appendItem:item];
         }
     }
@@ -56,9 +56,9 @@
 - (id<CNImSet>)imCopy {
     CNMHashSet* arr = [CNMHashSet hashSet];
     {
-        id<CNIterator> __inline__1_i = [self iterator];
-        while([__inline__1_i hasNext]) {
-            id item = [__inline__1_i next];
+        id<CNIterator> __il__1i = [self iterator];
+        while([__il__1i hasNext]) {
+            id item = [__il__1i next];
             [arr appendItem:item];
         }
     }
