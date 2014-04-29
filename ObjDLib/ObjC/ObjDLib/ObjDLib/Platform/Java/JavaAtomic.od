@@ -19,7 +19,9 @@ stub class AtomicInteger {
     def set(newValue : int4)
     def incrementAndGet : int4
     def decrementAndGet : int4
+    @GenName("addAndGet")
     def addAndGet(value : int4) : int4
+    @GenName("compareAndSet")
     def compareAndSet(oldValue : int4, newValue : int4) : bool
 }
 
@@ -29,6 +31,8 @@ stub class AtomicBoolean {
     def boolValue : bool
     @GenName("set")
     def set(newValue : bool)
+    @GenName("getAndSet")
     def getAndSet(newValue : bool) : bool
+    @GenName("compareAndSet")
     def compareAndSet(oldValue : bool, newValue : bool) : bool
 }

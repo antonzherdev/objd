@@ -51,7 +51,7 @@ public class FutureTest extends TestCase {
                                 return _ + 1;
                             }
                         });
-                        result.addAndGetValue(((int)__inline__3_v + 1));
+                        result.addAndGet(((int)__inline__3_v + 1));
                         DispatchQueue.aDefault.asyncF(new P0() {
                             @Override
                             public void apply() {
@@ -61,7 +61,7 @@ public class FutureTest extends TestCase {
                         m.onCompleteF(new P<Try<Integer>>() {
                             @Override
                             public void apply(final Try<Integer> _) {
-                                n.addAndGetValue(((int)_.get()));
+                                n.addAndGet(((int)_.get()));
                             }
                         });
                     }
@@ -102,7 +102,7 @@ public class FutureTest extends TestCase {
                     m.onCompleteF(new P<Try<Integer>>() {
                         @Override
                         public void apply(final Try<Integer> _) {
-                            n.addAndGetValue(((int)_.get()));
+                            n.addAndGet(((int)_.get()));
                         }
                     });
                 }
