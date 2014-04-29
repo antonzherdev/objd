@@ -25,20 +25,20 @@ public final class FilledList<T> extends ImList<T> {
     @Override
     public ImList<T> filterF(final F<T, Boolean> f) {
         if(f.apply(this._head)) {
-            return ((ImList<T>)new FilledList<T>(this._head, this.tail.filterF(f)));
+            return ((ImList<T>)(new FilledList<T>(this._head, this.tail.filterF(f))));
         } else {
             return this.tail.filterF(f);
         }
     }
     @Override
     public ImList<T> reverse() {
-        return reverseAndAddList(((ImList<T>)EmptyList.instance));
+        return reverseAndAddList(((ImList<T>)(EmptyList.instance)));
     }
     private ImList<T> reverseAndAddList(final ImList<T> list) {
         FilledList<T> ret = new FilledList<T>(this._head, list);
         ImList<T> l = this.tail;
         while(!(l.isEmpty())) {
-            ret = new FilledList<T>(((FilledList<T>)l)._head, ret);
+            ret = new FilledList<T>(((FilledList<T>)(l))._head, ret);
             l = l.tail();
         }
         return ret;
@@ -52,7 +52,7 @@ public final class FilledList<T> extends ImList<T> {
             if(tail.isEmpty()) {
                 return ;
             }
-            list = ((FilledList<T>)tail);
+            list = ((FilledList<T>)(tail));
         }
     }
     @Override
@@ -61,14 +61,14 @@ public final class FilledList<T> extends ImList<T> {
         FilledList<T> list = this;
         while(true) {
             final T h = list._head;
-            if(item.compareTo(((C)h)) < 0) {
-                return new FilledList<T>(((T)item), before).reverseAndAddList(list);
+            if(item.compareTo(((C)(h))) < 0) {
+                return new FilledList<T>(((T)(item)), before).reverseAndAddList(list);
             }
             before = ImList.<T>applyItemTail(h, before);
             if(list.tail.isEmpty()) {
-                return new FilledList<T>(((T)item), before).reverse();
+                return new FilledList<T>(((T)(item)), before).reverse();
             }
-            list = ((FilledList<T>)list.tail);
+            list = ((FilledList<T>)(list.tail));
         }
     }
     public FilledList(final T _head, final ImList<T> tail) {

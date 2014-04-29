@@ -18,7 +18,7 @@ public final class Pair<T> extends ImSet_impl<T> {
     }
     @Override
     public int count() {
-        return ((int)2);
+        return ((int)(2));
     }
     @Override
     public Iterator<T> iterator() {

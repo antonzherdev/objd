@@ -29,7 +29,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     @Override
     public void assignImMap(final ImMap<K, V> imMap) {
         if(imMap instanceof ImTreeMap) {
-            final ImTreeMap<K, V> m = ((ImTreeMap<K, V>)imMap);
+            final ImTreeMap<K, V> m = ((ImTreeMap<K, V>)(imMap));
             final TreeMapEntry<K, V> __tmp_0_1 = m.root;
             this._root = (__tmp_0_1 == null) ? (null) : (__tmp_0_1.copyParent(null));
             this._size = m.count;
@@ -54,7 +54,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     }
     @Override
     public void clear() {
-        this._size = ((int)0);
+        this._size = ((int)(0));
         this._root = null;
     }
     @Override
@@ -67,7 +67,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
         TreeMapEntry<K, V> t = this._root;
         if(t == null) {
             this._root = new TreeMapEntry<K, V>(key, value, null);
-            this._size = ((int)1);
+            this._size = ((int)(1));
         } else {
             int cmp = 0;
             TreeMapEntry<K, V> parent = null;
@@ -123,7 +123,7 @@ else {
         if(replacement != null) {
             replacement.parent = p.parent;
             if(p.parent == null) {
-                this._root = ((TreeMapEntry<K, V>)replacement);
+                this._root = ((TreeMapEntry<K, V>)(replacement));
             } else {
                 final TreeMapEntry<K, V> __tmp_4_1 = p.parent;
                 if(__tmp_4_1 == null) {
@@ -135,13 +135,13 @@ else {
                     if(__tmp_4_1 == null) {
                         throw new RuntimeException("Not null");
                     }
-                    __tmp_4_1.left = ((TreeMapEntry<K, V>)replacement);
+                    __tmp_4_1.left = ((TreeMapEntry<K, V>)(replacement));
                 } else {
                     final TreeMapEntry<K, V> __tmp_4_1 = p.parent;
                     if(__tmp_4_1 == null) {
                         throw new RuntimeException("Not null");
                     }
-                    __tmp_4_1.right = ((TreeMapEntry<K, V>)replacement);
+                    __tmp_4_1.right = ((TreeMapEntry<K, V>)(replacement));
                 }
             }
             p.left = null;
@@ -431,7 +431,7 @@ else {
             {
                 final TreeMapEntry<K, V> __tmp_0_2 = r.left;
                 if(__tmp_0_2 != null) {
-                    __tmp_0_2.parent = ((TreeMapEntry<K, V>)p);
+                    __tmp_0_2.parent = ((TreeMapEntry<K, V>)(p));
                 }
             }
             r.parent = p.parent;
@@ -457,7 +457,7 @@ else {
                     __tmp_0_4.right = r;
                 }
             }
-            r.left = ((TreeMapEntry<K, V>)p);
+            r.left = ((TreeMapEntry<K, V>)(p));
             p.parent = r;
         }
     }
@@ -472,7 +472,7 @@ else {
             {
                 final TreeMapEntry<K, V> __tmp_0_2 = l.right;
                 if(__tmp_0_2 != null) {
-                    __tmp_0_2.parent = ((TreeMapEntry<K, V>)p);
+                    __tmp_0_2.parent = ((TreeMapEntry<K, V>)(p));
                 }
             }
             l.parent = p.parent;
@@ -498,7 +498,7 @@ else {
                     __tmp_0_4.left = l;
                 }
             }
-            l.right = ((TreeMapEntry<K, V>)p);
+            l.right = ((TreeMapEntry<K, V>)(p));
             p.parent = l;
         }
     }
@@ -514,7 +514,7 @@ else {
     public MTreeMap(final F2<K, K, Integer> comparator) {
         super(comparator);
         this._root = null;
-        this._size = ((int)0);
+        this._size = ((int)(0));
         this.keys = new MTreeMapKeySet<K>(this);
     }
     public V applyKeyOrUpdateWith(final K key, final F0<V> orUpdateWith) {

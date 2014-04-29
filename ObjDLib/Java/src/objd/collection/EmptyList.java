@@ -6,7 +6,7 @@ public final class EmptyList<T> extends ImList<T> {
     public static final EmptyList<Object> instance;
     @Override
     public int count() {
-        return ((int)0);
+        return ((int)(0));
     }
     @Override
     public T head() {
@@ -33,7 +33,7 @@ public final class EmptyList<T> extends ImList<T> {
     }
     @Override
     public <C extends Comparable<C>> ImList<T> insertItem(final C item) {
-        return ImList.<T>applyItem(((T)item));
+        return ImList.<T>applyItem(((T)(item)));
     }
     public EmptyList() {
         this.instance = new EmptyList<Object>();

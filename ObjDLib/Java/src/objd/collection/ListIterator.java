@@ -18,6 +18,6 @@ public class ListIterator<T> extends Iterator_impl<T> {
         return ret;
     }
     public ListIterator() {
-        this.list = ((ImList<T>)EmptyList.instance);
+        this.list = ((ImList<T>)(EmptyList.instance));
     }
 }

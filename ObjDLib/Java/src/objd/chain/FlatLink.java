@@ -10,7 +10,7 @@ public class FlatLink<T> extends ChainLink_impl<Traversable<T>, T> {
         return Yield.<Traversable<T>>decorateBaseBeginYield(yield, new F<Integer, Integer>() {
             @Override
             public Integer apply(final Integer size) {
-                return yield.beginYieldWithSize(((int)size * FlatLink.this.factor));
+                return yield.beginYieldWithSize(((int)(size * FlatLink.this.factor)));
             }
         }, new F<Traversable<T>, Integer>() {
             @Override
@@ -27,7 +27,7 @@ public class FlatLink<T> extends ChainLink_impl<Traversable<T>, T> {
                         }
                     }
                 });
-                return ((int)result.value);
+                return ((int)(result.value));
             }
         });
     }

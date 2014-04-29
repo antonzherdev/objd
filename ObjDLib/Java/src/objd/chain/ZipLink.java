@@ -14,7 +14,7 @@ public class ZipLink<T, A, R> extends ChainLink_impl<T, R> {
             @Override
             public Integer apply(final A item) {
                 if(!(ai.hasNext())) {
-                    return ((int)1);
+                    return ((int)(1));
                 } else {
                     return yield.yieldItem(ZipLink.this.f.apply(item, ai.next()));
                 }

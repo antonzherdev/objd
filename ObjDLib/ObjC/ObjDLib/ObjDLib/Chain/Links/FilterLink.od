@@ -2,7 +2,7 @@ package objd.chain
 
 class FilterLink<T>(val predicate : T -> bool, val selectivity : float4) extends ChainLink<T, T> {
     override def build(yield : Yield<T>) : Yield<T> = {
-        Yield.decorate<Traversable<T>>(
+        Yield.decorate<T>(
             base = yield,
             begin = size -> yield.beginYieldWith(size = size * selectivity),
             yield = item -> {

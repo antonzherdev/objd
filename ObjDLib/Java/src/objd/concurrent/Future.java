@@ -61,7 +61,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)t));
+                    p.completeValue(((Try<R>)(t)));
                 }
             }
         });
@@ -74,7 +74,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)t));
+                    p.completeValue(((Try<R>)(t)));
                 }
             }
         });
@@ -95,7 +95,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)t));
+                    p.completeValue(((Try<R>)(t)));
                 }
             }
         });
@@ -108,7 +108,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)t));
+                    p.completeValue(((Try<R>)(t)));
                 }
             }
         });
@@ -121,7 +121,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)t));
+                    p.completeValue(((Try<R>)(t)));
                 }
             }
         });
@@ -143,7 +143,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)t));
+                    p.completeValue(((Try<R>)(t)));
                 }
             }
         });
@@ -156,7 +156,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)t));
+                    p.completeValue(((Try<R>)(t)));
                 }
             }
         });
@@ -169,7 +169,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)t));
+                    p.completeValue(((Try<R>)(t)));
                 }
             }
         });
@@ -182,7 +182,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)t));
+                    p.completeValue(((Try<R>)(t)));
                 }
             }
         });
@@ -205,7 +205,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)t));
+                    p.completeValue(((Try<R>)(t)));
                 }
             }
         });
@@ -218,7 +218,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)t));
+                    p.completeValue(((Try<R>)(t)));
                 }
             }
         });
@@ -231,7 +231,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)t));
+                    p.completeValue(((Try<R>)(t)));
                 }
             }
         });
@@ -244,7 +244,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)t));
+                    p.completeValue(((Try<R>)(t)));
                 }
             }
         });
@@ -257,7 +257,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)t));
+                    p.completeValue(((Try<R>)(t)));
                 }
             }
         });
@@ -326,7 +326,7 @@ public abstract class Future<T> {
                     f.apply(tr.get());
                     p.successValue(null);
                 } else {
-                    p.completeValue(((Try<Void>)tr));
+                    p.completeValue(((Try<Void>)(tr)));
                 }
             }
         });
@@ -338,7 +338,7 @@ public abstract class Future<T> {
             @Override
             public void apply(final Try<T> tr) {
                 if(tr.isFailure()) {
-                    p.completeValue(((Try<R>)tr));
+                    p.completeValue(((Try<R>)(tr)));
                 } else {
                     final Future<R> fut = f.apply(tr.get());
                     fut.onCompleteF(new P<Try<R>>() {
@@ -398,7 +398,7 @@ public abstract class Future<T> {
                     if(__inline__0___tr.isSuccess()) {
                         {
                             final T __tr2 = __inline__0___tr.get();
-                            ((Traversable<I>)__tr2).forEach(f);
+                            ((Traversable<I>)(__tr2)).forEach(f);
                         }
                     }
                 }
@@ -426,7 +426,7 @@ public abstract class Future<T> {
                         p.successValue(new Tuple<T, R>(a.value, b.value));
                     }
                 } else {
-                    p.completeValue(((Try<Tuple<T, R>>)t));
+                    p.completeValue(((Try<Tuple<T, R>>)(t)));
                 }
             }
         });
@@ -439,7 +439,7 @@ public abstract class Future<T> {
                         p.successValue(new Tuple<T, R>(a.value, b.value));
                     }
                 } else {
-                    p.completeValue(((Try<Tuple<T, R>>)t));
+                    p.completeValue(((Try<Tuple<T, R>>)(t)));
                 }
             }
         });

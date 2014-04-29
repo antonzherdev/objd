@@ -11,10 +11,10 @@ public class Yield<T> {
     public final F<Integer, Integer> end;
     public final F<Traversable<T>, Integer> all;
     public static byte Continue() {
-        return ((byte)0);
+        return ((byte)(0));
     }
     public static byte Break() {
-        return ((byte)1);
+        return ((byte)(1));
     }
     public static <T> Yield<T> makeBeginYieldEndAll(final F<Integer, Integer> begin, final F<T, Integer> yield, final F<Integer, Integer> end, final F<Traversable<T>, Integer> all) {
         return new Yield<T>(begin, yield, end, all);
@@ -132,14 +132,14 @@ public class Yield<T> {
     }
     public int beginYieldWithSize(final int size) {
         if(this.begin == null) {
-            return ((int)((byte)0));
+            return ((int)(((byte)(0))));
         } else {
             return this.begin.apply(size);
         }
     }
     public int yieldItem(final T item) {
         if(this.yield == null) {
-            return ((int)((byte)0));
+            return ((int)(((byte)(0))));
         } else {
             return this.yield.apply(item);
         }
@@ -159,49 +159,49 @@ public class Yield<T> {
         }
     }
     public int stdYieldAllItems(final Traversable<T> items) {
-        final Mut<Integer> result = new Mut<Integer>(((int)((byte)0)));
+        final Mut<Integer> result = new Mut<Integer>(((int)(((byte)(0)))));
         if(items instanceof Array) {
-            final Array<T> _items = ((Array<T>)items);
-            if(beginYieldWithSize(_items.count()) == ((byte)1)) {
-                return ((int)((byte)1));
+            final Array<T> _items = ((Array<T>)(items));
+            if(beginYieldWithSize(_items.count()) == ((byte)(1))) {
+                return ((int)(((byte)(1))));
             } else {
                 _items.goOn(new F<T, Boolean>() {
                     @Override
                     public Boolean apply(final T item) {
-                        result.value = ((int)yieldItem(item));
-                        return result.value == ((byte)0);
+                        result.value = ((int)(yieldItem(item)));
+                        return result.value == ((byte)(0));
                     }
                 });
             }
         } else {
             if(items instanceof Iterable) {
-                final Iterable<T> _items = ((Iterable<T>)items);
-                if(beginYieldWithSize(_items.count()) == ((byte)1)) {
-                    return ((int)((byte)1));
+                final Iterable<T> _items = ((Iterable<T>)(items));
+                if(beginYieldWithSize(_items.count()) == ((byte)(1))) {
+                    return ((int)(((byte)(1))));
                 } else {
                     items.goOn(new F<T, Boolean>() {
                         @Override
                         public Boolean apply(final T item) {
-                            result.value = ((int)yieldItem(item));
-                            return result.value == ((byte)0);
+                            result.value = ((int)(yieldItem(item)));
+                            return result.value == ((byte)(0));
                         }
                     });
                 }
             } else {
-                if(beginYieldWithSize(((int)0)) == ((byte)1)) {
-                    return ((int)((byte)1));
+                if(beginYieldWithSize(((int)(0))) == ((byte)(1))) {
+                    return ((int)(((byte)(1))));
                 } else {
                     items.goOn(new F<T, Boolean>() {
                         @Override
                         public Boolean apply(final T item) {
-                            result.value = ((int)yieldItem(item));
-                            return result.value == ((byte)0);
+                            result.value = ((int)(yieldItem(item)));
+                            return result.value == ((byte)(0));
                         }
                     });
                 }
             }
         }
-        return endYieldWithResult(((int)result.value));
+        return endYieldWithResult(((int)(result.value)));
     }
     public Yield(final F<Integer, Integer> begin, final F<T, Integer> yield, final F<Integer, Integer> end, final F<Traversable<T>, Integer> all) {
         this.begin = begin;

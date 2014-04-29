@@ -23,7 +23,7 @@ public class ChainTest extends TestCase {
         .assertTrueValue(!(ImArray.fromObjects().chain().or()));
     }
     public void testFuture() {
-        repeatTimesF(((int)1000), new P0() {
+        repeatTimesF(((int)(1000)), new P0() {
             @Override
             public void apply() {
                 final ImArray<Tuple<Integer, Promise<Integer>>> arr = 0.to(1000).chain().<Tuple<Integer, Promise<Integer>>>map(new F<Integer, Tuple<Integer, Promise<Integer>>>() {
@@ -65,7 +65,7 @@ public class ChainTest extends TestCase {
                         return _ * _;
                     }
                 }).toArray();
-                .<ImArray<Integer>>assertEqualsAB(set, fut.getResultAwait(((float)5)));
+                .<ImArray<Integer>>assertEqualsAB(set, fut.getResultAwait(((float)(5))));
             }
         });
     }
@@ -90,11 +90,11 @@ public class ChainTest extends TestCase {
                 });
             }
         });
-        .assertTrueValue(fut.waitResultPeriod(((float)5)) != null);
-        .<Integer>assertEqualsAB(count.intValue(), ((int)arr.count()));
+        .assertTrueValue(fut.waitResultPeriod(((float)(5))) != null);
+        .<Integer>assertEqualsAB(count.intValue(), ((int)(arr.count())));
     }
     public void testFlat() {
-        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(1, 5, 2, 3, 2), ImArray.fromObjects(((ImArray<Integer>)ImArray.fromObjects(1, 5)), ((ImArray<Integer>)ImArray.fromObjects(2, 3)), ImArray.fromObjects(2)).chain().<Integer>flat().toArray());
+        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(1, 5, 2, 3, 2), ImArray.fromObjects(((ImArray<Integer>)(ImArray.fromObjects(1, 5))), ((ImArray<Integer>)(ImArray.fromObjects(2, 3))), ImArray.fromObjects(2)).chain().<Integer>flat().toArray());
     }
     public void testZip() {
         .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(2, 3), ImArray.fromObjects(1, 0, 3).chain().<Integer, Integer>zipABy(ImArray.fromObjects(1, 3), new F2<Integer, Integer, Integer>() {

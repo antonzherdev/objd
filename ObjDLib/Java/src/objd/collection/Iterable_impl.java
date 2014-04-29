@@ -50,7 +50,7 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
     }
     @Override
     public int hashCode() {
-        int ret = ((int)13);
+        int ret = ((int)(13));
         final Iterator<T> i = this.iterator();
         while(i.hasNext()) {
             ret = ret * 31 + i.next().hashCode();
@@ -59,7 +59,7 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
     }
     public int count() {
         final Iterator<T> i = this.iterator();
-        int n = ((int)0);
+        int n = ((int)(0));
         while(i.hasNext()) {
             i.next();
             n++;

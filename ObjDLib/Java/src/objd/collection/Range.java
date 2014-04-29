@@ -45,6 +45,6 @@ public final class Range extends ImSeq_impl<int> {
         this.start = start;
         this.end = end;
         this.step = step;
-        this.count = (step > 0) ? ((start <= end) ? (((int)(end - start) / step + 1)) : (((int)0))) : ((step < 0) ? ((start >= end) ? (((int)(end - start) / step + 1)) : (((int)0))) : (((int)1)));
+        this.count = (step > 0) ? ((start <= end) ? (((int)((end - start) / step + 1))) : (((int)(0)))) : ((step < 0) ? ((start >= end) ? (((int)((end - start) / step + 1))) : (((int)(0)))) : (((int)(1))));
     }
 }

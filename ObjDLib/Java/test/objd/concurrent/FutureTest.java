@@ -33,8 +33,8 @@ public class FutureTest extends TestCase {
                 }
             }
         }
-        Thread.sleepPeriod(((float)1));
-        .<Integer>assertEqualsAB(n.intValue(), ((int)count));
+        Thread.sleepPeriod(((float)(1)));
+        .<Integer>assertEqualsAB(n.intValue(), ((int)(count)));
     }
     public void testMap() {
         final AtomicInt n = new AtomicInt();
@@ -54,7 +54,7 @@ public class FutureTest extends TestCase {
                                 return _ + 1;
                             }
                         });
-                        result.addAndGetValue(((int)__inline__3_v + 1));
+                        result.addAndGet(((int)(__inline__3_v + 1)));
                         DispatchQueue.aDefault.asyncF(new P0() {
                             @Override
                             public void apply() {
@@ -64,14 +64,14 @@ public class FutureTest extends TestCase {
                         m.onCompleteF(new P<Try<Integer>>() {
                             @Override
                             public void apply(final Try<Integer> _) {
-                                n.addAndGetValue(((int)_.get()));
+                                n.addAndGet(((int)(_.get())));
                             }
                         });
                     }
                 });
             }
         }
-        Thread.sleepPeriod(((float)3));
+        Thread.sleepPeriod(((float)(3)));
         .<AtomicInt>assertEqualsAB(n, result);
     }
     public void testFlatMap() {
@@ -105,14 +105,14 @@ public class FutureTest extends TestCase {
                     m.onCompleteF(new P<Try<Integer>>() {
                         @Override
                         public void apply(final Try<Integer> _) {
-                            n.addAndGetValue(((int)_.get()));
+                            n.addAndGet(((int)(_.get())));
                         }
                     });
                 }
             }
         }
-        Thread.sleepPeriod(((float)3));
-        .<Integer>assertEqualsAB(n.intValue(), ((int)result));
+        Thread.sleepPeriod(((float)(3)));
+        .<Integer>assertEqualsAB(n.intValue(), ((int)(result)));
     }
     public FutureTest() {
     }

@@ -26,7 +26,7 @@ public class FutureEnd<T> {
             @Override
             public Integer apply(final Integer size) {
                 FutureEnd.this._array = new MArray<T>(size);
-                return ((int)0);
+                return ((int)(0));
             }
         }, new F<Future<T>, Integer>() {
             @Override
@@ -51,11 +51,11 @@ public class FutureEnd<T> {
                                         if(FutureEnd.this._array == null) {
                                             throw new RuntimeException("Not null");
                                         }
-                                        FutureEnd.this._array.setIndexItem(((int)i), tr.get());
+                                        FutureEnd.this._array.setIndexItem(((int)(i)), tr.get());
                                         _set.value = i;
                                         final int r = FutureEnd.this._counter.decrementAndGet();
                                         if(FutureEnd.this._ended && r == 0) {
-                                            if(!(FutureEnd.this._yielded.getAndSetNewValue(true))) {
+                                            if(!(FutureEnd.this._yielded.getAndSet(true))) {
                                                 if(FutureEnd.this._array == null) {
                                                     throw new RuntimeException("Not null");
                                                 }
@@ -69,9 +69,9 @@ public class FutureEnd<T> {
                     });
                 }
                 if(FutureEnd.this._stopped) {
-                    return ((int)1);
+                    return ((int)(1));
                 } else {
-                    return ((int)0);
+                    return ((int)(0));
                 }
             }
         }, new F<Integer, Integer>() {
@@ -79,7 +79,7 @@ public class FutureEnd<T> {
             public Integer apply(final Integer res) {
                 FutureEnd.this._ended = true;
                 if(FutureEnd.this._counter.intValue() == 0) {
-                    if(!(FutureEnd.this._yielded.getAndSetNewValue(true))) {
+                    if(!(FutureEnd.this._yielded.getAndSet(true))) {
                         if(FutureEnd.this._array == null) {
                             throw new RuntimeException("Not null");
                         }

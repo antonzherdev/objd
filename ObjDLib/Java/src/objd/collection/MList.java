@@ -56,9 +56,9 @@ public class MList<T> extends MSeq_impl<T> {
         if(this.headItem == null) {
             this.headItem = i;
             this.lastItem = i;
-            this._count = ((int)1);
+            this._count = ((int)(1));
         } else {
-            i.next = ((MListItem<T>)this.headItem);
+            i.next = ((MListItem<T>)(this.headItem));
             this.headItem.prev = i;
             this.headItem = i;
             this._count++;
@@ -70,9 +70,9 @@ public class MList<T> extends MSeq_impl<T> {
         if(this.lastItem == null) {
             this.headItem = i;
             this.lastItem = i;
-            this._count = ((int)1);
+            this._count = ((int)(1));
         } else {
-            i.prev = ((MListItem<T>)this.lastItem);
+            i.prev = ((MListItem<T>)(this.lastItem));
             this.lastItem.next = i;
             this.lastItem = i;
             this._count++;
@@ -182,6 +182,6 @@ public class MList<T> extends MSeq_impl<T> {
         return (this.headItem == null) ? (null) : (this.headItem.data);
     }
     public MList() {
-        this._count = ((int)0);
+        this._count = ((int)(0));
     }
 }

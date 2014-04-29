@@ -11,7 +11,7 @@ public class ShuffleLink<T> extends ChainLink_impl<T, T> {
             @Override
             public Integer apply(final Integer size) {
                 ShuffleLink.this._array = new MArray<T>(size);
-                return ((int)0);
+                return ((int)(0));
             }
         }, new F<T, Integer>() {
             @Override
@@ -23,7 +23,7 @@ public class ShuffleLink<T> extends ChainLink_impl<T, T> {
                     throw new RuntimeException("Not null");
                 }
                 ShuffleLink.this._array.insertIndexItem(UInt.rndMax(ShuffleLink.this._array.count()), item);
-                return ((int)0);
+                return ((int)(0));
             }
         }, new F<Integer, Integer>() {
             @Override
@@ -32,7 +32,7 @@ public class ShuffleLink<T> extends ChainLink_impl<T, T> {
                     throw new RuntimeException("Not null");
                 }
                 if(yield.yieldAllItems(ShuffleLink.this._array) == 1) {
-                    return ((int)1);
+                    return ((int)(1));
                 } else {
                     return r;
                 }

@@ -21,7 +21,7 @@ public class MapOptLink<A, B> extends ChainLink_impl<A, B> {
                 if(__tmp_0 != null) {
                     return __tmp_0;
                 } else {
-                    return ((int)0);
+                    return ((int)(0));
                 }
             }
         });

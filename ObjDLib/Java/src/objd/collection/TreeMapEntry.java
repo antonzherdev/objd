@@ -19,7 +19,7 @@ public class TreeMapEntry<K, V> {
                 }
                 p = __tmp_0_1;
             }
-            return ((TreeMapEntry<K, V>)p);
+            return ((TreeMapEntry<K, V>)(p));
         } else {
             TreeMapEntry<K, V> p = this.parent;
             TreeMapEntry<K, V> ch = this;

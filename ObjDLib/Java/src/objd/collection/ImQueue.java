@@ -34,13 +34,13 @@ public class ImQueue<T> extends Queue_impl<T> {
     }
     public Tuple<T, ImQueue<T>> dequeue() {
         if(!(this.out.isEmpty())) {
-            return ((Tuple<T, ImQueue<T>>)new Tuple<T, ImQueue<T>>(this.out.head(), new ImQueue<T>(this.in, this.out.tail())));
+            return ((Tuple<T, ImQueue<T>>)(new Tuple<T, ImQueue<T>>(this.out.head(), new ImQueue<T>(this.in, this.out.tail()))));
         } else {
             if(this.in.isEmpty()) {
-                return ((Tuple<T, ImQueue<T>>)new Tuple<T, ImQueue<T>>(null, this));
+                return ((Tuple<T, ImQueue<T>>)(new Tuple<T, ImQueue<T>>(null, this)));
             } else {
                 final ImList<T> rev = this.in.reverse();
-                return ((Tuple<T, ImQueue<T>>)new Tuple<T, ImQueue<T>>(rev.head(), new ImQueue<T>(ImList.<T>apply(), rev.tail())));
+                return ((Tuple<T, ImQueue<T>>)(new Tuple<T, ImQueue<T>>(rev.head(), new ImQueue<T>(ImList.<T>apply(), rev.tail()))));
             }
         }
     }

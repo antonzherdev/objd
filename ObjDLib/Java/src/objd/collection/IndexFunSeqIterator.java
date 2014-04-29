@@ -19,6 +19,6 @@ public class IndexFunSeqIterator<T> extends Iterator_impl<T> {
     public IndexFunSeqIterator(final int count, final F<Integer, T> f) {
         this.count = count;
         this.f = f;
-        this.i = ((int)0);
+        this.i = ((int)(0));
     }
 }

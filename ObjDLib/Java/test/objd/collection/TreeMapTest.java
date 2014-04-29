@@ -9,7 +9,7 @@ import test..*;
 public class TreeMapTest extends TestCase {
     public void testMain() {
         final MTreeMap<Integer, String> map = MTreeMap.<Integer, String>apply();
-        .<Integer>assertEqualsAB(0, ((int)map.count()));
+        .<Integer>assertEqualsAB(0, ((int)(map.count())));
         .assertTrueValue(map.applyKey(0) == null);
         map.setKeyValue(0, "test");
         final String __tmp_4 = map.applyKey(0);
@@ -48,7 +48,7 @@ public class TreeMapTest extends TestCase {
                 .assertTrueValue(map.applyKey(i) == null);
             }
         });
-        .<Integer>assertEqualsAB(0, ((int)map.count()));
+        .<Integer>assertEqualsAB(0, ((int)(map.count())));
     }
     public TreeMapTest() {
     }

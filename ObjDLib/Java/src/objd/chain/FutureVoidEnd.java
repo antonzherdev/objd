@@ -20,7 +20,7 @@ public class FutureVoidEnd<T> {
         return Yield.<Future<T>>makeBeginYieldEnd(new F<Integer, Integer>() {
             @Override
             public Integer apply(final Integer size) {
-                return ((int)0);
+                return ((int)(0));
             }
         }, new F<Future<T>, Integer>() {
             @Override
@@ -38,7 +38,7 @@ public class FutureVoidEnd<T> {
                                     if(!(FutureVoidEnd.this._stopped)) {
                                         final int r = FutureVoidEnd.this._counter.decrementAndGet();
                                         if(FutureVoidEnd.this._ended && r == 0) {
-                                            if(!(FutureVoidEnd.this._yielded.getAndSetNewValue(true))) {
+                                            if(!(FutureVoidEnd.this._yielded.getAndSet(true))) {
                                                 FutureVoidEnd.this._promise.successValue(null);
                                             }
                                         }
@@ -49,9 +49,9 @@ public class FutureVoidEnd<T> {
                     });
                 }
                 if(FutureVoidEnd.this._stopped) {
-                    return ((int)1);
+                    return ((int)(1));
                 } else {
-                    return ((int)0);
+                    return ((int)(0));
                 }
             }
         }, new F<Integer, Integer>() {
@@ -60,7 +60,7 @@ public class FutureVoidEnd<T> {
                 int ret = res;
                 FutureVoidEnd.this._ended = true;
                 if(FutureVoidEnd.this._counter.intValue() == 0) {
-                    if(!(FutureVoidEnd.this._yielded.getAndSetNewValue(true))) {
+                    if(!(FutureVoidEnd.this._yielded.getAndSet(true))) {
                         FutureVoidEnd.this._promise.successValue(null);
                     }
                 }

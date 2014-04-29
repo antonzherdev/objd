@@ -9,7 +9,7 @@ public abstract class Seq_impl<T> extends Iterable_impl<T> implements Seq<T> {
     }
     @Override
     public T head() {
-        return applyIndex(((int)0));
+        return applyIndex(((int)(0)));
     }
     public T applyIndex(final int index) {
         if(index >= this.count()) {
