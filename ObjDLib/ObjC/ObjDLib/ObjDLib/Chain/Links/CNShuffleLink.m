@@ -2,7 +2,6 @@
 #import "CNShuffleLink.h"
 
 #import "CNPlat.h"
-#import "CNYield.h"
 #import "CNType.h"
 @implementation CNShuffleLink
 static CNClassType* _CNShuffleLink_type;

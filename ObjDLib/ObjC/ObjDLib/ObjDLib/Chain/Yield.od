@@ -1,5 +1,10 @@
 package objd.chain
 
+
+trait ChainLink<A, B>{
+    def build(yield : Yield<B>) : Yield<A>
+}
+
 class Yield<T>(val begin : (uint -> int4)? = nil, val yield : (T -> int4)? = nil, val end : (int4 -> int4)? = nil, val all : (Traversable<T> -> int4)? = nil) {
     static inline def Continue : byte = 0
     static inline def Break : byte = 1

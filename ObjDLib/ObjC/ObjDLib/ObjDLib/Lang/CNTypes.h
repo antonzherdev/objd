@@ -15,10 +15,6 @@ typedef id (^cnF0)();
 typedef void (^cnP)(id x);
 typedef void (^cnP2)(id x, id y);
 
-@protocol CNChainLink <NSObject>
-- (CNYield *)buildYield:(CNYield *)yield;
-@end
-
 extern id cnResolveCollection(id collection);
 
 

@@ -4,6 +4,25 @@
 #import "CNCollection.h"
 #import "CNPlat.h"
 #import "CNType.h"
+@implementation CNChainLink_impl
+
+- (CNYield*)buildYield:(CNYield*)yield {
+    @throw @"Method build is abstract";
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    return self;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendString:@">"];
+    return description;
+}
+
+@end
+
+
 @implementation CNYield
 static CNClassType* _CNYield_type;
 @synthesize begin = _begin;

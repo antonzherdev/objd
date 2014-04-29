@@ -4,7 +4,7 @@ import objd.lang.*;
 import objd.collection.Iterable;
 import objd.collection.Iterator;
 
-public class Zip3Link<T, A, B, R> implements ChainLink<T, R> {
+public class Zip3Link<T, A, B, R> extends ChainLink_impl<T, R> {
     public final Iterable<A> a;
     public final Iterable<B> b;
     public final F3<T, A, B, R> f;

@@ -3,7 +3,7 @@ package objd.chain;
 import objd.lang.*;
 import objd.collection.MArray;
 
-public class ShuffleLink<T> implements ChainLink<T, T> {
+public class ShuffleLink<T> extends ChainLink_impl<T, T> {
     private MArray<T> _array;
     @Override
     public Yield<T> buildYield(final Yield<T> yield) {

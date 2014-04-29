@@ -1,12 +1,10 @@
 #import "objdcore.h"
-#import "CNObject.h"
-#import "CNChain.h"
-@class CNYield;
+#import "CNYield.h"
 @class CNClassType;
 
 @class CNFilterLink;
 
-@interface CNFilterLink : NSObject<CNChainLink> {
+@interface CNFilterLink : CNChainLink_impl {
 @protected
     BOOL(^_predicate)(id);
     float _selectivity;

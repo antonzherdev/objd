@@ -1,13 +1,11 @@
 #import "objdcore.h"
-#import "CNObject.h"
-#import "CNChain.h"
-@class CNYield;
+#import "CNYield.h"
 @class CNClassType;
 
 @class CNMapLink;
 @class CNMapOptLink;
 
-@interface CNMapLink : NSObject<CNChainLink> {
+@interface CNMapLink : CNChainLink_impl {
 @protected
     id(^_f)(id);
 }
@@ -21,7 +19,7 @@
 @end
 
 
-@interface CNMapOptLink : NSObject<CNChainLink> {
+@interface CNMapOptLink : CNChainLink_impl {
 @protected
     id(^_f)(id);
 }

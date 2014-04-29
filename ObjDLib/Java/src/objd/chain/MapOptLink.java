@@ -2,7 +2,7 @@ package objd.chain;
 
 import objd.lang.*;
 
-public class MapOptLink<A, B> implements ChainLink<A, B> {
+public class MapOptLink<A, B> extends ChainLink_impl<A, B> {
     public final F<A, B> f;
     @Override
     public Yield<A> buildYield(final Yield<B> yield) {

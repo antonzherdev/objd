@@ -2,7 +2,6 @@
 #import "CNZipLink.h"
 
 #import "CNCollection.h"
-#import "CNYield.h"
 #import "CNType.h"
 @implementation CNZipLink
 static CNClassType* _CNZipLink_type;

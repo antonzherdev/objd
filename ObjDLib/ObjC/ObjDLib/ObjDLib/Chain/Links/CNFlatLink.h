@@ -1,13 +1,11 @@
 #import "objdcore.h"
-#import "CNObject.h"
-#import "CNChain.h"
-@class CNYield;
+#import "CNYield.h"
 @protocol CNTraversable;
 @class CNClassType;
 
 @class CNFlatLink;
 
-@interface CNFlatLink : NSObject<CNChainLink> {
+@interface CNFlatLink : CNChainLink_impl {
 @protected
     CGFloat _factor;
 }

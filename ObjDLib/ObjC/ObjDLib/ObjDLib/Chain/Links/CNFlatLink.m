@@ -1,7 +1,6 @@
 #import "objd.h"
 #import "CNFlatLink.h"
 
-#import "CNYield.h"
 #import "CNCollection.h"
 #import "CNType.h"
 @implementation CNFlatLink

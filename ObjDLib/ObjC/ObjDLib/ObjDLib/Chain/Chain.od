@@ -81,6 +81,3 @@ stub class Chain<A> extends ImIterable<A> {
 }
 
 
-stub trait ChainLink<A, B>{
-    def build(yield : Yield<B>) : Yield<A>
-}

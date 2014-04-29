@@ -4,7 +4,7 @@ import objd.lang.*;
 import objd.collection.Iterable;
 import objd.collection.Iterator;
 
-public class ZipLink<T, A, R> implements ChainLink<T, R> {
+public class ZipLink<T, A, R> extends ChainLink_impl<T, R> {
     public final Iterable<A> a;
     public final F2<T, A, R> f;
     @Override

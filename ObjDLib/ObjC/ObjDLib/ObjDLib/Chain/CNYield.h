@@ -5,7 +5,18 @@
 @protocol CNIterable;
 @class CNClassType;
 
+@class CNChainLink_impl;
 @class CNYield;
+@protocol CNChainLink;
+
+@protocol CNChainLink<NSObject>
+- (CNYield*)buildYield:(CNYield*)yield;
+@end
+
+
+@interface CNChainLink_impl : NSObject<CNChainLink>
+@end
+
 
 @interface CNYield : NSObject {
 @protected

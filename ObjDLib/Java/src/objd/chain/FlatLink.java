@@ -3,7 +3,7 @@ package objd.chain;
 import objd.lang.*;
 import objd.collection.Traversable;
 
-public class FlatLink<T> implements ChainLink<Traversable<T>, T> {
+public class FlatLink<T> extends ChainLink_impl<Traversable<T>, T> {
     public final float factor;
     @Override
     public Yield<Traversable<T>> buildYield(final Yield<T> yield) {

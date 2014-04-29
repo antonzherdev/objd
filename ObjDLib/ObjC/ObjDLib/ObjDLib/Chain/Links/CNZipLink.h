@@ -1,15 +1,13 @@
 #import "objdcore.h"
-#import "CNObject.h"
-#import "CNChain.h"
+#import "CNYield.h"
 @protocol CNIterable;
-@class CNYield;
 @protocol CNIterator;
 @class CNClassType;
 
 @class CNZipLink;
 @class CNZip3Link;
 
-@interface CNZipLink : NSObject<CNChainLink> {
+@interface CNZipLink : CNChainLink_impl {
 @protected
     id<CNIterable> _a;
     id(^_f)(id, id);
@@ -25,7 +23,7 @@
 @end
 
 
-@interface CNZip3Link : NSObject<CNChainLink> {
+@interface CNZip3Link : CNChainLink_impl {
 @protected
     id<CNIterable> _a;
     id<CNIterable> _b;
