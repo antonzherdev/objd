@@ -1,0 +1,29 @@
+package objd.collection
+
+case class Range(val start : int, val end : int, val step : int) extends ImSeq<int> {
+    override val count : uint =
+        if(step > 0) if(start <= end) (end - start)/step + 1 else 0
+        else if(step < 0) if(start >= end) (end - start)/step + 1 else 0
+        else 1
+    override def apply(index : uint) : int?  =
+        if(index < count) start + step*index
+        else nil
+    override def iterator : Iterator<int> = RangeIterator(start, end, step)
+
+    def set(step : int) : Range = Range(start, end, step)
+    override def isEmpty : bool =
+        if(step > 0) start > end
+        else if(step < 0) start < end
+        else false
+    static def apply(i : int) : Range = Range(i, i, 1)
+}
+
+class RangeIterator(val start : int, val end : int, val step : int) extends Iterator<int> {
+    private var i : int = start
+    override def hasNext : bool = (step > 0 && i <= end) || (step < 0 && i >= end)
+    override def next : int = {
+        val ret = i
+        i += step
+        ret
+    }
+}

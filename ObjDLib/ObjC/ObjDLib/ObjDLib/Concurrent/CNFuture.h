@@ -1,5 +1,6 @@
 #import "objdcore.h"
-#import "ODObject.h"
+#import "CNObject.h"
+@class CNClassType;
 @class CNDispatchQueue;
 @class CNAtomicInt;
 @class CNTry;
@@ -8,7 +9,6 @@
 @class CNLockCondition;
 @protocol CNTraversable;
 @class CNTuple;
-@class ODClassType;
 @class CNAtomicObject;
 @class CNFailure;
 
@@ -20,7 +20,7 @@
 @interface CNFuture : NSObject
 + (instancetype)future;
 - (instancetype)init;
-- (ODClassType*)type;
+- (CNClassType*)type;
 + (CNFuture*)applyF:(id(^)())f;
 + (CNFuture*)joinA:(CNFuture*)a b:(CNFuture*)b;
 + (CNFuture*)joinA:(CNFuture*)a b:(CNFuture*)b c:(CNFuture*)c;
@@ -43,19 +43,19 @@
 - (CNTry*)waitResult;
 - (id)getResultAwait:(CGFloat)await;
 - (CNFuture*)joinAnother:(CNFuture*)another;
-+ (ODClassType*)type;
++ (CNClassType*)type;
 @end
 
 
 @interface CNPromise : CNFuture
 + (instancetype)promise;
 - (instancetype)init;
-- (ODClassType*)type;
+- (CNClassType*)type;
 + (CNPromise*)apply;
 - (BOOL)completeValue:(CNTry*)value;
 - (BOOL)successValue:(id)value;
 - (BOOL)failureReason:(id)reason;
-+ (ODClassType*)type;
++ (CNClassType*)type;
 @end
 
 
@@ -65,13 +65,13 @@
 }
 + (instancetype)defaultPromise;
 - (instancetype)init;
-- (ODClassType*)type;
+- (CNClassType*)type;
 - (CNTry*)result;
 - (BOOL)completeValue:(CNTry*)value;
 - (BOOL)successValue:(id)value;
 - (BOOL)failureReason:(id)reason;
 - (void)onCompleteF:(void(^)(CNTry*))f;
-+ (ODClassType*)type;
++ (CNClassType*)type;
 @end
 
 
@@ -83,7 +83,7 @@
 
 + (instancetype)keptPromiseWithValue:(CNTry*)value;
 - (instancetype)initWithValue:(CNTry*)value;
-- (ODClassType*)type;
+- (CNClassType*)type;
 - (CNTry*)result;
 - (void)onCompleteF:(void(^)(CNTry*))f;
 - (CNTry*)waitResultPeriod:(CGFloat)period;
@@ -91,7 +91,7 @@
 - (BOOL)completeValue:(CNTry*)value;
 - (BOOL)successValue:(id)value;
 - (BOOL)failureReason:(id)reason;
-+ (ODClassType*)type;
++ (CNClassType*)type;
 @end
 
 

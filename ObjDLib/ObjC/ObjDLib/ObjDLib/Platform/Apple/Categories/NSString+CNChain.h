@@ -3,7 +3,7 @@
 
 @protocol CNIterable;
 
-@interface NSString (CNChain) <CNImSeq, ODComparable>
+@interface NSString (CNChain) <CNImSeq, CNComparable>
 - (id)tupleBy:(NSString *)by;
 
 - (id <CNIterable>)splitBy:(NSString *)by;

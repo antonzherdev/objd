@@ -1,6 +1,6 @@
 #import "objd.h"
 #import "CNSeed.h"
-#import "ODType.h"
+#import "CNType.h"
 #define SEED_RAND(f) \
     int r = _rands[_position] f;\
     _position++;\
@@ -11,7 +11,7 @@
     int * _rands;
     unsigned int _position;
 }
-static ODClassType* _CNSeed_type;
+static CNClassType * _CNSeed_type;
 @synthesize id = _id;
 @synthesize circleSize = _circleSize;
 @synthesize position = _position;
@@ -44,7 +44,7 @@ static ODClassType* _CNSeed_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNSeed class]) _CNSeed_type = [ODClassType classTypeWithCls:[CNSeed class]];
+    if(self == [CNSeed class]) _CNSeed_type = [CNClassType classTypeWithCls:[CNSeed class]];
 }
 
 - (int)nextInt {
@@ -73,11 +73,11 @@ static ODClassType* _CNSeed_type;
     return [CNSeed seedWithId:0 circleSize:1000];
 }
 
-- (ODClassType*)type {
+- (CNClassType *)type {
     return [CNSeed type];
 }
 
-+ (ODClassType*)type {
++ (CNClassType *)type {
     return _CNSeed_type;
 }
 

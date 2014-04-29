@@ -39,7 +39,7 @@ data Import = ImportClass {importClass :: Class} | ImportObjectDefs {importClass
 instance Eq File where
 	File {fileName = a, filePackage = p} == File {fileName = b, filePackage = bp} = a == b && p == bp
 coreFakeFile :: File
-coreFakeFile = File "fake.od" (Package ["core"] Nothing "") [] []
+coreFakeFile = File "fake.od" (Package ["objd"] Nothing "") [] []
 fileNameWithPrefix :: File -> String
 fileNameWithPrefix f = packagePrefix (filePackage f) ++ fileName f
 
@@ -141,7 +141,7 @@ instance Eq Class where
 	a == b = className a == className b
 
 isCoreFile :: File -> Bool
-isCoreFile File{filePackage = Package (x : _) _ _} = x == "core"
+isCoreFile File{filePackage = Package (x : _) _ _} = x == "objd"
 isCoreFile _ = False
 classConstructor :: Class -> Maybe Def 
 classConstructor Generic{} = Nothing
@@ -692,7 +692,7 @@ linkFile lang files (D.File name package stms) = fl
 		allFiles = filter (/= fl) $ files
 		
 		kernelFiles :: [File]
-		kernelFiles = filter ((== "core") . head . packageName . filePackage ) files 
+		kernelFiles = filter ((== "objd") . head . packageName . filePackage ) files 
 		
 		clImports :: D.FileStm -> [Import]
 		clImports cl = concatMap (\(D.ClassImport inn) -> linkImport files inn) . filter D.isClassImport $ classBody cl
@@ -1286,7 +1286,7 @@ dataTypeClass env TPBool = classFind (envIndex env) "Bool"
 dataTypeClass env (TPPointer _) = classFind (envIndex env) "Pointer"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("Tuple" ++ show (length a))
 dataTypeClass env f@TPFun{} = Class { _classMods = [], className = "", _classExtends =  Extends (Just $ baseClassExtends (envIndex env)) [],
-	_classPackage = Package ["core"] Nothing "", _classFile = coreFakeFile, 
+	_classPackage = Package ["objd", "lang"] Nothing "", _classFile = coreFakeFile, 
 	_classDefs = [applyLambdaDef f], _classGenerics = [], _classImports = [], classAnnotations = []}
 	where
 		

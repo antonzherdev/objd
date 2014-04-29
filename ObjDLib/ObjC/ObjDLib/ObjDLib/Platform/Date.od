@@ -1,8 +1,0 @@
-package core.objc
-
-stub class NSDate {
-    def beforeNow : float8 //seconds
-    def sinceNow : float8 //seconds
-}
-
-typedef DateTime = NSDate

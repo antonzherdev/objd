@@ -1,4 +1,4 @@
-package core.lang
+package objd.lang
 
 stub class Enum(val ordinal : uint, val name : string) {
     override def description : string = name

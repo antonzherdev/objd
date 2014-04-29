@@ -1,6 +1,6 @@
 #import "objdcore.h"
-#import "ODObject.h"
-@class ODClassType;
+#import "CNObject.h"
+@class CNClassType;
 
 @class CNSeed;
 
@@ -15,13 +15,13 @@
 
 + (instancetype)seedWithId:(unsigned int)id circleSize:(unsigned int)circleSize;
 - (instancetype)initWithId:(unsigned int)id circleSize:(unsigned int)circleSize;
-- (ODClassType*)type;
+- (CNClassType *)type;
 - (int)nextInt;
 - (int)nextIntMin:(int)min max:(int)max;
 + (CNSeed*)applyId:(unsigned int)id;
 + (CNSeed*)applyCircleSize:(unsigned int)circleSize;
 + (CNSeed*)apply;
-+ (ODClassType*)type;
++ (CNClassType *)type;
 @end
 
 

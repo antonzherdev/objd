@@ -20,7 +20,7 @@
 - (CNChain*)link:(id<CNChainLink>)link;
 - (CNChain*)filter:(cnPredicate)predicate;
 - (CNChain*)filter:(cnPredicate)predicate selectivity:(double)selectivity;
-- (CNChain*)filterCast:(ODType *)type;
+- (CNChain*)filterCast:(CNType *)type;
 
 
 - (CNChain*)map:(cnF)f;

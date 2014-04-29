@@ -1,9 +1,9 @@
 #import "objdcore.h"
-#import "ODObject.h"
+#import "CNObject.h"
 @class CNChain;
 @class CNMArray;
 @protocol CNIterator;
-@class ODClassType;
+@class CNClassType;
 
 @class CNSortBuilder;
 
@@ -16,12 +16,12 @@
 
 + (instancetype)sortBuilderWithChain:(CNChain*)chain;
 - (instancetype)initWithChain:(CNChain*)chain;
-- (ODClassType*)type;
+- (CNClassType*)type;
 - (CNSortBuilder*)ascBy:(id(^)(id))by;
 - (CNSortBuilder*)descBy:(id(^)(id))by;
 - (CNSortBuilder*)andF:(NSInteger(^)(id, id))f;
 - (CNChain*)endSort;
-+ (ODClassType*)type;
++ (CNClassType*)type;
 @end
 
 

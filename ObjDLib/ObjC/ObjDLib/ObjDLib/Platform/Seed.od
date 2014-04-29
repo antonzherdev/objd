@@ -1,8 +1,0 @@
-package core.chain
-
-stub class Seed(id : uint4 = 0, circleSize : uint4 = 1000) {
-    def nextInt : int4
-    def nextInt(min : int4, max : int4) : int4
-    def position : uint4
-    def set(position : uint4)
-}

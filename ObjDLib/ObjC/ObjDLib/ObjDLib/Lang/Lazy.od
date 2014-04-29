@@ -1,0 +1,33 @@
+package objd.lang
+
+class Lazy<T>(val f : () -> T) {
+    private var _value : T?
+    private var _calculated = false
+    def isCalculated : bool =  _calculated
+    def get : T =
+        if(_calculated) _value.get
+        else {
+            _value = f()
+            _calculated = true
+            _value.get
+        }
+}
+
+
+class Cache<X, R>(val f : X -> R) {
+    private var _lastX : X?
+    private var _lastF : R?
+
+    def apply(x : X) : R =
+        if(x == _lastX) _lastF.get
+        else {
+            _lastX = x
+            _lastF = f(x)
+            _lastF.get
+        }
+}
+
+
+class Weak<T>(weak val value : T?) {
+    def isEmpty : bool = value === nil
+}

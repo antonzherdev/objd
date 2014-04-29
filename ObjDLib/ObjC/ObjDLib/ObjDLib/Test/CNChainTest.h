@@ -7,14 +7,14 @@
 @class CNFuture;
 @class CNAtomicInt;
 @class CNTry;
-@class ODClassType;
+@class CNClassType;
 
 @class CNChainTest;
 
 @interface CNChainTest : TSTestCase
 + (instancetype)chainTest;
 - (instancetype)init;
-- (ODClassType*)type;
+- (CNClassType*)type;
 - (void)testAnd;
 - (void)testOr;
 - (void)testFuture;
@@ -23,7 +23,7 @@
 - (void)testZip;
 - (void)testZip3;
 - (void)testZipFor;
-+ (ODClassType*)type;
++ (CNClassType*)type;
 @end
 
 

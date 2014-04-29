@@ -45,7 +45,7 @@
 
 - (id)randomItem {
     if([self isEmpty]) return nil;
-    else return [self objectAtIndex:oduIntRndMax([self count] - 1)];
+    else return [self objectAtIndex:cnuIntRndMax([self count] - 1)];
 }
 
 - (id)findWhere:(BOOL(^)(id))where {

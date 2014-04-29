@@ -1,9 +1,9 @@
 #import "objdcore.h"
-#import "ODObject.h"
+#import "CNObject.h"
+@class CNClassType;
 @class CNDispatchQueue;
 @class CNChain;
 @class CNMArray;
-@class ODClassType;
 
 @class CNIterator_impl;
 @class CNMIterator_impl;
@@ -151,20 +151,20 @@
 
 + (instancetype)iterableFWithIteratorF:(id<CNIterator>(^)())iteratorF;
 - (instancetype)initWithIteratorF:(id<CNIterator>(^)())iteratorF;
-- (ODClassType*)type;
+- (CNClassType*)type;
 - (id<CNIterator>)iterator;
-+ (ODClassType*)type;
++ (CNClassType*)type;
 @end
 
 
 @interface CNEmptyIterator : CNIterator_impl
 + (instancetype)emptyIterator;
 - (instancetype)init;
-- (ODClassType*)type;
+- (CNClassType*)type;
 - (BOOL)hasNext;
 - (id)next;
 + (CNEmptyIterator*)instance;
-+ (ODClassType*)type;
++ (CNClassType*)type;
 @end
 
 

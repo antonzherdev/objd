@@ -1,15 +1,15 @@
 #import "objd.h"
 #import "CNFuture.h"
 
+#import "CNType.h"
 #import "CNDispatchQueue.h"
 #import "CNAtomic.h"
 #import "CNTry.h"
 #import "CNLock.h"
 #import "CNCollection.h"
 #import "CNTuple.h"
-#import "ODType.h"
 @implementation CNFuture
-static ODClassType* _CNFuture_type;
+static CNClassType* _CNFuture_type;
 
 + (instancetype)future {
     return [[CNFuture alloc] init];
@@ -23,7 +23,7 @@ static ODClassType* _CNFuture_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNFuture class]) _CNFuture_type = [ODClassType classTypeWithCls:[CNFuture class]];
+    if(self == [CNFuture class]) _CNFuture_type = [CNClassType classTypeWithCls:[CNFuture class]];
 }
 
 + (CNFuture*)applyF:(id(^)())f {
@@ -349,11 +349,11 @@ static ODClassType* _CNFuture_type;
     return p;
 }
 
-- (ODClassType*)type {
+- (CNClassType*)type {
     return [CNFuture type];
 }
 
-+ (ODClassType*)type {
++ (CNClassType*)type {
     return _CNFuture_type;
 }
 
@@ -371,7 +371,7 @@ static ODClassType* _CNFuture_type;
 
 
 @implementation CNPromise
-static ODClassType* _CNPromise_type;
+static CNClassType* _CNPromise_type;
 
 + (instancetype)promise {
     return [[CNPromise alloc] init];
@@ -385,7 +385,7 @@ static ODClassType* _CNPromise_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNPromise class]) _CNPromise_type = [ODClassType classTypeWithCls:[CNPromise class]];
+    if(self == [CNPromise class]) _CNPromise_type = [CNClassType classTypeWithCls:[CNPromise class]];
 }
 
 + (CNPromise*)apply {
@@ -404,11 +404,11 @@ static ODClassType* _CNPromise_type;
     @throw @"Method failure is abstract";
 }
 
-- (ODClassType*)type {
+- (CNClassType*)type {
     return [CNPromise type];
 }
 
-+ (ODClassType*)type {
++ (CNClassType*)type {
     return _CNPromise_type;
 }
 
@@ -426,7 +426,7 @@ static ODClassType* _CNPromise_type;
 
 
 @implementation CNDefaultPromise
-static ODClassType* _CNDefaultPromise_type;
+static CNClassType* _CNDefaultPromise_type;
 
 + (instancetype)defaultPromise {
     return [[CNDefaultPromise alloc] init];
@@ -441,7 +441,7 @@ static ODClassType* _CNDefaultPromise_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNDefaultPromise class]) _CNDefaultPromise_type = [ODClassType classTypeWithCls:[CNDefaultPromise class]];
+    if(self == [CNDefaultPromise class]) _CNDefaultPromise_type = [CNClassType classTypeWithCls:[CNDefaultPromise class]];
 }
 
 - (CNTry*)result {
@@ -487,11 +487,11 @@ static ODClassType* _CNDefaultPromise_type;
     }
 }
 
-- (ODClassType*)type {
+- (CNClassType*)type {
     return [CNDefaultPromise type];
 }
 
-+ (ODClassType*)type {
++ (CNClassType*)type {
     return _CNDefaultPromise_type;
 }
 
@@ -509,7 +509,7 @@ static ODClassType* _CNDefaultPromise_type;
 
 
 @implementation CNKeptPromise
-static ODClassType* _CNKeptPromise_type;
+static CNClassType* _CNKeptPromise_type;
 @synthesize value = _value;
 
 + (instancetype)keptPromiseWithValue:(CNTry*)value {
@@ -525,7 +525,7 @@ static ODClassType* _CNKeptPromise_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNKeptPromise class]) _CNKeptPromise_type = [ODClassType classTypeWithCls:[CNKeptPromise class]];
+    if(self == [CNKeptPromise class]) _CNKeptPromise_type = [CNClassType classTypeWithCls:[CNKeptPromise class]];
 }
 
 - (CNTry*)result {
@@ -556,11 +556,11 @@ static ODClassType* _CNKeptPromise_type;
     return NO;
 }
 
-- (ODClassType*)type {
+- (CNClassType*)type {
     return [CNKeptPromise type];
 }
 
-+ (ODClassType*)type {
++ (CNClassType*)type {
     return _CNKeptPromise_type;
 }
 

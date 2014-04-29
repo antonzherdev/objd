@@ -1,0 +1,22 @@
+package objd.lang
+
+stub package object {
+    val prefix = "CN"
+}
+
+stub class Bundle {
+    static def fileNameFor(resource : string) : string
+    static def readToString(resource : string) : string
+}
+
+stub class Directory {
+    static def sandbox : string
+}
+
+stub class Locale {
+    static def preferredLanguages : [string]
+}
+
+stub struct System {
+    static def milliTime : int8
+}

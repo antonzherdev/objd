@@ -3,9 +3,9 @@
 
 #import "CNTreeMap.h"
 #import "CNChain.h"
-#import "ODType.h"
+#import "CNType.h"
 @implementation CNTreeMapTest
-static ODClassType* _CNTreeMapTest_type;
+static CNClassType* _CNTreeMapTest_type;
 
 + (instancetype)treeMapTest {
     return [[CNTreeMapTest alloc] init];
@@ -19,7 +19,7 @@ static ODClassType* _CNTreeMapTest_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNTreeMapTest class]) _CNTreeMapTest_type = [ODClassType classTypeWithCls:[CNTreeMapTest class]];
+    if(self == [CNTreeMapTest class]) _CNTreeMapTest_type = [CNClassType classTypeWithCls:[CNTreeMapTest class]];
 }
 
 - (void)testMain {
@@ -45,11 +45,11 @@ static ODClassType* _CNTreeMapTest_type;
     assertEquals(@0, numi(((NSInteger)([map count]))));
 }
 
-- (ODClassType*)type {
+- (CNClassType*)type {
     return [CNTreeMapTest type];
 }
 
-+ (ODClassType*)type {
++ (CNClassType*)type {
     return _CNTreeMapTest_type;
 }
 

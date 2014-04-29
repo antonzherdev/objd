@@ -102,7 +102,7 @@
 
 - (id)randomItem {
     if([self isEmpty]) return nil;
-    else return [self applyIndex:oduIntRndMax([self count] - 1)];
+    else return [self applyIndex:cnuIntRndMax([self count] - 1)];
 }
 
 - (id<CNSet>)toSet {

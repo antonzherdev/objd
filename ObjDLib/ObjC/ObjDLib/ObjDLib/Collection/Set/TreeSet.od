@@ -1,0 +1,63 @@
+package objd.collection
+
+class TreeSet<T>(val map : TreeMap<T, Object>) extends Set<T> {
+    def higherThan(item : T) : T? = map.higherKeyThan(item)
+    def lowerThan(item : T) : T? = map.lowerKeyThan(item)
+
+    override def count : uint = map.count
+    override def iterator = map.keys.iterator
+    def iteratorHigherThan(item : T) = map.keys.iteratorHigherThan(item)
+
+    override def head : T? = map.firstKey
+    def last : T? = map.lastKey
+    override def contains(item : T) : bool = map.contains(key = item)
+}
+
+class ImTreeSet<T>(val immap : ImTreeMap<T, Object>) extends TreeSet<T>(immap) with ImSet<T> {
+    override def mCopy : MTreeSet<T> = MTreeSet<T>(immap.mCopy)
+}
+
+class TreeSetBuilder<T>(val comparator : (T, T) -> int) extends Builder<T, ImTreeSet<T>> {
+    static def apply<T extends Comparable<T>> = TreeSetBuilder<T>((a : T, b : T) -> a.compare(b))
+    private val set = MTreeSet<T>(comparator)
+    override def append(item : T) {
+        set.append(item)
+    }
+    override def build : ImTreeSet<T> = set.im
+}
+
+
+class MTreeSet<T>(val mmap : MTreeMap<T, Object>) extends TreeSet<T>(mmap) with MSet<T> {
+    static def apply<T>(weak comparator : (T, T) -> int) : MTreeSet<T> = {
+        MTreeSet<T>(MTreeMap<T, Object>(comparator))
+    }
+
+    static def apply<T> = MTreeSet<T>(MTreeMap<T, Object>())
+    private static val obj = Object()
+    override def mutableIterator = mmap.keys.mutableIterator
+//    def between(a : T, b : T) : [T]
+
+    override def append(item : T) {
+        mmap.set(item, obj)
+    }
+
+    override def remove(item : T) : bool = mmap.remove(key = item) != nil
+
+
+    override def clear {
+        mmap.clear
+    }
+
+    def addAll(objects : Traversable<T>) {
+        objects.for(append(item = _))
+    }
+
+    def reorder : MTreeSet<T> = {
+        val ret = MTreeSet<T>(MTreeMap<T, Object>(mmap.comparator))
+        ret.addAll(self)
+        ret
+    }
+
+    override def im : ImTreeSet<T> = ImTreeSet(mmap.im)
+    override def imCopy : ImTreeSet<T> = ImTreeSet(mmap.imCopy)
+}

@@ -8,18 +8,18 @@
 @class CNThread;
 @class CNTry;
 @class CNFuture;
-@class ODClassType;
+@class CNClassType;
 
 @class CNFutureTest;
 
 @interface CNFutureTest : TSTestCase
 + (instancetype)futureTest;
 - (instancetype)init;
-- (ODClassType*)type;
+- (CNClassType*)type;
 - (void)testPromiseOnComplete;
 - (void)testMap;
 - (void)testFlatMap;
-+ (ODClassType*)type;
++ (CNClassType*)type;
 @end
 
 

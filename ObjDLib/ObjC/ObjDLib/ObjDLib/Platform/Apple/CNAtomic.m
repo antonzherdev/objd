@@ -3,7 +3,7 @@
 @implementation CNAtomicBool {
     int _value;
 }
-static ODClassType* _ATAtomicBool_type;
+static CNClassType * _ATAtomicBool_type;
 
 + (id)atomicBool {
     return [[CNAtomicBool alloc] init];
@@ -17,7 +17,7 @@ static ODClassType* _ATAtomicBool_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNAtomicBool class]) _ATAtomicBool_type = [ODClassType classTypeWithCls:[CNAtomicBool class]];
+    if(self == [CNAtomicBool class]) _ATAtomicBool_type = [CNClassType classTypeWithCls:[CNAtomicBool class]];
 }
 
 - (BOOL)boolValue {
@@ -48,11 +48,11 @@ static ODClassType* _ATAtomicBool_type;
     return OSAtomicCompareAndSwap32(e, u, &_value);
 }
 
-- (ODClassType*)type {
+- (CNClassType *)type {
     return [CNAtomicBool type];
 }
 
-+ (ODClassType*)type {
++ (CNClassType *)type {
     return _ATAtomicBool_type;
 }
 
@@ -82,7 +82,7 @@ static ODClassType* _ATAtomicBool_type;
 @implementation CNAtomicInt {
     int _value;
 }
-static ODClassType* _ATAtomicInt_type;
+static CNClassType * _ATAtomicInt_type;
 
 + (id)atomicInt {
     return [[CNAtomicInt alloc] init];
@@ -96,7 +96,7 @@ static ODClassType* _ATAtomicInt_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNAtomicInt class]) _ATAtomicInt_type = [ODClassType classTypeWithCls:[CNAtomicInt class]];
+    if(self == [CNAtomicInt class]) _ATAtomicInt_type = [CNClassType classTypeWithCls:[CNAtomicInt class]];
 }
 
 - (int)intValue {
@@ -126,11 +126,11 @@ static ODClassType* _ATAtomicInt_type;
     return OSAtomicCompareAndSwap32(oldValue, newValue, &_value);
 }
 
-- (ODClassType*)type {
+- (CNClassType *)type {
     return [CNAtomicBool type];
 }
 
-+ (ODClassType*)type {
++ (CNClassType *)type {
     return _ATAtomicBool_type;
 }
 
@@ -160,7 +160,7 @@ static ODClassType* _ATAtomicInt_type;
 @implementation CNAtomicObject {
     void* _value;
 }
-static ODClassType* _ATAtomicInt_type;
+static CNClassType * _ATAtomicInt_type;
 
 + (instancetype)atomicObject {
     return [[CNAtomicObject alloc] init];
@@ -188,7 +188,7 @@ static ODClassType* _ATAtomicInt_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNAtomicInt class]) _ATAtomicInt_type = [ODClassType classTypeWithCls:[CNAtomicInt class]];
+    if(self == [CNAtomicInt class]) _ATAtomicInt_type = [CNClassType classTypeWithCls:[CNAtomicInt class]];
 }
 
 - (id)value {
@@ -219,11 +219,11 @@ static ODClassType* _ATAtomicInt_type;
     return NO;
 }
 
-- (ODClassType*)type {
+- (CNClassType *)type {
     return [CNAtomicBool type];
 }
 
-+ (ODClassType*)type {
++ (CNClassType *)type {
     return _ATAtomicBool_type;
 }
 

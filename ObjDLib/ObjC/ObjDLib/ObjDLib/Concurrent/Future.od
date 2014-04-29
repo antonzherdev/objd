@@ -1,4 +1,8 @@
-package core.chain
+package objd.concurrent
+
+stub package object {
+    val prefix = "CN"
+}
 
 abstract class Future<T> {
     static def apply<T>(f : () -> T) : Future<T> = {

@@ -3,9 +3,9 @@
 
 #import "CNCollection.h"
 #import "CNPlat.h"
-#import "ODType.h"
+#import "CNType.h"
 @implementation CNYield
-static ODClassType* _CNYield_type;
+static CNClassType* _CNYield_type;
 @synthesize begin = _begin;
 @synthesize yield = _yield;
 @synthesize end = _end;
@@ -29,7 +29,7 @@ static ODClassType* _CNYield_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNYield class]) _CNYield_type = [ODClassType classTypeWithCls:[CNYield class]];
+    if(self == [CNYield class]) _CNYield_type = [CNClassType classTypeWithCls:[CNYield class]];
 }
 
 + (char)Continue {
@@ -292,11 +292,11 @@ static ODClassType* _CNYield_type;
     return [CNYield yieldWithBegin:nil yield:nil end:nil all:nil];
 }
 
-- (ODClassType*)type {
+- (CNClassType*)type {
     return [CNYield type];
 }
 
-+ (ODClassType*)type {
++ (CNClassType*)type {
     return _CNYield_type;
 }
 

@@ -7,9 +7,9 @@
 #import "CNDispatchQueue.h"
 #import "CNAtomic.h"
 #import "CNTry.h"
-#import "ODType.h"
+#import "CNType.h"
 @implementation CNChainTest
-static ODClassType* _CNChainTest_type;
+static CNClassType* _CNChainTest_type;
 
 + (instancetype)chainTest {
     return [[CNChainTest alloc] init];
@@ -23,7 +23,7 @@ static ODClassType* _CNChainTest_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNChainTest class]) _CNChainTest_type = [ODClassType classTypeWithCls:[CNChainTest class]];
+    if(self == [CNChainTest class]) _CNChainTest_type = [CNClassType classTypeWithCls:[CNChainTest class]];
 }
 
 - (void)testAnd {
@@ -104,11 +104,11 @@ static ODClassType* _CNChainTest_type;
     assertEquals(((@[@2, @3])), arr);
 }
 
-- (ODClassType*)type {
+- (CNClassType*)type {
     return [CNChainTest type];
 }
 
-+ (ODClassType*)type {
++ (CNClassType*)type {
     return _CNChainTest_type;
 }
 

@@ -1,0 +1,28 @@
+package objd.collection
+
+trait Set<T> extends Iterable<T> {}
+
+trait ImSet<T> extends Set<T> with ImIterable<T> {
+    override  def mCopy : MSet<T> = {
+        val arr = MHashSet<T>()
+        for{item -> arr.append(item)}
+        arr
+    }
+}
+trait MSet<T> extends Set<T> with MIterable<T> {
+    override def im : ImSet<T> = imCopy
+    override def imCopy : ImSet<T> = {
+        val arr = MHashSet<T>()
+        for{item -> arr.append(item)}
+        arr.im
+    }
+}
+
+class HashSetBuilder<T> extends Builder<T, ImHashSet<T>> {
+    val set = MHashSet<T>()
+
+    override def append(item : T) {
+        set.append(item)
+    }
+    override def build : ImHashSet<T> = set.im
+}

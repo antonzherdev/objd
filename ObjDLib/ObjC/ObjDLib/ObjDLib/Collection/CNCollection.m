@@ -1,10 +1,10 @@
 #import "objd.h"
 #import "CNCollection.h"
 
+#import "CNType.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
 #import "CNPlat.h"
-#import "ODType.h"
 @implementation CNIterator_impl
 
 - (BOOL)hasNext {
@@ -417,7 +417,7 @@
 
 
 @implementation CNIterableF
-static ODClassType* _CNIterableF_type;
+static CNClassType* _CNIterableF_type;
 @synthesize iteratorF = _iteratorF;
 
 + (instancetype)iterableFWithIteratorF:(id<CNIterator>(^)())iteratorF {
@@ -433,18 +433,18 @@ static ODClassType* _CNIterableF_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNIterableF class]) _CNIterableF_type = [ODClassType classTypeWithCls:[CNIterableF class]];
+    if(self == [CNIterableF class]) _CNIterableF_type = [CNClassType classTypeWithCls:[CNIterableF class]];
 }
 
 - (id<CNIterator>)iterator {
     return _iteratorF();
 }
 
-- (ODClassType*)type {
+- (CNClassType*)type {
     return [CNIterableF type];
 }
 
-+ (ODClassType*)type {
++ (CNClassType*)type {
     return _CNIterableF_type;
 }
 
@@ -463,7 +463,7 @@ static ODClassType* _CNIterableF_type;
 
 @implementation CNEmptyIterator
 static CNEmptyIterator* _CNEmptyIterator_instance;
-static ODClassType* _CNEmptyIterator_type;
+static CNClassType* _CNEmptyIterator_type;
 
 + (instancetype)emptyIterator {
     return [[CNEmptyIterator alloc] init];
@@ -478,7 +478,7 @@ static ODClassType* _CNEmptyIterator_type;
 + (void)initialize {
     [super initialize];
     if(self == [CNEmptyIterator class]) {
-        _CNEmptyIterator_type = [ODClassType classTypeWithCls:[CNEmptyIterator class]];
+        _CNEmptyIterator_type = [CNClassType classTypeWithCls:[CNEmptyIterator class]];
         _CNEmptyIterator_instance = [CNEmptyIterator emptyIterator];
     }
 }
@@ -491,7 +491,7 @@ static ODClassType* _CNEmptyIterator_type;
     @throw @"Iterator is empty";
 }
 
-- (ODClassType*)type {
+- (CNClassType*)type {
     return [CNEmptyIterator type];
 }
 
@@ -499,7 +499,7 @@ static ODClassType* _CNEmptyIterator_type;
     return _CNEmptyIterator_instance;
 }
 
-+ (ODClassType*)type {
++ (CNClassType*)type {
     return _CNEmptyIterator_type;
 }
 

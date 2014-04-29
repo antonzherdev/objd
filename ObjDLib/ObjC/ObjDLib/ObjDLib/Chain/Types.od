@@ -1,6 +1,0 @@
-package core.chain
-
-stub object Memory {
-    def autoreleasePoolStart
-    def autoreleasePoolEnd
-}

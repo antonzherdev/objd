@@ -1,0 +1,66 @@
+package objd.collection
+
+trait Queue<T> {
+}
+
+class ImQueue<T>(val in : ImList<T>, val out : ImList<T>) extends Queue<T> {
+    static def apply<T> : ImQueue<T> = empty
+    private static val empty : ImQueue<any> = ImQueue<any>(ImList<any>(), ImList<any>())
+
+    def iterator : Iterator<T> = QueueIterator<T>(in, out)
+    def isEmpty = in.isEmpty && out.isEmpty
+    def count = in.count + out.count
+
+    def add(item : T) : ImQueue<T> =
+        if(isEmpty) ImQueue<T>(ImList<T>(), ImList(item))
+        else ImQueue<T>(ImList(item, in), out)
+
+    def enqueue(item : T) : ImQueue<T> =
+        if(isEmpty) ImQueue<T>(ImList<T>(), ImList(item))
+        else ImQueue<T>(ImList(item, in), out)
+
+    def dequeue : (T?, ImQueue<T>) =
+        if(!out.isEmpty) (out.head, ImQueue<T>(in, out.tail))
+        else if(in.isEmpty) (nil, self)
+        else {
+            val rev = in.reverse
+            (rev.head, ImQueue<T>(ImList<T>(), rev.tail))
+        }
+}
+
+class QueueIterator<T>(in : ImList<T>, val out : ImList<T>) extends Iterator<T> {
+    private var i : Iterator<T> = in.iterator
+    private var isIn = true
+    override def hasNext =
+        if(i.hasNext) true
+        else if(isIn) {
+            isIn = false
+            i = out.reverse.iterator
+            i.hasNext
+        }
+        else false
+
+    override def next : T = {
+        if(!i.hasNext && isIn) {
+            isIn = false
+            i = out.reverse.iterator
+        }
+        i.next
+    }
+}
+
+class MQueue<T> extends Queue<T> {
+    private var _queue : ImQueue<T> = ImQueue<T>()
+
+    def enqueue(item : T)  {
+        _queue = _queue + item
+    }
+
+    def dequeue : T? = {
+        val p = _queue.dequeue
+        _queue = p.b
+        p.a
+    }
+
+    def count = _queue.count
+}

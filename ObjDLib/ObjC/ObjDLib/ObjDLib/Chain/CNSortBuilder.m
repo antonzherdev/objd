@@ -4,9 +4,9 @@
 #import "CNChain.h"
 #import "CNPlat.h"
 #import "CNCollection.h"
-#import "ODType.h"
+#import "CNType.h"
 @implementation CNSortBuilder
-static ODClassType* _CNSortBuilder_type;
+static CNClassType* _CNSortBuilder_type;
 @synthesize chain = _chain;
 
 + (instancetype)sortBuilderWithChain:(CNChain*)chain {
@@ -25,7 +25,7 @@ static ODClassType* _CNSortBuilder_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNSortBuilder class]) _CNSortBuilder_type = [ODClassType classTypeWithCls:[CNSortBuilder class]];
+    if(self == [CNSortBuilder class]) _CNSortBuilder_type = [CNClassType classTypeWithCls:[CNSortBuilder class]];
 }
 
 - (CNSortBuilder*)ascBy:(id(^)(id))by {
@@ -59,11 +59,11 @@ static ODClassType* _CNSortBuilder_type;
     }];
 }
 
-- (ODClassType*)type {
+- (CNClassType*)type {
     return [CNSortBuilder type];
 }
 
-+ (ODClassType*)type {
++ (CNClassType*)type {
     return _CNSortBuilder_type;
 }
 

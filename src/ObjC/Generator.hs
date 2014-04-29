@@ -84,7 +84,7 @@ stmToInterface cl =
 			(D.DefModPrivate `notElem` D.defMods f) && D.isField f && D.isStatic f)) defs
 
 typeInstanceFun :: C.Fun		
-typeInstanceFun = C.Fun C.InstanceFun (C.TPSimple "ODClassType*" []) "type" []		
+typeInstanceFun = C.Fun C.InstanceFun (C.TPSimple "CNClassType*" []) "type" []		
 
 classExtends :: D.Class -> C.Extends
 classExtends cl = addTraits cl $ maybe (C.Extends "NSObject" []) ext (D.extendsClass $ D.classExtends cl)
@@ -302,7 +302,7 @@ implInitialize env@Env{envClass = cl} = let
 	hasInitialize d@D.Def{D.defBody = b} = not (D.isConst b) && D.isField d && D.isStatic d
 	selfClass = C.Call (C.Ref $ D.classNameWithPrefix cl) "class" [] []
 	typeInit = [C.Set Nothing (C.Ref $ staticName env "type") $ 
-		C.Call (C.Ref "ODClassType") "classTypeWith" [("cls", selfClass)] [] | D.ClassModTraitImpl `notElem` D.classMods cl]
+		C.Call (C.Ref "CNClassType") "classTypeWith" [("cls", selfClass)] [] | D.ClassModTraitImpl `notElem` D.classMods cl]
 	stms = typeInit ++ map (implInitField env) fields
 	in if null stms then Nothing else Just $ C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
 			(C.Stm $ C.Call C.Super "initialize" [] []) : [C.If (C.BoolOp Eq C.Self selfClass)
@@ -433,7 +433,7 @@ genStruct cl =
 					]
 			}
 			where
-				buildExp "type" D.Nop = C.Call (C.Ref "ODPType") "typeWith" [
+				buildExp "type" D.Nop = C.Call (C.Ref "CNPType") "typeWith" [
 					("cls", C.Call (C.Ref wrapName) "class" [] []),
 					("name", C.StringConst name),
 					("size", C.CCall (C.Ref "sizeof") [C.Ref name]),
@@ -869,9 +869,9 @@ tExp env (D.Dot l (D.Is dtp)) = case dtp of
 	_ -> C.Call (castGeneric l $ tExp env l) "isKindOf" 
 		[("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] [])] []
 tExp env (D.Dot l (D.As dtp)) = case dtp of
-	D.TPClass D.TPMTrait _ _ -> C.Call (C.Ref "ODObject") "asKindOf" 
+	D.TPClass D.TPMTrait _ _ -> C.Call (C.Ref "CNObject") "asKindOf" 
 		[("protocol", C.ProtocolRef $ C.Ref $ D.dataTypeClassNameWithPrefix dtp), ("object", castGeneric l $ tExp env l)] []
-	_ -> C.Call (C.Ref "ODObject") "asKindOf" 
+	_ -> C.Call (C.Ref "CNObject") "asKindOf" 
 		[("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] []), ("object", castGeneric l $ tExp env l)] []
 tExp env (D.Dot l (D.CastDot dtp)) = tExp env (D.Cast dtp l)
 tExp env (D.Dot l (D.Cast dtp c)) = tExp env (D.Cast dtp (D.Dot l c))

@@ -1,0 +1,18 @@
+package objd.collection
+
+stub class String extends ImSeq<char> with Comparable<String> {
+    def tuple(by : string) : (string, string)?
+    def split(by : string) : Iterable<string>
+
+    def toUInt : uint
+    def toInt : int
+    def toFloat : float
+
+    def has(prefix : string) : bool
+    def has(suffix : string) : bool
+    def encodeForURL : string
+    def replace(occurrences : string, withString : string) : string
+    def substr(begin : uint, end : uint) : string
+}
+
+stub class Char

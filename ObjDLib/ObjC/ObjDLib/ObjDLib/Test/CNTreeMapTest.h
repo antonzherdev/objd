@@ -3,16 +3,16 @@
 @class CNMTreeMap;
 @class CNChain;
 @class CNMTreeMapKeySet;
-@class ODClassType;
+@class CNClassType;
 
 @class CNTreeMapTest;
 
 @interface CNTreeMapTest : TSTestCase
 + (instancetype)treeMapTest;
 - (instancetype)init;
-- (ODClassType*)type;
+- (CNClassType*)type;
 - (void)testMain;
-+ (ODClassType*)type;
++ (CNClassType*)type;
 @end
 
 

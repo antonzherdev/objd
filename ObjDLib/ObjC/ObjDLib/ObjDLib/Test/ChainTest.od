@@ -1,4 +1,4 @@
-package core.chain
+package objd.chain
 
 import test._
 

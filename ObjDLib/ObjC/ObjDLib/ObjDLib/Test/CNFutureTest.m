@@ -7,9 +7,9 @@
 #import "CNFuture.h"
 #import "CNDispatchQueue.h"
 #import "CNTry.h"
-#import "ODType.h"
+#import "CNType.h"
 @implementation CNFutureTest
-static ODClassType* _CNFutureTest_type;
+static CNClassType* _CNFutureTest_type;
 
 + (instancetype)futureTest {
     return [[CNFutureTest alloc] init];
@@ -23,7 +23,7 @@ static ODClassType* _CNFutureTest_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNFutureTest class]) _CNFutureTest_type = [ODClassType classTypeWithCls:[CNFutureTest class]];
+    if(self == [CNFutureTest class]) _CNFutureTest_type = [CNClassType classTypeWithCls:[CNFutureTest class]];
 }
 
 - (void)testPromiseOnComplete {
@@ -104,11 +104,11 @@ static ODClassType* _CNFutureTest_type;
     assertEquals(numi4([n intValue]), numi4(((int)(result))));
 }
 
-- (ODClassType*)type {
+- (CNClassType*)type {
     return [CNFutureTest type];
 }
 
-+ (ODClassType*)type {
++ (CNClassType*)type {
     return _CNFutureTest_type;
 }
 

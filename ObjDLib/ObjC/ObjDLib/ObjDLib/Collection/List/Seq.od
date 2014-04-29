@@ -1,0 +1,145 @@
+package objd.collection
+
+import core.math._
+
+trait Seq<T> extends Iterable<T> {
+    def apply(index : uint) : T? = {
+        if(index >= count) return nil
+
+        val i = iterator
+        var n = index
+        while(i.hasNext) {
+            if(n == 0) return i.next
+            i.next
+            n--
+        }
+        nil
+    }
+
+    def toSet : Set<T> = convertWith<Set<T>>(HashSetBuilder<T>())
+
+
+    def isEqual(seq : Seq<T>) : bool = {
+        if(self.count != seq.count) return false
+        val ia = self.iterator
+        val ib = seq.iterator
+        while(ia.hasNext && ib.hasNext) {
+            if(ia.next != ib.next) return false
+        }
+        true
+    }
+
+    override def isEmpty : bool = count == 0
+
+    override def head : T? = apply(0)
+    def last : T? = apply(count - 1)
+    def tail : ImSeq<T> = {
+        val builder = ArrayBuilder<T>()
+        val i = iterator
+        if(i.hasNext) {
+            i.next
+            while(i.hasNext) {
+                builder.append(i.next)
+            }
+        }
+        builder.build
+    }
+}
+
+trait ImSeq<T> extends Seq<T> with ImIterable<T> {
+    def add(item : T) : ImSeq<T> = {
+        val builder = ArrayBuilder<T>()
+        builder.appendAll(self)
+        builder.append(item)
+        builder.build
+    }
+
+    def add(seq : Seq<T>) : ImSeq<T> = {
+        val builder = ArrayBuilder<T>()
+        builder.appendAll(self)
+        builder.appendAll(seq)
+        builder.build
+    }
+
+    def sub(item : T) : ImSeq<T> = {
+        chain.filter(_ != item).toArray
+    }
+
+    override def mCopy : MSeq<T> = {
+        val arr = MArray<T>()
+        for{item -> arr.append(item)}
+        arr
+    }
+}
+
+trait MSeq<T> extends Seq<T> with MIterable<T> {
+    def remove(index : uint) : bool = {
+        val i = mutableIterator
+        var j = index
+        var ret = false
+        while(i.hasNext) {
+            i.next
+            if(j == 0) {
+                i.remove
+                ret = true
+                break
+            }
+            j--
+        }
+        ret
+    }
+
+    def insert(index : uint, item : T)
+    def prepend(item : T)
+
+    def set(index : uint, item : T) {
+        val i = mutableIterator
+        var n = index
+        while(i.hasNext) {
+            if(n == 0) {
+                i.next
+                i.set(value = item)
+                return nil
+            }
+            i.next
+            n--
+        }
+        throw "Incorrect index"
+    }
+
+    override def im : ImSeq<T> = imCopy
+    override def imCopy : ImSeq<T> = {
+        val arr = MArray<T>()
+        for{item -> arr.append(item)}
+        arr.im
+    }
+}
+
+class ArrayBuilder<T> extends Builder<T, ImArray<T>> {
+    private val array = MArray<T>()
+
+    override def append(item : T) {
+        array.append(item)
+    }
+
+    override def build : ImArray<T> = array.im
+}
+
+case class IndexFunSeq<T>(override val count : uint, val f : uint -> T) extends ImSeq<T> {
+    override def apply(index : uint) : T? =
+        if(index >= count) nil
+        else f(index)
+
+    override def iterator : Iterator<T> = IndexFunSeqIterator<T>(count, f)
+}
+
+class IndexFunSeqIterator<T>(val count : uint, val f : uint -> T) extends Iterator<T> {
+    private var i : uint = 0
+    override def hasNext = i < count
+
+    override def next : T = {
+        val ret = f(i)
+        i++
+        ret
+    }
+}

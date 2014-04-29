@@ -1,13 +1,13 @@
 #import "objd.h"
 #import "CNDispatchQueue.h"
 
-#import "ODType.h"
+#import "CNType.h"
 @implementation CNDispatchQueue{
     dispatch_queue_t _ref;
 }
 static CNDispatchQueue* _CNDispatchQueue_default;
 static CNDispatchQueue* _CNDispatchQueue_mainThread;
-static ODClassType* _CNDispatchQueue_type;
+static CNClassType * _CNDispatchQueue_type;
 @synthesize ref = _ref;
 
 + (id)dispatchQueueWithRef:(dispatch_queue_t)ref {
@@ -24,7 +24,7 @@ static ODClassType* _CNDispatchQueue_type;
 + (void)initialize {
     [super initialize];
     if(self == [CNDispatchQueue class]) {
-        _CNDispatchQueue_type = [ODClassType classTypeWithCls:[CNDispatchQueue class]];
+        _CNDispatchQueue_type = [CNClassType classTypeWithCls:[CNDispatchQueue class]];
         _CNDispatchQueue_default = [CNDispatchQueue dispatchQueueWithRef:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)];
         _CNDispatchQueue_mainThread = [CNDispatchQueue dispatchQueueWithRef:dispatch_get_main_queue()];
     }
@@ -34,7 +34,7 @@ static ODClassType* _CNDispatchQueue_type;
     dispatch_async(_ref, f);
 }
 
-- (ODClassType*)type {
+- (CNClassType *)type {
     return [CNDispatchQueue type];
 }
 
@@ -42,7 +42,7 @@ static ODClassType* _CNDispatchQueue_type;
     return _CNDispatchQueue_default;
 }
 
-+ (ODClassType*)type {
++ (CNClassType *)type {
     return _CNDispatchQueue_type;
 }
 

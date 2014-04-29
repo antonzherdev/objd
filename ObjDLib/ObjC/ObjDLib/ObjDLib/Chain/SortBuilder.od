@@ -1,4 +1,4 @@
-package core.chain
+package objd.chain
 
 class SortBuilder<A>(val chain : Chain<A>) {
     private val functions = MArray<(A, A) -> int>()

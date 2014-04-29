@@ -1,5 +1,5 @@
 #import "objdcore.h"
-#import "ODObject.h"
+#import "CNObject.h"
 
 #define cnLogApplyText(text) NSLog(@"%@", text)
 

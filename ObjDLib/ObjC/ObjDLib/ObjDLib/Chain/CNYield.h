@@ -1,9 +1,9 @@
 #import "objdcore.h"
-#import "ODObject.h"
+#import "CNObject.h"
 @protocol CNTraversable;
 @class CNArray;
 @protocol CNIterable;
-@class ODClassType;
+@class CNClassType;
 
 @class CNYield;
 
@@ -21,7 +21,7 @@
 
 + (instancetype)yieldWithBegin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all;
 - (instancetype)initWithBegin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all;
-- (ODClassType*)type;
+- (CNClassType*)type;
 + (CNYield*)makeBegin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all;
 + (CNYield*)makeBegin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield end:(int(^)(int))end;
 + (CNYield*)makeBegin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield all:(int(^)(id<CNTraversable>))all;
@@ -74,7 +74,7 @@
 + (CNYield*)applyEnd:(int(^)(int))end;
 + (CNYield*)applyAll:(int(^)(id<CNTraversable>))all;
 + (CNYield*)apply;
-+ (ODClassType*)type;
++ (CNClassType*)type;
 @end
 
 
