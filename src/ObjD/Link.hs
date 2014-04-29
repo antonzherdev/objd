@@ -1,6 +1,6 @@
 module ObjD.Link (
 	Lang(..),
-	classDefsWithTraits, link
+	link
 )where
 
 import 			 ObjD.LinkStruct
@@ -134,46 +134,6 @@ reduceDataTypes :: Env -> [DataType] -> DataType
 reduceDataTypes env tps = foldl1 (firstCommonSuperDataType env) tps		
 
 
-classDefsWithTraits :: Bool -> Class -> [Def]
-classDefsWithTraits withAbstract cl = classDefs cl ++ notOverloadedTraitDefs
-	where	
-		
-		notOverloadedTraitDefs = map updef $ filter (\(def, _) -> not $ any ((== def) . fst) notAbstractClassDefs) notAbstractTraitDefs
-		--notOverloadedTraitDefs = notAbstractTraitDefs
-		notAbstractTraitDefs = notAbstractDefs True
-		notAbstractClassDefs = notAbstractDefs False
-		notAbstractDefs :: Bool ->[(Def, Class)]
-		notAbstractDefs trait = ( 
-			(if withAbstract then id else filter ( (DefModAbstract `notElem`). defMods. fst) ) 
-			. map (\(a, _, c) -> (a, c)) 
-			. filter (\(_, t, _) -> trait == t)) allDefsWithLine
-		allDefsWithLine :: [(Def, Bool, Class)]
-		allDefsWithLine = allDefsWithLine' False True cl
-		allDefsWithLine' :: Bool -> Bool -> Class -> [(Def, Bool, Class)] -- (Def, traitLine - True/classLine - False)
-		allDefsWithLine' currentLine traitLine cll = 
-			map (\def -> (def, currentLine, cll)) (classDefs cll) 
-			++ concatMap nextRec ((extendsRefs . classExtends) cll)
-			where
-				nextRec :: ExtendsRef -> [(Def, Bool, Class)]
-				nextRec (nextClass, _) = 
-					let line = traitLine && isTrait nextClass
-					in allDefsWithLine' line line nextClass
-		selfTp = TPClass TPMClass clGens cl
-		env = defaultEnv{envSelf = selfTp}
-		clGens = map (TPClass TPMGeneric []) $ classGenerics cl
-		updef :: (Def, Class) -> Def
-		updef (d, defClass) = let
-			gens = buildGenerics defClass $ fromJust $ upGenericsToClass defClass (cl, clGens)
-			rg = replaceGenerics False gens
-			tp' = rg $ defType d
-			pars' :: [(Def, Def)]
-			pars' = map (\p -> (p, p{defType = rg $ defType p})) (defPars d)
-			body' :: Exp
-			body' = inlineCall env $ Dot (Self selfTp) $ Call d tp' (map (second callRef) pars') []
-			in case classGenerics cl of
-				[] -> d
-				_ -> d{defType = tp', defPars = map snd pars', defBody = body'}
-
 traitImplClass :: Env -> Class -> Class
 traitImplClass env cl = let 
 	base = baseClassExtends $ envIndex env 
@@ -183,13 +143,15 @@ traitImplClass env cl = let
 			(xcl, xgens):_ -> maybe base (\c -> ExtendsClass (c, xgens) []) $ M.lookup (className xcl ++ "_impl") (envIndex env),
 		extendsTraits = [(cl, map (TPClass TPMGeneric []) $ classGenerics cl)]
 	}
-	in cl {
+	self = cl {
 		className = className cl ++ "_impl",
 		_classExtends = ext, 
 		_classMods = ClassModTraitImpl : ClassModAbstract : delete ClassModTrait (classMods cl), 
 		_classDefs = filter( (DefModOverride `elem`) .defMods) $ classDefs cl,
-		_classImports = []
+		_classImports = [],
+		classDefsWithTraits = defsWithTraits env self
 	}
+	in self
 
 getTraitImplClass :: Env -> Class -> Maybe Class
 getTraitImplClass env cl = M.lookup (className cl ++ "_impl") (envIndex env)
@@ -307,7 +269,8 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 				{-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
 				_classGenerics = generics,
 				_classImports = clImports,
-				classAnnotations = annotations
+				classAnnotations = annotations,
+				classDefsWithTraits = defsWithTraits env self
 			}
 			D.Enum{} -> Class {
 				_classFile = file,
@@ -323,7 +286,8 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 					defMods = [DefModStatic], defPars = [], defGenerics = Nothing, defAnnotations = []}],
 				_classGenerics = generics,
 				_classImports = clImports,
-				classAnnotations = annotations
+				classAnnotations = annotations,
+				classDefsWithTraits = defsWithTraits env self
 			}
 			D.Type{} -> Class {
 				_classFile = file,
@@ -334,7 +298,8 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 				_classDefs = [constructorForType], 
 				_classGenerics = generics,
 				_classImports = [],
-				classAnnotations = annotations
+				classAnnotations = annotations,
+				classDefsWithTraits = defsWithTraits env self
 			}
 		isSeltTrait = case cl of 
 			D.Class{} -> D.ClassModTrait `elem` D.classMods cl
@@ -414,6 +379,43 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 			defGenerics = Nothing, defPars = [], defAnnotations = []}
 			where 
 				typeName = if selfIsStruct then "PType" else "ClassType"
+
+defsWithTraits :: Env -> Class -> [Def]
+defsWithTraits env self = classDefs self ++ notOverloadedTraitDefs
+	where	
+		
+		notOverloadedTraitDefs = map updef $ filter (\(def, _) -> not $ any ((== def) . fst) notAbstractClassDefs) notAbstractTraitDefs
+		--notOverloadedTraitDefs = notAbstractTraitDefs
+		notAbstractTraitDefs = notAbstractDefs True
+		notAbstractClassDefs = notAbstractDefs False
+		notAbstractDefs :: Bool ->[(Def, Class)]
+		notAbstractDefs trait = ( map (\(a, _, c) -> (a, c)) . filter (\(_, t, _) -> trait == t)) allDefsWithLine
+		allDefsWithLine :: [(Def, Bool, Class)]
+		allDefsWithLine = allDefsWithLine' False True self
+		allDefsWithLine' :: Bool -> Bool -> Class -> [(Def, Bool, Class)] -- (Def, traitLine - True/classLine - False)
+		allDefsWithLine' currentLine traitLine cll = 
+			map (\def -> (def, currentLine, cll)) (classDefs cll) 
+			++ concatMap nextRec ((extendsRefs . classExtends) cll)
+			where
+				nextRec :: ExtendsRef -> [(Def, Bool, Class)]
+				nextRec (nextClass, _) = 
+					let line = traitLine && isTrait nextClass
+					in allDefsWithLine' line line nextClass
+		stp = TPClass TPMClass clGens self
+		clGens = map (TPClass TPMGeneric []) $ classGenerics self
+		updef :: (Def, Class) -> Def
+		updef (d, defClass) = let
+			gens = buildGenerics defClass $ fromJust $ upGenericsToClass defClass (self, clGens)
+			rg = replaceGenerics False gens
+			tp' = rg $ defType d
+			pars' :: [(Def, Def)]
+			pars' = map (\p -> (p, p{defType = rg $ defType p})) (defPars d)
+			body' :: Exp
+			body' = inlineCall env{envSelf = stp} $ Dot (Self stp) $ Call d tp' (map (second callRef) pars') []
+			in case classGenerics self of
+				[] -> d
+				_ -> d{defType = tp', defPars = map snd pars', defBody = body'}
+
 linkExtends :: Env -> Bool -> [Def] -> D.Extends -> Extends
 linkExtends env isSeltTrait constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
 	let 
@@ -657,8 +659,6 @@ type ClassIndex = M.Map String Class
 type ObjectIndex = [Class]
 data Env = Env{envSelf :: DataType, envIndex :: ClassIndex, envObjectIndex :: ObjectIndex, envVals :: [Def], envInit :: Bool, envTp :: DataType, envVarSuffix :: String}
 
-defaultEnv :: Env
-defaultEnv = Env{envSelf =TPVoid, envIndex = M.empty, envObjectIndex = [], envVals = [], envInit = False, envTp = TPVoid, envVarSuffix = ""}
 envChangeDefTp :: Env -> Def -> DataType -> Env
 envChangeDefTp env@Env{envVals = vals} d tp = env{envVals = d{defType = tp} : filter (/= d) vals}
 envAddVals :: [Def] -> Env -> Env 
@@ -693,7 +693,7 @@ dataTypeClass env (TPObject _ c) = Class { _classMods = [ClassModObject], classN
 	_classExtends = Extends (if className c == "Object" then Nothing else Just $ baseClassExtends (envIndex env)) [], 
 	_classDefs = allDefsInObject (c, M.empty), _classGenerics = [], _classImports = [],
 	_classFile = fromMaybe (error $ "No class file for class " ++ className c) $ classFile c,
-	_classPackage = classPackage c, classAnnotations = []}
+	_classPackage = classPackage c, classAnnotations = [], classDefsWithTraits = []}
 dataTypeClass env (TPGenericWrap _ c) = dataTypeClass env c
 dataTypeClass _ (TPSelf c) = c
 dataTypeClass env (TPArr _ _) = classFind (envIndex env) "ImArray"
@@ -719,7 +719,7 @@ dataTypeClass env (TPPointer _) = classFind (envIndex env) "Pointer"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("Tuple" ++ show (length a))
 dataTypeClass env f@TPFun{} = Class { _classMods = [], className = "", _classExtends =  Extends (Just $ baseClassExtends (envIndex env)) [],
 	_classPackage = Package ["objd", "lang"] Nothing "", _classFile = coreFakeFile, 
-	_classDefs = [applyLambdaDef f], _classGenerics = [], _classImports = [], classAnnotations = []}
+	_classDefs = [applyLambdaDef f], _classGenerics = [], _classImports = [], classAnnotations = [], classDefsWithTraits = []}
 	where
 		
 dataTypeClass _ x = ClassError (show x) ("No dataTypeClass for " ++ show x)

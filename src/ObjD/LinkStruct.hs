@@ -16,7 +16,7 @@ module ObjD.LinkStruct (
 	dataTypeClassNameWithPrefix, dataTypeClassName, classFieldsForEquals, isConst, classFields, isAbstract, classContainsInit,
 	isFinal, isTpClass, isTpEnum, isTpTrait, isNop, enumItems, isType, isGeneric, isGenericWrap, tpGeneric, resolveTypeAlias,
 	containsAnnotationWithClassName, isSpecial, isConstructor, mainExtendsRef, isBaseClass, traitExtendsRefs, findAnnotationWithClassName, 
-	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError
+	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError, isDefAbstract
 	) where
 
 import 			 Ex.String
@@ -50,7 +50,7 @@ fileNameWithPrefix f = packagePrefix (filePackage f) ++ fileName f
  -----------------------------------------------------------------------------------------------------------------------------------------}
 data Class = Class {_classFile :: File, _classPackage :: Package, className :: String
 	, _classGenerics :: [Class], _classExtends :: Extends, _classMods :: [ClassMod], _classDefs :: [Def]
-	, _classImports :: [Import], classAnnotations :: [Annotation]}
+	, _classImports :: [Import], classAnnotations :: [Annotation], classDefsWithTraits :: [Def]}
 	| Generic {className :: String, _classExtendsRef :: [ExtendsRef]}
 	| ClassError {className :: String, classErrorText :: String}
 classFile :: Class -> Maybe File
@@ -297,6 +297,8 @@ isInline :: Def -> Bool
 isInline = (DefModInline `elem` ) . defMods
 isPure :: Def -> Bool
 isPure = (DefModPure `elem` ) . defMods
+isDefAbstract :: Def -> Bool
+isDefAbstract = (DefModAbstract `elem` ) . defMods
 enumItems :: Class -> [Def]
 enumItems = filter isEnumItem . classDefs
 instance Eq Def where

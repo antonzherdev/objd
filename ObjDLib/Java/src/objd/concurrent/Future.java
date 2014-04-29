@@ -4,6 +4,8 @@ import objd.lang.*;
 import objd.collection.Traversable;
 
 public abstract class Future<T> {
+    public abstract Try<T> result();
+    public abstract void onCompleteF(final P<Try<T>> f);
     public static <T> Future<T> applyF(final F0<T> f) {
         final Promise<T> p = Promise.<T>apply();
         DispatchQueue.aDefault.asyncF(new P0() {
@@ -265,7 +267,6 @@ public abstract class Future<T> {
     public static <T> Future<T> successfulResult(final T result) {
         return new KeptPromise<T>(new Success<T>(result));
     }
-    public abstract Try<T> result();
     public boolean isCompleted() {
         return this.result() != null;
     }
@@ -285,7 +286,6 @@ public abstract class Future<T> {
             return true;
         }
     }
-    public abstract void onCompleteF(final P<Try<T>> f);
     public void onSuccessF(final P<T> f) {
         onCompleteF(new P<Try<T>>() {
             @Override

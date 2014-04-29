@@ -3,6 +3,9 @@ package objd.collection;
 import objd.lang.*;
 
 public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
+    public abstract TreeMapEntry<K, V> root();
+    @Override
+    public abstract TreeMapKeySet<K> keys();
     public static final int BLACK;
     public static final int RED;
     public final F2<K, K, Integer> comparator;
@@ -16,7 +19,6 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
         final TreeMapEntry<K, V> __tmpu = entryForKey(key);
         return ((__tmpu == null) ? (null) : (__tmpu.value));
     }
-    public abstract TreeMapEntry<K, V> root();
     @Override
     public boolean isEmpty() {
         return this.root() == null;
@@ -37,8 +39,6 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
         }
         return p;
     }
-    @Override
-    public abstract TreeMapKeySet<K> keys();
     @Override
     public Iterator<Tuple<K, V>> iterator() {
         return TreeMapIterator.<K, V>applyMapEntry(this, this.firstEntry());

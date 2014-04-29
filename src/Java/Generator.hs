@@ -6,7 +6,6 @@ import Control.Monad.Writer
 import Ex.String
 import Data.Maybe
 import Data.List
-import ObjD.Link as D
 import ObjD.LinkStruct as D
 import Java.Struct as J
 
@@ -31,7 +30,8 @@ genClass :: D.Class -> Writer Wrt J.Class
 genClass cl = do
 	let 
 		defs = filter (\f -> not (D.isSpecial f)) 
-			$ if D.isTrait cl then filter (not . D.isConstructor) (D.classDefs cl) else D.classDefsWithTraits False cl
+			$ if D.isTrait cl then filter (not . D.isConstructor) (D.classDefs cl) else
+				filter (D.isDefAbstract) (D.classDefs cl) ++ filter (not . D.isDefAbstract) (D.classDefsWithTraits cl)
 		trMod D.ClassModAbstract = Just J.ClassModAbstract
 		trMod D.ClassModFinal = Just J.ClassModFinal
 		trMod _ = Nothing

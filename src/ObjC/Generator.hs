@@ -11,7 +11,6 @@ import           Data.Char
 import           Data.Maybe
 import           Data.List
 import qualified ObjC.Struct   as C
-import qualified ObjD.Link   as D
 import qualified ObjD.LinkStruct   as D
 
 arc :: Bool
@@ -196,7 +195,7 @@ stmToImpl cl =
 		clsName = D.classNameWithPrefix cl
 		env = Env cl 0 D.TPVoid False
 		defs :: [D.Def]
-		defs = D.classDefsWithTraits True cl
+		defs = D.classDefsWithTraits cl
 					
 		constrFuns = fromMaybe [] $ fmap (\constr -> [implCreate cl constr, implInit env constr]) (D.classConstructor cl)
 		implFields = filter needField defs
@@ -316,7 +315,9 @@ implInitialize env@Env{envClass = cl} = let
 implInit :: Env -> D.Def -> C.ImplFun
 implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFun (initFun constr) (
 			[C.Set Nothing C.Self (superInit $ D.extendsClass $ D.classExtends cl)]
-			++ declareWeakSelf env (implInitFields (filter hasField constrPars) (filter hasInit (D.classDefsWithTraits False cl)))
+			++ declareWeakSelf env (implInitFields 
+					(filter hasField constrPars) 
+					(filter hasInit (D.classDefsWithTraits cl)))
 			++ [C.Stm C.Nop, C.Return C.Self]
 			)
 	where
@@ -625,7 +626,7 @@ procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
 		procClasses = concatMap procClass classes
 		procClass :: D.Class -> [(D.Class, Bool)]
 		procClass cl = procExtends (D.classExtends cl) 
-			++ concatMap procDef (D.classDefsWithTraits False cl)
+			++ concatMap procDef (D.classDefsWithTraits cl)
 		procDef :: D.Def -> [(D.Class, Bool)]
 		procDef def = procDataType (D.defType def) ++ procExp (D.defBody def) ++ concatMap procDef (D.defPars def)
 		procExtends :: D.Extends -> [(D.Class, Bool)]
