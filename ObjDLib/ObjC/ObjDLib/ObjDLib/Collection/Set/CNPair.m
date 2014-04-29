@@ -26,11 +26,6 @@ static CNClassType* _CNPair_type;
     if(self == [CNPair class]) _CNPair_type = [CNClassType classTypeWithCls:[CNPair class]];
 }
 
-+ (CNPair*)newWithA:(id)a b:(id)b {
-    if(a < b) return [CNPair pairWithA:a b:b];
-    else return [CNPair pairWithA:b b:a];
-}
-
 - (BOOL)containsItem:(id)item {
     return [_a isEqual:item] || [_b isEqual:item];
 }
@@ -47,6 +42,16 @@ static CNClassType* _CNPair_type;
     return _a;
 }
 
+- (BOOL)isEqualPair:(CNPair*)pair {
+    return ({
+        id __tmp__il_aitem = pair.a;
+        [_a isEqual:__tmp__il_aitem] || [_b isEqual:__tmp__il_aitem];
+    }) && ({
+        id __tmp__il_bitem = pair.b;
+        [_a isEqual:__tmp__il_bitem] || [_b isEqual:__tmp__il_bitem];
+    });
+}
+
 - (CNClassType*)type {
     return [CNPair type];
 }
@@ -61,9 +66,9 @@ static CNClassType* _CNPair_type;
 
 - (BOOL)isEqual:(id)other {
     if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNPair* o = ((CNPair*)(other));
-    return [self.a isEqual:o.a] && [self.b isEqual:o.b];
+    if(!(other)) return NO;
+    if([other isKindOfClass:[CNPair class]]) return [self isEqualPair:((CNPair*)(other))];
+    return NO;
 }
 
 - (NSUInteger)hash {

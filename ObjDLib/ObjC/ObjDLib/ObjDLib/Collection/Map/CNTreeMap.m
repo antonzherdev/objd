@@ -718,15 +718,12 @@ static CNClassType* _CNMTreeMap_type;
     [self setKey:((CNTuple*)(item)).a value:((CNTuple*)(item)).b];
 }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Woverriding-method-mismatch"
 - (void)mutableFilterBy:(BOOL(^)(CNTuple*))by {
     id<CNMIterator> i = [self mutableIterator];
     while([i hasNext]) {
         if(by([i next])) [i remove];
     }
 }
-#pragma clang diagnostic pop
 
 - (CNClassType*)type {
     return [CNMTreeMap type];

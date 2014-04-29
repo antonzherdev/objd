@@ -1,13 +1,11 @@
 package objd.collection
 
 case class Pair<T>(val a : T, val b : T) extends ImSet<T> {
-    static def newWith<T>(a : T, b : T) : Pair<T> =
-        if(a < b) Pair<T>(a, b)
-        else Pair<T>(b, a)
-    override def contains(item : T) : bool = a == item || b == item
+    override inline def contains(item : T) : bool = a == item || b == item
     override def count : uint = 2
     override def iterator : Iterator<T> = PairIterator<T>(self)
     override def head : T? = a
+    def isEqual(pair : Pair<T>) : bool = contains(pair.a) && contains(pair.b)
 }
 
 class PairIterator<T>(val pair : Pair<T>) extends Iterator<T> {

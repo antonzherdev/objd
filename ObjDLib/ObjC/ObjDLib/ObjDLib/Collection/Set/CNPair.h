@@ -17,11 +17,10 @@
 + (instancetype)pairWithA:(id)a b:(id)b;
 - (instancetype)initWithA:(id)a b:(id)b;
 - (CNClassType*)type;
-+ (CNPair*)newWithA:(id)a b:(id)b;
-- (BOOL)containsItem:(id)item;
 - (NSUInteger)count;
 - (id<CNIterator>)iterator;
 - (id)head;
+- (BOOL)isEqualPair:(CNPair*)pair;
 + (CNClassType*)type;
 @end
 
