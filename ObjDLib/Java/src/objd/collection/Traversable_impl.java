@@ -77,6 +77,7 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
         return ret.value;
     }
     public T head() {
+        final Mut<T> ret = new Mut<T>();
         goOn(new F<T, Boolean>() {
             @Override
             public Boolean apply(final T on) {

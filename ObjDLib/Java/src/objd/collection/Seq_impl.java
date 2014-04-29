@@ -1,7 +1,5 @@
 package objd.collection;
 
-import objd.lang.*;
-
 public abstract class Seq_impl<T> extends Iterable_impl<T> implements Seq<T> {
     @Override
     public boolean isEmpty() {
@@ -27,7 +25,7 @@ public abstract class Seq_impl<T> extends Iterable_impl<T> implements Seq<T> {
         return null;
     }
     public Set<T> toSet() {
-        return <Set<T>>convertWithBuilder(new HashSetBuilder<T>());
+        return this.<ImHashSet<T>>convertWithBuilder(new HashSetBuilder<T>());
     }
     public boolean isEqualSeq(final Seq<T> seq) {
         if(this.count() != seq.count()) {

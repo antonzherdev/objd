@@ -1,5 +1,7 @@
 package objd.lang;
 
+import objd.lang.*;
+
 public abstract class Try<T> {
     public abstract T get();
     public abstract Object reason();

@@ -16,7 +16,7 @@ trait Seq<T> extends Iterable<T> {
         nil
     }
 
-    def toSet : Set<T> = convertWith<Set<T>>(HashSetBuilder<T>())
+    def toSet : Set<T> = convertWith(HashSetBuilder<T>())
 
 
     def isEqual(seq : Seq<T>) : bool = {

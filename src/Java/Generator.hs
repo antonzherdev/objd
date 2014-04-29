@@ -291,10 +291,11 @@ genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
 			pars' <- mapM ((genExp env) . snd) pars
 			gens' <- mapM genTp gens
 			return $ J.New [] (D.defName objDef) gens' pars'
-genExp env (D.Dot (Self stp) r@(D.Call d _ pars _) ) 
+genExp env (D.Dot (Self stp) r@(D.Call d _ pars gens) ) 
 	| D.DefModStatic `elem` D.defMods d = do
 		r' <- genExp env r
 		return $ J.Dot (J.Ref $ D.dataTypeClassName stp) r'
+	| not (null gens) && not (null pars) = genExp env r >>= \e' -> return $ J.Dot J.This e'
 	| not (null pars) = genExp env r
 genExp env (D.Dot l r) = do
 	l' <- genExp env l
@@ -502,7 +503,7 @@ genStm env (D.Val True d) = do
 	return $ v J.Nop:t
 genStm env (D.Val False d) = do
 	v <- declareVal d
-	genExpStm env (D.defBody d) v
+	if D.defBody d == D.Nop then return [v J.Nop] else genExpStm env (D.defBody d) v
 genStm env (D.Weak x) = genStm env x
 genStm env e = genExpStm env e J.Stm 
 
