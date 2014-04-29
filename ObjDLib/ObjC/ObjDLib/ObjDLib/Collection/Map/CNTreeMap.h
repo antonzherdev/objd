@@ -46,6 +46,7 @@
 - (id)lastKey;
 - (id)lowerKeyThanKey:(id)key;
 - (id)higherKeyThanKey:(id)key;
+- (CNTreeMapEntry*)higherEntryThanKey:(id)key;
 + (NSInteger)BLACK;
 + (NSInteger)RED;
 + (CNClassType*)type;

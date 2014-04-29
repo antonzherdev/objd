@@ -1,5 +1,7 @@
 package objd.lang;
 
+import objd.lang.*;
+
 public class Cache<X, R> {
     public final F<X, R> f;
     private X _lastX;

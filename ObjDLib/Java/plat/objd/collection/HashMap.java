@@ -1,6 +1,7 @@
 package objd.collection;
 
-import java.lang.*;
+import objd.lang.Tuple;
+
 import java.util.Map;
 
 public abstract class HashMap<K, V> extends Map_impl<K, V> {
@@ -21,7 +22,7 @@ public abstract class HashMap<K, V> extends Map_impl<K, V> {
     }
 
     @Override
-    public java.lang.Iterable<K> keys() {
+    public Iterable<K> keys() {
         return new HashMapIterable<K>() {
             @Override
             public Iterator<K> iterator() {
@@ -42,7 +43,7 @@ public abstract class HashMap<K, V> extends Map_impl<K, V> {
     }
 
     @Override
-    public java.lang.Iterable<V> values() {
+    public Iterable<V> values() {
         return new HashMapIterable<V>() {
             @Override
             public Iterator<V> iterator() {

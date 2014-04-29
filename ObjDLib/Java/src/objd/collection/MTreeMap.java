@@ -147,14 +147,14 @@ else {
             p.left = null;
             p.right = null;
             p.parent = null;
-            if(p.color == this.BLACK) {
+            if(p.color == MTreeMap.BLACK) {
                 fixAfterDeletionEntry(replacement);
             }
         } else {
             if(p.parent == null) {
                 this._root = null;
             } else {
-                if(p.color == this.BLACK) {
+                if(p.color == MTreeMap.BLACK) {
                     fixAfterDeletionEntry(p);
                 }
                 if(p.parent != null) {
@@ -190,13 +190,13 @@ else {
         return entry.value;
     }
     private void fixAfterInsertionEntry(final TreeMapEntry<K, V> entry) {
-        entry.color = this.RED;
+        entry.color = MTreeMap.RED;
         TreeMapEntry<K, V> x = entry;
         final TreeMapEntry<K, V> __tmp_2 = x.parent;
         if(__tmp_2 == null) {
             throw new RuntimeException("Not null");
         }
-        while(x != null && (this._root == null || !(this._root.equals(x))) && __tmp_2.color == this.RED) {
+        while(x != null && (this._root == null || !(this._root.equals(x))) && __tmp_2.color == MTreeMap.RED) {
             final TreeMapEntry<K, V> __tmp_2_0_l = x.parent;
             final TreeMapEntry<K, V> __tmp_2_0 = x.parent;
             final TreeMapEntry<K, V> __tmp_2_0 = (__tmp_2_0 == null) ? (null) : (__tmp_2_0.parent);
@@ -205,19 +205,19 @@ else {
                 final TreeMapEntry<K, V> __tmp_2_0_0 = x.parent;
                 final TreeMapEntry<K, V> __tmp_2_0_0 = (__tmp_2_0_0 == null) ? (null) : (__tmp_2_0_0.parent);
                 final TreeMapEntry<K, V> y = (__tmp_2_0_0 == null) ? (null) : (__tmp_2_0_0.right);
-                if(y != null && y.color == this.RED) {
+                if(y != null && y.color == MTreeMap.RED) {
                     {
                         final TreeMapEntry<K, V> __tmp_2_0_1_0 = x.parent;
                         if(__tmp_2_0_1_0 != null) {
-                            __tmp_2_0_1_0.color = this.BLACK;
+                            __tmp_2_0_1_0.color = MTreeMap.BLACK;
                         }
                     }
-                    y.color = this.BLACK;
+                    y.color = MTreeMap.BLACK;
                     {
                         final TreeMapEntry<K, V> __tmp_2_0_1_2 = x.parent;
                         final TreeMapEntry<K, V> __tmp_2_0_1_2 = (__tmp_2_0_1_2 == null) ? (null) : (__tmp_2_0_1_2.parent);
                         if(__tmp_2_0_1_2 != null) {
-                            __tmp_2_0_1_2.color = this.RED;
+                            __tmp_2_0_1_2.color = MTreeMap.RED;
                         }
                     }
                     final TreeMapEntry<K, V> __tmp_2_0_1_3 = x.parent;
@@ -232,14 +232,14 @@ else {
                     {
                         final TreeMapEntry<K, V> __tmp_2_0_1_1 = x.parent;
                         if(__tmp_2_0_1_1 != null) {
-                            __tmp_2_0_1_1.color = this.BLACK;
+                            __tmp_2_0_1_1.color = MTreeMap.BLACK;
                         }
                     }
                     {
                         final TreeMapEntry<K, V> __tmp_2_0_1_2 = x.parent;
                         final TreeMapEntry<K, V> __tmp_2_0_1_2 = (__tmp_2_0_1_2 == null) ? (null) : (__tmp_2_0_1_2.parent);
                         if(__tmp_2_0_1_2 != null) {
-                            __tmp_2_0_1_2.color = this.RED;
+                            __tmp_2_0_1_2.color = MTreeMap.RED;
                         }
                     }
                     final TreeMapEntry<K, V> __tmp_2_0_1_3p0 = x.parent;
@@ -249,19 +249,19 @@ else {
                 final TreeMapEntry<K, V> __tmp_2_0_0 = x.parent;
                 final TreeMapEntry<K, V> __tmp_2_0_0 = (__tmp_2_0_0 == null) ? (null) : (__tmp_2_0_0.parent);
                 final TreeMapEntry<K, V> y = (__tmp_2_0_0 == null) ? (null) : (__tmp_2_0_0.left);
-                if(y != null && y.color == this.RED) {
+                if(y != null && y.color == MTreeMap.RED) {
                     {
                         final TreeMapEntry<K, V> __tmp_2_0_1_0 = x.parent;
                         if(__tmp_2_0_1_0 != null) {
-                            __tmp_2_0_1_0.color = this.BLACK;
+                            __tmp_2_0_1_0.color = MTreeMap.BLACK;
                         }
                     }
-                    y.color = this.BLACK;
+                    y.color = MTreeMap.BLACK;
                     {
                         final TreeMapEntry<K, V> __tmp_2_0_1_2 = x.parent;
                         final TreeMapEntry<K, V> __tmp_2_0_1_2 = (__tmp_2_0_1_2 == null) ? (null) : (__tmp_2_0_1_2.parent);
                         if(__tmp_2_0_1_2 != null) {
-                            __tmp_2_0_1_2.color = this.RED;
+                            __tmp_2_0_1_2.color = MTreeMap.RED;
                         }
                     }
                     final TreeMapEntry<K, V> __tmp_2_0_1_3 = x.parent;
@@ -276,14 +276,14 @@ else {
                     {
                         final TreeMapEntry<K, V> __tmp_2_0_1_1 = x.parent;
                         if(__tmp_2_0_1_1 != null) {
-                            __tmp_2_0_1_1.color = this.BLACK;
+                            __tmp_2_0_1_1.color = MTreeMap.BLACK;
                         }
                     }
                     {
                         final TreeMapEntry<K, V> __tmp_2_0_1_2 = x.parent;
                         final TreeMapEntry<K, V> __tmp_2_0_1_2 = (__tmp_2_0_1_2 == null) ? (null) : (__tmp_2_0_1_2.parent);
                         if(__tmp_2_0_1_2 != null) {
-                            __tmp_2_0_1_2.color = this.RED;
+                            __tmp_2_0_1_2.color = MTreeMap.RED;
                         }
                     }
                     final TreeMapEntry<K, V> __tmp_2_0_1_3p0 = x.parent;
@@ -292,23 +292,23 @@ else {
             }
         }
         if(this._root != null) {
-            this._root.color = this.BLACK;
+            this._root.color = MTreeMap.BLACK;
         }
     }
     private void fixAfterDeletionEntry(final TreeMapEntry<K, V> entry) {
         TreeMapEntry<K, V> x = entry;
-        while(x != null && (this._root == null || !(this._root.equals(x))) && x.color == this.BLACK) {
+        while(x != null && (this._root == null || !(this._root.equals(x))) && x.color == MTreeMap.BLACK) {
             final TreeMapEntry<K, V> __tmp_1_0 = x.parent;
             final TreeMapEntry<K, V> __tmp_1_0 = (__tmp_1_0 == null) ? (null) : (__tmp_1_0.left);
             if(__tmp_1_0 != null && __tmp_1_0.equals(x)) {
                 final TreeMapEntry<K, V> __tmp_1_0_0 = x.parent;
                 TreeMapEntry<K, V> sib = (__tmp_1_0_0 == null) ? (null) : (__tmp_1_0_0.right);
-                if(sib != null && sib.color == this.RED) {
-                    sib.color = this.BLACK;
+                if(sib != null && sib.color == MTreeMap.RED) {
+                    sib.color = MTreeMap.BLACK;
                     {
                         final TreeMapEntry<K, V> __tmp_1_0_1_1 = x.parent;
                         if(__tmp_1_0_1_1 != null) {
-                            __tmp_1_0_1_1.color = this.RED;
+                            __tmp_1_0_1_1.color = MTreeMap.RED;
                         }
                     }
                     rotateLeftP(x.parent);
@@ -317,22 +317,22 @@ else {
                 }
                 final TreeMapEntry<K, V> __tmp_1_0_2 = (sib == null) ? (null) : (sib.left);
                 final TreeMapEntry<K, V> __tmp_1_0_2 = (sib == null) ? (null) : (sib.right);
-                if((__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.left).color) : (this.BLACK) == this.BLACK && (__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.right).color) : (this.BLACK) == this.BLACK) {
+                if((__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.left).color) : (MTreeMap.BLACK) == MTreeMap.BLACK && (__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.right).color) : (MTreeMap.BLACK) == MTreeMap.BLACK) {
                     if(sib != null) {
-                        sib.color = this.RED;
+                        sib.color = MTreeMap.RED;
                     }
                     x = x.parent;
                 } else {
                     final TreeMapEntry<K, V> __tmp_1_0_2_0 = (sib == null) ? (null) : (sib.right);
-                    if((__tmp_1_0_2_0 != null) ? ((sib == null) ? (null) : (sib.right).color) : (this.BLACK) == this.BLACK) {
+                    if((__tmp_1_0_2_0 != null) ? ((sib == null) ? (null) : (sib.right).color) : (MTreeMap.BLACK) == MTreeMap.BLACK) {
                         {
                             final TreeMapEntry<K, V> __tmp_1_0_2_0_0 = (sib == null) ? (null) : (sib.left);
                             if(__tmp_1_0_2_0_0 != null) {
-                                __tmp_1_0_2_0_0.color = this.BLACK;
+                                __tmp_1_0_2_0_0.color = MTreeMap.BLACK;
                             }
                         }
                         if(sib != null) {
-                            sib.color = this.RED;
+                            sib.color = MTreeMap.RED;
                         }
                         rotateRightP(sib);
                         final TreeMapEntry<K, V> __tmp_1_0_2_0_3 = x.parent;
@@ -340,18 +340,18 @@ else {
                     }
                     if(sib != null) {
                         final TreeMapEntry<K, V> __tmp_1_0_2_1 = x.parent;
-                        sib.color = (__tmp_1_0_2_1 != null) ? (x.parent.color) : (this.BLACK);
+                        sib.color = (__tmp_1_0_2_1 != null) ? (x.parent.color) : (MTreeMap.BLACK);
                     }
                     {
                         final TreeMapEntry<K, V> __tmp_1_0_2_2 = x.parent;
                         if(__tmp_1_0_2_2 != null) {
-                            __tmp_1_0_2_2.color = this.BLACK;
+                            __tmp_1_0_2_2.color = MTreeMap.BLACK;
                         }
                     }
                     {
                         final TreeMapEntry<K, V> __tmp_1_0_2_3 = (sib == null) ? (null) : (sib.right);
                         if(__tmp_1_0_2_3 != null) {
-                            __tmp_1_0_2_3.color = this.BLACK;
+                            __tmp_1_0_2_3.color = MTreeMap.BLACK;
                         }
                     }
                     rotateLeftP(x.parent);
@@ -360,12 +360,12 @@ else {
             } else {
                 final TreeMapEntry<K, V> __tmp_1_0_0 = x.parent;
                 TreeMapEntry<K, V> sib = (__tmp_1_0_0 == null) ? (null) : (__tmp_1_0_0.left);
-                if(sib != null && sib.color == this.RED) {
-                    sib.color = this.BLACK;
+                if(sib != null && sib.color == MTreeMap.RED) {
+                    sib.color = MTreeMap.BLACK;
                     {
                         final TreeMapEntry<K, V> __tmp_1_0_1_1 = x.parent;
                         if(__tmp_1_0_1_1 != null) {
-                            __tmp_1_0_1_1.color = this.RED;
+                            __tmp_1_0_1_1.color = MTreeMap.RED;
                         }
                     }
                     rotateRightP(x.parent);
@@ -374,22 +374,22 @@ else {
                 }
                 final TreeMapEntry<K, V> __tmp_1_0_2 = (sib == null) ? (null) : (sib.right);
                 final TreeMapEntry<K, V> __tmp_1_0_2 = (sib == null) ? (null) : (sib.left);
-                if((__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.right).color) : (this.BLACK) == this.BLACK && (__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.left).color) : (this.BLACK) == this.BLACK) {
+                if((__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.right).color) : (MTreeMap.BLACK) == MTreeMap.BLACK && (__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.left).color) : (MTreeMap.BLACK) == MTreeMap.BLACK) {
                     if(sib != null) {
-                        sib.color = this.RED;
+                        sib.color = MTreeMap.RED;
                     }
                     x = x.parent;
                 } else {
                     final TreeMapEntry<K, V> __tmp_1_0_2_0 = (sib == null) ? (null) : (sib.left);
-                    if((__tmp_1_0_2_0 != null) ? ((sib == null) ? (null) : (sib.left).color) : (this.BLACK) == this.BLACK) {
+                    if((__tmp_1_0_2_0 != null) ? ((sib == null) ? (null) : (sib.left).color) : (MTreeMap.BLACK) == MTreeMap.BLACK) {
                         {
                             final TreeMapEntry<K, V> __tmp_1_0_2_0_0 = (sib == null) ? (null) : (sib.right);
                             if(__tmp_1_0_2_0_0 != null) {
-                                __tmp_1_0_2_0_0.color = this.BLACK;
+                                __tmp_1_0_2_0_0.color = MTreeMap.BLACK;
                             }
                         }
                         if(sib != null) {
-                            sib.color = this.RED;
+                            sib.color = MTreeMap.RED;
                         }
                         rotateLeftP(sib);
                         final TreeMapEntry<K, V> __tmp_1_0_2_0_3 = x.parent;
@@ -397,18 +397,18 @@ else {
                     }
                     if(sib != null) {
                         final TreeMapEntry<K, V> __tmp_1_0_2_1 = x.parent;
-                        sib.color = (__tmp_1_0_2_1 != null) ? (x.parent.color) : (this.BLACK);
+                        sib.color = (__tmp_1_0_2_1 != null) ? (x.parent.color) : (MTreeMap.BLACK);
                     }
                     {
                         final TreeMapEntry<K, V> __tmp_1_0_2_2 = x.parent;
                         if(__tmp_1_0_2_2 != null) {
-                            __tmp_1_0_2_2.color = this.BLACK;
+                            __tmp_1_0_2_2.color = MTreeMap.BLACK;
                         }
                     }
                     {
                         final TreeMapEntry<K, V> __tmp_1_0_2_3 = (sib == null) ? (null) : (sib.left);
                         if(__tmp_1_0_2_3 != null) {
-                            __tmp_1_0_2_3.color = this.BLACK;
+                            __tmp_1_0_2_3.color = MTreeMap.BLACK;
                         }
                     }
                     rotateRightP(x.parent);
@@ -417,7 +417,7 @@ else {
             }
         }
         if(x != null) {
-            x.color = this.BLACK;
+            x.color = MTreeMap.BLACK;
         }
     }
     private void rotateLeftP(final TreeMapEntry<K, V> p) {
@@ -538,7 +538,7 @@ else {
     }
     @Override
     public void appendItem(final Tuple<K, V> item) {
-        setKeyValue(item.b, item.a);
+        setKeyValue(item.a, item.b);
     }
     @Override
     public boolean removeItem(final Tuple<K, V> item) {

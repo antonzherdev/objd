@@ -5,7 +5,7 @@ import objd.lang.*;
 public abstract class MMap_impl<K, V> extends Map_impl<K, V> implements MMap<K, V> {
     @Override
     public void appendItem(final Tuple<K, V> item) {
-        setKeyValue(item.b, item.a);
+        setKeyValue(item.a, item.b);
     }
     @Override
     public boolean removeItem(final Tuple<K, V> item) {

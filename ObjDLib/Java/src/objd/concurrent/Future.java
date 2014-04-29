@@ -1,7 +1,6 @@
 package objd.concurrent;
 
 import objd.lang.*;
-import objd.lang.Try;
 import objd.collection.Traversable;
 
 public abstract class Future<T> {

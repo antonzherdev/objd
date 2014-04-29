@@ -4,7 +4,7 @@ trait Queue<T> {
 }
 
 class ImQueue<T>(val in : ImList<T>, val out : ImList<T>) extends Queue<T> {
-    static def apply<T> : ImQueue<T> = empty
+    static def apply<T> : ImQueue<T> = empty.cast<ImQueue<T>>
     private static val empty : ImQueue<any> = ImQueue<any>(ImList<any>(), ImList<any>())
 
     def iterator : Iterator<T> = QueueIterator<T>(in, out)

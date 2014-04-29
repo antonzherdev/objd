@@ -1,5 +1,7 @@
 package objd.lang;
 
+import objd.lang.*;
+
 public class Weak<T> {
     public final T value;
     public boolean isEmpty() {

@@ -2,7 +2,7 @@ package objd.collection
 
 abstract class ImList<T> extends ImSeq<T> {
     static def apply<T> : ImList<T> = EmptyList.instance.cast<ImList<T>>
-    static def apply<T>(item : T) : ImList<T> = FilledList<T>(item, EmptyList.instance)
+    static def apply<T>(item : T) : ImList<T> = FilledList<T>(item, EmptyList.instance.cast<ImList<T>>)
     static def apply<T>(item : T, tail : ImList<T>) : ImList<T>  = FilledList<T>(item, tail)
 
     override def iterator : Iterator<T> = {

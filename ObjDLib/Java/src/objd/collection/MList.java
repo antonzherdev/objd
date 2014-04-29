@@ -34,6 +34,7 @@ public class MList<T> extends MSeq_impl<T> {
                 int i = index;
                 while(c != null && i > 0) {
                     c = c.next;
+                    i--;
                 }
                 if(c != null) {
                     final MListItem<T> li = new MListItem<T>(item);

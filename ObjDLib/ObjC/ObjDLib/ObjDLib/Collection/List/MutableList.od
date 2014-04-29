@@ -24,6 +24,7 @@ class MList<T> extends MSeq<T> {
             var i = index
             while(c != nil && i > 0) {
                 c = c.next
+                i--
             }
             if(c != nil) {
                 val li = MListItem<T>(item)
@@ -140,9 +141,10 @@ class MListIterator<T>(val list : MList<T>) extends MIterator<T> {
 
     override def hasNext : bool = item != nil
     override def next : T = {
-        prev = item
-        item = item.get.next
-        prev.get.data
+        val p = item.get
+        item = p.next
+        prev = p
+        p.data
     }
     override def remove {
         list.remove(prev.get)
@@ -158,8 +160,8 @@ class MListImmutableIterator<T> extends Iterator<T> {
 
     override def hasNext : bool = item != nil
     override def next : T = {
-        val r = item
-        item = item.get.next
-        r.get.data
+        val r = item.get
+        item = r.next
+        r.data
     }
 }

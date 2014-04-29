@@ -1,6 +1,7 @@
 package objd.collection;
 
 import objd.lang.*;
+import objd.concurrent.DispatchQueue;
 import objd.chain.Chain;
 
 public abstract class Traversable_impl<T> implements Traversable<T> {

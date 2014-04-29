@@ -62,7 +62,7 @@ abstract class TreeMap<K, V>(val comparator : (K, K) -> int) extends ImMap<K, V>
         nil
     }
 
-    private def higherEntryThan(key : K) : TreeMapEntry<K, V>? = {
+    def higherEntryThan(key : K) : TreeMapEntry<K, V>? = {
         var p = root
         while (p != nil) {
             val cmp = comparator(key, p.key)

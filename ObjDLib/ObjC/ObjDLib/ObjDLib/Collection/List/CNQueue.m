@@ -47,7 +47,7 @@ static CNClassType* _CNImQueue_type;
 }
 
 + (CNImQueue*)apply {
-    return _CNImQueue_empty;
+    return ((CNImQueue*)(_CNImQueue_empty));
 }
 
 - (id<CNIterator>)iterator {

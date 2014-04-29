@@ -48,6 +48,7 @@ static CNClassType* _CNMList_type;
             NSUInteger i = index;
             while(c != nil && i > 0) {
                 c = ((CNMListItem*)(c)).next;
+                i--;
             }
             if(c != nil) {
                 CNMListItem* li = [CNMListItem listItemWithData:item];
@@ -274,9 +275,10 @@ static CNClassType* _CNMListIterator_type;
 }
 
 - (id)next {
-    _prev = _item;
-    _item = ((CNMListItem*)(nonnil(_item))).next;
-    return ((CNMListItem*)(nonnil(_prev))).data;
+    CNMListItem* p = ((CNMListItem*)(nonnil(_item)));
+    _item = p.next;
+    _prev = p;
+    return p.data;
 }
 
 - (void)remove {
@@ -333,9 +335,9 @@ static CNClassType* _CNMListImmutableIterator_type;
 }
 
 - (id)next {
-    CNMListItem* r = _item;
-    _item = ((CNMListItem*)(nonnil(_item))).next;
-    return ((CNMListItem*)(nonnil(r))).data;
+    CNMListItem* r = ((CNMListItem*)(nonnil(_item)));
+    _item = r.next;
+    return r.data;
 }
 
 - (CNClassType*)type {

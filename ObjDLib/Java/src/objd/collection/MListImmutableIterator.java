@@ -10,14 +10,11 @@ public class MListImmutableIterator<T> extends Iterator_impl<T> {
     }
     @Override
     public T next() {
-        final MListItem<T> r = this.item;
         if(this.item == null) {
             throw new RuntimeException("Not null");
         }
-        this.item = this.item.next;
-        if(r == null) {
-            throw new RuntimeException("Not null");
-        }
+        final MListItem<T> r = this.item;
+        this.item = r.next;
         return r.data;
     }
     public MListImmutableIterator() {

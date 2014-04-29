@@ -78,7 +78,7 @@
 @implementation CNMMap_impl
 
 - (void)appendItem:(CNTuple*)item {
-    [self setKey:((CNTuple*)(item)).b value:((CNTuple*)(item)).a];
+    [self setKey:((CNTuple*)(item)).a value:((CNTuple*)(item)).b];
 }
 
 - (BOOL)removeItem:(CNTuple*)item {

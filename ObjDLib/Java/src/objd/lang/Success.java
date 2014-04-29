@@ -1,5 +1,7 @@
 package objd.lang;
 
+import objd.lang.*;
+
 public final class Success<T> extends Try<T> {
     public final T get;
     @Override

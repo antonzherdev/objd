@@ -2,7 +2,6 @@ package objd.concurrent;
 
 import objd.lang.*;
 import objd.collection.Iterator;
-import objd.lang.Try;
 import test.;
 import test.Test;
 import test.TestCase;

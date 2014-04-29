@@ -12,15 +12,13 @@ public class MListIterator<T> extends MIterator_impl<T> {
     }
     @Override
     public T next() {
-        this.prev = this.item;
         if(this.item == null) {
             throw new RuntimeException("Not null");
         }
-        this.item = this.item.next;
-        if(this.prev == null) {
-            throw new RuntimeException("Not null");
-        }
-        return this.prev.data;
+        final MListItem<T> p = this.item;
+        this.item = p.next;
+        this.prev = p;
+        return p.data;
     }
     @Override
     public void remove() {

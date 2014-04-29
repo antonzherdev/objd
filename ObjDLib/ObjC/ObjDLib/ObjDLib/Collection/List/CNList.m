@@ -25,7 +25,7 @@ static CNClassType* _CNImList_type;
 }
 
 + (CNImList*)applyItem:(id)item {
-    return [CNFilledList filledListWith_head:item tail:CNEmptyList.instance];
+    return [CNFilledList filledListWith_head:item tail:((CNImList*)(CNEmptyList.instance))];
 }
 
 + (CNImList*)applyItem:(id)item tail:(CNImList*)tail {

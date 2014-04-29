@@ -19,7 +19,7 @@ genFile D.File{D.filePackage = D.Package{D.packageName = package}, D.fileImports
 	in J.File {
 		J.fileIsTest = D.containsAnnotationWithClassName "test.Test" $ D.classAnnotations cls,
 		J.filePackage = package,
-		J.fileImports = filter ((/= package) . init) $ nub $ ["objd", "lang", "*"] : clImps ++ map genImport imps,
+		J.fileImports = ["objd", "lang", "*"] : (filter (\p -> package /= init p && ["objd", "lang"] /= init p) $ nub $ clImps ++ map genImport imps),
 		J.fileClass = cls'}
 
 genImport :: D.Import -> J.Import
@@ -168,7 +168,7 @@ genPar D.Def{D.defName = nm, D.defType = tp} = do
  -----------------------------------------------------------------------------------------------------------------------------------------------}
 genTp :: D.DataType -> Writer Wrt J.TP
 genTp (D.TPClass tp gens cl) = do
-	when (tp == D.TPMClass || tp == D.TPMTrait) $ tellImport $ D.packageName (D.classPackage cl) ++ [D.className cl]
+	when (tp == D.TPMClass || tp == D.TPMTrait) $ tellImportClass cl
 	gens' <- mapM genTp gens
 	return $ J.TPRef gens' (D.className cl) 
 genTp (D.TPNumber _ 1) = return $ J.tpRef "byte"
@@ -261,6 +261,8 @@ tellImport :: J.Import -> Writer Wrt ()
 tellImport imp = tell Wrt{wrtStms = [], wrtImports = [imp]}
 tellImports :: [J.Import] -> Writer Wrt ()
 tellImports imps = tell Wrt{wrtStms = [], wrtImports = imps}
+tellImportClass :: D.Class -> Writer Wrt ()
+tellImportClass cl = tellImport $ D.packageName (D.classPackage cl) ++ [D.className cl]
 
 genExp :: Env -> D.Exp -> Writer Wrt J.Exp
 genExp _ D.Nop = return J.Nop
@@ -288,8 +290,8 @@ genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
 			pars' <- mapM ((genExp env) . snd) pars
 			gens' <- mapM genTp gens
 			return $ J.New [] (D.defName objDef) gens' pars'
-genExp env (D.Dot (Self stp) r@(D.Call d _ pars gens) ) 
-	| D.DefModStatic `elem` D.defMods d && not (null gens) = do
+genExp env (D.Dot (Self stp) r@(D.Call d _ pars _) ) 
+	| D.DefModStatic `elem` D.defMods d = do
 		r' <- genExp env r
 		return $ J.Dot (J.Ref $ D.dataTypeClassName stp) r'
 	| not (null pars) = genExp env r
@@ -301,9 +303,13 @@ genExp env (D.Index l r) = do
 	l' <- genExp env l
 	r' <- genExp env r
 	return $ J.Index l' r'
-genExp _ (D.Call d _ [] []) 
-	| D.DefModChangedInLambda `elem` D.defMods d = return $ J.Dot (J.Ref $ D.defName d) (J.Ref "value")
-	| D.DefModField `elem` D.defMods d || D.DefModLocal `elem` D.defMods d || D.DefModObject `elem` D.defMods d = return $ J.Ref $ D.defName d
+genExp _ (D.Call d@D.Def{D.defMods = mods} _ [] []) 
+	| D.DefModChangedInLambda `elem` mods = return $ J.Dot (J.Ref $ D.defName d) (J.Ref "value")
+	| D.DefModField `elem` mods || D.DefModLocal `elem` mods = return $ J.Ref $ D.defName d
+	| D.DefModObject `elem` mods = do
+		let (D.TPObject _ cl) = D.defType d
+		tellImportClass cl 
+		return $ J.Ref $ D.defName d
 genExp env (D.Call constr _ pars gens) 
 	| D.DefModConstructor `elem` D.defMods constr 
 		= do

@@ -39,7 +39,7 @@ trait MMap<K, V> extends Map<K, V> with MIterable<(K, V)> {
     }
 
     override def append(item : (K, V)) {
-        set(item.b, item.a)
+        set(item.a, item.b)
     }
     override def remove(item : (K, V)) : bool = remove(item.a) != nil
 

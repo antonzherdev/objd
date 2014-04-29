@@ -98,7 +98,7 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
         }
         return null;
     }
-    private TreeMapEntry<K, V> higherEntryThanKey(final K key) {
+    public TreeMapEntry<K, V> higherEntryThanKey(final K key) {
         TreeMapEntry<K, V> p = this.root();
         while(p != null) {
             final int cmp = this.comparator.apply(key, p.key);

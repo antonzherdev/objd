@@ -1,7 +1,6 @@
 package objd.collection;
 
 import objd.lang.*;
-import objd.lang.Object;
 
 public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
     private static final Object obj;
@@ -18,7 +17,7 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
     }
     @Override
     public void appendItem(final T item) {
-        this.mmap.setKeyValue(item, this.obj);
+        this.mmap.setKeyValue(item, MTreeSet.obj);
     }
     @Override
     public boolean removeItem(final T item) {

@@ -7,7 +7,7 @@ public abstract class ImList<T> extends ImSeq_impl<T> {
         return ((ImList<T>)(EmptyList.instance));
     }
     public static <T> ImList<T> applyItem(final T item) {
-        return new FilledList<T>(item, EmptyList.instance);
+        return new FilledList<T>(item, ((ImList<T>)(EmptyList.instance)));
     }
     public static <T> ImList<T> applyItemTail(final T item, final ImList<T> tail) {
         return new FilledList<T>(item, tail);
