@@ -124,21 +124,12 @@ static CNClassType* _CNYield_type;
 }
 
 + (CNYield*)decorateBase:(CNYield*)base begin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all {
-    return [CNYield yieldWithBegin:({
-        int(^__tmp)(NSUInteger) = begin;
-        ((__tmp != nil) ? ((int(^)(NSUInteger))(__tmp)) : ^int(NSUInteger size) {
-            return [base beginYieldWithSize:size];
-        });
-    }) yield:({
-        int(^__tmp)(id) = yield;
-        ((__tmp != nil) ? ((int(^)(id))(__tmp)) : ^int(id item) {
-            return [base yieldItem:item];
-        });
-    }) end:({
-        int(^__tmp)(int) = end;
-        ((__tmp != nil) ? ((int(^)(int))(__tmp)) : ^int(int result) {
-            return [base endYieldWithResult:result];
-        });
+    return [CNYield yieldWithBegin:((begin != nil) ? ((int(^)(NSUInteger))(begin)) : ^int(NSUInteger size) {
+        return [base beginYieldWithSize:size];
+    }) yield:((yield != nil) ? ((int(^)(id))(yield)) : ^int(id item) {
+        return [base yieldItem:((id)(item))];
+    }) end:((end != nil) ? ((int(^)(int))(end)) : ^int(int result) {
+        return [base endYieldWithResult:result];
     }) all:all];
 }
 

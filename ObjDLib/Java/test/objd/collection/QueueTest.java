@@ -20,27 +20,27 @@ public class QueueTest extends TestCase {
         .<Integer>assertEqualsAB(3, ((int)(q.count())));
         Tuple<Integer, ImQueue<Integer>> p = q.dequeue();
         q = p.b;
-        final Integer __tmp_12 = p.a;
-        if(__tmp_12 == null) {
+        final Integer __tmp_12p1 = p.a;
+        if(__tmp_12p1 == null) {
             throw new RuntimeException("Not null");
         }
-        .<Integer>assertEqualsAB(1, __tmp_12);
+        .<Integer>assertEqualsAB(1, __tmp_12p1);
         .<Integer>assertEqualsAB(2, ((int)(q.count())));
         p = q.dequeue();
         q = p.b;
-        final Integer __tmp_16 = p.a;
-        if(__tmp_16 == null) {
+        final Integer __tmp_16p1 = p.a;
+        if(__tmp_16p1 == null) {
             throw new RuntimeException("Not null");
         }
-        .<Integer>assertEqualsAB(2, __tmp_16);
+        .<Integer>assertEqualsAB(2, __tmp_16p1);
         .<Integer>assertEqualsAB(1, ((int)(q.count())));
         p = q.dequeue();
         q = p.b;
-        final Integer __tmp_20 = p.a;
-        if(__tmp_20 == null) {
+        final Integer __tmp_20p1 = p.a;
+        if(__tmp_20p1 == null) {
             throw new RuntimeException("Not null");
         }
-        .<Integer>assertEqualsAB(3, __tmp_20);
+        .<Integer>assertEqualsAB(3, __tmp_20p1);
         .<Integer>assertEqualsAB(0, ((int)(q.count())));
     }
     public QueueTest() {

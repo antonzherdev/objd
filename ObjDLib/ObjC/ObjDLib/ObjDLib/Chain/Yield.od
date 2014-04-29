@@ -11,10 +11,10 @@ class Yield<T>(val begin : (uint -> int4)? = nil, val yield : (T -> int4)? = nil
 
     static def make<T>(begin : (uint -> int4)? = nil, yield : (T -> int4)? = nil, end : (int4 -> int4)? = nil, all : (Traversable<T> -> int4)? = nil) : Yield<T> =
         Yield<T>(begin, yield, end, all)
-    static def decorate<T>(base : Yield<_>, begin : (uint -> int4)? = nil, yield : (T -> int4)? = nil, end : (int4 -> int4)? = nil, all : (Traversable<T> -> int4)? = nil) : Yield<T> =
+    static def decorate<T, A>(base : Yield<A>, begin : (uint -> int4)? = nil, yield : (T -> int4)? = nil, end : (int4 -> int4)? = nil, all : (Traversable<T> -> int4)? = nil) : Yield<T> =
         Yield<T>(
             begin = begin.getOr{size : uint -> base.beginYieldWith(size)},
-            yield = yield.getOr{item : T -> base.yield(item)},
+            yield = yield.getOr{item : T -> base.yield(item.cast<A>)},
               end = end.getOr{result : int4 -> base.endYieldWith(result)},
               all = all)
     def beginYieldWith(size : uint) : int4 =

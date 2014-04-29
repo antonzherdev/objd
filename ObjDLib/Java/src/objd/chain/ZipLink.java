@@ -10,7 +10,7 @@ public class ZipLink<T, A, R> extends ChainLink_impl<T, R> {
     @Override
     public Yield<A> buildYield(final Yield<R> yield) {
         final Iterator<A> ai = this.a.iterator();
-        return Yield.<A>decorateBaseYield(yield, new F<A, Integer>() {
+        return Yield.<A, R>decorateBaseYield(yield, new F<A, Integer>() {
             @Override
             public Integer apply(final A item) {
                 if(!(ai.hasNext())) {

@@ -7,7 +7,7 @@ public class ShuffleLink<T> extends ChainLink_impl<T, T> {
     private MArray<T> _array;
     @Override
     public Yield<T> buildYield(final Yield<T> yield) {
-        return Yield.<T>decorateBaseBeginYieldEnd(yield, new F<Integer, Integer>() {
+        return Yield.<T, T>decorateBaseBeginYieldEnd(yield, new F<Integer, Integer>() {
             @Override
             public Integer apply(final Integer size) {
                 ShuffleLink.this._array = new MArray<T>(size);

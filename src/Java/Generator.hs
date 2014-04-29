@@ -76,7 +76,7 @@ defName' d = case D.defPars d of
 		"isEqual" -> "equals"
 		o -> o
 	_ -> fromMaybe (D.defName d ++ concatMap (cap . D.defName) (D.defPars d)) $ 
-		D.findAnnotationWithClassName "core.gen.GenName" (D.defAnnotations d) >>= (\a -> case a of
+		D.findAnnotationWithClassName "objd.gen.GenName" (D.defAnnotations d) >>= (\a -> case a of
 			D.Annotation _ [(_, D.StringConst s)] -> Just s
 			_ -> Nothing)
 
@@ -283,7 +283,10 @@ genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
 			pars' <- mapM ((genExp env) . snd) pars
 			gens' <- mapM genTp gens
 			return $ J.New [] (D.defName objDef) gens' pars'
-genExp env (D.Dot (Self _) r@(D.Call _ _ pars _) ) 
+genExp env (D.Dot (Self stp) r@(D.Call d _ pars gens) ) 
+	| D.DefModStatic `elem` D.defMods d && not (null gens) = do
+		r' <- genExp env r
+		return $ J.Dot (J.Ref $ D.dataTypeClassName stp) r'
 	| not (null pars) = genExp env r
 genExp env (D.Dot l r) = do
 	l' <- genExp env l
@@ -296,6 +299,12 @@ genExp env (D.Index l r) = do
 genExp _ (D.Call d _ [] []) 
 	| D.DefModChangedInLambda `elem` D.defMods d = return $ J.Dot (J.Ref $ D.defName d) (J.Ref "value")
 	| D.DefModField `elem` D.defMods d || D.DefModLocal `elem` D.defMods d || D.DefModObject `elem` D.defMods d = return $ J.Ref $ D.defName d
+genExp env (D.Call constr _ pars gens) 
+	| D.DefModConstructor `elem` D.defMods constr 
+		= do
+			pars' <- mapM ((genExp env) . snd) pars
+			gens' <- mapM genTp gens
+			return $ J.New [] (D.dataTypeClassName $ D.defType constr) gens' pars'
 genExp env (D.Call d _ pars gens) = do
 	pars' <- mapM ((genExp env) . snd) pars
 	gens' <- mapM genTp gens

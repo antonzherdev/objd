@@ -29,7 +29,7 @@ static CNClassType* _CNFilterLink_type;
 - (CNYield*)buildYield:(CNYield*)yield {
     return [CNYield decorateBase:yield begin:^int(NSUInteger size) {
         return [yield beginYieldWithSize:((NSUInteger)(size * _selectivity))];
-    } yield:^int(id<CNTraversable> item) {
+    } yield:^int(id item) {
         if(_predicate(item)) return [yield yieldItem:item];
         else return 0;
     }];

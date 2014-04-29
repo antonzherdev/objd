@@ -242,8 +242,8 @@ else {
                             __tmp_2_0_1_2.color = this.RED;
                         }
                     }
-                    final TreeMapEntry<K, V> __tmp_2_0_1_3 = x.parent;
-                    rotateRightP((__tmp_2_0_1_3 == null) ? (null) : (__tmp_2_0_1_3.parent));
+                    final TreeMapEntry<K, V> __tmp_2_0_1_3p0 = x.parent;
+                    rotateRightP((__tmp_2_0_1_3p0 == null) ? (null) : (__tmp_2_0_1_3p0.parent));
                 }
             } else {
                 final TreeMapEntry<K, V> __tmp_2_0_0 = x.parent;
@@ -286,8 +286,8 @@ else {
                             __tmp_2_0_1_2.color = this.RED;
                         }
                     }
-                    final TreeMapEntry<K, V> __tmp_2_0_1_3 = x.parent;
-                    rotateLeftP((__tmp_2_0_1_3 == null) ? (null) : (__tmp_2_0_1_3.parent));
+                    final TreeMapEntry<K, V> __tmp_2_0_1_3p0 = x.parent;
+                    rotateLeftP((__tmp_2_0_1_3p0 == null) ? (null) : (__tmp_2_0_1_3p0.parent));
                 }
             }
         }

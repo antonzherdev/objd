@@ -1049,16 +1049,17 @@ resolveDefPar env mainDef parameters = parRec True parameters []
 		makeDef :: [(Def, Maybe Exp)] -> Def
 		makeDef pars =  
 			let 
-				callMainDef = call mainDef (map expCallPar pars)
+				callGens = maybe [] (map (TPClass TPMGeneric []). defGenericsClasses) $ defGenerics mainDef
+				callMainDef = Call mainDef (defType mainDef) (map expCallPar pars) callGens
 				callMainDef' = maybeAddReturn env (defType mainDef) $ 
 					if DefModConstructor `elem` defMods mainDef then callMainDef 
 					else Dot (Self (envSelf env)) $ callMainDef
 				in mainDef {defMods = (map (\m -> if m == DefModConstructor then DefModDef else m) . filter (\m -> m /= DefModAbstract) ) (defMods mainDef),
 					defPars = (map fst . filter ( isNothing . snd)) pars,
 					defBody = callMainDef'}  
-		expCallPar :: (Def, Maybe Exp) -> Exp
-		expCallPar (d, Nothing) = callRef d
-		expCallPar (_, Just b) = b
+		expCallPar :: (Def, Maybe Exp) -> (Def, Exp)
+		expCallPar (d, Nothing) = (d, callRef d)
+		expCallPar (d, Just b) = (d, b)
 
 linkDefPars :: Env -> [D.Par] -> [(Def, Maybe Exp)]
 --linkDefPars _ _ | trace ("linkDefPars: ") False = undefined
@@ -1101,6 +1102,8 @@ idxFind :: M.Map String a -> String -> Maybe a
 idxFind idxx k = M.lookup k idxx
 classFind :: ClassIndex -> String -> Class
 classFind cidx name = fromMaybe (ClassError name ("Class " ++ name ++ " not found") ) $ idxFind cidx name
+envAddSuffix :: Env -> String -> Env
+envAddSuffix env s = env{envVarSuffix = envVarSuffix env ++ s}
 {------------------------------------------------------------------------------------------------------------------------------ 
  - DataType 
  ------------------------------------------------------------------------------------------------------------------------------}
@@ -2202,10 +2205,8 @@ linkOrElse env _ ((D.NullDot dl dr), (NullDot dl' dr' _)) alt =
 linkOrElse env (tp, isOptionAlt) (_, l') alt = 
 	let 
 		tmp = tmpVal env "" (option False tp) $ implicitConvertsion env (option False tp) l'
-	in Braces[
-			declareVal env tmp,
-			If (BoolOp NotEq (callRef tmp) (None tp)) ((if isOptionAlt then id else nonOpt env False) $ callRef tmp) alt
-		]
+		e r = If (BoolOp NotEq r (None tp)) ((if isOptionAlt then id else nonOpt env False) r) alt
+	in if isElementaryExpression l' then e l' else Braces[declareVal env tmp, e (callRef tmp)]
 
 linkNullDot :: Env -> D.Exp -> Exp
 linkNullDot env d@(D.NullDot a b) = let
@@ -2597,7 +2598,11 @@ tryExprCall :: Env-> Maybe DataType -> D.Exp -> Exp
 tryExprCall _ (Just (TPUnknown t)) e = ExpDError t e
 tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 	where
-		pars' = map (second (\e -> FirstTry e (exprToSome env e))) (fromMaybe [] pars) 
+		pars' = mapPars 0 (fromMaybe [] pars)
+			where
+				mapPars :: Int -> [D.CallPar] -> [(Maybe String, Exp)]
+				mapPars _ [] = []
+				mapPars i ((n, e):xs) = (n, FirstTry e (exprToSome (envAddSuffix env $ 'p' : show i) e)) : mapPars (i + 1) xs
 		self = fromMaybe (envSelf env) strictClass
 		call' :: (Maybe Class, Exp)
 		call' = fromMaybe (Nothing, ExpDError errorString cll) $ listToMaybe $ mplus (findCall True) (findCall False)

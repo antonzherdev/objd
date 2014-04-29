@@ -7,7 +7,7 @@ public class FilterLink<T> extends ChainLink_impl<T, T> {
     public final float selectivity;
     @Override
     public Yield<T> buildYield(final Yield<T> yield) {
-        return Yield.<T>decorateBaseBeginYield(yield, new F<Integer, Integer>() {
+        return Yield.<T, T>decorateBaseBeginYield(yield, new F<Integer, Integer>() {
             @Override
             public Integer apply(final Integer size) {
                 return yield.beginYieldWithSize(((int)(size * FilterLink.this.selectivity)));
