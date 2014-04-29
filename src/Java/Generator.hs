@@ -7,6 +7,7 @@ import Ex.String
 import Data.Maybe
 import Data.List
 import ObjD.Link as D
+import ObjD.LinkStruct as D
 import Java.Struct as J
 
 toJava :: D.File -> [J.File]
@@ -397,7 +398,7 @@ genExp env e@D.NPE = do
 	tellGenStms env e 
 	return J.Nop
 genExp env (D.Some _ e) = genExp env e
-genExp env (D.Return False e) = genExp env e
+genExp env (D.Return _ e) = genExp env e
 genExp env (D.Arr exps) = do
 	exps' <- mapM (genExp env) exps
 	return $ J.Dot (J.Ref "ImArray") (J.Call "fromObjects" [] exps')

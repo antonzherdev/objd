@@ -5,7 +5,9 @@ import Ex.String
 import ObjC.Generator
 import Java.Generator
 import ObjD.Parser
+import ObjD.Check as L
 import ObjD.Link as L
+import ObjD.LinkStruct as L
 import ObjD.Struct as D
 import Java.Struct as J
 import ObjC.Struct as C

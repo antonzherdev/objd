@@ -12,6 +12,7 @@ import           Data.Maybe
 import           Data.List
 import qualified ObjC.Struct   as C
 import qualified ObjD.Link   as D
+import qualified ObjD.LinkStruct   as D
 
 arc :: Bool
 arc = True
