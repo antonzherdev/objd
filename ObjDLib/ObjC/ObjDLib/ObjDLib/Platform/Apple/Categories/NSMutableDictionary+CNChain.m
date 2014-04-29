@@ -6,7 +6,7 @@
     [self setObject:wrapNil(value) forKey:wrapNil(key)];
 }
 
-- (id)removeForKey:(id)key {
+- (id)removeKey:(id)key {
     id ret = [self objectForKey:wrapNil(key)];
     if(ret != nil) [self removeObjectForKey:wrapNil(key)];
     return ret;
@@ -16,18 +16,12 @@
     return [NSMutableDictionary dictionary];
 }
 
-- (id)objectForKey:(id)key orUpdateWith:(id (^)())with {
+- (id)applyKey:(id)key orUpdateWith:(id (^)())with {
     id v = [self objectForKey:wrapNil(key)];
     if(v != nil) return v;
     v = with();
     [self setObject:wrapNil(v) forKey:wrapNil(key)];
     return v;
-}
-
-- (id)takeKey:(id)key {
-    id ret = self[wrapNil(key)];
-    if(ret != nil) [self removeObjectForKey:wrapNil(key)];
-    return ret;
 }
 
 

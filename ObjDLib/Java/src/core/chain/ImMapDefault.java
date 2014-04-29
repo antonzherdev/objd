@@ -12,7 +12,7 @@ public class ImMapDefault<K, V> extends ImIterable_impl<Tuple<K, V>> {
         return this.map.iterator();
     }
     public V applyKey(final K key) {
-        final V __tmp = this.map.optKey(key);
+        final V __tmp = this.map.applyKey(key);
         if(__tmp != null) {
             return __tmp;
         } else {

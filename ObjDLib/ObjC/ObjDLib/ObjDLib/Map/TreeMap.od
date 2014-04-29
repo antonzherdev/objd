@@ -1,8 +1,7 @@
 package core.chain
 
 abstract class TreeMap<K, V>(val comparator : (K, K) -> int) extends ImMap<K, V> {
-    override def apply(key : K) : V = entryFor(key).get.value
-    override def opt(key : K) : V? = entryFor(key)?.value
+    override def apply(key : K) : V? = entryFor(key)?.value
     def root : TreeMapEntry<K, V>?
     override def isEmpty : bool = root == nil
 
@@ -174,7 +173,7 @@ class MTreeMap<K, V>(comparator : (K, K) -> int) extends TreeMap<K, V>(comparato
         }
     }
 
-    override def removeFor(key : K) : V? = entryFor(key).for(delete(_))
+    override def remove(key : K) : V? = entryFor(key).for(delete(_))
 
     private def delete(entry : TreeMapEntry<K, V>) : V = {
         var p = entry

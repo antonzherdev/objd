@@ -32,10 +32,6 @@ static ODClassType* _CNTreeMap_type;
 }
 
 - (id)applyKey:(id)key {
-    return ((CNTreeMapEntry*)(nonnil([self entryForKey:key]))).value;
-}
-
-- (id)optKey:(id)key {
     return ((CNTreeMapEntry*)([self entryForKey:key])).value;
 }
 
@@ -408,7 +404,7 @@ static ODClassType* _CNMTreeMap_type;
     }
 }
 
-- (id)removeForKey:(id)key {
+- (id)removeKey:(id)key {
     CNTreeMapEntry* _ = [self entryForKey:key];
     if(_ != nil) return [self deleteEntry:_];
     else return nil;
@@ -701,8 +697,8 @@ static ODClassType* _CNMTreeMap_type;
     }
 }
 
-- (id)objectForKey:(id)key orUpdateWith:(id(^)())orUpdateWith {
-    id __tmp = [self optKey:key];
+- (id)applyKey:(id)key orUpdateWith:(id(^)())orUpdateWith {
+    id __tmp = [self applyKey:key];
     if(__tmp != nil) {
         return ((id)(__tmp));
     } else {
@@ -713,16 +709,10 @@ static ODClassType* _CNMTreeMap_type;
 }
 
 - (id)modifyKey:(id)key by:(id(^)(id))by {
-    id newObject = by([self optKey:key]);
-    if(newObject == nil) [self removeForKey:key];
+    id newObject = by([self applyKey:key]);
+    if(newObject == nil) [self removeKey:key];
     else [self setKey:key value:newObject];
     return newObject;
-}
-
-- (id)takeKey:(id)key {
-    id ret = [self optKey:key];
-    [self removeForKey:key];
-    return ret;
 }
 
 - (void)appendItem:(CNTuple*)item {
@@ -730,7 +720,7 @@ static ODClassType* _CNMTreeMap_type;
 }
 
 - (BOOL)removeItem:(CNTuple*)item {
-    return [self removeForKey:((CNTuple*)(item)).a] != nil;
+    return [self removeKey:((CNTuple*)(item)).a] != nil;
 }
 
 - (void)mutableFilterBy:(BOOL(^)(id))by {

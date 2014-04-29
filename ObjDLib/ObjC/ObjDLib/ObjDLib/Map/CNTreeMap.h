@@ -35,7 +35,6 @@
 - (instancetype)initWithComparator:(NSInteger(^)(id, id))comparator;
 - (ODClassType*)type;
 - (id)applyKey:(id)key;
-- (id)optKey:(id)key;
 - (CNTreeMapEntry*)root;
 - (BOOL)isEmpty;
 - (CNTreeMapEntry*)entryForKey:(id)key;
@@ -109,7 +108,7 @@
 - (void)clear;
 - (id<CNMIterator>)mutableIterator;
 - (void)setKey:(id)key value:(id)value;
-- (id)removeForKey:(id)key;
+- (id)removeKey:(id)key;
 - (CNTuple*)pollFirst;
 + (ODClassType*)type;
 @end

@@ -16,7 +16,7 @@ public class MMapDefault<K, V> extends MIterable_impl<Tuple<K, V>> {
         return this.map.mutableIterator();
     }
     public V applyKey(final K key) {
-        return this.map.objectForKeyOrUpdateWith(key, new F0<V>() {
+        return this.map.applyKeyOrUpdateWith(key, new F0<V>() {
             @Override
             public V apply() {
                 return MMapDefault.this.defaultFunc.apply(key);
@@ -43,6 +43,9 @@ public class MMapDefault<K, V> extends MIterable_impl<Tuple<K, V>> {
     @Override
     public void appendItem(final Tuple<K, V> item) {
         this.map.appendItem(item);
+    }
+    public V removeKey(final K key) {
+        return this.map.removeKey(key);
     }
     @Override
     public boolean removeItem(final Tuple<K, V> item) {

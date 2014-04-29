@@ -7,7 +7,7 @@ public abstract class MMap_impl<K, V> extends Map_impl<K, V> implements MMap<K, 
     }
     @Override
     public boolean removeItem(final Tuple<K, V> item) {
-        return removeForKey(item.a) != null;
+        return removeKey(item.a) != null;
     }
     @Override
     public ImMap<K, V> im() {
@@ -25,8 +25,8 @@ public abstract class MMap_impl<K, V> extends Map_impl<K, V> implements MMap<K, 
         }
         return arr.im();
     }
-    public V objectForKeyOrUpdateWith(final K key, final F0<V> orUpdateWith) {
-        final V __tmp = optKey(key);
+    public V applyKeyOrUpdateWith(final K key, final F0<V> orUpdateWith) {
+        final V __tmp = applyKey(key);
         if(__tmp != null) {
             return __tmp;
         } else {
@@ -36,18 +36,13 @@ public abstract class MMap_impl<K, V> extends Map_impl<K, V> implements MMap<K, 
         }
     }
     public V modifyKeyBy(final K key, final F<V, V> by) {
-        final V newObject = by.apply(optKey(key));
+        final V newObject = by.apply(applyKey(key));
         if(newObject == null) {
-            removeForKey(key);
+            removeKey(key);
         } else {
             setKeyValue(key, newObject);
         }
         return newObject;
-    }
-    public V takeKey(final K key) {
-        final V ret = optKey(key);
-        removeForKey(key);
-        return ret;
     }
     public void assignImMap(final ImMap<K, V> imMap) {
         this.clear();

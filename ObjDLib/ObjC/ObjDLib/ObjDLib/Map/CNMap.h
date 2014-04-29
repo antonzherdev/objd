@@ -18,8 +18,6 @@
 
 @protocol CNMap<CNIterable>
 - (id)applyKey:(id)key;
-- (id)optKey:(id)key;
-- (id)getKey:(id)key orValue:(id)orValue;
 - (id<CNIterable>)keys;
 - (id<CNIterable>)values;
 - (BOOL)containsKey:(id)key;
@@ -44,10 +42,9 @@
 
 @protocol CNMMap<CNMap, CNMIterable>
 - (void)setKey:(id)key value:(id)value;
-- (id)removeForKey:(id)key;
-- (id)objectForKey:(id)key orUpdateWith:(id(^)())orUpdateWith;
+- (id)removeKey:(id)key;
+- (id)applyKey:(id)key orUpdateWith:(id(^)())orUpdateWith;
 - (id)modifyKey:(id)key by:(id(^)(id))by;
-- (id)takeKey:(id)key;
 - (void)appendItem:(CNTuple*)item;
 - (BOOL)removeItem:(CNTuple*)item;
 - (id<CNImMap>)im;
@@ -110,6 +107,7 @@
 - (void)setKey:(id)key value:(id)value;
 - (id)modifyKey:(id)key by:(id(^)(id))by;
 - (void)appendItem:(CNTuple*)item;
+- (id)removeKey:(id)key;
 - (BOOL)removeItem:(CNTuple*)item;
 - (void)clear;
 - (CNImMapDefault*)im;

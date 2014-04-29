@@ -11,16 +11,6 @@
     @throw @"Method apply is abstract";
 }
 
-- (id)optKey:(id)key {
-    @throw @"Method opt is abstract";
-}
-
-- (id)getKey:(id)key orValue:(id)orValue {
-    id __tmp = [self optKey:key];
-    if(__tmp != nil) return ((id)(__tmp));
-    else return orValue;
-}
-
 - (id<CNIterable>)keys {
     @throw @"Method keys is abstract";
 }
@@ -30,13 +20,13 @@
 }
 
 - (BOOL)containsKey:(id)key {
-    return [self optKey:key] != nil;
+    return [self applyKey:key] != nil;
 }
 
 - (BOOL)isValueEqualKey:(id)key value:(id)value {
     id __tmp;
     {
-        id _ = [self optKey:key];
+        id _ = [self applyKey:key];
         if(_ != nil) __tmp = numb([_ isEqual:value]);
         else __tmp = nil;
     }
@@ -92,7 +82,7 @@
 }
 
 - (BOOL)removeItem:(CNTuple*)item {
-    return [self removeForKey:((CNTuple*)(item)).a] != nil;
+    return [self removeKey:((CNTuple*)(item)).a] != nil;
 }
 
 - (id<CNImMap>)im {
@@ -115,12 +105,12 @@
     @throw @"Method set is abstract";
 }
 
-- (id)removeForKey:(id)key {
-    @throw @"Method removeFor is abstract";
+- (id)removeKey:(id)key {
+    @throw @"Method remove is abstract";
 }
 
-- (id)objectForKey:(id)key orUpdateWith:(id(^)())orUpdateWith {
-    id __tmp = [self optKey:key];
+- (id)applyKey:(id)key orUpdateWith:(id(^)())orUpdateWith {
+    id __tmp = [self applyKey:key];
     if(__tmp != nil) {
         return ((id)(__tmp));
     } else {
@@ -131,16 +121,10 @@
 }
 
 - (id)modifyKey:(id)key by:(id(^)(id))by {
-    id newObject = by([self optKey:key]);
-    if(newObject == nil) [self removeForKey:key];
+    id newObject = by([self applyKey:key]);
+    if(newObject == nil) [self removeKey:key];
     else [self setKey:key value:newObject];
     return newObject;
-}
-
-- (id)takeKey:(id)key {
-    id ret = [self optKey:key];
-    [self removeForKey:key];
-    return ret;
 }
 
 - (void)assignImMap:(id<CNImMap>)imMap {
@@ -215,7 +199,7 @@ static ODClassType* _CNImMapDefault_type;
 }
 
 - (id)applyKey:(id)key {
-    id __tmp = [_map optKey:key];
+    id __tmp = [_map applyKey:key];
     if(__tmp != nil) return ((id)(__tmp));
     else return _defaultFunc(key);
 }
@@ -315,7 +299,7 @@ static ODClassType* _CNMMapDefault_type;
 }
 
 - (id)applyKey:(id)key {
-    return [_map objectForKey:key orUpdateWith:^id() {
+    return [_map applyKey:key orUpdateWith:^id() {
         return _defaultFunc(key);
     }];
 }
@@ -344,6 +328,10 @@ static ODClassType* _CNMMapDefault_type;
 
 - (void)appendItem:(CNTuple*)item {
     [_map appendItem:item];
+}
+
+- (id)removeKey:(id)key {
+    return [_map removeKey:key];
 }
 
 - (BOOL)removeItem:(CNTuple*)item {

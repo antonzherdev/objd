@@ -223,7 +223,7 @@ static ODClassType* _CNMTreeSet_type;
 }
 
 - (BOOL)removeItem:(id)item {
-    return [_mmap removeForKey:item] != nil;
+    return [_mmap removeKey:item] != nil;
 }
 
 - (void)clear {

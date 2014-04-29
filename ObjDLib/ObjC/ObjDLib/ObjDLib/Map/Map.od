@@ -1,13 +1,11 @@
 package core.chain
 
 trait Map<K, V> extends Iterable<(K, V)> {
-    def apply(key : K) : V
-    def opt(key : K) : V?
-    def get(key : K, orValue : V) : V = opt(key).getOr(orValue)
+    def apply(key : K) : V?
     def keys : Iterable<K>
     def values : Iterable<V>
-    def contains(key : K) : bool = opt(key) != nil
-    def isValueEqual(key : K, value : V) : bool = opt(key).map(_ == value).getOr(false)
+    def contains(key : K) : bool = apply(key) != nil
+    def isValueEqual(key : K, value : V) : bool = apply(key).map(_ == value).getOr(false)
 }
 
 trait ImMap<K, V> extends Map<K, V> with ImIterable<(K, V)> {
@@ -27,29 +25,23 @@ trait ImMap<K, V> extends Map<K, V> with ImIterable<(K, V)> {
 
 trait MMap<K, V> extends Map<K, V> with MIterable<(K, V)> {
     def set(key : K, value : V)
-    def removeFor(key : K) : V?
-    def objectFor(key: K, orUpdateWith: () -> V) : V = opt(key).getOr {
+    def remove(key : K) : V?
+    def apply(key : K, orUpdateWith: () -> V) : V = apply(key).getOr {
         val init : V = orUpdateWith()
         set(key, init)
         init
     }
     def modify(key : K, by : V? -> V?) : V? = {
-        val newObject = by(opt(key))
-        if(newObject == nil) removeFor(key)
+        val newObject = by(apply(key))
+        if(newObject == nil) remove(key)
         else set(key, newObject)
         newObject
-    }
-
-    def take(key : K) : V? = {
-        val ret = opt(key)
-        removeFor(key)
-        ret
     }
 
     override def append(item : (K, V)) {
         set(item.b, item.a)
     }
-    override def remove(item : (K, V)) : bool = removeFor(item.a) != nil
+    override def remove(item : (K, V)) : bool = remove(item.a) != nil
 
     override def im : ImMap<K, V> = imCopy
     override def imCopy : ImMap<K, V> = {
@@ -67,7 +59,7 @@ trait MMap<K, V> extends Map<K, V> with MIterable<(K, V)> {
 class ImMapDefault<K, V>(val map : ImMap<K, V>, val defaultFunc : K -> V) extends ImIterable<(K, V)> {
     override def count : uint = map.count
     override def iterator : Iterator<(K, V)> = map.iterator
-    def apply(key : K) : V = map.opt(key) .getOr (defaultFunc(key))
+    def apply(key : K) : V = map.apply(key).getOr(defaultFunc(key))
     def keys : Iterable<K> = map.keys
     def values : Iterable<V> = map.values
     def contains(key : K) : bool = map.contains(key)
@@ -80,7 +72,7 @@ class MMapDefault<K, V>(val map : MMap<K, V>, val defaultFunc : K -> V) extends 
     override def count : uint = map.count
     override def iterator : Iterator<(K, V)> = map.iterator
     override def mutableIterator : MIterator<(K, V)> = map.mutableIterator
-    def apply(key : K) : V = map.objectFor(key, orUpdateWith = defaultFunc(key))
+    def apply(key : K) : V = map(key, orUpdateWith = defaultFunc(key))
     def keys : Iterable<K> = map.keys
     def values : Iterable<V> = map.values
     def contains(key : K) : bool = map.contains(key)
@@ -95,9 +87,8 @@ class MMapDefault<K, V>(val map : MMap<K, V>, val defaultFunc : K -> V) extends 
     override def append(item : (K, V)) {
         map.append(item)
     }
-    override def remove(item : (K, V)) : bool = {
-        map.remove(item)
-    }
+    def remove(key : K) : V? = map.remove(key)
+    override def remove(item : (K, V)) : bool = map.remove(item = item)
     override def clear {
         map.clear
     }

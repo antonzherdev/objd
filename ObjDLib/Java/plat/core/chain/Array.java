@@ -85,7 +85,10 @@ public abstract class Array<T> extends Seq_impl<T> {
 
     @Override
     public T findWhere(F<T, Boolean> where) {
-        return findWhere(where);
+        for (T t : list) {
+            if(where.apply(t)) return t;
+        }
+        return null;
     }
 
     @Override

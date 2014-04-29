@@ -96,7 +96,7 @@ else {
         }
     }
     @Override
-    public V removeForKey(final K key) {
+    public V removeKey(final K key) {
         final TreeMapEntry<K, V> _ = entryForKey(key);
         if(_ != null) {
             return deleteEntry(_);
@@ -515,8 +515,8 @@ else {
         this._size = ((int)0);
         this.keys = new MTreeMapKeySet<K>(this);
     }
-    public V objectForKeyOrUpdateWith(final K key, final F0<V> orUpdateWith) {
-        final V __tmp = optKey(key);
+    public V applyKeyOrUpdateWith(final K key, final F0<V> orUpdateWith) {
+        final V __tmp = applyKey(key);
         if(__tmp != null) {
             return __tmp;
         } else {
@@ -526,18 +526,13 @@ else {
         }
     }
     public V modifyKeyBy(final K key, final F<V, V> by) {
-        final V newObject = by.apply(optKey(key));
+        final V newObject = by.apply(applyKey(key));
         if(newObject == null) {
-            removeForKey(key);
+            removeKey(key);
         } else {
             setKeyValue(key, newObject);
         }
         return newObject;
-    }
-    public V takeKey(final K key) {
-        final V ret = optKey(key);
-        removeForKey(key);
-        return ret;
     }
     @Override
     public void appendItem(final Tuple<K, V> item) {
@@ -545,7 +540,7 @@ else {
     }
     @Override
     public boolean removeItem(final Tuple<K, V> item) {
-        return removeForKey(item.a) != null;
+        return removeKey(item.a) != null;
     }
     @Override
     public boolean removeItem(final T item) {

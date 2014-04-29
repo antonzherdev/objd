@@ -41,7 +41,7 @@ class MTreeSet<T>(val mmap : MTreeMap<T, Object>) extends TreeSet<T>(mmap) with 
         mmap.set(item, obj)
     }
 
-    override def remove(item : T) : bool = mmap.removeFor(key = item) != nil
+    override def remove(item : T) : bool = mmap.remove(key = item) != nil
 
 
     override def clear {

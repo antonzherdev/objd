@@ -19,7 +19,7 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
     }
     @Override
     public boolean removeItem(final T item) {
-        return this.mmap.removeForKey(item) != null;
+        return this.mmap.removeKey(item) != null;
     }
     @Override
     public void clear() {
