@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class MListItem<T> {
     public T data;
     public MListItem<T> next;

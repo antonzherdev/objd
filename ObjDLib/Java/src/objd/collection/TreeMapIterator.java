@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class TreeMapIterator<K, V> extends Iterator_impl<Tuple<K, V>> {
     public final TreeMap<K, V> map;
     public TreeMapEntry<K, V> entry;

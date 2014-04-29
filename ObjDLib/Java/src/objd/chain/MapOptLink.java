@@ -1,5 +1,7 @@
 package objd.chain;
 
+import objd.lang.*;
+
 public class MapOptLink<A, B> implements ChainLink<A, B> {
     public final F<A, B> f;
     @Override

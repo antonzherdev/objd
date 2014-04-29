@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public final class PArray<T> extends ImSeq_impl<T> {
     public final int stride;
     public final F2<Pointer, Integer, T> wrap;

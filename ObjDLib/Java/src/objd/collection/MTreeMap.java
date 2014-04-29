@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     private TreeMapEntry<K, V> _root;
     private int _size;

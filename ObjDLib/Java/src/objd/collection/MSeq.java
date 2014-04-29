@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public interface MSeq<T> extends Seq<T>, MIterable<T> {
     boolean removeIndex(final int index);
     void insertIndexItem(final int index, final T item);

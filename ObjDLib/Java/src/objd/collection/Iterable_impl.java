@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public abstract class Iterable_impl<T> extends Traversable_impl<T> implements Iterable<T> {
     @Override
     public T head() {

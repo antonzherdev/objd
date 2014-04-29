@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class MListImmutableIterator<T> extends Iterator_impl<T> {
     public MListItem<T> item;
     @Override

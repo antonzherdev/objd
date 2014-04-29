@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public final class EmptyList<T> extends ImList<T> {
     public static final EmptyList<Object> instance;
     @Override

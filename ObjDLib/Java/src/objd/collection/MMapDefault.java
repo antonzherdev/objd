@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class MMapDefault<K, V> extends MIterable_impl<Tuple<K, V>> {
     public final MMap<K, V> map;
     public final F<K, V> defaultFunc;

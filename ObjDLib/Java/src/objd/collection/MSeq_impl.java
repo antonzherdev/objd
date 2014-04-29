@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public abstract class MSeq_impl<T> extends Seq_impl<T> implements MSeq<T> {
     @Override
     public ImSeq<T> im() {

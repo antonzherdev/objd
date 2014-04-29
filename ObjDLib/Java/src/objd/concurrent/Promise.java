@@ -1,5 +1,8 @@
 package objd.concurrent;
 
+import objd.lang.*;
+import objd.lang.Try;
+
 public abstract class Promise<T> extends Future<T> {
     public static <T> Promise<T> apply() {
         return new DefaultPromise<T>();

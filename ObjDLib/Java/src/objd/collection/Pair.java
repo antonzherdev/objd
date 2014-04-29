@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public final class Pair<T> extends ImSet_impl<T> {
     public final T a;
     public final T b;

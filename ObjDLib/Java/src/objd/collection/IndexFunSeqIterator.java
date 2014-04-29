@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class IndexFunSeqIterator<T> extends Iterator_impl<T> {
     public final int count;
     public final F<Integer, T> f;

@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class MQueue<T> extends Queue_impl<T> {
     private ImQueue<T> _queue;
     public void enqueueItem(final T item) {

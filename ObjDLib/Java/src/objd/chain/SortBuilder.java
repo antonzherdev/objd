@@ -1,5 +1,9 @@
 package objd.chain;
 
+import objd.lang.*;
+import objd.collection.MArray;
+import objd.collection.Iterator;
+
 public class SortBuilder<A> {
     public final Chain<A> chain;
     private final MArray<F2<A, A, Integer>> functions;

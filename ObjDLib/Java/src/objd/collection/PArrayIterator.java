@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class PArrayIterator<T> extends Iterator_impl<T> {
     public final PArray<T> array;
     private int i;

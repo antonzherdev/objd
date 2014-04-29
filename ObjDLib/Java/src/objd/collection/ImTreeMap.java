@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class ImTreeMap<K, V> extends TreeMap<K, V> {
     public final TreeMapEntry<K, V> root;
     @Override

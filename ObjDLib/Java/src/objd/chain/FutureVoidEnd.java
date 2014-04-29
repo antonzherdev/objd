@@ -1,5 +1,12 @@
 package objd.chain;
 
+import objd.lang.*;
+import objd.concurrent.Promise;
+import objd.concurrent.AtomicInt;
+import objd.concurrent.AtomicBool;
+import objd.concurrent.Future;
+import objd.lang.Try;
+
 public class FutureVoidEnd<T> {
     private final Promise<Void> _promise;
     private boolean _stopped;

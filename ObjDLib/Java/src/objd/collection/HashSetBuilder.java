@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class HashSetBuilder<T> extends Builder_impl<T, ImHashSet<T>> {
     public final MHashSet<T> set;
     @Override

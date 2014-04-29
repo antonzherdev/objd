@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public abstract class ImIterable_impl<T> extends Iterable_impl<T> implements ImIterable<T> {
     @Override
     public MIterable<T> mCopy() {

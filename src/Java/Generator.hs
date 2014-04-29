@@ -15,18 +15,18 @@ toJava file@D.File{D.fileClasses = classes} =
 
 genFile :: D.File -> D.Class -> J.File
 genFile D.File{D.filePackage = D.Package{D.packageName = package}, D.fileImports = imps} cls =
-	let (cls', clImps) = runWriter $ genClass cls
+	let (cls', Wrt{wrtImports = clImps}) = runWriter $ genClass cls
 	in J.File {
 		J.fileIsTest = D.containsAnnotationWithClassName "test.Test" $ D.classAnnotations cls,
 		J.filePackage = package,
-		J.fileImports = clImps ++ map genImport imps,
+		J.fileImports = filter ((/= package) . init) $ nub $ ["objd", "lang", "*"] : clImps ++ map genImport imps,
 		J.fileClass = cls'}
 
 genImport :: D.Import -> J.Import
 genImport (D.ImportClass cl) = D.packageName (D.classPackage cl) ++ [D.className cl] 
 genImport (D.ImportObjectDefs cl) = D.packageName (D.classPackage cl) ++ [D.className cl, "*"]
 
-genClass :: D.Class -> Writer [J.Import] J.Class
+genClass :: D.Class -> Writer Wrt J.Class
 genClass cl = do
 	let 
 		defs = filter (\f -> not (D.isSpecial f)) 
@@ -35,25 +35,34 @@ genClass cl = do
 		trMod D.ClassModFinal = Just J.ClassModFinal
 		trMod _ = Nothing
 	defs' <- mapM (genDef cl) defs
+	gens' <- mapM genGeneric $ D.classGenerics cl
+	ext' <- case D.mainExtendsRef (D.classExtends cl) of
+		Just e -> if D.isBaseClass (fst e) then return Nothing else fmap Just (genExtendsRef e)
+		Nothing -> return Nothing
+	impls' <- mapM genExtendsRef $ filter (not . D.isBaseClass . fst) $ D.traitExtendsRefs $ D.classExtends cl
 	return J.Class {
 		J.classMods = [J.ClassModVisibility J.Public] ++ mapMaybe trMod (D.classMods cl),
 		J.classType = if D.isTrait cl then J.ClassTypeInterface else J.ClassTypeClass,
 		J.className = D.className cl,
-		J.classGenerics = map genGeneric $ D.classGenerics cl,
-		J.classExtends = D.mainExtendsRef (D.classExtends cl) >>= \e -> if D.isBaseClass (fst e) then Nothing else Just (genExtendsRef e),
-		J.classImplements = map genExtendsRef $ filter (not . D.isBaseClass . fst) $ D.traitExtendsRefs $ D.classExtends cl,
+		J.classGenerics = gens',
+		J.classExtends = ext',
+		J.classImplements = impls',
 		J.classDefs = join defs'
 	}
 
 
-genGeneric :: D.Class -> J.Generic
-genGeneric cl = J.Generic {
-	J.genericName = D.className cl,
-	J.genericExtends = map genExtendsRef $ filter (not . D.isBaseClass . fst) $ D.extendsRefs $ D.classExtends cl
-}
+genGeneric :: D.Class -> Writer Wrt J.Generic
+genGeneric cl = do
+	exts <- mapM genExtendsRef $ filter (not . D.isBaseClass . fst) $ D.extendsRefs $ D.classExtends cl
+	return J.Generic {
+		J.genericName = D.className cl,
+		J.genericExtends = exts
+	}
 
-genExtendsRef :: D.ExtendsRef -> J.TP
-genExtendsRef (cl, gens) = J.TPRef (map genTp gens) (D.className cl) 
+genExtendsRef :: D.ExtendsRef -> Writer Wrt J.TP
+genExtendsRef (cl, gens) = do
+	gens' <- mapM genTp gens
+	return $ J.TPRef gens' (D.className cl) 
 
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - Defs
@@ -74,7 +83,7 @@ defName' d = case D.defPars d of
 overrideAnnotation :: J.DefAnnotation
 overrideAnnotation = J.DefAnnotation "Override" []
 
-genDef :: D.Class -> D.Def -> Writer [J.Import] [J.Def]
+genDef :: D.Class -> D.Def -> Writer Wrt [J.Def]
 genDef cl d =
  	let 
  		genMod D.DefModPrivate = Just $ J.DefModVisability J.Private
@@ -87,37 +96,33 @@ genDef cl d =
  		callSuperConstructor = case D.extendsClass $ D.classExtends cl of
  			Just (ExtendsClass _ []) -> return []
  			Just (ExtendsClass _ pars) -> do
- 				pars' <- mapM superPar pars
+ 				pars' <- mapM (genExp defaultEnv . snd) pars
  				return [J.Stm $ J.Call "super" [] pars']
  			_ -> return []
- 			where superPar p = do
- 				let  (e', Wrt{wrtImports = imps}) = runWriter $ genExp defaultEnv $ snd p
- 				tell imps
- 				return e'
  		body = if D.isTrait cl then D.Nop else D.defBody d	
  		mods = mapMaybe genMod (D.defMods d)
- 		tp = genTp $ D.defType d
  		name = defName' d
  		genSet dd = do
-			let (e', Wrt{wrtImports = imps}) = runWriter $ genExp defaultEnv (D.defBody dd)
- 			tell imps
+			e' <- genExp defaultEnv (D.defBody dd)
  			return $ J.Set Nothing (J.Dot J.This $ J.Ref (D.defName dd)) e'
  	in if D.isField d then 
- 			return $ [J.Field {
-	 				J.defAnnotations = [],
-	 				J.defMods = mods ++ [J.DefModFinal | D.DefModMutable `notElem` D.defMods d] ++ [J.DefModVolatile | D.DefModVolatile `elem` D.defMods d],
-	 				J.defName = name,
-	 				J.defTp = tp,
-	 				J.defExp = J.Nop
-		 		}] ++ [J.Def {
-	 				J.defAnnotations = [overrideAnnotation],
-	 				J.defMods = mods,
-	 				J.defGenerics = [],
-	 				J.defName = name,
-	 				J.defTp = tp,
-	 				J.defPars = [],
-	 				J.defStms = [J.Return $ J.Ref name]
-	 			}| D.DefModOverride `elem` D.defMods d]
+ 			do
+	 			tp <- genTp $ D.defType d
+	 			return $ [J.Field {
+		 				J.defAnnotations = [],
+		 				J.defMods = mods ++ [J.DefModFinal | D.DefModMutable `notElem` D.defMods d] ++ [J.DefModVolatile | D.DefModVolatile `elem` D.defMods d],
+		 				J.defName = name,
+		 				J.defTp = tp,
+		 				J.defExp = J.Nop
+			 		}] ++ [J.Def {
+		 				J.defAnnotations = [overrideAnnotation],
+		 				J.defMods = mods,
+		 				J.defGenerics = [],
+		 				J.defName = name,
+		 				J.defTp = tp,
+		 				J.defPars = [],
+		 				J.defStms = [J.Return $ J.Ref name]
+		 			}| D.DefModOverride `elem` D.defMods d]
  		else if D.isConstructor d then
  			do
  				super <- callSuperConstructor
@@ -125,73 +130,107 @@ genDef cl d =
  					D.isField f && D.defBody f /= D.Nop && D.DefModConstructorField `notElem` D.defMods f) 
  					(D.classDefs cl)
  				sets <- mapM genSet fields
+ 				pars' <- mapM genPar $ D.defPars d
  				return [J.Constructor {
 	 				J.defAnnotations = [],
 	 				J.defMods = mods,
-	 				J.defPars = map genPar $ D.defPars d,
+	 				J.defPars = pars',
 	 				J.defStms = super ++ (map constrSet . filter ((D.DefModConstructorField `elem` ). D.defMods)) (D.classDefs cl) ++ sets
 	 			}]
  		else 
  			do
- 				let (stms', Wrt{wrtImports = imps}) = runWriter $ getStms defaultEnv body
- 				tell imps
+ 				tp <- genTp $ D.defType d
+ 				stms' <- getStms defaultEnv body
+ 				gens' <- mapM genGeneric $ maybe [] D.defGenericsClasses $ D.defGenerics d
+ 				pars' <- mapM genPar $ D.defPars d
  				return [J.Def {
 	 				J.defAnnotations = [overrideAnnotation| D.DefModOverride `elem` D.defMods d],
 	 				J.defMods = mods,
-	 				J.defGenerics = maybe [] (map genGeneric . D.defGenericsClasses) $ D.defGenerics d,
+	 				J.defGenerics = gens',
 	 				J.defName = name,
 	 				J.defTp = tp,
-	 				J.defPars = map genPar $ D.defPars d,
+	 				J.defPars = pars',
 	 				J.defStms = stms'
 	 			}]
 
-genPar :: D.Def -> J.DefPar
-genPar D.Def{D.defName = nm, D.defType = tp} = ([J.DefModFinal], genTp tp, nm)
+genPar :: D.Def -> Writer Wrt J.DefPar
+genPar D.Def{D.defName = nm, D.defType = tp} = do
+	tp' <- genTp tp
+	return ([J.DefModFinal], tp', nm)
 
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - DataType
  -----------------------------------------------------------------------------------------------------------------------------------------------}
-genTp :: D.DataType -> J.TP
-genTp (D.TPClass _ gens cl) = J.TPRef (map genTp gens) (D.className cl) 
-genTp (D.TPNumber _ 1) = J.tpRef "byte"
-genTp (D.TPNumber _ 8) = J.tpRef "long"
-genTp (D.TPNumber _ _) = J.tpRef "int"
-genTp (D.TPGenericWrap _ (D.TPNumber _ 1)) = J.tpRef "Byte"
-genTp (D.TPGenericWrap _ (D.TPNumber _ 8)) = J.tpRef "Long"
-genTp (D.TPGenericWrap _ (D.TPNumber _ _)) = J.tpRef "Integer"
-genTp (D.TPFloatNumber 8) = J.tpRef "double"
-genTp (D.TPFloatNumber _) = J.tpRef "float"
-genTp (D.TPGenericWrap _ (D.TPFloatNumber 8)) = J.tpRef "Double"
-genTp (D.TPGenericWrap _ (D.TPFloatNumber _)) = J.tpRef "Float"
-genTp D.TPVoid = J.tpRef "void"
-genTp (D.TPGenericWrap _ D.TPVoid) = J.tpRef "Void"
-genTp D.TPChar = J.tpRef "char"
-genTp (D.TPGenericWrap _ D.TPChar) = J.tpRef "Character"
-genTp D.TPBool = J.tpRef "boolean"
-genTp (D.TPGenericWrap _ D.TPBool) = J.tpRef "Boolean"
+genTp :: D.DataType -> Writer Wrt J.TP
+genTp (D.TPClass tp gens cl) = do
+	when (tp == D.TPMClass || tp == D.TPMTrait) $ tellImport $ D.packageName (D.classPackage cl) ++ [D.className cl]
+	gens' <- mapM genTp gens
+	return $ J.TPRef gens' (D.className cl) 
+genTp (D.TPNumber _ 1) = return $ J.tpRef "byte"
+genTp (D.TPNumber _ 8) = return $ J.tpRef "long"
+genTp (D.TPNumber _ _) = return $ J.tpRef "int"
+genTp (D.TPGenericWrap _ (D.TPNumber _ 1)) = return $ J.tpRef "Byte"
+genTp (D.TPGenericWrap _ (D.TPNumber _ 8)) = return $ J.tpRef "Long"
+genTp (D.TPGenericWrap _ (D.TPNumber _ _)) = return $ J.tpRef "Integer"
+genTp (D.TPFloatNumber 8) = return $ J.tpRef "double"
+genTp (D.TPFloatNumber _) = return $ J.tpRef "float"
+genTp (D.TPGenericWrap _ (D.TPFloatNumber 8)) = return $ J.tpRef "Double"
+genTp (D.TPGenericWrap _ (D.TPFloatNumber _)) = return $ J.tpRef "Float"
+genTp D.TPVoid = return $ J.tpRef "void"
+genTp (D.TPGenericWrap _ D.TPVoid) = return $ J.tpRef "Void"
+genTp D.TPChar = return $ J.tpRef "char"
+genTp (D.TPGenericWrap _ D.TPChar) = return $ J.tpRef "Character"
+genTp D.TPBool = return $ J.tpRef "boolean"
+genTp (D.TPGenericWrap _ D.TPBool) = return $ J.tpRef "Boolean"
 
-genTp (D.TPFun (D.TPTuple [stp]) D.TPVoid) = J.TPRef [genTp $ D.wrapGeneric stp] "P"
-genTp (D.TPFun (D.TPTuple stps) D.TPVoid) = J.TPRef (map (genTp . D.wrapGeneric) stps) ("P" ++ show (length stps))
-genTp (D.TPFun D.TPVoid D.TPVoid) = J.TPRef [] "P0"
-genTp (D.TPFun stp D.TPVoid) = J.TPRef [genTp $ D.wrapGeneric stp] "P"
-genTp (D.TPFun (D.TPTuple [stp]) dtp) = J.TPRef [genTp $ D.wrapGeneric stp, genTp $ D.wrapGeneric dtp] "F"
-genTp (D.TPFun (D.TPTuple stps) dtp) = J.TPRef (map (genTp . D.wrapGeneric) stps ++ [genTp $ D.wrapGeneric dtp]) ("F" ++ show (length stps))
-genTp (D.TPFun D.TPVoid dtp) = J.TPRef [genTp $ D.wrapGeneric dtp] "F0"
-genTp (D.TPFun stp dtp) = J.TPRef [genTp $ D.wrapGeneric stp, genTp $ D.wrapGeneric dtp] "F"
+genTp (D.TPFun (D.TPTuple [stp]) D.TPVoid) = do 
+	stp' <- genTp $ D.wrapGeneric stp
+	return $ J.TPRef [stp'] "P"
+genTp (D.TPFun (D.TPTuple stps) D.TPVoid) = do
+	stps' <- mapM (genTp . D.wrapGeneric) stps
+	return $ J.TPRef stps' ("P" ++ show (length stps))
+genTp (D.TPFun D.TPVoid D.TPVoid) = return $ J.TPRef [] "P0"
+genTp (D.TPFun stp D.TPVoid) = do 
+	stp' <- genTp $ D.wrapGeneric stp
+	return $ J.TPRef [stp'] "P"
+genTp (D.TPFun (D.TPTuple [stp]) dtp) = do 
+	stp' <- genTp $ D.wrapGeneric stp
+	dtp' <- genTp $ D.wrapGeneric dtp
+	return $ J.TPRef [stp', dtp'] "F"
+genTp (D.TPFun (D.TPTuple stps) dtp) = do 
+	stps' <- mapM (genTp . D.wrapGeneric) stps
+	dtp' <- genTp $ D.wrapGeneric dtp
+	return $ J.TPRef (stps'  ++ [dtp']) ("F" ++ show (length stps))
+genTp (D.TPFun D.TPVoid dtp) = do 
+	dtp' <- genTp $ D.wrapGeneric dtp
+	return $ J.TPRef [dtp'] "F0"
+genTp (D.TPFun stp dtp) = do
+	stp' <- genTp $ D.wrapGeneric stp
+	dtp' <- genTp $ D.wrapGeneric dtp
+	return $ J.TPRef [stp', dtp'] "F"
 
 genTp (D.TPGenericWrap _ w) = genTp w
-genTp D.TPString = J.tpRef "String"
-genTp (D.TPEArr n tp)  = J.TPArr (genTp tp) n
-genTp D.TPAny = J.tpRef "Object"
-genTp (D.TPArr _ tp) = J.TPRef [genTp tp] "ImArray"
-genTp (D.TPTuple tps) = J.TPRef (map genTp tps) (tupleClassName $ length tps)
-genTp (D.TPSelf cl) = J.TPRef (map (J.tpRef . D.className) (D.classGenerics cl) ) (D.className cl)
-genTp (D.TPMap key value) = J.TPRef [genTp key, genTp value] "HashMap"
+genTp D.TPString = return $ J.tpRef "String"
+genTp (D.TPEArr n tp)  = do
+	tp' <- genTp tp
+	return $ J.TPArr tp' n
+genTp D.TPAny = return $ J.tpRef "Object"
+genTp (D.TPArr _ tp) = do
+	tp' <- genTp tp
+	return $ J.TPRef [tp'] "ImArray"
+genTp (D.TPTuple tps) = do
+	tps' <- mapM genTp tps
+	return $ J.TPRef tps' (tupleClassName $ length tps)
+genTp (D.TPSelf cl) = return $ J.TPRef (map (J.tpRef . D.className) (D.classGenerics cl) ) (D.className cl)
+genTp (D.TPMap key value) = do
+	key' <- genTp key
+	value' <- genTp value
+	return $ J.TPRef [key', value'] "ImHashMap"
 genTp (D.TPOption _ tp) = genTp tp
-genTp D.TPAnyGeneric = J.TPAnyGeneric
-genTp (D.TPPointer _) = J.tpRef "Pointer"
-genTp (D.TPNil) = J.tpRef "Object"
-genTp (D.TPUnknown e) = J.TPUnknown e
+genTp D.TPAnyGeneric = return J.TPAnyGeneric
+genTp (D.TPPointer _) = return $ J.tpRef "Pointer"
+genTp (D.TPNil) = return $ J.tpRef "Object"
+genTp (D.TPUnknown e) = return $ J.TPUnknown e
 
 genTp tp = error $ "genTp: " ++ show tp
 
@@ -213,6 +252,8 @@ instance Monoid Wrt where
 
 tellStms :: [J.Stm] -> Writer Wrt ()
 tellStms stms = tell Wrt{wrtStms = stms, wrtImports = []}
+tellImport :: J.Import -> Writer Wrt ()
+tellImport imp = tell Wrt{wrtStms = [], wrtImports = [imp]}
 tellImports :: [J.Import] -> Writer Wrt ()
 tellImports imps = tell Wrt{wrtStms = [], wrtImports = imps}
 
@@ -225,19 +266,23 @@ genExp _ (D.BoolConst s) = return $ J.BoolConst s
 genExp _ (D.IntConst s) = return $ J.IntConst s
 genExp env (D.Dot l (D.Is dtp)) = do 
 	l' <- genExp env l
-	return $ J.InstanceOf l' (genTp dtp)
+	dtp' <- genTp dtp
+	return $ J.InstanceOf l' dtp'
 genExp env (D.Dot l (D.CastDot dtp)) = do 
 	l' <- genExp env l
-	return $ J.Cast (genTp dtp) l'
+	dtp' <- genTp dtp
+	return $ J.Cast dtp' l'
 genExp env (D.Cast dtp l) = do 
 	l' <- genExp env l
-	return $ J.Cast (genTp dtp) l'
+	dtp' <- genTp dtp
+	return $ J.Cast dtp' l'
 genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
 	| D.DefModConstructor `elem` D.defMods constr 
 		|| (D.defName constr == "apply" && D.DefModStub `elem` D.defMods constr && D.DefModStatic `elem` D.defMods constr) 
 		= do
 			pars' <- mapM ((genExp env) . snd) pars
-			return $ J.New [] (D.defName objDef) (map genTp gens) pars'
+			gens' <- mapM genTp gens
+			return $ J.New [] (D.defName objDef) gens' pars'
 genExp env (D.Dot (Self _) r@(D.Call _ _ pars _) ) 
 	| not (null pars) = genExp env r
 genExp env (D.Dot l r) = do
@@ -253,22 +298,25 @@ genExp _ (D.Call d _ [] [])
 	| D.DefModField `elem` D.defMods d || D.DefModLocal `elem` D.defMods d || D.DefModObject `elem` D.defMods d = return $ J.Ref $ D.defName d
 genExp env (D.Call d _ pars gens) = do
 	pars' <- mapM ((genExp env) . snd) pars
-	return $ J.Call (defName' d) (map genTp gens) pars'
+	gens' <- mapM genTp gens
+	return $ J.Call (defName' d) gens' pars'
 genExp env (D.Lambda pars e dtp) = do
 	stms <- getStms env{envInnerClass = True} e
+	dtp' <- if dtp == D.TPVoid then return (J.tpRef "void") else genTp (D.wrapGeneric dtp)
+	let funPar (nm, tp) = genTp (D.wrapGeneric tp) >>= \tp' -> return ([J.DefModFinal], tp', nm)
+	pars' <- mapM funPar pars
 	let 
 		def = J.Def {
 			J.defAnnotations = [overrideAnnotation],
 			J.defMods = [J.DefModVisability J.Public],
 			J.defGenerics = [],
 			J.defName = "apply",
-			J.defTp = if dtp == D.TPVoid then J.tpRef "void" else genTp (D.wrapGeneric dtp),
-			J.defPars = map funPar pars,
+			J.defTp = dtp',
+			J.defPars = pars',
 			J.defStms = stms
 		}
-		funPar (nm, tp) = ([J.DefModFinal], genTp (D.wrapGeneric tp), nm)
 		clNm = (if dtp == D.TPVoid then "P" else "F") ++ if length pars == 1 then "" else show (length pars)
-	return $ J.New [def] clNm (map (genTp . D.wrapGeneric . snd) pars ++ [genTp (D.wrapGeneric dtp) | dtp /= D.TPVoid]) []
+	return $ J.New [def] clNm (map (\(_, t, _) -> t) pars' ++ [dtp' | dtp /= D.TPVoid]) []
 genExp Env{envInnerClass = False} (D.Self _) = return J.This
 genExp Env{envInnerClass = True} (D.Self tp) = return  $ J.Dot (J.Ref $ D.dataTypeClassName tp) J.This
 genExp env (D.MathOp tp l r) = do
@@ -340,7 +388,8 @@ genExp env (D.StringBuild pars lastString) = do
 			return $ stringExpressionsForTp (D.exprDataType expr) expr'
 genExp env (D.Tuple exps) = do
 	exps' <- mapM (genExp env) exps
-	return $ J.New [] (tupleClassName $ length exps') (map (genTp . D.exprDataType) exps) exps'
+	gens' <- mapM (genTp . D.exprDataType) exps
+	return $ J.New [] (tupleClassName $ length exps') gens' exps'
 genExp env (D.Weak x) = genExp env x
 genExp env (D.Braces [x]) = genExp env x
 genExp env (D.Braces exps) = do
@@ -421,21 +470,27 @@ genStm env (D.Set tp l r) = let
 		return $ lstm ++ rstm ++ [J.Set tp l' r']
 genStm env (D.Val True d) = do
 	t <- genStm env $ D.defBody d
-	return $ (declareVal d J.Nop):t
-genStm env (D.Val False d) = genExpStm env (D.defBody d) $ declareVal d
+	v <- declareVal d 
+	return $ v J.Nop:t
+genStm env (D.Val False d) = do
+	v <- declareVal d
+	genExpStm env (D.defBody d) v
 genStm env (D.Weak x) = genStm env x
 genStm env e = genExpStm env e J.Stm 
 
 
-declareVal :: D.Def -> J.Exp -> J.Stm
-declareVal d e
-	| D.DefModChangedInLambda `elem` D.defMods d = let
-		tp = genTp $ D.wrapGeneric $ D.defType d
-		clnm = if D.DefModVolatile `elem` D.defMods d then "MutVolatile" else "Mut"
-		new = J.New [] clnm [tp] $ case e of
-			J.Nop -> []
-			_ -> [e]
-		in J.Val [J.DefModFinal] (J.TPRef [tp] clnm) (D.defName d) new
-	| otherwise = J.Val 
-		([J.DefModFinal | D.DefModMutable `notElem` D.defMods d] ++ [J.DefModVolatile | D.DefModVolatile `elem` D.defMods d])
-		(genTp $ D.defType d) (D.defName d) e
+declareVal :: D.Def -> Writer Wrt (J.Exp -> J.Stm)
+declareVal d
+	| D.DefModChangedInLambda `elem` D.defMods d = do
+		tp <- genTp $ D.wrapGeneric $ D.defType d
+		let 
+			clnm = if D.DefModVolatile `elem` D.defMods d then "MutVolatile" else "Mut"
+			new e = J.New [] clnm [tp] $ case e of
+				J.Nop -> []
+				_ -> [e]
+		return $ \e -> J.Val [J.DefModFinal] (J.TPRef [tp] clnm) (D.defName d) (new e)
+	| otherwise = do
+		tp <- genTp $ D.defType d
+		return $ \e -> J.Val 
+			([J.DefModFinal | D.DefModMutable `notElem` D.defMods d] ++ [J.DefModVolatile | D.DefModVolatile `elem` D.defMods d])
+			tp (D.defName d) e

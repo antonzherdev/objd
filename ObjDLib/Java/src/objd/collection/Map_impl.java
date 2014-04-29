@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public abstract class Map_impl<K, V> extends Iterable_impl<Tuple<K, V>> implements Map<K, V> {
     public boolean containsKey(final K key) {
         return applyKey(key) != null;

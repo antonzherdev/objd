@@ -1,5 +1,9 @@
 package objd.concurrent;
 
+import objd.lang.*;
+import objd.lang.Try;
+import objd.collection.Traversable;
+
 public abstract class Future<T> {
     public static <T> Future<T> applyF(final F0<T> f) {
         final Promise<T> p = Promise.<T>apply();

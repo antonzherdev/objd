@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public final class Range extends ImSeq_impl<int> {
     public final int start;
     public final int end;

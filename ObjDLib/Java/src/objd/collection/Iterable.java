@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public interface Iterable<T> extends Traversable<T> {
     int count();
     Iterator<T> iterator();

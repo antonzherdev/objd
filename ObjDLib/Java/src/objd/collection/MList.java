@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class MList<T> extends MSeq_impl<T> {
     private int _count;
     private MListItem<T> headItem;

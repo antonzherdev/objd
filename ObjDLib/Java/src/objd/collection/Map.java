@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public interface Map<K, V> extends Iterable<Tuple<K, V>> {
     V applyKey(final K key);
     Iterable<K> keys();

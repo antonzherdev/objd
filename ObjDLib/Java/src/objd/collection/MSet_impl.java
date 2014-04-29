@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public abstract class MSet_impl<T> extends Set_impl<T> implements MSet<T> {
     @Override
     public ImSet<T> im() {

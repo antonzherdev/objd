@@ -1,5 +1,9 @@
 package objd.chain;
 
+import objd.lang.*;
+import objd.concurrent.Promise;
+import objd.concurrent.Future;
+import objd.concurrent.AtomicInt;
 import test.;
 import test.Test;
 import test.TestCase;

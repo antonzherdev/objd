@@ -1,5 +1,8 @@
 package objd.collection;
 
+import objd.lang.*;
+import objd.chain.Chain;
+
 public abstract class Traversable_impl<T> implements Traversable<T> {
     public void forEach(final P<T> each) {
         goOn(new F<T, Boolean>() {

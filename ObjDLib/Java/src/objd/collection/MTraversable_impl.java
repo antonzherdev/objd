@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public abstract class MTraversable_impl<T> extends Traversable_impl<T> implements MTraversable<T> {
     public ImTraversable<T> im() {
         return this.imCopy();

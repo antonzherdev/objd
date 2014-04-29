@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public abstract class ImList<T> extends ImSeq_impl<T> {
     public static <T> ImList<T> apply() {
         return ((ImList<T>)EmptyList.instance);

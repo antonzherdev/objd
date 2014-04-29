@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public final class IndexFunSeq<T> extends ImSeq_impl<T> {
     public final int count;
     @Override

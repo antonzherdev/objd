@@ -1,5 +1,8 @@
 package objd.collection;
 
+import objd.lang.*;
+import objd.chain.Chain;
+
 public interface Traversable<T> {
     void forEach(final P<T> each);
     void parForEach(final P<T> each);

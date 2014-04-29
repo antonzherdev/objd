@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public interface MMap<K, V> extends Map<K, V>, MIterable<Tuple<K, V>> {
     void setKeyValue(final K key, final V value);
     V removeKey(final K key);

@@ -1,5 +1,8 @@
 package objd.collection;
 
+import objd.lang.*;
+import objd.lang.Object;
+
 public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
     private static final Object obj;
     public final MTreeMap<T, Object> mmap;

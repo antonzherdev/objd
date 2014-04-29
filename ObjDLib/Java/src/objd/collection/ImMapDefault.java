@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class ImMapDefault<K, V> extends ImIterable_impl<Tuple<K, V>> {
     public final ImMap<K, V> map;
     public final F<K, V> defaultFunc;

@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class TreeMapBuilder<K, V> extends Builder_impl<Tuple<K, V>, TreeMap<K, V>> {
     public final F2<K, K, Integer> comparator;
     private final MTreeMap<K, V> map;

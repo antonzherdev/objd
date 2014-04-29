@@ -1,5 +1,8 @@
 package objd.chain;
 
+import objd.lang.*;
+import objd.collection.Traversable;
+
 public class FilterLink<T> implements ChainLink<T, T> {
     public final F<T, Boolean> predicate;
     public final float selectivity;

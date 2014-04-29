@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public abstract class MIterable_impl<T> extends Iterable_impl<T> implements MIterable<T> {
     @Override
     public boolean removeItem(final T item) {

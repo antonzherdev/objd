@@ -1,5 +1,10 @@
 package objd.chain;
 
+import objd.lang.*;
+import objd.collection.Traversable;
+import objd.collection.Array;
+import objd.collection.Iterable;
+
 public class Yield<T> {
     public final F<Integer, Integer> begin;
     public final F<T, Integer> yield;

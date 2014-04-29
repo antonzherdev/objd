@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
     public static final int BLACK;
     public static final int RED;

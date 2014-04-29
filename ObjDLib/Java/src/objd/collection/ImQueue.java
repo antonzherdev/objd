@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class ImQueue<T> extends Queue_impl<T> {
     private static final ImQueue<Object> empty;
     public final ImList<T> in;

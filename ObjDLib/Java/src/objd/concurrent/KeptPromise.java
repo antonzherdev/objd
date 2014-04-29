@@ -1,5 +1,8 @@
 package objd.concurrent;
 
+import objd.lang.*;
+import objd.lang.Try;
+
 public final class KeptPromise<T> extends Promise<T> {
     public final Try<T> value;
     @Override

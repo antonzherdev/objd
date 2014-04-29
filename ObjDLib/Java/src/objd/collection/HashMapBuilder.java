@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class HashMapBuilder<K, V> extends Builder_impl<Tuple<K, V>, ImHashMap<K, V>> {
     private final MHashMap<K, V> map;
     @Override

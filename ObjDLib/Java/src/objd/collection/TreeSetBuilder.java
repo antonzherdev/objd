@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class TreeSetBuilder<T> extends Builder_impl<T, ImTreeSet<T>> {
     public final F2<T, T, Integer> comparator;
     private final MTreeSet<T> set;

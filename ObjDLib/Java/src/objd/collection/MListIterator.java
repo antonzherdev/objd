@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class MListIterator<T> extends MIterator_impl<T> {
     public final MList<T> list;
     private MListItem<T> prev;

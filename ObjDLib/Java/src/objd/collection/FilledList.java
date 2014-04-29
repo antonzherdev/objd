@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public final class FilledList<T> extends ImList<T> {
     public final T _head;
     public final ImList<T> tail;

@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class ImListBuilder<T> extends Builder_impl<T, ImList<T>> {
     private ImList<T> list;
     @Override
