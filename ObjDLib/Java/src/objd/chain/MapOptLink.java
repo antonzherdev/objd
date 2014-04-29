@@ -9,17 +9,17 @@ public class MapOptLink<A, B> extends ChainLink_impl<A, B> {
         return Yield.<A, B>decorateBaseYield(yield, new F<A, Integer>() {
             @Override
             public Integer apply(final A item) {
-                final Integer __tmp_0;
+                final Integer __tmp_0r;
                 {
                     final B _ = MapOptLink.this.f.apply(item);
                     if(_ != null) {
-                        __tmp_0 = yield.yieldItem(_);
+                        __tmp_0r = yield.yieldItem(_);
                     } else {
-                        __tmp_0 = null;
+                        __tmp_0r = null;
                     }
                 }
-                if(__tmp_0 != null) {
-                    return __tmp_0;
+                if(__tmp_0r != null) {
+                    return __tmp_0r;
                 } else {
                     return ((int)(0));
                 }

@@ -1533,6 +1533,7 @@ data Exp = Nop
 	| Some Bool Exp -- Return checked or unchecked option
 	| None DataType
 	| Throw Exp
+	| NPE
 	| Not Exp
 	| Negative Exp
 	| Cast DataType Exp
@@ -1602,6 +1603,7 @@ instance Show Exp where
 	show (LambdaCall e) = show e ++ "()"
 	show (Deferencing e) = "*(" ++ show e ++ ")"
 	show (Try e f) = "try " ++ show e ++ "\nfinally " ++ show f
+	show NPE = "NPE"
 	show (StringBuild pars lastS) = "\"" ++ join (map (\(prev, e) -> prev ++ "$" ++ show e) pars) ++ lastS ++ "\""
 
 extractStringConst :: Exp -> Maybe String
@@ -1845,6 +1847,7 @@ exprDataType (Some ch v) = option ch $ exprDataType v
 exprDataType (None tp) = option False tp
 exprDataType (FirstTry _ e) = exprDataType e
 exprDataType (Throw _) = TPThrow
+exprDataType NPE = TPThrow
 exprDataType (Not _) = TPBool
 exprDataType (Negative e) = exprDataType e
 exprDataType (Deferencing e) = case exprDataType e of
@@ -1867,6 +1870,7 @@ exprDataType (LambdaCall e) = case unwrapGeneric $ exprDataType e of
 
 maybeCast :: DataType -> Exp -> Exp
 maybeCast _ e@Throw{} = e
+maybeCast _ e@NPE = e
 maybeCast _ e@(Braces []) = e
 maybeCast tp (If c t f) = If c (maybeCast tp t) (maybeCast tp f) 
 maybeCast tp (Braces x) = Braces $ (init x) ++ [maybeCast tp $ last x]
@@ -1891,19 +1895,19 @@ exprToSome env e =  expr env{envTp = baseDataType env} e
 
 expr :: Env -> D.Exp -> Exp
 expr env (D.If cond t D.Nop) = let
-	cond' = exprTo env TPBool cond 
-	env' = optChecking env cond'
-	in If (exprTo env TPBool cond) (expr (fst env') t) Nop
+	cond' = exprTo (envAddSuffix env "c") TPBool cond 
+	env' = optChecking (envAddSuffix env "t") cond'
+	in If cond' (expr (fst env') t) Nop
 expr env (D.If cond t f)
 	| envTp env == TPVoid = let
-		cond' = exprTo env TPBool cond 
+		cond' = exprTo (envAddSuffix env "c") TPBool cond 
 		env' = optChecking env cond'
-		in If (exprTo env TPBool cond) (expr (fst env') t) (expr (snd env') f)
+		in If cond' (expr (envAddSuffix (fst env') "t") t) (expr (envAddSuffix (snd env') "f") f)
 	| otherwise = let 
 		cond' = exprTo env TPBool cond 
 		env' = optChecking env cond'
-		t' = expr (fst env') t
-		f' = expr (snd env') f
+		t' = expr (envAddSuffix (fst env') "t") t
+		f' = expr (envAddSuffix (snd env') "f") f
 		dt = exprDataType t'
 		df = exprDataType f'
 		retTp = firstCommonSuperDataType env dt df
@@ -1963,14 +1967,14 @@ expr _ (D.BoolConst i) = BoolConst i
 expr _ (D.FloatConst s) = FloatConst s
 expr env (D.BoolOp tp a b)
 	| tp == Or || tp == And = let
-		a' = exprTo env TPBool a
+		a' = exprTo (envAddSuffix env "a") TPBool a
 		env' = optChecking env a'
-		env'' = if tp == Or then snd env' else fst env'
+		env'' = envAddSuffix (if tp == Or then snd env' else fst env') "b"
 	in BoolOp tp a' (exprTo env'' TPBool b)
 expr env (D.BoolOp tp a b) 
 	| tp == Eq || tp == NotEq = let
-		a' = exprToSome env a
-		b' = exprToSome env b
+		a' = exprToSome (envAddSuffix env "a") a
+		b' = exprToSome (envAddSuffix env "b") b
 		atp = unwrapGeneric $ exprDataType a'
 		btp = unwrapGeneric $ exprDataType b'
 	in case (a', b') of
@@ -1981,14 +1985,14 @@ expr env (D.BoolOp tp a b)
 			(TPOption False _, _) -> compareOptionWithNonOption env tp (a', atp) (b', btp)
 			(_, TPOption False _) -> compareOptionWithNonOption env tp (b', btp) (a', atp)
 			_ -> BoolOp tp  a' b'
-expr env (D.BoolOp tp a b) = BoolOp tp (exprToSome env a) (exprToSome env b)
+expr env (D.BoolOp tp a b) = BoolOp tp (exprToSome (envAddSuffix env "a") a) (exprToSome (envAddSuffix env "b") b)
 expr env (D.MathOp tp a b) = 
 	let 
-		aa = exprToSome env a
+		aa = exprToSome (envAddSuffix env "a") a
 		ltp = exprDataType aa
-		math = MathOp tp aa (exprToSome env b)
+		math = MathOp tp aa (exprToSome (envAddSuffix env "b") b)
 		cll = D.Call (literalDefName $ show tp) (Just [(Nothing, b)]) []
-		callOp =  Dot aa $ exprCall env (Just ltp) $ cll
+		callOp =  Dot aa $ exprCall (envAddSuffix env "b") (Just ltp) $ cll
 	in case unwrapGeneric ltp of
 		TPNumber{} -> math
 		TPFloatNumber{} -> math
@@ -1997,8 +2001,8 @@ expr env (D.MathOp tp a b) =
 		_ -> callOp 
 expr env d@(D.Dot a b) = let
 	aa = case a of
-		D.Call {} -> exprCall env Nothing a
-		_ -> exprToSome env a
+		D.Call {} -> exprCall (envAddSuffix env "l") Nothing a
+		_ -> exprToSome (envAddSuffix env "l") a
 	aTp' = case exprDataType aa of
 		TPOption True t -> t
 		TPPointer t -> t
@@ -2008,7 +2012,7 @@ expr env d@(D.Dot a b) = let
 		TPOption True t -> t
 		TPGenericWrap _ (TPOption True t) -> t
 		t -> t
-	bb = exprCall env (Just aTp')  b
+	bb = exprCall (envAddSuffix env "r") (Just aTp')  b
 	def = case aa of
 			ExpDError s _ -> ExpDError s d
 			_ -> case bb of
@@ -2147,8 +2151,8 @@ nonOpt _ False e = NonOpt False e e
 nonOpt env True e = let
 	tp = exprDataType e
 	tp' = unoptionHard $ tp
-	rt w = If (BoolOp Eq w (None tp')) (Throw $ StringConst "Not null") w
-	val = tmpVal env "" tp e
+	rt w = If (BoolOp Eq w (None tp')) NPE w
+	val = tmpVal env "n" tp e
 	in NonOpt True e $ if isElementaryExpression e then rt e else Braces [Val False val, rt (callRef val)]
 
 nullDot :: Env -> Exp -> Exp -> Exp
@@ -2156,7 +2160,7 @@ nullDot env l r = let
 	ltp = exprDataType l
 	ltp' = unoptionHard ltp
 	rtp = exprDataType r
-	val = tmpVal env "" ltp l
+	val = tmpVal env "u" ltp l
 	f l' = If (BoolOp Eq l' (None ltp')) (None rtp) (Some True $ Dot (nonOpt env False l') r) 
 	uw 
 		| isElementaryExpression l = f l
@@ -2232,17 +2236,17 @@ linkOrElse env (tp, isOptionAlt) (_, l') alt =
 linkNullDot :: Env -> D.Exp -> Exp
 linkNullDot env d@(D.NullDot a b) = let
 	aa = case a of
-		D.Call {} -> exprCall env Nothing a
-		_ -> exprToSome env a
+		D.Call {} -> exprCall (envAddSuffix env "l") Nothing a
+		_ -> exprToSome (envAddSuffix env "l") a
 	aTp = exprDataType aa
 	bb = case aTp of
-		TPOption _ tp -> exprCall env (Just tp) b
-		TPGenericWrap _ (TPOption _ tp) -> exprCall env (Just tp) b
+		TPOption _ tp -> exprCall (envAddSuffix env "r") (Just tp) b
+		TPGenericWrap _ (TPOption _ tp) -> exprCall (envAddSuffix env "r") (Just tp) b
 		tp -> ExpDError ("Null safe operation for the non-nullable datatype " ++ show tp) b	
 	in case aa of
 		ExpDError s _ -> ExpDError s d
 		_ -> case bb of
-			Dot l r -> nullDot env (nullDot env{envVarSuffix = envVarSuffix env ++ "i"} aa l) r
+			Dot l r -> nullDot env (nullDot (envAddSuffix env "i") aa l) r
 			_ -> nullDot env aa bb
 
 optChecking :: Env -> Exp -> (Env, Env)

@@ -39,9 +39,9 @@ public class MList<T> extends MSeq_impl<T> {
                 if(c != null) {
                     final MListItem<T> li = new MListItem<T>(item);
                     {
-                        final MListItem<T> __tmp_0_3_1 = c.next;
-                        if(__tmp_0_3_1 != null) {
-                            __tmp_0_3_1.prev = li;
+                        final MListItem<T> __tmp_0ff_3t_1 = c.next;
+                        if(__tmp_0ff_3t_1 != null) {
+                            __tmp_0ff_3t_1.prev = li;
                         }
                     }
                     c.next = li;
@@ -89,15 +89,15 @@ public class MList<T> extends MSeq_impl<T> {
                 this.lastItem.next = null;
             } else {
                 {
-                    final MListItem<T> __tmp_0_0 = listItem.prev;
-                    if(__tmp_0_0 != null) {
-                        __tmp_0_0.next = listItem.next;
+                    final MListItem<T> __tmp_0ff_0 = listItem.prev;
+                    if(__tmp_0ff_0 != null) {
+                        __tmp_0ff_0.next = listItem.next;
                     }
                 }
                 {
-                    final MListItem<T> __tmp_0_1 = listItem.next;
-                    if(__tmp_0_1 != null) {
-                        __tmp_0_1.prev = listItem.prev;
+                    final MListItem<T> __tmp_0ff_1 = listItem.next;
+                    if(__tmp_0ff_1 != null) {
+                        __tmp_0ff_1.prev = listItem.prev;
                     }
                 }
             }
@@ -137,7 +137,7 @@ public class MList<T> extends MSeq_impl<T> {
     }
     @Override
     public T last() {
-        return (this.lastItem == null) ? (null) : (this.lastItem.data);
+        return ((this.lastItem == null) ? (null) : (this.lastItem.data));
     }
     public T takeLast() {
         final MListItem<T> h = this.lastItem;
@@ -180,7 +180,7 @@ public class MList<T> extends MSeq_impl<T> {
     }
     @Override
     public T head() {
-        return (this.headItem == null) ? (null) : (this.headItem.data);
+        return ((this.headItem == null) ? (null) : (this.headItem.data));
     }
     public MList() {
         this._count = ((int)(0));

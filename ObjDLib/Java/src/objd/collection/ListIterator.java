@@ -13,7 +13,7 @@ public class ListIterator<T> extends Iterator_impl<T> {
         final T ret = this.list.head();
         this.list = this.list.tail();
         if(ret == null) {
-            throw new RuntimeException("Not null");
+            throw new NullPointerException();
         }
         return ret;
     }

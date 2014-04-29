@@ -32,7 +32,7 @@ class MTreeSet<T>(val mmap : MTreeMap<T, Object>) extends TreeSet<T>(mmap) with 
         MTreeSet<T>(MTreeMap<T, Object>(comparator))
     }
 
-    static def apply<T> = MTreeSet<T>(MTreeMap<T, Object>())
+    static def apply<T extends Comparable<T>> = MTreeSet<T>(MTreeMap<T, Object>())
     private static val obj = Object()
     override def mutableIterator = mmap.keys.mutableIterator
 //    def between(a : T, b : T) : [T]

@@ -393,6 +393,9 @@ genExp env e@(D.If cond t f) = do
 genExp env e@D.Throw{} = do 
 	tellGenStms env e 
 	return J.Nop
+genExp env e@D.NPE = do 
+	tellGenStms env e 
+	return J.Nop
 genExp env (D.Some _ e) = genExp env e
 genExp env (D.Return False e) = genExp env e
 genExp env (D.Arr exps) = do
@@ -480,7 +483,11 @@ genStm env (D.If cond t f) = do
 genStm env (D.While cond w) = do
 	w' <- getStms env w
 	genExpStm env cond (\cond' -> J.While cond' w')
+genStm env (D.Do cond w) = do
+	w' <- getStms env w
+	genExpStm env cond (\cond' -> J.Do cond' w')
 genStm env (D.Throw e) = genExpStm env e (\e' -> J.Throw $ J.New [] "RuntimeException" [] [e'])
+genStm _ D.NPE = return [J.Throw $ J.New [] "NullPointerException" [] []]
 genStm env (D.Set tp l r) = let
 	(l', Wrt{wrtStms = lstm, wrtImports = limps}) = runWriter $ genExp env l
 	(r', Wrt{wrtStms = rstm, wrtImports = rimps}) = runWriter $ genExp env r

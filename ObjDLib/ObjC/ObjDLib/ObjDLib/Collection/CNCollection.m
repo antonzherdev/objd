@@ -63,9 +63,9 @@
 
 - (void)appendAllItems:(id<CNTraversable>)items {
     if([items conformsToProtocol:@protocol(CNIterable)]) {
-        id<CNIterator> __il__0_0i = [((id<CNIterable>)(items)) iterator];
-        while([__il__0_0i hasNext]) {
-            id _ = [__il__0_0i next];
+        id<CNIterator> __il__0t_0i = [((id<CNIterable>)(items)) iterator];
+        while([__il__0t_0i hasNext]) {
+            id _ = [__il__0t_0i next];
             [self appendItem:_];
         }
     } else {

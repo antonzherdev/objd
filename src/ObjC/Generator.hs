@@ -1000,6 +1000,7 @@ tExp env ee@(D.NonOpt ch e _) = let
 			else C.Cast (showDataType tp) $ tExpTo env tp e
 tExp env (D.Return _ e) = tExp env e
 tExp env (D.Throw e) = C.ExpBraces [C.Throw $ tExp env e]
+tExp _ D.NPE = C.ExpBraces [C.Throw $ C.StringConst "Not null"]
 tExp env (D.Deferencing e) = C.Deferencing (tExp env e)
 tExp _ x = C.Error $ "No tExp for " ++ show x
 

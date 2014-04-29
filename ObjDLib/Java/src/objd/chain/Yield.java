@@ -65,22 +65,22 @@ public class Yield<T> {
         return Yield.<T>makeBeginYieldEndAll(null, null, null, null);
     }
     public static <T, A> Yield<T> decorateBaseBeginYieldEndAll(final Yield<A> base, final F<Integer, Integer> begin, final F<T, Integer> yield, final F<Integer, Integer> end, final F<Traversable<T>, Integer> all) {
-        return new Yield<T>((begin != null) ? (begin) : (new F<Integer, Integer>() {
+        return new Yield<T>(((begin != null) ? (begin) : (new F<Integer, Integer>() {
             @Override
             public Integer apply(final Integer size) {
                 return base.beginYieldWithSize(size);
             }
-        }), (yield != null) ? (yield) : (new F<T, Integer>() {
+        })), ((yield != null) ? (yield) : (new F<T, Integer>() {
             @Override
             public Integer apply(final T item) {
                 return base.yieldItem(((A)(item)));
             }
-        }), (end != null) ? (end) : (new F<Integer, Integer>() {
+        })), ((end != null) ? (end) : (new F<Integer, Integer>() {
             @Override
             public Integer apply(final Integer result) {
                 return base.endYieldWithResult(result);
             }
-        }), all);
+        })), all);
     }
     public static <T, A> Yield<T> decorateBaseBeginYieldEnd(final Yield<A> base, final F<Integer, Integer> begin, final F<T, Integer> yield, final F<Integer, Integer> end) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, begin, yield, end, null);

@@ -17,10 +17,10 @@ public class ShuffleLink<T> extends ChainLink_impl<T, T> {
             @Override
             public Integer apply(final T item) {
                 if(ShuffleLink.this._array == null) {
-                    throw new RuntimeException("Not null");
+                    throw new NullPointerException();
                 }
                 if(ShuffleLink.this._array == null) {
-                    throw new RuntimeException("Not null");
+                    throw new NullPointerException();
                 }
                 ShuffleLink.this._array.insertIndexItem(UInt.rndMax(ShuffleLink.this._array.count()), item);
                 return ((int)(0));
@@ -29,7 +29,7 @@ public class ShuffleLink<T> extends ChainLink_impl<T, T> {
             @Override
             public Integer apply(final Integer r) {
                 if(ShuffleLink.this._array == null) {
-                    throw new RuntimeException("Not null");
+                    throw new NullPointerException();
                 }
                 if(yield.yieldAllItems(ShuffleLink.this._array) == 1) {
                     return ((int)(1));

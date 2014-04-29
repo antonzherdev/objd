@@ -11,7 +11,7 @@ public class MListImmutableIterator<T> extends Iterator_impl<T> {
     @Override
     public T next() {
         if(this.item == null) {
-            throw new RuntimeException("Not null");
+            throw new NullPointerException();
         }
         final MListItem<T> r = this.item;
         this.item = r.next;

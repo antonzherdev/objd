@@ -142,12 +142,15 @@
     @throw @"Method mutableIterator is abstract";
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverriding-method-mismatch"
 - (void)mutableFilterBy:(BOOL(^)(CNTuple*))by {
     id<CNMIterator> i = [self mutableIterator];
     while([i hasNext]) {
         if(by([i next])) [i remove];
     }
 }
+#pragma clang diagnostic pop
 
 - (void)clear {
     @throw @"Method clear is abstract";

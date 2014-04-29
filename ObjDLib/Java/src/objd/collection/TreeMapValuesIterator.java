@@ -16,11 +16,11 @@ public class TreeMapValuesIterator<V> extends Iterator_impl<V> {
     @Override
     public V next() {
         if(this.entry == null) {
-            throw new RuntimeException("Not null");
+            throw new NullPointerException();
         }
         final V ret = this.entry.value;
         if(this.entry == null) {
-            throw new RuntimeException("Not null");
+            throw new NullPointerException();
         }
         this.entry = this.entry.next();
         return ret;

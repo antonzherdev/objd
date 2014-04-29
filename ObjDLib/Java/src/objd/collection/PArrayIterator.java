@@ -11,11 +11,11 @@ public class PArrayIterator<T> extends Iterator_impl<T> {
     }
     @Override
     public T next() {
-        final T __tmp_0 = this.array.applyIndex(((int)(this.i)));
-        if(__tmp_0 == null) {
-            throw new RuntimeException("Not null");
+        final T __tmp_0n = this.array.applyIndex(((int)(this.i)));
+        if(__tmp_0n == null) {
+            throw new NullPointerException();
         }
-        final T ret = __tmp_0;
+        final T ret = __tmp_0n;
         this.i++;
         return ret;
     }

@@ -110,6 +110,8 @@
 - (id<CNMIterator>)mutableIterator;
 - (void)setKey:(id)key value:(id)value;
 - (id)removeKey:(id)key;
+- (BOOL)removeItem:(CNTuple*)item;
+- (id)deleteEntry:(CNTreeMapEntry*)entry;
 - (CNTuple*)pollFirst;
 + (CNClassType*)type;
 @end

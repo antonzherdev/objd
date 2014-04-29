@@ -9,14 +9,14 @@ public class Cache<X, R> {
     public R applyX(final X x) {
         if(this._lastX != null && this._lastX.equals(x)) {
             if(this._lastF == null) {
-                throw new RuntimeException("Not null");
+                throw new NullPointerException();
             }
             return this._lastF;
         } else {
             this._lastX = x;
             this._lastF = this.f.apply(x);
             if(this._lastF == null) {
-                throw new RuntimeException("Not null");
+                throw new NullPointerException();
             }
             return this._lastF;
         }

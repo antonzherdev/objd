@@ -13,7 +13,7 @@ public class MListIterator<T> extends MIterator_impl<T> {
     @Override
     public T next() {
         if(this.item == null) {
-            throw new RuntimeException("Not null");
+            throw new NullPointerException();
         }
         final MListItem<T> p = this.item;
         this.item = p.next;
@@ -23,14 +23,14 @@ public class MListIterator<T> extends MIterator_impl<T> {
     @Override
     public void remove() {
         if(this.prev == null) {
-            throw new RuntimeException("Not null");
+            throw new NullPointerException();
         }
         this.list.removeListItem(this.prev);
     }
     @Override
     public void setValue(final T value) {
         if(this.prev == null) {
-            throw new RuntimeException("Not null");
+            throw new NullPointerException();
         }
         this.prev.data = value;
     }

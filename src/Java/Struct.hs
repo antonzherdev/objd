@@ -128,7 +128,7 @@ showAnnotation (DefAnnotation nm pars) = ["@" ++ nm ++ "("] `glue` (glueAll ", "
 showStmsInBrackets :: [Stm] -> [String]
 showStmsInBrackets stms = ["{"] ++ (map ind . concatMap showStm) stms ++ ["}"]
 
-data Stm = Stm Exp | Braces [Stm] | Return Exp | If Exp [Stm] [Stm] | While Exp [Stm]
+data Stm = Stm Exp | Braces [Stm] | Return Exp | If Exp [Stm] [Stm] | While Exp [Stm] | Do Exp [Stm]
 	| Throw Exp | Set (Maybe MathTp) Exp Exp | Val [DefMod] TP String Exp | Break deriving (Eq)
 
 showStm :: Stm -> [String]
@@ -140,6 +140,7 @@ showStm (Set tp l r) = showExp l `appp` maybe " = " (\t -> " " ++ show t ++ "= "
 showStm (Throw e) = ["throw "] `glue` showExp e `appp` ";"
 showStm (If cond t []) = (["if("] `glue` showExp cond `appp` ") ") `glue` showStmsInBrackets t
 showStm (While cond w) = (["while("] `glue` showExp cond `appp` ") ") `glue` showStmsInBrackets w
+showStm (Do cond w) = (["do "] `glue` showStmsInBrackets w) `glue` ([" while("] `glue` showExp cond `appp` ");")
 showStm (If cond t f) = (showStm (If cond t []) `appp` " else ") `glue` showStmsInBrackets f 
 showStm (Braces stms) = showStmsInBrackets stms
 showStm (Val mods tp nm Nop) = [pstrs' "" " " " " mods ++ show tp ++ " " ++ kw nm ++ ";"]
@@ -168,7 +169,7 @@ showExp (New defs name gens pars) = let
 		_ -> (t `appp` " {") ++ (map ind . concatMap (showDef (ClassTypeClass, ""))) defs ++ ["}"]
 showExp (Dot l r) = showExp l `appp` "." `glue` showExp r
 showExp (Index e i) = (showExp e `appp` "[") `glue` (showExp i `appp` "]")
-showExp (InlineIf cond t f) = ((["("] `glue` showExp cond `appp` ") ? (") `glue` showExp t `appp` ") : (")  `glue` showExp f `appp` ")"
+showExp (InlineIf cond t f) = ((["(("] `glue` showExp cond `appp` ") ? (") `glue` showExp t `appp` ") : (")  `glue` showExp f `appp` "))"
 showExp (InstanceOf e tp) = showExp e `appp` (" instanceof " ++ show (removeGenerics tp))
 showExp (Cast tp e) = ["((" ++ show tp ++ ")("] `glue` showExp e `appp` "))"
 showExp (Not e) = ["!("] `glue` showExp e `appp` ")"

@@ -1,13 +1,11 @@
 package objd.collection;
 
-import objd.lang.*;
-
-public class MTreeMapKeyIterator<K> extends MIterator_impl<K> {
-    public final MTreeMap<K, ?> map;
-    private TreeMapEntry<K, ?> prev;
-    public TreeMapEntry<K, ?> entry;
-    public static <K> MTreeMapKeyIterator<K> applyMapEntry(final MTreeMap<K, ?> map, final TreeMapEntry<K, ?> entry) {
-        final MTreeMapKeyIterator<K> ret = new MTreeMapKeyIterator<K>(map);
+public class MTreeMapKeyIterator<K, V> extends MIterator_impl<K> {
+    public final MTreeMap<K, V> map;
+    private TreeMapEntry<K, V> prev;
+    public TreeMapEntry<K, V> entry;
+    public static <K, V> MTreeMapKeyIterator<K, V> applyMapEntry(final MTreeMap<K, V> map, final TreeMapEntry<K, V> entry) {
+        final MTreeMapKeyIterator<K, V> ret = new MTreeMapKeyIterator<K, V>(map);
         ret.entry = entry;
         return ret;
     }
@@ -18,20 +16,18 @@ public class MTreeMapKeyIterator<K> extends MIterator_impl<K> {
     @Override
     public K next() {
         if(this.entry == null) {
-            throw new RuntimeException("Not null");
+            throw new NullPointerException();
         }
-        final K ret = this.entry.key;
-        this.prev = this.entry;
-        if(this.entry == null) {
-            throw new RuntimeException("Not null");
-        }
-        this.entry = this.entry.next();
+        final TreeMapEntry<K, V> e = this.entry;
+        final K ret = e.key;
+        this.prev = e;
+        this.entry = e.next();
         return ret;
     }
     @Override
     public void remove() {
         {
-            final TreeMapEntry<K, ?> _ = this.prev;
+            final TreeMapEntry<K, V> _ = this.prev;
             if(_ != null) {
                 this.map.deleteEntry(_);
             }
@@ -40,7 +36,7 @@ public class MTreeMapKeyIterator<K> extends MIterator_impl<K> {
     @Override
     public void setValue(final K value) {
         {
-            final TreeMapEntry<K, ?> p = this.prev;
+            final TreeMapEntry<K, V> p = this.prev;
             if(p != null) {
                 if(!(p.key.equals(value))) {
                     this.map.deleteEntry(p);
@@ -49,7 +45,7 @@ public class MTreeMapKeyIterator<K> extends MIterator_impl<K> {
             }
         }
     }
-    public MTreeMapKeyIterator(final MTreeMap<K, ?> map) {
+    public MTreeMapKeyIterator(final MTreeMap<K, V> map) {
         this.map = map;
     }
 }

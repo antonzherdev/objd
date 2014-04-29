@@ -5,9 +5,9 @@ import objd.lang.*;
 public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     private TreeMapEntry<K, V> _root;
     private int _size;
-    public final MTreeMapKeySet<K> keys;
+    public final MTreeMapKeySet<K, V> keys;
     @Override
-    public MTreeMapKeySet<K> keys() {
+    public MTreeMapKeySet<K, V> keys() {
         return keys;
     }
     public static <K extends Comparable<K>, V> MTreeMap<K, V> apply() {
@@ -20,7 +20,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     }
     @Override
     public ImTreeMap<K, V> imCopy() {
-        return new ImTreeMap<K, V>(this.comparator, (this._root == null) ? (null) : (this._root.copyParent(null)), this._size);
+        return new ImTreeMap<K, V>(this.comparator, ((this._root == null) ? (null) : (this._root.copyParent(null))), this._size);
     }
     @Override
     public ImTreeMap<K, V> im() {
@@ -30,15 +30,15 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     public void assignImMap(final ImMap<K, V> imMap) {
         if(imMap instanceof ImTreeMap) {
             final ImTreeMap<K, V> m = ((ImTreeMap<K, V>)(imMap));
-            final TreeMapEntry<K, V> __tmp_0_1 = m.root;
-            this._root = (__tmp_0_1 == null) ? (null) : (__tmp_0_1.copyParent(null));
+            final TreeMapEntry<K, V> __tmp_0t_1u = m.root;
+            this._root = ((__tmp_0t_1u == null) ? (null) : (__tmp_0t_1u.copyParent(null)));
             this._size = m.count;
         } else {
             this.clear();
             {
-                final Iterator<Tuple<K, V>> __il__0_1i = imMap.iterator();
-                while(__il__0_1i.hasNext()) {
-                    final Tuple<K, V> _ = __il__0_1i.next();
+                final Iterator<Tuple<K, V>> __il__0f_1i = imMap.iterator();
+                while(__il__0f_1i.hasNext()) {
+                    final Tuple<K, V> _ = __il__0f_1i.next();
                     appendItem(_);
                 }
             }
@@ -71,25 +71,29 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
         } else {
             int cmp = 0;
             TreeMapEntry<K, V> parent = null;
-            ERROR: Unknown do{
-    (<lm>parent\(^TreeMapEntry#C<§K#G§, §V#G§>)?\ = <lm>t\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.cast<(^TreeMapEntry#C<§K#G§, §V#G§>)?>)
-    (<lm>cmp\int\ = <l>__comparator\(§K#G§, §K#G§) -> int\.<d>apply( = <l>key\§K#G§\,  = <lm>t\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUm>key\§K#G§\)\int\)
-    if((<lm>cmp\int\ < 0)) (<lm>t\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>t\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>left\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)
-else if((<lm>cmp\int\ > 0)) (<lm>t\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ = <lm>t\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIm>right\(^TreeMapEntry#C<§K#G§, §V#G§>)?\)
-else {
-    (<lm>t\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\.<eIUm>value\§V#G§\ = <l>value\§V#G§\)
-    return nil
-}
-} while((<lm>t\(^TreeMapEntry#C<§K#G§, §V#G§>)¿\ != none<^TreeMapEntry#C<§K#G§, §V#G§>>));
+            do {
+                parent = ((TreeMapEntry<K, V>)(t));
+                cmp = __comparator.apply(key, t.key);
+                if(cmp < 0) {
+                    t = t.left;
+                } else {
+                    if(cmp > 0) {
+                        t = t.right;
+                    } else {
+                        t.value = value;
+                        return ;
+                    }
+                }
+            } while(t != null);
             final TreeMapEntry<K, V> e = new TreeMapEntry<K, V>(key, value, parent);
             if(cmp < 0) {
                 if(parent == null) {
-                    throw new RuntimeException("Not null");
+                    throw new NullPointerException();
                 }
                 parent.left = e;
             } else {
                 if(parent == null) {
-                    throw new RuntimeException("Not null");
+                    throw new NullPointerException();
                 }
                 parent.right = e;
             }
@@ -106,42 +110,46 @@ else {
             return null;
         }
     }
-    private V deleteEntry(final TreeMapEntry<K, V> entry) {
+    @Override
+    public boolean removeItem(final Tuple<K, V> item) {
+        return removeKey(item.a) != null;
+    }
+    public V deleteEntry(final TreeMapEntry<K, V> entry) {
         TreeMapEntry<K, V> p = entry;
         this._size--;
         if(p.left != null && p.right != null) {
-            final TreeMapEntry<K, V> __tmp_2_0 = p.next();
-            if(__tmp_2_0 == null) {
-                throw new RuntimeException("Not null");
+            final TreeMapEntry<K, V> __tmp_2t_0n = p.next();
+            if(__tmp_2t_0n == null) {
+                throw new NullPointerException();
             }
-            final TreeMapEntry<K, V> s = __tmp_2_0;
+            final TreeMapEntry<K, V> s = __tmp_2t_0n;
             p.key = s.key;
             p.value = s.value;
             p = s;
         }
-        final TreeMapEntry<K, V> replacement = (p.left != null) ? (p.left) : (p.right);
+        final TreeMapEntry<K, V> replacement = ((p.left != null) ? (p.left) : (p.right));
         if(replacement != null) {
             replacement.parent = p.parent;
             if(p.parent == null) {
                 this._root = ((TreeMapEntry<K, V>)(replacement));
             } else {
-                final TreeMapEntry<K, V> __tmp_4_1 = p.parent;
-                if(__tmp_4_1 == null) {
-                    throw new RuntimeException("Not null");
+                final TreeMapEntry<K, V> __tmp_4t_1fcbln = p.parent;
+                if(__tmp_4t_1fcbln == null) {
+                    throw new NullPointerException();
                 }
-                final TreeMapEntry<K, V> __tmp_4_1 = __tmp_4_1.left;
-                if(__tmp_4_1 != null && __tmp_4_1.equals(p)) {
-                    final TreeMapEntry<K, V> __tmp_4_1 = p.parent;
-                    if(__tmp_4_1 == null) {
-                        throw new RuntimeException("Not null");
+                final TreeMapEntry<K, V> __tmp_4t_1fc = __tmp_4t_1fcbln.left;
+                if(__tmp_4t_1fc != null && __tmp_4t_1fc.equals(p)) {
+                    final TreeMapEntry<K, V> __tmp_4t_1ftln = p.parent;
+                    if(__tmp_4t_1ftln == null) {
+                        throw new NullPointerException();
                     }
-                    __tmp_4_1.left = ((TreeMapEntry<K, V>)(replacement));
+                    __tmp_4t_1ftln.left = ((TreeMapEntry<K, V>)(replacement));
                 } else {
-                    final TreeMapEntry<K, V> __tmp_4_1 = p.parent;
-                    if(__tmp_4_1 == null) {
-                        throw new RuntimeException("Not null");
+                    final TreeMapEntry<K, V> __tmp_4t_1ffln = p.parent;
+                    if(__tmp_4t_1ffln == null) {
+                        throw new NullPointerException();
                     }
-                    __tmp_4_1.right = ((TreeMapEntry<K, V>)(replacement));
+                    __tmp_4t_1ffln.right = ((TreeMapEntry<K, V>)(replacement));
                 }
             }
             p.left = null;
@@ -157,30 +165,15 @@ else {
                 if(p.color == MTreeMap.BLACK) {
                     fixAfterDeletionEntry(p);
                 }
-                if(p.parent != null) {
-                    final TreeMapEntry<K, V> __tmp_4_1_0 = p.parent;
-                    if(__tmp_4_1_0 == null) {
-                        throw new RuntimeException("Not null");
-                    }
-                    final TreeMapEntry<K, V> __tmp_4_1_0 = __tmp_4_1_0.left;
-                    if(__tmp_4_1_0 != null && __tmp_4_1_0.equals(p)) {
-                        final TreeMapEntry<K, V> __tmp_4_1_0 = p.parent;
-                        if(__tmp_4_1_0 == null) {
-                            throw new RuntimeException("Not null");
-                        }
-                        __tmp_4_1_0.left = null;
+                final TreeMapEntry<K, V> g = p.parent;
+                if(g != null) {
+                    final TreeMapEntry<K, V> __tmp_4ff_2t_0c = g.left;
+                    if(__tmp_4ff_2t_0c != null && __tmp_4ff_2t_0c.equals(p)) {
+                        g.left = null;
                     } else {
-                        final TreeMapEntry<K, V> __tmp_4_1_0 = p.parent;
-                        if(__tmp_4_1_0 == null) {
-                            throw new RuntimeException("Not null");
-                        }
-                        final TreeMapEntry<K, V> __tmp_4_1_0 = __tmp_4_1_0.right;
-                        if(__tmp_4_1_0 != null && __tmp_4_1_0.equals(p)) {
-                            final TreeMapEntry<K, V> __tmp_4_1_0 = p.parent;
-                            if(__tmp_4_1_0 == null) {
-                                throw new RuntimeException("Not null");
-                            }
-                            __tmp_4_1_0.right = null;
+                        final TreeMapEntry<K, V> __tmp_4ff_2t_0fc = g.right;
+                        if(__tmp_4ff_2t_0fc != null && __tmp_4ff_2t_0fc.equals(p)) {
+                            g.right = null;
                         }
                     }
                     p.parent = null;
@@ -192,102 +185,79 @@ else {
     private void fixAfterInsertionEntry(final TreeMapEntry<K, V> entry) {
         entry.color = MTreeMap.RED;
         TreeMapEntry<K, V> x = entry;
-        final TreeMapEntry<K, V> __tmp_2 = x.parent;
-        if(__tmp_2 == null) {
-            throw new RuntimeException("Not null");
+        final TreeMapEntry<K, V> __tmp_2baln = x.parent;
+        if(__tmp_2baln == null) {
+            throw new NullPointerException();
         }
-        while(x != null && (this._root == null || !(this._root.equals(x))) && __tmp_2.color == MTreeMap.RED) {
-            final TreeMapEntry<K, V> __tmp_2_0_l = x.parent;
-            final TreeMapEntry<K, V> __tmp_2_0 = x.parent;
-            final TreeMapEntry<K, V> __tmp_2_0 = (__tmp_2_0 == null) ? (null) : (__tmp_2_0.parent);
-            final TreeMapEntry<K, V> __tmp_2_0_r = (__tmp_2_0 == null) ? (null) : (__tmp_2_0.left);
-            if(__tmp_2_0_l == __tmp_2_0_r || (__tmp_2_0_l != null && __tmp_2_0_r != null && __tmp_2_0_l.equals(__tmp_2_0_r))) {
-                final TreeMapEntry<K, V> __tmp_2_0_0 = x.parent;
-                final TreeMapEntry<K, V> __tmp_2_0_0 = (__tmp_2_0_0 == null) ? (null) : (__tmp_2_0_0.parent);
-                final TreeMapEntry<K, V> y = (__tmp_2_0_0 == null) ? (null) : (__tmp_2_0_0.right);
+        while(x != null && (this._root == null || !(this._root.equals(x))) && __tmp_2baln.color == MTreeMap.RED) {
+            final TreeMapEntry<K, V> __tmp_2_0n = x.parent;
+            if(__tmp_2_0n == null) {
+                throw new NullPointerException();
+            }
+            final TreeMapEntry<K, V> p = __tmp_2_0n;
+            final TreeMapEntry<K, V> __tmp_2_1cbu = p.parent;
+            final TreeMapEntry<K, V> __tmp_2_1c = ((__tmp_2_1cbu == null) ? (null) : (__tmp_2_1cbu.left));
+            if(__tmp_2_1c != null && __tmp_2_1c.equals(p)) {
+                final TreeMapEntry<K, V> __tmp_2_1t_0u = p.parent;
+                final TreeMapEntry<K, V> y = ((__tmp_2_1t_0u == null) ? (null) : (__tmp_2_1t_0u.right));
                 if(y != null && y.color == MTreeMap.RED) {
-                    {
-                        final TreeMapEntry<K, V> __tmp_2_0_1_0 = x.parent;
-                        if(__tmp_2_0_1_0 != null) {
-                            __tmp_2_0_1_0.color = MTreeMap.BLACK;
-                        }
-                    }
+                    p.color = MTreeMap.BLACK;
                     y.color = MTreeMap.BLACK;
                     {
-                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = x.parent;
-                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = (__tmp_2_0_1_2 == null) ? (null) : (__tmp_2_0_1_2.parent);
-                        if(__tmp_2_0_1_2 != null) {
-                            __tmp_2_0_1_2.color = MTreeMap.RED;
+                        final TreeMapEntry<K, V> __tmp_2_1t_1t_2 = p.parent;
+                        if(__tmp_2_1t_1t_2 != null) {
+                            __tmp_2_1t_1t_2.color = MTreeMap.RED;
                         }
                     }
-                    final TreeMapEntry<K, V> __tmp_2_0_1_3 = x.parent;
-                    x = (__tmp_2_0_1_3 == null) ? (null) : (__tmp_2_0_1_3.parent);
+                    x = p.parent;
                 } else {
-                    final TreeMapEntry<K, V> __tmp_2_0_1_0 = x.parent;
-                    final TreeMapEntry<K, V> __tmp_2_0_1_0 = (__tmp_2_0_1_0 == null) ? (null) : (__tmp_2_0_1_0.right);
-                    if(__tmp_2_0_1_0 != null && __tmp_2_0_1_0.equals(x)) {
-                        x = x.parent;
-                        rotateLeftP(x);
+                    final TreeMapEntry<K, V> __tmp_2_1t_1f_0c = p.right;
+                    if(__tmp_2_1t_1f_0c != null && __tmp_2_1t_1f_0c.equals(x)) {
+                        x = p;
+                        rotateLeftP(((TreeMapEntry<K, V>)(x)));
                     }
-                    {
-                        final TreeMapEntry<K, V> __tmp_2_0_1_1 = x.parent;
-                        if(__tmp_2_0_1_1 != null) {
-                            __tmp_2_0_1_1.color = MTreeMap.BLACK;
+                    final TreeMapEntry<K, V> pp = x.parent;
+                    if(pp != null) {
+                        pp.color = MTreeMap.BLACK;
+                        {
+                            final TreeMapEntry<K, V> __tmp_2_1t_1f_2t_1 = pp.parent;
+                            if(__tmp_2_1t_1f_2t_1 != null) {
+                                __tmp_2_1t_1f_2t_1.color = MTreeMap.RED;
+                            }
                         }
+                        rotateRightP(pp.parent);
                     }
-                    {
-                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = x.parent;
-                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = (__tmp_2_0_1_2 == null) ? (null) : (__tmp_2_0_1_2.parent);
-                        if(__tmp_2_0_1_2 != null) {
-                            __tmp_2_0_1_2.color = MTreeMap.RED;
-                        }
-                    }
-                    final TreeMapEntry<K, V> __tmp_2_0_1_3p0 = x.parent;
-                    rotateRightP((__tmp_2_0_1_3p0 == null) ? (null) : (__tmp_2_0_1_3p0.parent));
                 }
             } else {
-                final TreeMapEntry<K, V> __tmp_2_0_0 = x.parent;
-                final TreeMapEntry<K, V> __tmp_2_0_0 = (__tmp_2_0_0 == null) ? (null) : (__tmp_2_0_0.parent);
-                final TreeMapEntry<K, V> y = (__tmp_2_0_0 == null) ? (null) : (__tmp_2_0_0.left);
+                final TreeMapEntry<K, V> __tmp_2_1f_0u = p.parent;
+                final TreeMapEntry<K, V> y = ((__tmp_2_1f_0u == null) ? (null) : (__tmp_2_1f_0u.left));
                 if(y != null && y.color == MTreeMap.RED) {
-                    {
-                        final TreeMapEntry<K, V> __tmp_2_0_1_0 = x.parent;
-                        if(__tmp_2_0_1_0 != null) {
-                            __tmp_2_0_1_0.color = MTreeMap.BLACK;
-                        }
-                    }
+                    p.color = MTreeMap.BLACK;
                     y.color = MTreeMap.BLACK;
                     {
-                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = x.parent;
-                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = (__tmp_2_0_1_2 == null) ? (null) : (__tmp_2_0_1_2.parent);
-                        if(__tmp_2_0_1_2 != null) {
-                            __tmp_2_0_1_2.color = MTreeMap.RED;
+                        final TreeMapEntry<K, V> __tmp_2_1f_1t_2 = p.parent;
+                        if(__tmp_2_1f_1t_2 != null) {
+                            __tmp_2_1f_1t_2.color = MTreeMap.RED;
                         }
                     }
-                    final TreeMapEntry<K, V> __tmp_2_0_1_3 = x.parent;
-                    x = (__tmp_2_0_1_3 == null) ? (null) : (__tmp_2_0_1_3.parent);
+                    x = p.parent;
                 } else {
-                    final TreeMapEntry<K, V> __tmp_2_0_1_0 = x.parent;
-                    final TreeMapEntry<K, V> __tmp_2_0_1_0 = (__tmp_2_0_1_0 == null) ? (null) : (__tmp_2_0_1_0.left);
-                    if(__tmp_2_0_1_0 != null && __tmp_2_0_1_0.equals(x)) {
-                        x = x.parent;
-                        rotateRightP(x);
+                    final TreeMapEntry<K, V> __tmp_2_1f_1f_0c = p.left;
+                    if(__tmp_2_1f_1f_0c != null && __tmp_2_1f_1f_0c.equals(x)) {
+                        x = p;
+                        rotateRightP(((TreeMapEntry<K, V>)(x)));
                     }
-                    {
-                        final TreeMapEntry<K, V> __tmp_2_0_1_1 = x.parent;
-                        if(__tmp_2_0_1_1 != null) {
-                            __tmp_2_0_1_1.color = MTreeMap.BLACK;
+                    final TreeMapEntry<K, V> pp = x.parent;
+                    if(pp != null) {
+                        pp.color = MTreeMap.BLACK;
+                        {
+                            final TreeMapEntry<K, V> __tmp_2_1f_1f_2t_1 = pp.parent;
+                            if(__tmp_2_1f_1f_2t_1 != null) {
+                                __tmp_2_1f_1f_2t_1.color = MTreeMap.RED;
+                            }
                         }
+                        rotateLeftP(pp.parent);
                     }
-                    {
-                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = x.parent;
-                        final TreeMapEntry<K, V> __tmp_2_0_1_2 = (__tmp_2_0_1_2 == null) ? (null) : (__tmp_2_0_1_2.parent);
-                        if(__tmp_2_0_1_2 != null) {
-                            __tmp_2_0_1_2.color = MTreeMap.RED;
-                        }
-                    }
-                    final TreeMapEntry<K, V> __tmp_2_0_1_3p0 = x.parent;
-                    rotateLeftP((__tmp_2_0_1_3p0 == null) ? (null) : (__tmp_2_0_1_3p0.parent));
                 }
             }
         }
@@ -298,117 +268,117 @@ else {
     private void fixAfterDeletionEntry(final TreeMapEntry<K, V> entry) {
         TreeMapEntry<K, V> x = entry;
         while(x != null && (this._root == null || !(this._root.equals(x))) && x.color == MTreeMap.BLACK) {
-            final TreeMapEntry<K, V> __tmp_1_0 = x.parent;
-            final TreeMapEntry<K, V> __tmp_1_0 = (__tmp_1_0 == null) ? (null) : (__tmp_1_0.left);
-            if(__tmp_1_0 != null && __tmp_1_0.equals(x)) {
-                final TreeMapEntry<K, V> __tmp_1_0_0 = x.parent;
-                TreeMapEntry<K, V> sib = (__tmp_1_0_0 == null) ? (null) : (__tmp_1_0_0.right);
+            final TreeMapEntry<K, V> __tmp_1_0cbu = x.parent;
+            final TreeMapEntry<K, V> __tmp_1_0c = ((__tmp_1_0cbu == null) ? (null) : (__tmp_1_0cbu.left));
+            if(__tmp_1_0c != null && __tmp_1_0c.equals(x)) {
+                final TreeMapEntry<K, V> __tmp_1_0t_0u = x.parent;
+                TreeMapEntry<K, V> sib = ((__tmp_1_0t_0u == null) ? (null) : (__tmp_1_0t_0u.right));
                 if(sib != null && sib.color == MTreeMap.RED) {
                     sib.color = MTreeMap.BLACK;
                     {
-                        final TreeMapEntry<K, V> __tmp_1_0_1_1 = x.parent;
-                        if(__tmp_1_0_1_1 != null) {
-                            __tmp_1_0_1_1.color = MTreeMap.RED;
+                        final TreeMapEntry<K, V> __tmp_1_0t_1t_1 = x.parent;
+                        if(__tmp_1_0t_1t_1 != null) {
+                            __tmp_1_0t_1t_1.color = MTreeMap.RED;
                         }
                     }
                     rotateLeftP(x.parent);
-                    final TreeMapEntry<K, V> __tmp_1_0_1_3 = x.parent;
-                    sib = (__tmp_1_0_1_3 == null) ? (null) : (__tmp_1_0_1_3.right);
+                    final TreeMapEntry<K, V> __tmp_1_0t_1t_3u = x.parent;
+                    sib = ((__tmp_1_0t_1t_3u == null) ? (null) : (__tmp_1_0t_1t_3u.right));
                 }
-                final TreeMapEntry<K, V> __tmp_1_0_2 = (sib == null) ? (null) : (sib.left);
-                final TreeMapEntry<K, V> __tmp_1_0_2 = (sib == null) ? (null) : (sib.right);
-                if((__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.left).color) : (MTreeMap.BLACK) == MTreeMap.BLACK && (__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.right).color) : (MTreeMap.BLACK) == MTreeMap.BLACK) {
+                final TreeMapEntry<K, V> __tmp_1_0t_2caa = ((sib == null) ? (null) : (sib.left));
+                final TreeMapEntry<K, V> __tmp_1_0t_2cba = ((sib == null) ? (null) : (sib.right));
+                if(((__tmp_1_0t_2caa != null) ? (((sib == null) ? (null) : (sib.left)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK && ((__tmp_1_0t_2cba != null) ? (((sib == null) ? (null) : (sib.right)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK) {
                     if(sib != null) {
                         sib.color = MTreeMap.RED;
                     }
                     x = x.parent;
                 } else {
-                    final TreeMapEntry<K, V> __tmp_1_0_2_0 = (sib == null) ? (null) : (sib.right);
-                    if((__tmp_1_0_2_0 != null) ? ((sib == null) ? (null) : (sib.right).color) : (MTreeMap.BLACK) == MTreeMap.BLACK) {
+                    final TreeMapEntry<K, V> __tmp_1_0t_2f_0ca = ((sib == null) ? (null) : (sib.right));
+                    if(((__tmp_1_0t_2f_0ca != null) ? (((sib == null) ? (null) : (sib.right)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK) {
                         {
-                            final TreeMapEntry<K, V> __tmp_1_0_2_0_0 = (sib == null) ? (null) : (sib.left);
-                            if(__tmp_1_0_2_0_0 != null) {
-                                __tmp_1_0_2_0_0.color = MTreeMap.BLACK;
+                            final TreeMapEntry<K, V> __tmp_1_0t_2f_0t_0 = ((sib == null) ? (null) : (sib.left));
+                            if(__tmp_1_0t_2f_0t_0 != null) {
+                                __tmp_1_0t_2f_0t_0.color = MTreeMap.BLACK;
                             }
                         }
                         if(sib != null) {
                             sib.color = MTreeMap.RED;
                         }
                         rotateRightP(sib);
-                        final TreeMapEntry<K, V> __tmp_1_0_2_0_3 = x.parent;
-                        sib = (__tmp_1_0_2_0_3 == null) ? (null) : (__tmp_1_0_2_0_3.right);
+                        final TreeMapEntry<K, V> __tmp_1_0t_2f_0t_3u = x.parent;
+                        sib = ((__tmp_1_0t_2f_0t_3u == null) ? (null) : (__tmp_1_0t_2f_0t_3u.right));
                     }
                     if(sib != null) {
-                        final TreeMapEntry<K, V> __tmp_1_0_2_1 = x.parent;
-                        sib.color = (__tmp_1_0_2_1 != null) ? (x.parent.color) : (MTreeMap.BLACK);
+                        final TreeMapEntry<K, V> __tmp_1_0t_2f_1 = x.parent;
+                        sib.color = ((__tmp_1_0t_2f_1 != null) ? (x.parent.color) : (MTreeMap.BLACK));
                     }
                     {
-                        final TreeMapEntry<K, V> __tmp_1_0_2_2 = x.parent;
-                        if(__tmp_1_0_2_2 != null) {
-                            __tmp_1_0_2_2.color = MTreeMap.BLACK;
+                        final TreeMapEntry<K, V> __tmp_1_0t_2f_2 = x.parent;
+                        if(__tmp_1_0t_2f_2 != null) {
+                            __tmp_1_0t_2f_2.color = MTreeMap.BLACK;
                         }
                     }
                     {
-                        final TreeMapEntry<K, V> __tmp_1_0_2_3 = (sib == null) ? (null) : (sib.right);
-                        if(__tmp_1_0_2_3 != null) {
-                            __tmp_1_0_2_3.color = MTreeMap.BLACK;
+                        final TreeMapEntry<K, V> __tmp_1_0t_2f_3 = ((sib == null) ? (null) : (sib.right));
+                        if(__tmp_1_0t_2f_3 != null) {
+                            __tmp_1_0t_2f_3.color = MTreeMap.BLACK;
                         }
                     }
                     rotateLeftP(x.parent);
                     x = this._root;
                 }
             } else {
-                final TreeMapEntry<K, V> __tmp_1_0_0 = x.parent;
-                TreeMapEntry<K, V> sib = (__tmp_1_0_0 == null) ? (null) : (__tmp_1_0_0.left);
+                final TreeMapEntry<K, V> __tmp_1_0f_0u = x.parent;
+                TreeMapEntry<K, V> sib = ((__tmp_1_0f_0u == null) ? (null) : (__tmp_1_0f_0u.left));
                 if(sib != null && sib.color == MTreeMap.RED) {
                     sib.color = MTreeMap.BLACK;
                     {
-                        final TreeMapEntry<K, V> __tmp_1_0_1_1 = x.parent;
-                        if(__tmp_1_0_1_1 != null) {
-                            __tmp_1_0_1_1.color = MTreeMap.RED;
+                        final TreeMapEntry<K, V> __tmp_1_0f_1t_1 = x.parent;
+                        if(__tmp_1_0f_1t_1 != null) {
+                            __tmp_1_0f_1t_1.color = MTreeMap.RED;
                         }
                     }
                     rotateRightP(x.parent);
-                    final TreeMapEntry<K, V> __tmp_1_0_1_3 = x.parent;
-                    sib = (__tmp_1_0_1_3 == null) ? (null) : (__tmp_1_0_1_3.left);
+                    final TreeMapEntry<K, V> __tmp_1_0f_1t_3u = x.parent;
+                    sib = ((__tmp_1_0f_1t_3u == null) ? (null) : (__tmp_1_0f_1t_3u.left));
                 }
-                final TreeMapEntry<K, V> __tmp_1_0_2 = (sib == null) ? (null) : (sib.right);
-                final TreeMapEntry<K, V> __tmp_1_0_2 = (sib == null) ? (null) : (sib.left);
-                if((__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.right).color) : (MTreeMap.BLACK) == MTreeMap.BLACK && (__tmp_1_0_2 != null) ? ((sib == null) ? (null) : (sib.left).color) : (MTreeMap.BLACK) == MTreeMap.BLACK) {
+                final TreeMapEntry<K, V> __tmp_1_0f_2caa = ((sib == null) ? (null) : (sib.right));
+                final TreeMapEntry<K, V> __tmp_1_0f_2cba = ((sib == null) ? (null) : (sib.left));
+                if(((__tmp_1_0f_2caa != null) ? (((sib == null) ? (null) : (sib.right)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK && ((__tmp_1_0f_2cba != null) ? (((sib == null) ? (null) : (sib.left)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK) {
                     if(sib != null) {
                         sib.color = MTreeMap.RED;
                     }
                     x = x.parent;
                 } else {
-                    final TreeMapEntry<K, V> __tmp_1_0_2_0 = (sib == null) ? (null) : (sib.left);
-                    if((__tmp_1_0_2_0 != null) ? ((sib == null) ? (null) : (sib.left).color) : (MTreeMap.BLACK) == MTreeMap.BLACK) {
+                    final TreeMapEntry<K, V> __tmp_1_0f_2f_0ca = ((sib == null) ? (null) : (sib.left));
+                    if(((__tmp_1_0f_2f_0ca != null) ? (((sib == null) ? (null) : (sib.left)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK) {
                         {
-                            final TreeMapEntry<K, V> __tmp_1_0_2_0_0 = (sib == null) ? (null) : (sib.right);
-                            if(__tmp_1_0_2_0_0 != null) {
-                                __tmp_1_0_2_0_0.color = MTreeMap.BLACK;
+                            final TreeMapEntry<K, V> __tmp_1_0f_2f_0t_0 = ((sib == null) ? (null) : (sib.right));
+                            if(__tmp_1_0f_2f_0t_0 != null) {
+                                __tmp_1_0f_2f_0t_0.color = MTreeMap.BLACK;
                             }
                         }
                         if(sib != null) {
                             sib.color = MTreeMap.RED;
                         }
                         rotateLeftP(sib);
-                        final TreeMapEntry<K, V> __tmp_1_0_2_0_3 = x.parent;
-                        sib = (__tmp_1_0_2_0_3 == null) ? (null) : (__tmp_1_0_2_0_3.left);
+                        final TreeMapEntry<K, V> __tmp_1_0f_2f_0t_3u = x.parent;
+                        sib = ((__tmp_1_0f_2f_0t_3u == null) ? (null) : (__tmp_1_0f_2f_0t_3u.left));
                     }
                     if(sib != null) {
-                        final TreeMapEntry<K, V> __tmp_1_0_2_1 = x.parent;
-                        sib.color = (__tmp_1_0_2_1 != null) ? (x.parent.color) : (MTreeMap.BLACK);
+                        final TreeMapEntry<K, V> __tmp_1_0f_2f_1 = x.parent;
+                        sib.color = ((__tmp_1_0f_2f_1 != null) ? (x.parent.color) : (MTreeMap.BLACK));
                     }
                     {
-                        final TreeMapEntry<K, V> __tmp_1_0_2_2 = x.parent;
-                        if(__tmp_1_0_2_2 != null) {
-                            __tmp_1_0_2_2.color = MTreeMap.BLACK;
+                        final TreeMapEntry<K, V> __tmp_1_0f_2f_2 = x.parent;
+                        if(__tmp_1_0f_2f_2 != null) {
+                            __tmp_1_0f_2f_2.color = MTreeMap.BLACK;
                         }
                     }
                     {
-                        final TreeMapEntry<K, V> __tmp_1_0_2_3 = (sib == null) ? (null) : (sib.left);
-                        if(__tmp_1_0_2_3 != null) {
-                            __tmp_1_0_2_3.color = MTreeMap.BLACK;
+                        final TreeMapEntry<K, V> __tmp_1_0f_2f_3 = ((sib == null) ? (null) : (sib.left));
+                        if(__tmp_1_0f_2f_3 != null) {
+                            __tmp_1_0f_2f_3.color = MTreeMap.BLACK;
                         }
                     }
                     rotateRightP(x.parent);
@@ -422,39 +392,39 @@ else {
     }
     private void rotateLeftP(final TreeMapEntry<K, V> p) {
         if(p != null) {
-            final TreeMapEntry<K, V> __tmp_0_0 = p.right;
-            if(__tmp_0_0 == null) {
-                throw new RuntimeException("Not null");
+            final TreeMapEntry<K, V> __tmp_0t_0n = p.right;
+            if(__tmp_0t_0n == null) {
+                throw new NullPointerException();
             }
-            final TreeMapEntry<K, V> r = __tmp_0_0;
+            final TreeMapEntry<K, V> r = __tmp_0t_0n;
             p.right = r.left;
             {
-                final TreeMapEntry<K, V> __tmp_0_2 = r.left;
-                if(__tmp_0_2 != null) {
-                    __tmp_0_2.parent = ((TreeMapEntry<K, V>)(p));
+                final TreeMapEntry<K, V> __tmp_0t_2 = r.left;
+                if(__tmp_0t_2 != null) {
+                    __tmp_0t_2.parent = ((TreeMapEntry<K, V>)(p));
                 }
             }
             r.parent = p.parent;
             if(p.parent == null) {
                 this._root = r;
             } else {
-                final TreeMapEntry<K, V> __tmp_0_4 = p.parent;
-                if(__tmp_0_4 == null) {
-                    throw new RuntimeException("Not null");
+                final TreeMapEntry<K, V> __tmp_0t_4fcaln = p.parent;
+                if(__tmp_0t_4fcaln == null) {
+                    throw new NullPointerException();
                 }
-                final TreeMapEntry<K, V> __tmp_0_4 = __tmp_0_4.left;
-                if(__tmp_0_4 != null && __tmp_0_4.equals(p)) {
-                    final TreeMapEntry<K, V> __tmp_0_4 = p.parent;
-                    if(__tmp_0_4 == null) {
-                        throw new RuntimeException("Not null");
+                final TreeMapEntry<K, V> __tmp_0t_4fc = __tmp_0t_4fcaln.left;
+                if(__tmp_0t_4fc != null && __tmp_0t_4fc.equals(p)) {
+                    final TreeMapEntry<K, V> __tmp_0t_4ftln = p.parent;
+                    if(__tmp_0t_4ftln == null) {
+                        throw new NullPointerException();
                     }
-                    __tmp_0_4.left = r;
+                    __tmp_0t_4ftln.left = r;
                 } else {
-                    final TreeMapEntry<K, V> __tmp_0_4 = p.parent;
-                    if(__tmp_0_4 == null) {
-                        throw new RuntimeException("Not null");
+                    final TreeMapEntry<K, V> __tmp_0t_4ffln = p.parent;
+                    if(__tmp_0t_4ffln == null) {
+                        throw new NullPointerException();
                     }
-                    __tmp_0_4.right = r;
+                    __tmp_0t_4ffln.right = r;
                 }
             }
             r.left = ((TreeMapEntry<K, V>)(p));
@@ -463,39 +433,39 @@ else {
     }
     private void rotateRightP(final TreeMapEntry<K, V> p) {
         if(p != null) {
-            final TreeMapEntry<K, V> __tmp_0_0 = p.left;
-            if(__tmp_0_0 == null) {
-                throw new RuntimeException("Not null");
+            final TreeMapEntry<K, V> __tmp_0t_0n = p.left;
+            if(__tmp_0t_0n == null) {
+                throw new NullPointerException();
             }
-            final TreeMapEntry<K, V> l = __tmp_0_0;
+            final TreeMapEntry<K, V> l = __tmp_0t_0n;
             p.left = l.right;
             {
-                final TreeMapEntry<K, V> __tmp_0_2 = l.right;
-                if(__tmp_0_2 != null) {
-                    __tmp_0_2.parent = ((TreeMapEntry<K, V>)(p));
+                final TreeMapEntry<K, V> __tmp_0t_2 = l.right;
+                if(__tmp_0t_2 != null) {
+                    __tmp_0t_2.parent = ((TreeMapEntry<K, V>)(p));
                 }
             }
             l.parent = p.parent;
             if(p.parent == null) {
                 this._root = l;
             } else {
-                final TreeMapEntry<K, V> __tmp_0_4 = p.parent;
-                if(__tmp_0_4 == null) {
-                    throw new RuntimeException("Not null");
+                final TreeMapEntry<K, V> __tmp_0t_4fcaln = p.parent;
+                if(__tmp_0t_4fcaln == null) {
+                    throw new NullPointerException();
                 }
-                final TreeMapEntry<K, V> __tmp_0_4 = __tmp_0_4.right;
-                if(__tmp_0_4 != null && __tmp_0_4.equals(p)) {
-                    final TreeMapEntry<K, V> __tmp_0_4 = p.parent;
-                    if(__tmp_0_4 == null) {
-                        throw new RuntimeException("Not null");
+                final TreeMapEntry<K, V> __tmp_0t_4fc = __tmp_0t_4fcaln.right;
+                if(__tmp_0t_4fc != null && __tmp_0t_4fc.equals(p)) {
+                    final TreeMapEntry<K, V> __tmp_0t_4ftln = p.parent;
+                    if(__tmp_0t_4ftln == null) {
+                        throw new NullPointerException();
                     }
-                    __tmp_0_4.right = l;
+                    __tmp_0t_4ftln.right = l;
                 } else {
-                    final TreeMapEntry<K, V> __tmp_0_4 = p.parent;
-                    if(__tmp_0_4 == null) {
-                        throw new RuntimeException("Not null");
+                    final TreeMapEntry<K, V> __tmp_0t_4ffln = p.parent;
+                    if(__tmp_0t_4ffln == null) {
+                        throw new NullPointerException();
                     }
-                    __tmp_0_4.left = l;
+                    __tmp_0t_4ffln.left = l;
                 }
             }
             l.right = ((TreeMapEntry<K, V>)(p));
@@ -515,7 +485,7 @@ else {
         super(comparator);
         this._root = null;
         this._size = ((int)(0));
-        this.keys = new MTreeMapKeySet<K>(this);
+        this.keys = new MTreeMapKeySet<K, V>(this);
     }
     public V applyKeyOrUpdateWith(final K key, final F0<V> orUpdateWith) {
         final V __tmp = applyKey(key);
@@ -539,22 +509,6 @@ else {
     @Override
     public void appendItem(final Tuple<K, V> item) {
         setKeyValue(item.a, item.b);
-    }
-    @Override
-    public boolean removeItem(final Tuple<K, V> item) {
-        return removeKey(item.a) != null;
-    }
-    @Override
-    public boolean removeItem(final Tuple<K, V> item) {
-        final MIterator<T> i = this.mutableIterator();
-        boolean ret = false;
-        while(i.hasNext()) {
-            if(i.next().equals(item)) {
-                i.remove();
-                ret = true;
-            }
-        }
-        return ret;
     }
     public void mutableFilterBy(final F<Tuple<K, V>, Boolean> by) {
         final MIterator<Tuple<K, V>> i = this.mutableIterator();

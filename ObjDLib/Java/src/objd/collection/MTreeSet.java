@@ -8,7 +8,7 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
     public static <T> MTreeSet<T> applyComparator(final F2<T, T, Integer> comparator) {
         return new MTreeSet<T>(new MTreeMap<T, Object>(comparator));
     }
-    public static <T> MTreeSet<T> apply() {
+    public static <T extends Comparable<T>> MTreeSet<T> apply() {
         return new MTreeSet<T>(MTreeMap.<T, Object>apply());
     }
     @Override

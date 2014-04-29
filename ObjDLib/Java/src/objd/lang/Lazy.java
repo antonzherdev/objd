@@ -12,14 +12,14 @@ public class Lazy<T> {
     public T get() {
         if(this._calculated) {
             if(this._value == null) {
-                throw new RuntimeException("Not null");
+                throw new NullPointerException();
             }
             return this._value;
         } else {
             this._value = this.f.apply();
             this._calculated = true;
             if(this._value == null) {
-                throw new RuntimeException("Not null");
+                throw new NullPointerException();
             }
             return this._value;
         }

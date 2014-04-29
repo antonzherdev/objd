@@ -33,7 +33,7 @@ public class FutureEnd<T> {
                 if(!(FutureEnd.this._stopped)) {
                     FutureEnd.this._counter.incrementAndGet();
                     if(FutureEnd.this._array == null) {
-                        throw new RuntimeException("Not null");
+                        throw new NullPointerException();
                     }
                     FutureEnd.this._array.appendItem(null);
                     final int i = _i.value;
@@ -48,7 +48,7 @@ public class FutureEnd<T> {
                                 } else {
                                     if(!(FutureEnd.this._stopped)) {
                                         if(FutureEnd.this._array == null) {
-                                            throw new RuntimeException("Not null");
+                                            throw new NullPointerException();
                                         }
                                         FutureEnd.this._array.setIndexItem(((int)(i)), tr.get());
                                         _set.value = i;
@@ -56,7 +56,7 @@ public class FutureEnd<T> {
                                         if(FutureEnd.this._ended && r == 0) {
                                             if(!(FutureEnd.this._yielded.getAndSet(true))) {
                                                 if(FutureEnd.this._array == null) {
-                                                    throw new RuntimeException("Not null");
+                                                    throw new NullPointerException();
                                                 }
                                                 FutureEnd.this._promise.successValue(FutureEnd.this._array);
                                             }
@@ -80,7 +80,7 @@ public class FutureEnd<T> {
                 if(FutureEnd.this._counter.intValue() == 0) {
                     if(!(FutureEnd.this._yielded.getAndSet(true))) {
                         if(FutureEnd.this._array == null) {
-                            throw new RuntimeException("Not null");
+                            throw new NullPointerException();
                         }
                         FutureEnd.this._promise.successValue(FutureEnd.this._array);
                     }

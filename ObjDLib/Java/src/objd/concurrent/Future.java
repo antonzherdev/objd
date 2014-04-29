@@ -373,11 +373,11 @@ public abstract class Future<T> {
             }
         });
         cond.unlockedAwait();
-        final Try<T> __tmp_4 = this.result();
-        if(__tmp_4 == null) {
-            throw new RuntimeException("Not null");
+        final Try<T> __tmp_4n = this.result();
+        if(__tmp_4n == null) {
+            throw new NullPointerException();
         }
-        return __tmp_4;
+        return __tmp_4n;
     }
     public void waitAndOnSuccessAwaitF(final float await, final P<T> f) {
         {
@@ -405,11 +405,11 @@ public abstract class Future<T> {
         }
     }
     public T getResultAwait(final float await) {
-        final Try<T> __tmp = waitResultPeriod(await);
-        if(__tmp == null) {
-            throw new RuntimeException("Not null");
+        final Try<T> __tmpln = waitResultPeriod(await);
+        if(__tmpln == null) {
+            throw new NullPointerException();
         }
-        return __tmp.get();
+        return __tmpln.get();
     }
     public <R> Future<Tuple<T, R>> joinAnother(final Future<R> another) {
         final Promise<Tuple<T, R>> p = Promise.<Tuple<T, R>>apply();

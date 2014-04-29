@@ -13,8 +13,8 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
     }
     @Override
     public V applyKey(final K key) {
-        final TreeMapEntry<K, V> __tmp = entryForKey(key);
-        return (__tmp == null) ? (null) : (__tmp.value);
+        final TreeMapEntry<K, V> __tmpu = entryForKey(key);
+        return ((__tmpu == null) ? (null) : (__tmpu.value));
     }
     public abstract TreeMapEntry<K, V> root();
     @Override
@@ -56,20 +56,20 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
         return p;
     }
     public K firstKey() {
-        final TreeMapEntry<K, V> __tmp = this.firstEntry();
-        return (__tmp == null) ? (null) : (__tmp.key);
+        final TreeMapEntry<K, V> __tmpu = this.firstEntry();
+        return ((__tmpu == null) ? (null) : (__tmpu.key));
     }
     public K lastKey() {
-        final TreeMapEntry<K, V> __tmp = this.lastEntry();
-        return (__tmp == null) ? (null) : (__tmp.key);
+        final TreeMapEntry<K, V> __tmpu = this.lastEntry();
+        return ((__tmpu == null) ? (null) : (__tmpu.key));
     }
     public K lowerKeyThanKey(final K key) {
-        final TreeMapEntry<K, V> __tmp = lowerEntryThanKey(key);
-        return (__tmp == null) ? (null) : (__tmp.key);
+        final TreeMapEntry<K, V> __tmpu = lowerEntryThanKey(key);
+        return ((__tmpu == null) ? (null) : (__tmpu.key));
     }
     public K higherKeyThanKey(final K key) {
-        final TreeMapEntry<K, V> __tmp = higherEntryThanKey(key);
-        return (__tmp == null) ? (null) : (__tmp.key);
+        final TreeMapEntry<K, V> __tmpu = higherEntryThanKey(key);
+        return ((__tmpu == null) ? (null) : (__tmpu.key));
     }
     private TreeMapEntry<K, V> lowerEntryThanKey(final K key) {
         TreeMapEntry<K, V> p = this.root();
@@ -87,8 +87,8 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
                 } else {
                     TreeMapEntry<K, V> parent = p.parent;
                     TreeMapEntry<K, V> ch = p;
-                    final TreeMapEntry<K, V> __tmp_1_1_0_2 = parent.left;
-                    while(parent != null && __tmp_1_1_0_2 != null && __tmp_1_1_0_2.equals(ch)) {
+                    final TreeMapEntry<K, V> __tmp_1_1f_0f_2b = parent.left;
+                    while(parent != null && __tmp_1_1f_0f_2b != null && __tmp_1_1f_0f_2b.equals(ch)) {
                         ch = parent;
                         parent = parent.parent;
                     }
@@ -114,8 +114,8 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
                 } else {
                     TreeMapEntry<K, V> parent = p.parent;
                     TreeMapEntry<K, V> ch = p;
-                    final TreeMapEntry<K, V> __tmp_1_1_0_2 = parent.right;
-                    while(parent != null && __tmp_1_1_0_2 != null && __tmp_1_1_0_2.equals(ch)) {
+                    final TreeMapEntry<K, V> __tmp_1_1f_0f_2b = parent.right;
+                    while(parent != null && __tmp_1_1f_0f_2b != null && __tmp_1_1f_0f_2b.equals(ch)) {
                         ch = parent;
                         parent = parent.parent;
                     }

@@ -142,7 +142,7 @@ class MTreeMap<K, V>(comparator : (K, K) -> int) extends TreeMap<K, V>(comparato
         _root = nil
     }
     override def mutableIterator : MIterator<(K, V)> = MTreeMapIterator<K, V>(self, firstEntry)
-    override val keys : MTreeMapKeySet<K> = MTreeMapKeySet<K>(self)
+    override val keys : MTreeMapKeySet<K, V> = MTreeMapKeySet<K, V>(self)
 
     override def set(key : K, value : V)  {
         val __comparator = comparator
@@ -174,8 +174,9 @@ class MTreeMap<K, V>(comparator : (K, K) -> int) extends TreeMap<K, V>(comparato
     }
 
     override def remove(key : K) : V? = entryFor(key).for(delete(_))
+    override def remove(item : (K, V)) : bool = remove(item.a) != nil
 
-    private def delete(entry : TreeMapEntry<K, V>) : V = {
+    def delete(entry : TreeMapEntry<K, V>) : V = {
         var p = entry
         _size--
 
@@ -208,9 +209,10 @@ class MTreeMap<K, V>(comparator : (K, K) -> int) extends TreeMap<K, V>(comparato
             _root = nil
         } else { //  No children. Use self as phantom replacement and unlink.
             if (p.color == BLACK) fixAfterDeletion(p)
-            if (p.parent != nil) {
-                if (p == p.parent.get.left) p.parent.get.left = nil
-                else if (p == p.parent.get.right) p.parent.get.right = nil
+            val g = p.parent
+            if (g != nil) {
+                if (p == g.left) g.left = nil
+                else if (p == g.right) g.right = nil
                 p.parent = nil
             }
         }
@@ -221,37 +223,44 @@ class MTreeMap<K, V>(comparator : (K, K) -> int) extends TreeMap<K, V>(comparato
         entry.color = RED
         var x : TreeMapEntry<K, V>? = entry
         while (x != nil && x != _root && x.parent.get.color == RED) {
-            if (x.parent == x.parent?.parent?.left) {
-                val y = x.parent?.parent?.right
+            val p = x.parent.get
+            if (p == p.parent?.left) {
+                val y = p.parent?.right
                 if (y != nil && y.color == RED) {
-                    x.parent?.color = BLACK
+                    p.color = BLACK
                     y.color = BLACK
-                    x.parent?.parent?.color = RED
-                    x = x.parent?.parent
+                    p.parent?.color = RED
+                    x = p.parent
                 } else {
-                    if (x == x.parent?.right) {
-                        x = x.parent
+                    if (x == p.right) {
+                        x = p
                         rotateLeft(x)
                     }
-                    x.parent?.color = BLACK
-                    x.parent?.parent?.color = RED
-                    rotateRight(x.parent?.parent)
+                    val pp = x.parent
+                    if(pp != nil) {
+                        pp.color = BLACK
+                        pp.parent?.color = RED
+                        rotateRight(pp.parent)
+                    }
                 }
             } else {
-                val y = x.parent?.parent?.left
+                val y = p.parent?.left
                 if (y != nil && y.color == RED) {
-                    x.parent?.color = BLACK
+                    p.color = BLACK
                     y.color = BLACK
-                    x.parent?.parent?.color = RED
-                    x = x.parent?.parent
+                    p.parent?.color = RED
+                    x = p.parent
                 } else {
-                    if (x == x.parent?.left) {
-                        x = x.parent
+                    if (x == p.left) {
+                        x = p
                         rotateRight(x)
                     }
-                    x.parent?.color = BLACK
-                    x.parent?.parent?.color = RED
-                    rotateLeft(x.parent?.parent)
+                    val pp = x.parent
+                    if(pp != nil) {
+                        pp.color = BLACK
+                        pp.parent?.color = RED
+                        rotateLeft(pp.parent)
+                    }
                 }
             }
         }
@@ -393,41 +402,43 @@ class ImTreeMapKeySet<K>(weak val map : TreeMap<K, _>) extends TreeMapKeySet<K> 
 }
 
 class TreeMapKeyIterator<K>(val map : TreeMap<K, _>) extends Iterator<K> {
-   static def apply<K>(map : TreeMap<K, _>, entry : TreeMapEntry<K, _>?) : TreeMapKeyIterator<K> = {
-       val ret = TreeMapKeyIterator<K>(map)
-       ret.entry = entry
-       ret
-   }
-   var entry : TreeMapEntry<K, _>?
-   override def hasNext : bool = entry != nil
-   override def next : K = {
-        val ret = entry.get.key
-        entry = entry.get.next
-        ret
-   }
-}
-
-class MTreeMapKeySet<K>(weak val map : MTreeMap<K, _>) extends TreeMapKeySet<K> {
-    override def count : uint = map.count
-
-    override def iterator : Iterator<K> = TreeMapKeyIterator<K>(map, map.firstEntry)
-    def mutableIterator : MIterator<K> = MTreeMapKeyIterator<K>(map, map.firstEntry)
-    override def iteratorHigherThan(key : K) : Iterator<K> = MTreeMapKeyIterator<K>(map, map.higherEntryThan(key))
-}
-
-class MTreeMapKeyIterator<K>(val map : MTreeMap<K, _>) extends MIterator<K> {
-    static def apply<K>(map : MTreeMap<K, _>, entry : TreeMapEntry<K, _>?) : MTreeMapKeyIterator<K> = {
-        val ret = MTreeMapKeyIterator<K>(map)
+    static def apply<K>(map : TreeMap<K, _>, entry : TreeMapEntry<K, _>?) : TreeMapKeyIterator<K> = {
+        val ret = TreeMapKeyIterator<K>(map)
         ret.entry = entry
         ret
     }
-    private var prev : TreeMapEntry<K, _>?
     var entry : TreeMapEntry<K, _>?
     override def hasNext : bool = entry != nil
     override def next : K = {
-        val ret = entry.get.key
-        prev = entry
-        entry = entry.get.next
+        val e = entry.get
+        val ret = e.key
+        entry = e.next
+        ret
+    }
+}
+
+class MTreeMapKeySet<K, V>(weak val map : MTreeMap<K, V>) extends TreeMapKeySet<K> {
+    override def count : uint = map.count
+
+    override def iterator : Iterator<K> = TreeMapKeyIterator<K>(map, map.firstEntry)
+    def mutableIterator : MIterator<K> = MTreeMapKeyIterator<K, V>(map, map.firstEntry)
+    override def iteratorHigherThan(key : K) : Iterator<K> = MTreeMapKeyIterator<K, V>(map, map.higherEntryThan(key))
+}
+
+class MTreeMapKeyIterator<K, V>(val map : MTreeMap<K, V>) extends MIterator<K> {
+    static def apply<K, V>(map : MTreeMap<K, V>, entry : TreeMapEntry<K, V>?) : MTreeMapKeyIterator<K, V> = {
+        val ret = MTreeMapKeyIterator<K, V>(map)
+        ret.entry = entry
+        ret
+    }
+    private var prev : TreeMapEntry<K, V>?
+    var entry : TreeMapEntry<K, V>?
+    override def hasNext : bool = entry != nil
+    override def next : K = {
+        val e = entry.get
+        val ret = e.key
+        prev = e
+        entry = e.next
         ret
     }
 
@@ -494,9 +505,10 @@ class MTreeMapIterator<K, V>(val map : MTreeMap<K, V>) extends MIterator<(K, V)>
     var entry : TreeMapEntry<K, V>?
 
     override def next : (K, V) = {
-        val ret = (entry.get.key, entry.get.value)
-        prev = entry
-        entry = entry.get.next
+        val e = entry.get
+        val ret = (e.key, e.value)
+        prev = e
+        entry = e.next
         ret
     }
 
@@ -506,7 +518,7 @@ class MTreeMapIterator<K, V>(val map : MTreeMap<K, V>) extends MIterator<(K, V)>
 
     override def set(value : (K, V)) {
         prev.for{p ->
-            if(p.key == value.a) p.value = value
+            if(p.key == value.a) p.value = value.b
             else {
                 map.delete(p)
                 map.set(key = value.a, value = value.b)
