@@ -1,0 +1,32 @@
+package objd.chain;
+
+import objd.lang.*;
+import objd.collection.Traversable;
+import objd.collection.Iterable;
+import objd.collection.Go;
+
+public class SourceLink<T> extends ChainLink_impl<void, T> {
+    public final Traversable<T> collection;
+    @Override
+    public Yield<Void> buildYield(final Yield<T> yield) {
+        final Iterable<T> c = this.collection.ERROR: Unknown as<Iterable#T<T#G>>;
+        return Yield.<Void>makeBeginEnd(((c != null) ? (new F<Integer, Go>() {
+            @Override
+            public Go apply(final Integer size) {
+                return yield.beginYieldWithSize(c.count());
+            }
+        }) : (null)), new F<Go, Go>() {
+            @Override
+            public Go apply(final Go result) {
+                if(result.equals(Go.Break)) {
+                    return yield.endYieldWithResult(result);
+                } else {
+                    return yield.yieldAllItems(SourceLink.this.collection);
+                }
+            }
+        });
+    }
+    public SourceLink(final Traversable<T> collection) {
+        this.collection = collection;
+    }
+}

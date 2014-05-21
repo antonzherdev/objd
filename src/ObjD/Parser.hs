@@ -108,7 +108,6 @@ pType = tp
 			return $ makeTuple t
 		makeTuple :: [DataType] -> DataType
 		makeTuple [] = DataType "void" []
-		makeTuple [v] = v
 		makeTuple t = DataTypeTuple t
 
 		simple = do

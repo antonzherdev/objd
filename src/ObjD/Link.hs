@@ -725,18 +725,13 @@ dataTypeClass env f@TPFun{} = Class { _classMods = [], className = "", _classExt
 dataTypeClass _ x = ClassError (show x) ("No dataTypeClass for " ++ show x)
 
 applyLambdaDef :: DataType -> Def
-applyLambdaDef (TPFun stp dtp) = Def {defName = "apply", defPars = map (localVal "") sourceTypes, defType = dtp, defBody = Nop, defMods = [DefModApplyLambda], defGenerics = Nothing, defAnnotations = []}
-	where
-		sourceTypes = case stp of
-			TPVoid -> []
-			TPTuple tps -> tps
-			tp -> [tp]
-
+applyLambdaDef (TPFun stp dtp) = Def {defName = "apply", defPars = map (localVal "") stp, defType = dtp, defBody = Nop, defMods = [DefModApplyLambda], defGenerics = Nothing, defAnnotations = []}
+	
 dataTypeGenerics :: Env -> DataType -> [DataType]
 dataTypeGenerics _ (TPClass _ g _) = g
 dataTypeGenerics _ (TPArr _ g) = [g]
 dataTypeGenerics _ (TPEArr _ g) = [g]
-dataTypeGenerics _ (TPFun s d) = [s, d]
+dataTypeGenerics _ (TPFun s d) = s ++ [d]
 dataTypeGenerics _ (TPMap k v) = [k, v]
 dataTypeGenerics _ (TPOption _ v) = [v]
 dataTypeGenerics _ (TPTuple a) = a
@@ -794,10 +789,10 @@ dataType env (D.DataTypeArr m tp) = case tp' of
 		arrr' =  if m == 0 then arrr else earr
 		earr = TPEArr m tp'
 dataType env (D.DataTypeMap k v) = TPMap (wrapGeneric $ dataType env k) (wrapGeneric $ dataType env v)
-dataType env (D.DataTypeFun (D.DataTypeTuple []) d) = TPFun TPVoid (dataType env d)
-dataType env (D.DataTypeFun (D.DataTypeTuple [s]) d) = TPFun (dataType env s) (dataType env d)
-dataType env (D.DataTypeFun (D.DataTypeTuple tps) d) = TPFun (TPTuple $ map (dataType env) tps) (dataType env d)
-dataType env (D.DataTypeFun s d) = TPFun (dataType env s) (dataType env d)
+dataType env (D.DataTypeFun (D.DataTypeTuple tps) d) = TPFun (map (dataType env) tps) (dataType env d)
+dataType env (D.DataTypeFun (D.DataType "void" _) d) = TPFun [] (dataType env d)
+dataType env (D.DataTypeFun s d) = TPFun [dataType env s] (dataType env d)
+dataType env (D.DataTypeTuple [tp]) = dataType env tp
 dataType env (D.DataTypeTuple tps) = TPTuple $ map (wrapGeneric . dataType env) tps
 dataType env (D.DataTypeOption t) = TPOption False $ (wrapGeneric . dataType env) t
 	
@@ -1312,7 +1307,7 @@ linkFuncOp env ex@(D.FuncOp tp l r)  =
 		r' = expr env r
 		ltp = exprDataType l'
 		lInputType = case ltp of 
-			TPFun ret _ -> Right ret
+			TPFun ret _ -> Right $ head ret
 			_ -> Left $ "Left is not function but " ++ show ltp ++ " in " ++ show l'
 		lOutputType = case ltp of 
 			TPFun _ ret -> Right ret
@@ -1335,7 +1330,7 @@ linkFuncOp env ex@(D.FuncOp tp l r)  =
 		rdef = localVal "__r" (exprDataType r'')
 		rtp = exprDataType r''
 		rInputType = case rtp of 
-			TPFun ret _ -> Right ret
+			TPFun ret _ -> Right $ head ret
 			_ -> Left $ "Right is not function but " ++ show rtp ++ " in " ++ show r''
 		rOutputType = case rtp of 
 			TPFun _ ret -> Right ret
@@ -1632,9 +1627,9 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 -}
 		maybeLambdaCall = case pars of
 			Just [] -> case unwrapGeneric $ exprDataType call'' of
-				(TPFun TPVoid _) -> LambdaCall call''
-				TPOption True (TPGenericWrap _ (TPFun TPVoid _))-> LambdaCall call''
-				TPOption True (TPFun TPVoid _) -> LambdaCall call''
+				(TPFun [] _) -> LambdaCall call''
+				TPOption True (TPGenericWrap _ (TPFun [] _))-> LambdaCall call''
+				TPOption True (TPFun [] _) -> LambdaCall call''
 				_ -> call''
 			_ -> call''
 
@@ -1703,7 +1698,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 							gg'' = fromMaybe [] $ upGenericsToClass cl (cl', gg')
 					tryDetermine c (cl@(TPClass _ _ _), TPObject m cl') = 
 						tryDetermine c (cl, TPClass TPMClass [TPClass m [] cl'] (classFind (envIndex env) "Class"))
-					tryDetermine c (TPFun a b, TPFun a' b') = listToMaybe $ catMaybes [tryDetermine c (a, a'), tryDetermine c (b, b')]
+					tryDetermine c (TPFun a b, TPFun a' b') = listToMaybe $ catMaybes ( map (tryDetermine c)  (zip a a') ++ [tryDetermine c (b, b')])
 					tryDetermine c (a, b@TPArr{}) = tryDetermine c (a, dtpw b)
 					tryDetermine c (a, b@TPMap{}) = tryDetermine c (a, dtpw b)
 					tryDetermine _ _ = Nothing
@@ -1786,10 +1781,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 		correctCallPar (TPFun stp dtp, d, ExpDError _ (D.Lambda lambdaPars lambdaExpr)) = checkCallParOnWeak (d, Lambda lpars' expr' tp')
 			where
 				lpars' :: [(String, DataType)]
-				lpars' = map (second (replaceGenerics True gens' )) $ zip (map fst lambdaPars) (stps stp)
-				stps :: DataType -> [DataType]
-				stps (TPTuple tps) = tps
-				stps tp = [tp]
+				lpars' = map (second (replaceGenerics True gens' )) $ zip (map fst lambdaPars) stp
 				env' = envAddVals (map (uncurry localVal) lpars') $ env{envTp = dtp'}
 				dtp' = replaceGenerics True gens' dtp
 				expr' = if dtp' == TPVoid then expr env' lambdaExpr else maybeAddReturn env dtp' $ expr env' lambdaExpr
@@ -1990,7 +1982,8 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 				classConversion t sc _ = ExpLError (show t ++ " from " ++ show sc) ex
 
 lambdaImplicitParameters :: DataType -> [(String, DataType)]
-lambdaImplicitParameters (TPFun TPVoid _) = []
-lambdaImplicitParameters (TPFun (TPTuple stps) _) = (map(\(tp, i) -> ('_' : show i, tp)) . zipWithIndex) stps
-lambdaImplicitParameters (TPFun fstp _) = [("_", fstp)]
+lambdaImplicitParameters (TPFun [] _) = []
+lambdaImplicitParameters (TPFun [fstp] _) = [("_", fstp)]
+lambdaImplicitParameters (TPFun stps _) = (map(\(tp, i) -> ('_' : show i, tp)) . zipWithIndex) stps
+
 

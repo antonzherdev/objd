@@ -402,8 +402,7 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		
 
 dataTypePars :: DataType -> [Def]
-dataTypePars (TPFun (TPTuple pars) _) = map (localVal "") pars
-dataTypePars (TPFun t _) = [localVal "" t]
+dataTypePars (TPFun pars _) = map (localVal "") pars
 dataTypePars _ = []
 
 
@@ -423,7 +422,7 @@ literalDefName nam = nmRec False nam
 data DataType = TPNumber Bool Int | TPFloatNumber Int | TPString | TPVoid 
 	| TPClass {tpMod :: DataTypeMod, tpGenerics :: [DataType], tpClass :: Class}
 	| TPEArr Int DataType | TPAny | TPChar
-	| TPArr Int DataType | TPBool | TPFun DataType DataType | TPTuple [DataType] | TPSelf Class | TPUnknown String 
+	| TPArr Int DataType | TPBool | TPFun [DataType] DataType | TPTuple [DataType] | TPSelf Class | TPUnknown String 
 	| TPMap DataType DataType
 	| TPOption Bool DataType -- Currently in option state. If already checked than True
 	| TPGenericWrap [WrapReason] DataType | TPNil | TPObject {tpMod :: DataTypeMod, tpClass :: Class} | TPThrow
@@ -512,7 +511,7 @@ forDataType f tp = mplus (go tp) (f tp)
 		go (TPClass _ gens _) = msum $ map (forDataType f) gens
 		go (TPArr _ a) = forDataType f a
 		go (TPEArr _ a) = forDataType f a
-		go (TPFun a b) = mplus (forDataType f a) (forDataType f b)
+		go (TPFun a b) = mplus (msum $ map (forDataType f) a) (forDataType f b)
 		go (TPMap a b) = mplus (forDataType f a) (forDataType f b)
 		go (TPGenericWrap _ a) = forDataType f a
 		go (TPOption _ a) = forDataType f a
@@ -527,7 +526,7 @@ mapDataType f tp = fromMaybe (go tp) (f tp)
 		go (TPClass mods gens cl) = TPClass mods (map (mapDataType f) gens) cl
 		go (TPArr m a) = TPArr m (mapDataType f a)
 		go (TPEArr m a) = TPEArr m (mapDataType f a)
-		go (TPFun a b) = TPFun (mapDataType f a) (mapDataType f b)
+		go (TPFun a b) = TPFun (map (mapDataType f) a) (mapDataType f b)
 		go (TPMap a b) = TPMap (mapDataType f a) (mapDataType f b)
 		go (TPGenericWrap t a) = TPGenericWrap t (mapDataType f a)
 		go (TPPointer a) = TPPointer (mapDataType f a)
@@ -544,8 +543,8 @@ mapDataTypeGenerics f (TPPointer gen) = TPPointer (head $ f [gen])
 mapDataTypeGenerics f (TPEArr count gen) = TPEArr count (head $ f [gen])
 mapDataTypeGenerics f (TPArr count gen) = TPArr count (head $ f [gen])
 mapDataTypeGenerics f (TPFun s d) = 
-	let s':d':_ = f [s, d] 
-	in TPFun s' d'
+	let tp' = f $ s ++ [d] 
+	in TPFun (init tp') (last tp')
 mapDataTypeGenerics f (TPMap k v) = 
 	let k':v':_ = f [k, v] 
 	in TPMap k' v'
@@ -1026,12 +1025,7 @@ exprDataType (Index e i) = resolve $ exprDataType e
 		resolve (TPObject TPMEnum c) = TPClass TPMEnum [] c
 		resolve (TPGenericWrap _ t) = resolve t
 		resolve t = TPUnknown $ show t ++ " is not array " ++ show e ++ "[" ++ show i ++ "]"
-exprDataType (Lambda pars _ r) = TPFun (parsTp pars) r
-	where 
-		parsTp :: [(String, DataType)] -> DataType
-		parsTp [] = TPVoid
-		parsTp [(_, tp)] = tp
-		parsTp ps = TPTuple $ map snd ps
+exprDataType (Lambda pars _ r) = TPFun (map snd pars) r
 exprDataType e@(ExpDError _ _) = TPUnknown $ show e
 exprDataType e@(ExpError _) = TPUnknown $ show e
 exprDataType e@(ExpLError _ _) = TPUnknown $ show e

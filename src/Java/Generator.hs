@@ -189,31 +189,24 @@ genTp (D.TPGenericWrap _ D.TPChar) = return $ J.tpRef "Character"
 genTp D.TPBool = return $ J.tpRef "boolean"
 genTp (D.TPGenericWrap _ D.TPBool) = return $ J.tpRef "Boolean"
 
-genTp (D.TPFun (D.TPTuple [stp]) D.TPVoid) = do 
+genTp (D.TPFun [] D.TPVoid) = return $ J.TPRef [] "P0"
+genTp (D.TPFun [stp] D.TPVoid) = do 
 	stp' <- genTp $ D.wrapGeneric stp
 	return $ J.TPRef [stp'] "P"
-genTp (D.TPFun (D.TPTuple stps) D.TPVoid) = do
+genTp (D.TPFun stps D.TPVoid) = do
 	stps' <- mapM (genTp . D.wrapGeneric) stps
 	return $ J.TPRef stps' ("P" ++ show (length stps))
-genTp (D.TPFun D.TPVoid D.TPVoid) = return $ J.TPRef [] "P0"
-genTp (D.TPFun stp D.TPVoid) = do 
-	stp' <- genTp $ D.wrapGeneric stp
-	return $ J.TPRef [stp'] "P"
-genTp (D.TPFun (D.TPTuple [stp]) dtp) = do 
+genTp (D.TPFun [] dtp) = do 
+	dtp' <- genTp $ D.wrapGeneric dtp
+	return $ J.TPRef [dtp'] "F0"
+genTp (D.TPFun [stp] dtp) = do 
 	stp' <- genTp $ D.wrapGeneric stp
 	dtp' <- genTp $ D.wrapGeneric dtp
 	return $ J.TPRef [stp', dtp'] "F"
-genTp (D.TPFun (D.TPTuple stps) dtp) = do 
+genTp (D.TPFun stps dtp) = do 
 	stps' <- mapM (genTp . D.wrapGeneric) stps
 	dtp' <- genTp $ D.wrapGeneric dtp
 	return $ J.TPRef (stps'  ++ [dtp']) ("F" ++ show (length stps))
-genTp (D.TPFun D.TPVoid dtp) = do 
-	dtp' <- genTp $ D.wrapGeneric dtp
-	return $ J.TPRef [dtp'] "F0"
-genTp (D.TPFun stp dtp) = do
-	stp' <- genTp $ D.wrapGeneric stp
-	dtp' <- genTp $ D.wrapGeneric dtp
-	return $ J.TPRef [stp', dtp'] "F"
 
 genTp (D.TPGenericWrap _ w) = genTp w
 genTp D.TPString = return $ J.tpRef "String"
