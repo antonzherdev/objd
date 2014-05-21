@@ -1,7 +1,6 @@
 #import "objd.h"
 #import "CNZipLink.h"
 
-#import "CNCollection.h"
 #import "CNType.h"
 @implementation CNZipLink
 static CNClassType* _CNZipLink_type;
@@ -29,8 +28,8 @@ static CNClassType* _CNZipLink_type;
 
 - (CNYield*)buildYield:(CNYield*)yield {
     id<CNIterator> ai = [_a iterator];
-    return [CNYield decorateBase:yield yield:^int(id item) {
-        if(!([ai hasNext])) return 1;
+    return [CNYield decorateBase:yield yield:^CNGoR(id item) {
+        if(!([ai hasNext])) return CNGo_Break;
         else return [yield yieldItem:_f(item, [ai next])];
     }];
 }
@@ -55,7 +54,6 @@ static CNClassType* _CNZipLink_type;
 }
 
 @end
-
 
 @implementation CNZip3Link
 static CNClassType* _CNZip3Link_type;
@@ -86,8 +84,8 @@ static CNClassType* _CNZip3Link_type;
 - (CNYield*)buildYield:(CNYield*)yield {
     id<CNIterator> ai = [_a iterator];
     id<CNIterator> bi = [_b iterator];
-    return [CNYield decorateBase:yield yield:^int(id item) {
-        if(!([ai hasNext]) || !([bi hasNext])) return 1;
+    return [CNYield decorateBase:yield yield:^CNGoR(id item) {
+        if(!([ai hasNext]) || !([bi hasNext])) return CNGo_Break;
         else return [yield yieldItem:_f(item, [ai next], [bi next])];
     }];
 }
@@ -113,5 +111,4 @@ static CNClassType* _CNZip3Link_type;
 }
 
 @end
-
 

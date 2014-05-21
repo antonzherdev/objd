@@ -1,5 +1,6 @@
 module ObjC.Struct ( Property(..), PropertyModifier(..),FileStm(..), ImplSynthesize(..), ImplFun(..), Fun(..), FunType(..), FunPar(..),
-  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..), DataType(..), Extends(..), tp, forExp, forStm, forStms, cfun, Visibility(..)
+  Stm(..), Exp(..), ImplField(..), CFunPar(..), CFunMod(..), DataType(..), Extends(..), tp, forExp, forStm, forStms, cfun, Visibility(..),
+  EnumItem(..)
 ) where
 
 import           Ex.String
@@ -17,7 +18,9 @@ data FileStm =
 		, implFuns :: [ImplFun]
 		, implStaticFields :: [ImplField]}
 	| Struct {structName :: String, structFields :: [ImplField]}
+	| Enum {enumName :: String, enumItems :: [EnumItem]}
 	| TypeDefStruct {oldName :: String, newName :: String}
+	| CVar {cfunMods :: [CFunMod], cfunReturnType :: DataType, cfunName :: String}
 	| CFunDecl {cfunMods :: [CFunMod], cfunReturnType :: DataType, cfunName :: String, cfunPars :: [CFunPar]}
 	| CFun {cfunMods :: [CFunMod], cfunReturnType :: DataType, cfunName :: String, cfunPars :: [CFunPar], cfunExps :: [Stm]}
 	| ClassDecl String
@@ -32,6 +35,7 @@ data Property = Property {propertyName :: String, propertyType :: DataType, prop
 data PropertyModifier = ReadOnly | NonAtomic | Retain | Weak | Copy deriving(Eq)
 
 data ImplField = ImplField {implFieldName :: String, implFieldType :: DataType, implFieldsMods :: [String], implFieldExp :: Exp}
+data EnumItem = EnumItem {enumItemName :: String, enumItemValue :: Maybe Int}
 
 data ImplSynthesize = ImplSynthesize String String
 
@@ -49,7 +53,7 @@ instance Eq FunPar where
 	a == b = funParName a == funParName b
 
 data CFunPar = CFunPar {cfunParDataType :: DataType, cfunParName :: String}
-data CFunMod = CFunStatic | CFunInline
+data CFunMod = CFunStatic | CFunInline | CFunExtern
 {- EXPRESSIONS -}
 
 data DataType = TPSimple String [String]| TPBlock DataType [DataType] | TPArr Int String | TPRef DataType 
@@ -201,6 +205,10 @@ instance Show FileStm where
 	show (Struct name fields) = "struct " ++ name ++ " {\n" ++
 		(unlines . map (ind . show)) fields ++
 		"};"
+	show (Enum name fields) = "typedef enum " ++ name ++ " {\n" ++
+		(strs ",\n" . map (ind . show)) fields ++
+		"\n} " ++ name ++ ";"
+	show (CVar mods ret name) = pstrs "" " " " " (map show mods) ++ showDecl ret name ++ ";"
 	show (CFunDecl mods ret name pars) = strs " " (map show mods ++ [show ret]) ++ " " ++ name ++ "(" ++ (strs ", " . map show) pars ++ ");"
 	show (CFun mods ret name pars exps) = strs " " (map show mods ++ [show ret]) ++ " " ++ name ++ "(" ++ (strs ", " . map show) pars ++ ") {\n" ++
 			showStms exps ++
@@ -210,7 +218,7 @@ instance Show FileStm where
 		showFields (filter (not . null . snd) intFields)
 		 ++ (unlines' . map show) properties
 		 ++ (unlines  . map (( ++ ";") . show)) funs
-		 ++ "@end\n\n"
+		 ++ "@end"
 		 where
 		 	showFields [] = "\n"
 		 	showFields fields = " {\n" ++ unlines (map showVisibilitySection fields) ++ "}\n"
@@ -219,14 +227,14 @@ instance Show FileStm where
 		"@protocol " ++ name ++ "<" ++ strs ", " trs ++ ">\n"
 		++ (unlines' . map show) properties
 		 ++ (unlines  . map (( ++ ";") . show)) funs
-		 ++ "@end\n\n"
+		 ++ "@end"
 	show Implementation{implName = iName, implFields = fields, implSynthesizes = synzs, implFuns = funs, implStaticFields = stFields} =
 		"@implementation " ++ iName
 		++ showImplFields fields
 		++ showStFields stFields
 		++ showSynthenizes synzs ++ "\n"
 		++ showImplFuns funs
-		++ "@end\n\n"
+		++ "@end\n"
 		where
 		showImplFields [] = "\n"
 		showImplFields a = "{\n"
@@ -247,9 +255,13 @@ instance Show Extends where
 	show (Extends cl a) = cl ++ "<" ++ strs ", " a ++ ">"
 instance Show ImplField where
 	show(ImplField name tpp mods _) = (strs " " mods) `tryCon` " " ++ showDecl tpp (kw name) ++ ";"
+instance Show EnumItem where
+	show(EnumItem name Nothing) = name
+	show(EnumItem name (Just n)) = name ++ " = " ++ show n
 instance Show CFunMod where
 	show CFunStatic = "static"
 	show CFunInline = "inline"
+	show CFunExtern = "extern"
 instance Show CFunPar where
 	show (CFunPar t n) = showDecl t (kw n)
 

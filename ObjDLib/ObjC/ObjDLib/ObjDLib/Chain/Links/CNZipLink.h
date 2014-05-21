@@ -1,7 +1,6 @@
 #import "objdcore.h"
 #import "CNYield.h"
-@protocol CNIterable;
-@protocol CNIterator;
+#import "CNCollection.h"
 @class CNClassType;
 
 @class CNZipLink;

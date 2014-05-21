@@ -1,9 +1,11 @@
 package objd.lang
 
-stub class Enum(val ordinal : uint, val name : string) {
+class Enum(val ordinal : uint, val name : string) extends Comparable<Enum> {
     override def description : string = name
 
     override def hash : uint = ordinal
 
     static def values : [self]
+
+    override def compare(to : Enum) : int = ordinal.compare(to.ordinal)
 }

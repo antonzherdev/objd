@@ -1,34 +1,58 @@
+#import "objd.h"
 #import "CNMulLink.h"
-#import "CNTuple.h"
+
 #import "CNCollection.h"
+#import "CNChain.h"
+#import "CNType.h"
+@implementation CNMulLink
+static CNClassType* _CNMulLink_type;
 
-
-@implementation CNMulLink {
-    id _collection;
++ (instancetype)mulLinkWithCollection:(id<CNTraversable>)collection {
+    return [[CNMulLink alloc] initWithCollection:collection];
 }
-- (id)initWithCollection:(id)collection {
-    self = [super init];
-    if (self) {
-        _collection = cnResolveCollection(collection);
-    }
 
+- (instancetype)initWithCollection:(id<CNTraversable>)collection {
+    self = [super init];
+    if(self) __collection = (([collection isKindOfClass:[CNChain class]]) ? ((id<CNTraversable>)([((CNChain*)(collection)) toArray])) : collection);
+    
     return self;
 }
 
-- (CNYield *)buildYield:(CNYield *)yield {
-    return [CNYield decorateBase:yield begin:^int(NSUInteger size) {
-        return [yield beginYieldWithSize:size * [_collection count]];
-
-    }                      yield:^int(id a) {
-        return [_collection goOn:^BOOL(id b) {
-            CNTuple *item = [CNTuple tupleWithA:a b:b];
-            return [yield yieldItem:item] == 0;
-        }] ? 0 : 1;
-    }                        end:nil all:nil];
++ (void)initialize {
+    [super initialize];
+    if(self == [CNMulLink class]) _CNMulLink_type = [CNClassType classTypeWithCls:[CNMulLink class]];
 }
 
-+ (id)linkWithCollection:(id)collection {
-    return [[self alloc] initWithCollection:collection];
+- (CNYield*)buildYield:(CNYield*)yield {
+    return [CNYield decorateBase:yield begin:({
+        id<CNIterable> c = [CNObject asKindOfProtocol:@protocol(CNIterable) object:__collection];
+        ((c != nil) ? ^CNGoR(NSUInteger size) {
+            return [yield beginYieldWithSize:size * [c count]];
+        } : nil);
+    }) yield:^CNGoR(id a) {
+        return [__collection goOn:^CNGoR(id b) {
+            return [yield yieldItem:tuple(a, b)];
+        }];
+    }];
+}
+
+- (CNClassType*)type {
+    return [CNMulLink type];
+}
+
++ (CNClassType*)type {
+    return _CNMulLink_type;
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    return self;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendString:@">"];
+    return description;
 }
 
 @end
+

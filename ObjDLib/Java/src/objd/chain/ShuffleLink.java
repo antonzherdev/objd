@@ -2,20 +2,21 @@ package objd.chain;
 
 import objd.lang.*;
 import objd.collection.MArray;
+import objd.collection.Go;
 
 public class ShuffleLink<T> extends ChainLink_impl<T, T> {
     private MArray<T> _array;
     @Override
     public Yield<T> buildYield(final Yield<T> yield) {
-        return Yield.<T, T>decorateBaseBeginYieldEnd(yield, new F<Integer, Integer>() {
+        return Yield.<T, T>decorateBaseBeginYieldEnd(yield, new F<Integer, Go>() {
             @Override
-            public Integer apply(final Integer size) {
+            public Go apply(final Integer size) {
                 ShuffleLink.this._array = new MArray<T>(size);
-                return ((int)(0));
+                return Go.Continue;
             }
-        }, new F<T, Integer>() {
+        }, new F<T, Go>() {
             @Override
-            public Integer apply(final T item) {
+            public Go apply(final T item) {
                 if(ShuffleLink.this._array == null) {
                     throw new NullPointerException();
                 }
@@ -23,18 +24,18 @@ public class ShuffleLink<T> extends ChainLink_impl<T, T> {
                     throw new NullPointerException();
                 }
                 ShuffleLink.this._array.insertIndexItem(UInt.rndMax(ShuffleLink.this._array.count()), item);
-                return ((int)(0));
+                return Go.Continue;
             }
-        }, new F<Integer, Integer>() {
+        }, new F<Go, Go>() {
             @Override
-            public Integer apply(final Integer r) {
-                if(ShuffleLink.this._array == null) {
-                    throw new NullPointerException();
-                }
-                if(yield.yieldAllItems(ShuffleLink.this._array) == 1) {
-                    return ((int)(1));
+            public Go apply(final Go r) {
+                if(r.equals(Go.Break)) {
+                    return yield.endYieldWithResult(r);
                 } else {
-                    return r;
+                    if(ShuffleLink.this._array == null) {
+                        throw new NullPointerException();
+                    }
+                    return yield.yieldAllItems(ShuffleLink.this._array);
                 }
             }
         });

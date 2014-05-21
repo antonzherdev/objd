@@ -52,6 +52,18 @@ class ChainTest extends TestCase {
         assertEquals(count.intValue, arr.count)
     }
 
+    def testMap {
+        assertEquals([4, 0, 2], [2, 0, 1].chain.map{x -> 2*x}.toArray)
+    }
+
+    def testMapOpt {
+        assertEquals([4, 2], [2, 0, 1].chain.mapOpt<int>{x -> if(x == 0) nil else 2*x}.toArray)
+    }
+
+    def testFlatMap {
+        assertEquals([2, 4, 0, 0, 1, 2], [2, 0, 1].chain.flatMap{x -> [x, 2*x]}.toArray)
+    }
+
     def testFlat {
         assertEquals([1, 5, 2, 3, 2], [[1, 5], [2, 3], [2]].chain.flat.toArray)
     }
@@ -70,5 +82,54 @@ class ChainTest extends TestCase {
             arr += (a + b)
         }
         assertEquals([2, 3], arr)
+    }
+
+    def testAppend {
+        assertEquals([1, 0, 2, 3, 1], [1, 0, 2].chain.append([3, 1]).toArray)
+    }
+
+    def testPreppend {
+        assertEquals([3, 1, 1, 0, 2], [1, 0, 2].chain.prepend([3, 1]).toArray)
+    }
+
+    def testMul {
+        assertEquals([(1, 3), (1, 1), (0, 3), (0, 1), (2, 3), (2, 1)], [1, 0, 2].chain.mul([3, 1]).toArray)
+    }
+
+    def testTop {
+        assertEquals([1, 0], [1, 0, 2].chain.top(2).toArray)
+        assertTrue([1, 0, 2].chain.top(0).toArray.isEmpty)
+        assertEquals([1, 0, 2], [1, 0, 2].chain.top(4).toArray)
+    }
+
+    def testSort {
+        assertEquals([0, 1, 2], [1, 0, 2].chain.sort.toArray)
+        assertEquals([2, 1, 0], [1, 0, 2].chain.sortDesc.toArray)
+    }
+
+    def testReverse {
+        assertEquals([2, 0, 1], [1, 0, 2].chain.reverse.toArray)
+    }
+
+    def testGroupBy {
+        assertEquals([[1, 0], [2]].chain.toSet, [1, 0, 2].chain.group(by = _ <= 1).map(_.b).toSet)
+        assertEquals([-1, 3].chain.toSet, [1, -2, 3].chain.group<bool, int>(by = _ <= 1, fold = (a, b) -> a + b, withStart = 0).map(_.b).toSet)
+    }
+
+    def testDistinct {
+        assertEquals([1, 3, 4, 2], [1, 3, 1, 4, 4, 2].chain.distinct.toArray)
+    }
+
+    def testCombinations {
+        assertEquals([(2, 0), (2, 1), (0, 1)], [2, 0, 1].chain.combinations.toArray)
+    }
+
+    def testUncombinations {
+        assertEquals([2, 0, 1], [(2, 0), (2, 1), (0, 1)].chain.uncombinations.toArray)
+    }
+
+    def testNeighbours {
+        assertEquals([(2, 0), (0, 1)], [2, 0, 1].chain.neighbours.toArray)
+        assertEquals([(2, 0), (0, 1), (1, 2)], [2, 0, 1].chain.neighboursRing.toArray)
     }
 }

@@ -68,7 +68,6 @@ static CNClassType* _CNTuple_type;
 
 @end
 
-
 @implementation CNTuple3
 static CNClassType* _CNTuple3_type;
 @synthesize a = _a;
@@ -142,7 +141,6 @@ static CNClassType* _CNTuple3_type;
 }
 
 @end
-
 
 @implementation CNTuple4
 static CNClassType* _CNTuple4_type;
@@ -225,7 +223,6 @@ static CNClassType* _CNTuple4_type;
 }
 
 @end
-
 
 @implementation CNTuple5
 static CNClassType* _CNTuple5_type;
@@ -316,5 +313,4 @@ static CNClassType* _CNTuple5_type;
 }
 
 @end
-
 

@@ -78,11 +78,11 @@
 }
 
 
-- (BOOL)goOn:(BOOL (^)(id))on {
+- (CNGoR)goOn:(CNGoR (^)(id))on {
     for(id item in self)  {
-        if(!on(uwrapNil(item))) return NO;
+        if(on(uwrapNil(item)) == CNGo_Break) return CNGo_Break;
     }
-    return YES;
+    return CNGo_Continue;
 }
 
 - (BOOL)containsItem:(id)item {

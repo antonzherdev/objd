@@ -46,7 +46,6 @@
 
 @end
 
-
 @implementation CNImMap_impl
 
 - (id<CNMMap>)mCopy {
@@ -73,7 +72,6 @@
 }
 
 @end
-
 
 @implementation CNMMap_impl
 
@@ -164,7 +162,6 @@
 }
 
 @end
-
 
 @implementation CNImMapDefault
 static CNClassType* _CNImMapDefault_type;
@@ -260,7 +257,6 @@ static CNClassType* _CNImMapDefault_type;
 }
 
 @end
-
 
 @implementation CNMMapDefault
 static CNClassType* _CNMMapDefault_type;
@@ -371,7 +367,6 @@ static CNClassType* _CNMMapDefault_type;
 
 @end
 
-
 @implementation CNHashMapBuilder
 static CNClassType* _CNHashMapBuilder_type;
 
@@ -418,5 +413,4 @@ static CNClassType* _CNHashMapBuilder_type;
 }
 
 @end
-
 

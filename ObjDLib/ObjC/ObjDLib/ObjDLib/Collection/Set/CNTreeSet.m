@@ -77,7 +77,6 @@ static CNClassType* _CNTreeSet_type;
 
 @end
 
-
 @implementation CNImTreeSet
 static CNClassType* _CNImTreeSet_type;
 @synthesize immap = _immap;
@@ -122,7 +121,6 @@ static CNClassType* _CNImTreeSet_type;
 }
 
 @end
-
 
 @implementation CNTreeSetBuilder
 static CNClassType* _CNTreeSetBuilder_type;
@@ -180,7 +178,6 @@ static CNClassType* _CNTreeSetBuilder_type;
 }
 
 @end
-
 
 @implementation CNMTreeSet
 static NSObject* _CNMTreeSet_obj;
@@ -277,5 +274,4 @@ static CNClassType* _CNMTreeSet_type;
 }
 
 @end
-
 

@@ -1,7 +1,7 @@
 #import "objdcore.h"
 #import "CNSeq.h"
-#import "CNObject.h"
 #import "CNCollection.h"
+#import "CNObject.h"
 @class CNClassType;
 
 @class CNMList;

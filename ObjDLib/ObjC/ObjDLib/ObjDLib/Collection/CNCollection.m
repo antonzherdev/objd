@@ -27,7 +27,6 @@
 
 @end
 
-
 @implementation CNMIterator_impl
 
 - (void)remove {
@@ -49,7 +48,6 @@
 }
 
 @end
-
 
 @implementation CNBuilder_impl
 
@@ -87,26 +85,51 @@
 
 @end
 
+@implementation CNGo
+
++ (instancetype)goWithOrdinal:(NSUInteger)ordinal name:(NSString*)name {
+    return [[CNGo alloc] initWithOrdinal:ordinal name:name];
+}
+
+- (instancetype)initWithOrdinal:(NSUInteger)ordinal name:(NSString*)name {
+    self = [super initWithOrdinal:ordinal name:name];
+    
+    return self;
+}
+
++ (void)load {
+    [super load];
+    CNGo_Continue_Desc = [CNGo goWithOrdinal:0 name:@"Continue"];
+    CNGo_Break_Desc = [CNGo goWithOrdinal:1 name:@"Break"];
+    CNGo_Values[0] = CNGo_Continue_Desc;
+    CNGo_Values[1] = CNGo_Break_Desc;
+}
+
++ (NSArray*)values {
+    return (@[CNGo_Continue_Desc, CNGo_Break_Desc]);
+}
+
+@end
 
 @implementation CNTraversable_impl
 
 - (void)forEach:(void(^)(id))each {
-    [self goOn:^BOOL(id item) {
+    [self goOn:^CNGoR(id item) {
         each(item);
-        return YES;
+        return CNGo_Continue;
     }];
 }
 
 - (void)parForEach:(void(^)(id))each {
-    [self goOn:^BOOL(id item) {
+    [self goOn:^CNGoR(id item) {
         [CNDispatchQueue.aDefault asyncF:^void() {
             each(item);
         }];
-        return YES;
+        return CNGo_Continue;
     }];
 }
 
-- (BOOL)goOn:(BOOL(^)(id))on {
+- (CNGoR)goOn:(CNGoR(^)(id))on {
     @throw @"Method go is abstract";
 }
 
@@ -116,12 +139,12 @@
 
 - (id)findWhere:(BOOL(^)(id))where {
     __block id ret = nil;
-    [self goOn:^BOOL(id x) {
+    [self goOn:^CNGoR(id x) {
         if(where(x)) {
             ret = x;
-            return NO;
+            return CNGo_Break;
         } else {
-            return YES;
+            return CNGo_Continue;
         }
     }];
     return ret;
@@ -129,12 +152,12 @@
 
 - (BOOL)existsWhere:(BOOL(^)(id))where {
     __block BOOL ret = NO;
-    [self goOn:^BOOL(id x) {
+    [self goOn:^CNGoR(id x) {
         if(where(x)) {
             ret = YES;
-            return NO;
+            return CNGo_Break;
         } else {
-            return YES;
+            return CNGo_Continue;
         }
     }];
     return ret;
@@ -142,12 +165,12 @@
 
 - (BOOL)allConfirm:(BOOL(^)(id))confirm {
     __block BOOL ret = YES;
-    [self goOn:^BOOL(id x) {
+    [self goOn:^CNGoR(id x) {
         if(!(confirm(x))) {
             ret = NO;
-            return NO;
+            return CNGo_Break;
         } else {
-            return YES;
+            return CNGo_Continue;
         }
     }];
     return ret;
@@ -155,9 +178,9 @@
 
 - (id)head {
     __block id ret;
-    [self goOn:^BOOL(id on) {
+    [self goOn:^CNGoR(id on) {
         ret = on;
-        return NO;
+        return CNGo_Break;
     }];
     return ret;
 }
@@ -181,7 +204,6 @@
 
 @end
 
-
 @implementation CNImTraversable_impl
 
 - (id<CNMTraversable>)mCopy {
@@ -203,7 +225,6 @@
 }
 
 @end
-
 
 @implementation CNMTraversable_impl
 
@@ -243,7 +264,6 @@
 
 @end
 
-
 @implementation CNIterable_impl
 
 - (id)head {
@@ -268,13 +288,13 @@
     }
 }
 
-- (BOOL)goOn:(BOOL(^)(id))on {
-    BOOL ret = YES;
+- (CNGoR)goOn:(CNGoR(^)(id))on {
+    CNGoR ret = CNGo_Continue;
     id<CNIterator> i = [self iterator];
     while([i hasNext]) {
-        BOOL b = on([i next]);
+        CNGoR b = on([i next]);
         if(!(b)) {
-            ret = NO;
+            ret = CNGo_Break;
             break;
         }
     }
@@ -326,7 +346,6 @@
 
 @end
 
-
 @implementation CNImIterable_impl
 
 - (id<CNMIterable>)mCopy {
@@ -352,7 +371,6 @@
 }
 
 @end
-
 
 @implementation CNMIterable_impl
 
@@ -415,7 +433,6 @@
 
 @end
 
-
 @implementation CNIterableF
 static CNClassType* _CNIterableF_type;
 @synthesize iteratorF = _iteratorF;
@@ -459,7 +476,6 @@ static CNClassType* _CNIterableF_type;
 }
 
 @end
-
 
 @implementation CNEmptyIterator
 static CNEmptyIterator* _CNEmptyIterator_instance;
@@ -514,5 +530,4 @@ static CNClassType* _CNEmptyIterator_type;
 }
 
 @end
-
 

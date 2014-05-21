@@ -26,8 +26,8 @@
 - (CNChain*)map:(cnF)f;
 - (CNChain*)flatMap:(cnF)f;
 - (CNChain*)flatMap:(cnF)f factor:(double) factor;
-- (CNChain*)neighbors;
-- (CNChain*)neighborsRing;
+- (CNChain*)neighbours;
+- (CNChain*)neighboursRing;
 - (CNChain*)combinations;
 - (CNChain*)uncombinations;
 
@@ -72,7 +72,7 @@
 - (id)max;
 - (NSDictionary *)toMap;
 - (NSMutableDictionary *)toMutableMap;
-- (int)apply:(CNYield *)yield;
+- (CNGoR)apply:(CNYield *)yield;
 - (NSString *)toStringWithDelimiter:(NSString *)delimiter;
 
 - (NSString *)toStringWithStart:(NSString *)string delimiter:(NSString *)delimiter end:(NSString *)end;

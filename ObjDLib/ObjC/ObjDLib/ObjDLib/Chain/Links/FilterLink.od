@@ -1,13 +1,32 @@
 package objd.chain
 
-class FilterLink<T>(val predicate : T -> bool, val selectivity : float4) extends ChainLink<T, T> {
+class FilterLink<T>(val predicate : T -> bool, val factor : float) extends ChainLink<T, T> {
     override def build(yield : Yield<T>) : Yield<T> = {
         Yield.decorate<T>(
             base = yield,
-            begin = size -> yield.beginYieldWith(size = size * selectivity),
+            begin = size -> yield.beginYieldWith(size = size * factor),
             yield = item -> {
                 if(predicate(item)) yield.yield(item)
-                else 0
+                else Go.Continue
+            }
+        )
+    }
+}
+
+class TopLink<T>(val number : uint) extends ChainLink<T, T> {
+    override def build(yield : Yield<T>) : Yield<T> = {
+        var n : uint = 0
+        Yield.decorate<T>(
+            base = yield,
+            begin = size -> yield.beginYieldWith(size = size.max(number)),
+            yield = item -> {
+                if(n < number) {
+                    if(yield.yield(item) == Go.Break) Go.Break
+                    else {
+                        n++
+                        if(n < number) Go.Continue else Go.Break
+                    }
+                } else Go.Break
             }
         )
     }

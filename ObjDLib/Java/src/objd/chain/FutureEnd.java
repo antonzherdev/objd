@@ -7,6 +7,7 @@ import objd.concurrent.AtomicInt;
 import objd.concurrent.AtomicBool;
 import objd.collection.MArray;
 import objd.concurrent.Future;
+import objd.collection.Go;
 
 public class FutureEnd<T> {
     private final Promise<Seq<T>> _promise;
@@ -21,15 +22,15 @@ public class FutureEnd<T> {
     public Yield<Future<T>> yield() {
         final Mut<Integer> _i = new Mut<Integer>(0);
         final MutVolatile<Integer> _set = new MutVolatile<Integer>(-1);
-        return Yield.<Future<T>>makeBeginYieldEnd(new F<Integer, Integer>() {
+        return Yield.<Future<T>>makeBeginYieldEnd(new F<Integer, Go>() {
             @Override
-            public Integer apply(final Integer size) {
+            public Go apply(final Integer size) {
                 FutureEnd.this._array = new MArray<T>(size);
-                return ((int)(0));
+                return Go.Continue;
             }
-        }, new F<Future<T>, Integer>() {
+        }, new F<Future<T>, Go>() {
             @Override
-            public Integer apply(final Future<T> fut) {
+            public Go apply(final Future<T> fut) {
                 if(!(FutureEnd.this._stopped)) {
                     FutureEnd.this._counter.incrementAndGet();
                     if(FutureEnd.this._array == null) {
@@ -68,14 +69,14 @@ public class FutureEnd<T> {
                     });
                 }
                 if(FutureEnd.this._stopped) {
-                    return ((int)(1));
+                    return Go.Break;
                 } else {
-                    return ((int)(0));
+                    return Go.Continue;
                 }
             }
-        }, new F<Integer, Integer>() {
+        }, new F<Go, Go>() {
             @Override
-            public Integer apply(final Integer res) {
+            public Go apply(final Go res) {
                 FutureEnd.this._ended = true;
                 if(FutureEnd.this._counter.intValue() == 0) {
                     if(!(FutureEnd.this._yielded.getAndSet(true))) {

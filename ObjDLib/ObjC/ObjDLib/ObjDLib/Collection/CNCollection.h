@@ -1,5 +1,6 @@
 #import "objdcore.h"
 #import "CNObject.h"
+#import "CNEnum.h"
 @class CNClassType;
 @class CNDispatchQueue;
 @class CNChain;
@@ -16,6 +17,7 @@
 @class CNMIterable_impl;
 @class CNIterableF;
 @class CNEmptyIterator;
+@class CNGo;
 @protocol CNIterator;
 @protocol CNMIterator;
 @protocol CNBuilder;
@@ -25,6 +27,8 @@
 @protocol CNIterable;
 @protocol CNImIterable;
 @protocol CNMIterable;
+
+
 
 @protocol CNIterator<NSObject>
 - (BOOL)hasNext;
@@ -57,10 +61,23 @@
 @end
 
 
+@interface CNGo : CNEnum
++ (NSArray*)values;
+@end
+typedef enum CNGoR {
+    CNGo_Nil = 0,
+    CNGo_Continue = 1,
+    CNGo_Break = 2
+} CNGoR;
+static CNGo* CNGo_Values[2];
+static CNGo* CNGo_Continue_Desc;
+static CNGo* CNGo_Break_Desc;
+
+
 @protocol CNTraversable<NSObject>
 - (void)forEach:(void(^)(id))each;
 - (void)parForEach:(void(^)(id))each;
-- (BOOL)goOn:(BOOL(^)(id))on;
+- (CNGoR)goOn:(CNGoR(^)(id))on;
 - (CNChain*)chain;
 - (id)findWhere:(BOOL(^)(id))where;
 - (BOOL)existsWhere:(BOOL(^)(id))where;
@@ -103,7 +120,7 @@
 - (BOOL)isEmpty;
 - (void)forEach:(void(^)(id))each;
 - (void)parForEach:(void(^)(id))each;
-- (BOOL)goOn:(BOOL(^)(id))on;
+- (CNGoR)goOn:(CNGoR(^)(id))on;
 - (BOOL)containsItem:(id)item;
 - (NSString*)description;
 - (NSUInteger)hash;

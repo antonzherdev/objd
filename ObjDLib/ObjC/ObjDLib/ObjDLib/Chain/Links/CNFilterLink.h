@@ -1,19 +1,35 @@
 #import "objdcore.h"
 #import "CNYield.h"
+#import "CNCollection.h"
 @class CNClassType;
 
 @class CNFilterLink;
+@class CNTopLink;
 
 @interface CNFilterLink : CNChainLink_impl {
 @protected
     BOOL(^_predicate)(id);
-    float _selectivity;
+    CGFloat _factor;
 }
 @property (nonatomic, readonly) BOOL(^predicate)(id);
-@property (nonatomic, readonly) float selectivity;
+@property (nonatomic, readonly) CGFloat factor;
 
-+ (instancetype)filterLinkWithPredicate:(BOOL(^)(id))predicate selectivity:(float)selectivity;
-- (instancetype)initWithPredicate:(BOOL(^)(id))predicate selectivity:(float)selectivity;
++ (instancetype)filterLinkWithPredicate:(BOOL(^)(id))predicate factor:(CGFloat)factor;
+- (instancetype)initWithPredicate:(BOOL(^)(id))predicate factor:(CGFloat)factor;
+- (CNClassType*)type;
+- (CNYield*)buildYield:(CNYield*)yield;
++ (CNClassType*)type;
+@end
+
+
+@interface CNTopLink : CNChainLink_impl {
+@protected
+    NSUInteger _number;
+}
+@property (nonatomic, readonly) NSUInteger number;
+
++ (instancetype)topLinkWithNumber:(NSUInteger)number;
+- (instancetype)initWithNumber:(NSUInteger)number;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
 + (CNClassType*)type;

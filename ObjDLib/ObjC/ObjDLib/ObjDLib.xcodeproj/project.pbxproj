@@ -46,32 +46,25 @@
 		0292EDCC1886A6F600DF540E /* CNObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF319966EFEB00DBC7690 /* CNObject.m */; };
 		6F3DF00104130E0116680169 /* NSLock+CNChain.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF3640E0995D779C143E2 /* NSLock+CNChain.m */; };
 		6F3DF0185756AC00402B304E /* ChainTest.od in Resources */ = {isa = PBXBuildFile; fileRef = 6F3DF30402FFC050E4602342 /* ChainTest.od */; };
-		6F3DF0AD2424169D67DC50FE /* CNAppendLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF1FE7C3AA01189F9A649 /* CNAppendLink.m */; };
-		6F3DF0BCF2825D3B8838A8E6 /* CNPrependLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF8A4A4762BEFC8C3CCCF /* CNPrependLink.m */; };
 		6F3DF0C3CA3B085E7EAAE425 /* CNList.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFC43B78866C2CE279FD1 /* CNList.m */; };
 		6F3DF0C6DE3189E2641E2353 /* CNLock.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF61E5C628303F34DDEA7 /* CNLock.m */; };
 		6F3DF0E4CACDC4E3F4613262 /* CNTreeSet.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF346787D5DC482CB895A /* CNTreeSet.m */; };
 		6F3DF104290C2A08FC6CA9F6 /* CNChain.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF0F54D8195E08BC39887 /* CNChain.m */; };
 		6F3DF1164EA16626203455AD /* CNFuture.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF35AF87DC4C66D7D8D48 /* CNFuture.m */; };
-		6F3DF177BF0D4A4A2B227326 /* CNNeighboursLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFA63AED78C6942FA31E0 /* CNNeighboursLink.m */; };
 		6F3DF18675ED726E20ED7911 /* CNTreeMapTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF10AC716733B22DF960C /* CNTreeMapTest.m */; };
 		6F3DF1AA2FFA452175561CCC /* NSString+CNChain.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF6B9B3EE38B3E97BD6C2 /* NSString+CNChain.m */; };
 		6F3DF1CC5DC2F6F86DC73978 /* CNRange.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF4C83A0563F30A0D6ED4 /* CNRange.m */; };
-		6F3DF222CFE30ADCA7227AB5 /* CNFlatMapLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF3B0FE9E9310B9E8BB24 /* CNFlatMapLink.m */; };
-		6F3DF274163671948A4F79E6 /* CNTopLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFA53B828F87A81872BBF /* CNTopLink.m */; };
+		6F3DF25A2ECCA9C4D060F750 /* SourceLink.od in Resources */ = {isa = PBXBuildFile; fileRef = 6F3DFB48DD031BF7F089E6D3 /* SourceLink.od */; };
 		6F3DF2C181B7B59C11934331 /* CNSeed.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF3A99EB8F6E07F61C664 /* CNSeed.m */; };
 		6F3DF2C3A92A607641EEFDF5 /* CNQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF1365A6FB6414192DC83 /* CNQueue.m */; };
 		6F3DF2FC245D79759BA48A69 /* CNTreeMapTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF10AC716733B22DF960C /* CNTreeMapTest.m */; };
-		6F3DF317F404F2380EA9B096 /* CNFlatMapLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF3B0FE9E9310B9E8BB24 /* CNFlatMapLink.m */; };
 		6F3DF33A0FEC66520C1A7310 /* FutureTest.od in Resources */ = {isa = PBXBuildFile; fileRef = 6F3DF3FAE08F79F26047841C /* FutureTest.od */; };
 		6F3DF35A8D5DEC432BECCAB3 /* CNTuple.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFF370F14EE8227B8E04A /* CNTuple.m */; };
 		6F3DF35C1AB0C009D80E8E63 /* CNRange.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF4C83A0563F30A0D6ED4 /* CNRange.m */; };
 		6F3DF3ADB3A54CF1FCEBFFC4 /* CNLock.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF61E5C628303F34DDEA7 /* CNLock.m */; };
 		6F3DF3CB6D68B401693D2189 /* CNMapLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFB98C81B1E07AE8AF4F4 /* CNMapLink.m */; };
 		6F3DF3E2302E8502F9B0B335 /* CNFutureTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFED62991A317D5247197 /* CNFutureTest.m */; };
-		6F3DF3FF34179F4A5BDD8C39 /* CNAppendLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF1FE7C3AA01189F9A649 /* CNAppendLink.m */; };
 		6F3DF3FF8AFF46F861FAE4CF /* CNAtomic.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFC76982161DFC7F7CF58 /* CNAtomic.m */; };
-		6F3DF40685FFF8080C620EFC /* CNShuffleLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFAC7045D33869A5AB646 /* CNShuffleLink.m */; };
 		6F3DF40A6A36C5C7FD227E7C /* CNPair.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF57A5630CA2B88B029E4 /* CNPair.m */; };
 		6F3DF4263E76D5283D31DFA7 /* CNSortLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFF70D813131BD4E05677 /* CNSortLink.m */; };
 		6F3DF427F63B84FF941610F4 /* CNChain.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF0F54D8195E08BC39887 /* CNChain.m */; };
@@ -81,10 +74,8 @@
 		6F3DF48CEA483A5D35C6FE26 /* Lazy.od in Resources */ = {isa = PBXBuildFile; fileRef = 6F3DF9877E234023813109B3 /* Lazy.od */; };
 		6F3DF49C8DAE4168CA233C6A /* CNPArray.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF696A3E4C085F569A75F /* CNPArray.m */; };
 		6F3DF4BEC03E2EB00362CA1B /* CNCombinationsLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFA9F781C1CCA992354D4 /* CNCombinationsLink.m */; };
-		6F3DF4DCEF9B50E1E692576F /* CNReverseLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF8150648A7EDB25C6BE4 /* CNReverseLink.m */; };
 		6F3DF573E90C353B4987A787 /* CNMapLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFB98C81B1E07AE8AF4F4 /* CNMapLink.m */; };
 		6F3DF5A38A04637A7C549C6B /* CNLazy.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFFA2B4818A3768BA5F55 /* CNLazy.m */; };
-		6F3DF6019C45EA847A0B64E9 /* CNDistinctLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF6F269E57BA03B21CD07 /* CNDistinctLink.m */; };
 		6F3DF681C9DE41B5E1D8C787 /* TSTestCase.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF083C850404A7CA14C58 /* TSTestCase.m */; };
 		6F3DF685A21AF4D976C7B92C /* CNTry.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF2DAF29DB4CE17E7F80C /* CNTry.m */; };
 		6F3DF6E0EC1AF13FB84CEB9A /* CNSourceLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF03A4E6D52F4B9DD80B8 /* CNSourceLink.m */; };
@@ -92,26 +83,20 @@
 		6F3DF76A463AF5C6B4A04A20 /* Lazy.od in Resources */ = {isa = PBXBuildFile; fileRef = 6F3DF9877E234023813109B3 /* Lazy.od */; };
 		6F3DF7872E095FDB0A4F80C6 /* CNTreeMap.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF22B2B2C6124D141EF14 /* CNTreeMap.m */; };
 		6F3DF78C5CC553777B2A8B03 /* CNAtomic.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFC76982161DFC7F7CF58 /* CNAtomic.m */; };
-		6F3DF7CFF8C1C523A253B89E /* CNFlatLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFA1978463D2A78748D85 /* CNFlatLink.m */; };
 		6F3DF7E35DDE8F44C48B3795 /* CNMutableList.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFCB7599A21AA20671F93 /* CNMutableList.m */; };
 		6F3DF802C0DF25238F0CDF46 /* CNDispatchQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFA74B9C39BAC30D18FC4 /* CNDispatchQueue.m */; };
 		6F3DF837D13CBEDCE6E047AF /* ChainTest.od in Resources */ = {isa = PBXBuildFile; fileRef = 6F3DF30402FFC050E4602342 /* ChainTest.od */; };
-		6F3DF83A0D3EC7945DEA1ED5 /* CNUncombinationsLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF066FF60E56AA1FA4463 /* CNUncombinationsLink.m */; };
 		6F3DF88FE8EA8F0CFC1C0983 /* CNGroupByLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF2E44DED05650A47A14F /* CNGroupByLink.m */; };
 		6F3DF8C716C25418FBF2BDDE /* CNCombinationsLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFA9F781C1CCA992354D4 /* CNCombinationsLink.m */; };
 		6F3DF8E081BD7BF114492C5A /* CNPair.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF57A5630CA2B88B029E4 /* CNPair.m */; };
 		6F3DF8EC7E846D639C184745 /* CNSeq.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF020DAD5BBD44549712C /* CNSeq.m */; };
 		6F3DF907836C9511AB1B477C /* CNZipLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF8DB569678D8AE016211 /* CNZipLink.m */; };
-		6F3DF9500C14718EE9F7CC27 /* CNNeighboursLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFA63AED78C6942FA31E0 /* CNNeighboursLink.m */; };
 		6F3DF952B1F5748D5462FD63 /* NSString+CNChain.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF6B9B3EE38B3E97BD6C2 /* NSString+CNChain.m */; };
 		6F3DF98488A816838B1DD62C /* CNGroupByLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF2E44DED05650A47A14F /* CNGroupByLink.m */; };
 		6F3DFA71047CD1AE8D721E6C /* CNMutableList.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFCB7599A21AA20671F93 /* CNMutableList.m */; };
 		6F3DFAA0EAB9F93765EFA0E4 /* NSConditionLock+CNChain.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFC62C9316077B4F5D47C /* NSConditionLock+CNChain.m */; };
-		6F3DFAF22B09AD4AAC2AD444 /* CNPrependLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF8A4A4762BEFC8C3CCCF /* CNPrependLink.m */; };
-		6F3DFB1C02AF0142953CAD86 /* CNTopLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFA53B828F87A81872BBF /* CNTopLink.m */; };
 		6F3DFB3301C713EE73FE7F15 /* CNLazy.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFFA2B4818A3768BA5F55 /* CNLazy.m */; };
 		6F3DFB5C057AE98B11878137 /* FutureTest.od in Resources */ = {isa = PBXBuildFile; fileRef = 6F3DF3FAE08F79F26047841C /* FutureTest.od */; };
-		6F3DFB6B05DBCE9B39966BB2 /* CNDistinctLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF6F269E57BA03B21CD07 /* CNDistinctLink.m */; };
 		6F3DFB737CA574C25F293C21 /* CNList.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFC43B78866C2CE279FD1 /* CNList.m */; };
 		6F3DFB8F7985F6CEF4377C1F /* CNSourceLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF03A4E6D52F4B9DD80B8 /* CNSourceLink.m */; };
 		6F3DFBA3E56D0969F633A7BF /* CNThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFEA04ADDF2E7A371676C /* CNThread.m */; };
@@ -127,7 +112,6 @@
 		6F3DFD5535AE9B9873D7963B /* CNFutureEnd.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF3E00F6AC3DD235BDF3F /* CNFutureEnd.m */; };
 		6F3DFD8E6D7F09774DD078D6 /* CNChainTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF6B03C9AB6933D025F36 /* CNChainTest.m */; };
 		6F3DFDB32A576BCFA0F600F3 /* CNFilterLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFB309E8E89278511D174 /* CNFilterLink.m */; };
-		6F3DFDB686B6AF1BF0F0DE0A /* CNReverseLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF8150648A7EDB25C6BE4 /* CNReverseLink.m */; };
 		6F3DFDC46B6C0E247CEE66D2 /* CNQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF1365A6FB6414192DC83 /* CNQueue.m */; };
 		6F3DFDF2115629FA51333B77 /* CNFutureEnd.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF3E00F6AC3DD235BDF3F /* CNFutureEnd.m */; };
 		6F3DFE02D99BC81F3C914451 /* CNSet.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF4726ABD25626900315B /* CNSet.m */; };
@@ -135,7 +119,6 @@
 		6F3DFE08B84C6E5B0A8FE475 /* CNSortLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFF70D813131BD4E05677 /* CNSortLink.m */; };
 		6F3DFE3318E0158C152711F1 /* CNTry.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF2DAF29DB4CE17E7F80C /* CNTry.m */; };
 		6F3DFE3572F13004B215C3BC /* NSConditionLock+CNChain.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFC62C9316077B4F5D47C /* NSConditionLock+CNChain.m */; };
-		6F3DFE3692EAEB242AFAFD4E /* CNShuffleLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFAC7045D33869A5AB646 /* CNShuffleLink.m */; };
 		6F3DFE7729DA2CD1134F26F8 /* CNFilterLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFB309E8E89278511D174 /* CNFilterLink.m */; };
 		6F3DFED3776C1379866DEAF5 /* CNMulLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFDD6DC07C14D1F087E7D /* CNMulLink.m */; };
 		6F3DFEF8D122B967B4D94B84 /* CNMulLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFDD6DC07C14D1F087E7D /* CNMulLink.m */; };
@@ -144,8 +127,6 @@
 		6F3DFF684F3052615072EE6B /* CNQueueTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFC273693EC16F6B45486 /* CNQueueTest.m */; };
 		6F3DFF7657F21851B9B5629C /* CNDispatchQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFA74B9C39BAC30D18FC4 /* CNDispatchQueue.m */; };
 		6F3DFF82D962FAAD8BDC1E3C /* CNSeq.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF020DAD5BBD44549712C /* CNSeq.m */; };
-		6F3DFF8C292B94650C64A08E /* CNFlatLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFA1978463D2A78748D85 /* CNFlatLink.m */; };
-		6F3DFFF53634E3DE36E40B11 /* CNUncombinationsLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF066FF60E56AA1FA4463 /* CNUncombinationsLink.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -165,13 +146,11 @@
 		6F3DF020DAD5BBD44549712C /* CNSeq.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNSeq.m; sourceTree = "<group>"; };
 		6F3DF022730816E2EF4CC0DD /* FilterLink.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = FilterLink.od; sourceTree = "<group>"; };
 		6F3DF03A4E6D52F4B9DD80B8 /* CNSourceLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNSourceLink.m; sourceTree = "<group>"; };
-		6F3DF066FF60E56AA1FA4463 /* CNUncombinationsLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNUncombinationsLink.m; sourceTree = "<group>"; };
 		6F3DF07EBDB06FA839AA171D /* CNSortLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNSortLink.h; sourceTree = "<group>"; };
 		6F3DF083C850404A7CA14C58 /* TSTestCase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TSTestCase.m; sourceTree = "<group>"; };
 		6F3DF0AB78E3DEA4E8962FC6 /* CNType.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNType.m; sourceTree = "<group>"; };
 		6F3DF0D95451ECD3F8633E0B /* CNTreeMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNTreeMap.h; sourceTree = "<group>"; };
 		6F3DF0DDB9CCAB71C25B7FB4 /* CNLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNLock.h; sourceTree = "<group>"; };
-		6F3DF0E7FC709262B4CE1DC0 /* CNAppendLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNAppendLink.h; sourceTree = "<group>"; };
 		6F3DF0F54D8195E08BC39887 /* CNChain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNChain.m; sourceTree = "<group>"; };
 		6F3DF0F6EF2F635231715E30 /* NSMutableArray+CNChain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableArray+CNChain.h"; sourceTree = "<group>"; };
 		6F3DF10AC716733B22DF960C /* CNTreeMapTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNTreeMapTest.m; sourceTree = "<group>"; };
@@ -189,13 +168,13 @@
 		6F3DF1E4F71DCDD9DBF93489 /* CNSortBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNSortBuilder.h; sourceTree = "<group>"; };
 		6F3DF1F46A5359219202BFA1 /* NSMutableSet+CNChain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableSet+CNChain.h"; sourceTree = "<group>"; };
 		6F3DF1F8E8FEE1FD156C837D /* String.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = String.od; sourceTree = "<group>"; };
-		6F3DF1FE7C3AA01189F9A649 /* CNAppendLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNAppendLink.m; sourceTree = "<group>"; };
 		6F3DF20C5D2ED91D0ADF2085 /* ObjDLib-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "ObjDLib-Prefix.pch"; sourceTree = "<group>"; };
 		6F3DF22B2B2C6124D141EF14 /* CNTreeMap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNTreeMap.m; sourceTree = "<group>"; };
 		6F3DF254923F187D6DFAB858 /* ZipLink.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = ZipLink.od; sourceTree = "<group>"; };
 		6F3DF263082194669F6F28EE /* CNEnumerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNEnumerator.h; sourceTree = "<group>"; };
 		6F3DF27B421E7AB9E2F42967 /* CNCollection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNCollection.m; sourceTree = "<group>"; };
 		6F3DF28D9A8C605BBD29C842 /* CNTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNTypes.h; sourceTree = "<group>"; };
+		6F3DF29E0EDBF12502BC7CCD /* GroupByLink.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = GroupByLink.od; sourceTree = "<group>"; };
 		6F3DF2D1C22A15F86ABA630A /* DispatchQueue.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = DispatchQueue.od; sourceTree = "<group>"; };
 		6F3DF2DAF29DB4CE17E7F80C /* CNTry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNTry.m; sourceTree = "<group>"; };
 		6F3DF2DC92D723107FA1E8E9 /* CNYield.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNYield.m; sourceTree = "<group>"; };
@@ -212,7 +191,6 @@
 		6F3DF3640E0995D779C143E2 /* NSLock+CNChain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSLock+CNChain.m"; sourceTree = "<group>"; };
 		6F3DF37738523E4DFF529DC7 /* CNGroupByLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNGroupByLink.h; sourceTree = "<group>"; };
 		6F3DF3A99EB8F6E07F61C664 /* CNSeed.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNSeed.m; sourceTree = "<group>"; };
-		6F3DF3B0FE9E9310B9E8BB24 /* CNFlatMapLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNFlatMapLink.m; sourceTree = "<group>"; };
 		6F3DF3B68A7945F73618BE88 /* CNZipLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNZipLink.h; sourceTree = "<group>"; };
 		6F3DF3CA7BD1F4E91839E522 /* Yield.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Yield.od; sourceTree = "<group>"; };
 		6F3DF3E00F6AC3DD235BDF3F /* CNFutureEnd.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNFutureEnd.m; sourceTree = "<group>"; };
@@ -223,13 +201,11 @@
 		6F3DF40EF74C4248EBF02700 /* CNChainTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNChainTest.h; sourceTree = "<group>"; };
 		6F3DF40F6CE36988010D8771 /* Type.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Type.od; sourceTree = "<group>"; };
 		6F3DF41787B290A8D07F066D /* NSSet+CNChain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSSet+CNChain.h"; sourceTree = "<group>"; };
-		6F3DF45508588572695EAFB9 /* CNPrependLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNPrependLink.h; sourceTree = "<group>"; };
 		6F3DF464CFEC3D99F2BB1FC2 /* CNCollection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNCollection.h; sourceTree = "<group>"; };
 		6F3DF4726ABD25626900315B /* CNSet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNSet.m; sourceTree = "<group>"; };
 		6F3DF4C3A5550339BF80028E /* Platform.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Platform.od; sourceTree = "<group>"; };
 		6F3DF4C83A0563F30A0D6ED4 /* CNRange.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNRange.m; sourceTree = "<group>"; };
 		6F3DF532282076620B8FF020 /* MutableList.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = MutableList.od; sourceTree = "<group>"; };
-		6F3DF5405CABBCFB223D078D /* CNReverseLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNReverseLink.h; sourceTree = "<group>"; };
 		6F3DF56F5576D9C969F2D802 /* Map.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Map.od; sourceTree = "<group>"; };
 		6F3DF5701195F2F819CC51DC /* Pair.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Pair.od; sourceTree = "<group>"; };
 		6F3DF57A5630CA2B88B029E4 /* CNPair.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNPair.m; sourceTree = "<group>"; };
@@ -244,29 +220,22 @@
 		6F3DF61E5C628303F34DDEA7 /* CNLock.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNLock.m; sourceTree = "<group>"; };
 		6F3DF6462567377FC191AC60 /* CNEnumerator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNEnumerator.m; sourceTree = "<group>"; };
 		6F3DF64EDFED15B13DBE2D6E /* TreeSet.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = TreeSet.od; sourceTree = "<group>"; };
-		6F3DF64F487E320DD427114B /* FlatLink.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = FlatLink.od; sourceTree = "<group>"; };
 		6F3DF6535FDF17939560758B /* CNPointer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNPointer.h; sourceTree = "<group>"; };
 		6F3DF6920E5AED97AA228C0B /* Lock.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Lock.od; sourceTree = "<group>"; };
 		6F3DF696A3E4C085F569A75F /* CNPArray.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNPArray.m; sourceTree = "<group>"; };
 		6F3DF6B03C9AB6933D025F36 /* CNChainTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNChainTest.m; sourceTree = "<group>"; };
 		6F3DF6B9B3EE38B3E97BD6C2 /* NSString+CNChain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+CNChain.m"; sourceTree = "<group>"; };
 		6F3DF6BBB0B72CD86202D573 /* CNThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNThread.h; sourceTree = "<group>"; };
-		6F3DF6D00E7621EB04C77985 /* CNFlatLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNFlatLink.h; sourceTree = "<group>"; };
-		6F3DF6F269E57BA03B21CD07 /* CNDistinctLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNDistinctLink.m; sourceTree = "<group>"; };
 		6F3DF70DD4038CEEFE521E0C /* FutureEnd.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = FutureEnd.od; sourceTree = "<group>"; };
+		6F3DF7BB9E7BD8BAA3833E2E /* MulLink.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = MulLink.od; sourceTree = "<group>"; };
 		6F3DF7CDD24E788464E51784 /* CNAtomic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNAtomic.h; sourceTree = "<group>"; };
 		6F3DF7E3567D72D6EB6D36C4 /* NSMutableDictionary+CNChain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableDictionary+CNChain.m"; sourceTree = "<group>"; };
-		6F3DF8150648A7EDB25C6BE4 /* CNReverseLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNReverseLink.m; sourceTree = "<group>"; };
 		6F3DF81955268DF52E956EF0 /* CNPlat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNPlat.h; sourceTree = "<group>"; };
 		6F3DF83428BB79C7EDC964D8 /* NSArray+CNChain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSArray+CNChain.m"; sourceTree = "<group>"; };
-		6F3DF854BC80112840521CD6 /* CNDistinctLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNDistinctLink.h; sourceTree = "<group>"; };
-		6F3DF8703D4693F267823CAE /* CNShuffleLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNShuffleLink.h; sourceTree = "<group>"; };
 		6F3DF873C396131E8ABB6EB2 /* CNFutureTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNFutureTest.h; sourceTree = "<group>"; };
 		6F3DF8836688DBE44C89054E /* CNQueueTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNQueueTest.h; sourceTree = "<group>"; };
 		6F3DF8A2E280F0F1A41AEA85 /* NSDictionary+CNChain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+CNChain.h"; sourceTree = "<group>"; };
-		6F3DF8A4A4762BEFC8C3CCCF /* CNPrependLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNPrependLink.m; sourceTree = "<group>"; };
 		6F3DF8AADA9B83E88EB26988 /* CNDispatchQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNDispatchQueue.h; sourceTree = "<group>"; };
-		6F3DF8B5712D7440EAC89874 /* CNNeighboursLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNNeighboursLink.h; sourceTree = "<group>"; };
 		6F3DF8DB569678D8AE016211 /* CNZipLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNZipLink.m; sourceTree = "<group>"; };
 		6F3DF8E4E720D74312A58717 /* CNLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNLog.h; sourceTree = "<group>"; };
 		6F3DF8F5033A7AAD85BC6126 /* CNEnum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNEnum.h; sourceTree = "<group>"; };
@@ -279,22 +248,16 @@
 		6F3DF9F9B15DB68238C178B2 /* objd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = objd.h; sourceTree = "<group>"; };
 		6F3DFA02659821B9FE022B37 /* CNFuture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNFuture.h; sourceTree = "<group>"; };
 		6F3DFA1698C3AE2C0C0D45B1 /* Future.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Future.od; sourceTree = "<group>"; };
-		6F3DFA1978463D2A78748D85 /* CNFlatLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNFlatLink.m; sourceTree = "<group>"; };
 		6F3DFA1FE290AF9334F102A1 /* CNCombinationsLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNCombinationsLink.h; sourceTree = "<group>"; };
 		6F3DFA204F95F3F86FCB54CF /* NSArray+CNChain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSArray+CNChain.h"; sourceTree = "<group>"; };
 		6F3DFA326F9189CF6D21F863 /* CNObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNObject.h; sourceTree = "<group>"; };
-		6F3DFA53B828F87A81872BBF /* CNTopLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNTopLink.m; sourceTree = "<group>"; };
-		6F3DFA63AED78C6942FA31E0 /* CNNeighboursLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNNeighboursLink.m; sourceTree = "<group>"; };
 		6F3DFA74B9C39BAC30D18FC4 /* CNDispatchQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNDispatchQueue.m; sourceTree = "<group>"; };
 		6F3DFA763BE3593AE407B2B3 /* TreeMap.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = TreeMap.od; sourceTree = "<group>"; };
-		6F3DFA7AA95B41CEE49ADDAB /* CNTopLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNTopLink.h; sourceTree = "<group>"; };
 		6F3DFA8762D6C6F882EFAC02 /* TestCase.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = TestCase.od; sourceTree = "<group>"; };
 		6F3DFA95B762522F5CD8C07A /* objdcore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = objdcore.h; sourceTree = "<group>"; };
 		6F3DFA9F781C1CCA992354D4 /* CNCombinationsLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNCombinationsLink.m; sourceTree = "<group>"; };
 		6F3DFAB61311B0D08C87EF3B /* CNMap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNMap.m; sourceTree = "<group>"; };
 		6F3DFAB6AC7549D2E0D34C65 /* QueueTest.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = QueueTest.od; sourceTree = "<group>"; };
-		6F3DFAC7045D33869A5AB646 /* CNShuffleLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNShuffleLink.m; sourceTree = "<group>"; };
-		6F3DFAD15B28F51A72B8D458 /* CNUncombinationsLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNUncombinationsLink.h; sourceTree = "<group>"; };
 		6F3DFAE2B04AE7BD32EF4610 /* CNRange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNRange.h; sourceTree = "<group>"; };
 		6F3DFAF5F9F753F6A673D673 /* Atomic.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Atomic.od; sourceTree = "<group>"; };
 		6F3DFB07FF86BF976602F5C3 /* Try.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Try.od; sourceTree = "<group>"; };
@@ -302,7 +265,7 @@
 		6F3DFB293641BD8EE978DAE5 /* CNLazy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNLazy.h; sourceTree = "<group>"; };
 		6F3DFB309E8E89278511D174 /* CNFilterLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNFilterLink.m; sourceTree = "<group>"; };
 		6F3DFB3D21ED02EF178EBC34 /* CNPlatform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNPlatform.h; sourceTree = "<group>"; };
-		6F3DFB53ED08C78805F6AB90 /* CNFlatMapLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNFlatMapLink.h; sourceTree = "<group>"; };
+		6F3DFB48DD031BF7F089E6D3 /* SourceLink.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = SourceLink.od; sourceTree = "<group>"; };
 		6F3DFB5CEF10D8BC8E1C8C34 /* Log.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Log.od; sourceTree = "<group>"; };
 		6F3DFB89E4E538039BC4B837 /* Action.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Action.od; sourceTree = "<group>"; };
 		6F3DFB8DBA912E53708C705A /* CNFutureEnd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNFutureEnd.h; sourceTree = "<group>"; };
@@ -324,11 +287,13 @@
 		6F3DFD489E837269A3427E6E /* CNPair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNPair.h; sourceTree = "<group>"; };
 		6F3DFD8CFCDF51ADE2F2AAC3 /* CNEnum.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNEnum.m; sourceTree = "<group>"; };
 		6F3DFD99A6CFC9F087E7C883 /* CNSortBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNSortBuilder.m; sourceTree = "<group>"; };
+		6F3DFDA85F4F092AFE1833D5 /* SortLink.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = SortLink.od; sourceTree = "<group>"; };
 		6F3DFDB554B758A0386675F3 /* Option.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Option.od; sourceTree = "<group>"; };
 		6F3DFDD6DC07C14D1F087E7D /* CNMulLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNMulLink.m; sourceTree = "<group>"; };
 		6F3DFDDAE5DB84D43CFAEBDA /* CNYield.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNYield.h; sourceTree = "<group>"; };
 		6F3DFE083687FE4BFFE47D04 /* CNPlatform.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNPlatform.m; sourceTree = "<group>"; };
 		6F3DFE08D0FC51FF57A85A93 /* CNSeed.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNSeed.h; sourceTree = "<group>"; };
+		6F3DFE16ECC4A9DC159EBF1B /* CombinationsLink.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = CombinationsLink.od; sourceTree = "<group>"; };
 		6F3DFE39C4D7340A0878FAC3 /* CNPlatform.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNPlatform.m; sourceTree = "<group>"; };
 		6F3DFE5BFDAFD72F70B6E307 /* Memory.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Memory.od; sourceTree = "<group>"; };
 		6F3DFE603C9DBE10F9FB446B /* CNTreeMapTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNTreeMapTest.h; sourceTree = "<group>"; };
@@ -346,7 +311,6 @@
 		6F3DFF389EF741184604D9FE /* Queue.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Queue.od; sourceTree = "<group>"; };
 		6F3DFF70D813131BD4E05677 /* CNSortLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNSortLink.m; sourceTree = "<group>"; };
 		6F3DFFA2B4818A3768BA5F55 /* CNLazy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNLazy.m; sourceTree = "<group>"; };
-		6F3DFFBC6C7D2C479E9D9CF3 /* ShuffleLink.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = ShuffleLink.od; sourceTree = "<group>"; };
 		6F3DFFF54F486BCC41CC94C0 /* CNList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNList.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -605,46 +569,29 @@
 				6F3DFB98C81B1E07AE8AF4F4 /* CNMapLink.m */,
 				6F3DF1D848DA59BBAC392605 /* CNMulLink.h */,
 				6F3DFDD6DC07C14D1F087E7D /* CNMulLink.m */,
-				6F3DFA7AA95B41CEE49ADDAB /* CNTopLink.h */,
-				6F3DFA53B828F87A81872BBF /* CNTopLink.m */,
 				6F3DF3B68A7945F73618BE88 /* CNZipLink.h */,
 				6F3DF8DB569678D8AE016211 /* CNZipLink.m */,
 				6F3DF07EBDB06FA839AA171D /* CNSortLink.h */,
 				6F3DFF70D813131BD4E05677 /* CNSortLink.m */,
-				6F3DF0E7FC709262B4CE1DC0 /* CNAppendLink.h */,
-				6F3DF1FE7C3AA01189F9A649 /* CNAppendLink.m */,
 				6F3DF610BC2BB08F3A74CF0C /* CNFilterLink.h */,
 				6F3DFB309E8E89278511D174 /* CNFilterLink.m */,
 				6F3DF33B58A2BF14D4E7FF44 /* CNSourceLink.h */,
 				6F3DF03A4E6D52F4B9DD80B8 /* CNSourceLink.m */,
-				6F3DFB53ED08C78805F6AB90 /* CNFlatMapLink.h */,
-				6F3DF3B0FE9E9310B9E8BB24 /* CNFlatMapLink.m */,
 				6F3DF37738523E4DFF529DC7 /* CNGroupByLink.h */,
 				6F3DF2E44DED05650A47A14F /* CNGroupByLink.m */,
-				6F3DF45508588572695EAFB9 /* CNPrependLink.h */,
-				6F3DF8A4A4762BEFC8C3CCCF /* CNPrependLink.m */,
-				6F3DF5405CABBCFB223D078D /* CNReverseLink.h */,
-				6F3DF8150648A7EDB25C6BE4 /* CNReverseLink.m */,
-				6F3DF854BC80112840521CD6 /* CNDistinctLink.h */,
-				6F3DF6F269E57BA03B21CD07 /* CNDistinctLink.m */,
-				6F3DF8B5712D7440EAC89874 /* CNNeighboursLink.h */,
-				6F3DFA63AED78C6942FA31E0 /* CNNeighboursLink.m */,
 				6F3DFA1FE290AF9334F102A1 /* CNCombinationsLink.h */,
 				6F3DFA9F781C1CCA992354D4 /* CNCombinationsLink.m */,
-				6F3DFAD15B28F51A72B8D458 /* CNUncombinationsLink.h */,
-				6F3DF066FF60E56AA1FA4463 /* CNUncombinationsLink.m */,
-				6F3DF6D00E7621EB04C77985 /* CNFlatLink.h */,
-				6F3DFA1978463D2A78748D85 /* CNFlatLink.m */,
 				6F3DFB8DBA912E53708C705A /* CNFutureEnd.h */,
 				6F3DF3E00F6AC3DD235BDF3F /* CNFutureEnd.m */,
-				6F3DF8703D4693F267823CAE /* CNShuffleLink.h */,
-				6F3DFAC7045D33869A5AB646 /* CNShuffleLink.m */,
 				6F3DF022730816E2EF4CC0DD /* FilterLink.od */,
-				6F3DF64F487E320DD427114B /* FlatLink.od */,
 				6F3DF70DD4038CEEFE521E0C /* FutureEnd.od */,
 				6F3DFC78258C7EAC79449222 /* MapLink.od */,
-				6F3DFFBC6C7D2C479E9D9CF3 /* ShuffleLink.od */,
 				6F3DF254923F187D6DFAB858 /* ZipLink.od */,
+				6F3DF7BB9E7BD8BAA3833E2E /* MulLink.od */,
+				6F3DFDA85F4F092AFE1833D5 /* SortLink.od */,
+				6F3DF29E0EDBF12502BC7CCD /* GroupByLink.od */,
+				6F3DFB48DD031BF7F089E6D3 /* SourceLink.od */,
+				6F3DFE16ECC4A9DC159EBF1B /* CombinationsLink.od */,
 			);
 			path = Links;
 			sourceTree = "<group>";
@@ -804,6 +751,7 @@
 				6F3DF0185756AC00402B304E /* ChainTest.od in Resources */,
 				6F3DFB5C057AE98B11878137 /* FutureTest.od in Resources */,
 				6F3DF48CEA483A5D35C6FE26 /* Lazy.od in Resources */,
+				6F3DF25A2ECCA9C4D060F750 /* SourceLink.od in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -894,23 +842,13 @@
 				6F3DF7E35DDE8F44C48B3795 /* CNMutableList.m in Sources */,
 				6F3DF573E90C353B4987A787 /* CNMapLink.m in Sources */,
 				6F3DFEF8D122B967B4D94B84 /* CNMulLink.m in Sources */,
-				6F3DF274163671948A4F79E6 /* CNTopLink.m in Sources */,
 				6F3DFBBBD123E80F5957EDB9 /* CNZipLink.m in Sources */,
 				6F3DFE08B84C6E5B0A8FE475 /* CNSortLink.m in Sources */,
-				6F3DF0AD2424169D67DC50FE /* CNAppendLink.m in Sources */,
 				6F3DFE7729DA2CD1134F26F8 /* CNFilterLink.m in Sources */,
 				6F3DFB8F7985F6CEF4377C1F /* CNSourceLink.m in Sources */,
-				6F3DF317F404F2380EA9B096 /* CNFlatMapLink.m in Sources */,
 				6F3DF88FE8EA8F0CFC1C0983 /* CNGroupByLink.m in Sources */,
-				6F3DFAF22B09AD4AAC2AD444 /* CNPrependLink.m in Sources */,
-				6F3DFDB686B6AF1BF0F0DE0A /* CNReverseLink.m in Sources */,
-				6F3DF6019C45EA847A0B64E9 /* CNDistinctLink.m in Sources */,
-				6F3DF177BF0D4A4A2B227326 /* CNNeighboursLink.m in Sources */,
 				6F3DF8C716C25418FBF2BDDE /* CNCombinationsLink.m in Sources */,
-				6F3DF83A0D3EC7945DEA1ED5 /* CNUncombinationsLink.m in Sources */,
-				6F3DF7CFF8C1C523A253B89E /* CNFlatLink.m in Sources */,
 				6F3DFDF2115629FA51333B77 /* CNFutureEnd.m in Sources */,
-				6F3DF40685FFF8080C620EFC /* CNShuffleLink.m in Sources */,
 				6F3DF7173C8A625D8CFF5F50 /* CNMap.m in Sources */,
 				6F3DFCD0E4A861374F949E63 /* CNTreeMap.m in Sources */,
 				6F3DF5A38A04637A7C549C6B /* CNLazy.m in Sources */,
@@ -965,23 +903,13 @@
 				6F3DFA71047CD1AE8D721E6C /* CNMutableList.m in Sources */,
 				6F3DF3CB6D68B401693D2189 /* CNMapLink.m in Sources */,
 				6F3DFED3776C1379866DEAF5 /* CNMulLink.m in Sources */,
-				6F3DFB1C02AF0142953CAD86 /* CNTopLink.m in Sources */,
 				6F3DF907836C9511AB1B477C /* CNZipLink.m in Sources */,
 				6F3DF4263E76D5283D31DFA7 /* CNSortLink.m in Sources */,
-				6F3DF3FF34179F4A5BDD8C39 /* CNAppendLink.m in Sources */,
 				6F3DFDB32A576BCFA0F600F3 /* CNFilterLink.m in Sources */,
 				6F3DF6E0EC1AF13FB84CEB9A /* CNSourceLink.m in Sources */,
-				6F3DF222CFE30ADCA7227AB5 /* CNFlatMapLink.m in Sources */,
 				6F3DF98488A816838B1DD62C /* CNGroupByLink.m in Sources */,
-				6F3DF0BCF2825D3B8838A8E6 /* CNPrependLink.m in Sources */,
-				6F3DF4DCEF9B50E1E692576F /* CNReverseLink.m in Sources */,
-				6F3DFB6B05DBCE9B39966BB2 /* CNDistinctLink.m in Sources */,
-				6F3DF9500C14718EE9F7CC27 /* CNNeighboursLink.m in Sources */,
 				6F3DF4BEC03E2EB00362CA1B /* CNCombinationsLink.m in Sources */,
-				6F3DFFF53634E3DE36E40B11 /* CNUncombinationsLink.m in Sources */,
-				6F3DFF8C292B94650C64A08E /* CNFlatLink.m in Sources */,
 				6F3DFD5535AE9B9873D7963B /* CNFutureEnd.m in Sources */,
-				6F3DFE3692EAEB242AFAFD4E /* CNShuffleLink.m in Sources */,
 				6F3DFD02681A43ACD80AFB9C /* CNMap.m in Sources */,
 				6F3DF7872E095FDB0A4F80C6 /* CNTreeMap.m in Sources */,
 				6F3DFB3301C713EE73FE7F15 /* CNLazy.m in Sources */,

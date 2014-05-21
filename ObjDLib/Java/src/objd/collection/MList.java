@@ -158,15 +158,15 @@ public class MList<T> extends MSeq_impl<T> {
         }
     }
     @Override
-    public boolean goOn(final F<T, Boolean> on) {
+    public Go goOn(final F<T, Go> on) {
         MListItem<T> i = this.headItem;
         while(i != null) {
             if(!(on.apply(i.data))) {
-                return false;
+                return Go.Break;
             }
             i = i.next;
         }
-        return true;
+        return Go.Continue;
     }
     @Override
     public void mutableFilterBy(final F<T, Boolean> by) {

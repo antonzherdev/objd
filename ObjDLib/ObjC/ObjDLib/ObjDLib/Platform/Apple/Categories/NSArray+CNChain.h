@@ -11,7 +11,6 @@
 - (id) head;
 - (id) randomItem;
 - (void) forEach:(cnP)p;
-- (BOOL) goOn:(BOOL(^)(id))on;
 - (id)findWhere:(cnPredicate)predicate;
 - (NSArray *)arrayByRemovingObject:(id)object;
 - (id <CNSet>)toSet;

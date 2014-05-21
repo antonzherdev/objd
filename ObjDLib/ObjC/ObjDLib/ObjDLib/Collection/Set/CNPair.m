@@ -88,7 +88,6 @@ static CNClassType* _CNPair_type;
 
 @end
 
-
 @implementation CNPairIterator
 static CNClassType* _CNPairIterator_type;
 @synthesize pair = _pair;
@@ -142,5 +141,4 @@ static CNClassType* _CNPairIterator_type;
 }
 
 @end
-
 

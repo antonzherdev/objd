@@ -19,10 +19,24 @@
 - (void)testOr;
 - (void)testFuture;
 - (void)testVoidFuture;
+- (void)testMap;
+- (void)testMapOpt;
+- (void)testFlatMap;
 - (void)testFlat;
 - (void)testZip;
 - (void)testZip3;
 - (void)testZipFor;
+- (void)testAppend;
+- (void)testPreppend;
+- (void)testMul;
+- (void)testTop;
+- (void)testSort;
+- (void)testReverse;
+- (void)testGroupBy;
+- (void)testDistinct;
+- (void)testCombinations;
+- (void)testUncombinations;
+- (void)testNeighbours;
 + (CNClassType*)type;
 @end
 

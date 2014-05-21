@@ -163,13 +163,13 @@ static CNClassType* _CNMList_type;
     }
 }
 
-- (BOOL)goOn:(BOOL(^)(id))on {
+- (CNGoR)goOn:(CNGoR(^)(id))on {
     CNMListItem* i = _headItem;
     while(i != nil) {
-        if(!(on(((CNMListItem*)(i)).data))) return NO;
+        if(!(on(((CNMListItem*)(i)).data))) return CNGo_Break;
         i = ((CNMListItem*)(i)).next;
     }
-    return YES;
+    return CNGo_Continue;
 }
 
 - (void)mutableFilterBy:(BOOL(^)(id))by {
@@ -203,7 +203,6 @@ static CNClassType* _CNMList_type;
 }
 
 @end
-
 
 @implementation CNMListItem
 static CNClassType* _CNMListItem_type;
@@ -247,7 +246,6 @@ static CNClassType* _CNMListItem_type;
 }
 
 @end
-
 
 @implementation CNMListIterator
 static CNClassType* _CNMListIterator_type;
@@ -310,7 +308,6 @@ static CNClassType* _CNMListIterator_type;
 
 @end
 
-
 @implementation CNMListImmutableIterator
 static CNClassType* _CNMListImmutableIterator_type;
 @synthesize item = _item;
@@ -359,5 +356,4 @@ static CNClassType* _CNMListImmutableIterator_type;
 }
 
 @end
-
 

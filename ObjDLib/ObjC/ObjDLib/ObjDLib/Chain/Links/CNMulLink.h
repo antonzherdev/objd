@@ -1,10 +1,21 @@
-#import <Foundation/Foundation.h>
-#import "CNTypes.h"
+#import "objdcore.h"
+#import "CNYield.h"
+@protocol CNTraversable;
+@class CNChain;
+@protocol CNIterable;
+@class CNClassType;
 
+@class CNMulLink;
 
-@interface CNMulLink : NSObject <CNChainLink>
-- (id)initWithCollection:(id)collection;
-
-+ (id)linkWithCollection:(id)collection;
-
+@interface CNMulLink : CNChainLink_impl {
+@protected
+    id<CNTraversable> __collection;
+}
++ (instancetype)mulLinkWithCollection:(id<CNTraversable>)collection;
+- (instancetype)initWithCollection:(id<CNTraversable>)collection;
+- (CNClassType*)type;
+- (CNYield*)buildYield:(CNYield*)yield;
++ (CNClassType*)type;
 @end
+
+

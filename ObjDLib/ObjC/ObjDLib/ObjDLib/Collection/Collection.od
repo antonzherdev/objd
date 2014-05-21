@@ -26,12 +26,16 @@ trait Builder<T, C extends Traversable<T>> {
     }
 }
 
+enum Go {
+    Continue()
+    Break()
+}
 
 trait Traversable<T> {
     def for(each : T -> void) {
         go{item ->
             each(item)
-            true
+            Go.Continue
         }
     }
 
@@ -40,11 +44,11 @@ trait Traversable<T> {
             DispatchQueue.default.async{
                 each(item)
             }
-            true
+            Go.Continue
         }
     }
 
-    def go(on : T -> bool) : bool
+    def go(on : T -> Go) : Go
 
     def chain : Chain<T> = {
         Chain.chainWith<T>(self)
@@ -55,8 +59,8 @@ trait Traversable<T> {
         go{x ->
             if(where(x)) {
                 ret = x
-                false
-            } else true
+                Go.Break
+            } else Go.Continue
         }
         ret
     }
@@ -66,8 +70,8 @@ trait Traversable<T> {
         go{x ->
             if(where(x)) {
                 ret = true
-                false
-            } else true
+                Go.Break
+            } else Go.Continue
         }
         ret
     }
@@ -77,8 +81,8 @@ trait Traversable<T> {
         go{x ->
             if(!confirm(x)) {
                 ret = false
-                false
-            } else true
+                Go.Break
+            } else Go.Continue
         }
         ret
     }
@@ -87,7 +91,7 @@ trait Traversable<T> {
         var ret : T?
         go{on ->
             ret = on
-            false
+            Go.Break
         }
         ret
     }
@@ -149,13 +153,13 @@ trait Iterable<T> extends Traversable<T> {
         }
     }
 
-    override inline def go(on : T -> bool) : bool = {
-        var ret = true
+    override inline def go(on : T -> Go) : Go = {
+        var ret = Go.Continue
         val i = iterator
         while(i.hasNext) {
             val b = on(i.next)
             if(!b) {
-                ret = false
+                ret = Go.Break
                 break
             }
         }

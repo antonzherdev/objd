@@ -74,7 +74,6 @@ static CNClassType* _CNImList_type;
 
 @end
 
-
 @implementation CNFilledList
 static CNClassType* _CNFilledList_type;
 @synthesize _head = __head;
@@ -186,7 +185,6 @@ static CNClassType* _CNFilledList_type;
 
 @end
 
-
 @implementation CNEmptyList
 static CNEmptyList* _CNEmptyList_instance;
 static CNClassType* _CNEmptyList_type;
@@ -274,7 +272,6 @@ static CNClassType* _CNEmptyList_type;
 
 @end
 
-
 @implementation CNListIterator
 static CNClassType* _CNListIterator_type;
 @synthesize list = _list;
@@ -325,7 +322,6 @@ static CNClassType* _CNListIterator_type;
 
 @end
 
-
 @implementation CNImListBuilder
 static CNClassType* _CNImListBuilder_type;
 
@@ -372,5 +368,4 @@ static CNClassType* _CNImListBuilder_type;
 }
 
 @end
-
 

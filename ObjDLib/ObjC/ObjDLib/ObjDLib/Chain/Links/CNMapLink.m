@@ -23,7 +23,7 @@ static CNClassType* _CNMapLink_type;
 }
 
 - (CNYield*)buildYield:(CNYield*)yield {
-    return [CNYield decorateBase:yield yield:^int(id item) {
+    return [CNYield decorateBase:yield yield:^CNGoR(id item) {
         return [yield yieldItem:_f(item)];
     }];
 }
@@ -48,7 +48,6 @@ static CNClassType* _CNMapLink_type;
 
 @end
 
-
 @implementation CNMapOptLink
 static CNClassType* _CNMapOptLink_type;
 @synthesize f = _f;
@@ -70,15 +69,15 @@ static CNClassType* _CNMapOptLink_type;
 }
 
 - (CNYield*)buildYield:(CNYield*)yield {
-    return [CNYield decorateBase:yield yield:^int(id item) {
-        id __tmp_0r;
+    return [CNYield decorateBase:yield yield:^CNGoR(id item) {
+        CNGoR __tmp_0r;
         {
             id _ = _f(item);
-            if(_ != nil) __tmp_0r = numi4([yield yieldItem:_]);
-            else __tmp_0r = nil;
+            if(_ != nil) __tmp_0r = [yield yieldItem:_];
+            else __tmp_0r = CNGo_Nil;
         }
-        if(__tmp_0r != nil) return unumi4(__tmp_0r);
-        else return 0;
+        if(__tmp_0r != CNGo_Nil) return ((CNGoR)(__tmp_0r));
+        else return CNGo_Continue;
     }];
 }
 
@@ -102,4 +101,109 @@ static CNClassType* _CNMapOptLink_type;
 
 @end
 
+@implementation CNFlatLink
+static CNClassType* _CNFlatLink_type;
+@synthesize factor = _factor;
+
++ (instancetype)flatLinkWithFactor:(CGFloat)factor {
+    return [[CNFlatLink alloc] initWithFactor:factor];
+}
+
+- (instancetype)initWithFactor:(CGFloat)factor {
+    self = [super init];
+    if(self) _factor = factor;
+    
+    return self;
+}
+
++ (void)initialize {
+    [super initialize];
+    if(self == [CNFlatLink class]) _CNFlatLink_type = [CNClassType classTypeWithCls:[CNFlatLink class]];
+}
+
+- (CNYield*)buildYield:(CNYield*)yield {
+    return [CNYield decorateBase:yield begin:^CNGoR(NSUInteger size) {
+        return [yield beginYieldWithSize:((NSUInteger)(size * _factor))];
+    } yield:^CNGoR(id<CNTraversable> col) {
+        return [((id<CNTraversable>)(col)) goOn:^CNGoR(id item) {
+            return [yield yieldItem:item];
+        }];
+    }];
+}
+
+- (CNClassType*)type {
+    return [CNFlatLink type];
+}
+
++ (CNClassType*)type {
+    return _CNFlatLink_type;
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    return self;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendFormat:@"factor=%f", self.factor];
+    [description appendString:@">"];
+    return description;
+}
+
+@end
+
+@implementation CNFlatMapLink
+static CNClassType* _CNFlatMapLink_type;
+@synthesize f = _f;
+@synthesize factor = _factor;
+
++ (instancetype)flatMapLinkWithF:(id<CNTraversable>(^)(id))f factor:(CGFloat)factor {
+    return [[CNFlatMapLink alloc] initWithF:f factor:factor];
+}
+
+- (instancetype)initWithF:(id<CNTraversable>(^)(id))f factor:(CGFloat)factor {
+    self = [super init];
+    if(self) {
+        _f = [f copy];
+        _factor = factor;
+    }
+    
+    return self;
+}
+
++ (void)initialize {
+    [super initialize];
+    if(self == [CNFlatMapLink class]) _CNFlatMapLink_type = [CNClassType classTypeWithCls:[CNFlatMapLink class]];
+}
+
+- (CNYield*)buildYield:(CNYield*)yield {
+    return [CNYield decorateBase:yield begin:^CNGoR(NSUInteger size) {
+        return [yield beginYieldWithSize:((NSUInteger)(size * _factor))];
+    } yield:^CNGoR(id item) {
+        return [_f(item) goOn:^CNGoR(id i) {
+            return [yield yieldItem:i];
+        }];
+    }];
+}
+
+- (CNClassType*)type {
+    return [CNFlatMapLink type];
+}
+
++ (CNClassType*)type {
+    return _CNFlatMapLink_type;
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    return self;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendFormat:@"factor=%f", self.factor];
+    [description appendString:@">"];
+    return description;
+}
+
+@end
 

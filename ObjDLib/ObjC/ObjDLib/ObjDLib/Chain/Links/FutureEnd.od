@@ -16,7 +16,7 @@ class FutureEnd<T> {
         Yield.make<Future<T>>(
             begin = size -> {
                 _array = MArray<T>(capacity = size)
-                0
+                Go.Continue
             },
             yield = fut -> {
                 if(!_stopped) {
@@ -42,7 +42,7 @@ class FutureEnd<T> {
                         }
                     }
                 }
-                if(_stopped) 1 else 0
+                if(_stopped) Go.Break else Go.Continue
             },
             end = res -> {
                 _ended = true
@@ -68,7 +68,7 @@ class FutureVoidEnd<T> {
 
     def yield : Yield<Future<T>> = Yield.make<Future<T>>(
         begin = size -> {
-            0
+            Go.Continue
         },
         yield = fut -> {
             if(!_stopped) {
@@ -89,7 +89,7 @@ class FutureVoidEnd<T> {
                 }
                 }
             }
-            if(_stopped) 1 else 0
+            if(_stopped) Go.Break else Go.Continue
         },
         end = res -> {
             var ret = res

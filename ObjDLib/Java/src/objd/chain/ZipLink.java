@@ -3,6 +3,7 @@ package objd.chain;
 import objd.lang.*;
 import objd.collection.Iterable;
 import objd.collection.Iterator;
+import objd.collection.Go;
 
 public class ZipLink<T, A, R> extends ChainLink_impl<T, R> {
     public final Iterable<A> a;
@@ -10,11 +11,11 @@ public class ZipLink<T, A, R> extends ChainLink_impl<T, R> {
     @Override
     public Yield<T> buildYield(final Yield<R> yield) {
         final Iterator<A> ai = this.a.iterator();
-        return Yield.<T, R>decorateBaseYield(yield, new F<T, Integer>() {
+        return Yield.<T, R>decorateBaseYield(yield, new F<T, Go>() {
             @Override
-            public Integer apply(final T item) {
+            public Go apply(final T item) {
                 if(!(ai.hasNext())) {
-                    return ((int)(1));
+                    return Go.Break;
                 } else {
                     return yield.yieldItem(ZipLink.this.f.apply(item, ai.next()));
                 }

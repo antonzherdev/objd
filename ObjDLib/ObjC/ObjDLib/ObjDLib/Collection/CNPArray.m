@@ -87,7 +87,6 @@ static CNClassType* _CNPArray_type;
 
 @end
 
-
 @implementation CNPArrayIterator
 static CNClassType* _CNPArrayIterator_type;
 @synthesize array = _array;
@@ -141,5 +140,4 @@ static CNClassType* _CNPArrayIterator_type;
 }
 
 @end
-
 

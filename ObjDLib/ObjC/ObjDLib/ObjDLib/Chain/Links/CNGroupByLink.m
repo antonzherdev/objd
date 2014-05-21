@@ -1,70 +1,192 @@
-#import "CNTypes.h"
+#import "objd.h"
 #import "CNGroupByLink.h"
-#import "CNTuple.h"
-#import "NSMutableDictionary+CNChain.h"
 
+#import "CNPlat.h"
+#import "CNType.h"
+@implementation CNImGroupByLink
+static CNClassType* _CNImGroupByLink_type;
+@synthesize by = _by;
+@synthesize start = _start;
+@synthesize fold = _fold;
+@synthesize factor = _factor;
 
-@implementation CNGroupByLink {
-    cnF _by;
-    cnF0 _start;
-    cnF2 _fold;
-    double _factor;
-    BOOL _mutableMode;
-    cnF _mapAfter;
++ (instancetype)imGroupByLinkWithBy:(id(^)(id))by start:(id(^)())start fold:(id(^)(id, id))fold factor:(CGFloat)factor {
+    return [[CNImGroupByLink alloc] initWithBy:by start:start fold:fold factor:factor];
 }
 
-- (id)initWithBy:(cnF)by fold:(cnF2)fold withStart:(cnF0)start factor:(double)factor mutableMode:(BOOL)mutableMode mapAfter:(cnF)mapAfter {
+- (instancetype)initWithBy:(id(^)(id))by start:(id(^)())start fold:(id(^)(id, id))fold factor:(CGFloat)factor {
     self = [super init];
-    if (self) {
-        _by = by;
-        _fold = fold;
-        _start = start;
+    if(self) {
+        _by = [by copy];
+        _start = [start copy];
+        _fold = [fold copy];
         _factor = factor;
-        _mutableMode = mutableMode;
-        _mapAfter = mapAfter;
     }
-
+    
     return self;
 }
 
-+ (id)linkWithBy:(cnF)by fold:(cnF2)fold withStart:(cnF0)start factor:(double)factor mutableMode:(BOOL)mutableMode mapAfter:(cnF)mapAfter {
-    return [[self alloc] initWithBy:by fold:fold withStart:start factor:factor mutableMode:mutableMode mapAfter:mapAfter];
++ (void)initialize {
+    [super initialize];
+    if(self == [CNImGroupByLink class]) _CNImGroupByLink_type = [CNClassType classTypeWithCls:[CNImGroupByLink class]];
 }
 
+- (CNYield*)buildYield:(CNYield*)yield {
+    CNMHashMap* m = [CNMHashMap hashMap];
+    return [CNYield decorateBase:yield begin:^CNGoR(NSUInteger _) {
+        return CNGo_Continue;
+    } yield:^CNGoR(id item) {
+        id k = _by(item);
+        id v = [m applyKey:k orUpdateWith:_start];
+        [m setKey:k value:_fold(v, item)];
+        return CNGo_Continue;
+    } end:^CNGoR(CNGoR result) {
+        if(result == CNGo_Break) return [yield endYieldWithResult:result];
+        else return [yield yieldAllItems:m];
+    }];
+}
 
-- (CNYield *)buildYield:(CNYield *)yield {
-    __block NSMutableDictionary * dictionary = nil;
-    return [CNYield decorateBase:yield begin:^int(NSUInteger size) {
-        NSUInteger newSize = (NSUInteger) (size * _factor);
-        dictionary = [NSMutableDictionary dictionaryWithCapacity:newSize];
-        return [yield beginYieldWithSize:newSize];
-    }                      yield:^int(id item) {
-        id key = _by(item);
-        id r = [dictionary objectForKey:key];
-        if (r == nil) {
-            r = _start();
-            if (_mutableMode) [dictionary setObject:r forKey:key];
-        }
-        r = _fold(r, item);
-        if (!_mutableMode) [dictionary setObject:r forKey:key];
-        return 0;
-    }                        end:^int(int result) {
-        if (result != 1) {
-            if (_mapAfter != nil) {
-                __block int r = 0;
-                [dictionary enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
-                    if ([yield yieldItem:tuple(key, _mapAfter(obj))] == 1) {
-                        r = 1;
-                        *stop = YES;
-                    }
-                }];
-                result = r;
-            } else {
-                result = [yield yieldAllItems:dictionary];
-            }
-        }
-        return [yield endYieldWithResult:result];
-    }                        all:nil];
+- (CNClassType*)type {
+    return [CNImGroupByLink type];
+}
+
++ (CNClassType*)type {
+    return _CNImGroupByLink_type;
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    return self;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendFormat:@"factor=%f", self.factor];
+    [description appendString:@">"];
+    return description;
 }
 
 @end
+
+@implementation CNMGroupByLink
+static CNClassType* _CNMGroupByLink_type;
+@synthesize by = _by;
+@synthesize start = _start;
+@synthesize append = _append;
+@synthesize finish = _finish;
+@synthesize factor = _factor;
+
++ (instancetype)groupByLinkWithBy:(id(^)(id))by start:(id(^)())start append:(void(^)(id, id))append finish:(id(^)(id))finish factor:(CGFloat)factor {
+    return [[CNMGroupByLink alloc] initWithBy:by start:start append:append finish:finish factor:factor];
+}
+
+- (instancetype)initWithBy:(id(^)(id))by start:(id(^)())start append:(void(^)(id, id))append finish:(id(^)(id))finish factor:(CGFloat)factor {
+    self = [super init];
+    if(self) {
+        _by = [by copy];
+        _start = [start copy];
+        _append = [append copy];
+        _finish = [finish copy];
+        _factor = factor;
+    }
+    
+    return self;
+}
+
++ (void)initialize {
+    [super initialize];
+    if(self == [CNMGroupByLink class]) _CNMGroupByLink_type = [CNClassType classTypeWithCls:[CNMGroupByLink class]];
+}
+
+- (CNYield*)buildYield:(CNYield*)yield {
+    CNMHashMap* m = [CNMHashMap hashMap];
+    return [CNYield decorateBase:yield begin:^CNGoR(NSUInteger size) {
+        return [yield beginYieldWithSize:((NSUInteger)(size * _factor))];
+    } yield:^CNGoR(id item) {
+        id k = _by(item);
+        id v = [m applyKey:k orUpdateWith:_start];
+        _append(v, item);
+        return CNGo_Continue;
+    } end:^CNGoR(CNGoR result) {
+        if(result == CNGo_Break) return [yield endYieldWithResult:result];
+        else return [yield endYieldWithResult:[m goOn:^CNGoR(CNTuple* t) {
+            return [yield yieldItem:tuple(t.a, _finish(t.b))];
+        }]];
+    }];
+}
+
+- (CNClassType*)type {
+    return [CNMGroupByLink type];
+}
+
++ (CNClassType*)type {
+    return _CNMGroupByLink_type;
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    return self;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendFormat:@"factor=%f", self.factor];
+    [description appendString:@">"];
+    return description;
+}
+
+@end
+
+@implementation CNDistinctLink
+static CNClassType* _CNDistinctLink_type;
+@synthesize factor = _factor;
+
++ (instancetype)distinctLinkWithFactor:(CGFloat)factor {
+    return [[CNDistinctLink alloc] initWithFactor:factor];
+}
+
+- (instancetype)initWithFactor:(CGFloat)factor {
+    self = [super init];
+    if(self) _factor = factor;
+    
+    return self;
+}
+
++ (void)initialize {
+    [super initialize];
+    if(self == [CNDistinctLink class]) _CNDistinctLink_type = [CNClassType classTypeWithCls:[CNDistinctLink class]];
+}
+
+- (CNYield*)buildYield:(CNYield*)yield {
+    CNMHashSet* set = [CNMHashSet hashSet];
+    return [CNYield decorateBase:yield begin:^CNGoR(NSUInteger size) {
+        return [yield beginYieldWithSize:((NSUInteger)(size * _factor))];
+    } yield:^CNGoR(id item) {
+        if([set containsItem:item]) {
+            return CNGo_Continue;
+        } else {
+            [set appendItem:item];
+            return [yield yieldItem:item];
+        }
+    }];
+}
+
+- (CNClassType*)type {
+    return [CNDistinctLink type];
+}
+
++ (CNClassType*)type {
+    return _CNDistinctLink_type;
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    return self;
+}
+
+- (NSString*)description {
+    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
+    [description appendFormat:@"factor=%f", self.factor];
+    [description appendString:@">"];
+    return description;
+}
+
+@end
+

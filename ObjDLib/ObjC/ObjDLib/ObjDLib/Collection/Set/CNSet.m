@@ -19,7 +19,6 @@
 
 @end
 
-
 @implementation CNImSet_impl
 
 - (id<CNMSet>)mCopy {
@@ -45,7 +44,6 @@
 }
 
 @end
-
 
 @implementation CNMSet_impl
 
@@ -108,7 +106,6 @@
 
 @end
 
-
 @implementation CNHashSetBuilder
 static CNClassType* _CNHashSetBuilder_type;
 @synthesize set = _set;
@@ -156,5 +153,4 @@ static CNClassType* _CNHashSetBuilder_type;
 }
 
 @end
-
 

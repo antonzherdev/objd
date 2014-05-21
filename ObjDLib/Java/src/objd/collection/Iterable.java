@@ -13,7 +13,7 @@ public interface Iterable<T> extends Traversable<T> {
     @Override
     void parForEach(final P<T> each);
     @Override
-    boolean goOn(final F<T, Boolean> on);
+    Go goOn(final F<T, Go> on);
     boolean containsItem(final T item);
     @Override
     String toString();

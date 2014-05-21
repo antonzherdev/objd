@@ -33,13 +33,13 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
         }
     }
     @Override
-    public boolean goOn(final F<T, Boolean> on) {
-        boolean ret = true;
+    public Go goOn(final F<T, Go> on) {
+        Go ret = Go.Continue;
         final Iterator<T> i = this.iterator();
         while(i.hasNext()) {
-            final boolean b = on.apply(i.next());
+            final Go b = on.apply(i.next());
             if(!(b)) {
-                ret = false;
+                ret = Go.Break;
                 break;
             }
         }

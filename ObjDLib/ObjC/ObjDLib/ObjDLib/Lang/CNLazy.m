@@ -59,7 +59,6 @@ static CNClassType* _CNLazy_type;
 
 @end
 
-
 @implementation CNCache
 static CNClassType* _CNCache_type;
 @synthesize f = _f;
@@ -110,7 +109,6 @@ static CNClassType* _CNCache_type;
 
 @end
 
-
 @implementation CNWeak
 static CNClassType* _CNWeak_type;
 @synthesize value = _value;
@@ -155,5 +153,4 @@ static CNClassType* _CNWeak_type;
 }
 
 @end
-
 

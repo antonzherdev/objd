@@ -1,5 +1,6 @@
 #import "objdcore.h"
 #import "CNObject.h"
+#import "CNCollection.h"
 @class CNPromise;
 @class CNAtomicInt;
 @class CNAtomicBool;

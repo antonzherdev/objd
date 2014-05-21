@@ -16,7 +16,33 @@ class MapOptLink<A, B>(val f : A -> B?) extends ChainLink<A, B> {
         Yield.decorate<A>(
             base = yield,
             yield = {item ->
-                f(item).map(yield.yield(_)).getOr(0)
+                f(item).map(yield.yield(_)).getOr(Go.Continue)
+            }
+        )
+    }
+}
+
+class FlatLink<T>(val factor : float) extends ChainLink<Traversable<T>, T> {
+    override def build(yield : Yield<T>) : Yield<Traversable<T>> = {
+        Yield.decorate<Traversable<T>>(
+            base = yield,
+            begin = size -> yield.beginYieldWith(size = size * factor),
+            yield = col -> {
+                col.go {item ->
+                    yield.yield(item)
+                }
+            }
+        )
+    }
+}
+
+class FlatMapLink<A, B>(val f : A -> Traversable<B>, val factor : float) extends ChainLink<A, B> {
+    override def build(yield : Yield<B>) : Yield<A> = {
+        Yield.decorate<A>(
+            base = yield,
+            begin = size -> yield.beginYieldWith(size*factor),
+            yield = {item ->
+                f(item).go {i -> yield.yield(i)}
             }
         )
     }

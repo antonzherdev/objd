@@ -1,0 +1,80 @@
+package objd.chain
+
+class CombinationsLink<T> extends ChainLink<T, (T, T)> {
+    private def sf(n : uint) : uint = {
+        var i = 1
+        var r = 0
+        while(i < n) {
+            r += i
+            i++
+        }
+        r
+    }
+
+    override def build(yield : Yield<(T, T)>) : Yield<T> = {
+        var prevs : MArray<T>?
+        Yield.decorate<T>(
+            base = yield,
+            begin = size -> {
+                prevs = MArray<T>(capacity = size)
+                yield.beginYieldWith(sf(size))
+            },
+            yield = item -> {
+                val r = prevs.get.go{ prev ->
+                    yield.yield((prev, item))
+                }
+                prevs.get.append(item)
+                r
+            }
+        )
+    }
+}
+
+class UncombinationsLink<T> extends ChainLink<(T, T), T> {
+    override def build(yield : Yield<T>) : Yield<(T, T)> = {
+        var set : MHashSet<T> = MHashSet<T>()
+        Yield.decorate<(T, T)>(
+            base = yield,
+            yield = item -> {
+                var r = Go.Continue
+                val a = item.a
+                if(!set.contains(a)) {
+                    set.append(a)
+                    r = yield.yield(a)
+                }
+                val b = item.b
+                if(r == Go.Continue && !set.contains(b)) {
+                    set.append(b)
+                    r = yield.yield(b)
+                }
+                r
+            }
+        )
+    }
+}
+
+class NeighboursLink<T>(val ring : bool) extends ChainLink<T, (T, T)> {
+    override def build(yield : Yield<(T, T)>) : Yield<T> = {
+        var first : T?
+        var prev : T?
+        Yield.decorate<T>(
+            base = yield,
+            begin = size -> yield.beginYieldWith(if(size <= 1) 0 else if(ring) size else size - 1),
+            yield = item ->
+                if(prev == nil) {
+                    first = item
+                    prev = item
+                    Go.Continue
+                } else {
+                    val p = prev
+                    prev = item
+                    yield.yield((p, item))
+                },
+            end = if(ring)
+                result : Go ->
+                    if(result == Go.Break || first == nil) yield.endYieldWith(result)
+                    else yield.endYieldWith(yield.yield((prev.get, first.get)))
+                else nil
+        )
+    }
+}

@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.Tuple;
+
 public class ImHashMap<K, V> extends HashMap<K, V> implements ImMap<K, V> {
     public ImHashMap() {
         super(new java.util.HashMap<K,V>());

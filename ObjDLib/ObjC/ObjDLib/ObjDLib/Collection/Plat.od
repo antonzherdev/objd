@@ -11,7 +11,7 @@ stub class MHashSet<T> extends MSet<T> {
 
 stub class Array<T> extends Seq<T> {
     override def for(each : T -> void)
-    override def go(on : T -> bool) : bool
+    override def go(on : T -> Go) : Go
 }
 
 stub class ImArray<T> extends Array<T> with ImSeq<T>  {
@@ -29,11 +29,38 @@ stub class MArray<T> extends Array<T> with MSeq<T> {
     override def imCopy : [T]
 }
 
-stub class ImHashMap <K, V> extends ImMap<K, V> {
+@Java
+stub trait HashMap<K, V> extends Map<K, V>
+
+
+@ObjC
+stub trait HashMap<K, V> extends Map<K, V> {
+    override def for(each : ((K, V)) -> void)
+    override def go(on : ((K, V)) -> Go) : Go
+}
+
+@Java
+stub class ImHashMap<K, V> extends ImMap<K, V> with HashMap<K, V> {
     override def mCopy : MHashMap<K, V>
 }
 
-stub class MHashMap<K, V> extends MMap<K, V> {
+@ObjC
+stub class ImHashMap<K, V> extends ImMap<K, V> with HashMap<K, V> {
+    override def mCopy : MHashMap<K, V>
+    override def for(each : ((K, V)) -> void)
+    override def go(on : ((K, V)) -> Go) : Go
+}
+
+@Java
+stub class MHashMap<K, V> extends MMap<K, V> with HashMap<K, V> {
     override def im : ImHashMap<K, V>
     override def imCopy : ImHashMap<K, V>
+}
+
+@ObjC
+stub class MHashMap<K, V> extends MMap<K, V> with HashMap<K, V> {
+    override def im : ImHashMap<K, V>
+    override def imCopy : ImHashMap<K, V>
+    override def for(each : ((K, V)) -> void)
+    override def go(on : ((K, V)) -> Go) : Go
 }

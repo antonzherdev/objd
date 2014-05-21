@@ -6,25 +6,25 @@ import objd.chain.Chain;
 
 public abstract class Traversable_impl<T> implements Traversable<T> {
     public void forEach(final P<T> each) {
-        goOn(new F<T, Boolean>() {
+        goOn(new F<T, Go>() {
             @Override
-            public Boolean apply(final T item) {
+            public Go apply(final T item) {
                 each.apply(item);
-                return true;
+                return Go.Continue;
             }
         });
     }
     public void parForEach(final P<T> each) {
-        goOn(new F<T, Boolean>() {
+        goOn(new F<T, Go>() {
             @Override
-            public Boolean apply(final T item) {
+            public Go apply(final T item) {
                 DispatchQueue.aDefault.asyncF(new P0() {
                     @Override
                     public void apply() {
                         each.apply(item);
                     }
                 });
-                return true;
+                return Go.Continue;
             }
         });
     }
@@ -33,14 +33,14 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
     }
     public T findWhere(final F<T, Boolean> where) {
         final Mut<T> ret = new Mut<T>(null);
-        goOn(new F<T, Boolean>() {
+        goOn(new F<T, Go>() {
             @Override
-            public Boolean apply(final T x) {
+            public Go apply(final T x) {
                 if(where.apply(x)) {
                     ret.value = x;
-                    return false;
+                    return Go.Break;
                 } else {
-                    return true;
+                    return Go.Continue;
                 }
             }
         });
@@ -48,14 +48,14 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
     }
     public boolean existsWhere(final F<T, Boolean> where) {
         final Mut<Boolean> ret = new Mut<Boolean>(false);
-        goOn(new F<T, Boolean>() {
+        goOn(new F<T, Go>() {
             @Override
-            public Boolean apply(final T x) {
+            public Go apply(final T x) {
                 if(where.apply(x)) {
                     ret.value = true;
-                    return false;
+                    return Go.Break;
                 } else {
-                    return true;
+                    return Go.Continue;
                 }
             }
         });
@@ -63,14 +63,14 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
     }
     public boolean allConfirm(final F<T, Boolean> confirm) {
         final Mut<Boolean> ret = new Mut<Boolean>(true);
-        goOn(new F<T, Boolean>() {
+        goOn(new F<T, Go>() {
             @Override
-            public Boolean apply(final T x) {
+            public Go apply(final T x) {
                 if(!(confirm.apply(x))) {
                     ret.value = false;
-                    return false;
+                    return Go.Break;
                 } else {
-                    return true;
+                    return Go.Continue;
                 }
             }
         });
@@ -78,11 +78,11 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
     }
     public T head() {
         final Mut<T> ret = new Mut<T>();
-        goOn(new F<T, Boolean>() {
+        goOn(new F<T, Go>() {
             @Override
-            public Boolean apply(final T on) {
+            public Go apply(final T on) {
                 ret.value = on;
-                return false;
+                return Go.Break;
             }
         });
         return ret.value;

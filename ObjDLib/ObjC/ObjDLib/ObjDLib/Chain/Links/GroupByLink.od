@@ -1,0 +1,60 @@
+package objd.chain
+
+class ImGroupByLink<T, K, V, W>(val by : T -> K, val start : () -> V, val fold : (V, T) -> V, val factor : float) extends ChainLink<T, (K, W)> {
+    override def build(yield : Yield<(K, V)>) : Yield<T> = {
+        val m = MHashMap<K, V>()
+        Yield.decorate<T>(
+            base = yield,
+            begin = _ -> Go.Continue,
+            yield = item -> {
+                val k = by(item)
+                val v = m(k, orUpdateWith = start)
+                m.set(k, fold(v, item))
+                Go.Continue
+            },
+            end = result -> {
+                if(result == Go.Break) yield.endYieldWith(result)
+                else yield.yieldAll(m)
+            }
+        )
+    }
+}
+
+class MGroupByLink<T, K, V, W>(val by : T -> K, val start : () -> V, val append : (V, T) -> void, val finish : (V -> W) ,val factor : float) extends ChainLink<T, (K, W)> {
+    override def build(yield : Yield<(K, V)>) : Yield<T> = {
+        val m = MHashMap<K, V>()
+        Yield.decorate<T>(
+            base = yield,
+            begin = size -> yield.beginYieldWith(size = size * factor),
+            yield = item -> {
+                val k = by(item)
+                val v = m(k, orUpdateWith = start)
+                append(v, item)
+                Go.Continue
+            },
+            end = result -> {
+                if(result == Go.Break) yield.endYieldWith(result)
+                else yield.endYieldWith(m.go{t ->
+                    yield.yield((t.a, finish(t.b)))
+                })
+            }
+        )
+    }
+}
+
+class DistinctLink<T>(val factor : float) extends ChainLink<T, T> {
+    override def build(yield : Yield<T>) : Yield<T> = {
+        val set = MHashSet<T>()
+        Yield.decorate<T>(
+            base = yield,
+            begin = size -> yield.beginYieldWith(size = size * factor),
+            yield = item -> {
+                if(set.contains(item)) Go.Continue
+                else {
+                    set.append(item)
+                    yield.yield(item)
+                }
+            }
+        )
+    }
+}

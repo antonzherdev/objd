@@ -22,12 +22,12 @@
 
 - (BOOL)existsWhere:(BOOL(^)(id))where {
     __block BOOL ret = NO;
-    [self goOn:^BOOL(id x) {
+    [self goOn:^CNGoR(id x) {
         if(where(uwrapNil(x))) {
             ret = YES;
-            return NO;
+            return CNGo_Break;
         } else {
-            return YES;
+            return CNGo_Continue;
         }
     }];
     return ret;
@@ -35,12 +35,12 @@
 
 - (BOOL)allConfirm:(BOOL(^)(id))confirm {
     __block BOOL ret = YES;
-    [self goOn:^BOOL(id x) {
+    [self goOn:^CNGoR(id x) {
         if(!confirm(uwrapNil(x))) {
             ret = NO;
-            return NO;
+            return CNGo_Break;
         } else {
-            return YES;
+            return CNGo_Continue;
         }
     }];
     return ret;
@@ -76,11 +76,11 @@
 }
 
 
-- (BOOL)goOn:(BOOL(^)(id))on {
-    __block BOOL ret = YES;
+- (CNGoR)goOn:(CNGoR(^)(id))on {
+    __block CNGoR ret = CNGo_Continue;
     [self enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
         if(!on(tuple(uwrapNil(key), uwrapNil(obj)))) {
-            ret = NO;
+            ret = CNGo_Break;
             *stop = YES;
         }
     }];
@@ -118,12 +118,12 @@
 
 - (id)findWhere:(BOOL(^)(id))where {
     __block id ret = nil;
-    [self goOn:^BOOL(id x) {
+    [self goOn:^CNGoR(id x) {
         if(where(uwrapNil(x))) {
             ret = x;
-            NO;
+            return CNGo_Break;
         }
-        return YES;
+        return CNGo_Continue;
     }];
     return ret;
 }
@@ -146,8 +146,8 @@
     return [builder build];
 }
 
-- (id <CNMIterable>)mCopy {
-    return (id <CNMIterable>) [self mutableCopy];
+- (id <CNMMap>)mCopy {
+    return (id <CNMMap>) [self mutableCopy];
 }
 
 @end

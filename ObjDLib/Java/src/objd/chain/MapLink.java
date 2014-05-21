@@ -6,9 +6,9 @@ public class MapLink<A, B> extends ChainLink_impl<A, B> {
     public final F<A, B> f;
     @Override
     public Yield<A> buildYield(final Yield<B> yield) {
-        return Yield.<A, B>decorateBaseYield(yield, new F<A, Integer>() {
+        return Yield.<A, B>decorateBaseYield(yield, new F<A, Go>() {
             @Override
-            public Integer apply(final A item) {
+            public Go apply(final A item) {
                 return yield.yieldItem(MapLink.this.f.apply(item));
             }
         });

@@ -1,0 +1,16 @@
+package objd.chain
+
+class MulLink<A, B>(collection : Traversable<B>) extends ChainLink<A, (A, B)> {
+    private val _collection = if(collection.is<Chain<B>>) collection.cast<Chain<B>>.toArray else collection
+
+    override def build(yield : Yield<(A, B)>) : Yield<A> = Yield.decorate<A>(
+        base = yield,
+        begin = _collection.as<Iterable<B>>.map{c ->
+            size : uint -> yield.beginYieldWith(size = size * c.count)
+        },
+        yield = a ->
+            _collection.go{b ->
+                yield.yield((a, b))
+            }
+    )
+}

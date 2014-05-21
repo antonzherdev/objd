@@ -1,0 +1,39 @@
+package objd.chain
+
+class SourceLink<T>(val collection : Traversable<T>) extends ChainLink<void, T> {
+    override def build(yield : Yield<T>) : Yield<void> = Yield.make<void>(
+        begin = collection.as<Iterable<T>>.map{c ->
+            size : uint -> yield.beginYieldWith(size = c.count)
+        },
+        end = result ->
+            if(result == Go.Break) yield.endYieldWith(result)
+            else yield.yieldAll(collection)
+    )
+}
+
+
+class AppendLink<T>(val collection : Traversable<T>) extends ChainLink<T, T> {
+    override def build(yield : Yield<T>) : Yield<T> = Yield.decorate<T>(
+        base = yield,
+        begin = collection.as<Iterable<T>>.map{c ->
+            size : uint -> yield.beginYieldWith(size = size + c.count)
+        },
+        end = result ->
+        if(result == Go.Continue) {
+            yield.endYieldWith(collection.go{item ->
+                yield.yield(item)
+            })
+        } else yield.endYieldWith(result)
+    )
+}
+
+class PrependLink<T>(val collection : Traversable<T>) extends ChainLink<T, T> {
+    override def build(yield : Yield<T>) : Yield<T> = Yield.decorate<T>(
+        base = yield,
+        begin = size : uint -> {
+            val r = yield.beginYieldWith(size = size + collection.as<Iterable<T>>.map(_.count).getOr(0))
+            if(r == Go.Break) Go.Break
+            else collection.go{item -> yield.yield(item)}
+        }
+    )
+}

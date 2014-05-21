@@ -6,7 +6,7 @@ import objd.chain.Chain;
 public interface Traversable<T> {
     void forEach(final P<T> each);
     void parForEach(final P<T> each);
-    boolean goOn(final F<T, Boolean> on);
+    Go goOn(final F<T, Go> on);
     Chain<T> chain();
     T findWhere(final F<T, Boolean> where);
     boolean existsWhere(final F<T, Boolean> where);

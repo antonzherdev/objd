@@ -6,7 +6,7 @@ class ZipLink<T, A, R>(val a : Iterable<A>, val f : (T, A) -> R) extends ChainLi
         Yield.decorate<T>(
             base = yield,
             yield = item -> {
-                if(!ai.hasNext) 1
+                if(!ai.hasNext) Go.Break
                 else yield.yield(f(item, ai.next))
             }
         )
@@ -20,7 +20,7 @@ class Zip3Link<T, A, B, R>(val a : Iterable<A>, val b : Iterable<B>, val f : (T,
         Yield.decorate<T>(
             base = yield,
             yield = item -> {
-                if(!ai.hasNext || !bi.hasNext) 1
+                if(!ai.hasNext || !bi.hasNext) Go.Break
                 else yield.yield(f(item, ai.next, bi.next))
             }
         )

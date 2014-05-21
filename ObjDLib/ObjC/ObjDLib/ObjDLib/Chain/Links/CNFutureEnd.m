@@ -39,10 +39,10 @@ static CNClassType* _CNFutureEnd_type;
 - (CNYield*)yield {
     __block NSInteger _i = 0;
     __block volatile NSInteger _set = -1;
-    return [CNYield makeBegin:^int(NSUInteger size) {
+    return [CNYield makeBegin:^CNGoR(NSUInteger size) {
         __array = [CNMArray applyCapacity:size];
-        return 0;
-    } yield:^int(CNFuture* fut) {
+        return CNGo_Continue;
+    } yield:^CNGoR(CNFuture* fut) {
         if(!(__stopped)) {
             [__counter incrementAndGet];
             [((CNMArray*)(nonnil(__array))) appendItem:nil];
@@ -66,9 +66,9 @@ static CNClassType* _CNFutureEnd_type;
                 }
             }];
         }
-        if(__stopped) return 1;
-        else return 0;
-    } end:^int(int res) {
+        if(__stopped) return CNGo_Break;
+        else return CNGo_Continue;
+    } end:^CNGoR(CNGoR res) {
         __ended = YES;
         if([__counter intValue] == 0) {
             if(!([__yielded getAndSetNewValue:YES])) [__promise successValue:((CNMArray*)(nonnil(__array)))];
@@ -96,7 +96,6 @@ static CNClassType* _CNFutureEnd_type;
 }
 
 @end
-
 
 @implementation CNFutureVoidEnd
 static CNClassType* _CNFutureVoidEnd_type;
@@ -128,9 +127,9 @@ static CNClassType* _CNFutureVoidEnd_type;
 }
 
 - (CNYield*)yield {
-    return [CNYield makeBegin:^int(NSUInteger size) {
-        return 0;
-    } yield:^int(CNFuture* fut) {
+    return [CNYield makeBegin:^CNGoR(NSUInteger size) {
+        return CNGo_Continue;
+    } yield:^CNGoR(CNFuture* fut) {
         if(!(__stopped)) {
             [__counter incrementAndGet];
             [((CNFuture*)(fut)) onCompleteF:^void(CNTry* tr) {
@@ -149,10 +148,10 @@ static CNClassType* _CNFutureVoidEnd_type;
                 }
             }];
         }
-        if(__stopped) return 1;
-        else return 0;
-    } end:^int(int res) {
-        int ret = res;
+        if(__stopped) return CNGo_Break;
+        else return CNGo_Continue;
+    } end:^CNGoR(CNGoR res) {
+        CNGoR ret = res;
         __ended = YES;
         if([__counter intValue] == 0) {
             if(!([__yielded getAndSetNewValue:YES])) [__promise successValue:nil];
@@ -180,5 +179,4 @@ static CNClassType* _CNFutureVoidEnd_type;
 }
 
 @end
-
 

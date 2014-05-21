@@ -16,8 +16,8 @@ stub class Chain<A> extends ImIterable<A> {
 
     pure def combinations : Chain<(A, A)>
     pure def uncombinations<B>(self : Chain<(B, B)>) : Chain<B>
-    pure def neighbors : Chain<(A, A)>
-    pure def neighborsRing : Chain<(A, A)>
+    pure def neighbours : Chain<(A, A)>
+    pure def neighboursRing : Chain<(A, A)>
     pure def mul<B>(: Traversable<B>) : Chain<(A,B)>
 
     pure def group<K>(by : A -> K) : Chain<(K, [A])>

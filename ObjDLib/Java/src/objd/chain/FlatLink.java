@@ -7,27 +7,20 @@ public class FlatLink<T> extends ChainLink_impl<Traversable<T>, T> {
     public final float factor;
     @Override
     public Yield<Traversable<T>> buildYield(final Yield<T> yield) {
-        return Yield.<Traversable<T>, T>decorateBaseBeginYield(yield, new F<Integer, Integer>() {
+        return Yield.<Traversable<T>, T>decorateBaseBeginYield(yield, new F<Integer, Go>() {
             @Override
-            public Integer apply(final Integer size) {
+            public Go apply(final Integer size) {
                 return yield.beginYieldWithSize(((int)(size * FlatLink.this.factor)));
             }
-        }, new F<Traversable<T>, Integer>() {
+        }, new F<Traversable<T>, Go>() {
             @Override
-            public Integer apply(final Traversable<T> col) {
-                final Mut<Integer> result = new Mut<Integer>(0);
-                col.goOn(new F<T, Boolean>() {
+            public Go apply(final Traversable<T> col) {
+                return col.goOn(new F<T, Go>() {
                     @Override
-                    public Boolean apply(final T item) {
-                        if(yield.yieldItem(item) != 0) {
-                            result.value = 1;
-                            return false;
-                        } else {
-                            return true;
-                        }
+                    public Go apply(final T item) {
+                        return yield.yieldItem(item);
                     }
                 });
-                return ((int)(result.value));
             }
         });
     }

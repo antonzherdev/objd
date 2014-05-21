@@ -17,7 +17,6 @@
 
 @end
 
-
 @implementation CNImQueue
 static CNImQueue* _CNImQueue_empty;
 static CNClassType* _CNImQueue_type;
@@ -107,7 +106,6 @@ static CNClassType* _CNImQueue_type;
 
 @end
 
-
 @implementation CNQueueIterator
 static CNClassType* _CNQueueIterator_type;
 @synthesize out = _out;
@@ -175,7 +173,6 @@ static CNClassType* _CNQueueIterator_type;
 
 @end
 
-
 @implementation CNMQueue
 static CNClassType* _CNMQueue_type;
 
@@ -228,5 +225,4 @@ static CNClassType* _CNMQueue_type;
 }
 
 @end
-
 

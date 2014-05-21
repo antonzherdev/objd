@@ -94,7 +94,6 @@ static CNClassType* _CNRange_type;
 
 @end
 
-
 @implementation CNRangeIterator
 static CNClassType* _CNRangeIterator_type;
 @synthesize start = _start;
@@ -154,5 +153,4 @@ static CNClassType* _CNRangeIterator_type;
 }
 
 @end
-
 

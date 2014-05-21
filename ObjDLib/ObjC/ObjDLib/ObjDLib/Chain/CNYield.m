@@ -1,7 +1,6 @@
 #import "objd.h"
 #import "CNYield.h"
 
-#import "CNCollection.h"
 #import "CNPlat.h"
 #import "CNType.h"
 @implementation CNChainLink_impl
@@ -22,7 +21,6 @@
 
 @end
 
-
 @implementation CNYield
 static CNClassType* _CNYield_type;
 @synthesize begin = _begin;
@@ -30,11 +28,11 @@ static CNClassType* _CNYield_type;
 @synthesize end = _end;
 @synthesize all = _all;
 
-+ (instancetype)yieldWithBegin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all {
++ (instancetype)yieldWithBegin:(CNGoR(^)(NSUInteger))begin yield:(CNGoR(^)(id))yield end:(CNGoR(^)(CNGoR))end all:(CNGoR(^)(id<CNTraversable>))all {
     return [[CNYield alloc] initWithBegin:begin yield:yield end:end all:all];
 }
 
-- (instancetype)initWithBegin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all {
+- (instancetype)initWithBegin:(CNGoR(^)(NSUInteger))begin yield:(CNGoR(^)(id))yield end:(CNGoR(^)(CNGoR))end all:(CNGoR(^)(id<CNTraversable>))all {
     self = [super init];
     if(self) {
         _begin = begin;
@@ -51,71 +49,63 @@ static CNClassType* _CNYield_type;
     if(self == [CNYield class]) _CNYield_type = [CNClassType classTypeWithCls:[CNYield class]];
 }
 
-+ (char)Continue {
-    return 0;
-}
-
-+ (char)Break {
-    return 1;
-}
-
-+ (CNYield*)makeBegin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)makeBegin:(CNGoR(^)(NSUInteger))begin yield:(CNGoR(^)(id))yield end:(CNGoR(^)(CNGoR))end all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield yieldWithBegin:begin yield:yield end:end all:all];
 }
 
-+ (CNYield*)makeBegin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield end:(int(^)(int))end {
++ (CNYield*)makeBegin:(CNGoR(^)(NSUInteger))begin yield:(CNGoR(^)(id))yield end:(CNGoR(^)(CNGoR))end {
     return [CNYield makeBegin:begin yield:yield end:end all:nil];
 }
 
-+ (CNYield*)makeBegin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)makeBegin:(CNGoR(^)(NSUInteger))begin yield:(CNGoR(^)(id))yield all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield makeBegin:begin yield:yield end:nil all:all];
 }
 
-+ (CNYield*)makeBegin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield {
++ (CNYield*)makeBegin:(CNGoR(^)(NSUInteger))begin yield:(CNGoR(^)(id))yield {
     return [CNYield makeBegin:begin yield:yield end:nil all:nil];
 }
 
-+ (CNYield*)makeBegin:(int(^)(NSUInteger))begin end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)makeBegin:(CNGoR(^)(NSUInteger))begin end:(CNGoR(^)(CNGoR))end all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield makeBegin:begin yield:nil end:end all:all];
 }
 
-+ (CNYield*)makeBegin:(int(^)(NSUInteger))begin end:(int(^)(int))end {
++ (CNYield*)makeBegin:(CNGoR(^)(NSUInteger))begin end:(CNGoR(^)(CNGoR))end {
     return [CNYield makeBegin:begin yield:nil end:end all:nil];
 }
 
-+ (CNYield*)makeBegin:(int(^)(NSUInteger))begin all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)makeBegin:(CNGoR(^)(NSUInteger))begin all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield makeBegin:begin yield:nil end:nil all:all];
 }
 
-+ (CNYield*)makeBegin:(int(^)(NSUInteger))begin {
++ (CNYield*)makeBegin:(CNGoR(^)(NSUInteger))begin {
     return [CNYield makeBegin:begin yield:nil end:nil all:nil];
 }
 
-+ (CNYield*)makeYield:(int(^)(id))yield end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)makeYield:(CNGoR(^)(id))yield end:(CNGoR(^)(CNGoR))end all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield makeBegin:nil yield:yield end:end all:all];
 }
 
-+ (CNYield*)makeYield:(int(^)(id))yield end:(int(^)(int))end {
++ (CNYield*)makeYield:(CNGoR(^)(id))yield end:(CNGoR(^)(CNGoR))end {
     return [CNYield makeBegin:nil yield:yield end:end all:nil];
 }
 
-+ (CNYield*)makeYield:(int(^)(id))yield all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)makeYield:(CNGoR(^)(id))yield all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield makeBegin:nil yield:yield end:nil all:all];
 }
 
-+ (CNYield*)makeYield:(int(^)(id))yield {
++ (CNYield*)makeYield:(CNGoR(^)(id))yield {
     return [CNYield makeBegin:nil yield:yield end:nil all:nil];
 }
 
-+ (CNYield*)makeEnd:(int(^)(int))end all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)makeEnd:(CNGoR(^)(CNGoR))end all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield makeBegin:nil yield:nil end:end all:all];
 }
 
-+ (CNYield*)makeEnd:(int(^)(int))end {
++ (CNYield*)makeEnd:(CNGoR(^)(CNGoR))end {
     return [CNYield makeBegin:nil yield:nil end:end all:nil];
 }
 
-+ (CNYield*)makeAll:(int(^)(id<CNTraversable>))all {
++ (CNYield*)makeAll:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield makeBegin:nil yield:nil end:nil all:all];
 }
 
@@ -123,69 +113,69 @@ static CNClassType* _CNYield_type;
     return [CNYield makeBegin:nil yield:nil end:nil all:nil];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base begin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all {
-    return [CNYield yieldWithBegin:((begin != nil) ? ((int(^)(NSUInteger))(begin)) : ^int(NSUInteger size) {
++ (CNYield*)decorateBase:(CNYield*)base begin:(CNGoR(^)(NSUInteger))begin yield:(CNGoR(^)(id))yield end:(CNGoR(^)(CNGoR))end all:(CNGoR(^)(id<CNTraversable>))all {
+    return [CNYield yieldWithBegin:((begin != nil) ? ((CNGoR(^)(NSUInteger))(begin)) : ^CNGoR(NSUInteger size) {
         return [base beginYieldWithSize:size];
-    }) yield:((yield != nil) ? ((int(^)(id))(yield)) : ^int(id item) {
+    }) yield:((yield != nil) ? ((CNGoR(^)(id))(yield)) : ^CNGoR(id item) {
         return [base yieldItem:((id)(item))];
-    }) end:((end != nil) ? ((int(^)(int))(end)) : ^int(int result) {
+    }) end:((end != nil) ? ((CNGoR(^)(CNGoR))(end)) : ^CNGoR(CNGoR result) {
         return [base endYieldWithResult:result];
     }) all:all];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base begin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield end:(int(^)(int))end {
++ (CNYield*)decorateBase:(CNYield*)base begin:(CNGoR(^)(NSUInteger))begin yield:(CNGoR(^)(id))yield end:(CNGoR(^)(CNGoR))end {
     return [CNYield decorateBase:base begin:begin yield:yield end:end all:nil];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base begin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)decorateBase:(CNYield*)base begin:(CNGoR(^)(NSUInteger))begin yield:(CNGoR(^)(id))yield all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield decorateBase:base begin:begin yield:yield end:nil all:all];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base begin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield {
++ (CNYield*)decorateBase:(CNYield*)base begin:(CNGoR(^)(NSUInteger))begin yield:(CNGoR(^)(id))yield {
     return [CNYield decorateBase:base begin:begin yield:yield end:nil all:nil];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base begin:(int(^)(NSUInteger))begin end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)decorateBase:(CNYield*)base begin:(CNGoR(^)(NSUInteger))begin end:(CNGoR(^)(CNGoR))end all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield decorateBase:base begin:begin yield:nil end:end all:all];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base begin:(int(^)(NSUInteger))begin end:(int(^)(int))end {
++ (CNYield*)decorateBase:(CNYield*)base begin:(CNGoR(^)(NSUInteger))begin end:(CNGoR(^)(CNGoR))end {
     return [CNYield decorateBase:base begin:begin yield:nil end:end all:nil];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base begin:(int(^)(NSUInteger))begin all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)decorateBase:(CNYield*)base begin:(CNGoR(^)(NSUInteger))begin all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield decorateBase:base begin:begin yield:nil end:nil all:all];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base begin:(int(^)(NSUInteger))begin {
++ (CNYield*)decorateBase:(CNYield*)base begin:(CNGoR(^)(NSUInteger))begin {
     return [CNYield decorateBase:base begin:begin yield:nil end:nil all:nil];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base yield:(int(^)(id))yield end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)decorateBase:(CNYield*)base yield:(CNGoR(^)(id))yield end:(CNGoR(^)(CNGoR))end all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield decorateBase:base begin:nil yield:yield end:end all:all];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base yield:(int(^)(id))yield end:(int(^)(int))end {
++ (CNYield*)decorateBase:(CNYield*)base yield:(CNGoR(^)(id))yield end:(CNGoR(^)(CNGoR))end {
     return [CNYield decorateBase:base begin:nil yield:yield end:end all:nil];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base yield:(int(^)(id))yield all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)decorateBase:(CNYield*)base yield:(CNGoR(^)(id))yield all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield decorateBase:base begin:nil yield:yield end:nil all:all];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base yield:(int(^)(id))yield {
++ (CNYield*)decorateBase:(CNYield*)base yield:(CNGoR(^)(id))yield {
     return [CNYield decorateBase:base begin:nil yield:yield end:nil all:nil];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)decorateBase:(CNYield*)base end:(CNGoR(^)(CNGoR))end all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield decorateBase:base begin:nil yield:nil end:end all:all];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base end:(int(^)(int))end {
++ (CNYield*)decorateBase:(CNYield*)base end:(CNGoR(^)(CNGoR))end {
     return [CNYield decorateBase:base begin:nil yield:nil end:end all:nil];
 }
 
-+ (CNYield*)decorateBase:(CNYield*)base all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)decorateBase:(CNYield*)base all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield decorateBase:base begin:nil yield:nil end:nil all:all];
 }
 
@@ -193,108 +183,127 @@ static CNClassType* _CNYield_type;
     return [CNYield decorateBase:base begin:nil yield:nil end:nil all:nil];
 }
 
-- (int)beginYieldWithSize:(NSUInteger)size {
-    if(_begin == nil) return ((int)(0));
+- (CNGoR)beginYieldWithSize:(NSUInteger)size {
+    if(_begin == nil) return CNGo_Continue;
     else return _begin(size);
 }
 
-- (int)yieldItem:(id)item {
-    if(_yield == nil) return ((int)(0));
+- (CNGoR)yieldItem:(id)item {
+    if(_yield == nil) return CNGo_Continue;
     else return _yield(item);
 }
 
-- (int)endYieldWithResult:(int)result {
+- (CNGoR)endYieldWithResult:(CNGoR)result {
     if(_end == nil) return result;
     else return _end(result);
 }
 
-- (int)yieldAllItems:(id<CNTraversable>)items {
+- (CNGoR)yieldAllItems:(id<CNTraversable>)items {
     if(_all != nil) return _all(items);
     else return [self stdYieldAllItems:items];
 }
 
-- (int)stdYieldAllItems:(id<CNTraversable>)items {
-    __block NSInteger result = ((NSInteger)(0));
+- (CNGoR)stdYieldAllItems:(id<CNTraversable>)items {
+    __block CNGoR result = CNGo_Continue;
     if([items isKindOfClass:[CNArray class]]) {
         CNArray* _items = ((CNArray*)(items));
-        if([self beginYieldWithSize:[_items count]] == 1) return ((int)(1));
-        else for(id item in _items) {
-            result = ((NSInteger)([self yieldItem:item]));
-            if(result == 0) continue;
+        if([self beginYieldWithSize:[_items count]] == CNGo_Continue) for(id item in _items) {
+            result = [self yieldItem:item];
+            if(result == CNGo_Continue) continue;
             else break;
         }
     } else {
-        if([items conformsToProtocol:@protocol(CNIterable)]) {
+        if([items conformsToProtocol:@protocol(CNHashMap)]) {
             id<CNIterable> _items = ((id<CNIterable>)(items));
-            if([self beginYieldWithSize:[_items count]] == 1) return ((int)(1));
-            else [items goOn:^BOOL(id item) {
-                result = ((NSInteger)([self yieldItem:item]));
-                return result == 0;
+            if([self beginYieldWithSize:[_items count]] == CNGo_Continue) [items goOn:^CNGoR(id item) {
+                result = [self yieldItem:item];
+                return result;
             }];
         } else {
-            if([self beginYieldWithSize:0] == 1) return ((int)(1));
-            else [items goOn:^BOOL(id item) {
-                result = ((NSInteger)([self yieldItem:item]));
-                return result == 0;
-            }];
+            if([items conformsToProtocol:@protocol(CNIterable)]) {
+                id<CNIterable> _items = ((id<CNIterable>)(items));
+                if([self beginYieldWithSize:[_items count]] == CNGo_Continue) {
+                    CNGoR __il__1fft_1tret = CNGo_Continue;
+                    id<CNIterator> __il__1fft_1ti = [_items iterator];
+                    while([__il__1fft_1ti hasNext]) {
+                        CNGoR __il__1fft_1tb = ({
+                            id item = [__il__1fft_1ti next];
+                            ({
+                                result = [self yieldItem:item];
+                                result;
+                            });
+                        });
+                        if(!(__il__1fft_1tb)) {
+                            __il__1fft_1tret = CNGo_Break;
+                            break;
+                        }
+                    }
+                    return __il__1fft_1tret;
+                }
+            } else {
+                if([self beginYieldWithSize:0] == CNGo_Continue) [items goOn:^CNGoR(id item) {
+                    result = [self yieldItem:item];
+                    return result;
+                }];
+            }
         }
     }
-    return [self endYieldWithResult:((int)(result))];
+    return [self endYieldWithResult:result];
 }
 
-+ (CNYield*)applyBegin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield end:(int(^)(int))end {
++ (CNYield*)applyBegin:(CNGoR(^)(NSUInteger))begin yield:(CNGoR(^)(id))yield end:(CNGoR(^)(CNGoR))end {
     return [CNYield yieldWithBegin:begin yield:yield end:end all:nil];
 }
 
-+ (CNYield*)applyBegin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)applyBegin:(CNGoR(^)(NSUInteger))begin yield:(CNGoR(^)(id))yield all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield yieldWithBegin:begin yield:yield end:nil all:all];
 }
 
-+ (CNYield*)applyBegin:(int(^)(NSUInteger))begin yield:(int(^)(id))yield {
++ (CNYield*)applyBegin:(CNGoR(^)(NSUInteger))begin yield:(CNGoR(^)(id))yield {
     return [CNYield yieldWithBegin:begin yield:yield end:nil all:nil];
 }
 
-+ (CNYield*)applyBegin:(int(^)(NSUInteger))begin end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)applyBegin:(CNGoR(^)(NSUInteger))begin end:(CNGoR(^)(CNGoR))end all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield yieldWithBegin:begin yield:nil end:end all:all];
 }
 
-+ (CNYield*)applyBegin:(int(^)(NSUInteger))begin end:(int(^)(int))end {
++ (CNYield*)applyBegin:(CNGoR(^)(NSUInteger))begin end:(CNGoR(^)(CNGoR))end {
     return [CNYield yieldWithBegin:begin yield:nil end:end all:nil];
 }
 
-+ (CNYield*)applyBegin:(int(^)(NSUInteger))begin all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)applyBegin:(CNGoR(^)(NSUInteger))begin all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield yieldWithBegin:begin yield:nil end:nil all:all];
 }
 
-+ (CNYield*)applyBegin:(int(^)(NSUInteger))begin {
++ (CNYield*)applyBegin:(CNGoR(^)(NSUInteger))begin {
     return [CNYield yieldWithBegin:begin yield:nil end:nil all:nil];
 }
 
-+ (CNYield*)applyYield:(int(^)(id))yield end:(int(^)(int))end all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)applyYield:(CNGoR(^)(id))yield end:(CNGoR(^)(CNGoR))end all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield yieldWithBegin:nil yield:yield end:end all:all];
 }
 
-+ (CNYield*)applyYield:(int(^)(id))yield end:(int(^)(int))end {
++ (CNYield*)applyYield:(CNGoR(^)(id))yield end:(CNGoR(^)(CNGoR))end {
     return [CNYield yieldWithBegin:nil yield:yield end:end all:nil];
 }
 
-+ (CNYield*)applyYield:(int(^)(id))yield all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)applyYield:(CNGoR(^)(id))yield all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield yieldWithBegin:nil yield:yield end:nil all:all];
 }
 
-+ (CNYield*)applyYield:(int(^)(id))yield {
++ (CNYield*)applyYield:(CNGoR(^)(id))yield {
     return [CNYield yieldWithBegin:nil yield:yield end:nil all:nil];
 }
 
-+ (CNYield*)applyEnd:(int(^)(int))end all:(int(^)(id<CNTraversable>))all {
++ (CNYield*)applyEnd:(CNGoR(^)(CNGoR))end all:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield yieldWithBegin:nil yield:nil end:end all:all];
 }
 
-+ (CNYield*)applyEnd:(int(^)(int))end {
++ (CNYield*)applyEnd:(CNGoR(^)(CNGoR))end {
     return [CNYield yieldWithBegin:nil yield:nil end:end all:nil];
 }
 
-+ (CNYield*)applyAll:(int(^)(id<CNTraversable>))all {
++ (CNYield*)applyAll:(CNGoR(^)(id<CNTraversable>))all {
     return [CNYield yieldWithBegin:nil yield:nil end:nil all:all];
 }
 
@@ -325,5 +334,4 @@ static CNClassType* _CNYield_type;
 }
 
 @end
-
 

@@ -181,12 +181,12 @@
     }
 }
 
-- (BOOL)goOn:(BOOL(^)(id))on {
+- (CNGoR)goOn:(CNGoR(^)(id))on {
     id<CNIterator> i = [self iterator];
     while([i hasNext]) {
-        if(!(on([i next]))) return NO;
+        if(on([i next]) == CNGo_Break) return CNGo_Break;
     }
-    return YES;
+    return CNGo_Continue;
 }
 
 - (BOOL)containsItem:(id)item {
@@ -199,12 +199,12 @@
 
 - (id)findWhere:(BOOL(^)(id))where {
     __block id ret = nil;
-    [self goOn:^BOOL(id x) {
+    [self goOn:^CNGoR(id x) {
         if(where(x)) {
             ret = x;
-            return NO;
+            return CNGo_Break;
         } else {
-            return YES;
+            return CNGo_Continue;
         }
     }];
     return ret;
@@ -212,12 +212,12 @@
 
 - (BOOL)existsWhere:(BOOL(^)(id))where {
     __block BOOL ret = NO;
-    [self goOn:^BOOL(id x) {
+    [self goOn:^CNGoR(id x) {
         if(where(x)) {
             ret = YES;
-            return NO;
+            return CNGo_Break;
         } else {
-            return YES;
+            return CNGo_Continue;
         }
     }];
     return ret;
@@ -225,12 +225,12 @@
 
 - (BOOL)allConfirm:(BOOL(^)(id))confirm {
     __block BOOL ret = YES;
-    [self goOn:^BOOL(id x) {
+    [self goOn:^CNGoR(id x) {
         if(!confirm(numb(ret))) {
             ret = NO;
-            return NO;
+            return CNGo_Break;
         } else {
-            return YES;
+            return CNGo_Continue;
         }
     }];
     return ret;

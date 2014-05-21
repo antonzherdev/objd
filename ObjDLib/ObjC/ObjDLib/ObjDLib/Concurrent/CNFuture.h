@@ -17,6 +17,8 @@
 @class CNDefaultPromise;
 @class CNKeptPromise;
 
+
+
 @interface CNFuture : NSObject
 + (instancetype)future;
 - (instancetype)init;

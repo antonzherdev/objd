@@ -369,7 +369,6 @@ static CNClassType* _CNFuture_type;
 
 @end
 
-
 @implementation CNPromise
 static CNClassType* _CNPromise_type;
 
@@ -423,7 +422,6 @@ static CNClassType* _CNPromise_type;
 }
 
 @end
-
 
 @implementation CNDefaultPromise
 static CNClassType* _CNDefaultPromise_type;
@@ -507,7 +505,6 @@ static CNClassType* _CNDefaultPromise_type;
 
 @end
 
-
 @implementation CNKeptPromise
 static CNClassType* _CNKeptPromise_type;
 @synthesize value = _value;
@@ -576,5 +573,4 @@ static CNClassType* _CNKeptPromise_type;
 }
 
 @end
-
 

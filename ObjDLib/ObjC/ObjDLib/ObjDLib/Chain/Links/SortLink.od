@@ -1,0 +1,58 @@
+package objd.chain
+
+class SortLink<T>(val comparator : (T, T) -> int) extends ChainLink<T, T> {
+    override def build(yield : Yield<T>) : Yield<T> = {
+        val set = MTreeSet<T>(comparator)
+        Yield.decorate<T>(
+            base = yield,
+            begin = _ -> Go.Continue,
+            yield = item -> {
+                set.append(item)
+                Go.Continue
+            },
+            end = result -> {
+                if(result == Go.Break) yield.endYieldWith(result)
+                else yield.yieldAll(set)
+            }
+        )
+    }
+}
+
+class ReverseLink<T> extends ChainLink<T, T> {
+    override def build(yield : Yield<T>) : Yield<T> = {
+        val list = MList<T>()
+        Yield.decorate<T>(
+            base = yield,
+            begin = _ -> Go.Continue,
+            yield = item -> {
+                list.prepend(item)
+                Go.Continue
+            },
+            end = result -> {
+                if(result == Go.Break) yield.endYieldWith(result)
+                else yield.yieldAll(list)
+            }
+        )
+    }
+}
+
+class ShuffleLink<T> extends ChainLink<T, T> {
+    private var _array : MArray<T>?
+    override def build(yield : Yield<T>) : Yield<T> = {
+        Yield.decorate<T>(
+            base = yield,
+            begin = size -> {
+                _array = MArray<T>(capacity = size)
+                Go.Continue
+            },
+            yield = item -> {
+                _array.get.insert(index = UInt.rnd(_array.get.count), item)
+                Go.Continue
+            },
+            end = r -> {
+                if(r == Go.Break) yield.endYieldWith(r)
+                else yield.yieldAll(_array.get)
+            }
+        )
+    }
+}

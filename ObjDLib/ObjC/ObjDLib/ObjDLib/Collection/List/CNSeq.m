@@ -70,7 +70,6 @@
 
 @end
 
-
 @implementation CNImSeq_impl
 
 - (id<CNMSeq>)mCopy {
@@ -116,7 +115,6 @@
 }
 
 @end
-
 
 @implementation CNMSeq_impl
 
@@ -218,7 +216,6 @@
 
 @end
 
-
 @implementation CNArrayBuilder
 static CNClassType* _CNArrayBuilder_type;
 
@@ -265,7 +262,6 @@ static CNClassType* _CNArrayBuilder_type;
 }
 
 @end
-
 
 @implementation CNIndexFunSeq
 static CNClassType* _CNIndexFunSeq_type;
@@ -335,7 +331,6 @@ static CNClassType* _CNIndexFunSeq_type;
 
 @end
 
-
 @implementation CNIndexFunSeqIterator
 static CNClassType* _CNIndexFunSeqIterator_type;
 @synthesize count = _count;
@@ -391,5 +386,4 @@ static CNClassType* _CNIndexFunSeqIterator_type;
 }
 
 @end
-
 

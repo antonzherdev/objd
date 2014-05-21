@@ -60,7 +60,6 @@ static CNClassType* _CNTry_type;
 
 @end
 
-
 @implementation CNSuccess
 static CNClassType* _CNSuccess_type;
 @synthesize get = _get;
@@ -118,7 +117,6 @@ static CNClassType* _CNSuccess_type;
 
 @end
 
-
 @implementation CNFailure
 static CNClassType* _CNFailure_type;
 @synthesize reason = _reason;
@@ -175,5 +173,4 @@ static CNClassType* _CNFailure_type;
 }
 
 @end
-
 

@@ -66,4 +66,3 @@ static CNClassType* _CNQueueTest_type;
 
 @end
 
-

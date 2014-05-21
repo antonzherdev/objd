@@ -110,13 +110,13 @@ class MList<T> extends MSeq<T> {
             i = i.next
         }
     }
-    override inline def go(on : T -> bool) : bool = {
+    override inline def go(on : T -> Go) : Go = {
         var i = headItem
         while(i != nil) {
-            if(!on(i.data)) return false
+            if(!on(i.data)) return Go.Break
             i = i.next
         }
-        true
+        Go.Continue
     }
 
     override def mutableFilter(by : T -> bool) {

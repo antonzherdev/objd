@@ -124,4 +124,3 @@ static CNClassType* _CNFutureTest_type;
 
 @end
 
-

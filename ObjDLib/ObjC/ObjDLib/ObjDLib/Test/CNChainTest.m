@@ -80,6 +80,25 @@ static CNClassType* _CNChainTest_type;
     assertEquals(numi4([count intValue]), numi4(((int)([arr count]))));
 }
 
+- (void)testMap {
+    assertEquals(((@[@4, @0, @2])), ([[[(@[@2, @0, @1]) chain] map:^id(id x) {
+        return numi(2 * unumi(x));
+    }] toArray]));
+}
+
+- (void)testMapOpt {
+    assertEquals(((@[@4, @2])), ([[[(@[@2, @0, @1]) chain] mapOpt:^id(id x) {
+        if(unumi(x) == 0) return nil;
+        else return numi(2 * unumi(x));
+    }] toArray]));
+}
+
+- (void)testFlatMap {
+    assertEquals(((@[@2, @4, @0, @0, @1, @2])), ([[[(@[@2, @0, @1]) chain] flatMap:^NSArray*(id x) {
+        return (@[x, numi(2 * unumi(x))]);
+    }] toArray]));
+}
+
 - (void)testFlat {
     assertEquals(((@[@1, @5, @2, @3, @2])), ([[[(@[((NSArray*)((@[@1, @5]))), ((NSArray*)((@[@2, @3]))), (@[@2])]) chain] flat] toArray]));
 }
@@ -104,6 +123,67 @@ static CNClassType* _CNChainTest_type;
     assertEquals(((@[@2, @3])), arr);
 }
 
+- (void)testAppend {
+    assertEquals(((@[@1, @0, @2, @3, @1])), ([[[(@[@1, @0, @2]) chain] append:(@[@3, @1])] toArray]));
+}
+
+- (void)testPreppend {
+    assertEquals(((@[@3, @1, @1, @0, @2])), ([[[(@[@1, @0, @2]) chain] prepend:(@[@3, @1])] toArray]));
+}
+
+- (void)testMul {
+    assertEquals(((@[tuple(@1, @3), tuple(@1, @1), tuple(@0, @3), tuple(@0, @1), tuple(@2, @3), tuple(@2, @1)])), ([[[(@[@1, @0, @2]) chain] mul:(@[@3, @1])] toArray]));
+}
+
+- (void)testTop {
+    assertEquals(((@[@1, @0])), ([[[(@[@1, @0, @2]) chain] topNumbers:2] toArray]));
+    assertTrue(([[[[(@[@1, @0, @2]) chain] topNumbers:0] toArray] isEmpty]));
+    assertEquals(((@[@1, @0, @2])), ([[[(@[@1, @0, @2]) chain] topNumbers:4] toArray]));
+}
+
+- (void)testSort {
+    assertEquals(((@[@0, @1, @2])), ([[[(@[@1, @0, @2]) chain] sort] toArray]));
+    assertEquals(((@[@2, @1, @0])), ([[[(@[@1, @0, @2]) chain] sortDesc] toArray]));
+}
+
+- (void)testReverse {
+    assertEquals(((@[@2, @0, @1])), ([[[(@[@1, @0, @2]) chain] reverse] toArray]));
+}
+
+- (void)testGroupBy {
+    assertEquals(([[(@[((NSArray*)((@[@1, @0]))), (@[@2])]) chain] toSet]), ([[[[(@[@1, @0, @2]) chain] groupBy:^id(id _) {
+        return numb(unumi(_) <= 1);
+    }] map:^NSArray*(CNTuple* _) {
+        return ((CNTuple*)(_)).b;
+    }] toSet]));
+    assertEquals(([[(@[@-1, @3]) chain] toSet]), ([[[[(@[@1, @-2, @3]) chain] groupBy:^id(id _) {
+        return numb(unumi(_) <= 1);
+    } fold:^id(id a, id b) {
+        return numi(unumi(a) + unumi(b));
+    } withStart:^id() {
+        return @0;
+    }] map:^id(CNTuple* _) {
+        return ((CNTuple*)(_)).b;
+    }] toSet]));
+}
+
+- (void)testDistinct {
+    assertEquals(((@[@1, @3, @4, @2])), ([[[(@[@1, @3, @1, @4, @4, @2]) chain] distinct] toArray]));
+}
+
+- (void)testCombinations {
+    assertEquals(((@[tuple(@2, @0), tuple(@2, @1), tuple(@0, @1)])), ([[[(@[@2, @0, @1]) chain] combinations] toArray]));
+}
+
+- (void)testUncombinations {
+    assertEquals(((@[@2, @0, @1])), ([[[(@[tuple(@2, @0), tuple(@2, @1), tuple(@0, @1)]) chain] uncombinations] toArray]));
+}
+
+- (void)testNeighbours {
+    assertEquals(((@[tuple(@2, @0), tuple(@0, @1)])), ([[[(@[@2, @0, @1]) chain] neighbours] toArray]));
+    assertEquals(((@[tuple(@2, @0), tuple(@0, @1), tuple(@1, @2)])), ([[[(@[@2, @0, @1]) chain] neighboursRing] toArray]));
+}
+
 - (CNClassType*)type {
     return [CNChainTest type];
 }
@@ -123,5 +203,4 @@ static CNClassType* _CNChainTest_type;
 }
 
 @end
-
 

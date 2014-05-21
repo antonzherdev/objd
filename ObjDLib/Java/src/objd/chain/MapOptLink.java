@@ -1,15 +1,16 @@
 package objd.chain;
 
 import objd.lang.*;
+import objd.collection.Go;
 
 public class MapOptLink<A, B> extends ChainLink_impl<A, B> {
     public final F<A, B> f;
     @Override
     public Yield<A> buildYield(final Yield<B> yield) {
-        return Yield.<A, B>decorateBaseYield(yield, new F<A, Integer>() {
+        return Yield.<A, B>decorateBaseYield(yield, new F<A, Go>() {
             @Override
-            public Integer apply(final A item) {
-                final Integer __tmp_0r;
+            public Go apply(final A item) {
+                final Go __tmp_0r;
                 {
                     final B _ = MapOptLink.this.f.apply(item);
                     if(_ != null) {
@@ -21,7 +22,7 @@ public class MapOptLink<A, B> extends ChainLink_impl<A, B> {
                 if(__tmp_0r != null) {
                     return __tmp_0r;
                 } else {
-                    return ((int)(0));
+                    return Go.Continue;
                 }
             }
         });
