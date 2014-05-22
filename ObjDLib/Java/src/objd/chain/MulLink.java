@@ -8,7 +8,7 @@ public class MulLink<A, B> extends ChainLink_impl<A, Tuple<A, B>> {
     private final Traversable<T> _collection;
     @Override
     public Yield<A> buildYield(final Yield<Tuple<A, B>> yield) {
-        final Iterable<B> c = this._collection.ERROR: Unknown as<Iterable#T<B#G>>;
+        final Iterable<B> c = Util.<Iterable<B>>as(Iterable.class, this._collection);
         return Yield.<A, Tuple<A, B>>decorateBaseBeginYield(yield, ((c != null) ? (new F<Integer, Go>() {
             @Override
             public Go apply(final Integer size) {

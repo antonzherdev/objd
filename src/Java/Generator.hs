@@ -269,6 +269,10 @@ genExp env (D.Dot l (D.Is dtp)) = do
 	l' <- genExp env l
 	dtp' <- genTp dtp
 	return $ J.InstanceOf l' dtp'
+genExp env (D.Dot l (D.As dtp)) = do 
+	l' <- genExp env l
+	dtp' <- genTp dtp
+	return $ J.Dot (J.Ref "Util") $ J.Call "as" [dtp'] [J.Dot (J.Ref $ D.dataTypeClassName dtp) (J.Ref "class"), l']
 genExp env (D.Dot l (D.CastDot dtp)) = do 
 	l' <- genExp env l
 	dtp' <- genTp dtp

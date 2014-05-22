@@ -14,7 +14,7 @@ public class PrependLink<T> extends ChainLink_impl<T, T> {
             public Go apply(final Integer size) {
                 final Integer __tmprp1_0rp0b;
                 {
-                    final Iterable<T> _ = PrependLink.this.collection.ERROR: Unknown as<Iterable#T<T#G>>;
+                    final Iterable<T> _ = Util.<Iterable<T>>as(Iterable.class, PrependLink.this.collection);
                     if(_ != null) {
                         __tmprp1_0rp0b = _.count();
                     } else {

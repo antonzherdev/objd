@@ -9,7 +9,7 @@ public class SourceLink<T> extends ChainLink_impl<void, T> {
     public final Traversable<T> collection;
     @Override
     public Yield<Void> buildYield(final Yield<T> yield) {
-        final Iterable<T> c = this.collection.ERROR: Unknown as<Iterable#T<T#G>>;
+        final Iterable<T> c = Util.<Iterable<T>>as(Iterable.class, this.collection);
         return Yield.<Void>makeBeginEnd(((c != null) ? (new F<Integer, Go>() {
             @Override
             public Go apply(final Integer size) {
