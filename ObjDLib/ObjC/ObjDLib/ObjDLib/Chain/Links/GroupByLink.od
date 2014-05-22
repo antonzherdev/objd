@@ -1,6 +1,6 @@
 package objd.chain
 
-class ImGroupByLink<T, K, V, W>(val by : T -> K, val start : () -> V, val fold : (V, T) -> V, val factor : float) extends ChainLink<T, (K, W)> {
+class ImGroupByLink<T, K, V>(val factor : float, val by : T -> K, val start : () -> V, val fold : (V, T) -> V) extends ChainLink<T, (K, V)> {
     override def build(yield : Yield<(K, V)>) : Yield<T> = {
         val m = MHashMap<K, V>()
         Yield.decorate<T>(
@@ -20,7 +20,7 @@ class ImGroupByLink<T, K, V, W>(val by : T -> K, val start : () -> V, val fold :
     }
 }
 
-class MGroupByLink<T, K, V, W>(val by : T -> K, val start : () -> V, val append : (V, T) -> void, val finish : (V -> W) ,val factor : float) extends ChainLink<T, (K, W)> {
+class MGroupByLink<T, K, V, W>(val factor : float, val by : T -> K, val start : () -> V, val append : (V, T) -> void, val finish : (V -> W)) extends ChainLink<T, (K, W)> {
     override def build(yield : Yield<(K, V)>) : Yield<T> = {
         val m = MHashMap<K, V>()
         Yield.decorate<T>(

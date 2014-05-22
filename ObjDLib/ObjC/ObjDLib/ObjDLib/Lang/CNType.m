@@ -12,10 +12,6 @@
     return self;
 }
 
-- (Class)cls {
-    @throw @"Method cls is abstract";
-}
-
 - (NSString*)name {
     @throw @"Method name is abstract";
 }
@@ -31,6 +27,11 @@
 - (BOOL)isEqualToOther:(CNType *)other {
     return self == other;
 }
+
+- (BOOL)isInstanceObj:(NSObject *)obj {
+    return NO;
+}
+
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
@@ -75,6 +76,54 @@ static CNClassType * _ODClassType_type;
 + (CNClassType *)type {
     return _ODClassType_type;
 }
+
+- (BOOL)isInstanceObj:(NSObject *)obj {
+    return [obj isKindOfClass:_cls];
+}
+
+@end
+
+@implementation CNTraitType {
+    Protocol * _cls;
+    NSString* _name;
+}
+static CNClassType * _ODProtocolType_type;
+@synthesize cls = _cls;
+
++ (id)classTypeWithCls:(Protocol*)cls name:(NSString*)name{
+    return [[CNTraitType alloc] initWithCls:cls name:name];
+}
+
+- (id)initWithCls:(Protocol*)cls name:(NSString*)name{
+    self = [super init];
+    if(self) {
+        _cls = cls;
+        _name = name;
+    }
+
+    return self;
+}
+
++ (void)initialize {
+    [super initialize];
+    _ODProtocolType_type = [CNClassType classTypeWithCls:[CNTraitType class]];
+}
+
+- (NSString*)name {
+    return _name;
+}
+
+- (CNClassType *)type {
+    return [CNTraitType type];
+}
+
++ (CNClassType *)type {
+    return _ODProtocolType_type;
+}
+
+- (BOOL)isInstanceObj:(NSObject *)obj {
+    return [obj conformsToProtocol:_cls];
+}
 @end
 
 
@@ -117,6 +166,10 @@ static CNClassType * _ODPType_type;
 
 + (CNClassType *)type {
     return _ODPType_type;
+}
+
+- (BOOL)isInstanceObj:(NSObject *)obj {
+    return [obj isKindOfClass:_cls];
 }
 @end
 

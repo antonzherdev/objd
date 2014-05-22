@@ -37,6 +37,17 @@
 - (void)testCombinations;
 - (void)testUncombinations;
 - (void)testNeighbours;
+- (void)testExclude;
+- (void)testIntersect;
+- (void)testFold;
+- (void)testCount;
+- (void)testHead;
+- (void)testLast;
+- (void)testRandom;
+- (void)testGap;
+- (void)testMin;
+- (void)testMax;
+- (void)testToString;
 + (CNClassType*)type;
 @end
 

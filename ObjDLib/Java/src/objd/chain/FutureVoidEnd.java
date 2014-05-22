@@ -7,7 +7,7 @@ import objd.concurrent.AtomicBool;
 import objd.concurrent.Future;
 import objd.collection.Go;
 
-public class FutureVoidEnd<T> {
+public class FutureVoidEnd {
     private final Promise<Void> _promise;
     private boolean _stopped;
     private AtomicInt _counter;
@@ -16,20 +16,20 @@ public class FutureVoidEnd<T> {
     public Future<Void> future() {
         return this._promise;
     }
-    public Yield<Future<T>> yield() {
-        return Yield.<Future<T>>makeBeginYieldEnd(new F<Integer, Go>() {
+    public Yield<Future<Void>> yield() {
+        return Yield.<Future<Void>>makeBeginYieldEnd(new F<Integer, Go>() {
             @Override
             public Go apply(final Integer size) {
                 return Go.Continue;
             }
-        }, new F<Future<T>, Go>() {
+        }, new F<Future<Void>, Go>() {
             @Override
-            public Go apply(final Future<T> fut) {
+            public Go apply(final Future<Void> fut) {
                 if(!(FutureVoidEnd.this._stopped)) {
                     FutureVoidEnd.this._counter.incrementAndGet();
-                    fut.onCompleteF(new P<Try<T>>() {
+                    fut.onCompleteF(new P<Try<Void>>() {
                         @Override
-                        public void apply(final Try<T> tr) {
+                        public void apply(final Try<Void> tr) {
                             if(!(FutureVoidEnd.this._stopped)) {
                                 if(tr.isFailure()) {
                                     FutureVoidEnd.this._stopped = true;

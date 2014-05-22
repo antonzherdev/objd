@@ -29,7 +29,22 @@ public abstract class Traversable_impl<T> implements Traversable<T> {
         });
     }
     public Chain<T> chain() {
-        return Chain.<T>chainWithCollection(this);
+        return Chain.<T>applyCollection(this);
+    }
+    public boolean containsItem(final T item) {
+        final Mut<Boolean> ret = new Mut<Boolean>(false);
+        goOn(new F<T, Go>() {
+            @Override
+            public Go apply(final T x) {
+                if(x.equals(item)) {
+                    ret.value = true;
+                    return Go.Break;
+                } else {
+                    return Go.Continue;
+                }
+            }
+        });
+        return ret.value;
     }
     public T findWhere(final F<T, Boolean> where) {
         final Mut<T> ret = new Mut<T>(null);

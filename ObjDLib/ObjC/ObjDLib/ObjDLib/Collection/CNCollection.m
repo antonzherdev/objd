@@ -134,7 +134,20 @@
 }
 
 - (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
+    return [CNChain applyCollection:self];
+}
+
+- (BOOL)containsItem:(id)item {
+    __block BOOL ret = NO;
+    [self goOn:^CNGoR(id x) {
+        if([x isEqual:item]) {
+            ret = YES;
+            return CNGo_Break;
+        } else {
+            return CNGo_Continue;
+        }
+    }];
+    return ret;
 }
 
 - (id)findWhere:(BOOL(^)(id))where {
@@ -301,8 +314,16 @@
     return ret;
 }
 
+- (BOOL)containsItem:(id)item {
+    id<CNIterator> i = [self iterator];
+    while([i hasNext]) {
+        if([[i next] isEqual:i]) return YES;
+    }
+    return NO;
+}
+
 - (NSString*)description {
-    return [[self chain] toStringWithStart:@"[" delimiter:@", " end:@"]"];
+    return [[self chain] toStringStart:@"[" delimiter:@", " end:@"]"];
 }
 
 - (NSUInteger)hash {
@@ -330,14 +351,6 @@
 
 - (BOOL)isEmpty {
     return !([[self iterator] hasNext]);
-}
-
-- (BOOL)containsItem:(id)item {
-    id<CNIterator> i = [self iterator];
-    while([i hasNext]) {
-        if([[i next] isEqual:i]) return YES;
-    }
-    return NO;
 }
 
 - (id)copyWithZone:(NSZone*)zone {

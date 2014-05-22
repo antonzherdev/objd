@@ -1,6 +1,6 @@
 package objd.chain
 
-class FilterLink<T>(val predicate : T -> bool, val factor : float) extends ChainLink<T, T> {
+class FilterLink<T>(val factor : float, val predicate : T -> bool) extends ChainLink<T, T> {
     override def build(yield : Yield<T>) : Yield<T> = {
         Yield.decorate<T>(
             base = yield,

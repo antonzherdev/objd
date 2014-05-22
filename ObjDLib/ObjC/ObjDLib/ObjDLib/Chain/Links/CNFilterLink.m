@@ -4,18 +4,18 @@
 #import "CNType.h"
 @implementation CNFilterLink
 static CNClassType* _CNFilterLink_type;
-@synthesize predicate = _predicate;
 @synthesize factor = _factor;
+@synthesize predicate = _predicate;
 
-+ (instancetype)filterLinkWithPredicate:(BOOL(^)(id))predicate factor:(CGFloat)factor {
-    return [[CNFilterLink alloc] initWithPredicate:predicate factor:factor];
++ (instancetype)filterLinkWithFactor:(CGFloat)factor predicate:(BOOL(^)(id))predicate {
+    return [[CNFilterLink alloc] initWithFactor:factor predicate:predicate];
 }
 
-- (instancetype)initWithPredicate:(BOOL(^)(id))predicate factor:(CGFloat)factor {
+- (instancetype)initWithFactor:(CGFloat)factor predicate:(BOOL(^)(id))predicate {
     self = [super init];
     if(self) {
-        _predicate = [predicate copy];
         _factor = factor;
+        _predicate = [predicate copy];
     }
     
     return self;

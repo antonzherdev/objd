@@ -772,6 +772,8 @@ data Exp = Nop
 	| Cast DataType Exp
 	| As DataType
 	| Is DataType
+	| AsTp DataType Exp
+	| IsTp DataType Exp
 	| CastDot DataType
 	| Try Exp Exp
 	| Break
@@ -828,6 +830,8 @@ instance Show Exp where
 	show (Cast tp e) = show e ++ ".cast<" ++ show tp ++ ">"
 	show (As tp) = "as<" ++ show tp ++ ">"
 	show (Is tp) = "is<" ++ show tp ++ ">"
+	show (AsTp tp e) = "as<" ++ show tp ++ ">(" ++ show e ++ ")"
+	show (IsTp tp e) = "is<" ++ show tp ++ ">(" ++ show e ++ ")"
 	show (CastDot tp) = "cast<" ++ show tp ++ ">"
 	show (Break) = "break"
 	show (Continue) = "continue"
@@ -884,6 +888,8 @@ forExp f ee = mplus (go ee) (f ee)
 		go (Return _ e) = forExp f e
 		go (Cast _ e) = forExp f e
 		go (Some _ e) = forExp f e
+		go (IsTp _ e) = forExp f e
+		go (AsTp _ e) = forExp f e
 		go (Throw e) = forExp f e
 		go (Not e) = forExp f e
 		go (Negative e) = forExp f e
@@ -924,6 +930,8 @@ mapExp f ee = fromMaybe (go ee) (f ee)
 		go (Some ch e) = Some ch $ mapExp f e
 		go (Throw e) = Throw $ mapExp f e
 		go (Not e) = Not $ mapExp f e
+		go (IsTp tp e) = IsTp tp $ mapExp f e
+		go (AsTp tp e) = AsTp tp $ mapExp f e
 		go (Negative e) = Negative $ mapExp f e
 		go (Lambda p1 e p2) = Lambda p1 (mapExp f e) p2
 		go (FirstTry p e) = FirstTry p $ mapExp f e
@@ -1049,8 +1057,10 @@ exprDataType (Deferencing e) = case exprDataType e of
 	r -> TPUnknown $ show r ++ " is not a reference"
 exprDataType (Cast dtp _) = dtp
 exprDataType (As dtp) = option False $ wrapGeneric dtp
+exprDataType (AsTp dtp _) = option False $ wrapGeneric dtp
 exprDataType (CastDot dtp) = dtp
 exprDataType (Is _) = TPBool
+exprDataType (IsTp _ _) = TPBool
 exprDataType Break = TPVoid
 exprDataType (Null tp) = TPPointer tp
 exprDataType StringBuild{} = TPString

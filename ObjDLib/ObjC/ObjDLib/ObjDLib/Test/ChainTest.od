@@ -113,7 +113,7 @@ class ChainTest extends TestCase {
 
     def testGroupBy {
         assertEquals([[1, 0], [2]].chain.toSet, [1, 0, 2].chain.group(by = _ <= 1).map(_.b).toSet)
-        assertEquals([-1, 3].chain.toSet, [1, -2, 3].chain.group<bool, int>(by = _ <= 1, fold = (a, b) -> a + b, withStart = 0).map(_.b).toSet)
+        assertEquals([-1, 3].chain.toSet, [1, -2, 3].chain.group<bool, int>(by = _ <= 1, start = 0, fold = (a, b) -> a + b).map(_.b).toSet)
     }
 
     def testDistinct {
@@ -131,5 +131,51 @@ class ChainTest extends TestCase {
     def testNeighbours {
         assertEquals([(2, 0), (0, 1)], [2, 0, 1].chain.neighbours.toArray)
         assertEquals([(2, 0), (0, 1), (1, 2)], [2, 0, 1].chain.neighboursRing.toArray)
+    }
+
+    def testExclude {
+        assertEquals([0, 3, 0], [2, 0, 1, 2, 3, 0].chain.exclude([2, 1]).toArray)
+    }
+
+    def testIntersect {
+        assertEquals([2, 1, 2], [2, 0, 1, 2, 3, 0].chain.intersect([2, 1]).toArray)
+    }
+
+    def testFold {
+        assertEquals(3, [2, 0, 1].chain.fold(start = 0) {r, a -> r + a})
+    }
+
+    def testCount {
+        assertEquals(3, [2, 0, 1].chain.count)
+    }
+
+    def testHead {
+        assertEquals(2, [2, 0, 1].chain.head.get)
+    }
+
+    def testLast {
+        assertEquals(1, [2, 0, 1].chain.last.get)
+    }
+
+    def testRandom {
+        assertTrue([2, 0, 1].contains([2, 0, 1].chain.randomItem.get))
+    }
+
+    def testGap {
+        assertEquals((0, 2), [2, 0, 1].chain.gap.get)
+    }
+
+    def testMin {
+        assertEquals(0, [2, 0, 1].chain.min.get)
+    }
+
+    def testMax {
+        assertEquals(3, [2, 3, 0, 1].chain.max.get)
+    }
+
+    def testToString {
+        assertEquals("acb", ["a", "c", "b"].chain.map(_.head.get).toString)
+        assertEquals("2, 0, 1", [2, 0, 1].chain.toString(", "))
+        assertEquals("[2, 0, 1]", [2, 0, 1].chain.toString("[", ", ", "]"))
     }
 }

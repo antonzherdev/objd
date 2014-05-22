@@ -1,8 +1,8 @@
 #import "objd.h"
 #import "CNQueue.h"
 
-#import "CNList.h"
 #import "CNType.h"
+#import "CNList.h"
 @implementation CNQueue_impl
 
 - (id)copyWithZone:(NSZone*)zone {

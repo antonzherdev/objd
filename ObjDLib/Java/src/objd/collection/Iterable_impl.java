@@ -46,8 +46,18 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
         return ret;
     }
     @Override
+    public boolean containsItem(final T item) {
+        final Iterator<T> i = this.iterator();
+        while(i.hasNext()) {
+            if(i.next().equals(i)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    @Override
     public String toString() {
-        return this.chain().toStringWithStartDelimiterEnd("[", ", ", "]");
+        return this.chain().toStringStartDelimiterEnd("[", ", ", "]");
     }
     @Override
     public int hashCode() {
@@ -69,14 +79,5 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
     }
     public boolean isEmpty() {
         return !(this.iterator().hasNext());
-    }
-    public boolean containsItem(final T item) {
-        final Iterator<T> i = this.iterator();
-        while(i.hasNext()) {
-            if(i.next().equals(i)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

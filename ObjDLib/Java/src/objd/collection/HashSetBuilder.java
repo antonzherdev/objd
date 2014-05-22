@@ -12,7 +12,10 @@ public class HashSetBuilder<T> extends Builder_impl<T, ImHashSet<T>> {
     public ImHashSet<T> build() {
         return this.set.im();
     }
-    public HashSetBuilder() {
-        this.set = new MHashSet<T>();
+    public HashSetBuilder(final int capacity) {
+        this.set = new MHashSet<T>(capacity);
+    }
+    static public <T> HashSetBuilder<T> apply() {
+        return new HashSetBuilder<T>(((int)(0)));
     }
 }

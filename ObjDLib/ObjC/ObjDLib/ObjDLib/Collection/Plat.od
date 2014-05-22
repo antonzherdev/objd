@@ -5,6 +5,7 @@ stub class ImHashSet<T> extends ImSet<T> {
 }
 
 stub class MHashSet<T> extends MSet<T> {
+    static def apply<T>(capacity : uint) : MHashSet<T>
     override def im : ImHashSet<T>
     override def imCopy : ImHashSet<T>
 }
@@ -53,12 +54,14 @@ stub class ImHashMap<K, V> extends ImMap<K, V> with HashMap<K, V> {
 
 @Java
 stub class MHashMap<K, V> extends MMap<K, V> with HashMap<K, V> {
+    static def apply<K, V>(capacity : uint) : MHashMap<K, V>
     override def im : ImHashMap<K, V>
     override def imCopy : ImHashMap<K, V>
 }
 
 @ObjC
 stub class MHashMap<K, V> extends MMap<K, V> with HashMap<K, V> {
+    static def apply<K, V>(capacity : uint) : MHashMap<K, V>
     override def im : ImHashMap<K, V>
     override def imCopy : ImHashMap<K, V>
     override def for(each : ((K, V)) -> void)

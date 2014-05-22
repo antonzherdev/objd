@@ -8,6 +8,7 @@ public interface Traversable<T> {
     void parForEach(final P<T> each);
     Go goOn(final F<T, Go> on);
     Chain<T> chain();
+    boolean containsItem(final T item);
     T findWhere(final F<T, Boolean> where);
     boolean existsWhere(final F<T, Boolean> where);
     boolean allConfirm(final F<T, Boolean> confirm);

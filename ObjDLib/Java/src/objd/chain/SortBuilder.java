@@ -30,7 +30,7 @@ public class SortBuilder<A> {
         return this;
     }
     public Chain<A> endSort() {
-        return this.chain.sort(new F2<A, A, Integer>() {
+        return this.chain.sortComparator(new F2<A, A, Integer>() {
             @Override
             public Integer apply(final A x, final A y) {
                 int ret = 0;

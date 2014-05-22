@@ -4,12 +4,27 @@
 
 
 @implementation NSMutableSet (CNChain)
++ (CNType *)type {
+    static CNClassType* __type = nil;
+    if(__type == nil) __type = [CNClassType classTypeWithCls:[NSMutableSet class]];
+    return nil;
+}
+
+- (CNType*) type {
+    return [NSMutableSet type];
+}
+
+
 + (id)hashSet {
     return [NSMutableSet set];
 }
 
 - (void)appendItem:(id)object {
     [self addObject:wrapNil(object)];
+}
+
++ (NSMutableSet *)applyCapacity:(NSUInteger)capacity {
+    return [NSMutableSet setWithCapacity:capacity];
 }
 
 - (BOOL)removeItem:(id)object {

@@ -115,8 +115,8 @@ trait MSeq<T> extends Seq<T> with MIterable<T> {
     }
 }
 
-class ArrayBuilder<T> extends Builder<T, ImArray<T>> {
-    private val array = MArray<T>()
+class ArrayBuilder<T>(capacity : uint = 0) extends Builder<T, ImArray<T>> {
+    private val array = MArray<T>(capacity)
 
     override def append(item : T) {
         array.append(item)

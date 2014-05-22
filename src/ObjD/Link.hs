@@ -264,8 +264,8 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 				className = D.className cl, 
 				_classExtends = if D.className cl == "Object" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
 				_classDefs = 
-					if isObject then fields ++ defs ++ [typeField | not isSeltTrait] 
-					else fields ++ defs ++ constr constrPars ++ [typeField | not isSeltTrait] 
+					if isObject then fields ++ defs ++ [typeField]
+					else fields ++ defs ++ constr constrPars ++ [typeField] 
 				{-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
 				_classGenerics = generics,
 				_classImports = clImports,
@@ -768,6 +768,7 @@ dataType env (D.DataType name gens) = case name of
 	"void" -> TPVoid
 	"string" -> TPString
 	"bool" -> TPBool
+	"Bool" -> wrapGeneric TPBool
 	"self" -> TPSelf $ dataTypeClass env $ envSelf env
 	"any" -> TPAny
 	"Pointer" -> TPPointer $ case gens of
@@ -1571,11 +1572,20 @@ linkCase env (D.Case mainExpr items) =
  - Calling 
  ------------------------------------------------------------------------------------------------------------------------------}
 
+classTypeClass :: DataType -> DataType
+classTypeClass (TPClass TPMClass [g] Class{className = "ClassType"}) = g
+classTypeClass (TPClass TPMClass [g] Class{className = "PType"}) = g
+classTypeClass _ = TPUnknown "Not Type"
 
 exprCall :: Env-> Maybe DataType -> D.Exp -> Exp
 exprCall _ (Just (TPUnknown t)) e = ExpDError t e
 exprCall env (Just _) (D.Call "as" Nothing [tp]) = As $ dataType env tp
 exprCall env (Just _) (D.Call "is" Nothing [tp]) = Is $ dataType env tp
+exprCall env (Just _) (D.Call "is" (Just [(_, e)]) [tp]) = IsTp (dataType env tp) (expr env e)
+exprCall env (Just _) (D.Call "is" (Just [(_, e)]) _) = let e' = expr env e in IsTp (classTypeClass $ exprDataType e') e' 
+exprCall env (Just _) (D.Call "as" (Just [(_, e)]) [tp]) = AsTp (dataType env tp) (expr env e)
+exprCall env (Just _) (D.Call "as" (Just [(_, e)]) _) = let e' = expr env e in AsTp (classTypeClass $ exprDataType e') e' 
+
 exprCall env (Just _) (D.Call "cast" Nothing [tp]) = CastDot $ dataType env tp
 exprCall env strictClass cll@(D.Call name pars gens) = 
 	case tryExprCall env strictClass cll of
@@ -1856,11 +1866,11 @@ inlineCall env e = let
 
 	replacedExp = mapExp rep $ defBody def
 	rep :: Exp -> Maybe Exp
-	rep (Dot (Call d _ [] _) (Call Def{defMods = mbLamdaMods} _ lambdaCallPars _)) 
-		| DefModApplyLambda `elem` mbLamdaMods = fmap (unwrapLambda (map (mapExp rep . snd) lambdaCallPars)) $ lookup d refs
-	rep (LambdaCall (Call d _ [] _)) = fmap (unwrapLambda []) $ lookup d refs
-	rep (Call d _ [] _) 
-		| DefModField `elem` defMods d || DefModLocal `elem` defMods d = lookup d refs
+	rep (Dot (Call d tp [] _) (Call Def{defMods = mbLamdaMods} _ lambdaCallPars _)) 
+		| DefModApplyLambda `elem` mbLamdaMods = fmap (unwrapLambda (map (mapExp rep . snd) lambdaCallPars)) $ findRef d tp
+	rep (LambdaCall (Call d tp [] _)) = fmap (unwrapLambda []) $ findRef d tp
+	rep (Call d tp [] _) 
+		| DefModField `elem` defMods d || DefModLocal `elem` defMods d = findRef d tp
 	rep (Call d tp cpars cgens) =
 		Just $ Call d 
 			(repgens tp) 
@@ -1869,7 +1879,19 @@ inlineCall env e = let
 	rep (Val b dd) = 
 		fmap (\d -> Val b $ d{defBody = mapExp rep (defBody d)} ) $ lookup dd mapDeclaredValsGenerics
 	rep (Self _) = lookup (fst selfPar) refs
+	rep (Is tp) = Just $ Is $ repgens tp
+	rep (As tp) = Just $ As $ repgens tp
 	rep _ = Nothing
+
+	findRef :: Def -> DataType -> Maybe Exp
+	findRef d tp = fmap checkOpt $ lookup d refs
+		where
+			checkOpt ee = case tp of 
+				TPOption True _ -> case ee of
+					Call d' (TPOption False otp) [] [] -> Call d' (TPOption True otp) [] []
+					_ -> ee
+				_ -> ee
+
 	refs :: [(Def, Exp)]
 	refs = (map (second callRef) vals) ++ pars' ++ map (second callRef) mapDeclaredValsGenerics
 	vals = (map dec parsForDeclareVars)

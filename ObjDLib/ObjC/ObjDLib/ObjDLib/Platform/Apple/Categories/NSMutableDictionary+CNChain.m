@@ -2,6 +2,17 @@
 
 
 @implementation NSMutableDictionary (CNChain)
++ (CNType *)type {
+    static CNClassType* __type = nil;
+    if(__type == nil) __type = [CNClassType classTypeWithCls:[NSMutableDictionary class]];
+    return nil;
+}
+
+- (CNType*) type {
+    return [NSMutableDictionary type];
+}
+
+
 - (void)setKey:(id)key value:(id)value {
     [self setObject:wrapNil(value) forKey:wrapNil(key)];
 }

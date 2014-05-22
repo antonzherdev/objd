@@ -12,7 +12,10 @@ public class ArrayBuilder<T> extends Builder_impl<T, ImArray<T>> {
     public ImArray<T> build() {
         return this.array.im();
     }
-    public ArrayBuilder() {
-        this.array = new MArray<T>();
+    public ArrayBuilder(final int capacity) {
+        this.array = new MArray<T>(capacity);
+    }
+    static public <T> ArrayBuilder<T> apply() {
+        return new ArrayBuilder<T>(((int)(0)));
     }
 }

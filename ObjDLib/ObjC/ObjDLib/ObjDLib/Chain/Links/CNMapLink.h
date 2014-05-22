@@ -52,14 +52,14 @@
 
 @interface CNFlatMapLink : CNChainLink_impl {
 @protected
-    id<CNTraversable>(^_f)(id);
     CGFloat _factor;
+    id<CNTraversable>(^_f)(id);
 }
-@property (nonatomic, readonly) id<CNTraversable>(^f)(id);
 @property (nonatomic, readonly) CGFloat factor;
+@property (nonatomic, readonly) id<CNTraversable>(^f)(id);
 
-+ (instancetype)flatMapLinkWithF:(id<CNTraversable>(^)(id))f factor:(CGFloat)factor;
-- (instancetype)initWithF:(id<CNTraversable>(^)(id))f factor:(CGFloat)factor;
++ (instancetype)flatMapLinkWithFactor:(CGFloat)factor f:(id<CNTraversable>(^)(id))f;
+- (instancetype)initWithFactor:(CGFloat)factor f:(id<CNTraversable>(^)(id))f;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
 + (CNClassType*)type;

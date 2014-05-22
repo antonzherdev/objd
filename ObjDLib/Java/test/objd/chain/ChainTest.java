@@ -28,7 +28,7 @@ public class ChainTest extends TestCase {
         repeatTimesF(((int)(1000)), new P0() {
             @Override
             public void apply() {
-                final ImArray<Tuple<Integer, Promise<Integer>>> arr = 0.to(1000).chain().<Tuple<Integer, Promise<Integer>>>map(new F<Integer, Tuple<Integer, Promise<Integer>>>() {
+                final ImArray<Tuple<Integer, Promise<Integer>>> arr = 0.to(1000).chain().<Tuple<Integer, Promise<Integer>>>mapF(new F<Integer, Tuple<Integer, Promise<Integer>>>() {
                     @Override
                     public Tuple<Integer, Promise<Integer>> apply(final Integer i) {
                         return new Tuple<Integer, Promise<Integer>>(i, Promise.<Integer>apply());
@@ -45,7 +45,7 @@ public class ChainTest extends TestCase {
                         });
                     }
                 });
-                final Future<ImArray<Integer>> fut = arr.chain().<Promise<Integer>>map(new F<Tuple<Integer, Promise<Integer>>, Promise<Integer>>() {
+                final Future<ImArray<Integer>> fut = arr.chain().<Promise<Integer>>mapF(new F<Tuple<Integer, Promise<Integer>>, Promise<Integer>>() {
                     @Override
                     public Promise<Integer> apply(final Tuple<Integer, Promise<Integer>> _) {
                         return _.b;
@@ -56,12 +56,12 @@ public class ChainTest extends TestCase {
                         return chain.toArray();
                     }
                 });
-                final ImArray<Integer> set = arr.chain().<Integer>map(new F<Tuple<Integer, Promise<Integer>>, Integer>() {
+                final ImArray<Integer> set = arr.chain().<Integer>mapF(new F<Tuple<Integer, Promise<Integer>>, Integer>() {
                     @Override
                     public Integer apply(final Tuple<Integer, Promise<Integer>> _) {
                         return _.a;
                     }
-                }).<Integer>map(new F<Integer, Integer>() {
+                }).<Integer>mapF(new F<Integer, Integer>() {
                     @Override
                     public Integer apply(final Integer _) {
                         return _ * _;
@@ -72,7 +72,7 @@ public class ChainTest extends TestCase {
         });
     }
     public void testVoidFuture() {
-        final ImArray<Promise<Void>> arr = 0.to(1000).chain().<Promise<Void>>map(new F<Integer, Promise<Void>>() {
+        final ImArray<Promise<Void>> arr = 0.to(1000).chain().<Promise<Void>>mapF(new F<Integer, Promise<Void>>() {
             @Override
             public Promise<Void> apply(final Integer i) {
                 return Promise.<Void>apply();
@@ -96,7 +96,7 @@ public class ChainTest extends TestCase {
         .<Integer>assertEqualsAB(count.intValue(), ((int)(arr.count())));
     }
     public void testMap() {
-        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(4, 0, 2), ImArray.fromObjects(2, 0, 1).chain().<Integer>map(new F<Integer, Integer>() {
+        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(4, 0, 2), ImArray.fromObjects(2, 0, 1).chain().<Integer>mapF(new F<Integer, Integer>() {
             @Override
             public Integer apply(final Integer x) {
                 return 2 * x;
@@ -104,7 +104,7 @@ public class ChainTest extends TestCase {
         }).toArray());
     }
     public void testMapOpt() {
-        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(4, 2), ImArray.fromObjects(2, 0, 1).chain().<Integer>mapOpt(new F<Integer, Integer>() {
+        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(4, 2), ImArray.fromObjects(2, 0, 1).chain().<Integer>mapOptF(new F<Integer, Integer>() {
             @Override
             public Integer apply(final Integer x) {
                 if(x == 0) {
@@ -116,7 +116,7 @@ public class ChainTest extends TestCase {
         }).toArray());
     }
     public void testFlatMap() {
-        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(2, 4, 0, 0, 1, 2), ImArray.fromObjects(2, 0, 1).chain().<Integer>flatMap(new F<Integer, ImArray<Integer>>() {
+        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(2, 4, 0, 0, 1, 2), ImArray.fromObjects(2, 0, 1).chain().<Integer>flatMapF(new F<Integer, ImArray<Integer>>() {
             @Override
             public ImArray<Integer> apply(final Integer x) {
                 return ImArray.fromObjects(x, 2 * x);
@@ -127,7 +127,7 @@ public class ChainTest extends TestCase {
         .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(1, 5, 2, 3, 2), ImArray.fromObjects(((ImArray<Integer>)(ImArray.fromObjects(1, 5))), ((ImArray<Integer>)(ImArray.fromObjects(2, 3))), ImArray.fromObjects(2)).chain().<Integer>flat().toArray());
     }
     public void testZip() {
-        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(2, 3), ImArray.fromObjects(1, 0, 3).chain().<Integer, Integer>zipABy(ImArray.fromObjects(1, 3), new F2<Integer, Integer, Integer>() {
+        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(2, 3), ImArray.fromObjects(1, 0, 3).chain().<Integer, Integer>zipBBy(ImArray.fromObjects(1, 3), new F2<Integer, Integer, Integer>() {
             @Override
             public Integer apply(final Integer a, final Integer b) {
                 return a + b;
@@ -135,7 +135,7 @@ public class ChainTest extends TestCase {
         }).toArray());
     }
     public void testZip3() {
-        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(3, 4), ImArray.fromObjects(1, 0, 3).chain().<Integer, Integer, Integer>zip3ABBy(ImArray.fromObjects(1, 3), ImArray.fromObjects(1, 1, 2, 4), new F3<Integer, Integer, Integer, Integer>() {
+        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(3, 4), ImArray.fromObjects(1, 0, 3).chain().<Integer, Integer, Integer>zip3BCBy(ImArray.fromObjects(1, 3), ImArray.fromObjects(1, 1, 2, 4), new F3<Integer, Integer, Integer, Integer>() {
             @Override
             public Integer apply(final Integer a, final Integer b, final Integer c) {
                 return a + b + c;
@@ -144,7 +144,7 @@ public class ChainTest extends TestCase {
     }
     public void testZipFor() {
         final Mut<ImArray<Integer>> arr = new Mut<ImArray<Integer>>(ImArray.fromObjects());
-        ImArray.fromObjects(1, 0, 3).chain().<Integer>zipForABy(ImArray.fromObjects(1, 3), new P2<Integer, Integer>() {
+        ImArray.fromObjects(1, 0, 3).chain().<Integer>zipForBBy(ImArray.fromObjects(1, 3), new P2<Integer, Integer>() {
             @Override
             public void apply(final Integer a, final Integer b) {
                 arr.value = arr.value.addItem(a + b);
@@ -153,13 +153,13 @@ public class ChainTest extends TestCase {
         .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(2, 3), arr.value);
     }
     public void testAppend() {
-        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(1, 0, 2, 3, 1), ImArray.fromObjects(1, 0, 2).chain().append(ImArray.fromObjects(3, 1)).toArray());
+        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(1, 0, 2, 3, 1), ImArray.fromObjects(1, 0, 2).chain().appendCollection(ImArray.fromObjects(3, 1)).toArray());
     }
     public void testPreppend() {
-        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(3, 1, 1, 0, 2), ImArray.fromObjects(1, 0, 2).chain().prepend(ImArray.fromObjects(3, 1)).toArray());
+        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(3, 1, 1, 0, 2), ImArray.fromObjects(1, 0, 2).chain().prependCollection(ImArray.fromObjects(3, 1)).toArray());
     }
     public void testMul() {
-        .<ImArray<Tuple<Integer, Integer>>>assertEqualsAB(ImArray.fromObjects(new Tuple<int, int>(1, 3), new Tuple<int, int>(1, 1), new Tuple<int, int>(0, 3), new Tuple<int, int>(0, 1), new Tuple<int, int>(2, 3), new Tuple<int, int>(2, 1)), ImArray.fromObjects(1, 0, 2).chain().<Integer>mul(ImArray.fromObjects(3, 1)).toArray());
+        .<ImArray<Tuple<Integer, Integer>>>assertEqualsAB(ImArray.fromObjects(new Tuple<int, int>(1, 3), new Tuple<int, int>(1, 1), new Tuple<int, int>(0, 3), new Tuple<int, int>(0, 1), new Tuple<int, int>(2, 3), new Tuple<int, int>(2, 1)), ImArray.fromObjects(1, 0, 2).chain().<Integer>mulBy(ImArray.fromObjects(3, 1)).toArray());
     }
     public void testTop() {
         .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(1, 0), ImArray.fromObjects(1, 0, 2).chain().topNumbers(2).toArray());
@@ -179,28 +179,28 @@ public class ChainTest extends TestCase {
             public Boolean apply(final Integer _) {
                 return _ <= 1;
             }
-        }).<ImArray<Integer>>map(new F<Tuple<Boolean, ImArray<Integer>>, ImArray<Integer>>() {
+        }).<ImArray<Integer>>mapF(new F<Tuple<Boolean, ImArray<Integer>>, ImArray<Integer>>() {
             @Override
             public ImArray<Integer> apply(final Tuple<Boolean, ImArray<Integer>> _) {
                 return _.b;
             }
         }).toSet());
-        .<Set<Integer>>assertEqualsAB(ImArray.fromObjects(-1, 3).chain().toSet(), ImArray.fromObjects(1, -2, 3).chain().<Boolean, Integer>groupByFoldWithStart(new F<Integer, Boolean>() {
+        .<Set<Integer>>assertEqualsAB(ImArray.fromObjects(-1, 3).chain().toSet(), ImArray.fromObjects(1, -2, 3).chain().<Boolean, Integer>groupByStartFold(new F<Integer, Boolean>() {
             @Override
             public Boolean apply(final Integer _) {
                 return _ <= 1;
-            }
-        }, new F2<Integer, Integer, Integer>() {
-            @Override
-            public Integer apply(final Integer a, final Integer b) {
-                return a + b;
             }
         }, new F0<Integer>() {
             @Override
             public Integer apply() {
                 return 0;
             }
-        }).<Integer>map(new F<Tuple<Boolean, Integer>, Integer>() {
+        }, new F2<Integer, Integer, Integer>() {
+            @Override
+            public Integer apply(final Integer a, final Integer b) {
+                return a + b;
+            }
+        }).<Integer>mapF(new F<Tuple<Boolean, Integer>, Integer>() {
             @Override
             public Integer apply(final Tuple<Boolean, Integer> _) {
                 return _.b;
@@ -219,6 +219,79 @@ public class ChainTest extends TestCase {
     public void testNeighbours() {
         .<ImArray<Tuple<Integer, Integer>>>assertEqualsAB(ImArray.fromObjects(new Tuple<int, int>(2, 0), new Tuple<int, int>(0, 1)), ImArray.fromObjects(2, 0, 1).chain().neighbours().toArray());
         .<ImArray<Tuple<Integer, Integer>>>assertEqualsAB(ImArray.fromObjects(new Tuple<int, int>(2, 0), new Tuple<int, int>(0, 1), new Tuple<int, int>(1, 2)), ImArray.fromObjects(2, 0, 1).chain().neighboursRing().toArray());
+    }
+    public void testExclude() {
+        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(0, 3, 0), ImArray.fromObjects(2, 0, 1, 2, 3, 0).chain().excludeCollection(ImArray.fromObjects(2, 1)).toArray());
+    }
+    public void testIntersect() {
+        .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(2, 1, 2), ImArray.fromObjects(2, 0, 1, 2, 3, 0).chain().intersectCollection(ImArray.fromObjects(2, 1)).toArray());
+    }
+    public void testFold() {
+        .<Integer>assertEqualsAB(3, ImArray.fromObjects(2, 0, 1).chain().<Integer>foldStartBy(0, new F2<Integer, Integer, Integer>() {
+            @Override
+            public Integer apply(final Integer r, final Integer a) {
+                return r + a;
+            }
+        }));
+    }
+    public void testCount() {
+        .<Integer>assertEqualsAB(3, ((int)(ImArray.fromObjects(2, 0, 1).chain().count())));
+    }
+    public void testHead() {
+        final Integer __tmp_0p1n = ImArray.fromObjects(2, 0, 1).chain().head();
+        if(__tmp_0p1n == null) {
+            throw new NullPointerException();
+        }
+        .<Integer>assertEqualsAB(2, __tmp_0p1n);
+    }
+    public void testLast() {
+        final Integer __tmp_0p1n = ImArray.fromObjects(2, 0, 1).chain().last();
+        if(__tmp_0p1n == null) {
+            throw new NullPointerException();
+        }
+        .<Integer>assertEqualsAB(1, __tmp_0p1n);
+    }
+    public void testRandom() {
+        final Integer __tmp_0p0rp0n = ImArray.fromObjects(2, 0, 1).chain().randomItem();
+        if(__tmp_0p0rp0n == null) {
+            throw new NullPointerException();
+        }
+        .assertTrueValue(ImArray.fromObjects(2, 0, 1).containsItem(__tmp_0p0rp0n));
+    }
+    public void testGap() {
+        final Tuple<Integer, Integer> __tmp_0p1n = ImArray.fromObjects(2, 0, 1).chain().<Integer>gap();
+        if(__tmp_0p1n == null) {
+            throw new NullPointerException();
+        }
+        .<Tuple<Integer, Integer>>assertEqualsAB(new Tuple<int, int>(0, 2), __tmp_0p1n);
+    }
+    public void testMin() {
+        final Integer __tmp_0p1n = ImArray.fromObjects(2, 0, 1).chain().<Integer>min();
+        if(__tmp_0p1n == null) {
+            throw new NullPointerException();
+        }
+        .<Integer>assertEqualsAB(0, __tmp_0p1n);
+    }
+    public void testMax() {
+        final Integer __tmp_0p1n = ImArray.fromObjects(2, 3, 0, 1).chain().<Integer>max();
+        if(__tmp_0p1n == null) {
+            throw new NullPointerException();
+        }
+        .<Integer>assertEqualsAB(3, __tmp_0p1n);
+    }
+    public void testToString() {
+        .<String>assertEqualsAB("acb", ImArray.fromObjects("a", "c", "b").chain().<Character>mapF(new F<String, Character>() {
+            @Override
+            public Character apply(final String _) {
+                final Character __tmp_0p1lrn = _.head();
+                if(__tmp_0p1lrn == null) {
+                    throw new NullPointerException();
+                }
+                return __tmp_0p1lrn;
+            }
+        }).toString());
+        .<String>assertEqualsAB("2, 0, 1", ImArray.fromObjects(2, 0, 1).chain().toStringDelimiter(", "));
+        .<String>assertEqualsAB("[2, 0, 1]", ImArray.fromObjects(2, 0, 1).chain().toStringStartDelimiterEnd("[", ", ", "]"));
     }
     public ChainTest() {
     }

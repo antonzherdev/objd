@@ -20,6 +20,7 @@
 #import "NSDictionary+CNChain.h"
 #import "NSMutableSet+CNChain.h"
 #import "NSMutableArray+CNChain.h"
+#import "NSMutableString+CNChain.h"
 #import "CNLog.h"
 #import "NSString+CNChain.h"
 #import "NSDate+CNChain.h"

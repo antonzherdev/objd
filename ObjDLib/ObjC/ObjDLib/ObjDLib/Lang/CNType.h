@@ -7,11 +7,11 @@
 @interface CNType : NSObject
 + (id)type;
 - (id)init;
-- (Class)cls;
 - (NSString*)name;
 - (NSString*)description;
 - (NSUInteger)hash;
 - (BOOL)isEqualToOther:(CNType *)other;
+- (BOOL)isInstanceObj:(NSObject*)obj;
 @end
 
 
@@ -20,6 +20,16 @@
 
 + (id)classTypeWithCls:(Class)cls;
 - (id)initWithCls:(Class)cls;
+- (CNClassType *)type;
+- (NSString*)name;
++ (CNClassType *)type;
+@end
+
+@interface CNTraitType : CNType
+@property (nonatomic, readonly) Protocol* cls;
+
++ (id)classTypeWithCls:(Protocol*)cls name:(NSString*)name;
+- (id)initWithCls:(Protocol*)cls name:(NSString*)name;
 - (CNClassType *)type;
 - (NSString*)name;
 + (CNClassType *)type;

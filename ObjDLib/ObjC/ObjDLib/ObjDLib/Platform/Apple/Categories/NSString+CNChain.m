@@ -55,6 +55,18 @@
 @end
 
 @implementation NSString (CNChain)
+
++ (CNType *)type {
+    static CNClassType* __type = nil;
+    if(__type == nil) __type = [CNClassType classTypeWithCls:[NSString class]];
+    return nil;
+}
+
+- (CNType*) type {
+    return [NSString type];
+}
+
+
 - (id)tupleBy:(NSString *)by {
     NSRange range = [self rangeOfString:by];
     if(range.length <= 0) return nil;
@@ -106,18 +118,15 @@
 }
 
 - (id<CNSet>)toSet {
-    return [self convertWithBuilder:[CNHashSetBuilder hashSetBuilder]];
+    return [self convertWithBuilder:[CNHashSetBuilder apply]];
 }
 
-- (id<CNImSeq>)addItem:(id)item {
-    CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
-    [builder appendAllItems:self];
-    [builder appendItem:item];
-    return ((NSArray*)([builder build]));
+- (NSString*)addItem:(id)item {
+    return [self stringByAppendingFormat:@"%c", [item charValue]];
 }
 
 - (id <CNImSeq>)addSeq:(id <CNSeq>)seq {
-    CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
+    CNArrayBuilder* builder = [CNArrayBuilder apply];
     [builder appendAllItems:self];
     [builder appendAllItems:seq];
     return ((NSArray*)([builder build]));
@@ -129,7 +138,7 @@
 
 
 - (id<CNImSeq>)subItem:(id)item {
-    return [[[self chain] filter:^BOOL(id _) {
+    return [[[self chain] filterWhen:^BOOL(id _) {
         return !([_ isEqual:item]);
     }] toArray];
 }
@@ -162,7 +171,7 @@
 }
 
 - (CNChain*)chain {
-    return [CNChain chainWithCollection:self];
+    return [CNChain applyCollection:self];
 }
 
 - (void)forEach:(void(^)(id))each {

@@ -48,7 +48,7 @@ static CNClassType* _CNSortBuilder_type;
 }
 
 - (CNChain*)endSort {
-    return [_chain sort:^NSInteger(id x, id y) {
+    return [_chain sortComparator:^NSInteger(id x, id y) {
         NSInteger ret = 0;
         id<CNIterator> i = [_functions iterator];
         while(ret == 0 && [i hasNext]) {

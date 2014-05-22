@@ -1,8 +1,8 @@
 #import "objdcore.h"
 #import "CNObject.h"
 #import "CNCollection.h"
-@class CNImList;
 @class CNClassType;
+@class CNImList;
 
 @class CNQueue_impl;
 @class CNImQueue;

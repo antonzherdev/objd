@@ -27,7 +27,7 @@ public abstract class Seq_impl<T> extends Iterable_impl<T> implements Seq<T> {
         return null;
     }
     public Set<T> toSet() {
-        return this.<ImHashSet<T>>convertWithBuilder(new HashSetBuilder<T>());
+        return this.<ImHashSet<T>>convertWithBuilder(HashSetBuilder.<T>apply());
     }
     public boolean isEqualSeq(final Seq<T> seq) {
         if(this.count() != seq.count()) {
@@ -46,7 +46,7 @@ public abstract class Seq_impl<T> extends Iterable_impl<T> implements Seq<T> {
         return applyIndex(this.count() - 1);
     }
     public ImSeq<T> tail() {
-        final ArrayBuilder<T> builder = new ArrayBuilder<T>();
+        final ArrayBuilder<T> builder = ArrayBuilder.<T>apply();
         final Iterator<T> i = this.iterator();
         if(i.hasNext()) {
             i.next();

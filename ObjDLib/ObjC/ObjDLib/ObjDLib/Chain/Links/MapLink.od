@@ -36,7 +36,7 @@ class FlatLink<T>(val factor : float) extends ChainLink<Traversable<T>, T> {
     }
 }
 
-class FlatMapLink<A, B>(val f : A -> Traversable<B>, val factor : float) extends ChainLink<A, B> {
+class FlatMapLink<A, B>(val factor : float, val f : A -> Traversable<B>) extends ChainLink<A, B> {
     override def build(yield : Yield<B>) : Yield<A> = {
         Yield.decorate<A>(
             base = yield,

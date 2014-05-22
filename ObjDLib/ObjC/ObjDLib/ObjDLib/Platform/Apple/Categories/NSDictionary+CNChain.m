@@ -8,6 +8,17 @@
 - (id <CNIterable>)values {
     return [self allValues];
 }
+
++ (CNType *)type {
+    static CNClassType* __type = nil;
+    if(__type == nil) __type = [CNClassType classTypeWithCls:[NSDictionary class]];
+    return nil;
+}
+
+- (CNType*) type {
+    return [NSDictionary type];
+}
+
 - (NSDictionary *)dictionaryByAddingValue:(id)value forKey:(id)key {
     NSMutableDictionary * ret = [NSMutableDictionary dictionaryWithDictionary:self];
     [ret setObject:wrapNil(value) forKey:wrapNil(key)];
@@ -58,7 +69,7 @@
 
 
 - (CNChain *)chain {
-    return [CNChain chainWithCollection:self];
+    return [CNChain applyCollection:self];
 }
 
 - (void)forEach:(cnP)p {

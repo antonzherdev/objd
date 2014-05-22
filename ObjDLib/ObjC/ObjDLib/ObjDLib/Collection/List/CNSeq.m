@@ -2,10 +2,10 @@
 #import "CNSeq.h"
 
 #import "CNSet.h"
+#import "CNType.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
 #import "CNPlat.h"
-#import "CNType.h"
 @implementation CNSeq_impl
 
 - (BOOL)isEmpty {
@@ -29,7 +29,7 @@
 }
 
 - (id<CNSet>)toSet {
-    return [self convertWithBuilder:[CNHashSetBuilder hashSetBuilder]];
+    return [self convertWithBuilder:[CNHashSetBuilder apply]];
 }
 
 - (BOOL)isEqualSeq:(id<CNSeq>)seq {
@@ -47,7 +47,7 @@
 }
 
 - (id<CNImSeq>)tail {
-    CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
+    CNArrayBuilder* builder = [CNArrayBuilder apply];
     id<CNIterator> i = [self iterator];
     if([i hasNext]) {
         [i next];
@@ -85,21 +85,21 @@
 }
 
 - (id<CNImSeq>)addItem:(id)item {
-    CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
+    CNArrayBuilder* builder = [CNArrayBuilder apply];
     [builder appendAllItems:self];
     [builder appendItem:item];
     return [builder build];
 }
 
 - (id<CNImSeq>)addSeq:(id<CNSeq>)seq {
-    CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
+    CNArrayBuilder* builder = [CNArrayBuilder apply];
     [builder appendAllItems:self];
     [builder appendAllItems:seq];
     return [builder build];
 }
 
 - (id<CNImSeq>)subItem:(id)item {
-    return [[[self chain] filter:^BOOL(id _) {
+    return [[[self chain] filterWhen:^BOOL(id _) {
         return !([_ isEqual:item]);
     }] toArray];
 }
@@ -219,13 +219,13 @@
 @implementation CNArrayBuilder
 static CNClassType* _CNArrayBuilder_type;
 
-+ (instancetype)arrayBuilder {
-    return [[CNArrayBuilder alloc] init];
++ (instancetype)arrayBuilderWithCapacity:(NSUInteger)capacity {
+    return [[CNArrayBuilder alloc] initWithCapacity:capacity];
 }
 
-- (instancetype)init {
+- (instancetype)initWithCapacity:(NSUInteger)capacity {
     self = [super init];
-    if(self) _array = [CNMArray array];
+    if(self) _array = [CNMArray applyCapacity:capacity];
     
     return self;
 }
@@ -241,6 +241,10 @@ static CNClassType* _CNArrayBuilder_type;
 
 - (CNImArray*)build {
     return _array;
+}
+
++ (CNArrayBuilder*)apply {
+    return [CNArrayBuilder arrayBuilderWithCapacity:0];
 }
 
 - (CNClassType*)type {

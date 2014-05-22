@@ -1,102 +1,137 @@
-#import <Foundation/Foundation.h>
-#import "CNTypes.h"
+#import "objdcore.h"
+#import "CNObject.h"
 #import "CNCollection.h"
-
+@class CNClassType;
+@protocol CNChainLink;
+@class CNSourceLink;
+@class CNFilterLink;
+@class CNTopLink;
+@class CNMapLink;
+@class CNMapOptLink;
+@class CNFlatMapLink;
+@class CNFlatLink;
+@class CNCombinationsLink;
+@class CNUncombinationsLink;
+@class CNNeighboursLink;
+@class CNMulLink;
+@class CNArrayBuilder;
+@class CNMGroupByLink;
+@class CNImGroupByLink;
+@class CNDistinctLink;
+@class CNZipLink;
+@class CNYield;
+@class CNZip3Link;
+@class CNPrependLink;
+@class CNAppendLink;
+@class CNReverseLink;
+@class CNSortLink;
 @class CNSortBuilder;
-@protocol CNTraversable;
-@class CNTreeSet;
-@class CNFuture;
-@class CNImList;
-@class CNImTreeSet;
+@class CNShuffleLink;
+@protocol CNSeq;
 @class CNSeed;
+@class CNType;
+@class CNMArray;
+@class CNImList;
+@class CNImListBuilder;
+@protocol CNSet;
+@class CNHashSetBuilder;
+@class CNTreeSet;
+@class CNTreeSetBuilder;
+@class CNHashMapBuilder;
+@class CNImHashMap;
+@class CNStringBuilder;
+@class CNString;
+@class CNFuture;
+@class CNFutureEnd;
+@class CNFutureVoidEnd;
 
-@interface CNChain : NSObject <CNTraversable>
-- (id)initWithLink:(id <CNChainLink>)link previous:(CNChain *)previous;
-
-+ (id)chainWithLink:(id <CNChainLink>)link previous:(CNChain *)previous;
-
-+ (CNChain*)chainWithCollection:(id)collection;
-
-- (CNChain*)link:(id<CNChainLink>)link;
-- (CNChain*)filter:(cnPredicate)predicate;
-- (CNChain*)filter:(cnPredicate)predicate selectivity:(double)selectivity;
-- (CNChain*)filterCast:(CNType *)type;
+@class CNChain;
 
 
-- (CNChain*)map:(cnF)f;
-- (CNChain*)flatMap:(cnF)f;
-- (CNChain*)flatMap:(cnF)f factor:(double) factor;
-- (CNChain*)neighbours;
-- (CNChain*)neighboursRing;
+
+@interface CNChain : CNImTraversable_impl {
+@protected
+    id<CNChainLink> _link;
+    CNChain* _previous;
+}
+@property (nonatomic, readonly) id<CNChainLink> link;
+@property (nonatomic, readonly) CNChain* previous;
+
++ (instancetype)chainWithLink:(id<CNChainLink>)link previous:(CNChain*)previous;
+- (instancetype)initWithLink:(id<CNChainLink>)link previous:(CNChain*)previous;
+- (CNClassType*)type;
++ (CNChain*)applyCollection:(id<CNTraversable>)collection;
+- (CNChain*)filterFactor:(CGFloat)factor when:(BOOL(^)(id))when;
+- (CNChain*)filterWhen:(BOOL(^)(id))when;
+- (CNChain*)topNumbers:(NSInteger)numbers;
+- (CNChain*)filterCastFactor:(CGFloat)factor to:(CNClassType*)to;
+- (CNChain*)filterCastTo:(CNClassType*)to;
+- (CNChain*)mapF:(id(^)(id))f;
+- (CNChain*)mapOptF:(id(^)(id))f;
+- (CNChain*)flatMapFactor:(CGFloat)factor f:(id<CNTraversable>(^)(id))f;
+- (CNChain*)flatMapF:(id<CNTraversable>(^)(id))f;
+- (CNChain*)flatFactor:(CGFloat)factor;
+- (CNChain*)flat;
 - (CNChain*)combinations;
 - (CNChain*)uncombinations;
-
-- (CNChain*)groupBy:(cnF)by fold:(cnF2)fold withStart:(cnF0)start;
-- (CNChain*)groupBy:(cnF)by withBuilder:(cnF0)builder;
-- (CNChain*)groupBy:(cnF)by map:(cnF)f withBuilder:(cnF0)builder;
-- (CNChain*)groupBy:(cnF)by map:(cnF)f;
-- (CNChain*)groupBy:(cnF)by;
-
-- (CNChain*)zipA:(id <CNIterable>)a;
-- (CNChain*)zipA:(id <CNIterable>)a by:(cnF2)by;
-- (void)zipForA:(id <CNIterable>)a by:(cnP2)by;
-- (CNChain*)zip3A:(id <CNIterable>)a b:(id <CNIterable>)b;
-- (CNChain*)zip3A:(id <CNIterable>)a b:(id <CNIterable>)b by:(cnF3)by;
-
-- (CNChain*)append:(id)collection;
-- (CNChain*)prepend:(id)collection;
-- (CNChain*)exclude:(id)collection;
-- (CNChain*)intersect:(id)collection;
-
-- (CNChain*)mul :(id)collection;
-
+- (CNChain*)neighbours;
+- (CNChain*)neighboursRing;
+- (CNChain*)mulBy:(id<CNTraversable>)by;
+- (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by;
+- (CNChain*)groupBy:(id(^)(id))by;
+- (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by map:(id(^)(id))map;
+- (CNChain*)groupBy:(id(^)(id))by map:(id(^)(id))map;
+- (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by builder:(id<CNBuilder>(^)())builder;
+- (CNChain*)groupBy:(id(^)(id))by builder:(id<CNBuilder>(^)())builder;
+- (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by map:(id(^)(id))map builder:(id<CNBuilder>(^)())builder;
+- (CNChain*)groupBy:(id(^)(id))by map:(id(^)(id))map builder:(id<CNBuilder>(^)())builder;
+- (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by start:(id(^)())start fold:(id(^)(id, id))fold;
+- (CNChain*)groupBy:(id(^)(id))by start:(id(^)())start fold:(id(^)(id, id))fold;
+- (CNChain*)distinctFactor:(CGFloat)factor;
+- (CNChain*)distinct;
+- (CNChain*)zipB:(id<CNIterable>)b;
+- (CNChain*)zipB:(id<CNIterable>)b by:(id(^)(id, id))by;
+- (void)zipForB:(id<CNIterable>)b by:(void(^)(id, id))by;
+- (CNChain*)zip3B:(id<CNIterable>)b c:(id<CNIterable>)c;
+- (CNChain*)zip3B:(id<CNIterable>)b c:(id<CNIterable>)c by:(id(^)(id, id, id))by;
+- (CNChain*)prependCollection:(id<CNTraversable>)collection;
+- (CNChain*)appendCollection:(id<CNTraversable>)collection;
+- (CNChain*)excludeCollection:(id<CNTraversable>)collection;
+- (CNChain*)intersectCollection:(id<CNIterable>)collection;
 - (CNChain*)reverse;
-- (CNChain *)distinct;
-- (CNChain *)distinctWithSelectivity:(double) selectivity;
-- (CNChain *)sort;
-- (CNChain *)sort:(cnCompare)comparator;
-- (CNChain *)sortDesc;
-- (CNSortBuilder *)sortBy;
-
-
+- (CNChain*)reverseWhen:(BOOL)when;
+- (CNChain*)sort;
+- (CNChain*)sortDesc;
+- (CNChain*)sortComparator:(NSInteger(^)(id, id))comparator;
+- (CNSortBuilder*)sortBy;
+- (CNChain*)shuffle;
+- (CNGoR)goOn:(CNGoR(^)(id))on;
+- (id)foldStart:(id)start by:(id(^)(id, id))by;
+- (NSUInteger)count;
+- (id)last;
 - (id)randomItem;
 - (id)randomItemSeed:(CNSeed*)seed;
-- (NSUInteger)count;
-- (NSArray*)toArray;
-- (NSSet*)toSet;
-
-- (id)foldStart:(id)start by:(cnF2)by;
-- (id)head;
-- (id)last;
+- (BOOL)isEmpty;
+- (CNTuple*)gap;
 - (id)min;
 - (id)max;
-- (NSDictionary *)toMap;
-- (NSMutableDictionary *)toMutableMap;
-- (CNGoR)apply:(CNYield *)yield;
-- (NSString *)toStringWithDelimiter:(NSString *)delimiter;
-
-- (NSString *)toStringWithStart:(NSString *)string delimiter:(NSString *)delimiter end:(NSString *)end;
-
-- (NSString *)charsToString;
-
-- (CNImTreeSet *)toTreeSet;
-
-- (CNChain *)topNumbers:(NSUInteger)numbers;
-
-- (CNChain *)flat;
-
 - (BOOL)or;
 - (BOOL)and;
-
-- (CNFuture *)voidFuture;
-- (CNFuture *)futureF:(id (^)(CNChain *))f;
-- (CNFuture *)future;
-
-- (CNChain *)reverseWhen:(BOOL)when;
-
-- (CNChain *)shuffle;
-
-- (CNImList *)toList;
-
-- (CNChain *)mapOpt:(id(^)(id))f;
+- (id<CNSeq>)toSeq;
+- (NSArray*)toArray;
+- (CNImList*)toList;
+- (id<CNSet>)toSet;
+- (CNTreeSet*)toTreeSet;
+- (NSDictionary*)toMap;
+- (NSString*)toStringStart:(NSString*)start delimiter:(NSString*)delimiter end:(NSString*)end;
+- (NSString*)toStringDelimiter:(NSString*)delimiter;
+- (NSString*)toString;
+- (CNFuture*)futureF:(id(^)(CNChain*))f;
+- (CNFuture*)future;
+- (CNFuture*)voidFuture;
+- (CNGoR)applyYield:(CNYield*)yield;
+- (CNChain*)addLink:(id<CNChainLink>)link;
++ (CNClassType*)type;
 @end
+
+

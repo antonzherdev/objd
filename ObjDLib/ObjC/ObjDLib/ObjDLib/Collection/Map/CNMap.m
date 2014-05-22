@@ -1,10 +1,10 @@
 #import "objd.h"
 #import "CNMap.h"
 
+#import "CNType.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
 #import "CNPlat.h"
-#import "CNType.h"
 @implementation CNMap_impl
 
 - (id)applyKey:(id)key {

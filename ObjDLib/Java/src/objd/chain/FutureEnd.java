@@ -2,7 +2,6 @@ package objd.chain;
 
 import objd.lang.*;
 import objd.concurrent.Promise;
-import objd.collection.Seq;
 import objd.concurrent.AtomicInt;
 import objd.concurrent.AtomicBool;
 import objd.collection.MArray;
@@ -10,13 +9,13 @@ import objd.concurrent.Future;
 import objd.collection.Go;
 
 public class FutureEnd<T> {
-    private final Promise<Seq<T>> _promise;
+    private final Promise<ImArray<T>> _promise;
     private boolean _stopped;
     private AtomicInt _counter;
     private volatile boolean _ended;
     private AtomicBool _yielded;
     private MArray<T> _array;
-    public Future<Seq<T>> future() {
+    public Future<ImArray<T>> future() {
         return this._promise;
     }
     public Yield<Future<T>> yield() {
@@ -59,7 +58,7 @@ public class FutureEnd<T> {
                                                 if(FutureEnd.this._array == null) {
                                                     throw new NullPointerException();
                                                 }
-                                                FutureEnd.this._promise.successValue(FutureEnd.this._array);
+                                                FutureEnd.this._promise.successValue(FutureEnd.this._array.im());
                                             }
                                         }
                                     }
@@ -83,7 +82,7 @@ public class FutureEnd<T> {
                         if(FutureEnd.this._array == null) {
                             throw new NullPointerException();
                         }
-                        FutureEnd.this._promise.successValue(FutureEnd.this._array);
+                        FutureEnd.this._promise.successValue(FutureEnd.this._array.im());
                     }
                 }
                 return res;
@@ -91,7 +90,7 @@ public class FutureEnd<T> {
         });
     }
     public FutureEnd() {
-        this._promise = Promise.<Seq<T>>apply();
+        this._promise = Promise.<ImArray<T>>apply();
         this._stopped = false;
         this._counter = new AtomicInt();
         this._ended = false;

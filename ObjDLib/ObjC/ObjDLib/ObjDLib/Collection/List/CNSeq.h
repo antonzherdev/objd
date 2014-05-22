@@ -2,11 +2,11 @@
 #import "CNCollection.h"
 @protocol CNSet;
 @class CNHashSetBuilder;
+@class CNClassType;
 @class CNDispatchQueue;
 @class CNChain;
 @class CNMArray;
 @class CNImArray;
-@class CNClassType;
 
 @class CNSeq_impl;
 @class CNImSeq_impl;
@@ -68,11 +68,12 @@
 @protected
     CNMArray* _array;
 }
-+ (instancetype)arrayBuilder;
-- (instancetype)init;
++ (instancetype)arrayBuilderWithCapacity:(NSUInteger)capacity;
+- (instancetype)initWithCapacity:(NSUInteger)capacity;
 - (CNClassType*)type;
 - (void)appendItem:(id)item;
 - (CNImArray*)build;
++ (CNArrayBuilder*)apply;
 + (CNClassType*)type;
 @end
 

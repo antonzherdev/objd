@@ -6,3 +6,5 @@
 #define CNMHashMap NSMutableDictionary
 #define CNImHashSet NSSet
 #define CNMHashSet NSMutableSet
+#define CNStringBuilder NSMutableString
+#define CNString NSString

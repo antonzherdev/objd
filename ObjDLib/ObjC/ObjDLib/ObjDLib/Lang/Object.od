@@ -8,13 +8,10 @@ stub package object {
 stub class Object {
     def is<T> : bool
     def as<T> : T?
-    def is<T>(type : Type<T>) : bool
-    def as<T>(type : Type<T>) : T?
     def cast<T> : T
     def description : string
     def hash : uint
     static def type : Type<self>
-    static def class : Class
     def dealloc
 }
 

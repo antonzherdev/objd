@@ -16,19 +16,19 @@ public abstract class ImSeq_impl<T> extends Seq_impl<T> implements ImSeq<T> {
         return arr;
     }
     public ImSeq<T> addItem(final T item) {
-        final ArrayBuilder<T> builder = new ArrayBuilder<T>();
+        final ArrayBuilder<T> builder = ArrayBuilder.<T>apply();
         builder.appendAllItems(this);
         builder.appendItem(item);
         return builder.build();
     }
     public ImSeq<T> addSeq(final Seq<T> seq) {
-        final ArrayBuilder<T> builder = new ArrayBuilder<T>();
+        final ArrayBuilder<T> builder = ArrayBuilder.<T>apply();
         builder.appendAllItems(this);
         builder.appendAllItems(seq);
         return builder.build();
     }
     public ImSeq<T> subItem(final T item) {
-        return this.chain().filter(new F<T, Boolean>() {
+        return this.chain().filterWhen(new F<T, Boolean>() {
             @Override
             public Boolean apply(final T _) {
                 return !(_.equals(item));

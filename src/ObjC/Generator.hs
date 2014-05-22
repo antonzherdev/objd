@@ -696,7 +696,7 @@ showDataType :: D.DataType -> C.DataType
 showDataType (D.TPEArr 0 _) = C.TPSimple "id<CNImSeq>" []
 showDataType (D.TPEArr n tp) = C.TPArr n $ show $ showDataType tp
 showDataType (D.TPArr _ _) = C.TPSimple "NSArray*" []
-showDataType (D.TPMap _ _)  = C.TPSimple "id<CNImMap>" []
+showDataType (D.TPMap _ _)  = C.TPSimple "NSDictionary*" []
 showDataType (D.TPNumber False 1) = C.TPSimple "char" []
 showDataType (D.TPNumber True 1) = C.TPSimple "unsigned char" []
 showDataType (D.TPNumber False 4) = C.TPSimple "int" []
@@ -885,12 +885,13 @@ tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars _)
 		 isStubObject = case ltp of
 		 	D.TPObject _  cl -> D.ClassModStub `elem` D.classMods cl && D.ClassModObject `elem` D.classMods cl
 		 	_ -> False
-tExp env (D.Dot l (D.Is dtp)) = case dtp of
+tExp env (D.Dot l (D.Is dtp)) = case D.unwrapGeneric dtp of
+	D.TPClass D.TPMGeneric _ _ -> C.BoolConst False
 	D.TPClass D.TPMTrait _ _ -> C.Call (castGeneric l $ tExp env l) "conformsTo" 
 		[("protocol", C.ProtocolRef $ C.Ref $ D.dataTypeClassNameWithPrefix dtp)] []
 	_ -> C.Call (castGeneric l $ tExp env l) "isKindOf" 
 		[("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix dtp) "class" [] [])] []
-tExp env (D.Dot l (D.As dtp)) = case dtp of
+tExp env (D.Dot l (D.As dtp)) = case D.unwrapGeneric dtp of
 	D.TPClass D.TPMTrait _ _ -> C.Call (C.Ref "CNObject") "asKindOf" 
 		[("protocol", C.ProtocolRef $ C.Ref $ D.dataTypeClassNameWithPrefix dtp), ("object", castGeneric l $ tExp env l)] []
 	_ -> C.Call (C.Ref "CNObject") "asKindOf" 

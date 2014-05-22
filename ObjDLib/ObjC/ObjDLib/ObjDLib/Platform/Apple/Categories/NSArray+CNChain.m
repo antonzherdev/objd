@@ -8,13 +8,13 @@
 
 @implementation NSArray (CNChain)
 - (id)chain:(void (^)(CNChain *))block {
-    CNChain *chain = [CNChain chainWithCollection:self];
+    CNChain *chain = [CNChain applyCollection:self];
     block(chain);
     return [chain toArray];
 }
 
 - (CNChain *)chain {
-    return [CNChain chainWithCollection:self];
+    return [CNChain applyCollection:self];
 }
 
 - (id <CNIterator>)iterator {
@@ -104,9 +104,18 @@
     return CNGo_Continue;
 }
 
++ (CNType *)type {
+    static CNClassType* __type = nil;
+    if(__type == nil) __type = [CNClassType classTypeWithCls:[NSArray class]];
+    return nil;
+}
+
+- (CNType*) type {
+    return [NSArray type];
+}
 
 - (NSArray *)arrayByRemovingObject:(id)object {
-    return [[[self chain] filter:^BOOL(id x) {
+    return [[[self chain] filterWhen:^BOOL(id x) {
         return ![x isEqual:object];
     }] toArray];
 }
@@ -122,7 +131,7 @@
 }
 
 - (NSString*)description {
-    return [[self chain] toStringWithStart:@"[" delimiter:@", " end:@"]"];
+    return [[self chain] toStringStart:@"[" delimiter:@", " end:@"]"];
 }
 
 - (BOOL)isEqual:(id)other {
@@ -142,7 +151,7 @@
 }
 
 - (NSArray*)addSeq:(id<CNSeq>)seq {
-    CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
+    CNArrayBuilder* builder = [CNArrayBuilder arrayBuilderWithCapacity:(self.count + seq.count)];
     [builder appendAllItems:self];
     [builder appendAllItems:seq];
     return ((NSArray*)([builder build]));
@@ -176,7 +185,7 @@
 }
 
 - (NSArray*)tail {
-    CNArrayBuilder* builder = [CNArrayBuilder arrayBuilder];
+    CNArrayBuilder* builder = [CNArrayBuilder arrayBuilderWithCapacity:self.count - 1];
     id<CNIterator> i = [self iterator];
     if([i hasNext]) {
         [i next];

@@ -79,6 +79,7 @@ static CNGo* CNGo_Break_Desc;
 - (void)parForEach:(void(^)(id))each;
 - (CNGoR)goOn:(CNGoR(^)(id))on;
 - (CNChain*)chain;
+- (BOOL)containsItem:(id)item;
 - (id)findWhere:(BOOL(^)(id))where;
 - (BOOL)existsWhere:(BOOL(^)(id))where;
 - (BOOL)allConfirm:(BOOL(^)(id))confirm;
@@ -129,6 +130,7 @@ static CNGo* CNGo_Break_Desc;
 
 @interface CNIterable_impl : CNTraversable_impl<CNIterable>
 - (id)head;
+- (BOOL)containsItem:(id)item;
 - (NSString*)description;
 - (NSUInteger)hash;
 @end

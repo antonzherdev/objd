@@ -18,8 +18,8 @@ trait MSet<T> extends Set<T> with MIterable<T> {
     }
 }
 
-class HashSetBuilder<T> extends Builder<T, ImHashSet<T>> {
-    val set = MHashSet<T>()
+class HashSetBuilder<T>(capacity : uint = 0) extends Builder<T, ImHashSet<T>> {
+    val set = MHashSet<T>(capacity)
 
     override def append(item : T) {
         set.append(item)

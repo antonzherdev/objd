@@ -5,22 +5,22 @@
 #import "CNType.h"
 @implementation CNImGroupByLink
 static CNClassType* _CNImGroupByLink_type;
+@synthesize factor = _factor;
 @synthesize by = _by;
 @synthesize start = _start;
 @synthesize fold = _fold;
-@synthesize factor = _factor;
 
-+ (instancetype)imGroupByLinkWithBy:(id(^)(id))by start:(id(^)())start fold:(id(^)(id, id))fold factor:(CGFloat)factor {
-    return [[CNImGroupByLink alloc] initWithBy:by start:start fold:fold factor:factor];
++ (instancetype)imGroupByLinkWithFactor:(CGFloat)factor by:(id(^)(id))by start:(id(^)())start fold:(id(^)(id, id))fold {
+    return [[CNImGroupByLink alloc] initWithFactor:factor by:by start:start fold:fold];
 }
 
-- (instancetype)initWithBy:(id(^)(id))by start:(id(^)())start fold:(id(^)(id, id))fold factor:(CGFloat)factor {
+- (instancetype)initWithFactor:(CGFloat)factor by:(id(^)(id))by start:(id(^)())start fold:(id(^)(id, id))fold {
     self = [super init];
     if(self) {
+        _factor = factor;
         _by = [by copy];
         _start = [start copy];
         _fold = [fold copy];
-        _factor = factor;
     }
     
     return self;
@@ -69,24 +69,24 @@ static CNClassType* _CNImGroupByLink_type;
 
 @implementation CNMGroupByLink
 static CNClassType* _CNMGroupByLink_type;
+@synthesize factor = _factor;
 @synthesize by = _by;
 @synthesize start = _start;
 @synthesize append = _append;
 @synthesize finish = _finish;
-@synthesize factor = _factor;
 
-+ (instancetype)groupByLinkWithBy:(id(^)(id))by start:(id(^)())start append:(void(^)(id, id))append finish:(id(^)(id))finish factor:(CGFloat)factor {
-    return [[CNMGroupByLink alloc] initWithBy:by start:start append:append finish:finish factor:factor];
++ (instancetype)groupByLinkWithFactor:(CGFloat)factor by:(id(^)(id))by start:(id(^)())start append:(void(^)(id, id))append finish:(id(^)(id))finish {
+    return [[CNMGroupByLink alloc] initWithFactor:factor by:by start:start append:append finish:finish];
 }
 
-- (instancetype)initWithBy:(id(^)(id))by start:(id(^)())start append:(void(^)(id, id))append finish:(id(^)(id))finish factor:(CGFloat)factor {
+- (instancetype)initWithFactor:(CGFloat)factor by:(id(^)(id))by start:(id(^)())start append:(void(^)(id, id))append finish:(id(^)(id))finish {
     self = [super init];
     if(self) {
+        _factor = factor;
         _by = [by copy];
         _start = [start copy];
         _append = [append copy];
         _finish = [finish copy];
-        _factor = factor;
     }
     
     return self;

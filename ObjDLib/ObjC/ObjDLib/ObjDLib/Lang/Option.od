@@ -1,10 +1,21 @@
 package objd.lang
 
 stub class Option<T> {
+    //Get the value or throw exception
     def get : T
+
+    //Get the value if defined or return the parameter
     def getOr(value : T) : T
+
+    //Return self if defined or the parameter
     def or(option : T?) : T?
+
+    //Execute the lambda if defined
     def for(f : T -> void)
+
+    //Return new option with mapped value or none
     def map<X>(f : T -> X) : X?
+
+    //Return the option returned with the lambda or none
     def flatMap<X>(f : T -> X?) : X?
 }

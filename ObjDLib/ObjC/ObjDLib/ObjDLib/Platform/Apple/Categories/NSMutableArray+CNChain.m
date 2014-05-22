@@ -4,6 +4,17 @@
 
 
 @implementation NSMutableArray (CNChain)
++ (CNType *)type {
+    static CNClassType* __type = nil;
+    if(__type == nil) __type = [CNClassType classTypeWithCls:[NSMutableArray class]];
+    return nil;
+}
+
+- (CNType*) type {
+    return [NSMutableArray type];
+}
+
+
 + (NSMutableArray *)mutableArray {
     return [NSMutableArray array];
 }

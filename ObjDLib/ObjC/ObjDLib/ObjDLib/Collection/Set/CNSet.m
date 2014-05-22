@@ -1,10 +1,10 @@
 #import "objd.h"
 #import "CNSet.h"
 
+#import "CNType.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
 #import "CNPlat.h"
-#import "CNType.h"
 @implementation CNSet_impl
 
 - (id)copyWithZone:(NSZone*)zone {
@@ -110,13 +110,13 @@
 static CNClassType* _CNHashSetBuilder_type;
 @synthesize set = _set;
 
-+ (instancetype)hashSetBuilder {
-    return [[CNHashSetBuilder alloc] init];
++ (instancetype)hashSetBuilderWithCapacity:(NSUInteger)capacity {
+    return [[CNHashSetBuilder alloc] initWithCapacity:capacity];
 }
 
-- (instancetype)init {
+- (instancetype)initWithCapacity:(NSUInteger)capacity {
     self = [super init];
-    if(self) _set = [CNMHashSet hashSet];
+    if(self) _set = [CNMHashSet applyCapacity:capacity];
     
     return self;
 }
@@ -132,6 +132,10 @@ static CNClassType* _CNHashSetBuilder_type;
 
 - (CNImHashSet*)build {
     return [_set im];
+}
+
++ (CNHashSetBuilder*)apply {
+    return [CNHashSetBuilder hashSetBuilderWithCapacity:0];
 }
 
 - (CNClassType*)type {

@@ -1,20 +1,23 @@
 package objd.lang
 
-stub struct Class{}
-
 stub class Type<T> {
-    def cls : Class
     def name : string
     override def description = name + ".type"
     def size : uint
     override def hash : uint = self.cast<uint>
     def isEqual(other : Type<T>) = self == other
+
+    def isInstance(obj : any) : bool
 }
 
-stub class ClassType<T>(override cls : Class) extends Type<T> {
+stub class ClassType<T> extends Type<T> {
     override def name : string
 }
 
-stub class PType<T>(override cls : Class, override name : string, override size : uint, wrap : (Pointer<T>, uint) -> T) extends Type<T>
+stub class TraitType<T> extends Type<T> {
+    override def name : string
+}
+
+stub class PType<T>(override val name : string, override val size : uint, val wrap : (Pointer<T>, uint) -> T) extends Type<T>
 
 

@@ -1,14 +1,14 @@
 package objd.chain
 
 class FutureEnd<T> {
-    private val _promise = Promise<Seq<T>>()
+    private val _promise = Promise<[T]>()
     private var _stopped : bool = false
     private var _counter : AtomicInt = AtomicInt()
     private volatile var _ended : bool = false
     private var _yielded = AtomicBool()
     private var _array : MArray<T>?
 
-    def future : Future<Seq<T>> = _promise
+    def future : Future<[T]> = _promise
 
     def yield : Yield<Future<T>> = {
         var _i = 0
@@ -35,7 +35,7 @@ class FutureEnd<T> {
                                 val r = _counter.decrementAndGet
                                 if(_ended && r == 0) {
                                     if(!_yielded.getAndSet(true)) {
-                                        _promise.success(_array.get)
+                                        _promise.success(_array.get.im)
                                     }
                                 }
                             }
@@ -48,7 +48,7 @@ class FutureEnd<T> {
                 _ended = true
                 if(_counter.intValue == 0) {
                     if(!_yielded.getAndSet(true)) {
-                        _promise.success(_array.get)
+                        _promise.success(_array.get.im)
                     }
                 }
                 res
@@ -57,7 +57,7 @@ class FutureEnd<T> {
     }
 }
 
-class FutureVoidEnd<T> {
+class FutureVoidEnd {
     private val _promise = Promise<void>()
     private var _stopped : bool = false
     private var _counter : AtomicInt = AtomicInt()
@@ -66,7 +66,7 @@ class FutureVoidEnd<T> {
 
     def future : Future<void> = _promise
 
-    def yield : Yield<Future<T>> = Yield.make<Future<T>>(
+    def yield : Yield<Future<void>> = Yield.make<Future<void>>(
         begin = size -> {
             Go.Continue
         },

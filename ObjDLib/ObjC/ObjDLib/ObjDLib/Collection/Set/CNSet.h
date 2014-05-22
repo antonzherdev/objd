@@ -1,10 +1,10 @@
 #import "objdcore.h"
 #import "CNCollection.h"
+@class CNClassType;
 @class CNDispatchQueue;
 @class CNChain;
 @class CNMHashSet;
 @class CNImHashSet;
-@class CNClassType;
 
 @class CNSet_impl;
 @class CNImSet_impl;
@@ -50,11 +50,12 @@
 }
 @property (nonatomic, readonly) CNMHashSet* set;
 
-+ (instancetype)hashSetBuilder;
-- (instancetype)init;
++ (instancetype)hashSetBuilderWithCapacity:(NSUInteger)capacity;
+- (instancetype)initWithCapacity:(NSUInteger)capacity;
 - (CNClassType*)type;
 - (void)appendItem:(id)item;
 - (CNImHashSet*)build;
++ (CNHashSetBuilder*)apply;
 + (CNClassType*)type;
 @end
 

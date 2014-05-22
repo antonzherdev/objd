@@ -50,8 +50,17 @@ trait Traversable<T> {
 
     def go(on : T -> Go) : Go
 
-    def chain : Chain<T> = {
-        Chain.chainWith<T>(self)
+    def chain : Chain<T> = Chain<T>(collection = self)
+
+    def contains(item : T) : bool = {
+        var ret : bool = false
+        go{x ->
+            if(x == item) {
+                ret = true
+                Go.Break
+            } else Go.Continue
+        }
+        ret
     }
 
     def find(where : T -> bool) : T? = {
@@ -166,14 +175,14 @@ trait Iterable<T> extends Traversable<T> {
         ret
     }
 
-    def contains(item : T) : bool = {
+    override def contains(item : T) : bool = {
         val i = iterator
         while(i.hasNext) if(i.next == i) return true
         false
     }
 
     override def description : string = {
-        chain.toStringWith(start = "[", delimiter = ", ", end = "]")
+        chain.toString(start = "[", delimiter = ", ", end = "]")
     }
 
     override def hash : uint = {

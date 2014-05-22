@@ -18,7 +18,7 @@ class ImTreeSet<T>(val immap : ImTreeMap<T, Object>) extends TreeSet<T>(immap) w
 }
 
 class TreeSetBuilder<T>(val comparator : (T, T) -> int) extends Builder<T, ImTreeSet<T>> {
-    static def apply<T extends Comparable<T>> = TreeSetBuilder<T>((a : T, b : T) -> a.compare(b))
+    static def apply<T extends Comparable<T>> : TreeSetBuilder<T> = TreeSetBuilder<T>((a : T, b : T) -> a.compare(b))
     private val set = MTreeSet<T>(comparator)
     override def append(item : T) {
         set.append(item)

@@ -5,6 +5,17 @@
 
 
 @implementation NSSet (CNChain)
++ (CNType *)type {
+    static CNClassType* __type = nil;
+    if(__type == nil) __type = [CNClassType classTypeWithCls:[NSSet class]];
+    return nil;
+}
+
+- (CNType*) type {
+    return [NSSet type];
+}
+
+
 - (id <CNIterator>)iterator {
     return [CNEnumerator enumeratorWithEnumerator:[self objectEnumerator]];
 }
@@ -19,7 +30,7 @@
 }
 
 - (CNChain *)chain {
-    return [CNChain chainWithCollection:self];
+    return [CNChain applyCollection:self];
 }
 
 - (BOOL)existsWhere:(BOOL(^)(id))where {

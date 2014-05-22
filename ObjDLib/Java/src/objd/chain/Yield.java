@@ -12,56 +12,56 @@ public class Yield<T> {
     public final F<Integer, Go> begin;
     public final F<T, Go> yield;
     public final F<Go, Go> end;
-    public final F<Traversable<T>, Go> all;
-    public static <T> Yield<T> makeBeginYieldEndAll(final F<Integer, Go> begin, final F<T, Go> yield, final F<Go, Go> end, final F<Traversable<T>, Go> all) {
+    public final F2<Yield<T>, Traversable<T>, Go> all;
+    public static <T> Yield<T> makeBeginYieldEndAll(final F<Integer, Go> begin, final F<T, Go> yield, final F<Go, Go> end, final F2<Yield<T>, Traversable<T>, Go> all) {
         return new Yield<T>(begin, yield, end, all);
     }
     public static <T> Yield<T> makeBeginYieldEnd(final F<Integer, Go> begin, final F<T, Go> yield, final F<Go, Go> end) {
         return Yield.<T>makeBeginYieldEndAll(begin, yield, end, null);
     }
-    public static <T> Yield<T> makeBeginYieldAll(final F<Integer, Go> begin, final F<T, Go> yield, final F<Traversable<T>, Go> all) {
+    public static <T> Yield<T> makeBeginYieldAll(final F<Integer, Go> begin, final F<T, Go> yield, final F2<Yield<T>, Traversable<T>, Go> all) {
         return Yield.<T>makeBeginYieldEndAll(begin, yield, null, all);
     }
     public static <T> Yield<T> makeBeginYield(final F<Integer, Go> begin, final F<T, Go> yield) {
         return Yield.<T>makeBeginYieldEndAll(begin, yield, null, null);
     }
-    public static <T> Yield<T> makeBeginEndAll(final F<Integer, Go> begin, final F<Go, Go> end, final F<Traversable<T>, Go> all) {
+    public static <T> Yield<T> makeBeginEndAll(final F<Integer, Go> begin, final F<Go, Go> end, final F2<Yield<T>, Traversable<T>, Go> all) {
         return Yield.<T>makeBeginYieldEndAll(begin, null, end, all);
     }
     public static <T> Yield<T> makeBeginEnd(final F<Integer, Go> begin, final F<Go, Go> end) {
         return Yield.<T>makeBeginYieldEndAll(begin, null, end, null);
     }
-    public static <T> Yield<T> makeBeginAll(final F<Integer, Go> begin, final F<Traversable<T>, Go> all) {
+    public static <T> Yield<T> makeBeginAll(final F<Integer, Go> begin, final F2<Yield<T>, Traversable<T>, Go> all) {
         return Yield.<T>makeBeginYieldEndAll(begin, null, null, all);
     }
     public static <T> Yield<T> makeBegin(final F<Integer, Go> begin) {
         return Yield.<T>makeBeginYieldEndAll(begin, null, null, null);
     }
-    public static <T> Yield<T> makeYieldEndAll(final F<T, Go> yield, final F<Go, Go> end, final F<Traversable<T>, Go> all) {
+    public static <T> Yield<T> makeYieldEndAll(final F<T, Go> yield, final F<Go, Go> end, final F2<Yield<T>, Traversable<T>, Go> all) {
         return Yield.<T>makeBeginYieldEndAll(null, yield, end, all);
     }
     public static <T> Yield<T> makeYieldEnd(final F<T, Go> yield, final F<Go, Go> end) {
         return Yield.<T>makeBeginYieldEndAll(null, yield, end, null);
     }
-    public static <T> Yield<T> makeYieldAll(final F<T, Go> yield, final F<Traversable<T>, Go> all) {
+    public static <T> Yield<T> makeYieldAll(final F<T, Go> yield, final F2<Yield<T>, Traversable<T>, Go> all) {
         return Yield.<T>makeBeginYieldEndAll(null, yield, null, all);
     }
     public static <T> Yield<T> makeYield(final F<T, Go> yield) {
         return Yield.<T>makeBeginYieldEndAll(null, yield, null, null);
     }
-    public static <T> Yield<T> makeEndAll(final F<Go, Go> end, final F<Traversable<T>, Go> all) {
+    public static <T> Yield<T> makeEndAll(final F<Go, Go> end, final F2<Yield<T>, Traversable<T>, Go> all) {
         return Yield.<T>makeBeginYieldEndAll(null, null, end, all);
     }
     public static <T> Yield<T> makeEnd(final F<Go, Go> end) {
         return Yield.<T>makeBeginYieldEndAll(null, null, end, null);
     }
-    public static <T> Yield<T> makeAll(final F<Traversable<T>, Go> all) {
+    public static <T> Yield<T> makeAll(final F2<Yield<T>, Traversable<T>, Go> all) {
         return Yield.<T>makeBeginYieldEndAll(null, null, null, all);
     }
     public static <T> Yield<T> make() {
         return Yield.<T>makeBeginYieldEndAll(null, null, null, null);
     }
-    public static <T, A> Yield<T> decorateBaseBeginYieldEndAll(final Yield<A> base, final F<Integer, Go> begin, final F<T, Go> yield, final F<Go, Go> end, final F<Traversable<T>, Go> all) {
+    public static <T, A> Yield<T> decorateBaseBeginYieldEndAll(final Yield<A> base, final F<Integer, Go> begin, final F<T, Go> yield, final F<Go, Go> end, final F2<Yield<T>, Traversable<T>, Go> all) {
         return new Yield<T>(((begin != null) ? (begin) : (new F<Integer, Go>() {
             @Override
             public Go apply(final Integer size) {
@@ -82,43 +82,43 @@ public class Yield<T> {
     public static <T, A> Yield<T> decorateBaseBeginYieldEnd(final Yield<A> base, final F<Integer, Go> begin, final F<T, Go> yield, final F<Go, Go> end) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, begin, yield, end, null);
     }
-    public static <T, A> Yield<T> decorateBaseBeginYieldAll(final Yield<A> base, final F<Integer, Go> begin, final F<T, Go> yield, final F<Traversable<T>, Go> all) {
+    public static <T, A> Yield<T> decorateBaseBeginYieldAll(final Yield<A> base, final F<Integer, Go> begin, final F<T, Go> yield, final F2<Yield<T>, Traversable<T>, Go> all) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, begin, yield, null, all);
     }
     public static <T, A> Yield<T> decorateBaseBeginYield(final Yield<A> base, final F<Integer, Go> begin, final F<T, Go> yield) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, begin, yield, null, null);
     }
-    public static <T, A> Yield<T> decorateBaseBeginEndAll(final Yield<A> base, final F<Integer, Go> begin, final F<Go, Go> end, final F<Traversable<T>, Go> all) {
+    public static <T, A> Yield<T> decorateBaseBeginEndAll(final Yield<A> base, final F<Integer, Go> begin, final F<Go, Go> end, final F2<Yield<T>, Traversable<T>, Go> all) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, begin, null, end, all);
     }
     public static <T, A> Yield<T> decorateBaseBeginEnd(final Yield<A> base, final F<Integer, Go> begin, final F<Go, Go> end) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, begin, null, end, null);
     }
-    public static <T, A> Yield<T> decorateBaseBeginAll(final Yield<A> base, final F<Integer, Go> begin, final F<Traversable<T>, Go> all) {
+    public static <T, A> Yield<T> decorateBaseBeginAll(final Yield<A> base, final F<Integer, Go> begin, final F2<Yield<T>, Traversable<T>, Go> all) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, begin, null, null, all);
     }
     public static <T, A> Yield<T> decorateBaseBegin(final Yield<A> base, final F<Integer, Go> begin) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, begin, null, null, null);
     }
-    public static <T, A> Yield<T> decorateBaseYieldEndAll(final Yield<A> base, final F<T, Go> yield, final F<Go, Go> end, final F<Traversable<T>, Go> all) {
+    public static <T, A> Yield<T> decorateBaseYieldEndAll(final Yield<A> base, final F<T, Go> yield, final F<Go, Go> end, final F2<Yield<T>, Traversable<T>, Go> all) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, null, yield, end, all);
     }
     public static <T, A> Yield<T> decorateBaseYieldEnd(final Yield<A> base, final F<T, Go> yield, final F<Go, Go> end) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, null, yield, end, null);
     }
-    public static <T, A> Yield<T> decorateBaseYieldAll(final Yield<A> base, final F<T, Go> yield, final F<Traversable<T>, Go> all) {
+    public static <T, A> Yield<T> decorateBaseYieldAll(final Yield<A> base, final F<T, Go> yield, final F2<Yield<T>, Traversable<T>, Go> all) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, null, yield, null, all);
     }
     public static <T, A> Yield<T> decorateBaseYield(final Yield<A> base, final F<T, Go> yield) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, null, yield, null, null);
     }
-    public static <T, A> Yield<T> decorateBaseEndAll(final Yield<A> base, final F<Go, Go> end, final F<Traversable<T>, Go> all) {
+    public static <T, A> Yield<T> decorateBaseEndAll(final Yield<A> base, final F<Go, Go> end, final F2<Yield<T>, Traversable<T>, Go> all) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, null, null, end, all);
     }
     public static <T, A> Yield<T> decorateBaseEnd(final Yield<A> base, final F<Go, Go> end) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, null, null, end, null);
     }
-    public static <T, A> Yield<T> decorateBaseAll(final Yield<A> base, final F<Traversable<T>, Go> all) {
+    public static <T, A> Yield<T> decorateBaseAll(final Yield<A> base, final F2<Yield<T>, Traversable<T>, Go> all) {
         return Yield.<T, A>decorateBaseBeginYieldEndAll(base, null, null, null, all);
     }
     public static <T, A> Yield<T> decorateBase(final Yield<A> base) {
@@ -147,7 +147,7 @@ public class Yield<T> {
     }
     public Go yieldAllItems(final Traversable<T> items) {
         if(this.all != null) {
-            return this.all.apply(items);
+            return this.all.apply(this, items);
         } else {
             return stdYieldAllItems(items);
         }
@@ -209,7 +209,7 @@ public class Yield<T> {
         }
         return endYieldWithResult(result.value);
     }
-    public Yield(final F<Integer, Go> begin, final F<T, Go> yield, final F<Go, Go> end, final F<Traversable<T>, Go> all) {
+    public Yield(final F<Integer, Go> begin, final F<T, Go> yield, final F<Go, Go> end, final F2<Yield<T>, Traversable<T>, Go> all) {
         this.begin = begin;
         this.yield = yield;
         this.end = end;
@@ -218,43 +218,43 @@ public class Yield<T> {
     static public <T> Yield<T> applyBeginYieldEnd(final F<Integer, Go> begin, final F<T, Go> yield, final F<Go, Go> end) {
         return new Yield<T>(begin, yield, end, null);
     }
-    static public <T> Yield<T> applyBeginYieldAll(final F<Integer, Go> begin, final F<T, Go> yield, final F<Traversable<T>, Go> all) {
+    static public <T> Yield<T> applyBeginYieldAll(final F<Integer, Go> begin, final F<T, Go> yield, final F2<Yield<T>, Traversable<T>, Go> all) {
         return new Yield<T>(begin, yield, null, all);
     }
     static public <T> Yield<T> applyBeginYield(final F<Integer, Go> begin, final F<T, Go> yield) {
         return new Yield<T>(begin, yield, null, null);
     }
-    static public <T> Yield<T> applyBeginEndAll(final F<Integer, Go> begin, final F<Go, Go> end, final F<Traversable<T>, Go> all) {
+    static public <T> Yield<T> applyBeginEndAll(final F<Integer, Go> begin, final F<Go, Go> end, final F2<Yield<T>, Traversable<T>, Go> all) {
         return new Yield<T>(begin, null, end, all);
     }
     static public <T> Yield<T> applyBeginEnd(final F<Integer, Go> begin, final F<Go, Go> end) {
         return new Yield<T>(begin, null, end, null);
     }
-    static public <T> Yield<T> applyBeginAll(final F<Integer, Go> begin, final F<Traversable<T>, Go> all) {
+    static public <T> Yield<T> applyBeginAll(final F<Integer, Go> begin, final F2<Yield<T>, Traversable<T>, Go> all) {
         return new Yield<T>(begin, null, null, all);
     }
     static public <T> Yield<T> applyBegin(final F<Integer, Go> begin) {
         return new Yield<T>(begin, null, null, null);
     }
-    static public <T> Yield<T> applyYieldEndAll(final F<T, Go> yield, final F<Go, Go> end, final F<Traversable<T>, Go> all) {
+    static public <T> Yield<T> applyYieldEndAll(final F<T, Go> yield, final F<Go, Go> end, final F2<Yield<T>, Traversable<T>, Go> all) {
         return new Yield<T>(null, yield, end, all);
     }
     static public <T> Yield<T> applyYieldEnd(final F<T, Go> yield, final F<Go, Go> end) {
         return new Yield<T>(null, yield, end, null);
     }
-    static public <T> Yield<T> applyYieldAll(final F<T, Go> yield, final F<Traversable<T>, Go> all) {
+    static public <T> Yield<T> applyYieldAll(final F<T, Go> yield, final F2<Yield<T>, Traversable<T>, Go> all) {
         return new Yield<T>(null, yield, null, all);
     }
     static public <T> Yield<T> applyYield(final F<T, Go> yield) {
         return new Yield<T>(null, yield, null, null);
     }
-    static public <T> Yield<T> applyEndAll(final F<Go, Go> end, final F<Traversable<T>, Go> all) {
+    static public <T> Yield<T> applyEndAll(final F<Go, Go> end, final F2<Yield<T>, Traversable<T>, Go> all) {
         return new Yield<T>(null, null, end, all);
     }
     static public <T> Yield<T> applyEnd(final F<Go, Go> end) {
         return new Yield<T>(null, null, end, null);
     }
-    static public <T> Yield<T> applyAll(final F<Traversable<T>, Go> all) {
+    static public <T> Yield<T> applyAll(final F2<Yield<T>, Traversable<T>, Go> all) {
         return new Yield<T>(null, null, null, all);
     }
     static public <T> Yield<T> apply() {

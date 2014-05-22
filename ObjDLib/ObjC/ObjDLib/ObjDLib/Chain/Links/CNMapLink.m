@@ -154,18 +154,18 @@ static CNClassType* _CNFlatLink_type;
 
 @implementation CNFlatMapLink
 static CNClassType* _CNFlatMapLink_type;
-@synthesize f = _f;
 @synthesize factor = _factor;
+@synthesize f = _f;
 
-+ (instancetype)flatMapLinkWithF:(id<CNTraversable>(^)(id))f factor:(CGFloat)factor {
-    return [[CNFlatMapLink alloc] initWithF:f factor:factor];
++ (instancetype)flatMapLinkWithFactor:(CGFloat)factor f:(id<CNTraversable>(^)(id))f {
+    return [[CNFlatMapLink alloc] initWithFactor:factor f:f];
 }
 
-- (instancetype)initWithF:(id<CNTraversable>(^)(id))f factor:(CGFloat)factor {
+- (instancetype)initWithFactor:(CGFloat)factor f:(id<CNTraversable>(^)(id))f {
     self = [super init];
     if(self) {
-        _f = [f copy];
         _factor = factor;
+        _f = [f copy];
     }
     
     return self;
