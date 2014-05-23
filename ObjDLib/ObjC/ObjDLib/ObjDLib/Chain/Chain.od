@@ -26,13 +26,13 @@ class Chain<A>(val link : ChainLink<_, A>, val previous : Chain<_>?) extends ImT
     def group<K>(factor : float = 0.5, by : A -> K) : Chain<(K, [A])> =
         add(MGroupByLink<A, K, ArrayBuilder<A>, [A]>(factor, by,
             start = ArrayBuilder<A>(), append = (b, item) -> b.append(item), finish = b -> b.build))
-    def group<K, B>(factor : float = 0.5, by : A -> K, map : A -> B) : Chain<(K, [B])> =
+    def group<K, B>(factor : float = 0.5, by : A -> K, f : A -> B) : Chain<(K, [B])> =
         add(MGroupByLink<A, K, ArrayBuilder<B>, [B]>(factor, by,
-            start = ArrayBuilder<B>(), append = (b, item) -> b.append(map(item)), finish = b -> b.build))
-    def group<K, C extends Traversable<K>>(factor : float = 0.5, by : A -> K, builder : () -> Builder<A, C>) : Chain<(K, C<A>)> =
+            start = ArrayBuilder<B>(), append = (b, item) -> b.append(f(item)), finish = b -> b.build))
+    def group<K, C extends Traversable<A>>(factor : float = 0.5, by : A -> K, builder : () -> Builder<A, C>) : Chain<(K, C)> =
         add(MGroupByLink(factor, by, start = builder, append = (b, item) -> b.append(item), finish = b -> b.build))
-    def group<B, K, C extends Traversable<K>>(factor : float = 0.5, by : A -> K, map : A -> B, builder : () -> Builder<B, C>) : Chain<(K, C<B>)> =
-        add(MGroupByLink(factor, by, start = builder, append = (b, item) -> b.append(map(item)), finish = b -> b.build))
+    def group<B, K, C extends Traversable<B>>(factor : float = 0.5, by : A -> K, f : A -> B, builder : () -> Builder<B, C>) : Chain<(K, C)> =
+        add(MGroupByLink(factor, by, start = builder, append = (b, item) -> b.append(f(item)), finish = b -> b.build))
     def group<K, V>(factor : float = 0.5, by : A -> K, start : () -> V, fold : (V, A) -> V) : Chain<(K, V)> =
         add(ImGroupByLink(factor, by, start, fold))
     def distinct(factor : float = 0.5) : Chain<A> = add(DistinctLink<A>(factor))

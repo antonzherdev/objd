@@ -79,12 +79,12 @@
 - (CNChain*)mulBy:(id<CNTraversable>)by;
 - (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by;
 - (CNChain*)groupBy:(id(^)(id))by;
-- (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by map:(id(^)(id))map;
-- (CNChain*)groupBy:(id(^)(id))by map:(id(^)(id))map;
+- (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by f:(id(^)(id))f;
+- (CNChain*)groupBy:(id(^)(id))by f:(id(^)(id))f;
 - (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by builder:(id<CNBuilder>(^)())builder;
 - (CNChain*)groupBy:(id(^)(id))by builder:(id<CNBuilder>(^)())builder;
-- (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by map:(id(^)(id))map builder:(id<CNBuilder>(^)())builder;
-- (CNChain*)groupBy:(id(^)(id))by map:(id(^)(id))map builder:(id<CNBuilder>(^)())builder;
+- (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by f:(id(^)(id))f builder:(id<CNBuilder>(^)())builder;
+- (CNChain*)groupBy:(id(^)(id))by f:(id(^)(id))f builder:(id<CNBuilder>(^)())builder;
 - (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by start:(id(^)())start fold:(id(^)(id, id))fold;
 - (CNChain*)groupBy:(id(^)(id))by start:(id(^)())start fold:(id(^)(id, id))fold;
 - (CNChain*)distinctFactor:(CGFloat)factor;

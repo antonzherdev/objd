@@ -1,5 +1,5 @@
 package objd.lang;
 
 public interface P<T>  {
-    void apply(T _);
+    void apply(T a);
 }

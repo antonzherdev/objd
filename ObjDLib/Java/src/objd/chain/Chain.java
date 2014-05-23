@@ -100,7 +100,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
     public <K> Chain<Tuple<K, ImArray<A>>> groupBy(final F<A, K> by) {
         return this.<K>groupFactorBy(0.5, by);
     }
-    public <K, B> Chain<Tuple<K, ImArray<B>>> groupFactorByMap(final double factor, final F<A, K> by, final F<A, B> map) {
+    public <K, B> Chain<Tuple<K, ImArray<B>>> groupFactorByF(final double factor, final F<A, K> by, final F<A, B> f) {
         return this.<Tuple<K, ImArray<B>>>addLink(new MGroupByLink<A, K, ArrayBuilder<B>, ImArray<B>>(factor, by, new F0<ArrayBuilder<B>>() {
             @Override
             public ArrayBuilder<B> apply() {
@@ -109,12 +109,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
         }, new P2<ArrayBuilder<B>, A>() {
             @Override
             public void apply(final ArrayBuilder<B> b, final A item) {
-                b.appendItem(this.<A>mapF(new F<A, A>() {
-                    @Override
-                    public A apply(final A _) {
-                        return item;
-                    }
-                }));
+                b.appendItem(f.apply(item));
             }
         }, new F<ArrayBuilder<B>, ImArray<B>>() {
             @Override
@@ -123,10 +118,10 @@ public class Chain<A> extends ImTraversable_impl<A> {
             }
         }));
     }
-    public <K, B> Chain<Tuple<K, ImArray<B>>> groupByMap(final F<A, K> by, final F<A, B> map) {
-        return this.<K, B>groupFactorByMap(0.5, by, map);
+    public <K, B> Chain<Tuple<K, ImArray<B>>> groupByF(final F<A, K> by, final F<A, B> f) {
+        return this.<K, B>groupFactorByF(0.5, by, f);
     }
-    public <K, C extends Traversable<K>> Chain<Tuple<K, C<A>>> groupFactorByBuilder(final double factor, final F<A, K> by, final F0<Builder<A, C>> builder) {
+    public <K, C extends Traversable<A>> Chain<Tuple<K, C>> groupFactorByBuilder(final double factor, final F<A, K> by, final F0<Builder<A, C>> builder) {
         return this.<Tuple<K, C>>addLink(new MGroupByLink<A, K, Builder<A, C>, C>(factor, by, builder, new P2<Builder<A, C>, A>() {
             @Override
             public void apply(final Builder<A, C> b, final A item) {
@@ -139,19 +134,14 @@ public class Chain<A> extends ImTraversable_impl<A> {
             }
         }));
     }
-    public <K, C extends Traversable<K>> Chain<Tuple<K, C<A>>> groupByBuilder(final F<A, K> by, final F0<Builder<A, C>> builder) {
+    public <K, C extends Traversable<A>> Chain<Tuple<K, C>> groupByBuilder(final F<A, K> by, final F0<Builder<A, C>> builder) {
         return this.<K, C>groupFactorByBuilder(0.5, by, builder);
     }
-    public <B, K, C extends Traversable<K>> Chain<Tuple<K, C<B>>> groupFactorByMapBuilder(final double factor, final F<A, K> by, final F<A, B> map, final F0<Builder<B, C>> builder) {
+    public <B, K, C extends Traversable<B>> Chain<Tuple<K, C>> groupFactorByFBuilder(final double factor, final F<A, K> by, final F<A, B> f, final F0<Builder<B, C>> builder) {
         return this.<Tuple<K, C>>addLink(new MGroupByLink<A, K, Builder<B, C>, C>(factor, by, builder, new P2<Builder<B, C>, A>() {
             @Override
             public void apply(final Builder<B, C> b, final A item) {
-                b.appendItem(this.<A>mapF(new F<A, A>() {
-                    @Override
-                    public A apply(final A _) {
-                        return item;
-                    }
-                }));
+                b.appendItem(f.apply(item));
             }
         }, new F<Builder<B, C>, C>() {
             @Override
@@ -160,8 +150,8 @@ public class Chain<A> extends ImTraversable_impl<A> {
             }
         }));
     }
-    public <B, K, C extends Traversable<K>> Chain<Tuple<K, C<B>>> groupByMapBuilder(final F<A, K> by, final F<A, B> map, final F0<Builder<B, C>> builder) {
-        return this.<B, K, C>groupFactorByMapBuilder(0.5, by, map, builder);
+    public <B, K, C extends Traversable<B>> Chain<Tuple<K, C>> groupByFBuilder(final F<A, K> by, final F<A, B> f, final F0<Builder<B, C>> builder) {
+        return this.<B, K, C>groupFactorByFBuilder(0.5, by, f, builder);
     }
     public <K, V> Chain<Tuple<K, V>> groupFactorByStartFold(final double factor, final F<A, K> by, final F0<V> start, final F2<V, A, V> fold) {
         return this.<Tuple<K, V>>addLink(new ImGroupByLink<A, K, V>(factor, by, start, fold));

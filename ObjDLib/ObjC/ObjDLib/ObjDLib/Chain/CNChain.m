@@ -130,22 +130,18 @@ static CNClassType* _CNChain_type;
     return [self groupFactor:0.5 by:by];
 }
 
-- (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by map:(id(^)(id))map {
-    __weak CNChain* _weakSelf = self;
+- (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by f:(id(^)(id))f {
     return [self addLink:[CNMGroupByLink groupByLinkWithFactor:factor by:by start:^CNArrayBuilder*() {
         return [CNArrayBuilder apply];
     } append:^void(CNArrayBuilder* b, id item) {
-        CNChain* _self = _weakSelf;
-        if(_self != nil) [((CNArrayBuilder*)(b)) appendItem:[_self mapF:^id(id _) {
-            return item;
-        }]];
+        [((CNArrayBuilder*)(b)) appendItem:f(item)];
     } finish:^CNImArray*(CNArrayBuilder* b) {
         return [((CNArrayBuilder*)(b)) build];
     }]];
 }
 
-- (CNChain*)groupBy:(id(^)(id))by map:(id(^)(id))map {
-    return [self groupFactor:0.5 by:by map:map];
+- (CNChain*)groupBy:(id(^)(id))by f:(id(^)(id))f {
+    return [self groupFactor:0.5 by:by f:f];
 }
 
 - (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by builder:(id<CNBuilder>(^)())builder {
@@ -160,20 +156,16 @@ static CNClassType* _CNChain_type;
     return [self groupFactor:0.5 by:by builder:builder];
 }
 
-- (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by map:(id(^)(id))map builder:(id<CNBuilder>(^)())builder {
-    __weak CNChain* _weakSelf = self;
+- (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by f:(id(^)(id))f builder:(id<CNBuilder>(^)())builder {
     return [self addLink:[CNMGroupByLink groupByLinkWithFactor:factor by:by start:builder append:^void(id<CNBuilder> b, id item) {
-        CNChain* _self = _weakSelf;
-        if(_self != nil) [((id<CNBuilder>)(b)) appendItem:[_self mapF:^id(id _) {
-            return item;
-        }]];
+        [((id<CNBuilder>)(b)) appendItem:f(item)];
     } finish:^id(id<CNBuilder> b) {
         return [((id<CNBuilder>)(b)) build];
     }]];
 }
 
-- (CNChain*)groupBy:(id(^)(id))by map:(id(^)(id))map builder:(id<CNBuilder>(^)())builder {
-    return [self groupFactor:0.5 by:by map:map builder:builder];
+- (CNChain*)groupBy:(id(^)(id))by f:(id(^)(id))f builder:(id<CNBuilder>(^)())builder {
+    return [self groupFactor:0.5 by:by f:f builder:builder];
 }
 
 - (CNChain*)groupFactor:(CGFloat)factor by:(id(^)(id))by start:(id(^)())start fold:(id(^)(id, id))fold {
