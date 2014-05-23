@@ -1,6 +1,7 @@
 package objd.lang;
 
 import objd.lang.*;
+import objd.collection.ImArray;
 
 public class Enum implements Comparable<Enum> {
     public static abstract ImArray<Enum> values();

@@ -2,8 +2,8 @@ package objd.chain;
 
 import objd.lang.*;
 import objd.collection.Traversable;
-import objd.collection.ArrayBuilder;
 import objd.collection.ImArray;
+import objd.collection.ArrayBuilder;
 import objd.collection.Builder;
 import objd.collection.Iterable;
 import objd.collection.Iterator;
@@ -11,12 +11,16 @@ import objd.collection.Go;
 import objd.collection.Seq;
 import objd.collection.MArray;
 import objd.collection.ImList;
+import objd.collection.ImListBuilder;
 import objd.collection.Set;
+import objd.collection.HashSetBuilder;
 import objd.collection.TreeSet;
+import objd.collection.ImTreeSet;
 import objd.collection.TreeSetBuilder;
 import objd.collection.ImHashMap;
+import objd.collection.HashMapBuilder;
+import objd.collection.MHashMap;
 import objd.collection.StringBuilder;
-import objd.collection.String;
 import objd.concurrent.Future;
 import objd.collection.ImTraversable_impl;
 
@@ -235,7 +239,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             return this;
         }
     }
-    public <B extends Comparable<B>> Chain<A> sort() {
+    public <B extends Comparable<B>> Chain<B> sort() {
         return ((Chain<B>)(this)).<B>addLink(new SortLink<B>(new F2<B, B, Integer>() {
             @Override
             public Integer apply(final B a, final B b) {
@@ -243,7 +247,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             }
         }));
     }
-    public <B extends Comparable<B>> Chain<A> sortDesc() {
+    public <B extends Comparable<B>> Chain<B> sortDesc() {
         return ((Chain<B>)(this)).<B>addLink(new SortLink<B>(new F2<B, B, Integer>() {
             @Override
             public Integer apply(final B a, final B b) {
@@ -266,9 +270,9 @@ public class Chain<A> extends ImTraversable_impl<A> {
     }
     public <B> B foldStartBy(final B start, final F2<B, A, B> by) {
         final Mut<B> r = new Mut<B>(start);
-        applyYield(Yield.<B>makeYield(new F<B, Go>() {
+        applyYield(Yield.<A>makeYield(new F<A, Go>() {
             @Override
-            public Go apply(final B item) {
+            public Go apply(final A item) {
                 r.value = by.apply(r.value, item);
                 return Go.Continue;
             }
@@ -410,44 +414,6 @@ public class Chain<A> extends ImTraversable_impl<A> {
         }));
         return ret.value;
     }
-    private <R> R convertToBuilder(final Type<R> to, final F<Integer, Builder<A, R>> builder) {
-        final Mut<Builder<A, R>> b = new Mut<Builder<A, R>>();
-        final Mut<R> r = new Mut<R>();
-        applyYield(Yield.<A>makeBeginYieldAll(new F<Integer, Go>() {
-            @Override
-            public Go apply(final Integer size) {
-                b.value = builder.apply(((int)(size)));
-                return Go.Continue;
-            }
-        }, new F<A, Go>() {
-            @Override
-            public Go apply(final A item) {
-                if(b.value == null) {
-                    throw new NullPointerException();
-                }
-                b.value.appendItem(item);
-                return Go.Continue;
-            }
-        }, new F2<Yield<A>, Traversable<A>, Go>() {
-            @Override
-            public Go apply(final Yield<A> yield, final Traversable<A> all) {
-                if(all instanceof R) {
-                    r.value = ((R)(all));
-                    return Go.Continue;
-                } else {
-                    return yield.stdYieldAllItems(all);
-                }
-            }
-        }));
-        if(r.value == null) {
-            if(b.value == null) {
-                throw new NullPointerException();
-            }
-            return b.value.build();
-        } else {
-            return r.value;
-        }
-    }
     public Seq<A> toSeq() {
         final Mut<Builder<A, Seq<A>>> __il_b = new Mut<Builder<A, Seq<A>>>();
         final Mut<Seq<A>> __il_r = new Mut<Seq<A>>();
@@ -455,7 +421,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             @Override
             public Go apply(final Integer size) {
                 final int _ = ((int)(size));
-                __il_b.value = new ArrayBuilder<A>(((int)(_)));
+                __il_b.value = ((Builder)(new ArrayBuilder<A>(((int)(_)))));
                 return Go.Continue;
             }
         }, new F<A, Go>() {
@@ -531,13 +497,13 @@ public class Chain<A> extends ImTraversable_impl<A> {
         }
     }
     public ImList<A> toList() {
-        final Mut<Builder<A, ImList<?>>> __il_b = new Mut<Builder<A, ImList<?>>>();
-        final Mut<ImList<?>> __il_r = new Mut<ImList<?>>();
+        final Mut<Builder<A, ImList<A>>> __il_b = new Mut<Builder<A, ImList<A>>>();
+        final Mut<ImList<A>> __il_r = new Mut<ImList<A>>();
         applyYield(Yield.<A>makeBeginYieldAll(new F<Integer, Go>() {
             @Override
             public Go apply(final Integer size) {
                 final int _ = ((int)(size));
-                __il_b.value = new ImListBuilder<A>();
+                __il_b.value = ((Builder)(new ImListBuilder<A>()));
                 return Go.Continue;
             }
         }, new F<A, Go>() {
@@ -553,7 +519,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             @Override
             public Go apply(final Yield<A> yield, final Traversable<A> all) {
                 if(all instanceof ImList) {
-                    __il_r.value = ((ImList<?>)(all));
+                    __il_r.value = ((ImList<A>)(all));
                     return Go.Continue;
                 } else {
                     return yield.stdYieldAllItems(all);
@@ -570,13 +536,13 @@ public class Chain<A> extends ImTraversable_impl<A> {
         }
     }
     public Set<A> toSet() {
-        final Mut<Builder<A, Set<?>>> __il_b = new Mut<Builder<A, Set<?>>>();
-        final Mut<Set<?>> __il_r = new Mut<Set<?>>();
+        final Mut<Builder<A, Set<A>>> __il_b = new Mut<Builder<A, Set<A>>>();
+        final Mut<Set<A>> __il_r = new Mut<Set<A>>();
         applyYield(Yield.<A>makeBeginYieldAll(new F<Integer, Go>() {
             @Override
             public Go apply(final Integer size) {
                 final int _ = ((int)(size));
-                __il_b.value = new HashSetBuilder<A>(((int)(_)));
+                __il_b.value = ((Builder)(new HashSetBuilder<A>(((int)(_)))));
                 return Go.Continue;
             }
         }, new F<A, Go>() {
@@ -592,7 +558,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             @Override
             public Go apply(final Yield<A> yield, final Traversable<A> all) {
                 if(all instanceof Set) {
-                    __il_r.value = ((Set<?>)(all));
+                    __il_r.value = ((Set<A>)(all));
                     return Go.Continue;
                 } else {
                     return yield.stdYieldAllItems(all);
@@ -609,81 +575,84 @@ public class Chain<A> extends ImTraversable_impl<A> {
         }
     }
     public <B extends Comparable<B>> TreeSet<B> toTreeSet() {
-        final Mut<Builder<B, TreeSet<?>>> __il_b = new Mut<Builder<B, TreeSet<?>>>();
-        final Mut<TreeSet<?>> __il_r = new Mut<TreeSet<?>>();
+        final Mut<Builder<B, ImTreeSet<B>>> b = new Mut<Builder<B, ImTreeSet<B>>>();
+        final Mut<TreeSet<B>> r = new Mut<TreeSet<B>>();
         ((Chain<B>)(this)).applyYield(Yield.<B>makeBeginYieldAll(new F<Integer, Go>() {
             @Override
             public Go apply(final Integer size) {
-                final int _ = ((int)(size));
-                __il_b.value = TreeSetBuilder.<B>apply();
+                b.value = TreeSetBuilder.<B>apply();
                 return Go.Continue;
             }
-        }, new F<A, Go>() {
+        }, new F<B, Go>() {
             @Override
-            public Go apply(final A item) {
-                if(__il_b.value == null) {
+            public Go apply(final B item) {
+                if(b.value == null) {
                     throw new NullPointerException();
                 }
-                __il_b.value.appendItem(item);
+                b.value.appendItem(item);
                 return Go.Continue;
             }
-        }, new F2<Yield<A>, Traversable<A>, Go>() {
+        }, new F2<Yield<B>, Traversable<B>, Go>() {
             @Override
-            public Go apply(final Yield<A> yield, final Traversable<A> all) {
+            public Go apply(final Yield<B> yield, final Traversable<B> all) {
                 if(all instanceof TreeSet) {
-                    __il_r.value = ((TreeSet<?>)(all));
+                    r.value = ((TreeSet<B>)(all));
                     return Go.Continue;
                 } else {
                     return yield.stdYieldAllItems(all);
                 }
             }
         }));
-        if(__il_r.value == null) {
-            if(__il_b.value == null) {
+        if(r.value == null) {
+            if(b.value == null) {
                 throw new NullPointerException();
             }
-            return __il_b.value.build();
+            return b.value.build();
         } else {
-            return __il_r.value;
+            return r.value;
         }
     }
     public <K, V> ImHashMap<K, V> toMap() {
-        final Mut<Builder<Tuple<K, V>, ImHashMap<?, ?>>> __il_b = new Mut<Builder<Tuple<K, V>, ImHashMap<?, ?>>>();
-        final Mut<ImHashMap<?, ?>> __il_r = new Mut<ImHashMap<?, ?>>();
+        final Mut<Builder<Tuple<K, V>, ImHashMap<K, V>>> b = new Mut<Builder<Tuple<K, V>, ImHashMap<K, V>>>();
+        final Mut<ImHashMap<K, V>> r = new Mut<ImHashMap<K, V>>();
         ((Chain<Tuple<K, V>>)(this)).applyYield(Yield.<Tuple<K, V>>makeBeginYieldAll(new F<Integer, Go>() {
             @Override
             public Go apply(final Integer size) {
-                final int _ = ((int)(size));
-                __il_b.value = new HashMapBuilder<K, V>();
+                b.value = new HashMapBuilder<K, V>();
                 return Go.Continue;
             }
-        }, new F<A, Go>() {
+        }, new F<Tuple<K, V>, Go>() {
             @Override
-            public Go apply(final A item) {
-                if(__il_b.value == null) {
+            public Go apply(final Tuple<K, V> item) {
+                if(b.value == null) {
                     throw new NullPointerException();
                 }
-                __il_b.value.appendItem(item);
+                b.value.appendItem(item);
                 return Go.Continue;
             }
-        }, new F2<Yield<A>, Traversable<A>, Go>() {
+        }, new F2<Yield<Tuple<K, V>>, Traversable<Tuple<K, V>>, Go>() {
             @Override
-            public Go apply(final Yield<A> yield, final Traversable<A> all) {
+            public Go apply(final Yield<Tuple<K, V>> yield, final Traversable<Tuple<K, V>> all) {
                 if(all instanceof ImHashMap) {
-                    __il_r.value = ((ImHashMap<?, ?>)(all));
+                    r.value = ((ImHashMap<K, V>)(all));
                     return Go.Continue;
                 } else {
-                    return yield.stdYieldAllItems(all);
+                    if(all instanceof MHashMap) {
+                        r.value = ((MHashMap<K, V>)(all)).im();
+                        return Go.Continue;
+                    } else {
+                        return yield.stdYieldAllItems(all);
+                    }
                 }
             }
         }));
-        if(__il_r.value == null) {
-            if(__il_b.value == null) {
+        if(r.value == null) {
+            if(b.value == null) {
                 throw new NullPointerException();
             }
-            return __il_b.value.build();
+            return b.value.build();
         } else {
-            return __il_r.value;
+            return r.value;
         }
     }
     public String toStringStartDelimiterEnd(final String start, final String delimiter, final String end) {
@@ -702,49 +671,10 @@ public class Chain<A> extends ImTraversable_impl<A> {
             }
         });
         b.appendStr(end);
-        return b.build();
+        return b.toString();
     }
     public String toStringDelimiter(final String delimiter) {
         return toStringStartDelimiterEnd("", delimiter, "");
-    }
-    public String toString() {
-        final Mut<Builder<Character, String>> __il_b = new Mut<Builder<Character, String>>();
-        final Mut<String> __il_r = new Mut<String>();
-        ((Chain<Character>)(this)).applyYield(Yield.<Character>makeBeginYieldAll(new F<Integer, Go>() {
-            @Override
-            public Go apply(final Integer size) {
-                final int _ = ((int)(size));
-                __il_b.value = new StringBuilder();
-                return Go.Continue;
-            }
-        }, new F<A, Go>() {
-            @Override
-            public Go apply(final A item) {
-                if(__il_b.value == null) {
-                    throw new NullPointerException();
-                }
-                __il_b.value.appendItem(item);
-                return Go.Continue;
-            }
-        }, new F2<Yield<A>, Traversable<A>, Go>() {
-            @Override
-            public Go apply(final Yield<A> yield, final Traversable<A> all) {
-                if(all instanceof String) {
-                    __il_r.value = ((String)(all));
-                    return Go.Continue;
-                } else {
-                    return yield.stdYieldAllItems(all);
-                }
-            }
-        }));
-        if(__il_r.value == null) {
-            if(__il_b.value == null) {
-                throw new NullPointerException();
-            }
-            return __il_b.value.build();
-        } else {
-            return __il_r.value;
-        }
     }
     public <V, R> Future<R> futureF(final F<Chain<V>, R> f) {
         final FutureEnd<V> lnk = new FutureEnd<V>();
@@ -773,9 +703,9 @@ public class Chain<A> extends ImTraversable_impl<A> {
     }
     private Yield<?> buildYield(final Yield<A> yield) {
         Chain<?> ch = this;
-        Yield<A> y = yield;
+        Yield<?> y = yield;
         while(ch != null) {
-            y = ch.link.buildYield(y);
+            y = ch.link.buildYield(((Yield)(y)));
             ch = ch.previous;
         }
         return y;

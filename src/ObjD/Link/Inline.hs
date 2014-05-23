@@ -104,7 +104,9 @@ inlineCall env e = let
 			[] -> ee'
 			_ -> Braces $ nonelemPars ++ [ee']
 	unwrapLambda [] ee = LambdaCall ee
-	unwrapLambda p ee = Dot ee $ call (applyLambdaDef $ exprDataType ee) p
+	unwrapLambda p ee = case unwrapGeneric $ exprDataType ee of
+		tp@TPFun{} -> Dot ee $ call (applyLambdaDef tp) p
+		_ -> ee
 		
 	parsForDeclareVars = filter (checkCountOfUsing . fst) unelementaryPars
 		where 

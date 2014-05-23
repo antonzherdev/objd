@@ -290,7 +290,7 @@ static CNClassType* _CNFuture_type;
     [self onCompleteF:^void(CNTry* _) {
         [cond unlockedSignal];
     }];
-    [cond unlockedAwaitPeriod:period];
+    [cond unlockedAwaitPeriod:((float)(period))];
     return [self result];
 }
 

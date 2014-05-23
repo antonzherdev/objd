@@ -37,8 +37,7 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
         Go ret = Go.Continue;
         final Iterator<T> i = this.iterator();
         while(i.hasNext()) {
-            final Go b = on.apply(i.next());
-            if(!(b)) {
+            if(on.apply(i.next()) == Go.Break) {
                 ret = Go.Break;
                 break;
             }

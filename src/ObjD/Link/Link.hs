@@ -179,7 +179,7 @@ linkFile lang files (D.File name package stms) = fl
 			fileClasses = classes, filePackage = package'}
 		stms' = filter (not . containsOtherLangAnnotation) stms
 		containsOtherLangAnnotation stm = any isOtherLangAnnotation $ D.stmAnnotations stm
-		otherLangs = ["ObjD" | lang /= ObjC] ++ ["Java" | lang /= Java]
+		otherLangs = ["ObjC" | lang /= ObjC] ++ ["Java" | lang /= Java]
 		isOtherLangAnnotation (D.Annotation nm [] []) = nm `elem` otherLangs
 		isOtherLangAnnotation _ = False
 
@@ -558,10 +558,10 @@ linkDef env dd@D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.de
 		
 
 		overrideTp = fmap defType overrideDef
-		needWrapRetType = maybe False isTpGeneric overrideTp
-		isTpGeneric (TPClass TPMGeneric _ _) = True
-		isTpGeneric (TPGenericWrap _ _) = True
-		isTpGeneric _ = False
+		needWrapRetType = maybe False isTpG overrideTp
+		isTpG (TPClass TPMGeneric _ _) = True
+		isTpG (TPGenericWrap _ _) = True
+		isTpG _ = False
 
 		mapOverrideType rtp = 
 			let rtp' = if needWrapRetType then wrapGeneric rtp else rtp

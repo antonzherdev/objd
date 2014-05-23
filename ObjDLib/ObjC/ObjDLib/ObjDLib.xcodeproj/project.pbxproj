@@ -168,7 +168,6 @@
 		6F3DF1D848DA59BBAC392605 /* CNMulLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNMulLink.h; sourceTree = "<group>"; };
 		6F3DF1E4F71DCDD9DBF93489 /* CNSortBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNSortBuilder.h; sourceTree = "<group>"; };
 		6F3DF1F46A5359219202BFA1 /* NSMutableSet+CNChain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableSet+CNChain.h"; sourceTree = "<group>"; };
-		6F3DF1F8E8FEE1FD156C837D /* String.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = String.od; sourceTree = "<group>"; };
 		6F3DF20C5D2ED91D0ADF2085 /* ObjDLib-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "ObjDLib-Prefix.pch"; sourceTree = "<group>"; };
 		6F3DF22B2B2C6124D141EF14 /* CNTreeMap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNTreeMap.m; sourceTree = "<group>"; };
 		6F3DF254923F187D6DFAB858 /* ZipLink.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = ZipLink.od; sourceTree = "<group>"; };
@@ -273,6 +272,7 @@
 		6F3DFB89E4E538039BC4B837 /* Action.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Action.od; sourceTree = "<group>"; };
 		6F3DFB8DBA912E53708C705A /* CNFutureEnd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNFutureEnd.h; sourceTree = "<group>"; };
 		6F3DFB98C81B1E07AE8AF4F4 /* CNMapLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNMapLink.m; sourceTree = "<group>"; };
+		6F3DFBABEDBD8BBF8A168929 /* String.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = String.od; sourceTree = "<group>"; };
 		6F3DFBFD7AC72CE83F409CE4 /* NSSet+CNChain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSSet+CNChain.m"; sourceTree = "<group>"; };
 		6F3DFC246D27E5263D82FA89 /* CNSeq.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNSeq.h; sourceTree = "<group>"; };
 		6F3DFC273693EC16F6B45486 /* CNQueueTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNQueueTest.m; sourceTree = "<group>"; };
@@ -453,6 +453,7 @@
 				6F3DF1A76D447B696BA92937 /* Seed.od */,
 				6F3DF605B1CD1B688EB5DE43 /* CNTuple.h */,
 				6F3DFF370F14EE8227B8E04A /* CNTuple.m */,
+				6F3DFBABEDBD8BBF8A168929 /* String.od */,
 			);
 			path = Lang;
 			sourceTree = "<group>";
@@ -562,7 +563,6 @@
 				6F3DFE07532F2214D839C834 /* List */,
 				6F3DF2BC72049BBE907BFDEC /* Map */,
 				6F3DF1337C8ECD62CF5FB05C /* Plat.od */,
-				6F3DF1F8E8FEE1FD156C837D /* String.od */,
 				6F3DF662F2C181522BFCDC22 /* Set */,
 			);
 			path = Collection;

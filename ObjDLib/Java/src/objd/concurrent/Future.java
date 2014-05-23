@@ -360,7 +360,7 @@ public abstract class Future<T> {
                 cond.unlockedSignal();
             }
         });
-        cond.unlockedAwaitPeriod(period);
+        cond.unlockedAwaitPeriod(((float)(period)));
         return this.result();
     }
     public Try<T> waitResult() {

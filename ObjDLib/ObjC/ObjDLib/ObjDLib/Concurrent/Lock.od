@@ -19,8 +19,8 @@ stub class LockCondition {
     def await
     def unlockedAwait
 
-    def await(period : float) : bool
-    def unlockedAwait(period : float) : bool
+    def await(period : float4) : bool
+    def unlockedAwait(period : float4) : bool
 
     def signal //Signal when the lock is locked
     def signalAndUnlock //Signal when the lock is locked and unlock

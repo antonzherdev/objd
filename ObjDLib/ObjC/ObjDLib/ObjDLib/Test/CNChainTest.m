@@ -227,9 +227,6 @@ static CNClassType* _CNChainTest_type;
 }
 
 - (void)testToString {
-    assertEquals(@"acb", ([[[(@[@"a", @"c", @"b"]) chain] mapF:^id(NSString* _) {
-        return nums(unums(nonnil([_ head])));
-    }] toString]));
     assertEquals((@"2, 0, 1"), ([[(@[@2, @0, @1]) chain] toStringDelimiter:@", "]));
     assertEquals((@"[2, 0, 1]"), ([[(@[@2, @0, @1]) chain] toStringStart:@"[" delimiter:@", " end:@"]"]));
 }

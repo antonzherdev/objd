@@ -226,14 +226,13 @@ static CNClassType* _CNYield_type;
                     CNGoR __il__1fft_1tret = CNGo_Continue;
                     id<CNIterator> __il__1fft_1ti = [_items iterator];
                     while([__il__1fft_1ti hasNext]) {
-                        CNGoR __il__1fft_1tb = ({
+                        if(({
                             id item = [__il__1fft_1ti next];
                             ({
                                 result = [self yieldItem:item];
                                 result;
                             });
-                        });
-                        if(!(__il__1fft_1tb)) {
+                        }) == CNGo_Break) {
                             __il__1fft_1tret = CNGo_Break;
                             break;
                         }

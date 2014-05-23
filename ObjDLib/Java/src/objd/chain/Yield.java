@@ -186,8 +186,7 @@ public class Yield<T> {
                         while(__il__1fft_1ti.hasNext()) {
                             final T item = __il__1fft_1ti.next();
                             result.value = yieldItem(item);
-                            final Go __il__1fft_1tb = result.value;
-                            if(!(__il__1fft_1tb)) {
+                            if(result.value == Go.Break) {
                                 __il__1fft_1tret = Go.Break;
                                 break;
                             }

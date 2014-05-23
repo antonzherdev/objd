@@ -67,3 +67,21 @@ stub class MHashMap<K, V> extends MMap<K, V> with HashMap<K, V> {
     override def for(each : ((K, V)) -> void)
     override def go(on : ((K, V)) -> Go) : Go
 }
+
+@ObjC
+stub class StringBuilder extends Builder<char, String> {
+    override def append(item : char)
+    def append(str : string)
+    def append(obj : Object)
+    override def build : string
+}
+
+@Java
+stub class StringBuilder extends Builder<char, String> {
+    override def append(item : char)
+    def append(str : string)
+    def append(obj : Object)
+
+    @GenName("toString")
+    final override def build : string
+}

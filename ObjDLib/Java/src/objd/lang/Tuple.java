@@ -1,15 +1,13 @@
 package objd.lang;
 
-import objd.lang.*;
-
 public final class Tuple<A, B> implements Comparable<Tuple<A, B>> {
     public final A a;
     public final B b;
     @Override
-    public <AC extends Comparable<A>, BC extends Comparable<B>> int compareTo(final Tuple<AC, BC> to) {
-        final int r = to.a.compareTo(this.a);
+    public int compareTo(final Tuple<A, B> to) {
+        final int r = ((Comparable<A>)(to.a)).compareTo(this.a);
         if(r == 0) {
-            return -(to.b.compareTo(this.b));
+            return -(((Comparable<B>)(to.b)).compareTo(this.b));
         } else {
             return -(r);
         }

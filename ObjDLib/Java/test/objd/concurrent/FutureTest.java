@@ -33,7 +33,7 @@ public class FutureTest extends TestCase {
             }
         }
         Thread.sleepPeriod(((double)(1)));
-        .<Integer>assertEqualsAB(n.intValue(), ((int)(count)));
+        .<Integer>assertEqualsAB(n.get(), ((int)(count)));
     }
     public void testMap() {
         final AtomicInt n = new AtomicInt();
@@ -111,7 +111,7 @@ public class FutureTest extends TestCase {
             }
         }
         Thread.sleepPeriod(((double)(3)));
-        .<Integer>assertEqualsAB(n.intValue(), ((int)(result)));
+        .<Integer>assertEqualsAB(n.get(), ((int)(result)));
     }
     public FutureTest() {
     }

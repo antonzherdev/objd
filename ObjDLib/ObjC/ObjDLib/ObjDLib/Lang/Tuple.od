@@ -1,9 +1,9 @@
 package objd.lang
 
 final case class Tuple<A, B>(val a : A, val b : B) extends Comparable<Tuple<A, B>> {
-    override def compare<AC extends Comparable<A>, BC extends Comparable<B>>(to : Tuple<AC, BC>) : int = {
-        val r = to.a.compare(a)
-        if(r == 0) -to.b.compare(b) else -r
+    override def compare(to : Tuple<A, B>) : int = {
+        val r = to.a.cast<Comparable<A>>.compare(a)
+        if(r == 0) -to.b.cast<Comparable<B>>.compare(b) else -r
     }
 
     override def description = "($a, $b)"
@@ -11,30 +11,25 @@ final case class Tuple<A, B>(val a : A, val b : B) extends Comparable<Tuple<A, B
 }
 
 final case class Tuple3<A, B, C>(val a : A, val b : B, val c : C) extends Comparable<Tuple3<A, B, C>> {
-    override def compare<AC extends Comparable<A>, BC extends Comparable<B>, CC extends Comparable<C>>(to : Tuple3<AC, BC, CC>) : int = {
-        var r = to.a.compare(a)
+    override def compare(to : Tuple3<A, B, C>) : int = {
+        var r = to.a.cast<Comparable<A>>.compare(a)
         if(r == 0) {
-            r = to.b.compare(b)
-            if(r == 0) -to.c.compare(c) else -r
+            r = to.b.cast<Comparable<B>>.compare(b)
+            if(r == 0) -to.c.cast<Comparable<C>>.compare(c) else -r
         } else -r
     }
-
     override def description = "($a, $b, $c)"
     static def unapply<A, B, C>(tuple : Tuple3<A, B, C>) : Tuple3<A, B, C>? = tuple
 }
 
 final case class Tuple4<A, B, C, D>(val a : A, val b : B, val c : C, val d : D) extends Comparable<Tuple4<A, B, C, D>> {
-    override def compare<AC extends Comparable<A>
-        , BC extends Comparable<B>
-        , CC extends Comparable<C>
-        , DC extends Comparable<D>
-    >(to : Tuple4<AC, BC, CC, DC>) : int = {
-        var r = to.a.compare(a)
+    override def compare(to : Tuple4<A, B, C, D>) : int = {
+        var r = to.a.cast<Comparable<A>>.compare(a)
         if(r == 0) {
-            r = to.b.compare(b)
+            r = to.b.cast<Comparable<B>>.compare(b)
             if(r == 0) {
-                r = to.c.compare(c)
-                if(r == 0) -to.d.compare(d) else -r
+                r = to.c.cast<Comparable<C>>.compare(c)
+                if(r == 0) -to.d.cast<Comparable<D>>.compare(d) else -r
             } else -r
         } else -r
     }
@@ -44,20 +39,15 @@ final case class Tuple4<A, B, C, D>(val a : A, val b : B, val c : C, val d : D) 
 }
 
 final case class Tuple5<A, B, C, D, E>(val a : A, val b : B, val c : C, val d : D, val e : E) extends Comparable<Tuple5<A, B, C, D, E>> {
-    override def compare<AC extends Comparable<A>
-    , BC extends Comparable<B>
-    , CC extends Comparable<C>
-    , DC extends Comparable<D>
-    , EC extends Comparable<E>
-    >(to : Tuple5<AC, BC, CC, DC, EC>) : int = {
-        var r = to.a.compare(a)
+    override def compare(to : Tuple5<A, B, C, D, E>) : int = {
+        var r = to.a.cast<Comparable<A>>.compare(a)
         if(r == 0) {
-            r = to.b.compare(b)
+            r = to.b.cast<Comparable<B>>.compare(b)
             if(r == 0) {
-                r = to.c.compare(c)
+                r = to.c.cast<Comparable<C>>.compare(c)
                 if(r == 0) {
-                    r = to.d.compare(d)
-                    if(r == 0) -to.e.compare(e) else -r
+                    r = to.d.cast<Comparable<D>>.compare(d)
+                    if(r == 0) -to.e.cast<Comparable<E>>.compare(e) else -r
                 } else -r
             } else -r
         } else -r

@@ -2,6 +2,7 @@ package objd.chain;
 
 import objd.lang.*;
 import test.;
+import objd.collection.ImArray;
 import objd.concurrent.Promise;
 import objd.concurrent.DispatchQueue;
 import objd.concurrent.Future;
@@ -93,7 +94,7 @@ public class ChainTest extends TestCase {
             }
         });
         .assertTrueValue(fut.waitResultPeriod(((double)(5))) != null);
-        .<Integer>assertEqualsAB(count.intValue(), ((int)(arr.count())));
+        .<Integer>assertEqualsAB(count.get(), ((int)(arr.count())));
     }
     public void testMap() {
         .<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(4, 0, 2), ImArray.fromObjects(2, 0, 1).chain().<Integer>mapF(new F<Integer, Integer>() {
@@ -280,16 +281,6 @@ public class ChainTest extends TestCase {
         .<Integer>assertEqualsAB(3, __tmp_0p1n);
     }
     public void testToString() {
-        .<String>assertEqualsAB("acb", ImArray.fromObjects("a", "c", "b").chain().<Character>mapF(new F<String, Character>() {
-            @Override
-            public Character apply(final String _) {
-                final Character __tmp_0p1lrn = _.head();
-                if(__tmp_0p1lrn == null) {
-                    throw new NullPointerException();
-                }
-                return __tmp_0p1lrn;
-            }
-        }).toString());
         .<String>assertEqualsAB("2, 0, 1", ImArray.fromObjects(2, 0, 1).chain().toStringDelimiter(", "));
         .<String>assertEqualsAB("[2, 0, 1]", ImArray.fromObjects(2, 0, 1).chain().toStringStartDelimiterEnd("[", ", ", "]"));
     }

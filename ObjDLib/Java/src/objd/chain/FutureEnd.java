@@ -2,6 +2,7 @@ package objd.chain;
 
 import objd.lang.*;
 import objd.concurrent.Promise;
+import objd.collection.ImArray;
 import objd.concurrent.AtomicInt;
 import objd.concurrent.AtomicBool;
 import objd.collection.MArray;
@@ -77,7 +78,7 @@ public class FutureEnd<T> {
             @Override
             public Go apply(final Go res) {
                 FutureEnd.this._ended = true;
-                if(FutureEnd.this._counter.intValue() == 0) {
+                if(FutureEnd.this._counter.get() == 0) {
                     if(!(FutureEnd.this._yielded.getAndSet(true))) {
                         if(FutureEnd.this._array == null) {
                             throw new NullPointerException();

@@ -166,8 +166,7 @@ trait Iterable<T> extends Traversable<T> {
         var ret = Go.Continue
         val i = iterator
         while(i.hasNext) {
-            val b = on(i.next)
-            if(!b) {
+            if(on(i.next) == Go.Break) {
                 ret = Go.Break
                 break
             }

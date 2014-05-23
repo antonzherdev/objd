@@ -1,6 +1,7 @@
 package objd.concurrent;
 
 import objd.lang.*;
+import objd.collection.ImArray;
 
 public class DefaultPromise<T> extends Promise<T> {
     private final AtomicObject<Object> _state;

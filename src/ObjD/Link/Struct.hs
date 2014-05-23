@@ -16,7 +16,7 @@ module ObjD.Link.Struct (
 	dataTypeClassNameWithPrefix, dataTypeClassName, classFieldsForEquals, isConst, classFields, isAbstract, classContainsInit,
 	isFinal, isTpClass, isTpEnum, isTpTrait, isNop, enumItems, isType, isGeneric, isGenericWrap, tpGeneric, resolveTypeAlias,
 	containsAnnotationWithClassName, isSpecial, isConstructor, mainExtendsRef, isBaseClass, traitExtendsRefs, findAnnotationWithClassName, 
-	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError, isDefAbstract, isEnumItem
+	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError, isDefAbstract, isEnumItem, isTpGeneric, isPrivate
 	) where
 
 import 			 Ex.String
@@ -207,6 +207,8 @@ findAnnotationWithClassName nm = find ((== nm) . fullClassName . annotationClass
 containsAnnotationWithClassName :: String -> [Annotation] -> Bool
 containsAnnotationWithClassName nm a = isJust $ findAnnotationWithClassName nm a
 
+instance Show Annotation where
+	show (Annotation d pars) = "@" ++ defName d ++ showCallPars pars
 
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - Extends 
@@ -297,6 +299,8 @@ isInline :: Def -> Bool
 isInline = (DefModInline `elem` ) . defMods
 isPure :: Def -> Bool
 isPure = (DefModPure `elem` ) . defMods
+isPrivate :: Def -> Bool
+isPrivate = (DefModPrivate `elem` ) . defMods
 isDefAbstract :: Def -> Bool
 isDefAbstract = (DefModAbstract `elem` ) . defMods
 enumItems :: Class -> [Def]
@@ -360,10 +364,10 @@ instance Show Def where
 	show = showDef True
 
 showDef :: Bool -> Def -> String
-showDef f Def {defName = name , defPars = [], defType = tp, defBody = e, defMods = mods, defGenerics = gens} =
-	strs' " " mods ++ " " ++ name ++ maybe "" show gens ++ " : " ++ show tp ++ if f then " = " ++ show e else ""
-showDef f Def {defName = name , defPars = pars, defType = tp, defBody = e, defMods = mods, defGenerics = gens} =
-	strs' " " mods ++ " " ++ name ++ maybe "" show gens ++ "(" ++ strs' ", " pars ++ ")" ++ " : " ++ show tp  ++ if f then  " = " ++ show e else ""
+showDef f Def {defName = name , defPars = [], defType = tp, defBody = e, defMods = mods, defGenerics = gens, defAnnotations = ans} =
+	pstrs' "" "\n" "\n" ans ++ strs' " " mods ++ " " ++ name ++ maybe "" show gens ++ " : " ++ show tp ++ if f then " = " ++ show e else ""
+showDef f Def {defName = name , defPars = pars, defType = tp, defBody = e, defMods = mods, defGenerics = gens, defAnnotations = ans} =
+	pstrs' "" "\n" "\n" ans ++ strs' " " mods ++ " " ++ name ++ maybe "" show gens ++ "(" ++ strs' ", " pars ++ ")" ++ " : " ++ show tp  ++ if f then  " = " ++ show e else ""
 
 instance Show DefGenerics where
 	show (DefGenerics [] _) = ""
@@ -471,6 +475,9 @@ isTpClass _ = False
 isTpEnum :: DataType -> Bool
 isTpEnum (TPClass TPMEnum _ _) = True
 isTpEnum _ = False
+isTpGeneric :: DataType -> Bool
+isTpGeneric (TPClass TPMGeneric _ _) = True
+isTpGeneric _ = False
 isTpTrait :: DataType -> Bool
 isTpTrait (TPClass TPMTrait _ _) = True
 isTpTrait _ = False

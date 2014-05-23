@@ -1,4 +1,4 @@
-package objd.collection
+package objd.lang
 
 stub class String extends ImSeq<char> with Comparable<String> {
     def tuple(by : string) : (string, string)?
@@ -16,10 +16,3 @@ stub class String extends ImSeq<char> with Comparable<String> {
 }
 
 stub class Char
-
-stub class StringBuilder extends Builder<char, String> {
-    override def append(item : char)
-    def append(str : string)
-    def append(obj : Object)
-    override def build : string
-}

@@ -59,7 +59,7 @@ public class FutureVoidEnd {
             public Go apply(final Go res) {
                 Go ret = res;
                 FutureVoidEnd.this._ended = true;
-                if(FutureVoidEnd.this._counter.intValue() == 0) {
+                if(FutureVoidEnd.this._counter.get() == 0) {
                     if(!(FutureVoidEnd.this._yielded.getAndSet(true))) {
                         FutureVoidEnd.this._promise.successValue(null);
                     }

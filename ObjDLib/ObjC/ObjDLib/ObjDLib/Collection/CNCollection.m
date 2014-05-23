@@ -305,8 +305,7 @@
     CNGoR ret = CNGo_Continue;
     id<CNIterator> i = [self iterator];
     while([i hasNext]) {
-        CNGoR b = on([i next]);
-        if(!(b)) {
+        if(on([i next]) == CNGo_Break) {
             ret = CNGo_Break;
             break;
         }

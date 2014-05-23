@@ -19,7 +19,6 @@
 #import "CNSet.h"
 #import "CNTreeSet.h"
 #import "CNMap.h"
-#import "CNString.h"
 #import "CNFuture.h"
 #import "CNFutureEnd.h"
 @implementation CNChain
@@ -383,35 +382,14 @@ static CNClassType* _CNChain_type;
     return ret;
 }
 
-- (id)convertTo:(CNType*)to builder:(id<CNBuilder>(^)(NSInteger))builder {
-    __block id<CNBuilder> b;
-    __block id r;
-    [self applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
-        b = builder(((NSInteger)(size)));
-        return CNGo_Continue;
-    } yield:^CNGoR(id item) {
-        [((id<CNBuilder>)(nonnil(b))) appendItem:item];
-        return CNGo_Continue;
-    } all:^CNGoR(CNYield* yield, id<CNTraversable> all) {
-        if(NO) {
-            r = ((id)(all));
-            return CNGo_Continue;
-        } else {
-            return [yield stdYieldAllItems:all];
-        }
-    }]];
-    if(r == nil) return [((id<CNBuilder>)(nonnil(b))) build];
-    else return r;
-}
-
 - (id<CNSeq>)toSeq {
     __block id<CNBuilder> __il_b;
     __block id<CNSeq> __il_r;
     [self applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
-        __il_b = ({
+        __il_b = ((id<CNBuilder>)(({
             NSInteger _ = ((NSInteger)(size));
             [CNArrayBuilder arrayBuilderWithCapacity:((NSUInteger)(_))];
-        });
+        })));
         return CNGo_Continue;
     } yield:^CNGoR(id item) {
         [((id<CNBuilder>)(nonnil(__il_b))) appendItem:item];
@@ -458,10 +436,10 @@ static CNClassType* _CNChain_type;
     __block id<CNBuilder> __il_b;
     __block CNImList* __il_r;
     [self applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
-        __il_b = ({
+        __il_b = ((id<CNBuilder>)(({
             NSInteger _ = ((NSInteger)(size));
             [CNImListBuilder imListBuilder];
-        });
+        })));
         return CNGo_Continue;
     } yield:^CNGoR(id item) {
         [((id<CNBuilder>)(nonnil(__il_b))) appendItem:item];
@@ -482,10 +460,10 @@ static CNClassType* _CNChain_type;
     __block id<CNBuilder> __il_b;
     __block id<CNSet> __il_r;
     [self applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
-        __il_b = ({
+        __il_b = ((id<CNBuilder>)(({
             NSInteger _ = ((NSInteger)(size));
             [CNHashSetBuilder hashSetBuilderWithCapacity:((NSUInteger)(_))];
-        });
+        })));
         return CNGo_Continue;
     } yield:^CNGoR(id item) {
         [((id<CNBuilder>)(nonnil(__il_b))) appendItem:item];
@@ -503,51 +481,50 @@ static CNClassType* _CNChain_type;
 }
 
 - (CNTreeSet*)toTreeSet {
-    __block id<CNBuilder> __il_b;
-    __block CNTreeSet* __il_r;
+    __block id<CNBuilder> b;
+    __block CNTreeSet* r;
     [((CNChain*)(self)) applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
-        __il_b = ({
-            NSInteger _ = ((NSInteger)(size));
-            [CNTreeSetBuilder apply];
-        });
+        b = [CNTreeSetBuilder apply];
         return CNGo_Continue;
     } yield:^CNGoR(id item) {
-        [((id<CNBuilder>)(nonnil(__il_b))) appendItem:item];
+        [((id<CNBuilder>)(nonnil(b))) appendItem:item];
         return CNGo_Continue;
     } all:^CNGoR(CNYield* yield, id<CNTraversable> all) {
         if([all isKindOfClass:[CNTreeSet class]]) {
-            __il_r = ((CNTreeSet*)(all));
+            r = ((CNTreeSet*)(all));
             return CNGo_Continue;
         } else {
             return [yield stdYieldAllItems:all];
         }
     }]];
-    if(__il_r == nil) return [((id<CNBuilder>)(nonnil(__il_b))) build];
-    else return __il_r;
+    if(r == nil) return [((id<CNBuilder>)(nonnil(b))) build];
+    else return r;
 }
 
 - (NSDictionary*)toMap {
-    __block id<CNBuilder> __il_b;
-    __block CNImHashMap* __il_r;
+    __block id<CNBuilder> b;
+    __block CNImHashMap* r;
     [((CNChain*)(self)) applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
-        __il_b = ({
-            NSInteger _ = ((NSInteger)(size));
-            [CNHashMapBuilder hashMapBuilder];
-        });
+        b = [CNHashMapBuilder hashMapBuilder];
         return CNGo_Continue;
-    } yield:^CNGoR(id item) {
-        [((id<CNBuilder>)(nonnil(__il_b))) appendItem:item];
+    } yield:^CNGoR(CNTuple* item) {
+        [((id<CNBuilder>)(nonnil(b))) appendItem:item];
         return CNGo_Continue;
     } all:^CNGoR(CNYield* yield, id<CNTraversable> all) {
         if([all isKindOfClass:[CNImHashMap class]]) {
-            __il_r = ((CNImHashMap*)(all));
+            r = ((CNImHashMap*)(all));
             return CNGo_Continue;
         } else {
-            return [yield stdYieldAllItems:all];
+            if([all isKindOfClass:[CNMHashMap class]]) {
+                r = [((CNMHashMap*)(all)) im];
+                return CNGo_Continue;
+            } else {
+                return [yield stdYieldAllItems:all];
+            }
         }
     }]];
-    if(__il_r == nil) return [((id<CNBuilder>)(nonnil(__il_b))) build];
-    else return __il_r;
+    if(r == nil) return [((id<CNBuilder>)(nonnil(b))) build];
+    else return r;
 }
 
 - (NSString*)toStringStart:(NSString*)start delimiter:(NSString*)delimiter end:(NSString*)end {
@@ -565,30 +542,6 @@ static CNClassType* _CNChain_type;
 
 - (NSString*)toStringDelimiter:(NSString*)delimiter {
     return [self toStringStart:@"" delimiter:delimiter end:@""];
-}
-
-- (NSString*)toString {
-    __block id<CNBuilder> __il_b;
-    __block CNString* __il_r;
-    [((CNChain*)(self)) applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
-        __il_b = ({
-            NSInteger _ = ((NSInteger)(size));
-            [CNStringBuilder stringBuilder];
-        });
-        return CNGo_Continue;
-    } yield:^CNGoR(id item) {
-        [((id<CNBuilder>)(nonnil(__il_b))) appendItem:item];
-        return CNGo_Continue;
-    } all:^CNGoR(CNYield* yield, id<CNTraversable> all) {
-        if([all isKindOfClass:[CNString class]]) {
-            __il_r = ((CNString*)(all));
-            return CNGo_Continue;
-        } else {
-            return [yield stdYieldAllItems:all];
-        }
-    }]];
-    if(__il_r == nil) return [((id<CNBuilder>)(nonnil(__il_b))) build];
-    else return __il_r;
 }
 
 - (CNFuture*)futureF:(id(^)(CNChain*))f {
@@ -621,7 +574,7 @@ static CNClassType* _CNChain_type;
     CNChain* ch = self;
     CNYield* y = yield;
     while(ch != nil) {
-        y = [((CNChain*)(ch)).link buildYield:y];
+        y = [((CNChain*)(ch)).link buildYield:((CNYield*)(y))];
         ch = ((CNChain*)(ch)).previous;
     }
     return y;

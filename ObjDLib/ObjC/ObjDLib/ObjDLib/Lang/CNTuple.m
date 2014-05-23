@@ -27,8 +27,8 @@ static CNClassType* _CNTuple_type;
 }
 
 - (NSInteger)compareTo:(CNTuple*)to {
-    NSInteger r = [((CNTuple*)(to)).a compareTo:_a];
-    if(r == 0) return -[((CNTuple*)(to)).b compareTo:_b];
+    NSInteger r = [((id<CNComparable>)(((CNTuple*)(to)).a)) compareTo:_a];
+    if(r == 0) return -[((id<CNComparable>)(((CNTuple*)(to)).b)) compareTo:_b];
     else return -r;
 }
 
@@ -95,10 +95,10 @@ static CNClassType* _CNTuple3_type;
 }
 
 - (NSInteger)compareTo:(CNTuple3*)to {
-    NSInteger r = [((CNTuple3*)(to)).a compareTo:_a];
+    NSInteger r = [((id<CNComparable>)(((CNTuple3*)(to)).a)) compareTo:_a];
     if(r == 0) {
-        r = [((CNTuple3*)(to)).b compareTo:_b];
-        if(r == 0) return -[((CNTuple3*)(to)).c compareTo:_c];
+        r = [((id<CNComparable>)(((CNTuple3*)(to)).b)) compareTo:_b];
+        if(r == 0) return -[((id<CNComparable>)(((CNTuple3*)(to)).c)) compareTo:_c];
         else return -r;
     } else {
         return -r;
@@ -171,12 +171,12 @@ static CNClassType* _CNTuple4_type;
 }
 
 - (NSInteger)compareTo:(CNTuple4*)to {
-    NSInteger r = [((CNTuple4*)(to)).a compareTo:_a];
+    NSInteger r = [((id<CNComparable>)(((CNTuple4*)(to)).a)) compareTo:_a];
     if(r == 0) {
-        r = [((CNTuple4*)(to)).b compareTo:_b];
+        r = [((id<CNComparable>)(((CNTuple4*)(to)).b)) compareTo:_b];
         if(r == 0) {
-            r = [((CNTuple4*)(to)).c compareTo:_c];
-            if(r == 0) return -[((CNTuple4*)(to)).d compareTo:_d];
+            r = [((id<CNComparable>)(((CNTuple4*)(to)).c)) compareTo:_c];
+            if(r == 0) return -[((id<CNComparable>)(((CNTuple4*)(to)).d)) compareTo:_d];
             else return -r;
         } else {
             return -r;
@@ -255,14 +255,14 @@ static CNClassType* _CNTuple5_type;
 }
 
 - (NSInteger)compareTo:(CNTuple5*)to {
-    NSInteger r = [((CNTuple5*)(to)).a compareTo:_a];
+    NSInteger r = [((id<CNComparable>)(((CNTuple5*)(to)).a)) compareTo:_a];
     if(r == 0) {
-        r = [((CNTuple5*)(to)).b compareTo:_b];
+        r = [((id<CNComparable>)(((CNTuple5*)(to)).b)) compareTo:_b];
         if(r == 0) {
-            r = [((CNTuple5*)(to)).c compareTo:_c];
+            r = [((id<CNComparable>)(((CNTuple5*)(to)).c)) compareTo:_c];
             if(r == 0) {
-                r = [((CNTuple5*)(to)).d compareTo:_d];
-                if(r == 0) return -[((CNTuple5*)(to)).e compareTo:_e];
+                r = [((id<CNComparable>)(((CNTuple5*)(to)).d)) compareTo:_d];
+                if(r == 0) return -[((id<CNComparable>)(((CNTuple5*)(to)).e)) compareTo:_e];
                 else return -r;
             } else {
                 return -r;

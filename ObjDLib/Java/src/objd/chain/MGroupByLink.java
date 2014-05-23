@@ -3,6 +3,7 @@ package objd.chain;
 import objd.lang.*;
 import objd.collection.MHashMap;
 import objd.collection.Go;
+import objd.collection.Iterator;
 
 public class MGroupByLink<T, K, V, W> extends ChainLink_impl<T, Tuple<K, W>> {
     public final double factor;
@@ -32,12 +33,16 @@ public class MGroupByLink<T, K, V, W> extends ChainLink_impl<T, Tuple<K, W>> {
                 if(result == Go.Break) {
                     return yield.endYieldWithResult(result);
                 } else {
-                    return yield.endYieldWithResult(m.goOn(new F<Tuple<K, V>, Go>() {
-                        @Override
-                        public Go apply(final Tuple<K, V> t) {
-                            return yield.yieldItem(new Tuple<K, W>(t.a, MGroupByLink.this.finish.apply(t.b)));
+                    Go __il__1r_0frp0ret = Go.Continue;
+                    final Iterator<Tuple<K, V>> __il__1r_0frp0i = m.iterator();
+                    while(__il__1r_0frp0i.hasNext()) {
+                        final Tuple<K, V> t = __il__1r_0frp0i.next();
+                        if(yield.yieldItem(new Tuple<K, W>(t.a, MGroupByLink.this.finish.apply(t.b))) == Go.Break) {
+                            __il__1r_0frp0ret = Go.Break;
+                            break;
                         }
-                    }));
+                    }
+                    return yield.endYieldWithResult(__il__1r_0frp0ret);
                 }
             }
         });

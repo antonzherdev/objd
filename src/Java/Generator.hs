@@ -9,6 +9,7 @@ import Data.List
 import qualified ObjD.Link.Struct as D
 import qualified Java.Struct as J
 
+
 toJava :: D.File -> [J.File]
 toJava file@D.File{D.fileClasses = classes} =
 	map (genFile file) $ filter (\cls -> not (D.isType cls) && not (D.isStub cls)) classes
@@ -19,7 +20,7 @@ genFile D.File{D.filePackage = D.Package{D.packageName = package}, D.fileImports
 	in J.File {
 		J.fileIsTest = D.containsAnnotationWithClassName "test.Test" $ D.classAnnotations cls,
 		J.filePackage = package,
-		J.fileImports = ["objd", "lang", "*"] : (filter (\p -> package /= init p && ["objd", "lang"] /= init p) $ nub $ clImps ++ map genImport imps),
+		J.fileImports = ["objd", "lang", "*"] : (filter (\p -> package /= init p && (["objd", "lang"] /= init p) ) $ nub $ clImps ++ map genImport imps),
 		J.fileClass = cls'}
 
 genImport :: D.Import -> J.Import
@@ -30,7 +31,7 @@ genClass :: D.Class -> Writer Wrt J.Class
 genClass cl = do
 	let 
 		isEnum = D.isEnum cl 
-		defs = filter (\f -> not (D.isSpecial f) && not (D.isEnumItem f)) 
+		defs = filter (\f -> not (D.isSpecial f) && not (D.isEnumItem f) && not (D.isInline f && D.isPrivate f)) 
 			$ if D.isTrait cl then filter (not . D.isConstructor) (D.classDefs cl) else
 				filter (D.isDefAbstract) (D.classDefs cl) ++ filter (not . D.isDefAbstract) (D.classDefsWithTraits cl)
 		trMod D.ClassModAbstract = Just J.ClassModAbstract
@@ -83,16 +84,18 @@ genExtendsRef (cl, gens) = do
  -----------------------------------------------------------------------------------------------------------------------------------------------}
 
 defName' :: D.Def -> String
-defName' d = case D.defPars d of
-	[] -> case D.defName d of
-		"hash" -> "hashCode"
-		"description" -> "toString"
-		"isEqual" -> "equals"
-		o -> o
-	_ -> fromMaybe (D.defName d ++ concatMap (cap . D.defName) (D.defPars d)) $ 
+defName' d = let 
+	def = fromMaybe (D.defName d ++ concatMap (cap . D.defName) (D.defPars d)) $ 
 		D.findAnnotationWithClassName "objd.gen.GenName" (D.defAnnotations d) >>= (\a -> case a of
 			D.Annotation _ [(_, D.StringConst s)] -> Just s
 			_ -> Nothing)
+	in case D.defPars d of
+		[] -> case D.defName d of
+			"hash" -> "hashCode"
+			"description" -> "toString"
+			"isEqual" -> "equals"
+			_ -> def
+		_ -> def
 
 overrideAnnotation :: J.DefAnnotation
 overrideAnnotation = J.DefAnnotation "Override" []
@@ -189,8 +192,10 @@ genTp (D.TPNumber _ _) = return $ J.tpRef "int"
 genTp (D.TPGenericWrap _ (D.TPNumber _ 1)) = return $ J.tpRef "Byte"
 genTp (D.TPGenericWrap _ (D.TPNumber _ 8)) = return $ J.tpRef "Long"
 genTp (D.TPGenericWrap _ (D.TPNumber _ _)) = return $ J.tpRef "Integer"
+genTp (D.TPFloatNumber 4) = return $ J.tpRef "float"
 genTp (D.TPFloatNumber 8) = return $ J.tpRef "double"
 genTp (D.TPFloatNumber _) = return $ J.tpRef "double"
+genTp (D.TPGenericWrap _ (D.TPFloatNumber 4)) = return $ J.tpRef "Float"
 genTp (D.TPGenericWrap _ (D.TPFloatNumber 8)) = return $ J.tpRef "Double"
 genTp (D.TPGenericWrap _ (D.TPFloatNumber _)) = return $ J.tpRef "Float"
 genTp D.TPVoid = return $ J.tpRef "void"
@@ -226,6 +231,7 @@ genTp (D.TPEArr n tp)  = do
 	return $ J.TPArr tp' n
 genTp D.TPAny = return $ J.tpRef "Object"
 genTp (D.TPArr _ tp) = do
+	tellImport ["objd", "collection", "ImArray"]
 	tp' <- genTp tp
 	return $ J.TPRef [tp'] "ImArray"
 genTp (D.TPTuple tps) = do
@@ -233,6 +239,7 @@ genTp (D.TPTuple tps) = do
 	return $ J.TPRef tps' (tupleClassName $ length tps)
 genTp (D.TPSelf cl) = return $ J.TPRef (map (J.tpRef . D.className) (D.classGenerics cl) ) (D.className cl)
 genTp (D.TPMap key value) = do
+	tellImport ["objd", "collection", "ImHashMap"]
 	key' <- genTp key
 	value' <- genTp value
 	return $ J.TPRef [key', value'] "ImHashMap"
@@ -276,11 +283,13 @@ genExp _ D.Nil = return J.Null
 genExp _ (D.StringConst s) = return $ J.StringConst s
 genExp _ (D.BoolConst s) = return $ J.BoolConst s
 genExp _ (D.IntConst s) = return $ J.IntConst s
-genExp _ (D.FloatConst s) = return $ J.FloatConst s
-genExp env (D.Dot l (D.Is dtp)) = do 
-	l' <- genExp env l
-	dtp' <- genTp dtp
-	return $ J.InstanceOf l' dtp'
+genExp _ (D.FloatConst s) = return $ J.FloatConst s	
+genExp env (D.Dot l (D.Is dtp)) 
+	| D.isTpGeneric dtp = return $ J.BoolConst False
+	| otherwise = do 
+		l' <- genExp env l
+		dtp' <- genTp dtp
+		return $ J.InstanceOf l' dtp'
 genExp env (D.Dot l (D.As dtp)) = do 
 	l' <- genExp env l
 	dtp' <- genTp dtp
@@ -297,6 +306,8 @@ genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
 	| D.DefModConstructor `elem` D.defMods constr 
 		|| (D.defName constr == "apply" && D.DefModStub `elem` D.defMods constr && D.DefModStatic `elem` D.defMods constr) 
 		= do
+			let (D.TPObject _ cl) = D.defType objDef
+			tellImportClass cl 
 			pars' <- mapM ((genExp env) . snd) pars
 			gens' <- mapM genTp gens
 			return $ J.New [] (D.defName objDef) gens' pars'
@@ -316,11 +327,11 @@ genExp env (D.Index l r) = do
 	return $ J.Index l' r'
 genExp _ (D.Call d@D.Def{D.defMods = mods} _ [] []) 
 	| D.DefModChangedInLambda `elem` mods = return $ J.Dot (J.Ref $ D.defName d) (J.Ref "value")
-	| D.DefModField `elem` mods || D.DefModLocal `elem` mods = return $ J.Ref $ D.defName d
+	| D.DefModField `elem` mods || D.DefModLocal `elem` mods = return $ J.Ref $ defName' d
 	| D.DefModObject `elem` mods = do
 		let (D.TPObject _ cl) = D.defType d
 		tellImportClass cl 
-		return $ J.Ref $ D.defName d
+		return $ J.Ref $ defName' d
 genExp env (D.Call constr _ pars gens) 
 	| D.DefModConstructor `elem` D.defMods constr 
 		= do

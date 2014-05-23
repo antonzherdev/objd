@@ -174,7 +174,6 @@ class ChainTest extends TestCase {
     }
 
     def testToString {
-        assertEquals("acb", ["a", "c", "b"].chain.map(_.head.get).toString)
         assertEquals("2, 0, 1", [2, 0, 1].chain.toString(", "))
         assertEquals("[2, 0, 1]", [2, 0, 1].chain.toString("[", ", ", "]"))
     }

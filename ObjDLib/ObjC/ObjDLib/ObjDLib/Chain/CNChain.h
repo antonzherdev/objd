@@ -38,9 +38,9 @@
 @class CNTreeSet;
 @class CNTreeSetBuilder;
 @class CNHashMapBuilder;
+@class CNMHashMap;
 @class CNImHashMap;
 @class CNStringBuilder;
-@class CNString;
 @class CNFuture;
 @class CNFutureEnd;
 @class CNFutureVoidEnd;
@@ -125,7 +125,6 @@
 - (NSDictionary*)toMap;
 - (NSString*)toStringStart:(NSString*)start delimiter:(NSString*)delimiter end:(NSString*)end;
 - (NSString*)toStringDelimiter:(NSString*)delimiter;
-- (NSString*)toString;
 - (CNFuture*)futureF:(id(^)(CNChain*))f;
 - (CNFuture*)future;
 - (CNFuture*)voidFuture;

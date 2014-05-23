@@ -1,7 +1,5 @@
 package objd.lang;
 
-import objd.lang.*;
-
 public final class Tuple5<A, B, C, D, E> implements Comparable<Tuple5<A, B, C, D, E>> {
     public final A a;
     public final B b;
@@ -9,16 +7,16 @@ public final class Tuple5<A, B, C, D, E> implements Comparable<Tuple5<A, B, C, D
     public final D d;
     public final E e;
     @Override
-    public <AC extends Comparable<A>, BC extends Comparable<B>, CC extends Comparable<C>, DC extends Comparable<D>, EC extends Comparable<E>> int compareTo(final Tuple5<AC, BC, CC, DC, EC> to) {
-        int r = to.a.compareTo(this.a);
+    public int compareTo(final Tuple5<A, B, C, D, E> to) {
+        int r = ((Comparable<A>)(to.a)).compareTo(this.a);
         if(r == 0) {
-            r = to.b.compareTo(this.b);
+            r = ((Comparable<B>)(to.b)).compareTo(this.b);
             if(r == 0) {
-                r = to.c.compareTo(this.c);
+                r = ((Comparable<C>)(to.c)).compareTo(this.c);
                 if(r == 0) {
-                    r = to.d.compareTo(this.d);
+                    r = ((Comparable<D>)(to.d)).compareTo(this.d);
                     if(r == 0) {
-                        return -(to.e.compareTo(this.e));
+                        return -(((Comparable<E>)(to.e)).compareTo(this.e));
                     } else {
                         return -(r);
                     }

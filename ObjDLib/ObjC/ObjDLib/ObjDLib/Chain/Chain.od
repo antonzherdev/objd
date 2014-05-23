@@ -66,8 +66,8 @@ class Chain<A>(val link : ChainLink<_, A>, val previous : Chain<_>?) extends ImT
 
     def reverse : Chain<A> = add(ReverseLink<A>())
     def reverse(when : bool) : Chain<A> = if(when) add(ReverseLink<A>()) else self
-    def sort<B extends Comparable<B>> (self : Chain<B>) : Chain<A> = add(SortLink<B>{a, b -> a.compare(b)})
-    def sortDesc<B extends Comparable<B>> (self : Chain<B>) : Chain<A> = add(SortLink<B>{a, b -> -a.compare(b)})
+    def sort<B extends Comparable<B>> (self : Chain<B>) : Chain<B> = add(SortLink<B>{a, b -> a.compare(b)})
+    def sortDesc<B extends Comparable<B>> (self : Chain<B>) : Chain<B> = add(SortLink<B>{a, b -> -a.compare(b)})
     def sort(comparator:(A, A) -> int) : Chain<A> = add(SortLink<A>(comparator))
     def sortBy : SortBuilder<A> = SortBuilder<A>(self)
     def shuffle : Chain<A> = add(ShuffleLink<A>())
@@ -75,7 +75,7 @@ class Chain<A>(val link : ChainLink<_, A>, val previous : Chain<_>?) extends ImT
     override def go(on : A -> Go) : Go = apply(Yield.make<A>(yield = on))
     def fold<B>(start : B, by : (B, A) -> B) : B = {
         var r = start
-        apply(Yield.make<B>(yield = item -> {
+        apply(Yield.make<A>(yield = item -> {
             r = by(r, item)
             Go.Continue
         }))
@@ -164,12 +164,12 @@ class Chain<A>(val link : ChainLink<_, A>, val previous : Chain<_>?) extends ImT
     }
 
 
-    private inline def convert<R>(to : Type<R>, builder : int -> Builder<A, R>) : R = {
+    private inline def convert<R extends Traversable<A>>(to : Type<R>, builder : int -> Builder<A, R>) : R = {
         var b : Builder<A, R>?
         var r : R?
         apply(Yield.make<A>(
             begin = size -> {
-                b = builder(size)
+                b = builder(size).cast<Builder>
                 Go.Continue
             },
             yield = item -> {
@@ -210,10 +210,53 @@ class Chain<A>(val link : ChainLink<_, A>, val previous : Chain<_>?) extends ImT
         ))
         if(r == nil) b.get.build else r
     }
-    def toList : ImList<A> = convert(ImList.type, ImListBuilder<A>())
-    def toSet : Set<A> = convert(Set.type, HashSetBuilder<A>(_))
-    def toTreeSet<B extends Comparable<B>>(self : Chain<B>) : TreeSet<B> = convert(TreeSet.type, TreeSetBuilder<B>())
-    def toMap<K, V>(self : Chain<(K, V)>) : [K : V] = convert(ImHashMap.type, HashMapBuilder<K, V>())
+    def toList : ImList<A> = convert<ImList<A>>(ImList.type, ImListBuilder<A>())
+    def toSet : Set<A> = convert<Set<A>>(Set.type, HashSetBuilder<A>(_))
+    def toTreeSet<B extends Comparable<B>>(self : Chain<B>) : TreeSet<B> = {
+        var b : Builder<B, ImTreeSet<B>>?
+        var r : TreeSet<B>?
+        apply(Yield.make<B>(
+            begin = size -> {
+                b = TreeSetBuilder<B>()
+                Go.Continue
+            },
+            yield = item -> {
+                b.get.append(item)
+                Go.Continue
+            },
+            all = (yield, all) -> {
+                if(all.is<TreeSet<B>>) {
+                    r = all.cast<TreeSet<B>>
+                    Go.Continue
+                } else yield.stdYieldAll(all)
+            }
+        ))
+        if(r == nil) b.get.build else r
+    }
+    def toMap<K, V>(self : Chain<(K, V)>) : [K : V] = {
+        var b : Builder<(K, V), ImHashMap<K, V>>?
+        var r : ImHashMap<K, V>?
+        apply(Yield.make<(K, V)>(
+            begin = size -> {
+                b = HashMapBuilder<K, V>()
+                Go.Continue
+            },
+            yield = item -> {
+                b.get.append(item)
+                Go.Continue
+            },
+            all = (yield, all) -> {
+                if(all.is<ImHashMap<K, V>>) {
+                    r = all.cast<ImHashMap<K, V>>
+                    Go.Continue
+                } else if(all.is<MHashMap<K, V>>) {
+                    r = all.cast<MHashMap<K, V>>.im
+                    Go.Continue
+                } else yield.stdYieldAll(all)
+            }
+        ))
+        if(r == nil) b.get.build else r
+    }
 
 
     def toString(start : string, delimiter : string, end : string) : string = {
@@ -229,7 +272,6 @@ class Chain<A>(val link : ChainLink<_, A>, val previous : Chain<_>?) extends ImT
         b.build
     }
     def toString(delimiter : string) : string = toString(start = "", delimiter, end = "")
-    def toString(self : Chain<char>) : string = convert(String.type, StringBuilder())
 
     def future<V, R>(self : Chain<Future<V>>, f : Chain<V> -> R) : Future<R> = {
         val lnk = FutureEnd<V>()
@@ -255,9 +297,9 @@ class Chain<A>(val link : ChainLink<_, A>, val previous : Chain<_>?) extends ImT
     }
     private def build(yield : Yield<A>) : Yield<_> = {
         var ch : Chain<_>? = self
-        var y = yield
+        var y : Yield<_> = yield
         while(ch != nil) {
-            y = ch.link.build(y)
+            y = ch.link.build(y.cast<Yield>)
             ch = ch.previous
         }
         y

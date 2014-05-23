@@ -51,6 +51,7 @@ dataTypeClass env f@TPFun{} = Class { _classMods = [], className = "", _classExt
 dataTypeClass _ x = ClassError (show x) ("No dataTypeClass for " ++ show x)
 
 applyLambdaDef :: DataType -> Def
+applyLambdaDef (TPGenericWrap _ tp) = applyLambdaDef tp
 applyLambdaDef (TPFun stp dtp) = Def {defName = "apply", defPars = map (localVal "") stp, defType = dtp, defBody = Nop, defMods = [DefModApplyLambda], defGenerics = Nothing, defAnnotations = []}
 	
 dataTypeGenerics :: Env -> DataType -> [DataType]
