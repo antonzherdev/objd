@@ -208,7 +208,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
         return this.<A>addLink(new AppendLink<A>(collection));
     }
     public Chain<A> excludeCollection(final Traversable<A> collection) {
-        final Traversable<T> c = ((collection instanceof Chain) ? (((Traversable<T>)(((Chain<T>)(collection)).toSet()))) : (collection));
+        final Traversable<A> c = ((collection instanceof Chain) ? (((Traversable<A>)(((Chain<A>)(collection)).toSet()))) : (collection));
         return filterWhen(new F<A, Boolean>() {
             @Override
             public Boolean apply(final A item) {
@@ -217,7 +217,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
         });
     }
     public Chain<A> intersectCollection(final Iterable<A> collection) {
-        final Traversable<T> c = ((collection instanceof Chain) ? (((Traversable<T>)(((Chain<T>)(collection)).toSet()))) : (collection));
+        final Traversable<A> c = ((collection instanceof Chain) ? (((Traversable<A>)(((Chain<A>)(collection)).toSet()))) : (collection));
         return filterWhen(new F<A, Boolean>() {
             @Override
             public Boolean apply(final A item) {
@@ -471,7 +471,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             @Override
             public Go apply(final Yield<A> yield, final Traversable<A> all) {
                 if(all instanceof Seq) {
-                    __il_r.value = ((R)(all));
+                    __il_r.value = ((Seq<A>)(all));
                     return Go.Continue;
                 } else {
                     return yield.stdYieldAllItems(all);
@@ -553,7 +553,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             @Override
             public Go apply(final Yield<A> yield, final Traversable<A> all) {
                 if(all instanceof ImList) {
-                    __il_r.value = ((R)(all));
+                    __il_r.value = ((ImList<?>)(all));
                     return Go.Continue;
                 } else {
                     return yield.stdYieldAllItems(all);
@@ -592,7 +592,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             @Override
             public Go apply(final Yield<A> yield, final Traversable<A> all) {
                 if(all instanceof Set) {
-                    __il_r.value = ((R)(all));
+                    __il_r.value = ((Set<?>)(all));
                     return Go.Continue;
                 } else {
                     return yield.stdYieldAllItems(all);
@@ -631,7 +631,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             @Override
             public Go apply(final Yield<A> yield, final Traversable<A> all) {
                 if(all instanceof TreeSet) {
-                    __il_r.value = ((R)(all));
+                    __il_r.value = ((TreeSet<?>)(all));
                     return Go.Continue;
                 } else {
                     return yield.stdYieldAllItems(all);
@@ -670,7 +670,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             @Override
             public Go apply(final Yield<A> yield, final Traversable<A> all) {
                 if(all instanceof ImHashMap) {
-                    __il_r.value = ((R)(all));
+                    __il_r.value = ((ImHashMap<?, ?>)(all));
                     return Go.Continue;
                 } else {
                     return yield.stdYieldAllItems(all);
@@ -730,7 +730,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             @Override
             public Go apply(final Yield<A> yield, final Traversable<A> all) {
                 if(all instanceof String) {
-                    __il_r.value = ((R)(all));
+                    __il_r.value = ((String)(all));
                     return Go.Continue;
                 } else {
                     return yield.stdYieldAllItems(all);

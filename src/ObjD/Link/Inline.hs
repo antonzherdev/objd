@@ -73,6 +73,8 @@ inlineCall env e = let
 	rep (Self _) = lookup (fst selfPar) refs
 	rep (Is tp) = Just $ Is $ repgens tp
 	rep (As tp) = Just $ As $ repgens tp
+	rep (CastDot tp) = Just $ CastDot $ repgens tp
+	rep (Cast tp ee) = Just $ Cast (repgens tp) (mapExp rep ee)
 	rep _ = Nothing
 
 	findRef :: Def -> DataType -> Maybe Exp
@@ -87,7 +89,7 @@ inlineCall env e = let
 	refs :: [(Def, Exp)]
 	refs = (map (second callRef) vals) ++ pars' ++ map (second callRef) mapDeclaredValsGenerics
 	vals = (map dec parsForDeclareVars)
-	dec (d, pe) = (d, tmpVal env (defName d) (defType d) pe)
+	dec (d, pe) = (d, tmpVal env (defName d) (repgens $ defType d) pe)
 	unwrapLambda :: [Exp] -> Exp -> Exp
 	unwrapLambda [] (Lambda _ ee _) = ee
 	unwrapLambda parExps (Lambda lpars ee _) = let

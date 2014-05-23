@@ -418,7 +418,7 @@ static CNClassType* _CNChain_type;
         return CNGo_Continue;
     } all:^CNGoR(CNYield* yield, id<CNTraversable> all) {
         if([all conformsToProtocol:@protocol(CNSeq)]) {
-            __il_r = ((id)(all));
+            __il_r = ((id<CNSeq>)(all));
             return CNGo_Continue;
         } else {
             return [yield stdYieldAllItems:all];
@@ -468,7 +468,7 @@ static CNClassType* _CNChain_type;
         return CNGo_Continue;
     } all:^CNGoR(CNYield* yield, id<CNTraversable> all) {
         if([all isKindOfClass:[CNImList class]]) {
-            __il_r = ((id)(all));
+            __il_r = ((CNImList*)(all));
             return CNGo_Continue;
         } else {
             return [yield stdYieldAllItems:all];
@@ -492,7 +492,7 @@ static CNClassType* _CNChain_type;
         return CNGo_Continue;
     } all:^CNGoR(CNYield* yield, id<CNTraversable> all) {
         if([all conformsToProtocol:@protocol(CNSet)]) {
-            __il_r = ((id)(all));
+            __il_r = ((id<CNSet>)(all));
             return CNGo_Continue;
         } else {
             return [yield stdYieldAllItems:all];
@@ -516,7 +516,7 @@ static CNClassType* _CNChain_type;
         return CNGo_Continue;
     } all:^CNGoR(CNYield* yield, id<CNTraversable> all) {
         if([all isKindOfClass:[CNTreeSet class]]) {
-            __il_r = ((id)(all));
+            __il_r = ((CNTreeSet*)(all));
             return CNGo_Continue;
         } else {
             return [yield stdYieldAllItems:all];
@@ -540,7 +540,7 @@ static CNClassType* _CNChain_type;
         return CNGo_Continue;
     } all:^CNGoR(CNYield* yield, id<CNTraversable> all) {
         if([all isKindOfClass:[CNImHashMap class]]) {
-            __il_r = ((id)(all));
+            __il_r = ((CNImHashMap*)(all));
             return CNGo_Continue;
         } else {
             return [yield stdYieldAllItems:all];
@@ -581,7 +581,7 @@ static CNClassType* _CNChain_type;
         return CNGo_Continue;
     } all:^CNGoR(CNYield* yield, id<CNTraversable> all) {
         if([all isKindOfClass:[CNString class]]) {
-            __il_r = ((id)(all));
+            __il_r = ((CNString*)(all));
             return CNGo_Continue;
         } else {
             return [yield stdYieldAllItems:all];
