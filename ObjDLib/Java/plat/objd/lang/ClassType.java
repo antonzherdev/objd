@@ -14,4 +14,8 @@ public class ClassType<T> {
     public Class<T> getCls() {
         return cls;
     }
+
+    public boolean isInstanceObj(Object obj) {
+        return cls.isInstance(obj);
+    }
 }

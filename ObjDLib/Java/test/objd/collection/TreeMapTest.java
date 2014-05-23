@@ -2,8 +2,8 @@ package objd.collection;
 
 import objd.lang.*;
 import test.;
-import test.Test;
 import test.TestCase;
+import test.Test;
 import test..*;
 
 public class TreeMapTest extends TestCase {

@@ -351,7 +351,7 @@ public abstract class Future<T> {
         });
         return p;
     }
-    public Try<T> waitResultPeriod(final float period) {
+    public Try<T> waitResultPeriod(final double period) {
         final Lock lock = new Lock();
         final LockCondition cond = lock.newCondition();
         onCompleteF(new P<Try<T>>() {
@@ -379,7 +379,7 @@ public abstract class Future<T> {
         }
         return __tmp_4n;
     }
-    public void waitAndOnSuccessAwaitF(final float await, final P<T> f) {
+    public void waitAndOnSuccessAwaitF(final double await, final P<T> f) {
         {
             final Try<T> __tr = waitResultPeriod(await);
             if(__tr != null) {
@@ -389,14 +389,14 @@ public abstract class Future<T> {
             }
         }
     }
-    public <I> void waitAndOnSuccessFlatAwaitF(final float await, final P<I> f) {
+    public <I> void waitAndOnSuccessFlatAwaitF(final double await, final P<I> f) {
         {
             {
-                final Try<T> __il__0__tr = waitResultPeriod(await);
+                final Try<Traversable<I>> __il__0__tr = ((Future<Traversable<I>>)(this)).waitResultPeriod(await);
                 if(__il__0__tr != null) {
                     if(__il__0__tr.isSuccess()) {
                         {
-                            final T __tr2 = __il__0__tr.get();
+                            final Traversable<I> __tr2 = __il__0__tr.get();
                             ((Traversable<I>)(__tr2)).forEach(f);
                         }
                     }
@@ -404,7 +404,7 @@ public abstract class Future<T> {
             }
         }
     }
-    public T getResultAwait(final float await) {
+    public T getResultAwait(final double await) {
         final Try<T> __tmpln = waitResultPeriod(await);
         if(__tmpln == null) {
             throw new NullPointerException();

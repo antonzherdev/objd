@@ -13,7 +13,7 @@ public final class KeptPromise<T> extends Promise<T> {
         f.apply(this.value);
     }
     @Override
-    public Try<T> waitResultPeriod(final float period) {
+    public Try<T> waitResultPeriod(final double period) {
         return this.value;
     }
     @Override

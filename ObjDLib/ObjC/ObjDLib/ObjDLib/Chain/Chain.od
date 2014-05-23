@@ -144,7 +144,7 @@ class Chain<A>(val link : ChainLink<_, A>, val previous : Chain<_>?) extends ImT
 
     def or(self : Chain<bool>) : bool = {
         var ret = false
-        apply(Yield.make<A>(yield = {item : Bool ->
+        apply(Yield.make<bool>(yield = {item : Bool ->
             if(item) {
                 ret = true
                 Go.Break
@@ -154,7 +154,7 @@ class Chain<A>(val link : ChainLink<_, A>, val previous : Chain<_>?) extends ImT
     }
     def and(self : Chain<bool>) : bool = {
         var ret = true
-        apply(Yield.make<A>(yield = {item : Bool ->
+        apply(Yield.make<bool>(yield = {item : Bool ->
             if(!item) {
                 ret = false
                 Go.Break

@@ -3,8 +3,8 @@ package objd.concurrent;
 import objd.lang.*;
 import objd.collection.Iterator;
 import test.;
-import test.Test;
 import test.TestCase;
+import test.Test;
 import test..*;
 
 public class FutureTest extends TestCase {
@@ -32,7 +32,7 @@ public class FutureTest extends TestCase {
                 }
             }
         }
-        Thread.sleepPeriod(((float)(1)));
+        Thread.sleepPeriod(((double)(1)));
         .<Integer>assertEqualsAB(n.intValue(), ((int)(count)));
     }
     public void testMap() {
@@ -70,7 +70,7 @@ public class FutureTest extends TestCase {
                 });
             }
         }
-        Thread.sleepPeriod(((float)(3)));
+        Thread.sleepPeriod(((double)(3)));
         .<AtomicInt>assertEqualsAB(n, result);
     }
     public void testFlatMap() {
@@ -110,7 +110,7 @@ public class FutureTest extends TestCase {
                 }
             }
         }
-        Thread.sleepPeriod(((float)(3)));
+        Thread.sleepPeriod(((double)(3)));
         .<Integer>assertEqualsAB(n.intValue(), ((int)(result)));
     }
     public FutureTest() {

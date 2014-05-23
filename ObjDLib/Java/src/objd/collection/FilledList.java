@@ -56,19 +56,19 @@ public final class FilledList<T> extends ImList<T> {
         }
     }
     @Override
-    public <C extends Comparable<C>> ImList<T> insertItem(final C item) {
-        ImList<T> before = ImList.<T>apply();
-        FilledList<T> list = this;
+    public <C extends Comparable<C>> ImList<C> insertItem(final C item) {
+        ImList<C> before = ImList.<C>apply();
+        FilledList<C> list = ((FilledList<C>)(this));
         while(true) {
-            final T h = list._head;
-            if(item.compareTo(((C)(h))) < 0) {
-                return new FilledList<T>(((T)(item)), before).reverseAndAddList(list);
+            final C h = list._head;
+            if(item.compareTo(h) < 0) {
+                return new FilledList<C>(item, before).reverseAndAddList(list);
             }
-            before = ImList.<T>applyItemTail(h, before);
+            before = ImList.<C>applyItemTail(h, before);
             if(list.tail.isEmpty()) {
-                return new FilledList<T>(((T)(item)), before).reverse();
+                return new FilledList<C>(item, before).reverse();
             }
-            list = ((FilledList<T>)(list.tail));
+            list = ((FilledList<C>)(list.tail));
         }
     }
     public FilledList(final T _head, final ImList<T> tail) {

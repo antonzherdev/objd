@@ -3,6 +3,7 @@ package objd.chain;
 import objd.lang.*;
 import objd.collection.Traversable;
 import objd.collection.Iterable;
+import objd.collection.Go;
 
 public class MulLink<A, B> extends ChainLink_impl<A, Tuple<A, B>> {
     private final Traversable<T> _collection;

@@ -1,8 +1,8 @@
 package objd.chain;
 
 import objd.lang.*;
-import objd.collection.Traversable;
 import objd.collection.Go;
+import objd.collection.Traversable;
 import objd.collection.Array;
 import objd.collection.Iterable;
 import objd.collection.Iterator;

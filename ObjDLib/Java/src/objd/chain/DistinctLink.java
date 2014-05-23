@@ -5,7 +5,7 @@ import objd.collection.MHashSet;
 import objd.collection.Go;
 
 public class DistinctLink<T> extends ChainLink_impl<T, T> {
-    public final float factor;
+    public final double factor;
     @Override
     public Yield<T> buildYield(final Yield<T> yield) {
         final MHashSet<T> set = new MHashSet<T>();
@@ -26,7 +26,7 @@ public class DistinctLink<T> extends ChainLink_impl<T, T> {
             }
         });
     }
-    public DistinctLink(final float factor) {
+    public DistinctLink(final double factor) {
         this.factor = factor;
     }
 }

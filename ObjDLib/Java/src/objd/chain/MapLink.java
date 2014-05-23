@@ -1,6 +1,7 @@
 package objd.chain;
 
 import objd.lang.*;
+import objd.collection.Go;
 
 public class MapLink<A, B> extends ChainLink_impl<A, B> {
     public final F<A, B> f;

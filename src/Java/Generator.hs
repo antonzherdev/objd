@@ -74,6 +74,7 @@ genGeneric cl = do
 
 genExtendsRef :: D.ExtendsRef -> Writer Wrt J.TP
 genExtendsRef (cl, gens) = do
+	tellImportClass cl
 	gens' <- mapM genTp gens
 	return $ J.TPRef gens' (D.className cl) 
 
@@ -179,7 +180,7 @@ genPar D.Def{D.defName = nm, D.defType = tp} = do
  -----------------------------------------------------------------------------------------------------------------------------------------------}
 genTp :: D.DataType -> Writer Wrt J.TP
 genTp (D.TPClass tp gens cl) = do
-	when (tp == D.TPMClass || tp == D.TPMTrait) $ tellImportClass cl
+	when (tp /= D.TPMGeneric && tp /= D.TPMType) $ tellImportClass cl
 	gens' <- mapM genTp gens
 	return $ J.TPRef gens' (D.className cl) 
 genTp (D.TPNumber _ 1) = return $ J.tpRef "byte"
@@ -189,7 +190,7 @@ genTp (D.TPGenericWrap _ (D.TPNumber _ 1)) = return $ J.tpRef "Byte"
 genTp (D.TPGenericWrap _ (D.TPNumber _ 8)) = return $ J.tpRef "Long"
 genTp (D.TPGenericWrap _ (D.TPNumber _ _)) = return $ J.tpRef "Integer"
 genTp (D.TPFloatNumber 8) = return $ J.tpRef "double"
-genTp (D.TPFloatNumber _) = return $ J.tpRef "float"
+genTp (D.TPFloatNumber _) = return $ J.tpRef "double"
 genTp (D.TPGenericWrap _ (D.TPFloatNumber 8)) = return $ J.tpRef "Double"
 genTp (D.TPGenericWrap _ (D.TPFloatNumber _)) = return $ J.tpRef "Float"
 genTp D.TPVoid = return $ J.tpRef "void"
@@ -275,6 +276,7 @@ genExp _ D.Nil = return J.Null
 genExp _ (D.StringConst s) = return $ J.StringConst s
 genExp _ (D.BoolConst s) = return $ J.BoolConst s
 genExp _ (D.IntConst s) = return $ J.IntConst s
+genExp _ (D.FloatConst s) = return $ J.FloatConst s
 genExp env (D.Dot l (D.Is dtp)) = do 
 	l' <- genExp env l
 	dtp' <- genTp dtp

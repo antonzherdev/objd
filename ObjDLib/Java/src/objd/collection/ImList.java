@@ -7,7 +7,7 @@ public abstract class ImList<T> extends ImSeq_impl<T> {
     public abstract ImList<T> tail();
     public abstract ImList<T> filterF(final F<T, Boolean> f);
     public abstract ImList<T> reverse();
-    public abstract <C extends Comparable<C>> ImList<T> insertItem(final C item);
+    public abstract <C extends Comparable<C>> ImList<C> insertItem(final C item);
     public static <T> ImList<T> apply() {
         return ((ImList<T>)(EmptyList.instance));
     }

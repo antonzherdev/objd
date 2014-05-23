@@ -18,6 +18,7 @@ import objd.collection.ImHashMap;
 import objd.collection.StringBuilder;
 import objd.collection.String;
 import objd.concurrent.Future;
+import objd.collection.ImTraversable_impl;
 
 public class Chain<A> extends ImTraversable_impl<A> {
     public final ChainLink<?, A> link;
@@ -25,16 +26,16 @@ public class Chain<A> extends ImTraversable_impl<A> {
     public static <T> Chain<T> applyCollection(final Traversable<T> collection) {
         return new Chain<T>(new SourceLink<T>(collection), null);
     }
-    public Chain<A> filterFactorWhen(final float factor, final F<A, Boolean> when) {
+    public Chain<A> filterFactorWhen(final double factor, final F<A, Boolean> when) {
         return this.<A>addLink(new FilterLink<A>(factor, when));
     }
     public Chain<A> filterWhen(final F<A, Boolean> when) {
-        return filterFactorWhen(ERROR: Unknown 0.5, when);
+        return filterFactorWhen(0.5, when);
     }
     public Chain<A> topNumbers(final int numbers) {
         return this.<A>addLink(new TopLink<A>(((int)(numbers))));
     }
-    public <B> Chain<B> filterCastFactorTo(final float factor, final ClassType<B> to) {
+    public <B> Chain<B> filterCastFactorTo(final double factor, final ClassType<B> to) {
         return ((Chain<B>)(this.<A>addLink(new FilterLink<A>(factor, new F<A, Boolean>() {
             @Override
             public Boolean apply(final A item) {
@@ -43,7 +44,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
         }))));
     }
     public <B> Chain<B> filterCastTo(final ClassType<B> to) {
-        return this.<B>filterCastFactorTo(ERROR: Unknown 0.5, to);
+        return this.<B>filterCastFactorTo(0.5, to);
     }
     public <B> Chain<B> mapF(final F<A, B> f) {
         return this.<B>addLink(new MapLink<A, B>(f));
@@ -51,23 +52,23 @@ public class Chain<A> extends ImTraversable_impl<A> {
     public <B> Chain<B> mapOptF(final F<A, B> f) {
         return this.<B>addLink(new MapOptLink<A, B>(f));
     }
-    public <B> Chain<B> flatMapFactorF(final float factor, final F<A, Traversable<B>> f) {
+    public <B> Chain<B> flatMapFactorF(final double factor, final F<A, Traversable<B>> f) {
         return this.<B>addLink(new FlatMapLink<A, B>(factor, f));
     }
     public <B> Chain<B> flatMapF(final F<A, Traversable<B>> f) {
-        return this.<B>flatMapFactorF(ERROR: Unknown 2.0, f);
+        return this.<B>flatMapFactorF(2.0, f);
     }
-    public <B> Chain<B> flatFactor(final float factor) {
-        return this.<B>addLink(new FlatLink<B>(factor));
+    public <B> Chain<B> flatFactor(final double factor) {
+        return ((Chain<Traversable<B>>)(this)).<B>addLink(new FlatLink<B>(factor));
     }
     public <B> Chain<B> flat() {
-        return this.<B>flatFactor(ERROR: Unknown 2.0);
+        return this.<B>flatFactor(2.0);
     }
     public Chain<Tuple<A, A>> combinations() {
         return this.<Tuple<A, A>>addLink(new CombinationsLink<A>());
     }
     public <B> Chain<B> uncombinations() {
-        return this.<B>addLink(new UncombinationsLink<B>());
+        return ((Chain<Tuple<B, B>>)(this)).<B>addLink(new UncombinationsLink<B>());
     }
     public Chain<Tuple<A, A>> neighbours() {
         return this.<Tuple<A, A>>addLink(new NeighboursLink<A>(false));
@@ -78,7 +79,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
     public <B> Chain<Tuple<A, B>> mulBy(final Traversable<B> by) {
         return this.<Tuple<A, B>>addLink(new MulLink<A, B>(by));
     }
-    public <K> Chain<Tuple<K, ImArray<A>>> groupFactorBy(final float factor, final F<A, K> by) {
+    public <K> Chain<Tuple<K, ImArray<A>>> groupFactorBy(final double factor, final F<A, K> by) {
         return this.<Tuple<K, ImArray<A>>>addLink(new MGroupByLink<A, K, ArrayBuilder<A>, ImArray<A>>(factor, by, new F0<ArrayBuilder<A>>() {
             @Override
             public ArrayBuilder<A> apply() {
@@ -97,9 +98,9 @@ public class Chain<A> extends ImTraversable_impl<A> {
         }));
     }
     public <K> Chain<Tuple<K, ImArray<A>>> groupBy(final F<A, K> by) {
-        return this.<K>groupFactorBy(ERROR: Unknown 0.5, by);
+        return this.<K>groupFactorBy(0.5, by);
     }
-    public <K, B> Chain<Tuple<K, ImArray<B>>> groupFactorByMap(final float factor, final F<A, K> by, final F<A, B> map) {
+    public <K, B> Chain<Tuple<K, ImArray<B>>> groupFactorByMap(final double factor, final F<A, K> by, final F<A, B> map) {
         return this.<Tuple<K, ImArray<B>>>addLink(new MGroupByLink<A, K, ArrayBuilder<B>, ImArray<B>>(factor, by, new F0<ArrayBuilder<B>>() {
             @Override
             public ArrayBuilder<B> apply() {
@@ -123,9 +124,9 @@ public class Chain<A> extends ImTraversable_impl<A> {
         }));
     }
     public <K, B> Chain<Tuple<K, ImArray<B>>> groupByMap(final F<A, K> by, final F<A, B> map) {
-        return this.<K, B>groupFactorByMap(ERROR: Unknown 0.5, by, map);
+        return this.<K, B>groupFactorByMap(0.5, by, map);
     }
-    public <K, C extends Traversable<K>> Chain<Tuple<K, C<A>>> groupFactorByBuilder(final float factor, final F<A, K> by, final F0<Builder<A, C>> builder) {
+    public <K, C extends Traversable<K>> Chain<Tuple<K, C<A>>> groupFactorByBuilder(final double factor, final F<A, K> by, final F0<Builder<A, C>> builder) {
         return this.<Tuple<K, C>>addLink(new MGroupByLink<A, K, Builder<A, C>, C>(factor, by, builder, new P2<Builder<A, C>, A>() {
             @Override
             public void apply(final Builder<A, C> b, final A item) {
@@ -139,9 +140,9 @@ public class Chain<A> extends ImTraversable_impl<A> {
         }));
     }
     public <K, C extends Traversable<K>> Chain<Tuple<K, C<A>>> groupByBuilder(final F<A, K> by, final F0<Builder<A, C>> builder) {
-        return this.<K, C>groupFactorByBuilder(ERROR: Unknown 0.5, by, builder);
+        return this.<K, C>groupFactorByBuilder(0.5, by, builder);
     }
-    public <B, K, C extends Traversable<K>> Chain<Tuple<K, C<B>>> groupFactorByMapBuilder(final float factor, final F<A, K> by, final F<A, B> map, final F0<Builder<B, C>> builder) {
+    public <B, K, C extends Traversable<K>> Chain<Tuple<K, C<B>>> groupFactorByMapBuilder(final double factor, final F<A, K> by, final F<A, B> map, final F0<Builder<B, C>> builder) {
         return this.<Tuple<K, C>>addLink(new MGroupByLink<A, K, Builder<B, C>, C>(factor, by, builder, new P2<Builder<B, C>, A>() {
             @Override
             public void apply(final Builder<B, C> b, final A item) {
@@ -160,19 +161,19 @@ public class Chain<A> extends ImTraversable_impl<A> {
         }));
     }
     public <B, K, C extends Traversable<K>> Chain<Tuple<K, C<B>>> groupByMapBuilder(final F<A, K> by, final F<A, B> map, final F0<Builder<B, C>> builder) {
-        return this.<B, K, C>groupFactorByMapBuilder(ERROR: Unknown 0.5, by, map, builder);
+        return this.<B, K, C>groupFactorByMapBuilder(0.5, by, map, builder);
     }
-    public <K, V> Chain<Tuple<K, V>> groupFactorByStartFold(final float factor, final F<A, K> by, final F0<V> start, final F2<V, A, V> fold) {
+    public <K, V> Chain<Tuple<K, V>> groupFactorByStartFold(final double factor, final F<A, K> by, final F0<V> start, final F2<V, A, V> fold) {
         return this.<Tuple<K, V>>addLink(new ImGroupByLink<A, K, V>(factor, by, start, fold));
     }
     public <K, V> Chain<Tuple<K, V>> groupByStartFold(final F<A, K> by, final F0<V> start, final F2<V, A, V> fold) {
-        return this.<K, V>groupFactorByStartFold(ERROR: Unknown 0.5, by, start, fold);
+        return this.<K, V>groupFactorByStartFold(0.5, by, start, fold);
     }
-    public Chain<A> distinctFactor(final float factor) {
+    public Chain<A> distinctFactor(final double factor) {
         return this.<A>addLink(new DistinctLink<A>(factor));
     }
     public Chain<A> distinct() {
-        return distinctFactor(ERROR: Unknown 0.5);
+        return distinctFactor(0.5);
     }
     public <B> Chain<Tuple<A, B>> zipB(final Iterable<B> b) {
         return this.<Tuple<A, B>>addLink(new ZipLink<A, B, Tuple<A, B>>(b, new F2<A, B, Tuple<A, B>>() {
@@ -245,7 +246,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
         }
     }
     public <B extends Comparable<B>> Chain<A> sort() {
-        return this.<B>addLink(new SortLink<B>(new F2<B, B, Integer>() {
+        return ((Chain<B>)(this)).<B>addLink(new SortLink<B>(new F2<B, B, Integer>() {
             @Override
             public Integer apply(final B a, final B b) {
                 return a.compareTo(b);
@@ -253,7 +254,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
         }));
     }
     public <B extends Comparable<B>> Chain<A> sortDesc() {
-        return this.<B>addLink(new SortLink<B>(new F2<B, B, Integer>() {
+        return ((Chain<B>)(this)).<B>addLink(new SortLink<B>(new F2<B, B, Integer>() {
             @Override
             public Integer apply(final B a, final B b) {
                 return -(a.compareTo(b));
@@ -345,7 +346,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
     public <B extends Comparable<B>> Tuple<B, B> gap() {
         final Mut<B> min = new Mut<B>();
         final Mut<B> max = new Mut<B>();
-        _forEach(new P<B>() {
+        ((Chain<B>)(this))._forEach(new P<B>() {
             @Override
             public void apply(final B item) {
                 if(min.value == null || min.value.compareTo(item) > 0) {
@@ -367,7 +368,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
     }
     public <B extends Comparable<B>> B min() {
         final Mut<B> min = new Mut<B>();
-        _forEach(new P<B>() {
+        ((Chain<B>)(this))._forEach(new P<B>() {
             @Override
             public void apply(final B item) {
                 if(min.value == null || min.value.compareTo(item) > 0) {
@@ -379,7 +380,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
     }
     public <B extends Comparable<B>> B max() {
         final Mut<B> max = new Mut<B>();
-        _forEach(new P<B>() {
+        ((Chain<B>)(this))._forEach(new P<B>() {
             @Override
             public void apply(final B item) {
                 if(max.value == null || max.value.compareTo(item) < 0) {
@@ -391,7 +392,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
     }
     public boolean or() {
         final Mut<Boolean> ret = new Mut<Boolean>(false);
-        applyYield(Yield.<A>makeYield(new F<Boolean, Go>() {
+        ((Chain<Boolean>)(this)).applyYield(Yield.<Boolean>makeYield(new F<Boolean, Go>() {
             @Override
             public Go apply(final Boolean item) {
                 if(item) {
@@ -406,7 +407,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
     }
     public boolean and() {
         final Mut<Boolean> ret = new Mut<Boolean>(true);
-        applyYield(Yield.<A>makeYield(new F<Boolean, Go>() {
+        ((Chain<Boolean>)(this)).applyYield(Yield.<Boolean>makeYield(new F<Boolean, Go>() {
             @Override
             public Go apply(final Boolean item) {
                 if(!(item)) {
@@ -618,9 +619,9 @@ public class Chain<A> extends ImTraversable_impl<A> {
         }
     }
     public <B extends Comparable<B>> TreeSet<B> toTreeSet() {
-        final Mut<Builder<A, TreeSet<?>>> __il_b = new Mut<Builder<A, TreeSet<?>>>();
+        final Mut<Builder<B, TreeSet<?>>> __il_b = new Mut<Builder<B, TreeSet<?>>>();
         final Mut<TreeSet<?>> __il_r = new Mut<TreeSet<?>>();
-        applyYield(Yield.<A>makeBeginYieldAll(new F<Integer, Go>() {
+        ((Chain<B>)(this)).applyYield(Yield.<B>makeBeginYieldAll(new F<Integer, Go>() {
             @Override
             public Go apply(final Integer size) {
                 final int _ = ((int)(size));
@@ -657,9 +658,9 @@ public class Chain<A> extends ImTraversable_impl<A> {
         }
     }
     public <K, V> ImHashMap<K, V> toMap() {
-        final Mut<Builder<A, ImHashMap<?, ?>>> __il_b = new Mut<Builder<A, ImHashMap<?, ?>>>();
+        final Mut<Builder<Tuple<K, V>, ImHashMap<?, ?>>> __il_b = new Mut<Builder<Tuple<K, V>, ImHashMap<?, ?>>>();
         final Mut<ImHashMap<?, ?>> __il_r = new Mut<ImHashMap<?, ?>>();
-        applyYield(Yield.<A>makeBeginYieldAll(new F<Integer, Go>() {
+        ((Chain<Tuple<K, V>>)(this)).applyYield(Yield.<Tuple<K, V>>makeBeginYieldAll(new F<Integer, Go>() {
             @Override
             public Go apply(final Integer size) {
                 final int _ = ((int)(size));
@@ -717,9 +718,9 @@ public class Chain<A> extends ImTraversable_impl<A> {
         return toStringStartDelimiterEnd("", delimiter, "");
     }
     public String toString() {
-        final Mut<Builder<A, String>> __il_b = new Mut<Builder<A, String>>();
+        final Mut<Builder<Character, String>> __il_b = new Mut<Builder<Character, String>>();
         final Mut<String> __il_r = new Mut<String>();
-        applyYield(Yield.<A>makeBeginYieldAll(new F<Integer, Go>() {
+        ((Chain<Character>)(this)).applyYield(Yield.<Character>makeBeginYieldAll(new F<Integer, Go>() {
             @Override
             public Go apply(final Integer size) {
                 final int _ = ((int)(size));
@@ -757,7 +758,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
     }
     public <V, R> Future<R> futureF(final F<Chain<V>, R> f) {
         final FutureEnd<V> lnk = new FutureEnd<V>();
-        applyYield(lnk.yield());
+        ((Chain<Future<V>>)(this)).applyYield(lnk.yield());
         return lnk.future().<R>mapF(new F<ImArray<V>, R>() {
             @Override
             public R apply(final ImArray<V> o) {
@@ -767,12 +768,12 @@ public class Chain<A> extends ImTraversable_impl<A> {
     }
     public <V> Future<ImArray<V>> future() {
         final FutureEnd<V> lnk = new FutureEnd<V>();
-        applyYield(lnk.yield());
+        ((Chain<Future<V>>)(this)).applyYield(lnk.yield());
         return lnk.future();
     }
     public Future<Void> voidFuture() {
         final FutureVoidEnd lnk = new FutureVoidEnd();
-        applyYield(lnk.yield());
+        ((Chain<Future<Void>>)(this)).applyYield(lnk.yield());
         return lnk.future();
     }
     public Go applyYield(final Yield<A> yield) {

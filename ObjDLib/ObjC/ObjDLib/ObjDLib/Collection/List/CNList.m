@@ -139,12 +139,12 @@ static CNClassType* _CNFilledList_type;
 
 - (CNImList*)insertItem:(id)item {
     CNImList* before = [CNImList apply];
-    CNFilledList* list = self;
+    CNFilledList* list = ((CNFilledList*)(self));
     while(YES) {
         id h = list._head;
-        if([item compareTo:((id)(h))] < 0) return [[CNFilledList filledListWith_head:((id)(item)) tail:before] reverseAndAddList:list];
+        if([item compareTo:h] < 0) return [[CNFilledList filledListWith_head:item tail:before] reverseAndAddList:list];
         before = [CNImList applyItem:h tail:before];
-        if([list.tail isEmpty]) return [[CNFilledList filledListWith_head:((id)(item)) tail:before] reverse];
+        if([list.tail isEmpty]) return [[CNFilledList filledListWith_head:item tail:before] reverse];
         list = ((CNFilledList*)(list.tail));
     }
 }
@@ -235,7 +235,7 @@ static CNClassType* _CNEmptyList_type;
 }
 
 - (CNImList*)insertItem:(id)item {
-    return [CNImList applyItem:((id)(item))];
+    return [CNImList applyItem:item];
 }
 
 - (CNClassType*)type {

@@ -7,7 +7,7 @@ module Java.Struct (
 
 import           Ex.String
 import 			 Data.List
---import 			 Data.Decimal
+import 			 Data.Decimal
 --import           Control.Monad
 --import 			 Control.Arrow
 
@@ -162,7 +162,7 @@ showStm (Val mods tp nm Nop) = [pstrs' "" " " " " mods ++ show tp ++ " " ++ kw n
 showStm (Val mods tp nm e) = [pstrs' "" " " " " mods ++ show tp ++ " " ++ kw nm ++ " = "] `glue` showExp e `appp` ";"
 
 
-data Exp = Nop | IntConst Int | ExpError String 
+data Exp = Nop | IntConst Int | FloatConst Decimal | ExpError String 
 	| Call String [TP] [Exp] | New [Def] String [TP] [Exp] | Dot Exp Exp | Ref String | InlineIf Exp Exp Exp | This
 	| BoolOp BoolTp Exp Exp | MathOp MathTp Exp Exp | Null | BoolConst Bool | InstanceOf Exp TP | Cast TP Exp
 	| StringConst String | Index Exp Exp | Not Exp | Negative Exp | MinusMinus Exp | PlusPlus Exp  deriving (Eq)
@@ -174,6 +174,7 @@ showExp This = ["this"]
 showExp (BoolConst True) = ["true"]
 showExp (BoolConst False) = ["false"]
 showExp (IntConst i) = [show i]
+showExp (FloatConst i) = [show i]
 showExp (StringConst s) = [show s]
 showExp (Ref s) = [kw s]
 showExp (Call name gens pars) = [pstrs' "<" ", " ">" gens ++ kw name ++ "("] `glue` (glueAll ", " . map showExp) pars `appp` ")"

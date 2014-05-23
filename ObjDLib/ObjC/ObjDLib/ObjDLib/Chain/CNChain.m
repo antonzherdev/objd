@@ -89,7 +89,7 @@ static CNClassType* _CNChain_type;
 }
 
 - (CNChain*)flatFactor:(CGFloat)factor {
-    return [self addLink:[CNFlatLink flatLinkWithFactor:factor]];
+    return [((CNChain*)(self)) addLink:[CNFlatLink flatLinkWithFactor:factor]];
 }
 
 - (CNChain*)flat {
@@ -101,7 +101,7 @@ static CNClassType* _CNChain_type;
 }
 
 - (CNChain*)uncombinations {
-    return [self addLink:[CNUncombinationsLink uncombinationsLink]];
+    return [((CNChain*)(self)) addLink:[CNUncombinationsLink uncombinationsLink]];
 }
 
 - (CNChain*)neighbours {
@@ -256,13 +256,13 @@ static CNClassType* _CNChain_type;
 }
 
 - (CNChain*)sort {
-    return [self addLink:[CNSortLink sortLinkWithComparator:^NSInteger(id a, id b) {
+    return [((CNChain*)(self)) addLink:[CNSortLink sortLinkWithComparator:^NSInteger(id a, id b) {
         return [a compareTo:b];
     }]];
 }
 
 - (CNChain*)sortDesc {
-    return [self addLink:[CNSortLink sortLinkWithComparator:^NSInteger(id a, id b) {
+    return [((CNChain*)(self)) addLink:[CNSortLink sortLinkWithComparator:^NSInteger(id a, id b) {
         return -[a compareTo:b];
     }]];
 }
@@ -341,7 +341,7 @@ static CNClassType* _CNChain_type;
 - (CNTuple*)gap {
     __block id min;
     __block id max;
-    [self _forEach:^void(id item) {
+    [((CNChain*)(self)) _forEach:^void(id item) {
         if(min == nil || [min compareTo:item] > 0) min = item;
         if(max == nil || [max compareTo:item] < 0) max = item;
     }];
@@ -351,7 +351,7 @@ static CNClassType* _CNChain_type;
 
 - (id)min {
     __block id min;
-    [self _forEach:^void(id item) {
+    [((CNChain*)(self)) _forEach:^void(id item) {
         if(min == nil || [min compareTo:item] > 0) min = item;
     }];
     return min;
@@ -359,7 +359,7 @@ static CNClassType* _CNChain_type;
 
 - (id)max {
     __block id max;
-    [self _forEach:^void(id item) {
+    [((CNChain*)(self)) _forEach:^void(id item) {
         if(max == nil || [max compareTo:item] < 0) max = item;
     }];
     return max;
@@ -367,7 +367,7 @@ static CNClassType* _CNChain_type;
 
 - (BOOL)or {
     __block BOOL ret = NO;
-    [self applyYield:[CNYield makeYield:^CNGoR(id item) {
+    [((CNChain*)(self)) applyYield:[CNYield makeYield:^CNGoR(id item) {
         if(unumb(item)) {
             ret = YES;
             return CNGo_Break;
@@ -380,7 +380,7 @@ static CNClassType* _CNChain_type;
 
 - (BOOL)and {
     __block BOOL ret = YES;
-    [self applyYield:[CNYield makeYield:^CNGoR(id item) {
+    [((CNChain*)(self)) applyYield:[CNYield makeYield:^CNGoR(id item) {
         if(!(unumb(item))) {
             ret = NO;
             return CNGo_Break;
@@ -513,7 +513,7 @@ static CNClassType* _CNChain_type;
 - (CNTreeSet*)toTreeSet {
     __block id<CNBuilder> __il_b;
     __block CNTreeSet* __il_r;
-    [self applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
+    [((CNChain*)(self)) applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
         __il_b = ({
             NSInteger _ = ((NSInteger)(size));
             [CNTreeSetBuilder apply];
@@ -537,7 +537,7 @@ static CNClassType* _CNChain_type;
 - (NSDictionary*)toMap {
     __block id<CNBuilder> __il_b;
     __block CNImHashMap* __il_r;
-    [self applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
+    [((CNChain*)(self)) applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
         __il_b = ({
             NSInteger _ = ((NSInteger)(size));
             [CNHashMapBuilder hashMapBuilder];
@@ -578,7 +578,7 @@ static CNClassType* _CNChain_type;
 - (NSString*)toString {
     __block id<CNBuilder> __il_b;
     __block CNString* __il_r;
-    [self applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
+    [((CNChain*)(self)) applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
         __il_b = ({
             NSInteger _ = ((NSInteger)(size));
             [CNStringBuilder stringBuilder];
@@ -601,7 +601,7 @@ static CNClassType* _CNChain_type;
 
 - (CNFuture*)futureF:(id(^)(CNChain*))f {
     CNFutureEnd* lnk = [CNFutureEnd futureEnd];
-    [self applyYield:[lnk yield]];
+    [((CNChain*)(self)) applyYield:[lnk yield]];
     return [[lnk future] mapF:^id(NSArray* o) {
         return f([((NSArray*)(o)) chain]);
     }];
@@ -609,13 +609,13 @@ static CNClassType* _CNChain_type;
 
 - (CNFuture*)future {
     CNFutureEnd* lnk = [CNFutureEnd futureEnd];
-    [self applyYield:[lnk yield]];
+    [((CNChain*)(self)) applyYield:[lnk yield]];
     return [lnk future];
 }
 
 - (CNFuture*)voidFuture {
     CNFutureVoidEnd* lnk = [CNFutureVoidEnd futureVoidEnd];
-    [self applyYield:[lnk yield]];
+    [((CNChain*)(self)) applyYield:[lnk yield]];
     return [lnk future];
 }
 

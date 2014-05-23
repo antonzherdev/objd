@@ -2,8 +2,8 @@ package objd.chain;
 
 import objd.lang.*;
 import objd.collection.Traversable;
-import objd.collection.Iterable;
 import objd.collection.Go;
+import objd.collection.Iterable;
 
 public class PrependLink<T> extends ChainLink_impl<T, T> {
     public final Traversable<T> collection;

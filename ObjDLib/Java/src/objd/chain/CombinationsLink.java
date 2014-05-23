@@ -2,6 +2,7 @@ package objd.chain;
 
 import objd.lang.*;
 import objd.collection.MArray;
+import objd.collection.Go;
 
 public class CombinationsLink<T> extends ChainLink_impl<T, Tuple<T, T>> {
     private int sfN(final int n) {

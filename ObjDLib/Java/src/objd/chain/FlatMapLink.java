@@ -2,9 +2,10 @@ package objd.chain;
 
 import objd.lang.*;
 import objd.collection.Traversable;
+import objd.collection.Go;
 
 public class FlatMapLink<A, B> extends ChainLink_impl<A, B> {
-    public final float factor;
+    public final double factor;
     public final F<A, Traversable<B>> f;
     @Override
     public Yield<A> buildYield(final Yield<B> yield) {
@@ -25,7 +26,7 @@ public class FlatMapLink<A, B> extends ChainLink_impl<A, B> {
             }
         });
     }
-    public FlatMapLink(final float factor, final F<A, Traversable<B>> f) {
+    public FlatMapLink(final double factor, final F<A, Traversable<B>> f) {
         this.factor = factor;
         this.f = f;
     }

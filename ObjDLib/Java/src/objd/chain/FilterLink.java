@@ -4,7 +4,7 @@ import objd.lang.*;
 import objd.collection.Go;
 
 public class FilterLink<T> extends ChainLink_impl<T, T> {
-    public final float factor;
+    public final double factor;
     public final F<T, Boolean> predicate;
     @Override
     public Yield<T> buildYield(final Yield<T> yield) {
@@ -24,7 +24,7 @@ public class FilterLink<T> extends ChainLink_impl<T, T> {
             }
         });
     }
-    public FilterLink(final float factor, final F<T, Boolean> predicate) {
+    public FilterLink(final double factor, final F<T, Boolean> predicate) {
         this.factor = factor;
         this.predicate = predicate;
     }

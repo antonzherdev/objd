@@ -7,8 +7,8 @@ import objd.concurrent.DispatchQueue;
 import objd.concurrent.Future;
 import objd.concurrent.AtomicInt;
 import objd.collection.Set;
-import test.Test;
 import test.TestCase;
+import test.Test;
 import test..*;
 
 public class ChainTest extends TestCase {
@@ -67,7 +67,7 @@ public class ChainTest extends TestCase {
                         return _ * _;
                     }
                 }).toArray();
-                .<ImArray<Integer>>assertEqualsAB(set, fut.getResultAwait(((float)(5))));
+                .<ImArray<Integer>>assertEqualsAB(set, fut.getResultAwait(((double)(5))));
             }
         });
     }
@@ -92,7 +92,7 @@ public class ChainTest extends TestCase {
                 });
             }
         });
-        .assertTrueValue(fut.waitResultPeriod(((float)(5))) != null);
+        .assertTrueValue(fut.waitResultPeriod(((double)(5))) != null);
         .<Integer>assertEqualsAB(count.intValue(), ((int)(arr.count())));
     }
     public void testMap() {

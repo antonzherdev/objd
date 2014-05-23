@@ -5,7 +5,7 @@ import objd.collection.MHashMap;
 import objd.collection.Go;
 
 public class ImGroupByLink<T, K, V> extends ChainLink_impl<T, Tuple<K, V>> {
-    public final float factor;
+    public final double factor;
     public final F<T, K> by;
     public final F0<V> start;
     public final F2<V, T, V> fold;
@@ -36,7 +36,7 @@ public class ImGroupByLink<T, K, V> extends ChainLink_impl<T, Tuple<K, V>> {
             }
         });
     }
-    public ImGroupByLink(final float factor, final F<T, K> by, final F0<V> start, final F2<V, T, V> fold) {
+    public ImGroupByLink(final double factor, final F<T, K> by, final F0<V> start, final F2<V, T, V> fold) {
         this.factor = factor;
         this.by = by;
         this.start = start;

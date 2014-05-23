@@ -143,15 +143,15 @@ traitImplClass env cl = let
 			(xcl, xgens):_ -> maybe base (\c -> ExtendsClass (c, xgens) []) $ M.lookup (className xcl ++ "_impl") (envIndex env),
 		extendsTraits = [(cl, map (TPClass TPMGeneric []) $ classGenerics cl)]
 	}
-	self = cl {
+	cl' = cl {
 		className = className cl ++ "_impl",
 		_classExtends = ext, 
 		_classMods = ClassModTraitImpl : ClassModAbstract : delete ClassModTrait (classMods cl), 
 		_classDefs = filter( (DefModOverride `elem`) .defMods) $ classDefs cl,
 		_classImports = [],
-		classDefsWithTraits = defsWithTraits env self
+		classDefsWithTraits = defsWithTraits env cl'
 	}
-	in self
+	in cl'
 
 getTraitImplClass :: Env -> Class -> Maybe Class
 getTraitImplClass env cl = M.lookup (className cl ++ "_impl") (envIndex env)
@@ -248,15 +248,15 @@ baseClassExtends cidx = ExtendsClass (classFind cidx "Object", []) []
 
 linkClass :: (ClassIndex, ObjectIndex, File, Package, [Import]) -> D.FileStm -> [Class]
 -- linkClass (_, _, _, _, _) D.Class{D.className = cls} | trace ("Class " ++ cls) False = undefined
-linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not isSeltStub then [self, traitImplClass env self] else [self]
+linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not isSeltStub then [cl', traitImplClass env cl'] else [cl']
 	where
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
-		env = Env selfType cidx glidx [] False TPVoid ""
-		staticEnv = Env (TPObject (refDataTypeMod self) self) ocidx glidx [] False TPVoid ""
+		env = Env selfType False cidx glidx [] False TPVoid ""
+		staticEnv = Env (TPObject (refDataTypeMod cl') cl') False ocidx glidx [] False TPVoid ""
 		isObject = case cl of
 			D.Class{} -> D.ClassModObject `elem` D.classMods cl
 			_ -> False
-		self = case cl of
+		cl' = case cl of
 			D.Class{} -> Class {
 				_classFile = file,
 				_classPackage = package,
@@ -270,7 +270,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 				_classGenerics = generics,
 				_classImports = clImports,
 				classAnnotations = annotations,
-				classDefsWithTraits = defsWithTraits env self
+				classDefsWithTraits = defsWithTraits env cl'
 			}
 			D.Enum{} -> Class {
 				_classFile = file,
@@ -278,16 +278,16 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 				_classMods = [ClassModEnum], 
 				className = D.className cl, 
 				_classExtends = Extends (Just $ ExtendsClass 
-					(classFind cidx "Enum", [TPClass TPMEnum [] self])  
+					(classFind cidx "Enum", [TPClass TPMEnum [] cl'])  
 					[(enumOrdinal, callLocalVal "ordinal" uint), (enumName, callLocalVal "name" TPString)]) [], 
 				_classDefs =  enumConstr ++
 					snd (mapAccumL enumItem 0 (D.enumItems cl)) ++ fields ++ defs ++ [Def{
-					defName = "values", defType = TPArr 0 (TPClass TPMEnum [] self), defBody = Nop,
+					defName = "values", defType = TPArr 0 (TPClass TPMEnum [] cl'), defBody = Nop,
 					defMods = [DefModStatic, DefModSpecial], defPars = [], defGenerics = Nothing, defAnnotations = []}],
 				_classGenerics = generics,
 				_classImports = clImports,
 				classAnnotations = annotations,
-				classDefsWithTraits = defsWithTraits env self
+				classDefsWithTraits = defsWithTraits env cl'
 			}
 			D.Type{} -> Class {
 				_classFile = file,
@@ -299,7 +299,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 				_classGenerics = generics,
 				_classImports = [],
 				classAnnotations = annotations,
-				classDefsWithTraits = defsWithTraits env self
+				classDefsWithTraits = defsWithTraits env cl'
 			}
 		isSeltTrait = case cl of 
 			D.Class{} -> D.ClassModTrait `elem` D.classMods cl
@@ -312,7 +312,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 		enumOrdinal = Def "ordinal" [] uint Nop [] Nothing []
 		enumName = Def "name" [] TPString Nop [] Nothing []
 		enumAdditionalDefs = [(enumOrdinal, Nothing), (enumName, Nothing)]
-		selfType = refDataType self (map (TPClass TPMGeneric []) generics)
+		selfType = refDataType cl' (map (TPClass TPMGeneric []) generics)
 		clsMod D.ClassModStruct = [ClassModStruct]
 		clsMod D.ClassModStub = [ClassModStub]
 		clsMod D.ClassModTrait =  [ClassModTrait]
@@ -367,9 +367,9 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 					[]
 		constructorForType = parConstructor' {defType = selfType}
 			where
-				gens = buildGenericsForSelf self
+				gens = buildGenericsForSelf cl'
 				parGenerics = superGenerics gens (extendsClassRef parClassExtends)
-				parClassExtends = fromJust $ extendsClass $ classExtends $ self
+				parClassExtends = fromJust $ extendsClass $ classExtends $ cl'
 				parConstructor = fromJust $ classConstructor $ extendsClassClass $ parClassExtends
 				parConstructor' = replaceGenericsInDef parGenerics parConstructor
 		typeField :: Def 
@@ -381,7 +381,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 				typeName = if selfIsStruct then "PType" else "ClassType"
 
 defsWithTraits :: Env -> Class -> [Def]
-defsWithTraits env self = classDefs self ++ notOverloadedTraitDefs
+defsWithTraits env cl = classDefs cl ++ notOverloadedTraitDefs
 	where	
 		
 		notOverloadedTraitDefs = map updef $ filter (\(def, _) -> not $ any ((== def) . fst) notAbstractClassDefs) notAbstractTraitDefs
@@ -391,7 +391,7 @@ defsWithTraits env self = classDefs self ++ notOverloadedTraitDefs
 		notAbstractDefs :: Bool ->[(Def, Class)]
 		notAbstractDefs trait = ( map (\(a, _, c) -> (a, c)) . filter (\(_, t, _) -> trait == t)) allDefsWithLine
 		allDefsWithLine :: [(Def, Bool, Class)]
-		allDefsWithLine = allDefsWithLine' False True self
+		allDefsWithLine = allDefsWithLine' False True cl
 		allDefsWithLine' :: Bool -> Bool -> Class -> [(Def, Bool, Class)] -- (Def, traitLine - True/classLine - False)
 		allDefsWithLine' currentLine traitLine cll = 
 			map (\def -> (def, currentLine, cll)) (classDefs cll) 
@@ -401,18 +401,18 @@ defsWithTraits env self = classDefs self ++ notOverloadedTraitDefs
 				nextRec (nextClass, _) = 
 					let line = traitLine && isTrait nextClass
 					in allDefsWithLine' line line nextClass
-		stp = TPClass TPMClass clGens self
-		clGens = map (TPClass TPMGeneric []) $ classGenerics self
+		stp = TPClass TPMClass clGens cl
+		clGens = map (TPClass TPMGeneric []) $ classGenerics cl
 		updef :: (Def, Class) -> Def
 		updef (d, defClass) = let
-			gens = buildGenerics defClass $ fromJust $ upGenericsToClass defClass (self, clGens)
+			gens = buildGenerics defClass $ fromJust $ upGenericsToClass defClass (cl, clGens)
 			rg = replaceGenerics False gens
 			tp' = rg $ defType d
 			pars' :: [(Def, Def)]
 			pars' = map (\p -> (p, p{defType = rg $ defType p})) (defPars d)
 			body' :: Exp
 			body' = inlineCall env{envSelf = stp} $ Dot (Self stp) $ Call d tp' (map (second callRef) pars') []
-			in case classGenerics self of
+			in case classGenerics cl of
 				[] -> d
 				_ -> d{defType = tp', defPars = map snd pars', defBody = body'}
 
@@ -553,9 +553,7 @@ linkDef env dd@D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.de
 				(_, TPGenericWrap{}) -> (thisPar{defType = wrapGeneric thisTp}, de)
 				_ -> p
 			| otherwise = (thisPar{defType = TPUnknown $ "Incorrect override: " ++ show thisTp ++ " is not instance of " ++ show superTp }, de)
-		defGenerics' = Just $ DefGenerics generics' $ case pars of
-		 	[] -> envSelf env
-		 	(Def{defName = dn, defType = dtp}, _) : _ -> if dn == "self" then dtp else envSelf env
+		defGenerics' = Just $ DefGenerics generics' $ envSelf env''' 
 		mods' = translateMods mods ++ if isInit then [] else checkOverrideMods mods overrideDef 
 		
 
@@ -574,6 +572,10 @@ linkDef env dd@D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.de
 		 		_ -> rtp'
 		parDefs = map fst pars''
 		env'' = envAddVals parDefs env'
+		env''' = case pars of
+		 	[] -> env''
+		 	(Def{defName = dn, defType = dtp}, _) : _ -> if dn == "self" then env''{envSelf = dtp, envSelfCast = True} else env''
+
 		isSelfStub = case envSelf env of
 			TPClass _ _ cl -> isStub cl
 			TPObject _ cl -> isStub cl
@@ -585,8 +587,8 @@ linkDef env dd@D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.de
 			_   -> 
 				let 
 					b = case tp of
-						Just (D.DataType "void" []) -> expr env'' body
-						_ -> exprToSome env'' body
+						Just (D.DataType "void" []) -> expr env''' body
+						_ -> exprToSome env''' body
 					tp' = unblockGenerics $ unwrapGeneric $ getDataType env' tp b
 					tp'' = mapOverrideType tp'
 					superInitDef :: Maybe Def
@@ -623,7 +625,7 @@ resolveDefPar env mainDef parameters = parRec True parameters []
 				callMainDef = Call mainDef (defType mainDef) (map expCallPar pars) callGens
 				callMainDef' = maybeAddReturn env (defType mainDef) $ 
 					if DefModConstructor `elem` defMods mainDef then callMainDef 
-					else Dot (Self (envSelf env)) $ callMainDef
+					else Dot (self env) $ callMainDef
 				in mainDef {defMods = (map (\m -> if m == DefModConstructor then DefModDef else m) . filter (\m -> m /= DefModAbstract) ) (defMods mainDef),
 					defPars = (map fst . filter ( isNothing . snd)) pars,
 					defBody = callMainDef'}  
@@ -657,7 +659,7 @@ linkDefPars env pars = let
 
 type ClassIndex = M.Map String Class
 type ObjectIndex = [Class]
-data Env = Env{envSelf :: DataType, envIndex :: ClassIndex, envObjectIndex :: ObjectIndex, envVals :: [Def], envInit :: Bool, envTp :: DataType, envVarSuffix :: String}
+data Env = Env{envSelf :: DataType, envSelfCast :: Bool, envIndex :: ClassIndex, envObjectIndex :: ObjectIndex, envVals :: [Def], envInit :: Bool, envTp :: DataType, envVarSuffix :: String}
 
 envChangeDefTp :: Env -> Def -> DataType -> Env
 envChangeDefTp env@Env{envVals = vals} d tp = env{envVals = d{defType = tp} : filter (/= d) vals}
@@ -863,6 +865,8 @@ exprTo env tp e = implicitConvertsion env tp $ expr env{envTp = tp} e
 exprToSome :: Env ->D.Exp -> Exp
 exprToSome env e =  expr env{envTp = baseDataType env} e
 
+self :: Env -> Exp
+self env = (if envSelfCast env then Cast (envSelf env) else id) (Self $ envSelf env)
 
 expr :: Env -> D.Exp -> Exp
 expr env (D.If cond t D.Nop) = let
@@ -1046,7 +1050,7 @@ expr env (D.Set tp a b) =
 			_ -> Set tp (ExpLError "Unassinable left" aa) (expr env b)
 expr env (D.PlusPlus e) = PlusPlus (exprToSome env e)
 expr env (D.MinusMinus e) = MinusMinus (exprToSome env e)
-expr env D.Self = Self $ envSelf env
+expr env D.Self = self env
 expr env D.Super = Super $ fromMaybe (error $ "No super data type for " ++ show (envSelf env)) $ superType $ envSelf env
 expr env r@D.Call{} = maybeInlineCall env $ exprCall env Nothing r
 expr env (D.Index e i) = let
@@ -1608,7 +1612,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 				mapPars :: Int -> [D.CallPar] -> [(Maybe String, Exp)]
 				mapPars _ [] = []
 				mapPars i ((n, e):xs) = (n, FirstTry e (exprToSome (envAddSuffix env $ 'p' : show i) e)) : mapPars (i + 1) xs
-		self = fromMaybe (envSelf env) strictClass
+		selfTp = fromMaybe (envSelf env) strictClass
 		call' :: (Maybe Class, Exp)
 		call' = fromMaybe (Nothing, ExpDError errorString cll) $ listToMaybe $ mplus (findCall True) (findCall False)
 		call'' :: Exp
@@ -1621,7 +1625,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 					| DefModObject `elem` defMods d = c
 					| DefModLocal `elem` defMods d = c
 					| isJust cl = Dot (callRef $ objectDef $ fromJust cl) c
-					| otherwise = Dot (Self (envSelf env)) c
+					| otherwise = Dot (self env) c
 				resolveDef _ _ c = c
 
 
@@ -1671,14 +1675,14 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 			ddefGenerics :: DefGenerics -> [(String, DataType)]
 			ddefGenerics DefGenerics{defGenericsClasses = defGens, defGenericsSelfType = selfType} = 
 				(zipWith (determineGenericType selfType) defGens . extendList (length defGens)) gens
-			srcClassGenerics = classGenerics $ dataTypeClass env self
+			srcClassGenerics = classGenerics $ dataTypeClass env selfTp
 			dclassGenerics :: [(String, DataType)]
-			dclassGenerics = (zipWith extractGen srcClassGenerics . extendList (length srcClassGenerics)) (dataTypeGenerics env self) 
+			dclassGenerics = (zipWith extractGen srcClassGenerics . extendList (length srcClassGenerics)) (dataTypeGenerics env selfTp) 
 				where 
 					extractGen :: Class -> Maybe DataType -> (String, DataType)
 					extractGen g (Just t) = (className g, t)
 					extractGen g Nothing = (className g, TPUnknown $
-						"Could not find generic type for " ++ show g ++ " in self " ++ show self ++ " for call " ++ show call')
+						"Could not find generic type for " ++ show g ++ " in self " ++ show selfTp ++ " for call " ++ show call')
 				
 			determineGenericType :: DataType -> Class -> Maybe D.DataType -> (String, DataType)
 			determineGenericType _ g (Just tp) = (className g, (wrapGeneric . dataType env) tp)
@@ -1690,7 +1694,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 					determineByPars :: Maybe DataType
 					determineByPars = (listToMaybe . mapMaybe ( (defType *** (exprDataType >>> unwrapGeneric))>>> tryDetermine g) ) rpars
 					determineBySelfType :: Maybe DataType
-					determineBySelfType = tryDetermine g (selfType, self)
+					determineBySelfType = tryDetermine g (selfType, selfTp)
 					errorText = "Could not determine generic type for " ++ show g ++ " in " ++ show cll 
 					tryDetermine :: Class -> (DataType, DataType) -> Maybe DataType
 					tryDetermine c (TPGenericWrap _  a, TPGenericWrap _ b) = tryDetermine c (a, b)
@@ -1759,7 +1763,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 
 				def' d = Call d (resolveTp d) (zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars') []
 				resolveTp d = case defType d of
-					TPSelf _ -> self
+					TPSelf _ -> selfTp
 					TPOption True tp@(TPFun _ dtp)-> if length pars' == length (defPars d) then tp else dtp
 					tp@(TPFun _ dtp)-> if length pars' == length (defPars d) then tp else dtp
 					tp -> tp
