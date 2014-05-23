@@ -283,7 +283,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 				_classDefs =  enumConstr ++
 					snd (mapAccumL enumItem 0 (D.enumItems cl)) ++ fields ++ defs ++ [Def{
 					defName = "values", defType = TPArr 0 (TPClass TPMEnum [] self), defBody = Nop,
-					defMods = [DefModStatic], defPars = [], defGenerics = Nothing, defAnnotations = []}],
+					defMods = [DefModStatic, DefModSpecial], defPars = [], defGenerics = Nothing, defAnnotations = []}],
 				_classGenerics = generics,
 				_classImports = clImports,
 				classAnnotations = annotations,

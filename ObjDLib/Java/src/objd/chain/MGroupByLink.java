@@ -29,7 +29,7 @@ public class MGroupByLink<T, K, V, W> extends ChainLink_impl<T, Tuple<K, W>> {
         }, new F<Go, Go>() {
             @Override
             public Go apply(final Go result) {
-                if(result.equals(Go.Break)) {
+                if(result == Go.Break) {
                     return yield.endYieldWithResult(result);
                 } else {
                     return yield.endYieldWithResult(m.goOn(new F<Tuple<K, V>, Go>() {

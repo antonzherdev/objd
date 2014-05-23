@@ -22,7 +22,7 @@ public class ReverseLink<T> extends ChainLink_impl<T, T> {
         }, new F<Go, Go>() {
             @Override
             public Go apply(final Go result) {
-                if(result.equals(Go.Break)) {
+                if(result == Go.Break) {
                     return yield.endYieldWithResult(result);
                 } else {
                     return yield.yieldAllItems(list);

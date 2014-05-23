@@ -1,6 +1,8 @@
 module Java.Struct ( 
-	File(..), Class(..), Visibility(..), ClassType(..),
-	TP(..), Generic(..), tpRef, Def(..), DefPar, DefMod(..), Stm(..), Exp(..), DefAnnotation(..), Import, ClassMod(..)
+	File(..), Class(..), Visibility(..), ClassType(..), EnumItem(..),
+	TP(..), Generic(..), Def(..), DefPar, DefMod(..), Stm(..), Exp(..), DefAnnotation(..), Import, ClassMod(..),
+
+	isDefModVisibility, tpRef
 ) where
 
 import           Ex.String
@@ -27,15 +29,20 @@ kw "default" = "aDefault"
 kw s = s
 
 data Class = Class {classMods :: [ClassMod], classType :: ClassType, className :: String, classGenerics :: [Generic]
-	, classExtends :: Maybe TP, classImplements :: [TP], classDefs :: [Def]} 
+	, classExtends :: Maybe TP, classImplements :: [TP], classEnumItems :: [EnumItem], classDefs :: [Def]} 
 instance Show Class where
 	show cl@Class{} = wrapStr "" " " (strs' " " (classMods cl)) ++ show (classType cl) ++ " " ++ className cl 
 		++ pstrs' "<" ", " ">" (classGenerics cl) 
 		++ maybe "" ((" extends " ++ ). show)  (classExtends cl)
 		++ pstrs' (if classType cl == ClassTypeClass then " implements " else " extends ") ", " "" (classImplements cl)
 		++ " {\n" 
+		++ showEnumItems (classEnumItems cl)	
 		++ (unlines . map ind . concatMap (showDef (classType cl, className cl)) )  (classDefs cl)
 		++ "}"
+		where
+			showEnumItems [] = ""
+			showEnumItems [x] = (strs "\n" $ map ind $ showEnumItem x) ++ ";\n"
+			showEnumItems (x:xs) = (strs "\n" $ map ind $ showEnumItem x) ++ ",\n" ++ showEnumItems xs
 
 data ClassMod = ClassModVisibility Visibility | ClassModAbstract | ClassModFinal
 instance Show ClassMod where
@@ -48,10 +55,11 @@ instance Show Visibility where
 	show Protected = "protected"
 	show Public = "public"
 	show Package = ""
-data ClassType = ClassTypeClass | ClassTypeInterface deriving (Eq)
+data ClassType = ClassTypeClass | ClassTypeInterface | ClassTypeEnum deriving (Eq)
 instance Show ClassType where
 	show ClassTypeClass = "class"
 	show ClassTypeInterface = "interface"
+	show ClassTypeEnum = "enum"
 	
 data Generic = Generic{genericExtends :: [TP], genericName :: String} deriving (Eq)
 instance Show Generic where
@@ -85,6 +93,10 @@ data Def =
 type DefPar = ([DefMod], TP, String)
 data DefMod = DefModStatic | DefModAbstract | DefModFinal | DefModOverride | DefModVisability Visibility 
 	| DefModVolatile deriving (Eq)
+
+isDefModVisibility :: DefMod -> Bool
+isDefModVisibility (DefModVisability _) = True
+isDefModVisibility _ = False
 
 showDef :: (ClassType, String) -> Def -> [String]
 showDef _ d@Field{} = concatMap showAnnotation (defAnnotations d) 
@@ -122,6 +134,9 @@ showAnnotation :: DefAnnotation -> [String]
 showAnnotation (DefAnnotation nm []) = ["@" ++ nm]
 showAnnotation (DefAnnotation nm pars) = ["@" ++ nm ++ "("] `glue` (glueAll ", " . map showExp) pars `appp` ")"
 
+data EnumItem = EnumItem String [Exp]
+showEnumItem :: EnumItem -> [String]
+showEnumItem (EnumItem name pars) = [name ++ "("] `glue` (glueAll ", " . map showExp) pars `appp` ")"
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - Stm
  -----------------------------------------------------------------------------------------------------------------------------------------------}

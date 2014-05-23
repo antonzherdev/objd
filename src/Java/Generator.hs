@@ -6,8 +6,8 @@ import Control.Monad.Writer
 import Ex.String
 import Data.Maybe
 import Data.List
-import ObjD.LinkStruct as D
-import Java.Struct as J
+import qualified ObjD.LinkStruct as D
+import qualified Java.Struct as J
 
 toJava :: D.File -> [J.File]
 toJava file@D.File{D.fileClasses = classes} =
@@ -29,13 +29,14 @@ genImport (D.ImportObjectDefs cl) = D.packageName (D.classPackage cl) ++ [D.clas
 genClass :: D.Class -> Writer Wrt J.Class
 genClass cl = do
 	let 
-		defs = filter (\f -> not (D.isSpecial f)) 
+		isEnum = D.isEnum cl 
+		defs = filter (\f -> not (D.isSpecial f) && not (D.isEnumItem f)) 
 			$ if D.isTrait cl then filter (not . D.isConstructor) (D.classDefs cl) else
 				filter (D.isDefAbstract) (D.classDefs cl) ++ filter (not . D.isDefAbstract) (D.classDefsWithTraits cl)
 		trMod D.ClassModAbstract = Just J.ClassModAbstract
 		trMod D.ClassModFinal = Just J.ClassModFinal
 		trMod _ = Nothing
-		staticInitFields = filter (\ f -> D.isField f && D.defBody f /= D.Nop && D.DefModStatic `elem` D.defMods f) (D.classDefs cl)
+		staticInitFields = filter (\ f -> D.isField f && not (D.isEnumItem f) && D.defBody f /= D.Nop && D.DefModStatic `elem` D.defMods f) (D.classDefs cl)
 		genStaticSet d = do
 			e' <- genExp defaultEnv $ D.defBody d
 			return $ J.Set Nothing (J.Ref $ D.defName d) e'
@@ -45,17 +46,23 @@ genClass cl = do
 		Just e -> if D.isBaseClass (fst e) then return Nothing else fmap Just (genExtendsRef e)
 		Nothing -> return Nothing
 	impls' <- mapM genExtendsRef $ filter (not . D.isBaseClass . fst) $ D.traitExtendsRefs $ D.classExtends cl
+	enumItems' <- mapM genEnumItem (if isEnum then filter D.isEnumItem (D.classDefs cl) else [])
 	staticInitFields' <- mapM genStaticSet staticInitFields
 	return J.Class {
 		J.classMods = [J.ClassModVisibility J.Public] ++ mapMaybe trMod (D.classMods cl),
-		J.classType = if D.isTrait cl then J.ClassTypeInterface else J.ClassTypeClass,
+		J.classType = if D.isTrait cl then J.ClassTypeInterface else if isEnum then J.ClassTypeEnum else J.ClassTypeClass,
 		J.className = D.className cl,
 		J.classGenerics = gens',
-		J.classExtends = ext',
+		J.classExtends = if isEnum then Nothing else ext',
 		J.classImplements = impls',
+		J.classEnumItems = enumItems',
 		J.classDefs = join defs' ++ [J.StaticConstructor staticInitFields' | not (null staticInitFields')]
 	}
 
+genEnumItem :: D.Def -> Writer Wrt J.EnumItem
+genEnumItem D.Def{D.defName = name, D.defBody = D.Dot _ (D.Call _ _ (_:_:pars) _)} = do
+	pars' <- (mapM (genExp defaultEnv) . map snd) pars
+	return $ J.EnumItem name pars'
 
 genGeneric :: D.Class -> Writer Wrt J.Generic
 genGeneric cl = do
@@ -99,12 +106,6 @@ genDef cl d =
  		genMod D.DefModAbstract = Just J.DefModAbstract
  		genMod _ = Nothing
  		constrSet dd = let nm = defName' dd in J.Set Nothing (J.Dot J.This (J.Ref nm)) (J.Ref nm)
- 		callSuperConstructor = case D.extendsClass $ D.classExtends cl of
- 			Just (ExtendsClass _ []) -> return []
- 			Just (ExtendsClass _ pars) -> do
- 				pars' <- mapM (genExp defaultEnv . snd) pars
- 				return [J.Stm $ J.Call "super" [] pars']
- 			_ -> return []
  		body = if D.isTrait cl then D.Nop else D.defBody d	
  		mods = mapMaybe genMod (D.defMods d)
  		name = defName' d
@@ -131,15 +132,24 @@ genDef cl d =
 		 			}| D.DefModOverride `elem` D.defMods d]
  		else if D.isConstructor d then
  			do
+ 				let 
+ 					isEnum = D.isEnum cl
+ 					callSuperConstructor = if isEnum then return [] else case D.extendsClass $ D.classExtends cl of
+			 			Just (D.ExtendsClass _ []) -> return []
+			 			Just (D.ExtendsClass _ pars) -> do
+			 				pars' <- mapM (genExp defaultEnv . snd) pars
+			 				return [J.Stm $ J.Call "super" [] pars']
+			 			_ -> return []
  				super <- callSuperConstructor
- 				let fields = filter (\ f -> 
- 					D.isField f && D.defBody f /= D.Nop && D.DefModConstructorField `notElem` D.defMods f && D.DefModStatic `notElem` D.defMods f) 
- 					(D.classDefs cl)
+ 				let 
+ 					fields = filter (\ f -> 
+	 					D.isField f && D.defBody f /= D.Nop && D.DefModConstructorField `notElem` D.defMods f && D.DefModStatic `notElem` D.defMods f) 
+	 					(D.classDefs cl)
  				sets <- mapM genSet fields
- 				pars' <- mapM genPar $ D.defPars d
+ 				pars' <- mapM genPar $ if isEnum then (tail $ tail $ D.defPars d) else D.defPars d
  				return [J.Constructor {
 	 				J.defAnnotations = [],
-	 				J.defMods = mods,
+	 				J.defMods = if isEnum then J.DefModVisability J.Private : filter (not . J.isDefModVisibility) mods else mods,
 	 				J.defPars = pars',
 	 				J.defStms = super ++ (map constrSet . filter ((D.DefModConstructorField `elem` ). D.defMods)) (D.classDefs cl) ++ sets
 	 			}]
@@ -288,7 +298,7 @@ genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
 			pars' <- mapM ((genExp env) . snd) pars
 			gens' <- mapM genTp gens
 			return $ J.New [] (D.defName objDef) gens' pars'
-genExp env (D.Dot (Self stp) r@(D.Call d _ pars gens) ) 
+genExp env (D.Dot (D.Self stp) r@(D.Call d _ pars gens) ) 
 	| D.DefModStatic `elem` D.defMods d = do
 		r' <- genExp env r
 		return $ J.Dot (J.Ref $ D.dataTypeClassName stp) r'
@@ -354,20 +364,25 @@ genExp env (D.BoolOp tp l r) = do
 	r' <- genExp env r
 	let
 		bool = J.BoolOp tp l' r'
+		eqs = (if tp == Eq then id else J.Not) $ J.Dot l' (J.Call "equals" [] [r']) 
 		eq = case (l, r) of
 			(D.None _, _) -> bool
 			(_, D.None _) -> bool
-			_ -> case (D.exprDataType l, D.exprDataType r) of
-				(D.TPNumber{}, _) -> bool
-				(_, D.TPNumber{}) -> bool
-				_ -> (if tp == Eq then id else J.Not) $ J.Dot l' (J.Call "equals" [] [r'])
+			_ -> case D.exprDataType l of
+				D.TPNumber{} -> bool
+				D.TPClass _ _ cl -> if D.isEnum cl then bool else eq2
+				_ ->  eq2
+		eq2 = case D.exprDataType r of
+				D.TPNumber{} -> bool
+				D.TPClass _ _ cl -> if D.isEnum cl then bool else eqs
+				_ ->  eqs
 		in return $ case tp of 
 			ExactEq -> J.BoolOp Eq l' r'
 			ExactNotEq -> J.BoolOp NotEq l' r'
 			Eq -> eq
 			NotEq -> eq
 			_ -> bool
-genExp env (NonOpt _ _ e) = genExp env e
+genExp env (D.NonOpt _ _ e) = genExp env e
 genExp env e@(D.If cond t f) = do
 	cond' <- genExp env cond
 	let 

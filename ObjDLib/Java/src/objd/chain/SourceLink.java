@@ -18,7 +18,7 @@ public class SourceLink<T> extends ChainLink_impl<void, T> {
         }) : (null)), new F<Go, Go>() {
             @Override
             public Go apply(final Go result) {
-                if(result.equals(Go.Break)) {
+                if(result == Go.Break) {
                     return yield.endYieldWithResult(result);
                 } else {
                     return yield.yieldAllItems(SourceLink.this.collection);

@@ -16,7 +16,7 @@ module ObjD.LinkStruct (
 	dataTypeClassNameWithPrefix, dataTypeClassName, classFieldsForEquals, isConst, classFields, isAbstract, classContainsInit,
 	isFinal, isTpClass, isTpEnum, isTpTrait, isNop, enumItems, isType, isGeneric, isGenericWrap, tpGeneric, resolveTypeAlias,
 	containsAnnotationWithClassName, isSpecial, isConstructor, mainExtendsRef, isBaseClass, traitExtendsRefs, findAnnotationWithClassName, 
-	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError, isDefAbstract
+	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError, isDefAbstract, isEnumItem
 	) where
 
 import 			 Ex.String

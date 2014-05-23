@@ -30,7 +30,7 @@ public class NeighboursLink<T> extends ChainLink_impl<T, Tuple<T, T>> {
         }, ((this.ring) ? (new F<Go, Go>() {
             @Override
             public Go apply(final Go result) {
-                if(result.equals(Go.Break) || first.value == null) {
+                if(result == Go.Break || first.value == null) {
                     return yield.endYieldWithResult(result);
                 } else {
                     if(prev.value == null) {

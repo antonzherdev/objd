@@ -156,7 +156,7 @@ public class Yield<T> {
         final Mut<Go> result = new Mut<Go>(Go.Continue);
         if(items instanceof Array) {
             final Array<T> _items = ((Array<T>)(items));
-            if(beginYieldWithSize(_items.count()).equals(Go.Continue)) {
+            if(beginYieldWithSize(_items.count()) == Go.Continue) {
                 _items.goOn(new F<T, Go>() {
                     @Override
                     public Go apply(final T item) {
@@ -168,7 +168,7 @@ public class Yield<T> {
         } else {
             if(items instanceof HashMap) {
                 final Iterable<T> _items = ((Iterable<T>)(items));
-                if(beginYieldWithSize(_items.count()).equals(Go.Continue)) {
+                if(beginYieldWithSize(_items.count()) == Go.Continue) {
                     items.goOn(new F<T, Go>() {
                         @Override
                         public Go apply(final T item) {
@@ -180,7 +180,7 @@ public class Yield<T> {
             } else {
                 if(items instanceof Iterable) {
                     final Iterable<T> _items = ((Iterable<T>)(items));
-                    if(beginYieldWithSize(_items.count()).equals(Go.Continue)) {
+                    if(beginYieldWithSize(_items.count()) == Go.Continue) {
                         Go __il__1fft_1tret = Go.Continue;
                         final Iterator<T> __il__1fft_1ti = _items.iterator();
                         while(__il__1fft_1ti.hasNext()) {
@@ -195,7 +195,7 @@ public class Yield<T> {
                         return __il__1fft_1tret;
                     }
                 } else {
-                    if(beginYieldWithSize(((int)(0))).equals(Go.Continue)) {
+                    if(beginYieldWithSize(((int)(0))) == Go.Continue) {
                         items.goOn(new F<T, Go>() {
                             @Override
                             public Go apply(final T item) {

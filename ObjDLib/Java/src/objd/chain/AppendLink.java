@@ -18,7 +18,7 @@ public class AppendLink<T> extends ChainLink_impl<T, T> {
         }) : (null)), new F<Go, Go>() {
             @Override
             public Go apply(final Go result) {
-                if(result.equals(Go.Continue)) {
+                if(result == Go.Continue) {
                     return yield.endYieldWithResult(AppendLink.this.collection.goOn(new F<T, Go>() {
                         @Override
                         public Go apply(final T item) {

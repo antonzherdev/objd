@@ -28,7 +28,7 @@ public class ImGroupByLink<T, K, V> extends ChainLink_impl<T, Tuple<K, V>> {
         }, new F<Go, Go>() {
             @Override
             public Go apply(final Go result) {
-                if(result.equals(Go.Break)) {
+                if(result == Go.Break) {
                     return yield.endYieldWithResult(result);
                 } else {
                     return yield.yieldAllItems(m);

@@ -18,7 +18,7 @@ public class UncombinationsLink<T> extends ChainLink_impl<Tuple<T, T>, T> {
                     r = yield.yieldItem(a);
                 }
                 final T b = item.b;
-                if(r.equals(Go.Continue) && !(set.containsItem(b))) {
+                if(r == Go.Continue && !(set.containsItem(b))) {
                     set.appendItem(b);
                     r = yield.yieldItem(b);
                 }

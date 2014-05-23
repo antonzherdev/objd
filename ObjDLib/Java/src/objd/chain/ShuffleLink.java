@@ -29,7 +29,7 @@ public class ShuffleLink<T> extends ChainLink_impl<T, T> {
         }, new F<Go, Go>() {
             @Override
             public Go apply(final Go r) {
-                if(r.equals(Go.Break)) {
+                if(r == Go.Break) {
                     return yield.endYieldWithResult(r);
                 } else {
                     if(ShuffleLink.this._array == null) {

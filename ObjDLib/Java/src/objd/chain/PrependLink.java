@@ -22,7 +22,7 @@ public class PrependLink<T> extends ChainLink_impl<T, T> {
                     }
                 }
                 final Go r = yield.beginYieldWithSize(size + ((__tmprp1_0rp0b != null) ? (__tmprp1_0rp0b) : (((int)(0)))));
-                if(r.equals(Go.Break)) {
+                if(r == Go.Break) {
                     return Go.Break;
                 } else {
                     return PrependLink.this.collection.goOn(new F<T, Go>() {

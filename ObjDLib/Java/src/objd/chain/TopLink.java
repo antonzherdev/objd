@@ -17,7 +17,7 @@ public class TopLink<T> extends ChainLink_impl<T, T> {
             @Override
             public Go apply(final T item) {
                 if(n.value < TopLink.this.number) {
-                    if(yield.yieldItem(item).equals(Go.Break)) {
+                    if(yield.yieldItem(item) == Go.Break) {
                         return Go.Break;
                     } else {
                         n.value++;
