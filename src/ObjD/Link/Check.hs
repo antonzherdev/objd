@@ -1,8 +1,8 @@
-module ObjD.Check (Error(..), checkErrors
+module ObjD.Link.Check (Error(..), checkErrors
 )where
 
 import  Data.List
-import  ObjD.LinkStruct
+import  ObjD.Link.Struct
 
 data Error = Error String | ErrorParent String Error
 instance Show Error where

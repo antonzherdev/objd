@@ -1,4 +1,4 @@
-module ObjD.LinkStruct (
+module ObjD.Link.Struct (
 	Sources, File(..), Class(..), Package(..), DataType(..), ExtendsRef, Extends(..), ClassMod(..), Generics, ClassRef, 
 	DataTypeMod(..), WrapReason(..), Def(..), DefMod(..), Exp(..), ExtendsClass(..), Import(..), DefGenerics(..),
 	Annotation(..), CallPar,

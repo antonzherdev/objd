@@ -1,9 +1,9 @@
-module ObjD.Link (
+module ObjD.Link.Link (
 	Lang(..),
 	link
 )where
 
-import 			 ObjD.LinkStruct
+import 			 ObjD.Link.Struct
 import 			 Control.Arrow
 import           Control.Monad.State
 import qualified Data.Map            as M

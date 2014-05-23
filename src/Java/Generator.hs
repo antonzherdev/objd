@@ -6,7 +6,7 @@ import Control.Monad.Writer
 import Ex.String
 import Data.Maybe
 import Data.List
-import qualified ObjD.LinkStruct as D
+import qualified ObjD.Link.Struct as D
 import qualified Java.Struct as J
 
 toJava :: D.File -> [J.File]
