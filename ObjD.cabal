@@ -17,5 +17,6 @@ cabal-version:       >=1.8
 executable ObjD
   main-is:             Main.hs
   hs-source-dirs:      src
-  other-modules:       ObjC.Struct, ObjD.Struct, ObjC.Generator, ObjD.Parser, Java.Struct, Java.Generator, ObjD.Link.Check, ObjD.Link.Link, ObjD.Link.Struct
+  other-modules:       ObjC.Struct, ObjD.Struct, ObjC.Generator, ObjD.Parser, Java.Struct, Java.Generator, 
+                       ObjD.Link.Check, ObjD.Link.Link, ObjD.Link.Struct, ObjD.Link.Env, ObjD.Link.Inline, ObjD.Link.DataType
   build-depends:       base >=4.5, parsec, containers, mtl, filepath, directory, Decimal
