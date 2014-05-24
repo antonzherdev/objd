@@ -38,11 +38,11 @@ public abstract class HashSet<T> extends Set_impl<T> {
     }
 
     @Override
-    public boolean goOn(F<T, Boolean> on) {
+    public Go goOn(F<T, Go> on) {
         for (T t : set) {
-            if(!on.apply(t)) return false;
+            if(on.apply(t) == Go.Break) return Go.Break;
         }
-        return true;
+        return Go.Continue;
     }
 
     @Override

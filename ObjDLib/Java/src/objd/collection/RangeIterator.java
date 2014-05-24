@@ -2,7 +2,7 @@ package objd.collection;
 
 import objd.lang.*;
 
-public class RangeIterator extends Iterator_impl<int> {
+public class RangeIterator extends Iterator_impl<Integer> {
     public final int start;
     public final int end;
     public final int step;

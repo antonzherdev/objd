@@ -12,9 +12,9 @@ public class MGroupByLink<T, K, V, W> extends ChainLink_impl<T, Tuple<K, W>> {
     public final P2<V, T> append;
     public final F<V, W> finish;
     @Override
-    public Yield<T> buildYield(final Yield<Tuple<K, V>> yield) {
+    public Yield<T> buildYield(final Yield<Tuple<K, W>> yield) {
         final MHashMap<K, V> m = new MHashMap<K, V>();
-        return Yield.<T, Tuple<K, V>>decorateBaseBeginYieldEnd(yield, new F<Integer, Go>() {
+        return Yield.<T, Tuple<K, W>>decorateBaseBeginYieldEnd(yield, new F<Integer, Go>() {
             @Override
             public Go apply(final Integer size) {
                 return yield.beginYieldWithSize(((int)(size * MGroupByLink.this.factor)));

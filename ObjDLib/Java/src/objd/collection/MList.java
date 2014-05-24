@@ -161,7 +161,7 @@ public class MList<T> extends MSeq_impl<T> {
     public Go goOn(final F<T, Go> on) {
         MListItem<T> i = this.headItem;
         while(i != null) {
-            if(!(on.apply(i.data))) {
+            if(on.apply(i.data) == Go.Break) {
                 return Go.Break;
             }
             i = i.next;

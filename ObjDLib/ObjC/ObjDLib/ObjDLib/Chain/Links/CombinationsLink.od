@@ -32,7 +32,7 @@ class CombinationsLink<T> extends ChainLink<T, (T, T)> {
 
 class UncombinationsLink<T> extends ChainLink<(T, T), T> {
     override def build(yield : Yield<T>) : Yield<(T, T)> = {
-        var set : MHashSet<T> = MHashSet<T>()
+        val set : MHashSet<T> = MHashSet<T>()
         Yield.decorate<(T, T)>(
             base = yield,
             yield = item -> {

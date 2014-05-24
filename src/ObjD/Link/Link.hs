@@ -443,7 +443,7 @@ linkAnnotation env (D.Annotation nm pars tps) = case expr env (D.Call nm (Just p
 	Dot _ (Call d _ pars' _ ) -> Annotation d pars'
 
 linkExtendsRef :: Env -> D.ExtendsRef -> ExtendsRef
-linkExtendsRef env (ecls, gens) = (classFind (envIndex env) ecls, map (dataType env) gens) 
+linkExtendsRef env (ecls, gens) = (classFind (envIndex env) ecls, map (wrapGeneric . dataType env) gens) 
 
 linkGenerics :: Env -> [D.Generic] -> [Class]
 linkGenerics env gens = cls

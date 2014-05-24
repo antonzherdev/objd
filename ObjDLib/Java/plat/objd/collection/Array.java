@@ -59,11 +59,11 @@ public abstract class Array<T> extends Seq_impl<T> {
     }
 
     @Override
-    public boolean goOn(F<T, Boolean> on) {
+    public Go goOn(F<T, Go> on) {
         for (T t : list) {
-            if(!on.apply(t)) return false;
+            if(on.apply(t) == Go.Break) return Go.Break;
         }
-        return true;
+        return Go.Continue;
     }
 
     @Override

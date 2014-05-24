@@ -113,7 +113,7 @@ class MList<T> extends MSeq<T> {
     override inline def go(on : T -> Go) : Go = {
         var i = headItem
         while(i != nil) {
-            if(!on(i.data)) return Go.Break
+            if(on(i.data) == Go.Break) return Go.Break
             i = i.next
         }
         Go.Continue

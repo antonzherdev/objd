@@ -7,7 +7,7 @@ import objd.collection.Go;
 public class UncombinationsLink<T> extends ChainLink_impl<Tuple<T, T>, T> {
     @Override
     public Yield<Tuple<T, T>> buildYield(final Yield<T> yield) {
-        MHashSet<T> set = new MHashSet<T>();
+        final MHashSet<T> set = new MHashSet<T>();
         return Yield.<Tuple<T, T>, T>decorateBaseYield(yield, new F<Tuple<T, T>, Go>() {
             @Override
             public Go apply(final Tuple<T, T> item) {

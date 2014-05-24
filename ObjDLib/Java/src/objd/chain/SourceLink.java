@@ -5,7 +5,7 @@ import objd.collection.Traversable;
 import objd.collection.Iterable;
 import objd.collection.Go;
 
-public class SourceLink<T> extends ChainLink_impl<void, T> {
+public class SourceLink<T> extends ChainLink_impl<Void, T> {
     public final Traversable<T> collection;
     @Override
     public Yield<Void> buildYield(final Yield<T> yield) {

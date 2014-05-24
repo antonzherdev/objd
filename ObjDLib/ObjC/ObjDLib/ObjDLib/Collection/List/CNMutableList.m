@@ -166,7 +166,7 @@ static CNClassType* _CNMList_type;
 - (CNGoR)goOn:(CNGoR(^)(id))on {
     CNMListItem* i = _headItem;
     while(i != nil) {
-        if(!(on(((CNMListItem*)(i)).data))) return CNGo_Break;
+        if(on(((CNMListItem*)(i)).data) == CNGo_Break) return CNGo_Break;
         i = ((CNMListItem*)(i)).next;
     }
     return CNGo_Continue;

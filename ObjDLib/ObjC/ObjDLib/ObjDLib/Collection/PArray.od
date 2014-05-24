@@ -3,6 +3,7 @@ package objd.collection
 import core.chain.Memory._
 
 
+@ObjC
 final class PArray<T>(val stride : uint, val wrap : (Pointer<T>, uint) -> T, override val count : uint, val length : uint, val bytes : Pointer<T>, val copied : bool) extends ImSeq<T> {
     static def apply<T>(stride : uint, wrap : (Pointer<T>, uint) -> T, count : uint, copyBytes : Pointer<T>) : PArray<T> = {
         val len =  count * stride
@@ -30,6 +31,7 @@ final class PArray<T>(val stride : uint, val wrap : (Pointer<T>, uint) -> T, ove
     }
 }
 
+@ObjC
 class PArrayIterator<T>(val array : PArray<T>) extends Iterator<T> {
     private var i = 0
     override def hasNext : bool = i < array.count

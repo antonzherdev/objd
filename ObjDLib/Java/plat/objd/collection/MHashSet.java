@@ -11,6 +11,9 @@ public class MHashSet<T> extends HashSet<T> implements MSet<T> {
         super(set);
     }
 
+    public MHashSet(int capacity) {
+        super(new java.util.HashSet<T>(capacity));
+    }
 
     @Override
     public MIterator<T> mutableIterator() {
