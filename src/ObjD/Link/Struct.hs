@@ -581,19 +581,27 @@ dataTypeClassName TPAny = "Any"
 dataTypeClassName (TPPointer _) = "Pointer"
 dataTypeClassName (TPTuple [_, _]) = "Tuple"
 dataTypeClassName (TPTuple a) = "Tuple" ++ show (length a)
+dataTypeClassName (TPNumber False 1) = "Byte"
+dataTypeClassName (TPNumber True 1) = "UByte"
+dataTypeClassName (TPNumber False 0) = "Int"
+dataTypeClassName (TPNumber True 0) = "UInt"
+dataTypeClassName (TPNumber False 4) = "Int4"
+dataTypeClassName (TPNumber True 4) = "UInt4"
+dataTypeClassName (TPNumber False 8) = "Int8"
+dataTypeClassName (TPNumber True 8) = "UInt8"
+dataTypeClassName (TPFloatNumber 4) = "Float4"
+dataTypeClassName (TPFloatNumber 8) = "Float8"
+dataTypeClassName (TPFloatNumber 0) = "Float"
+dataTypeClassName TPChar = "Char"
+dataTypeClassName TPString = "String"
+dataTypeClassName TPAny = "Any"
+dataTypeClassName TPBool = "Bool"
+dataTypeClassName TPFun{} = "F"
 dataTypeClassName x = error ("No dataTypeClassName for " ++ show x)
 
 
 dataTypeClassNameWithPrefix :: DataType -> String
-dataTypeClassNameWithPrefix (TPClass _ _ c ) = classNameWithPrefix c
-dataTypeClassNameWithPrefix (TPObject _ c) = classNameWithPrefix c
-dataTypeClassNameWithPrefix (TPGenericWrap _ c) = dataTypeClassNameWithPrefix c
-dataTypeClassNameWithPrefix (TPArr _ _) = "CNArray"
-dataTypeClassNameWithPrefix (TPMap _ _) = "CNMap"
-dataTypeClassNameWithPrefix TPAny = "ODAny"
-dataTypeClassNameWithPrefix (TPTuple [_, _]) = "CNTuple"
-dataTypeClassNameWithPrefix (TPTuple a) = "CNTuple" ++ show (length a)
-dataTypeClassNameWithPrefix x = error ("No dataTypeClassNameWithPrefix for " ++ show x)
+dataTypeClassNameWithPrefix tp = "CN" ++ dataTypeClassName tp
 
 resolveTypeAlias :: DataType -> DataType
 resolveTypeAlias tp@(TPClass TPMType _ c) = fromMaybe (TPUnknown $ "No super type for type " ++ className c) $ superType tp

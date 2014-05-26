@@ -29,7 +29,7 @@ public class ChainTest extends TestCase {
         repeatTimesF(((int)(1000)), new P0() {
             @Override
             public void apply() {
-                final ImArray<Tuple<Integer, Promise<Integer>>> arr = 0.to(1000).chain().<Tuple<Integer, Promise<Integer>>>mapF(new F<Integer, Tuple<Integer, Promise<Integer>>>() {
+                final ImArray<Tuple<Integer, Promise<Integer>>> arr = Int.to(0, 1000).chain().<Tuple<Integer, Promise<Integer>>>mapF(new F<Integer, Tuple<Integer, Promise<Integer>>>() {
                     @Override
                     public Tuple<Integer, Promise<Integer>> apply(final Integer i) {
                         return new Tuple<Integer, Promise<Integer>>(i, Promise.<Integer>apply());
@@ -73,7 +73,7 @@ public class ChainTest extends TestCase {
         });
     }
     public void testVoidFuture() {
-        final ImArray<Promise<Void>> arr = 0.to(1000).chain().<Promise<Void>>mapF(new F<Integer, Promise<Void>>() {
+        final ImArray<Promise<Void>> arr = Int.to(0, 1000).chain().<Promise<Void>>mapF(new F<Integer, Promise<Void>>() {
             @Override
             public Promise<Void> apply(final Integer i) {
                 return Promise.<Void>apply();

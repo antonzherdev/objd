@@ -317,6 +317,16 @@ genExp env (D.Dot (D.Self stp) r@(D.Call d _ pars gens) )
 		return $ J.Dot (J.Ref $ D.dataTypeClassName stp) r'
 	| not (null gens) && not (null pars) = genExp env r >>= \e' -> return $ J.Dot J.This e'
 	| not (null pars) = genExp env r
+genExp env (D.Dot l r@(D.Call d _ _ _)) 
+	| D.DefModStruct `elem` D.defMods d = do
+		l' <- genExp env l
+		r' <- genExp env r
+		return $ case r' of
+			J.Call cnm cgens cpars ->
+				J.Dot 
+					(J.Ref $ D.dataTypeClassName $ D.exprDataType l) 
+					(J.Call cnm cgens (if D.DefModStatic `elem` D.defMods d then cpars else l':cpars))
+			_ -> J.Dot l' r'
 genExp env (D.Dot l r) = do
 	l' <- genExp env l
 	r' <- genExp env r

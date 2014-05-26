@@ -12,7 +12,7 @@ public class FutureTest extends TestCase {
         final AtomicInt n = new AtomicInt();
         final int count = 100000;
         {
-            final Iterator<Integer> __il__2i = 1.to(count).iterator();
+            final Iterator<Integer> __il__2i = Int.to(1, count).iterator();
             while(__il__2i.hasNext()) {
                 final Integer i = __il__2i.next();
                 {
@@ -40,7 +40,7 @@ public class FutureTest extends TestCase {
         final int count = 100;
         AtomicInt result = new AtomicInt();
         {
-            final Iterator<Integer> __il__3i = 1.to(count).iterator();
+            final Iterator<Integer> __il__3i = Int.to(1, count).iterator();
             while(__il__3i.hasNext()) {
                 final Integer __il__3v = __il__3i.next();
                 DispatchQueue.aDefault.asyncF(new P0() {
@@ -78,7 +78,7 @@ public class FutureTest extends TestCase {
         final int count = 100;
         int result = 0;
         {
-            final Iterator<Integer> __il__3i = 1.to(count).iterator();
+            final Iterator<Integer> __il__3i = Int.to(1, count).iterator();
             while(__il__3i.hasNext()) {
                 final Integer i = __il__3i.next();
                 {

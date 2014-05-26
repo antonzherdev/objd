@@ -11,7 +11,7 @@ public class TopLink<T> extends ChainLink_impl<T, T> {
         return Yield.<T, T>decorateBaseBeginYield(yield, new F<Integer, Go>() {
             @Override
             public Go apply(final Integer size) {
-                return yield.beginYieldWithSize(size.maxB(TopLink.this.number));
+                return yield.beginYieldWithSize(UInt.maxB(size, TopLink.this.number));
             }
         }, new F<T, Go>() {
             @Override
