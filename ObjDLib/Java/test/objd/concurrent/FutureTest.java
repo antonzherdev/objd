@@ -4,8 +4,6 @@ import objd.lang.*;
 import objd.collection.Iterator;
 import test.PackageObjectTest;
 import test.TestCase;
-import test.Test;
-import test.PackageObjectTest.*;
 
 public class FutureTest extends TestCase {
     public void testPromiseOnComplete() {

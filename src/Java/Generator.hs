@@ -15,17 +15,14 @@ toJava file@D.File{D.fileClasses = classes} =
 	map (genFile file) $ filter (\cls -> not (D.isType cls) && not (D.isStub cls)) classes
 
 genFile :: D.File -> D.Class -> J.File
-genFile D.File{D.filePackage = D.Package{D.packageName = package}, D.fileImports = imps} cls =
+genFile D.File{D.filePackage = D.Package{D.packageName = package}} cls =
 	let (cls', Wrt{wrtImports = clImps}) = runWriter $ genClass cls
 	in J.File {
 		J.fileIsTest = D.containsAnnotationWithClassName "test.Test" $ D.classAnnotations cls,
 		J.filePackage = package,
-		J.fileImports = ["objd", "lang", "*"] : (filter (\p -> package /= init p && (["objd", "lang"] /= init p) ) $ nub $ clImps ++ map genImport imps),
+		J.fileImports = ["objd", "lang", "*"] : (filter (\p -> package /= init p && (["objd", "lang"] /= init p) ) $ nub clImps),
 		J.fileClass = cls'}
 
-genImport :: D.Import -> J.Import
-genImport (D.ImportClass cl) = D.packageName (D.classPackage cl) ++ [className cl] 
-genImport (D.ImportObjectDefs cl) = D.packageName (D.classPackage cl) ++ [className cl, "*"]
 
 genClass :: D.Class -> Writer Wrt J.Class
 genClass cl = do

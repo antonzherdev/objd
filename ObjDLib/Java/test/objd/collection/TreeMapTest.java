@@ -3,8 +3,6 @@ package objd.collection;
 import objd.lang.*;
 import test.PackageObjectTest;
 import test.TestCase;
-import test.Test;
-import test.PackageObjectTest.*;
 
 public class TreeMapTest extends TestCase {
     public void testMain() {

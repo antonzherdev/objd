@@ -10,8 +10,6 @@ import objd.concurrent.AtomicInt;
 import objd.collection.Traversable;
 import objd.collection.Set;
 import test.TestCase;
-import test.Test;
-import test.PackageObjectTest.*;
 
 public class ChainTest extends TestCase {
     public void testAnd() {
