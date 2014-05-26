@@ -41,7 +41,7 @@ class ChainTest extends TestCase {
         val arr : [Promise<void>] = 0.to(1000).chain.map{i -> Promise<void>()}.toArray
 
         val fut : Future<void> = arr.chain.voidFuture
-        var count = AtomicInt()
+        val count = AtomicInt()
         arr.for {p ->
             DispatchQueue.default.async {
                 count.incrementAndGet

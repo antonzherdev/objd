@@ -2,10 +2,10 @@ package objd.concurrent;
 
 import objd.lang.*;
 import objd.collection.Iterator;
-import test.;
+import test.PackageObjectTest;
 import test.TestCase;
 import test.Test;
-import test..*;
+import test.PackageObjectTest.*;
 
 public class FutureTest extends TestCase {
     public void testPromiseOnComplete() {
@@ -33,7 +33,7 @@ public class FutureTest extends TestCase {
             }
         }
         Thread.sleepPeriod(((double)(1)));
-        .<Integer>assertEqualsAB(n.get(), ((int)(count)));
+        PackageObjectTest.<Integer>assertEqualsAB(n.get(), ((int)(count)));
     }
     public void testMap() {
         final AtomicInt n = new AtomicInt();
@@ -71,7 +71,7 @@ public class FutureTest extends TestCase {
             }
         }
         Thread.sleepPeriod(((double)(3)));
-        .<AtomicInt>assertEqualsAB(n, result);
+        PackageObjectTest.<AtomicInt>assertEqualsAB(n, result);
     }
     public void testFlatMap() {
         final AtomicInt n = new AtomicInt();
@@ -111,7 +111,7 @@ public class FutureTest extends TestCase {
             }
         }
         Thread.sleepPeriod(((double)(3)));
-        .<Integer>assertEqualsAB(n.get(), ((int)(result)));
+        PackageObjectTest.<Integer>assertEqualsAB(n.get(), ((int)(result)));
     }
     public FutureTest() {
     }
