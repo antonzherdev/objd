@@ -69,11 +69,12 @@ instance Show Generic where
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - DataType
  -----------------------------------------------------------------------------------------------------------------------------------------------}
-data TP = TPRef [TP] String | TPArr TP Int | TPAnyGeneric | TPUnknown String deriving (Eq)
+data TP = TPRef [TP] String | TPArr TP Int | TPAnyGeneric [TP] | TPUnknown String deriving (Eq)
 tpRef :: String -> TP
 tpRef = TPRef []
 instance Show TP where
-	show (TPAnyGeneric) = "?"
+	show (TPAnyGeneric []) = "?"
+	show (TPAnyGeneric tps) = "? extends " ++ strs' " & " tps
 	show (TPRef [] nm) = nm
 	show (TPRef exts nm) = nm ++ "<" ++ strs' ", " exts ++ ">"
 	show (TPArr tp n) = show tp ++ "[" ++ show n ++ "]"

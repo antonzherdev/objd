@@ -1,12 +1,13 @@
 module ObjD.Link.Link (
-	Lang(..),
 	link
 )where
 
 import 			 ObjD.Link.Struct
 import 			 ObjD.Link.Env
-import 			 ObjD.Link.Inline
 import 			 ObjD.Link.DataType
+import 			 ObjD.Link.Extends
+import 			 ObjD.Link.Conversion
+import 			 ObjD.Link.Inline
 import 			 Control.Arrow
 import           Control.Monad.State
 import qualified Data.Map            as M
@@ -19,145 +20,6 @@ import qualified ObjD.Struct         as D
 detailedReferenceError :: Bool
 detailedReferenceError = False
 
-data Lang = ObjC | Java deriving (Eq)
-
-{-----------------------------------------------------------------------------------------------------------------------------------------
- - Extends 
- -----------------------------------------------------------------------------------------------------------------------------------------}
-
-
-superDataType :: Env -> DataType -> ExtendsRef -> DataType
-superDataType _ (TPClass _ gens cl) extRef@(extCl, _) = 
-	TPClass (refDataTypeMod extCl) (superGenericsList (buildGenerics cl gens) extRef) extCl
-superDataType _ (TPObject _ _) (extCl, _) = TPObject (refDataTypeMod extCl) extCl
-superDataType env tp extRef@(extCl, _) = TPClass (refDataTypeMod extCl) 
-	(superGenericsList (buildGenerics (dataTypeClass env tp) (dataTypeGenerics env tp)) extRef)  extCl
--- superDataType _ _ = TPVoid
-
-superDataTypes :: Env -> DataType -> [DataType]
-superDataTypes env tp = map (superDataType env tp) $ extendsRefs $ classExtends $ dataTypeClass env tp
-
-isInstanceOf :: Class -> Class -> Bool
-isInstanceOf cl Generic{_classExtendsRef = extends} = 
-	all (( cl `isInstanceOf` ) . fst ) extends
-isInstanceOf cl target
-	| target == cl = True
-	| otherwise = any (\extendsRef -> fst extendsRef `isInstanceOf` target) $ extendsRefs (classExtends cl)
-
-isInstanceOfTp :: Env -> DataType -> DataType -> Bool
-isInstanceOfTp _ cl target
-	| target == cl = True
-isInstanceOfTp _ TPUnset{} _ = True
-isInstanceOfTp _ TPNumber{} TPNumber{} = True
-isInstanceOfTp _ TPNumber{} TPFloatNumber{} = True
-isInstanceOfTp _ TPFloatNumber{} TPNumber{} = True
-isInstanceOfTp _ TPFloatNumber{} TPFloatNumber{} = True
-isInstanceOfTp env (TPSelf l) r = isInstanceOfTp env (refDataType l []) r
-isInstanceOfTp env l (TPSelf r) = isInstanceOfTp env l (refDataType r [])
-isInstanceOfTp env l (TPGenericWrap _ r)  = isInstanceOfTp env l r
-isInstanceOfTp env (TPGenericWrap _ l) r = isInstanceOfTp env l r
-isInstanceOfTp env l@(TPClass TPMType _ _) r = isInstanceOfTp env (fromJust $ superType l) r
-isInstanceOfTp env l r@(TPClass TPMType _ _) = isInstanceOfTp env l (fromJust $ superType r)
-isInstanceOfTp _ _ TPAny = True
-isInstanceOfTp _ _ TPThrow = True
-isInstanceOfTp _ TPThrow _ = True
-isInstanceOfTp _ TPNil (TPOption _ _) = True
-isInstanceOfTp _ TPNil TPVoid = True
-isInstanceOfTp _ TPAnyGeneric _ = True
-isInstanceOfTp _ _ TPAnyGeneric = True
-isInstanceOfTp _ _ TPUnknown{} = True
-isInstanceOfTp env (TPOption _ a) (TPOption _ b) 
-	| a == b = True
-	| otherwise = isInstanceOfTp env a b
-isInstanceOfTp env a (TPOption _ b)  = isInstanceOfTp env a b
-isInstanceOfTp env (TPOption True a) b  = isInstanceOfTp env a b
-isInstanceOfTp _ TPVoid (TPClass TPMGeneric _ _) = True
-isInstanceOfTp _ TPNil (TPClass TPMGeneric _ _) = True
-isInstanceOfTp env cl (TPClass TPMGeneric _ t) = dataTypeClass env cl `isInstanceOf` t
-isInstanceOfTp _ (TPClass _ _ _) (TPClass _ _ Class{className = "Object"}) = True
-isInstanceOfTp env cl target
-	-- | trace (show cl ++ " isInstanceOfTp " ++ show target ++ " / " ++ className (dataTypeClass env cl) ++ " isInstanceOf " ++ className (dataTypeClass env target)) False = undefined
-	| dataTypeClass env cl == dataTypeClass env target = 
-		all (\(clg, tg) -> isInstanceOfTp env clg tg ) $ zip (dataTypeGenerics env cl) (dataTypeGenerics env target)
-	-- | otherwise =  dataTypeClass env cl `isInstanceOf` dataTypeClass env target
-	| otherwise = any (\tp -> isInstanceOfTp env tp target) $ superDataTypes env cl
-		
-
-isInstanceOfCheck :: Env -> DataType -> DataType -> Bool
-isInstanceOfCheck env l r = isInstanceOfTp env l r
-
-baseDataType :: Env -> DataType
-baseDataType env = TPClass TPMClass [] $ classFind (envIndex env) "Object"
-
-commonSuperDataType :: Env -> DataType -> DataType -> [DataType]
--- commonSuperDataType _ a b | trace ("commonSuperDataType: " ++ show a ++ " and " ++ show b) False = undefined
-commonSuperDataType _ a b 
-	| a == b = [a]
-commonSuperDataType env (TPGenericWrap _ a) b = commonSuperDataType env a b
-commonSuperDataType env a (TPGenericWrap _ b) = commonSuperDataType env a b
-commonSuperDataType env TPNil a = commonSuperDataType env a TPNil
-commonSuperDataType _ TPAny a = [a]
-commonSuperDataType _ TPThrow a = [a]
-commonSuperDataType _ a@(TPOption _ _) TPNil = [a]
-commonSuperDataType _ TPVoid TPNil = [TPVoid]
-commonSuperDataType _ a TPNil = [option False a]
-commonSuperDataType _ a TPAny = [a]
-commonSuperDataType _ a TPThrow = [a]
-commonSuperDataType _ TPNumber{} f@TPFloatNumber{} = [f]
-commonSuperDataType _ f@TPFloatNumber{} TPNumber{} = [f]
-commonSuperDataType _ (TPNumber as an) (TPNumber bs bn) = [TPNumber (as || bs) (max an bn)]
-commonSuperDataType _ (TPFloatNumber an) (TPFloatNumber bn) = [TPFloatNumber (max an bn)]
-commonSuperDataType env (TPOption ca a) (TPOption cb b) = map (option (ca && cb)) $ commonSuperDataType env a b
-commonSuperDataType env a (TPOption c b) = map (option c) $ commonSuperDataType env a b
-commonSuperDataType env (TPOption c a) b = map (option c) $ commonSuperDataType env a b
-commonSuperDataType env _ TPVoid = [baseDataType env]
-commonSuperDataType env TPVoid _ = [baseDataType env]
-commonSuperDataType env a b 
-	| a == b = [a]
-	| dataTypeClass env a == dataTypeClass env b = 
-		[mapDataTypeGenerics (map (\(ag, bg) -> wrapGeneric $ head $ commonSuperDataType env ag bg) . zip (dataTypeGenerics env a) ) b]
-	| isInstanceOfTp env a b = [b]
-	| isInstanceOfTp env b a = [a]
-	| otherwise = 
-		let 
-			commons = nub $ concatMap (uncurry $ commonSuperDataType env) $ [(a', b) |a' <- superDataTypes env a] ++ [(a, b') |b' <- superDataTypes env b]
-			removeCommonCommons [] = []
-			removeCommonCommons (x:xs)
-				| any (\xx -> isInstanceOfTp env xx x) xs = removeCommonCommons xs
-				| otherwise = x:removeCommonCommons xs
-		in removeCommonCommons commons
-
-
-firstCommonSuperDataType :: Env -> DataType -> DataType -> DataType
-firstCommonSuperDataType env a b = case commonSuperDataType env a b of
-	[] -> TPUnknown $ "No common super data type for " ++ show a ++ " and " ++ show b
-	x:_ -> x
-
-reduceDataTypes :: Env -> [DataType] -> DataType
-reduceDataTypes env tps = foldl1 (firstCommonSuperDataType env) tps		
-
-
-traitImplClass :: Env -> Class -> Class
-traitImplClass env cl = let 
-	base = baseClassExtends $ envIndex env 
-	ext = Extends {
-		extendsClass = Just $ case extendsRefs $ classExtends cl of
-			[] -> base
-			(xcl, xgens):_ -> maybe base (\c -> ExtendsClass (c, xgens) []) $ M.lookup (className xcl ++ "_impl") (envIndex env),
-		extendsTraits = [(cl, map (TPClass TPMGeneric []) $ classGenerics cl)]
-	}
-	cl' = cl {
-		className = className cl ++ "_impl",
-		_classExtends = ext, 
-		_classMods = ClassModTraitImpl : ClassModAbstract : delete ClassModTrait (classMods cl), 
-		_classDefs = filter( (DefModOverride `elem`) .defMods) $ classDefs cl,
-		_classImports = [],
-		classDefsWithTraits = defsWithTraits env cl'
-	}
-	in cl'
-
-getTraitImplClass :: Env -> Class -> Maybe Class
-getTraitImplClass env cl = M.lookup (className cl ++ "_impl") (envIndex env)
 
 idx :: (a -> k) -> a -> (k, a)
 idx f a = (f a, a)
@@ -198,7 +60,7 @@ linkFile lang files (D.File name package stms) = fl
 			p <- findValWithName "prefix" o
 			(extractStringConst . defBody) p
 		packObj :: Maybe Class
-		packObj = find (\cl -> "" == className cl && ClassModObject `elem` classMods cl && ClassModPackageObject `elem` classMods cl) 
+		packObj = find (\cl -> ClassModPackageObject `elem` classMods cl) 
 			. concatMap fileClasses 
 			. filter ((== package) . packageName . filePackage) $ files
 
@@ -261,7 +123,7 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 				_classFile = file,
 				_classPackage = package,
 				_classMods =  nub $ concatMap clsMod (D.classMods cl), 
-				className = D.className cl, 
+				className = if D.ClassModPackageObject `elem` D.classMods cl then "PackageObject" ++ (cap $ last $ packageName package) else D.className cl, 
 				_classExtends = if D.className cl == "Object" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
 				_classDefs = 
 					if isObject then fields ++ defs ++ [typeField]
@@ -379,6 +241,30 @@ linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not is
 			defGenerics = Nothing, defPars = [], defAnnotations = []}
 			where 
 				typeName = if selfIsStruct then "PType" else "ClassType"
+
+
+traitImplClass :: Env -> Class -> Class
+traitImplClass env cl = let 
+	base = baseClassExtends $ envIndex env 
+	ext = Extends {
+		extendsClass = Just $ case extendsRefs $ classExtends cl of
+			[] -> base
+			(xcl, xgens):_ -> maybe base (\c -> ExtendsClass (c, xgens) []) $ M.lookup (className xcl ++ "_impl") (envIndex env),
+		extendsTraits = [(cl, map (TPClass TPMGeneric []) $ classGenerics cl)]
+	}
+	cl' = cl {
+		className = className cl ++ "_impl",
+		_classExtends = ext, 
+		_classMods = ClassModTraitImpl : ClassModAbstract : delete ClassModTrait (classMods cl), 
+		_classDefs = filter( (DefModOverride `elem`) .defMods) $ classDefs cl,
+		_classImports = [],
+		classDefsWithTraits = defsWithTraits env cl'
+	}
+	in cl'
+
+getTraitImplClass :: Env -> Class -> Maybe Class
+getTraitImplClass env cl = M.lookup (className cl ++ "_impl") (envIndex env)
+
 
 defsWithTraits :: Env -> Class -> [Def]
 defsWithTraits env cl = classDefs cl ++ notOverloadedTraitDefs
@@ -658,59 +544,6 @@ linkDefPars env pars = let
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Expression 
  ------------------------------------------------------------------------------------------------------------------------------}
-maybeAddReturn :: Env -> DataType -> Exp -> Exp
---maybeAddReturn _ tp _ | trace ("r " ++ show tp) False = undefined
-maybeAddReturn _ TPVoid e = e
-maybeAddReturn env tp e  = let
-	mbNil = case unwrapGeneric $ exprDataType e of
-		TPVoid -> case e of
-			Braces es -> Braces (es ++ [Return False Nil]) 
-			_ -> Braces (e : [Return False Nil]) 
-		_ -> addReturn env True tp e
-	in case unwrapGeneric tp of
-		TPClass TPMGeneric _ _ -> mbNil 
-		TPVoid -> mbNil 
-		TPUnknown{} -> mbNil 
-		_ -> addReturn env True tp e
-
-addReturn :: Env -> Bool -> DataType -> Exp -> Exp 
-addReturn env hard tp ee = addReturnBy defBy hard ee
-	where
-		defBy h e = Return h $ implicitConvertsion env tp e
-
-
-addReturnBy :: (Bool -> Exp -> Exp) -> Bool -> Exp -> Exp
-addReturnBy by hard (Weak e) = Weak (addReturnBy by hard e)
-addReturnBy by hard (If cond t f) = If cond (addReturnBy by hard t) (addReturnBy by hard f)
-addReturnBy by hard (Synchronized r b) = Synchronized r (addReturnBy by hard b)
-addReturnBy by hard (Try e f) = Try (addReturnBy by hard e) f
-addReturnBy _ True e@(Braces []) = ExpLError "Return empty braces" e
-addReturnBy by hard (Braces es) = Braces $ map (addReturnBy by False) (init es) ++ [addReturnBy by hard (last es)]
-addReturnBy _ True Nop = ExpLError "Return NOP" Nop
-addReturnBy _ _ e@(Throw _) = e
-addReturnBy by _ (Return _ e) = by True e
-addReturnBy _ _ e@While{} = e
-addReturnBy by True e = by False e
-addReturnBy _ _ e = e
-
-
-maybeCast :: DataType -> Exp -> Exp
-maybeCast _ e@Throw{} = e
-maybeCast _ e@NPE = e
-maybeCast _ e@(Braces []) = e
-maybeCast tp (If c t f) = If c (maybeCast tp t) (maybeCast tp f) 
-maybeCast tp (Braces x) = Braces $ (init x) ++ [maybeCast tp $ last x]
-maybeCast TPNil e = e
-maybeCast (TPGenericWrap _ TPNil) e = e
-maybeCast _ Nil = Nil
-maybeCast (TPOption ch t) e = 
-	let tp = unwrapGeneric $ exprDataType e
-	in case tp of
-		TPOption _ r -> if unwrapGeneric r == unwrapGeneric t then e else Cast tp e
-		_ -> Some ch e
-maybeCast tp e 
-	| unwrapGeneric tp == unwrapGeneric (exprDataType e) = e
-	| otherwise = Cast tp e
 
 exprTo :: Env -> DataType -> D.Exp -> Exp
 exprTo env tp e = implicitConvertsion env tp $ expr env{envTp = tp} e
@@ -1668,89 +1501,4 @@ insertWeak e = mapExp f e
 	where
 		f (Lambda p1 ee p2) = Just $ Lambda p1 (Weak ee) p2
 		f _ = Nothing
-
-		 
-{-----------------------------------------------------------------------------------------------------------------------------------------
- - Implicit conversion
- -----------------------------------------------------------------------------------------------------------------------------------------}
-
-implicitConvertsion :: Env -> DataType -> Exp -> Exp
-implicitConvertsion _ _ Nop = Nop
-implicitConvertsion _ TPVoid expression = expression
-implicitConvertsion env destinationType expression = if isInstanceOfCheck env (exprDataType theResult) destinationType then theResult 
-		else ExpLError ("Could not convert " ++ show (exprDataType theResult) ++ " to " ++ show destinationType) theResult
-	where
-		theResult = implicitConvertsion' destinationType expression
-		implicitConvertsion' (TPMap _ _) (Arr []) = Map []
-		implicitConvertsion' (TPMap k v) (Arr exps) = Map $ map tup exps
-			where
-				tup (Tuple [ke, ve]) = (implicitConvertsion env k ke, implicitConvertsion env v ve)
-				tup (Cast _ t) = tup t
-				tup e = (ExpLError "Not tuple in map" e, ExpLError "Not tuple in map" e)
-		implicitConvertsion' _ Nop = Nop
-		implicitConvertsion' dtp ex = let stp = exprDataType ex
-			in 
-				case ex of
-					Braces _ -> maybeAddReturn env dtp ex
-					If cond l r -> If cond (implicitConvertsion env dtp l) (implicitConvertsion env dtp r)
-					_ -> if stp == dtp then ex else conv stp dtp
-			where
-				conv (TPGenericWrap _ s) d = conv s d
-				conv s (TPGenericWrap _ d) = conv s d
-				conv (TPFun _ (TPGenericWrap _ _)) (TPFun _ (TPGenericWrap _ _)) = ex
-				conv (TPFun _ _) (TPFun _ fdtp@(TPGenericWrap _ _)) = case ex of
-					Lambda lambdaPars le _ -> Lambda lambdaPars  (maybeAddReturn env fdtp le) fdtp
-					_ -> ex
-				conv (TPFun _ stp) (TPFun _ TPVoid) = if stp == TPVoid then ex else  case ex of
-					Lambda lambdaPars le _ -> Lambda lambdaPars  (maybeAddReturn env TPVoid le) TPVoid
-					_ -> ex
-				conv TPFun{} TPFun{} = ex
-				conv _ f@(TPFun _ fdtp) = Lambda (lambdaImplicitParameters f) (maybeAddReturn env fdtp ex) fdtp
-				{-conv TPFun{} _ = LambdaCall ex-}
-				conv (TPOption True a) bb@(TPOption False b) = Cast bb $ conv a b
-				conv (TPOption _ a) (TPOption _ b) = conv a b
-				conv TPNil (TPOption _ tp) = None (wrapGeneric tp)
-				conv a (TPOption ch b) 
-					| a == b = Some ch ex
-					| otherwise = Some ch $ conv a b
-				conv _ (TPClass TPMGeneric _ _) = ex
-				conv (TPNumber _ _) TPString = Cast TPString ex
-				conv (TPFloatNumber _ ) TPString = Cast TPString ex
-				conv (TPNumber s1 l1) d@(TPNumber s2 l2) = if s1 /= s2 || l1 /= l2 then Cast d ex else ex
-				conv (TPFloatNumber l1) d@(TPFloatNumber l2) = if l1 /= l2 then Cast d ex else ex
-				conv TPFloatNumber{} d@TPNumber{} = Cast d ex
-				conv TPNumber{} d@TPFloatNumber{} = Cast d ex
-				conv (TPArr _ _) d@(TPEArr _ _) = Cast d ex
-				conv (TPTuple _) (TPTuple dtps) = case ex of
-					Tuple exps -> Tuple $ zipWith (implicitConvertsion env) dtps exps
-					(Cast tp (Tuple exps)) -> maybeCast tp $ Tuple $ zipWith (implicitConvertsion env) dtps exps
-					_ -> ex
-				conv (TPArr _ _) (TPArr _ adtp) = case ex of
-					Arr exps -> Arr $ map (implicitConvertsion env adtp) exps
-					_ -> ex
-				conv (TPArr _ _) (TPClass _ [d] Class{className = "PArray"}) = Cast (TPEArr 0 (unwrapGeneric d)) ex
-				conv sc dc@TPClass{} = if isInstanceOfTp env sc dc then ex else classConversion dc sc ex
-				conv _ _ = ex
-
-				classConversion c (TPGenericWrap _ g) e = classConversion c g e
-				classConversion (TPClass _ gens cls) sc e =
-					maybe e wrapWithApply $
-						find(checkApplyPars . defPars ).
-						map (replaceGenericsInDef gens') .
-						filter(\d -> 
-							(defName d == "apply") 
-							&& (DefModStatic `elem` defMods d)) $ (classDefs cls)
-					where
-						gens' = buildGenerics cls gens
-						checkApplyPars [Def{defType = tp}] = isInstanceOfTp env sc tp
-						checkApplyPars _ = False
-						od = objectDef cls
-						wrapWithApply apply@Def{defPars = [par]} = Dot (Call od (defType od) [] []) (Call apply dtp [(par, e)] [])
-				classConversion t sc _ = ExpLError (show t ++ " from " ++ show sc) ex
-
-lambdaImplicitParameters :: DataType -> [(String, DataType)]
-lambdaImplicitParameters (TPFun [] _) = []
-lambdaImplicitParameters (TPFun [fstp] _) = [("_", fstp)]
-lambdaImplicitParameters (TPFun stps _) = (map(\(tp, i) -> ('_' : show i, tp)) . zipWithIndex) stps
-
 

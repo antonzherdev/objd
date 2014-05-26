@@ -1,5 +1,5 @@
 module ObjD.Link.Struct (
-	Sources, File(..), Class(..), Package(..), DataType(..), ExtendsRef, Extends(..), ClassMod(..), Generics, ClassRef, 
+	Lang(..), Sources, File(..), Class(..), Package(..), DataType(..), ExtendsRef, Extends(..), ClassMod(..), Generics, ClassRef, 
 	DataTypeMod(..), WrapReason(..), Def(..), DefMod(..), Exp(..), ExtendsClass(..), Import(..), DefGenerics(..),
 	Annotation(..), CallPar,
 
@@ -28,6 +28,9 @@ import           Data.Char
 import           Control.Monad.State
 import qualified ObjD.Struct         as D
 import           Data.Decimal
+
+
+data Lang = ObjC | Java deriving (Eq)
 
 
 type Sources = [File]

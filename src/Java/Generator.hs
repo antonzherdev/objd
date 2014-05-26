@@ -244,7 +244,7 @@ genTp (D.TPMap key value) = do
 	value' <- genTp value
 	return $ J.TPRef [key', value'] "ImHashMap"
 genTp (D.TPOption _ tp) = genTp tp
-genTp D.TPAnyGeneric = return J.TPAnyGeneric
+genTp D.TPAnyGeneric = return $ J.TPAnyGeneric []
 genTp (D.TPPointer _) = return $ J.tpRef "Pointer"
 genTp (D.TPNil) = return $ J.tpRef "Object"
 genTp (D.TPUnknown e) = return $ J.TPUnknown e
@@ -308,7 +308,7 @@ genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
 		= do
 			let (D.TPObject _ cl) = D.defType objDef
 			tellImportClass cl 
-			pars' <- mapM ((genExp env) . snd) pars
+			pars' <- mapM (genParExp env) pars
 			gens' <- mapM genTp gens
 			return $ J.New [] (D.defName objDef) gens' pars'
 genExp env (D.Dot (D.Self stp) r@(D.Call d _ pars gens) ) 
@@ -345,11 +345,11 @@ genExp _ (D.Call d@D.Def{D.defMods = mods} _ [] [])
 genExp env (D.Call constr _ pars gens) 
 	| D.DefModConstructor `elem` D.defMods constr 
 		= do
-			pars' <- mapM ((genExp env) . snd) pars
+			pars' <- mapM (genParExp env) pars
 			gens' <- mapM genTp gens
 			return $ J.New [] (D.dataTypeClassName $ D.defType constr) gens' pars'
 genExp env (D.Call d _ pars gens) = do
-	pars' <- mapM ((genExp env) . snd) pars
+	pars' <- mapM (genParExp env) pars
 	gens' <- mapM genTp gens
 	return $ J.Call (defName' d) gens' pars'
 genExp env (D.Lambda pars e dtp) = do
@@ -459,7 +459,16 @@ genExp env (D.Braces exps) = do
 genExp env (D.NullDot _ _ e) = genExp env e
 genExp _ e = return $ J.ExpError $ "Unknown " ++ show e
 
-
+genParExp :: Env -> (D.Def, D.Exp) -> Writer Wrt J.Exp 
+genParExp env (_, e) = genExp env e {-do
+	e' <- genExp env e
+	let cst = do
+		tp' <- genTp (D.defType d)
+		return $ J.Cast tp' e'
+	case (D.defType d, D.exprDataType e) of
+		(D.TPClass _ dgs _, D.TPClass _ egs _) -> if dgs == egs then return e' else cst
+		(D.TPFun ds dd, D.TPFun es ed) -> if ds == es && dd == ed then return e' else cst
+		_ -> return e'-}
 
 stringFormatForType :: D.DataType -> String
 stringFormatForType (D.TPNumber False 8) = "%ld"

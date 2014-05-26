@@ -129,3 +129,5 @@ getDataType env tp e = maybe (exprDataType e) (dataType env) tp
 
 envSelfClass :: Env -> Class 
 envSelfClass env = dataTypeClass env $ envSelf env
+
+
