@@ -6,8 +6,8 @@ public class TreeMapKeyIterator<K> extends Iterator_impl<K> {
     public final TreeMap<K, ?> map;
     public TreeMapEntry<K, ?> entry;
     public static <K> TreeMapKeyIterator<K> applyMapEntry(final TreeMap<K, ?> map, final TreeMapEntry<K, ?> entry) {
-        final TreeMapKeyIterator<K> ret = new TreeMapKeyIterator<K>(((TreeMap<K, ?>)(((TreeMap)(map)))));
-        ret.entry = ((TreeMapEntry<K, ?>)(((TreeMapEntry)(entry))));
+        final TreeMapKeyIterator<K> ret = new TreeMapKeyIterator<K>(((TreeMap)(map)));
+        ret.entry = ((TreeMapEntry)(entry));
         return ret;
     }
     @Override
@@ -21,7 +21,7 @@ public class TreeMapKeyIterator<K> extends Iterator_impl<K> {
         }
         final TreeMapEntry<K, ?> e = this.entry;
         final K ret = e.key;
-        this.entry = e.next();
+        this.entry = ((TreeMapEntry)(e.next()));
         return ret;
     }
     public TreeMapKeyIterator(final TreeMap<K, ?> map) {

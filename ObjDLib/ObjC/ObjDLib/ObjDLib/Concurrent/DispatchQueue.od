@@ -7,6 +7,13 @@ stub class DispatchQueue {
     def async(f : () -> void)
 }
 
+@ObjC
+stub class Thread {
+    static def sleep(period : float)
+}
+
+@Java
+@GenName("ThreadUtil")
 stub class Thread {
     static def sleep(period : float)
 }

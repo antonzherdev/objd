@@ -32,13 +32,13 @@ public class FutureTest extends TestCase {
                 }
             }
         }
-        Thread.sleepPeriod(((double)(1)));
+        ThreadUtil.sleepPeriod(((double)(1)));
         PackageObjectTest.<Integer>assertEqualsAB(n.get(), ((int)(count)));
     }
     public void testMap() {
         final AtomicInt n = new AtomicInt();
         final int count = 100;
-        AtomicInt result = new AtomicInt();
+        final AtomicInt result = new AtomicInt();
         {
             final Iterator<Integer> __il__3i = Int.to(1, count).iterator();
             while(__il__3i.hasNext()) {
@@ -70,7 +70,7 @@ public class FutureTest extends TestCase {
                 });
             }
         }
-        Thread.sleepPeriod(((double)(3)));
+        ThreadUtil.sleepPeriod(((double)(3)));
         PackageObjectTest.<AtomicInt>assertEqualsAB(n, result);
     }
     public void testFlatMap() {
@@ -110,7 +110,7 @@ public class FutureTest extends TestCase {
                 }
             }
         }
-        Thread.sleepPeriod(((double)(3)));
+        ThreadUtil.sleepPeriod(((double)(3)));
         PackageObjectTest.<Integer>assertEqualsAB(n.get(), ((int)(result)));
     }
     public FutureTest() {

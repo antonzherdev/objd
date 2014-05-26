@@ -25,7 +25,7 @@ class FutureTest extends TestCase {
         val n = AtomicInt()
 
         val count = 100
-        var result = AtomicInt()
+        val result = AtomicInt()
         1.to(count).parFor {i ->
             val p = Promise<int>()
             val m = p.map(_ + 1)

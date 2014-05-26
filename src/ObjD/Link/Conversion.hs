@@ -84,7 +84,7 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 				case ex of
 					Braces _ -> maybeAddReturn env dtp ex
 					If cond l r -> If cond (implicitConvertsion env dtp l) (implicitConvertsion env dtp r)
-					_ -> if stp == dtp then ex else conv stp dtp
+					_ -> if stp == dtp then mdCheckGens stp dtp else conv stp dtp
 			where
 				conv (TPGenericWrap _ s) d = conv s d
 				conv s (TPGenericWrap _ d) = conv s d
@@ -112,20 +112,21 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 				conv TPFloatNumber{} d@TPNumber{} = Cast d ex
 				conv TPNumber{} d@TPFloatNumber{} = Cast d ex
 				conv (TPArr _ _) d@(TPEArr _ _) = Cast d ex
-				conv (TPTuple _) (TPTuple dtps) = case ex of
+				conv sc@(TPTuple _) dc@(TPTuple dtps) = case ex of
 					Tuple exps -> Tuple $ zipWith (implicitConvertsion env) dtps exps
 					(Cast tp (Tuple exps)) -> maybeCast tp $ Tuple $ zipWith (implicitConvertsion env) dtps exps
-					_ -> ex
-				conv (TPArr _ _) (TPArr _ adtp) = case ex of
+					_ -> mdCheckGens sc dc
+				conv sc@(TPArr _ _) dc@(TPArr _ adtp) = case ex of
+					Arr [] -> Cast dc ex
 					Arr exps -> Arr $ map (implicitConvertsion env adtp) exps
-					_ -> ex
+					_ -> mdCheckGens sc dc
 				conv (TPArr _ _) (TPClass _ [d] Class{className = "PArray"}) = Cast (TPEArr 0 (unwrapGeneric d)) ex
-				conv sc dc@TPClass{} = if isInstanceOfTp env sc dc then mdCheckGens sc dc else classConversion dc sc ex
+				conv sc dc@TPClass{} = if isInstanceOfTp env sc dc then mdCheckGens sc dc else classConversion dc sc
 				conv _ _ = ex
 
-				classConversion c (TPGenericWrap _ g) e = classConversion c g e
-				classConversion (TPClass _ gens cls) sc e =
-					maybe e wrapWithApply $
+				classConversion c (TPGenericWrap _ g) = classConversion c g
+				classConversion dc@(TPClass _ gens cls) sc =
+					maybe (mdCheckGens sc dc) wrapWithApply $
 						find(checkApplyPars . defPars ).
 						map (replaceGenericsInDef gens') .
 						filter(\d -> 
@@ -136,12 +137,13 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 						checkApplyPars [Def{defType = tp}] = isInstanceOfTp env sc tp
 						checkApplyPars _ = False
 						od = objectDef cls
-						wrapWithApply apply@Def{defPars = [par]} = Dot (Call od (defType od) [] []) (Call apply dtp [(par, e)] [])
-				classConversion t sc _ = ExpLError (show t ++ " from " ++ show sc) ex
+						wrapWithApply apply@Def{defPars = [par]} = Dot (Call od (defType od) [] []) (Call apply dtp [(par, ex)] [])
+				classConversion t sc = ExpLError (show t ++ " from " ++ show sc) ex
 
 
 				mdCheckGens sc dc = if envLang env == Java then checkGens sc dc else ex
 				
+				--checkGens sc dc | trace ("checkGens: " ++ show ex ++ ": " ++ show sc ++ " <<>>" ++ show dc)  False = undefined
 				checkGens sc dc 
 					| isValidDataType dc = if eqTps (dataTypeGenerics sc) (dataTypeGenerics dc) then ex else Cast dc ex
 					| otherwise = ex
@@ -151,7 +153,9 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 				eqTps _ _ = False
 
 				eqTp s (TPGenericWrap _ d) = eqTp s d
+				eqTp s (TPOption True d) = eqTp s d
 				eqTp (TPGenericWrap _ s) d = eqTp s d
+				eqTp (TPOption True s) d = eqTp s d
 				eqTp (TPClass _ sgs s) (TPClass _ dgs d) = s == d && eqTps sgs dgs
 				eqTp TPAnyGeneric _ = False
 				eqTp _ TPAnyGeneric = True

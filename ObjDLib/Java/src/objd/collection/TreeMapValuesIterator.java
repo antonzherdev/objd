@@ -5,8 +5,8 @@ import objd.lang.*;
 public class TreeMapValuesIterator<V> extends Iterator_impl<V> {
     public TreeMapEntry<?, V> entry;
     public static <V> TreeMapValuesIterator<V> applyMapEntry(final TreeMap<?, V> map, final TreeMapEntry<?, V> entry) {
-        final TreeMapValuesIterator<V> ret = new TreeMapValuesIterator<V>(((TreeMap<?, V>)(((TreeMap)(map)))));
-        ret.entry = ((TreeMapEntry<?, V>)(((TreeMapEntry)(entry))));
+        final TreeMapValuesIterator<V> ret = new TreeMapValuesIterator<V>(((TreeMap)(map)));
+        ret.entry = ((TreeMapEntry)(entry));
         return ret;
     }
     @Override
@@ -22,7 +22,7 @@ public class TreeMapValuesIterator<V> extends Iterator_impl<V> {
         if(this.entry == null) {
             throw new NullPointerException();
         }
-        this.entry = this.entry.next();
+        this.entry = ((TreeMapEntry)(this.entry.next()));
         return ret;
     }
     public TreeMapValuesIterator(final TreeMap<?, V> map) {

@@ -2,7 +2,7 @@ module Java.Struct (
 	File(..), Class(..), Visibility(..), ClassType(..), EnumItem(..),
 	TP(..), Generic(..), Def(..), DefPar, DefMod(..), Stm(..), Exp(..), DefAnnotation(..), Import, ClassMod(..),
 
-	isDefModVisibility, tpRef
+	isDefModVisibility, tpRef, hasTpAnyGeneric
 ) where
 
 import           Ex.String
@@ -79,6 +79,13 @@ instance Show TP where
 	show (TPRef exts nm) = nm ++ "<" ++ strs' ", " exts ++ ">"
 	show (TPArr tp n) = show tp ++ "[" ++ show n ++ "]"
 	show (TPUnknown e) = e
+
+hasTpAnyGeneric :: TP -> Bool
+hasTpAnyGeneric (TPRef tps _ ) = any hasTpAnyGeneric tps
+hasTpAnyGeneric (TPArr tp _) = hasTpAnyGeneric tp
+hasTpAnyGeneric (TPAnyGeneric _) = True
+hasTpAnyGeneric _ = False
+
 removeGenerics :: TP -> TP
 removeGenerics (TPRef _ nm) = TPRef [] nm
 removeGenerics t = t

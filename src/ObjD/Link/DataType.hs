@@ -15,7 +15,7 @@ dataTypeClassRef env tp = let
 
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
-dataTypeClass env (TPObject _ c) = Class { _classMods = [ClassModObject], className = className c, 
+dataTypeClass env (TPObject _ c) = Class { _classMods = [ClassModObject], className = className c, genClassName = genClassName c, 
 	_classExtends = Extends (if className c == "Object" then Nothing else Just $ baseClassExtends (envIndex env)) [], 
 	_classDefs = allDefsInObject (c, M.empty), _classGenerics = [], _classImports = [],
 	_classFile = fromMaybe (error $ "No class file for class " ++ className c) $ classFile c,
@@ -43,12 +43,12 @@ dataTypeClass env TPAny = classFind (envIndex env) "Any"
 dataTypeClass env TPBool = classFind (envIndex env) "Bool"
 dataTypeClass env (TPPointer _) = classFind (envIndex env) "Pointer"
 dataTypeClass env (TPTuple a) = classFind (envIndex env) ("Tuple" ++ show (length a))
-dataTypeClass env f@TPFun{} = Class { _classMods = [], className = "", _classExtends =  Extends (Just $ baseClassExtends (envIndex env)) [],
+dataTypeClass env f@TPFun{} = Class { _classMods = [], className = "", genClassName = "", _classExtends =  Extends (Just $ baseClassExtends (envIndex env)) [],
 	_classPackage = Package ["objd", "lang"] Nothing "", _classFile = coreFakeFile, 
 	_classDefs = [applyLambdaDef f], _classGenerics = [], _classImports = [], classAnnotations = [], classDefsWithTraits = []}
 	where
 		
-dataTypeClass _ x = ClassError (show x) ("No dataTypeClass for " ++ show x)
+dataTypeClass _ x = ClassError (show x) (show x) ("No dataTypeClass for " ++ show x)
 
 applyLambdaDef :: DataType -> Def
 applyLambdaDef (TPGenericWrap _ tp) = applyLambdaDef tp

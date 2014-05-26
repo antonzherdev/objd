@@ -116,7 +116,7 @@ static CNClassType* _CNChainTest_type;
 }
 
 - (void)testZipFor {
-    __block NSArray* arr = (@[]);
+    __block NSArray* arr = ((NSArray*)((@[])));
     [[(@[@1, @0, @3]) chain] zipForB:(@[@1, @3]) by:^void(id a, id b) {
         arr = [arr addItem:numi(unumi(a) + unumi(b))];
     }];

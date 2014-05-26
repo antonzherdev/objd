@@ -118,12 +118,17 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 		isObject = case cl of
 			D.Class{} -> D.ClassModObject `elem` D.classMods cl
 			_ -> False
+		clsName = case cl of
+			D.Class{} -> if D.ClassModPackageObject `elem` D.classMods cl then "PackageObject" ++ (cap $ last $ packageName package) else D.className cl
+			_ -> D.className cl
+		clsGenName = fromMaybe clsName $ genName annotations
 		cl' = case cl of
 			D.Class{} -> Class {
 				_classFile = file,
 				_classPackage = package,
 				_classMods =  nub $ concatMap clsMod (D.classMods cl), 
-				className = if D.ClassModPackageObject `elem` D.classMods cl then "PackageObject" ++ (cap $ last $ packageName package) else D.className cl, 
+				className = clsName, 
+				genClassName = clsGenName,
 				_classExtends = if D.className cl == "Object" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
 				_classDefs = 
 					if isObject then fields ++ defs ++ [typeField]
@@ -139,6 +144,7 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 				_classPackage = package,
 				_classMods = [ClassModEnum], 
 				className = D.className cl, 
+				genClassName = clsGenName,
 				_classExtends = Extends (Just $ ExtendsClass 
 					(classFind cidx "Enum", [TPClass TPMEnum [] cl'])  
 					[(enumOrdinal, callLocalVal "ordinal" uint), (enumName, callLocalVal "name" TPString)]) [], 
@@ -156,6 +162,7 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 				_classPackage = package,
 				_classMods = [ClassModType, ClassModStub], 
 				className = D.className cl, 
+				genClassName = clsGenName,
 				_classExtends = Extends (Just $ ExtendsClass (linkExtendsRef env (D.typeDef cl)) []) [], 
 				_classDefs = [constructorForType], 
 				_classGenerics = generics,
@@ -254,6 +261,7 @@ traitImplClass env cl = let
 	}
 	cl' = cl {
 		className = className cl ++ "_impl",
+		genClassName = genClassName cl ++ "_impl",
 		_classExtends = ext, 
 		_classMods = ClassModTraitImpl : ClassModAbstract : delete ClassModTrait (classMods cl), 
 		_classDefs = filter( (DefModOverride `elem`) .defMods) $ classDefs cl,
@@ -339,7 +347,7 @@ linkGenerics env gens = cls
 				Nothing -> []
 				Just (D.Extends (D.ExtendsClass firstExtends []) nextExtends) -> firstExtends : nextExtends
 			in Generic{
-				className = name,
+				className = name, genClassName = name,
 				_classExtendsRef = (classFind (envIndex env) "Object", []) : map (linkExtendsRef env') genExtendsRefs}
 		cls = map linkGeneric gens
 		env' = envAddClasses cls env

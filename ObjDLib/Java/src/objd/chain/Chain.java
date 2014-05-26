@@ -28,7 +28,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
     public final ChainLink<?, A> link;
     public final Chain<?> previous;
     public static <T> Chain<T> applyCollection(final Traversable<T> collection) {
-        return new Chain<T>(((ChainLink<?, T>)(((ChainLink)(new SourceLink<T>(collection))))), null);
+        return new Chain<T>(((ChainLink)(new SourceLink<T>(collection))), null);
     }
     public Chain<A> filterFactorWhen(final double factor, final F<A, Boolean> when) {
         return this.<A>addLink(((ChainLink<A, A>)(((ChainLink)(new FilterLink<A>(factor, when))))));
@@ -705,10 +705,10 @@ public class Chain<A> extends ImTraversable_impl<A> {
         Chain<?> ch = this;
         Yield<?> y = yield;
         while(ch != null) {
-            y = ch.link.buildYield(y);
-            ch = ((Chain<?>)(((Chain)(ch.previous))));
+            y = ((Yield)(ch.link.buildYield(((Yield)(y)))));
+            ch = ((Chain)(ch.previous));
         }
-        return y;
+        return ((Yield)(y));
     }
     public <B> Chain<B> addLink(final ChainLink<A, B> link) {
         return new Chain<B>(link, this);

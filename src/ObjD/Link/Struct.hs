@@ -16,7 +16,8 @@ module ObjD.Link.Struct (
 	dataTypeClassNameWithPrefix, dataTypeClassName, classFieldsForEquals, isConst, classFields, isAbstract, classContainsInit,
 	isFinal, isTpClass, isTpEnum, isTpTrait, isNop, enumItems, isType, isGeneric, isGenericWrap, tpGeneric, resolveTypeAlias,
 	containsAnnotationWithClassName, isSpecial, isConstructor, mainExtendsRef, isBaseClass, traitExtendsRefs, findAnnotationWithClassName, 
-	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError, isDefAbstract, isEnumItem, isTpGeneric, isPrivate
+	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError, isDefAbstract, isEnumItem, isTpGeneric, isPrivate,
+	genName, dataTypeGenClassName
 	) where
 
 import 			 Ex.String
@@ -51,11 +52,11 @@ fileNameWithPrefix f = packagePrefix (filePackage f) ++ fileName f
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - CLASS 
  -----------------------------------------------------------------------------------------------------------------------------------------}
-data Class = Class {_classFile :: File, _classPackage :: Package, className :: String
+data Class = Class {_classFile :: File, _classPackage :: Package, className :: String, genClassName :: String
 	, _classGenerics :: [Class], _classExtends :: Extends, _classMods :: [ClassMod], _classDefs :: [Def]
 	, _classImports :: [Import], classAnnotations :: [Annotation], classDefsWithTraits :: [Def]}
-	| Generic {className :: String, _classExtendsRef :: [ExtendsRef]}
-	| ClassError {className :: String, classErrorText :: String}
+	| Generic {className :: String, genClassName :: String, _classExtendsRef :: [ExtendsRef]}
+	| ClassError {className :: String, genClassName :: String, classErrorText :: String}
 classFile :: Class -> Maybe File
 classFile Class{_classFile = file} = Just file
 classFile _ = Nothing
@@ -118,14 +119,15 @@ type Generics = M.Map String DataType
 type ClassRef = (Class, Generics)
 
 instance Show Class where
-	show (Generic name ext) = name ++ extString
+	show (Generic name _ ext) = name ++ extString
 		where
 			extString = case filter ( (/= "Object") . className . fst) ext of
 				[] -> ""
 				genExtendsRefs -> " extends " ++ strs " with " (map showExtendsRef genExtendsRefs)
-	show (ClassError name er) = name ++ ": " ++ er
+	show (ClassError name _ er) = name ++ ": " ++ er
 	show cl =
-		tp cl ++ " " ++ className cl ++ sConstr cl ++ " " ++ show (classExtends cl) ++ " {\n" ++
+		tp cl ++ " " ++ className cl ++ (if genClassName cl /= className cl then "\\" ++ genClassName cl ++ "\\" else "") 
+			++ sConstr cl ++ " " ++ show (classExtends cl) ++ " {\n" ++
 			(unlines . map ind . concatMap (lines . show)) (classDefs cl)  ++
 		"}"
 		where
@@ -212,6 +214,12 @@ containsAnnotationWithClassName nm a = isJust $ findAnnotationWithClassName nm a
 
 instance Show Annotation where
 	show (Annotation d pars) = "@" ++ defName d ++ showCallPars pars
+
+
+genName :: [Annotation] -> Maybe String
+genName anns = findAnnotationWithClassName "objd.gen.GenName" anns >>= (\a -> case a of
+			Annotation _ [(_, StringConst s)] -> Just s
+			_ -> Nothing)
 
 {-----------------------------------------------------------------------------------------------------------------------------------------
  - Extends 
@@ -597,10 +605,15 @@ dataTypeClassName (TPFloatNumber 8) = "Float8"
 dataTypeClassName (TPFloatNumber 0) = "Float"
 dataTypeClassName TPChar = "Char"
 dataTypeClassName TPString = "String"
-dataTypeClassName TPAny = "Any"
 dataTypeClassName TPBool = "Bool"
 dataTypeClassName TPFun{} = "F"
 dataTypeClassName x = error ("No dataTypeClassName for " ++ show x)
+
+dataTypeGenClassName :: DataType -> String
+dataTypeGenClassName (TPGenericWrap _ c) = dataTypeGenClassName c
+dataTypeGenClassName (TPClass _ _ c ) = genClassName c
+dataTypeGenClassName (TPObject _ c) = genClassName c
+dataTypeGenClassName tp = dataTypeClassName tp
 
 
 dataTypeClassNameWithPrefix :: DataType -> String
@@ -669,7 +682,7 @@ instance Show DataTypeMod where
 	show TPMGeneric = "#G"
 
 tpGeneric :: DataType
-tpGeneric = TPClass TPMGeneric [] (Generic "?" [])
+tpGeneric = TPClass TPMGeneric [] (Generic "?" "?" [])
 
 objectType :: DataType -> DataType
 objectType (TPClass t _ cl) = TPObject t cl
@@ -719,7 +732,7 @@ extendsClassRef (ExtendsClass ref _) = ref
 replaceGenerics :: Bool -> Generics -> DataType -> DataType
 replaceGenerics blk gns tp = mapDataType f tp
 	where 
-		f (TPClass TPMGeneric _ (Generic g _)) = fmap wrapBlock $ M.lookup g gns
+		f (TPClass TPMGeneric _ (Generic g _ _)) = fmap wrapBlock $ M.lookup g gns
 		f w@(TPGenericWrap reasons _) = if WrapReasonBlock `elem` reasons then Just w else Nothing
 		f _ = Nothing
 		wrapBlock w@(TPGenericWrap reasons e) 
@@ -874,7 +887,7 @@ call d pars = Call d (defType d) (zip (defPars d) pars) []
 showCallPars :: [CallPar] -> String
 showCallPars [] = ""
 showCallPars pars = "(" ++ strs ", " (map showPar pars) ++ ")"
-	where showPar (Def {defName = name}, e) = name ++ " = " ++ show e
+	where showPar (Def {defName = name, defType = tp}, e) = name ++ "\\" ++ show tp ++ "\\ = " ++ show e
 	
 callLocalVal :: String -> DataType -> Exp
 callLocalVal name tp = Call (localVal name tp) tp [] []

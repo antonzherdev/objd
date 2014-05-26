@@ -25,7 +25,7 @@ envAddClasses newClasses env@Env{envIndex = cidx} = env{
 idxFind :: M.Map String a -> String -> Maybe a
 idxFind idxx k = M.lookup k idxx
 classFind :: ClassIndex -> String -> Class
-classFind cidx name = fromMaybe (ClassError name ("Class " ++ name ++ " not found") ) $ idxFind cidx name
+classFind cidx name = fromMaybe (ClassError name name ("Class " ++ name ++ " not found") ) $ idxFind cidx name
 envAddSuffix :: Env -> String -> Env
 envAddSuffix env s = env{envVarSuffix = envVarSuffix env ++ s}
 

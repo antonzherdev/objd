@@ -24,8 +24,8 @@ genFile D.File{D.filePackage = D.Package{D.packageName = package}, D.fileImports
 		J.fileClass = cls'}
 
 genImport :: D.Import -> J.Import
-genImport (D.ImportClass cl) = D.packageName (D.classPackage cl) ++ [D.className cl] 
-genImport (D.ImportObjectDefs cl) = D.packageName (D.classPackage cl) ++ [D.className cl, "*"]
+genImport (D.ImportClass cl) = D.packageName (D.classPackage cl) ++ [className cl] 
+genImport (D.ImportObjectDefs cl) = D.packageName (D.classPackage cl) ++ [className cl, "*"]
 
 genClass :: D.Class -> Writer Wrt J.Class
 genClass cl = do
@@ -52,7 +52,7 @@ genClass cl = do
 	return J.Class {
 		J.classMods = [J.ClassModVisibility J.Public] ++ mapMaybe trMod (D.classMods cl),
 		J.classType = if D.isTrait cl then J.ClassTypeInterface else if isEnum then J.ClassTypeEnum else J.ClassTypeClass,
-		J.className = D.className cl,
+		J.className = className cl,
 		J.classGenerics = gens',
 		J.classExtends = if isEnum then Nothing else ext',
 		J.classImplements = impls',
@@ -69,7 +69,7 @@ genGeneric :: D.Class -> Writer Wrt J.Generic
 genGeneric cl = do
 	exts <- mapM genExtendsRef $ filter (not . D.isBaseClass . fst) $ D.extendsRefs $ D.classExtends cl
 	return J.Generic {
-		J.genericName = D.className cl,
+		J.genericName = className cl,
 		J.genericExtends = exts
 	}
 
@@ -77,18 +77,19 @@ genExtendsRef :: D.ExtendsRef -> Writer Wrt J.TP
 genExtendsRef (cl, gens) = do
 	tellImportClass cl
 	gens' <- mapM genTp gens
-	return $ J.TPRef gens' (D.className cl) 
+	return $ J.TPRef gens' (className cl) 
 
 {-----------------------------------------------------------------------------------------------------------------------------------------------
  - Defs
  -----------------------------------------------------------------------------------------------------------------------------------------------}
 
-defName' :: D.Def -> String
-defName' d = let 
-	def = fromMaybe (D.defName d ++ concatMap (cap . D.defName) (D.defPars d)) $ 
-		D.findAnnotationWithClassName "objd.gen.GenName" (D.defAnnotations d) >>= (\a -> case a of
-			D.Annotation _ [(_, D.StringConst s)] -> Just s
-			_ -> Nothing)
+className :: D.Class -> String
+className cl = D.genClassName cl
+
+
+defName :: D.Def -> String
+defName d = let 
+	def = fromMaybe (D.defName d ++ concatMap (cap . D.defName) (D.defPars d)) $ D.genName (D.defAnnotations d)
 	in case D.defPars d of
 		[] -> case D.defName d of
 			"hash" -> "hashCode"
@@ -109,10 +110,10 @@ genDef cl d =
  		genMod D.DefModStatic = Just J.DefModStatic
  		genMod D.DefModAbstract = Just J.DefModAbstract
  		genMod _ = Nothing
- 		constrSet dd = let nm = defName' dd in J.Set Nothing (J.Dot J.This (J.Ref nm)) (J.Ref nm)
+ 		constrSet dd = let nm = defName dd in J.Set Nothing (J.Dot J.This (J.Ref nm)) (J.Ref nm)
  		body = if D.isTrait cl then D.Nop else D.defBody d	
  		mods = mapMaybe genMod (D.defMods d)
- 		name = defName' d
+ 		name = defName d
  		genSet dd = do
 			e' <- genExp defaultEnv (D.defBody dd)
  			return $ J.Set Nothing (J.Dot J.This $ J.Ref (D.defName dd)) e'
@@ -185,7 +186,7 @@ genTp :: D.DataType -> Writer Wrt J.TP
 genTp (D.TPClass tp gens cl) = do
 	when (tp /= D.TPMGeneric && tp /= D.TPMType) $ tellImportClass cl
 	gens' <- mapM genTp gens
-	return $ J.TPRef gens' (D.className cl) 
+	return $ J.TPRef gens' (className cl) 
 genTp (D.TPNumber _ 1) = return $ J.tpRef "byte"
 genTp (D.TPNumber _ 8) = return $ J.tpRef "long"
 genTp (D.TPNumber _ _) = return $ J.tpRef "int"
@@ -237,7 +238,7 @@ genTp (D.TPArr _ tp) = do
 genTp (D.TPTuple tps) = do
 	tps' <- mapM genTp tps
 	return $ J.TPRef tps' (tupleClassName $ length tps)
-genTp (D.TPSelf cl) = return $ J.TPRef (map (J.tpRef . D.className) (D.classGenerics cl) ) (D.className cl)
+genTp (D.TPSelf cl) = return $ J.TPRef (map (J.tpRef . className) (D.classGenerics cl) ) (className cl)
 genTp (D.TPMap key value) = do
 	tellImport ["objd", "collection", "ImHashMap"]
 	key' <- genTp key
@@ -274,7 +275,7 @@ tellImport imp = tell Wrt{wrtStms = [], wrtImports = [imp]}
 tellImports :: [J.Import] -> Writer Wrt ()
 tellImports imps = tell Wrt{wrtStms = [], wrtImports = imps}
 tellImportClass :: D.Class -> Writer Wrt ()
-tellImportClass cl = tellImport $ D.packageName (D.classPackage cl) ++ [D.className cl]
+tellImportClass cl = tellImport $ D.packageName (D.classPackage cl) ++ [className cl]
 
 genExp :: Env -> D.Exp -> Writer Wrt J.Exp
 genExp _ D.Nop = return J.Nop
@@ -293,12 +294,8 @@ genExp env (D.Dot l (D.Is dtp))
 genExp env (D.Dot l (D.As dtp)) = do 
 	l' <- genExp env l
 	dtp' <- genTp dtp
-	return $ J.Dot (J.Ref "Util") $ J.Call "as" [dtp'] [J.Dot (J.Ref $ D.dataTypeClassName dtp) (J.Ref "class"), l']
+	return $ J.Dot (J.Ref "Util") $ J.Call "as" [dtp'] [J.Dot (J.Ref $ D.dataTypeGenClassName dtp) (J.Ref "class"), l']
 genExp env (D.Dot l (D.CastDot dtp)) = do 
-	l' <- genExp env l
-	dtp' <- genTp dtp
-	return $ cast dtp' l'
-genExp env (D.Cast dtp l) = do 
 	l' <- genExp env l
 	dtp' <- genTp dtp
 	return $ cast dtp' l'
@@ -314,7 +311,7 @@ genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
 genExp env (D.Dot (D.Self stp) r@(D.Call d _ pars gens) ) 
 	| D.DefModStatic `elem` D.defMods d = do
 		r' <- genExp env r
-		return $ J.Dot (J.Ref $ D.dataTypeClassName stp) r'
+		return $ J.Dot (J.Ref $ D.dataTypeGenClassName stp) r'
 	| not (null gens) && not (null pars) = genExp env r >>= \e' -> return $ J.Dot J.This e'
 	| not (null pars) = genExp env r
 genExp env (D.Dot l r@(D.Call d _ _ _)) 
@@ -324,7 +321,7 @@ genExp env (D.Dot l r@(D.Call d _ _ _))
 		return $ case r' of
 			J.Call cnm cgens cpars ->
 				J.Dot 
-					(J.Ref $ D.dataTypeClassName $ D.exprDataType l) 
+					(J.Ref $ D.dataTypeGenClassName $ D.exprDataType l) 
 					(J.Call cnm cgens (if D.DefModStatic `elem` D.defMods d then cpars else l':cpars))
 			_ -> J.Dot l' r'
 genExp env (D.Dot l r) = do
@@ -337,21 +334,21 @@ genExp env (D.Index l r) = do
 	return $ J.Index l' r'
 genExp _ (D.Call d@D.Def{D.defMods = mods} _ [] []) 
 	| D.DefModChangedInLambda `elem` mods = return $ J.Dot (J.Ref $ D.defName d) (J.Ref "value")
-	| D.DefModField `elem` mods || D.DefModLocal `elem` mods = return $ J.Ref $ defName' d
+	| D.DefModField `elem` mods || D.DefModLocal `elem` mods = return $ J.Ref $ defName d
 	| D.DefModObject `elem` mods = do
 		let (D.TPObject _ cl) = D.defType d
 		tellImportClass cl 
-		return $ J.Ref $ defName' d
+		return $ J.Ref $ className cl
 genExp env (D.Call constr _ pars gens) 
 	| D.DefModConstructor `elem` D.defMods constr 
 		= do
 			pars' <- mapM (genParExp env) pars
 			gens' <- mapM genTp gens
-			return $ J.New [] (D.dataTypeClassName $ D.defType constr) gens' pars'
+			return $ J.New [] (D.dataTypeGenClassName $ D.defType constr) gens' pars'
 genExp env (D.Call d _ pars gens) = do
 	pars' <- mapM (genParExp env) pars
 	gens' <- mapM genTp gens
-	return $ J.Call (defName' d) gens' pars'
+	return $ J.Call (defName d) gens' pars'
 genExp env (D.Lambda pars e dtp) = do
 	stms <- getStms env{envInnerClass = True} e
 	dtp' <- if dtp == D.TPVoid then return (J.tpRef "void") else genTp (D.wrapGeneric dtp)
@@ -370,7 +367,7 @@ genExp env (D.Lambda pars e dtp) = do
 		clNm = (if dtp == D.TPVoid then "P" else "F") ++ if length pars == 1 then "" else show (length pars)
 	return $ J.New [def] clNm (map (\(_, t, _) -> t) pars' ++ [dtp' | dtp /= D.TPVoid]) []
 genExp Env{envInnerClass = False} (D.Self _) = return J.This
-genExp Env{envInnerClass = True} (D.Self tp) = return  $ J.Dot (J.Ref $ D.dataTypeClassName tp) J.This
+genExp Env{envInnerClass = True} (D.Self tp) = return  $ J.Dot (J.Ref $ D.dataTypeGenClassName tp) J.This
 genExp env (D.MathOp tp l r) = do
 	l' <- genExp env l
 	r' <- genExp env r
@@ -435,6 +432,9 @@ genExp env e@D.NPE = do
 	return J.Nop
 genExp env (D.Some _ e) = genExp env e
 genExp env (D.Return _ e) = genExp env e
+genExp _ (D.Cast (D.TPArr _ tp) (D.Arr [])) = do
+	tp' <- genTp tp
+	return $ J.Dot (J.Ref "ImArray") (J.Call "empty" [tp'] [])
 genExp env (D.Arr exps) = do
 	exps' <- mapM (genExp env) exps
 	return $ J.Dot (J.Ref "ImArray") (J.Call "fromObjects" [] exps')
@@ -448,7 +448,7 @@ genExp env (D.StringBuild pars lastString) = do
 			return $ stringExpressionsForTp (D.exprDataType expr) expr'
 genExp env (D.Tuple exps) = do
 	exps' <- mapM (genExp env) exps
-	gens' <- mapM (genTp . D.exprDataType) exps
+	gens' <- mapM (genTp . D.wrapGeneric . D.exprDataType) exps
 	return $ J.New [] (tupleClassName $ length exps') gens' exps'
 genExp env (D.Weak x) = genExp env x
 genExp env (D.Braces [x]) = genExp env x
@@ -457,6 +457,10 @@ genExp env (D.Braces exps) = do
 	tellStms $ join stms
 	genExp env $ last exps
 genExp env (D.NullDot _ _ e) = genExp env e
+genExp env (D.Cast dtp l) = do 
+	l' <- genExp env l
+	dtp' <- genTp dtp
+	return $ cast dtp' l'
 genExp _ e = return $ J.ExpError $ "Unknown " ++ show e
 
 genParExp :: Env -> (D.Def, D.Exp) -> Writer Wrt J.Exp 
@@ -464,7 +468,9 @@ genParExp env (_, e) = genExp env e
 
 cast :: J.TP -> J.Exp -> J.Exp
 cast tp@(J.TPRef [] _) e = J.Cast tp e
-cast tp@(J.TPRef _ r) e = J.Cast tp $ J.Cast (J.TPRef [] r) e
+cast tp@(J.TPRef _ r) e 
+	| J.hasTpAnyGeneric tp = J.Cast (J.TPRef [] r) e
+	| otherwise = J.Cast tp $ J.Cast (J.TPRef [] r) e
 cast tp e = J.Cast tp e
 
 stringFormatForType :: D.DataType -> String

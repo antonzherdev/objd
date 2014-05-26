@@ -10,11 +10,11 @@ public class ImTreeMapKeySet<K> extends TreeMapKeySet_impl<K> {
     }
     @Override
     public Iterator<K> iterator() {
-        return TreeMapKeyIterator.<K>applyMapEntry(this.map, this.map.firstEntry());
+        return TreeMapKeyIterator.<K>applyMapEntry(((TreeMap)(this.map)), ((TreeMapEntry)(this.map.firstEntry())));
     }
     @Override
     public Iterator<K> iteratorHigherThanKey(final K key) {
-        return TreeMapKeyIterator.<K>applyMapEntry(this.map, this.map.higherEntryThanKey(key));
+        return TreeMapKeyIterator.<K>applyMapEntry(((TreeMap)(this.map)), ((TreeMapEntry)(this.map.higherEntryThanKey(key))));
     }
     public ImTreeMapKeySet(final TreeMap<K, ?> map) {
         this.map = map;
