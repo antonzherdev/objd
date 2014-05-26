@@ -4,6 +4,7 @@ import test._
 
 @Test
 class FutureTest extends TestCase {
+    @Test
     def testPromiseOnComplete {
         val n = AtomicInt()
 
@@ -21,6 +22,7 @@ class FutureTest extends TestCase {
         assertEquals(n.intValue, count)
     }
 
+    @Test
     def testMap {
         val n = AtomicInt()
 
@@ -39,6 +41,7 @@ class FutureTest extends TestCase {
         assertEquals(n, result)
     }
 
+    @Test
     def testFlatMap {
         val n = AtomicInt()
 

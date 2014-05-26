@@ -2,9 +2,11 @@ package objd.collection;
 
 import objd.lang.*;
 import test.PackageObjectTest;
+import org.junit.Test;
 import test.TestCase;
 
 public class QueueTest extends TestCase {
+    @Test
     public void testDeque() {
         ImQueue<Integer> q = ImQueue.<Integer>apply();
         PackageObjectTest.assertTrueValue(q.isEmpty());

@@ -91,4 +91,16 @@ public abstract class HashMap<K, V> extends Map_impl<K, V> {
             return map.isEmpty();
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        HashMap a = (HashMap) o;
+
+        if (!map.equals(a.map)) return false;
+
+        return true;
+    }
 }

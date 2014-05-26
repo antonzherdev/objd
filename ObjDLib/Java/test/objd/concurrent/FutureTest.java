@@ -3,9 +3,11 @@ package objd.concurrent;
 import objd.lang.*;
 import objd.collection.Iterator;
 import test.PackageObjectTest;
+import org.junit.Test;
 import test.TestCase;
 
 public class FutureTest extends TestCase {
+    @Test
     public void testPromiseOnComplete() {
         final AtomicInt n = new AtomicInt();
         final int count = 100000;
@@ -33,6 +35,7 @@ public class FutureTest extends TestCase {
         ThreadUtil.sleepPeriod(((double)(1)));
         PackageObjectTest.<Integer>assertEqualsAB(n.get(), ((int)(count)));
     }
+    @Test
     public void testMap() {
         final AtomicInt n = new AtomicInt();
         final int count = 100;
@@ -71,6 +74,7 @@ public class FutureTest extends TestCase {
         ThreadUtil.sleepPeriod(((double)(3)));
         PackageObjectTest.<AtomicInt>assertEqualsAB(n, result);
     }
+    @Test
     public void testFlatMap() {
         final AtomicInt n = new AtomicInt();
         final int count = 100;

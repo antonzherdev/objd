@@ -4,6 +4,7 @@ import test._
 
 @Test
 class TreeMapTest extends TestCase {
+    @Test
     def testMain {
         val map = MTreeMap<int, string>()
         assertEquals(0, map.count)

@@ -84,4 +84,16 @@ public abstract class HashSet<T> extends Set_impl<T> {
         }
         return true;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        HashSet a = (HashSet) o;
+
+        if (!set.equals(a.set)) return false;
+
+        return true;
+    }
 }

@@ -2,9 +2,11 @@ package objd.collection;
 
 import objd.lang.*;
 import test.PackageObjectTest;
+import org.junit.Test;
 import test.TestCase;
 
 public class TreeMapTest extends TestCase {
+    @Test
     public void testMain() {
         final MTreeMap<Integer, String> map = MTreeMap.<Integer, String>apply();
         PackageObjectTest.<Integer>assertEqualsAB(0, ((int)(map.count())));

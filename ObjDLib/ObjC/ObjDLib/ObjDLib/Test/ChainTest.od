@@ -4,6 +4,7 @@ import test._
 
 @Test
 class ChainTest extends TestCase {
+    @Test
     def testAnd {
         assertTrue(![true, false, true].chain.and)
         assertTrue(![false, false, false].chain.and)
@@ -11,6 +12,7 @@ class ChainTest extends TestCase {
         assertTrue([].chain.and)
     }
 
+    @Test
     def testOr {
         assertTrue([false, false, true].chain.or)
         assertTrue(![false, false, false].chain.or)
@@ -18,6 +20,7 @@ class ChainTest extends TestCase {
         assertTrue(![].chain.or)
     }
 
+    @Test
     def testFuture {
         repeat(1000){
             val arr : [(int, Promise<int>)] = 0.to(1000).chain.map{i -> (i, Promise<int>())}.toArray
@@ -37,6 +40,7 @@ class ChainTest extends TestCase {
         }
     }
 
+    @Test
     def testVoidFuture {
         val arr : [Promise<void>] = 0.to(1000).chain.map{i -> Promise<void>()}.toArray
 
@@ -52,30 +56,37 @@ class ChainTest extends TestCase {
         assertEquals(count.intValue, arr.count)
     }
 
+    @Test
     def testMap {
         assertEquals([4, 0, 2], [2, 0, 1].chain.map{x -> 2*x}.toArray)
     }
 
+    @Test
     def testMapOpt {
         assertEquals([4, 2], [2, 0, 1].chain.mapOpt<int>{x -> if(x == 0) nil else 2*x}.toArray)
     }
 
+    @Test
     def testFlatMap {
         assertEquals([2, 4, 0, 0, 1, 2], [2, 0, 1].chain.flatMap{x -> [x, 2*x]}.toArray)
     }
 
+    @Test
     def testFlat {
         assertEquals([1, 5, 2, 3, 2], [[1, 5], [2, 3], [2]].chain.flat.toArray)
     }
 
+    @Test
     def testZip {
         assertEquals([2, 3], [1, 0, 3].chain.zip([1, 3]){a, b -> a + b}.toArray)
     }
 
+    @Test
     def testZip3 {
         assertEquals([3, 4], [1, 0, 3].chain.zip3([1, 3], [1, 1, 2, 4]){a, b, c -> a + b + c}.toArray)
     }
 
+    @Test
     def testZipFor {
         var arr : [int] = []
         [1, 0, 3].chain.zipFor([1, 3]) {a, b ->
@@ -84,95 +95,117 @@ class ChainTest extends TestCase {
         assertEquals([2, 3], arr)
     }
 
+    @Test
     def testAppend {
         assertEquals([1, 0, 2, 3, 1], [1, 0, 2].chain.append([3, 1]).toArray)
     }
 
+    @Test
     def testPreppend {
         assertEquals([3, 1, 1, 0, 2], [1, 0, 2].chain.prepend([3, 1]).toArray)
     }
 
+    @Test
     def testMul {
         assertEquals([(1, 3), (1, 1), (0, 3), (0, 1), (2, 3), (2, 1)], [1, 0, 2].chain.mul([3, 1]).toArray)
     }
 
+    @Test
     def testTop {
         assertEquals([1, 0], [1, 0, 2].chain.top(2).toArray)
         assertTrue([1, 0, 2].chain.top(0).toArray.isEmpty)
         assertEquals([1, 0, 2], [1, 0, 2].chain.top(4).toArray)
     }
 
+    @Test
     def testSort {
         assertEquals([0, 1, 2], [1, 0, 2].chain.sort.toArray)
         assertEquals([2, 1, 0], [1, 0, 2].chain.sortDesc.toArray)
     }
 
+    @Test
     def testReverse {
         assertEquals([2, 0, 1], [1, 0, 2].chain.reverse.toArray)
     }
 
+    @Test
     def testGroupBy {
         assertEquals([[1, 0], [2]].chain.toSet, [1, 0, 2].chain.group(by = _ <= 1).map(_.b).toSet)
         assertEquals([-1, 3].chain.toSet, [1, -2, 3].chain.group<bool, int>(by = _ <= 1, start = 0, fold = (a, b) -> a + b).map(_.b).toSet)
     }
 
+    @Test
     def testDistinct {
         assertEquals([1, 3, 4, 2], [1, 3, 1, 4, 4, 2].chain.distinct.toArray)
     }
 
+    @Test
     def testCombinations {
         assertEquals([(2, 0), (2, 1), (0, 1)], [2, 0, 1].chain.combinations.toArray)
     }
 
+    @Test
     def testUncombinations {
         assertEquals([2, 0, 1], [(2, 0), (2, 1), (0, 1)].chain.uncombinations.toArray)
     }
 
+    @Test
     def testNeighbours {
         assertEquals([(2, 0), (0, 1)], [2, 0, 1].chain.neighbours.toArray)
         assertEquals([(2, 0), (0, 1), (1, 2)], [2, 0, 1].chain.neighboursRing.toArray)
     }
 
+    @Test
     def testExclude {
         assertEquals([0, 3, 0], [2, 0, 1, 2, 3, 0].chain.exclude([2, 1]).toArray)
     }
 
+    @Test
     def testIntersect {
         assertEquals([2, 1, 2], [2, 0, 1, 2, 3, 0].chain.intersect([2, 1]).toArray)
     }
 
+    @Test
     def testFold {
         assertEquals(3, [2, 0, 1].chain.fold(start = 0) {r, a -> r + a})
     }
 
+    @Test
     def testCount {
         assertEquals(3, [2, 0, 1].chain.count)
     }
 
+    @Test
     def testHead {
         assertEquals(2, [2, 0, 1].chain.head.get)
     }
 
+    @Test
     def testLast {
         assertEquals(1, [2, 0, 1].chain.last.get)
     }
 
+    @Test
     def testRandom {
         assertTrue([2, 0, 1].contains([2, 0, 1].chain.randomItem.get))
     }
 
+    @Test
     def testGap {
         assertEquals((0, 2), [2, 0, 1].chain.gap.get)
     }
 
+    @Test
     def testMin {
         assertEquals(0, [2, 0, 1].chain.min.get)
     }
 
+    @Test
     def testMax {
         assertEquals(3, [2, 3, 0, 1].chain.max.get)
     }
 
+    @Test
     def testToString {
         assertEquals("2, 0, 1", [2, 0, 1].chain.toString(", "))
         assertEquals("[2, 0, 1]", [2, 0, 1].chain.toString("[", ", ", "]"))

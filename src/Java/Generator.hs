@@ -16,16 +16,18 @@ toJava file@D.File{D.fileClasses = classes} =
 
 genFile :: D.File -> D.Class -> J.File
 genFile D.File{D.filePackage = D.Package{D.packageName = package}} cls =
-	let (cls', Wrt{wrtImports = clImps}) = runWriter $ genClass cls
+	let 
+		isTest = D.containsAnnotationWithClassName "test.Test" $ D.classAnnotations cls
+		(cls', Wrt{wrtImports = clImps}) = runWriter $ genClass isTest cls
 	in J.File {
-		J.fileIsTest = D.containsAnnotationWithClassName "test.Test" $ D.classAnnotations cls,
+		J.fileIsTest = isTest,
 		J.filePackage = package,
 		J.fileImports = ["objd", "lang", "*"] : (filter (\p -> package /= init p && (["objd", "lang"] /= init p) ) $ nub clImps),
 		J.fileClass = cls'}
 
 
-genClass :: D.Class -> Writer Wrt J.Class
-genClass cl = do
+genClass :: Bool -> D.Class -> Writer Wrt J.Class
+genClass isTest cl = do
 	let 
 		isEnum = D.isEnum cl 
 		defs = filter (\f -> not (D.isSpecial f) && not (D.isEnumItem f) && not (D.isInline f && D.isPrivate f)) 
@@ -38,7 +40,7 @@ genClass cl = do
 		genStaticSet d = do
 			e' <- genExp defaultEnv $ D.defBody d
 			return $ J.Set Nothing (J.Ref $ D.defName d) e'
-	defs' <- mapM (genDef cl) defs
+	defs' <- mapM (genDef isTest cl) defs
 	gens' <- mapM genGeneric $ D.classGenerics cl
 	ext' <- case D.mainExtendsRef (D.classExtends cl) of
 		Just e -> if D.isBaseClass (fst e) then return Nothing else fmap Just (genExtendsRef e)
@@ -98,8 +100,11 @@ defName d = let
 overrideAnnotation :: J.DefAnnotation
 overrideAnnotation = J.DefAnnotation "Override" []
 
-genDef :: D.Class -> D.Def -> Writer Wrt [J.Def]
-genDef cl d =
+testAnnotation :: J.DefAnnotation
+testAnnotation = J.DefAnnotation "Test" []
+
+genDef :: Bool -> D.Class -> D.Def -> Writer Wrt [J.Def]
+genDef isClTest cl d =
  	let 
  		genMod D.DefModPrivate = Just $ J.DefModVisability J.Private
  		genMod D.DefModProtected = Just $ J.DefModVisability J.Protected
@@ -161,8 +166,10 @@ genDef cl d =
  				stms' <- getStms defaultEnv body
  				gens' <- mapM genGeneric $ maybe [] D.defGenericsClasses $ D.defGenerics d
  				pars' <- mapM genPar $ D.defPars d
+ 				let isTest = isClTest && (D.containsAnnotationWithClassName "test.Test" $ D.defAnnotations d)
+ 				when(isTest) $ tellImport ["org", "junit", "Test"]
  				return [J.Def {
-	 				J.defAnnotations = [overrideAnnotation| D.DefModOverride `elem` D.defMods d],
+	 				J.defAnnotations = [overrideAnnotation| D.DefModOverride `elem` D.defMods d] ++ [testAnnotation | isTest],
 	 				J.defMods = mods,
 	 				J.defGenerics = gens',
 	 				J.defName = name,

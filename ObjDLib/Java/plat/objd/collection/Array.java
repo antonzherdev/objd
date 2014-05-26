@@ -109,4 +109,16 @@ public abstract class Array<T> extends Seq_impl<T> {
         }
         return true;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Array array = (Array) o;
+
+        if (!list.equals(array.list)) return false;
+
+        return true;
+    }
 }
