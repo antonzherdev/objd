@@ -352,27 +352,30 @@ public abstract class Future<T> {
         return p;
     }
     public Try<T> waitResultPeriod(final double period) {
-        final Lock lock = new Lock();
-        final LockCondition cond = lock.newCondition();
+        final ConditionLock lock = new ConditionLock(0);
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(final Try<T> _) {
-                cond.unlockedSignal();
+                lock.lock();
+                lock.unlockWithCondition(1);
             }
         });
-        cond.unlockedAwaitPeriod(((float)(period)));
+        if(lock.lockWhenConditionPeriod(1, period)) {
+            lock.unlock();
+        }
         return this.result();
     }
     public Try<T> waitResult() {
-        final Lock lock = new Lock();
-        final LockCondition cond = lock.newCondition();
+        final ConditionLock lock = new ConditionLock(0);
         onCompleteF(new P<Try<T>>() {
             @Override
             public void apply(final Try<T> _) {
-                cond.unlockedSignal();
+                lock.lock();
+                lock.unlockWithCondition(1);
             }
         });
-        cond.unlockedAwait();
+        lock.lockWhenCondition(1);
+        lock.unlock();
         final Try<T> __tmp_4n = this.result();
         if(__tmp_4n == null) {
             throw new NullPointerException();

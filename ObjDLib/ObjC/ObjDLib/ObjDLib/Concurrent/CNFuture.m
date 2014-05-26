@@ -285,22 +285,23 @@ static CNClassType* _CNFuture_type;
 }
 
 - (CNTry*)waitResultPeriod:(CGFloat)period {
-    CNLock* lock = [CNLock lock];
-    CNLockCondition* cond = [lock newCondition];
+    NSConditionLock* lock = [NSConditionLock conditionLockWithCondition:0];
     [self onCompleteF:^void(CNTry* _) {
-        [cond unlockedSignal];
+        [lock lock];
+        [lock unlockWithCondition:1];
     }];
-    [cond unlockedAwaitPeriod:((float)(period))];
+    if([lock lockWhenCondition:1 period:period]) [lock unlock];
     return [self result];
 }
 
 - (CNTry*)waitResult {
-    CNLock* lock = [CNLock lock];
-    CNLockCondition* cond = [lock newCondition];
+    NSConditionLock* lock = [NSConditionLock conditionLockWithCondition:0];
     [self onCompleteF:^void(CNTry* _) {
-        [cond unlockedSignal];
+        [lock lock];
+        [lock unlockWithCondition:1];
     }];
-    [cond unlockedAwait];
+    [lock lockWhenCondition:1];
+    [lock unlock];
     return ((CNTry*)(nonnil([self result])));
 }
 

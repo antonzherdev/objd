@@ -82,7 +82,9 @@ classImports :: Class -> [Import]
 classImports Class{_classImports = r} = r
 classImports _ = []
 classNameWithPrefix :: Class -> String
-classNameWithPrefix cl = packagePrefix (classPackage cl) ++ cap (className cl)
+classNameWithPrefix cl 
+	| genClassName cl == className cl = packagePrefix (classPackage cl) ++ cap (className cl)
+	| otherwise = genClassName cl
 fullClassName :: Class -> String
 fullClassName cl = strs "." (packageName $ classPackage cl) ++ case className cl of
 	"" -> ""
@@ -613,6 +615,9 @@ dataTypeGenClassName tp = dataTypeClassName tp
 
 
 dataTypeClassNameWithPrefix :: DataType -> String
+dataTypeClassNameWithPrefix (TPGenericWrap _ c) = dataTypeClassNameWithPrefix c
+dataTypeClassNameWithPrefix (TPClass _ _ c ) = classNameWithPrefix c
+dataTypeClassNameWithPrefix (TPObject _ c) = classNameWithPrefix c
 dataTypeClassNameWithPrefix tp = "CN" ++ dataTypeClassName tp
 
 resolveTypeAlias :: DataType -> DataType

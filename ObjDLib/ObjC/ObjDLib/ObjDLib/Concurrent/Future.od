@@ -222,22 +222,25 @@ abstract class Future<T> {
     }
 
     def waitResult(period : float) : Try<T>? = {
-        val lock = Lock()
-        val cond = lock.newCondition
+        val lock = ConditionLock(0)
         onComplete { _ ->
-            cond.unlockedSignal
+            lock.lock
+            lock.unlockWith(condition = 1)
         }
-        cond.unlockedAwait(period)
+        if(lock.lockWhen(condition = 1, period)) {
+            lock.unlock
+        }
         result
     }
 
     def waitResult : Try<T> = {
-        val lock = Lock()
-        val cond = lock.newCondition
+        val lock = ConditionLock(0)
         onComplete { _ ->
-            cond.unlockedSignal
+            lock.lock
+            lock.unlockWith(condition = 1)
         }
-        cond.unlockedAwait
+        lock.lockWhen(condition = 1)
+        lock.unlock
         result.get
     }
 

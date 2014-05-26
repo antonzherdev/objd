@@ -43,7 +43,7 @@ public abstract class Array<T> extends Seq_impl<T> {
 
     @Override
     public T applyIndex(int index) {
-        return 0 < index || index >= list.size() ? null : list.get(index);
+        return 0 > index || index >= list.size() ? null : list.get(index);
     }
 
     @Override

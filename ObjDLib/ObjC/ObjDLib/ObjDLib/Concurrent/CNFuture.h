@@ -5,8 +5,7 @@
 @class CNAtomicInt;
 @class CNTry;
 @class CNSuccess;
-@class CNLock;
-@class CNLockCondition;
+@class NSConditionLock;
 @protocol CNTraversable;
 @class CNTuple;
 @class CNAtomicObject;

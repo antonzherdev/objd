@@ -1,28 +1,46 @@
 package objd.concurrent
 
-stub class Lock {
-    def lock
-    def unlock
-    def tryLock : bool
-
+stub trait Locking {
     inline def locked<T>(f : () -> T) : T = {
         lock
         val ret = f()
         unlock
         ret
     }
+    inline def lockedProc<T>(f : () -> void) : void = {
+        lock
+        f()
+        unlock
+    }
 
-    def newCondition : LockCondition
+    def lock
+    def unlock
+    def tryLock : bool
 }
 
-stub class LockCondition {
-    def await
-    def unlockedAwait
+@ObjC
+@GenName("NSLock")
+stub class Lock extends Locking
 
-    def await(period : float4) : bool
-    def unlockedAwait(period : float4) : bool
+@Java
+stub class Lock extends Locking
 
-    def signal //Signal when the lock is locked
-    def signalAndUnlock //Signal when the lock is locked and unlock
-    def unlockedSignal //Signal when the lock is NOT locked
+
+@ObjC
+@GenName("NSConditionLock")
+stub class ConditionLock(condition : int) extends Locking {
+    def tryLockWhen(condition : int) : bool
+    def lockWhen(condition : int)
+    def lockWhen(condition : int, period : float) : bool
+    def unlockWith(condition : int)
 }
+
+
+@Java
+stub class ConditionLock(condition : int) extends Locking {
+    def tryLockWhen(condition : int) : bool
+    def lockWhen(condition : int)
+    def lockWhen(condition : int, period : float) : bool
+    def unlockWith(condition : int)
+}
+
