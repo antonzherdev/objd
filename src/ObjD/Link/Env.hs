@@ -12,8 +12,8 @@ import           Data.Maybe
 
 type ClassIndex = M.Map String Class
 type ObjectIndex = [Class]
-data Env = Env{envSelf :: DataType, envSelfCast :: Bool, envIndex :: ClassIndex, envObjectIndex :: ObjectIndex
-	, envVals :: [Def], envInit :: Bool, envTp :: DataType, envVarSuffix :: String}
+data Env = Env{envLang :: Lang, envSelf :: DataType, envSelfCast :: Bool, envIndex :: ClassIndex
+	, envObjectIndex :: ObjectIndex, envVals :: [Def], envInit :: Bool, envTp :: DataType, envVarSuffix :: String}
 
 envChangeDefTp :: Env -> Def -> DataType -> Env
 envChangeDefTp env@Env{envVals = vals} d tp = env{envVals = d{defType = tp} : filter (/= d) vals}

@@ -7,6 +7,7 @@ import objd.concurrent.Promise;
 import objd.concurrent.DispatchQueue;
 import objd.concurrent.Future;
 import objd.concurrent.AtomicInt;
+import objd.collection.Traversable;
 import objd.collection.Set;
 import test.TestCase;
 import test.Test;
@@ -46,7 +47,7 @@ public class ChainTest extends TestCase {
                         });
                     }
                 });
-                final Future<ImArray<Integer>> fut = arr.chain().<Promise<Integer>>mapF(new F<Tuple<Integer, Promise<Integer>>, Promise<Integer>>() {
+                final Future<ImArray<Integer>> fut = ((Future<ImArray<Integer>>)(((Future)(arr.chain().<Promise<Integer>>mapF(new F<Tuple<Integer, Promise<Integer>>, Promise<Integer>>() {
                     @Override
                     public Promise<Integer> apply(final Tuple<Integer, Promise<Integer>> _) {
                         return _.b;
@@ -56,7 +57,7 @@ public class ChainTest extends TestCase {
                     public ImArray<Integer> apply(final Chain<Integer> chain) {
                         return chain.toArray();
                     }
-                });
+                })))));
                 final ImArray<Integer> set = arr.chain().<Integer>mapF(new F<Tuple<Integer, Promise<Integer>>, Integer>() {
                     @Override
                     public Integer apply(final Tuple<Integer, Promise<Integer>> _) {
@@ -105,7 +106,7 @@ public class ChainTest extends TestCase {
         }).toArray());
     }
     public void testMapOpt() {
-        PackageObjectTest.<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(4, 2), ImArray.fromObjects(2, 0, 1).chain().<Integer>mapOptF(new F<Integer, Integer>() {
+        PackageObjectTest.<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(4, 2), ImArray.fromObjects(2, 0, 1).chain().<Integer>mapOptF(((F<Integer, Integer>)(((F)(new F<Integer, Integer>() {
             @Override
             public Integer apply(final Integer x) {
                 if(x == 0) {
@@ -114,18 +115,18 @@ public class ChainTest extends TestCase {
                     return 2 * x;
                 }
             }
-        }).toArray());
+        }))))).toArray());
     }
     public void testFlatMap() {
-        PackageObjectTest.<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(2, 4, 0, 0, 1, 2), ImArray.fromObjects(2, 0, 1).chain().<Integer>flatMapF(new F<Integer, ImArray<Integer>>() {
+        PackageObjectTest.<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(2, 4, 0, 0, 1, 2), ImArray.fromObjects(2, 0, 1).chain().<Integer>flatMapF(((F<Integer, Traversable<Integer>>)(((F)(new F<Integer, ImArray<Integer>>() {
             @Override
             public ImArray<Integer> apply(final Integer x) {
                 return ImArray.fromObjects(x, 2 * x);
             }
-        }).toArray());
+        }))))).toArray());
     }
     public void testFlat() {
-        PackageObjectTest.<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(1, 5, 2, 3, 2), ImArray.fromObjects(((ImArray<Integer>)(ImArray.fromObjects(1, 5))), ((ImArray<Integer>)(ImArray.fromObjects(2, 3))), ImArray.fromObjects(2)).chain().<Integer>flat().toArray());
+        PackageObjectTest.<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(1, 5, 2, 3, 2), ImArray.fromObjects(((ImArray<Integer>)(((ImArray)(ImArray.fromObjects(1, 5))))), ((ImArray<Integer>)(((ImArray)(ImArray.fromObjects(2, 3))))), ImArray.fromObjects(2)).chain().<Integer>flat().toArray());
     }
     public void testZip() {
         PackageObjectTest.<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(2, 3), ImArray.fromObjects(1, 0, 3).chain().<Integer, Integer>zipBBy(ImArray.fromObjects(1, 3), new F2<Integer, Integer, Integer>() {
@@ -144,7 +145,7 @@ public class ChainTest extends TestCase {
         }).toArray());
     }
     public void testZipFor() {
-        final Mut<ImArray<Integer>> arr = new Mut<ImArray<Integer>>(ImArray.fromObjects());
+        final Mut<ImArray<Integer>> arr = new Mut<ImArray<Integer>>(ImArray.<Integer>fromObjects());
         ImArray.fromObjects(1, 0, 3).chain().<Integer>zipForBBy(ImArray.fromObjects(1, 3), new P2<Integer, Integer>() {
             @Override
             public void apply(final Integer a, final Integer b) {
@@ -175,7 +176,7 @@ public class ChainTest extends TestCase {
         PackageObjectTest.<ImArray<Integer>>assertEqualsAB(ImArray.fromObjects(2, 0, 1), ImArray.fromObjects(1, 0, 2).chain().reverse().toArray());
     }
     public void testGroupBy() {
-        PackageObjectTest.<Set<ImArray<Integer>>>assertEqualsAB(ImArray.fromObjects(((ImArray<Integer>)(ImArray.fromObjects(1, 0))), ImArray.fromObjects(2)).chain().toSet(), ImArray.fromObjects(1, 0, 2).chain().<Boolean>groupBy(new F<Integer, Boolean>() {
+        PackageObjectTest.<Set<ImArray<Integer>>>assertEqualsAB(ImArray.fromObjects(((ImArray<Integer>)(((ImArray)(ImArray.fromObjects(1, 0))))), ImArray.fromObjects(2)).chain().toSet(), ((Set<ImArray<Integer>>)(((Set)(ImArray.fromObjects(1, 0, 2).chain().<Boolean>groupBy(new F<Integer, Boolean>() {
             @Override
             public Boolean apply(final Integer _) {
                 return _ <= 1;
@@ -185,7 +186,7 @@ public class ChainTest extends TestCase {
             public ImArray<Integer> apply(final Tuple<Boolean, ImArray<Integer>> _) {
                 return _.b;
             }
-        }).toSet());
+        }).toSet())))));
         PackageObjectTest.<Set<Integer>>assertEqualsAB(ImArray.fromObjects(-1, 3).chain().toSet(), ImArray.fromObjects(1, -2, 3).chain().<Boolean, Integer>groupByStartFold(new F<Integer, Boolean>() {
             @Override
             public Boolean apply(final Integer _) {

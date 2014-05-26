@@ -31,7 +31,7 @@ public class MTreeMapKeyIterator<K, V> extends MIterator_impl<K> {
         {
             final TreeMapEntry<K, V> _ = this.prev;
             if(_ != null) {
-                this.map.deleteEntry(_);
+                this.map.deleteEntry(((TreeMapEntry<K, V>)(((TreeMapEntry)(_)))));
             }
         }
     }
@@ -41,7 +41,7 @@ public class MTreeMapKeyIterator<K, V> extends MIterator_impl<K> {
             final TreeMapEntry<K, V> p = this.prev;
             if(p != null) {
                 if(!(p.key.equals(value))) {
-                    this.map.deleteEntry(p);
+                    this.map.deleteEntry(((TreeMapEntry<K, V>)(((TreeMapEntry)(p)))));
                     this.map.setKeyValue(value, p.value);
                 }
             }

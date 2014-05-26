@@ -41,7 +41,7 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
     }
     @Override
     public Iterator<Tuple<K, V>> iterator() {
-        return TreeMapIterator.<K, V>applyMapEntry(this, this.firstEntry());
+        return ((Iterator<Tuple<K, V>>)(((Iterator)(TreeMapIterator.<K, V>applyMapEntry(this, this.firstEntry())))));
     }
     public TreeMapIterator<K, V> iteratorHigherThanKey(final K key) {
         return TreeMapIterator.<K, V>applyMapEntry(this, higherEntryThanKey(key));

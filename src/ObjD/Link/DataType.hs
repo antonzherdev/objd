@@ -1,5 +1,5 @@
 module ObjD.Link.DataType (
-	dataTypeClassRef, dataTypeClass, applyLambdaDef, dataTypeGenerics, getDataType, envSelfClass, dataType
+	dataTypeClassRef, dataTypeClass, applyLambdaDef, dataTypeGenerics, getDataType, envSelfClass, dataType, isValidDataType
 )where
 
 import 			 ObjD.Link.Struct
@@ -11,7 +11,7 @@ import qualified ObjD.Struct         as D
 dataTypeClassRef :: Env -> DataType -> ClassRef
 dataTypeClassRef env tp = let 
 		cl = dataTypeClass env tp
-	in (cl, buildGenerics cl $ dataTypeGenerics env tp)
+	in (cl, buildGenerics cl $ dataTypeGenerics tp)
 
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
@@ -54,17 +54,17 @@ applyLambdaDef :: DataType -> Def
 applyLambdaDef (TPGenericWrap _ tp) = applyLambdaDef tp
 applyLambdaDef (TPFun stp dtp) = Def {defName = "apply", defPars = map (localVal "") stp, defType = dtp, defBody = Nop, defMods = [DefModApplyLambda], defGenerics = Nothing, defAnnotations = []}
 	
-dataTypeGenerics :: Env -> DataType -> [DataType]
-dataTypeGenerics _ (TPClass _ g _) = g
-dataTypeGenerics _ (TPArr _ g) = [g]
-dataTypeGenerics _ (TPEArr _ g) = [g]
-dataTypeGenerics _ (TPFun s d) = s ++ [d]
-dataTypeGenerics _ (TPMap k v) = [k, v]
-dataTypeGenerics _ (TPOption _ v) = [v]
-dataTypeGenerics _ (TPTuple a) = a
-dataTypeGenerics _ (TPPointer a) = [a]
-dataTypeGenerics env (TPGenericWrap _ g) = dataTypeGenerics env g
-dataTypeGenerics _ _ = []
+dataTypeGenerics :: DataType -> [DataType]
+dataTypeGenerics (TPClass _ g _) = g
+dataTypeGenerics (TPArr _ g) = [g]
+dataTypeGenerics (TPEArr _ g) = [g]
+dataTypeGenerics (TPFun s d) = s ++ [d]
+dataTypeGenerics (TPMap k v) = [k, v]
+dataTypeGenerics (TPOption _ v) = [v]
+dataTypeGenerics (TPTuple a) = a
+dataTypeGenerics (TPPointer a) = [a]
+dataTypeGenerics (TPGenericWrap _ g) = dataTypeGenerics g
+dataTypeGenerics _ = []
 
 dataType :: Env -> D.DataType -> DataType
 dataType env (D.DataType name gens) = case name of
@@ -130,4 +130,8 @@ getDataType env tp e = maybe (exprDataType e) (dataType env) tp
 envSelfClass :: Env -> Class 
 envSelfClass env = dataTypeClass env $ envSelf env
 
+isValidDataType :: DataType -> Bool
+isValidDataType (TPGenericWrap _ tp) = isValidDataType tp
+isValidDataType (TPUnknown _) = False
+isValidDataType tp = all isValidDataType $ dataTypeGenerics tp
 

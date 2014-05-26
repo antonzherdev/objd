@@ -46,7 +46,7 @@ linkFile lang files (D.File name package stms) = fl
 		isOtherLangAnnotation _ = False
 
 		classes = (concatMap linkCl . filter isCls) stms'
-		linkCl cl = linkClass (cidx cl, glidx cl, fl, package', clImports cl) cl
+		linkCl cl = linkClass (lang, cidx cl, glidx cl, fl, package', clImports cl) cl
 		isCls s = D.isClass s || D.isStub s || D.isEnum s || D.isType s
 		cidx cl =  M.fromList . map (idx className) $ classes ++ importClasses cl ++ (concatMap fileClasses $ kernelFiles ++ packageFiles)
 		glidx cl = importObjectDefs cl
@@ -108,13 +108,13 @@ linkImport files name
 		packObject imp = filter (\c -> ClassModPackageObject `elem` classMods c && classPackageName c == imp) allClasses
 		classesWithName imp = filter (\c -> className c == last imp && classPackageName c == init imp) allClasses
 
-linkClass :: (ClassIndex, ObjectIndex, File, Package, [Import]) -> D.FileStm -> [Class]
+linkClass :: (Lang, ClassIndex, ObjectIndex, File, Package, [Import]) -> D.FileStm -> [Class]
 -- linkClass (_, _, _, _, _) D.Class{D.className = cls} | trace ("Class " ++ cls) False = undefined
-linkClass (ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not isSeltStub then [cl', traitImplClass env cl'] else [cl']
+linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not isSeltStub then [cl', traitImplClass env cl'] else [cl']
 	where
 		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
-		env = Env selfType False cidx glidx [] False TPVoid ""
-		staticEnv = Env (TPObject (refDataTypeMod cl') cl') False ocidx glidx [] False TPVoid ""
+		env = Env lang selfType False cidx glidx [] False TPVoid ""
+		staticEnv = Env lang (TPObject (refDataTypeMod cl') cl') False ocidx glidx [] False TPVoid ""
 		isObject = case cl of
 			D.Class{} -> D.ClassModObject `elem` D.classMods cl
 			_ -> False
@@ -377,7 +377,7 @@ linkField env (obj, _isStruct) dd@D.Def{D.defMods = mods, D.defName = name, D.de
 		in if isLazy then [defLazyGet, defLazy] else [def]
 
 findOverridenDef :: Env -> D.ClassStm -> Maybe Def
-findOverridenDef env D.Def{D.defName = name, D.defPars = opars} = find eqDef $ allDefsInParentClass (buildGenerics cl $ dataTypeGenerics env $ envSelf env) cl
+findOverridenDef env D.Def{D.defName = name, D.defPars = opars} = find eqDef $ allDefsInParentClass (buildGenerics cl $ dataTypeGenerics $ envSelf env) cl
 	where
 		cl = envSelfClass env
 		eqDef d = defName d == name && length (defPars d) == length opars' && all eqParameterNames (zip (defPars d) opars')
@@ -1363,7 +1363,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 				(zipWith (determineGenericType selfType) defGens . extendList (length defGens)) gens
 			srcClassGenerics = classGenerics $ dataTypeClass env selfTp
 			dclassGenerics :: [(String, DataType)]
-			dclassGenerics = (zipWith extractGen srcClassGenerics . extendList (length srcClassGenerics)) (dataTypeGenerics env selfTp) 
+			dclassGenerics = (zipWith extractGen srcClassGenerics . extendList (length srcClassGenerics)) (dataTypeGenerics selfTp) 
 				where 
 					extractGen :: Class -> Maybe DataType -> (String, DataType)
 					extractGen g (Just t) = (className g, t)
@@ -1402,7 +1402,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 					tryDetermine c (a, b@TPArr{}) = tryDetermine c (a, dtpw b)
 					tryDetermine c (a, b@TPMap{}) = tryDetermine c (a, dtpw b)
 					tryDetermine _ _ = Nothing
-					dtpw tp = TPClass TPMGeneric (dataTypeGenerics env tp) (dataTypeClass env tp) 
+					dtpw tp = TPClass TPMGeneric (dataTypeGenerics tp) (dataTypeClass env tp) 
 			in case snd call' of
 				(Call Def{defGenerics = Just defGens} _ _ _) -> 
 					M.fromList $ ddefGenerics defGens ++ dclassGenerics

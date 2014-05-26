@@ -11,7 +11,7 @@ public class ImMapDefault<K, V> extends ImIterable_impl<Tuple<K, V>> {
     }
     @Override
     public Iterator<Tuple<K, V>> iterator() {
-        return this.map.iterator();
+        return ((Iterator<Tuple<K, V>>)(((Iterator)(this.map.iterator()))));
     }
     public V applyKey(final K key) {
         final V __tmp = this.map.applyKey(key);

@@ -6,7 +6,7 @@ public abstract class Builder_impl<T, C extends Traversable<T>> implements Build
     public void appendAllItems(final Traversable<T> items) {
         if(items instanceof Iterable) {
             {
-                final Iterator<T> __il__0t_0i = ((Iterable<T>)(items)).iterator();
+                final Iterator<T> __il__0t_0i = ((Iterable<T>)(((Iterable)(items)))).iterator();
                 while(__il__0t_0i.hasNext()) {
                     final T _ = __il__0t_0i.next();
                     appendItem(_);

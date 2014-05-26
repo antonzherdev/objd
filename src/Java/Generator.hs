@@ -297,11 +297,11 @@ genExp env (D.Dot l (D.As dtp)) = do
 genExp env (D.Dot l (D.CastDot dtp)) = do 
 	l' <- genExp env l
 	dtp' <- genTp dtp
-	return $ J.Cast dtp' l'
+	return $ cast dtp' l'
 genExp env (D.Cast dtp l) = do 
 	l' <- genExp env l
 	dtp' <- genTp dtp
-	return $ J.Cast dtp' l'
+	return $ cast dtp' l'
 genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
 	| D.DefModConstructor `elem` D.defMods constr 
 		|| (D.defName constr == "apply" && D.DefModStub `elem` D.defMods constr && D.DefModStatic `elem` D.defMods constr) 
@@ -460,15 +460,12 @@ genExp env (D.NullDot _ _ e) = genExp env e
 genExp _ e = return $ J.ExpError $ "Unknown " ++ show e
 
 genParExp :: Env -> (D.Def, D.Exp) -> Writer Wrt J.Exp 
-genParExp env (_, e) = genExp env e {-do
-	e' <- genExp env e
-	let cst = do
-		tp' <- genTp (D.defType d)
-		return $ J.Cast tp' e'
-	case (D.defType d, D.exprDataType e) of
-		(D.TPClass _ dgs _, D.TPClass _ egs _) -> if dgs == egs then return e' else cst
-		(D.TPFun ds dd, D.TPFun es ed) -> if ds == es && dd == ed then return e' else cst
-		_ -> return e'-}
+genParExp env (_, e) = genExp env e 
+
+cast :: J.TP -> J.Exp -> J.Exp
+cast tp@(J.TPRef [] _) e = J.Cast tp e
+cast tp@(J.TPRef _ r) e = J.Cast tp $ J.Cast (J.TPRef [] r) e
+cast tp e = J.Cast tp e
 
 stringFormatForType :: D.DataType -> String
 stringFormatForType (D.TPNumber False 8) = "%ld"

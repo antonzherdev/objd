@@ -169,7 +169,7 @@ class Chain<A>(val link : ChainLink<_, A>, val previous : Chain<_>?) extends ImT
         var r : R?
         apply(Yield.make<A>(
             begin = size -> {
-                b = builder(size).cast<Builder>
+                b = builder(size)
                 Go.Continue
             },
             yield = item -> {
@@ -299,7 +299,7 @@ class Chain<A>(val link : ChainLink<_, A>, val previous : Chain<_>?) extends ImT
         var ch : Chain<_>? = self
         var y : Yield<_> = yield
         while(ch != nil) {
-            y = ch.link.build(y.cast<Yield>)
+            y = ch.link.build(y)
             ch = ch.previous
         }
         y

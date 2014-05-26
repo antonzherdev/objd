@@ -7,9 +7,9 @@ public final class Tuple<A, B> implements Comparable<Tuple<A, B>> {
     public final B b;
     @Override
     public int compareTo(final Tuple<A, B> to) {
-        final int r = ((Comparable<A>)(to.a)).compareTo(this.a);
+        final int r = ((Comparable<A>)(((Comparable)(to.a)))).compareTo(this.a);
         if(r == 0) {
-            return -(((Comparable<B>)(to.b)).compareTo(this.b));
+            return -(((Comparable<B>)(((Comparable)(to.b)))).compareTo(this.b));
         } else {
             return -(r);
         }

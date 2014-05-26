@@ -17,36 +17,36 @@ public abstract class Future<T> {
         return p;
     }
     public static <A, B> Future<Tuple<A, B>> joinAB(final Future<A> a, final Future<B> b) {
-        return Future.<A, B, Tuple<A, B>>mapABF(a, b, new F2<A, B, Tuple<A, B>>() {
+        return ((Future<Tuple<A, B>>)(((Future)(Future.<A, B, Tuple<A, B>>mapABF(a, b, new F2<A, B, Tuple<A, B>>() {
             @Override
             public Tuple<A, B> apply(final A _a, final B _b) {
                 return new Tuple<A, B>(_a, _b);
             }
-        });
+        })))));
     }
     public static <A, B, C> Future<Tuple3<A, B, C>> joinABC(final Future<A> a, final Future<B> b, final Future<C> c) {
-        return Future.<A, B, C, Tuple3<A, B, C>>mapABCF(a, b, c, new F3<A, B, C, Tuple3<A, B, C>>() {
+        return ((Future<Tuple3<A, B, C>>)(((Future)(Future.<A, B, C, Tuple3<A, B, C>>mapABCF(a, b, c, new F3<A, B, C, Tuple3<A, B, C>>() {
             @Override
             public Tuple3<A, B, C> apply(final A _a, final B _b, final C _c) {
                 return new Tuple3<A, B, C>(_a, _b, _c);
             }
-        });
+        })))));
     }
     public static <A, B, C, D> Future<Tuple4<A, B, C, D>> joinABCD(final Future<A> a, final Future<B> b, final Future<C> c, final Future<D> d) {
-        return Future.<A, B, C, D, Tuple4<A, B, C, D>>mapABCDF(a, b, c, d, new F4<A, B, C, D, Tuple4<A, B, C, D>>() {
+        return ((Future<Tuple4<A, B, C, D>>)(((Future)(Future.<A, B, C, D, Tuple4<A, B, C, D>>mapABCDF(a, b, c, d, new F4<A, B, C, D, Tuple4<A, B, C, D>>() {
             @Override
             public Tuple4<A, B, C, D> apply(final A _a, final B _b, final C _c, final D _d) {
                 return new Tuple4<A, B, C, D>(_a, _b, _c, _d);
             }
-        });
+        })))));
     }
     public static <A, B, C, D, E> Future<Tuple5<A, B, C, D, E>> joinABCDE(final Future<A> a, final Future<B> b, final Future<C> c, final Future<D> d, final Future<E> e) {
-        return Future.<A, B, C, D, E, Tuple5<A, B, C, D, E>>mapABCDEF(a, b, c, d, e, new F5<A, B, C, D, E, Tuple5<A, B, C, D, E>>() {
+        return ((Future<Tuple5<A, B, C, D, E>>)(((Future)(Future.<A, B, C, D, E, Tuple5<A, B, C, D, E>>mapABCDEF(a, b, c, d, e, new F5<A, B, C, D, E, Tuple5<A, B, C, D, E>>() {
             @Override
             public Tuple5<A, B, C, D, E> apply(final A _a, final B _b, final C _c, final D _d, final E _e) {
                 return new Tuple5<A, B, C, D, E>(_a, _b, _c, _d, _e);
             }
-        });
+        })))));
     }
     public static <A, B, R> Future<R> mapABF(final Future<A> a, final Future<B> b, final F2<A, B, R> f) {
         final Promise<R> p = Promise.<R>apply();
@@ -62,7 +62,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)(t)));
+                    p.completeValue(((Try<R>)(((Try)(t)))));
                 }
             }
         });
@@ -75,7 +75,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)(t)));
+                    p.completeValue(((Try<R>)(((Try)(t)))));
                 }
             }
         });
@@ -96,7 +96,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)(t)));
+                    p.completeValue(((Try<R>)(((Try)(t)))));
                 }
             }
         });
@@ -109,7 +109,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)(t)));
+                    p.completeValue(((Try<R>)(((Try)(t)))));
                 }
             }
         });
@@ -122,7 +122,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)(t)));
+                    p.completeValue(((Try<R>)(((Try)(t)))));
                 }
             }
         });
@@ -144,7 +144,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)(t)));
+                    p.completeValue(((Try<R>)(((Try)(t)))));
                 }
             }
         });
@@ -157,7 +157,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)(t)));
+                    p.completeValue(((Try<R>)(((Try)(t)))));
                 }
             }
         });
@@ -170,7 +170,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)(t)));
+                    p.completeValue(((Try<R>)(((Try)(t)))));
                 }
             }
         });
@@ -183,7 +183,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)(t)));
+                    p.completeValue(((Try<R>)(((Try)(t)))));
                 }
             }
         });
@@ -206,7 +206,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)(t)));
+                    p.completeValue(((Try<R>)(((Try)(t)))));
                 }
             }
         });
@@ -219,7 +219,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)(t)));
+                    p.completeValue(((Try<R>)(((Try)(t)))));
                 }
             }
         });
@@ -232,7 +232,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)(t)));
+                    p.completeValue(((Try<R>)(((Try)(t)))));
                 }
             }
         });
@@ -245,7 +245,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)(t)));
+                    p.completeValue(((Try<R>)(((Try)(t)))));
                 }
             }
         });
@@ -258,7 +258,7 @@ public abstract class Future<T> {
                         p.successValue(f.apply(_a.value, _b.value, _c.value, _d.value, _e.value));
                     }
                 } else {
-                    p.completeValue(((Try<R>)(t)));
+                    p.completeValue(((Try<R>)(((Try)(t)))));
                 }
             }
         });
@@ -325,7 +325,7 @@ public abstract class Future<T> {
                     f.apply(tr.get());
                     p.successValue(null);
                 } else {
-                    p.completeValue(((Try<Void>)(tr)));
+                    p.completeValue(((Try<Void>)(((Try)(tr)))));
                 }
             }
         });
@@ -337,7 +337,7 @@ public abstract class Future<T> {
             @Override
             public void apply(final Try<T> tr) {
                 if(tr.isFailure()) {
-                    p.completeValue(((Try<R>)(tr)));
+                    p.completeValue(((Try<R>)(((Try)(tr)))));
                 } else {
                     final Future<R> fut = f.apply(tr.get());
                     fut.onCompleteF(new P<Try<R>>() {
@@ -392,12 +392,12 @@ public abstract class Future<T> {
     public <I> void waitAndOnSuccessFlatAwaitF(final double await, final P<I> f) {
         {
             {
-                final Try<Traversable<I>> __il__0__tr = ((Future<Traversable<I>>)(this)).waitResultPeriod(await);
+                final Try<Traversable<I>> __il__0__tr = ((Future<Traversable<I>>)(((Future)(this)))).waitResultPeriod(await);
                 if(__il__0__tr != null) {
                     if(__il__0__tr.isSuccess()) {
                         {
                             final Traversable<I> __tr2 = __il__0__tr.get();
-                            ((Traversable<I>)(__tr2)).forEach(f);
+                            ((Traversable<I>)(((Traversable)(__tr2)))).forEach(f);
                         }
                     }
                 }
@@ -425,7 +425,7 @@ public abstract class Future<T> {
                         p.successValue(new Tuple<T, R>(a.value, b.value));
                     }
                 } else {
-                    p.completeValue(((Try<Tuple<T, R>>)(t)));
+                    p.completeValue(((Try<Tuple<T, R>>)(((Try)(t)))));
                 }
             }
         });
@@ -438,7 +438,7 @@ public abstract class Future<T> {
                         p.successValue(new Tuple<T, R>(a.value, b.value));
                     }
                 } else {
-                    p.completeValue(((Try<Tuple<T, R>>)(t)));
+                    p.completeValue(((Try<Tuple<T, R>>)(((Try)(t)))));
                 }
             }
         });

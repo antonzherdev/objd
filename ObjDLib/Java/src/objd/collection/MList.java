@@ -59,7 +59,7 @@ public class MList<T> extends MSeq_impl<T> {
             this.lastItem = i;
             this._count = ((int)(1));
         } else {
-            i.next = ((MListItem<T>)(this.headItem));
+            i.next = ((MListItem<T>)(((MListItem)(this.headItem))));
             this.headItem.prev = i;
             this.headItem = i;
             this._count++;
@@ -73,7 +73,7 @@ public class MList<T> extends MSeq_impl<T> {
             this.lastItem = i;
             this._count = ((int)(1));
         } else {
-            i.prev = ((MListItem<T>)(this.lastItem));
+            i.prev = ((MListItem<T>)(((MListItem)(this.lastItem))));
             this.lastItem.next = i;
             this.lastItem = i;
             this._count++;
@@ -113,7 +113,7 @@ public class MList<T> extends MSeq_impl<T> {
         {
             final MListItem<T> _ = this.headItem;
             if(_ != null) {
-                removeListItem(_);
+                removeListItem(((MListItem<T>)(((MListItem)(_)))));
             }
         }
     }
@@ -121,7 +121,7 @@ public class MList<T> extends MSeq_impl<T> {
         {
             final MListItem<T> _ = this.lastItem;
             if(_ != null) {
-                removeListItem(_);
+                removeListItem(((MListItem<T>)(((MListItem)(_)))));
             }
         }
     }
@@ -129,7 +129,7 @@ public class MList<T> extends MSeq_impl<T> {
         final MListItem<T> h = this.headItem;
         if(h != null) {
             final T r = h.data;
-            removeListItem(h);
+            removeListItem(((MListItem<T>)(((MListItem)(h)))));
             return r;
         } else {
             return null;
@@ -143,7 +143,7 @@ public class MList<T> extends MSeq_impl<T> {
         final MListItem<T> h = this.lastItem;
         if(h != null) {
             final T r = h.data;
-            removeListItem(h);
+            removeListItem(((MListItem<T>)(((MListItem)(h)))));
             return r;
         } else {
             return null;
@@ -173,7 +173,7 @@ public class MList<T> extends MSeq_impl<T> {
         MListItem<T> i = this.headItem;
         while(i != null) {
             if(!(by.apply(i.data))) {
-                removeListItem(i);
+                removeListItem(((MListItem<T>)(((MListItem)(i)))));
             }
             i = i.next;
         }

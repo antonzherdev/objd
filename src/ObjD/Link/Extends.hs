@@ -15,7 +15,7 @@ superDataType _ (TPClass _ gens cl) extRef@(extCl, _) =
 	TPClass (refDataTypeMod extCl) (superGenericsList (buildGenerics cl gens) extRef) extCl
 superDataType _ (TPObject _ _) (extCl, _) = TPObject (refDataTypeMod extCl) extCl
 superDataType env tp extRef@(extCl, _) = TPClass (refDataTypeMod extCl) 
-	(superGenericsList (buildGenerics (dataTypeClass env tp) (dataTypeGenerics env tp)) extRef)  extCl
+	(superGenericsList (buildGenerics (dataTypeClass env tp) (dataTypeGenerics tp)) extRef)  extCl
 -- superDataType _ _ = TPVoid
 
 superDataTypes :: Env -> DataType -> [DataType]
@@ -62,7 +62,7 @@ isInstanceOfTp _ (TPClass _ _ _) (TPClass _ _ Class{className = "Object"}) = Tru
 isInstanceOfTp env cl target
 	-- | trace (show cl ++ " isInstanceOfTp " ++ show target ++ " / " ++ className (dataTypeClass env cl) ++ " isInstanceOf " ++ className (dataTypeClass env target)) False = undefined
 	| dataTypeClass env cl == dataTypeClass env target = 
-		all (\(clg, tg) -> isInstanceOfTp env clg tg ) $ zip (dataTypeGenerics env cl) (dataTypeGenerics env target)
+		all (\(clg, tg) -> isInstanceOfTp env clg tg ) $ zip (dataTypeGenerics cl) (dataTypeGenerics target)
 	-- | otherwise =  dataTypeClass env cl `isInstanceOf` dataTypeClass env target
 	| otherwise = any (\tp -> isInstanceOfTp env tp target) $ superDataTypes env cl
 		
@@ -99,7 +99,7 @@ commonSuperDataType env TPVoid _ = [baseDataType env]
 commonSuperDataType env a b 
 	| a == b = [a]
 	| dataTypeClass env a == dataTypeClass env b = 
-		[mapDataTypeGenerics (map (\(ag, bg) -> wrapGeneric $ head $ commonSuperDataType env ag bg) . zip (dataTypeGenerics env a) ) b]
+		[mapDataTypeGenerics (map (\(ag, bg) -> wrapGeneric $ head $ commonSuperDataType env ag bg) . zip (dataTypeGenerics a) ) b]
 	| isInstanceOfTp env a b = [b]
 	| isInstanceOfTp env b a = [a]
 	| otherwise = 

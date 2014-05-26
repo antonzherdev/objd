@@ -25,20 +25,20 @@ public final class FilledList<T> extends ImList<T> {
     @Override
     public ImList<T> filterF(final F<T, Boolean> f) {
         if(f.apply(this._head)) {
-            return ((ImList<T>)(new FilledList<T>(this._head, this.tail.filterF(f))));
+            return ((ImList<T>)(((ImList)(new FilledList<T>(this._head, this.tail.filterF(f))))));
         } else {
             return this.tail.filterF(f);
         }
     }
     @Override
     public ImList<T> reverse() {
-        return reverseAndAddList(((ImList<T>)(EmptyList.instance)));
+        return reverseAndAddList(((ImList<T>)(((ImList)(EmptyList.instance)))));
     }
     private ImList<T> reverseAndAddList(final ImList<T> list) {
         FilledList<T> ret = new FilledList<T>(this._head, list);
         ImList<T> l = this.tail;
         while(!(l.isEmpty())) {
-            ret = new FilledList<T>(((FilledList<T>)(l))._head, ret);
+            ret = new FilledList<T>(((FilledList<T>)(((FilledList)(l))))._head, ret);
             l = l.tail();
         }
         return ret;
@@ -52,13 +52,13 @@ public final class FilledList<T> extends ImList<T> {
             if(tail.isEmpty()) {
                 return ;
             }
-            list = ((FilledList<T>)(tail));
+            list = ((FilledList<T>)(((FilledList)(tail))));
         }
     }
     @Override
     public <C extends Comparable<C>> ImList<C> insertItem(final C item) {
         ImList<C> before = ImList.<C>apply();
-        FilledList<C> list = ((FilledList<C>)(this));
+        FilledList<C> list = ((FilledList<C>)(((FilledList)(this))));
         while(true) {
             final C h = list._head;
             if(item.compareTo(h) < 0) {
@@ -68,7 +68,7 @@ public final class FilledList<T> extends ImList<T> {
             if(list.tail.isEmpty()) {
                 return new FilledList<C>(item, before).reverse();
             }
-            list = ((FilledList<C>)(list.tail));
+            list = ((FilledList<C>)(((FilledList)(list.tail))));
         }
     }
     public FilledList(final T _head, final ImList<T> tail) {

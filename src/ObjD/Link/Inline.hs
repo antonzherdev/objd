@@ -47,7 +47,7 @@ inlineCall env e = let
 	gens :: Generics
 	gens = M.union classGensMap defGensMap
 		where
-			classGensMap = buildGenerics defClass $ fromJust $ upGenericsToClass defClass ((dataTypeClass env selfTp), (dataTypeGenerics env selfTp))
+			classGensMap = buildGenerics defClass $ fromJust $ upGenericsToClass defClass ((dataTypeClass env selfTp), (dataTypeGenerics selfTp))
 			defGensMap = M.fromList $ zip (maybe [] (map className . defGenericsClasses) $ defGenerics def) callGens
 		
 	mapDeclaredValsGenerics = map repGens declaredVals

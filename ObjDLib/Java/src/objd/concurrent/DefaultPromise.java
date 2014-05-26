@@ -9,7 +9,7 @@ public class DefaultPromise<T> extends Promise<T> {
     public Try<T> result() {
         final Object v = this._state.get();
         if(v instanceof Try) {
-            return ((Try<T>)(v));
+            return ((Try<T>)(((Try)(v))));
         } else {
             return null;
         }
@@ -22,7 +22,7 @@ public class DefaultPromise<T> extends Promise<T> {
                 return false;
             } else {
                 if(this._state.compareAndSet(v, value)) {
-                    ((ImArray<P<Try<T>>>)(v)).forEach(new P<P<Try<T>>>() {
+                    ((ImArray<P<Try<T>>>)(((ImArray)(v)))).forEach(new P<P<Try<T>>>() {
                         @Override
                         public void apply(final P<Try<T>> f) {
                             f.apply(value);
@@ -46,10 +46,10 @@ public class DefaultPromise<T> extends Promise<T> {
         while(true) {
             final Object v = this._state.get();
             if(v instanceof Try) {
-                f.apply(((Try<T>)(v)));
+                f.apply(((Try<T>)(((Try)(v)))));
                 return ;
             } else {
-                final ImArray<P<Try<T>>> vv = ((ImArray<P<Try<T>>>)(v));
+                final ImArray<P<Try<T>>> vv = ((ImArray<P<Try<T>>>)(((ImArray)(v))));
                 if(this._state.compareAndSet(vv, vv.addItem(f))) {
                     return ;
                 }

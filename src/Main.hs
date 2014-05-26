@@ -19,7 +19,7 @@ import System.IO
 import System.FilePath
 
 debug :: [String]
-debug = []
+debug = ["ChainTest"]
 
 data Args = Args{objCPath :: Maybe String, javaPath :: Maybe String, javaTestPath :: Maybe String}
 

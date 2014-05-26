@@ -11,7 +11,7 @@ public abstract class ImMap_impl<K, V> extends Map_impl<K, V> implements ImMap<K
     }
     public ImMap<K, V> addItem(final Tuple<K, V> item) {
         final HashMapBuilder<K, V> builder = new HashMapBuilder<K, V>();
-        builder.appendAllItems(this);
+        builder.appendAllItems(((Traversable<Tuple<K, V>>)(((Traversable)(this)))));
         builder.appendItem(item);
         return builder.build();
     }

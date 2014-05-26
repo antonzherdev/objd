@@ -5,9 +5,11 @@ module ObjD.Link.Conversion (
 
 import 			 ObjD.Link.Struct
 import 			 ObjD.Link.Env
+import 			 ObjD.Link.DataType
 import 			 ObjD.Link.Extends
 import           Data.List
 import           Ex.String
+--import Debug.Trace
 
 maybeAddReturn :: Env -> DataType -> Exp -> Exp
 --maybeAddReturn _ tp _ | trace ("r " ++ show tp) False = undefined
@@ -86,14 +88,14 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 			where
 				conv (TPGenericWrap _ s) d = conv s d
 				conv s (TPGenericWrap _ d) = conv s d
-				conv (TPFun _ (TPGenericWrap _ _)) (TPFun _ (TPGenericWrap _ _)) = ex
-				conv (TPFun _ _) (TPFun _ fdtp@(TPGenericWrap _ _)) = case ex of
+				conv sc@(TPFun _ (TPGenericWrap _ _)) dc@(TPFun _ (TPGenericWrap _ _)) = mdCheckGens sc dc
+				conv sc@(TPFun _ _) dc@(TPFun _ fdtp@(TPGenericWrap _ _)) = case ex of
 					Lambda lambdaPars le _ -> Lambda lambdaPars  (maybeAddReturn env fdtp le) fdtp
-					_ -> ex
-				conv (TPFun _ stp) (TPFun _ TPVoid) = if stp == TPVoid then ex else  case ex of
+					_ -> mdCheckGens sc dc
+				conv sc@(TPFun _ stp) dc@(TPFun _ TPVoid) = if stp == TPVoid then ex else  case ex of
 					Lambda lambdaPars le _ -> Lambda lambdaPars  (maybeAddReturn env TPVoid le) TPVoid
-					_ -> ex
-				conv TPFun{} TPFun{} = ex
+					_ -> mdCheckGens sc dc
+				conv sc@TPFun{} dc@TPFun{} = mdCheckGens sc dc
 				conv _ f@(TPFun _ fdtp) = Lambda (lambdaImplicitParameters f) (maybeAddReturn env fdtp ex) fdtp
 				{-conv TPFun{} _ = LambdaCall ex-}
 				conv (TPOption True a) bb@(TPOption False b) = Cast bb $ conv a b
@@ -118,7 +120,7 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 					Arr exps -> Arr $ map (implicitConvertsion env adtp) exps
 					_ -> ex
 				conv (TPArr _ _) (TPClass _ [d] Class{className = "PArray"}) = Cast (TPEArr 0 (unwrapGeneric d)) ex
-				conv sc dc@TPClass{} = if isInstanceOfTp env sc dc then ex else classConversion dc sc ex
+				conv sc dc@TPClass{} = if isInstanceOfTp env sc dc then mdCheckGens sc dc else classConversion dc sc ex
 				conv _ _ = ex
 
 				classConversion c (TPGenericWrap _ g) e = classConversion c g e
@@ -136,6 +138,24 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 						od = objectDef cls
 						wrapWithApply apply@Def{defPars = [par]} = Dot (Call od (defType od) [] []) (Call apply dtp [(par, e)] [])
 				classConversion t sc _ = ExpLError (show t ++ " from " ++ show sc) ex
+
+
+				mdCheckGens sc dc = if envLang env == Java then checkGens sc dc else ex
+				
+				checkGens sc dc 
+					| isValidDataType dc = if eqTps (dataTypeGenerics sc) (dataTypeGenerics dc) then ex else Cast dc ex
+					| otherwise = ex
+
+				eqTps [] [] = True
+				eqTps (s:ss) (d:ds) = eqTp s d && eqTps ss ds
+				eqTps _ _ = False
+
+				eqTp s (TPGenericWrap _ d) = eqTp s d
+				eqTp (TPGenericWrap _ s) d = eqTp s d
+				eqTp (TPClass _ sgs s) (TPClass _ dgs d) = s == d && eqTps sgs dgs
+				eqTp TPAnyGeneric _ = False
+				eqTp _ TPAnyGeneric = True
+				eqTp s d = s == d
 
 lambdaImplicitParameters :: DataType -> [(String, DataType)]
 lambdaImplicitParameters (TPFun [] _) = []

@@ -21,7 +21,7 @@ public final class Range extends ImSeq_impl<Integer> {
     }
     @Override
     public Iterator<Integer> iterator() {
-        return new RangeIterator(this.start, this.end, this.step);
+        return ((Iterator<Integer>)(((Iterator)(new RangeIterator(this.start, this.end, this.step)))));
     }
     public Range setStep(final int step) {
         return new Range(this.start, this.end, step);

@@ -11,11 +11,11 @@ public class MMapDefault<K, V> extends MIterable_impl<Tuple<K, V>> {
     }
     @Override
     public Iterator<Tuple<K, V>> iterator() {
-        return this.map.iterator();
+        return ((Iterator<Tuple<K, V>>)(((Iterator)(this.map.iterator()))));
     }
     @Override
     public MIterator<Tuple<K, V>> mutableIterator() {
-        return this.map.mutableIterator();
+        return ((MIterator<Tuple<K, V>>)(((MIterator)(this.map.mutableIterator()))));
     }
     public V applyKey(final K key) {
         return this.map.applyKeyOrUpdateWith(key, new F0<V>() {

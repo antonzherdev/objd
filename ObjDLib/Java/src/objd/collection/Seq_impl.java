@@ -27,7 +27,7 @@ public abstract class Seq_impl<T> extends Iterable_impl<T> implements Seq<T> {
         return null;
     }
     public Set<T> toSet() {
-        return this.<ImHashSet<T>>convertWithBuilder(HashSetBuilder.<T>apply());
+        return this.<ImHashSet<T>>convertWithBuilder(((Builder<T, ImHashSet<T>>)(((Builder)(HashSetBuilder.<T>apply())))));
     }
     public boolean isEqualSeq(final Seq<T> seq) {
         if(this.count() != seq.count()) {

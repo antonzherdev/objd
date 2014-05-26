@@ -29,7 +29,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     @Override
     public void assignImMap(final ImMap<K, V> imMap) {
         if(imMap instanceof ImTreeMap) {
-            final ImTreeMap<K, V> m = ((ImTreeMap<K, V>)(imMap));
+            final ImTreeMap<K, V> m = ((ImTreeMap<K, V>)(((ImTreeMap)(imMap))));
             final TreeMapEntry<K, V> __tmp_0t_1u = m.root;
             this._root = ((__tmp_0t_1u == null) ? (null) : (__tmp_0t_1u.copyParent(null)));
             this._size = m.count;
@@ -59,7 +59,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     }
     @Override
     public MIterator<Tuple<K, V>> mutableIterator() {
-        return MTreeMapIterator.<K, V>applyMapEntry(this, this.firstEntry());
+        return ((MIterator<Tuple<K, V>>)(((MIterator)(MTreeMapIterator.<K, V>applyMapEntry(this, this.firstEntry())))));
     }
     @Override
     public void setKeyValue(final K key, final V value) {
@@ -72,7 +72,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
             int cmp = 0;
             TreeMapEntry<K, V> parent = null;
             do {
-                parent = ((TreeMapEntry<K, V>)(t));
+                parent = ((TreeMapEntry<K, V>)(((TreeMapEntry)(t))));
                 cmp = __comparator.apply(key, t.key);
                 if(cmp < 0) {
                     t = t.left;
@@ -105,7 +105,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     public V removeKey(final K key) {
         final TreeMapEntry<K, V> _ = entryForKey(key);
         if(_ != null) {
-            return deleteEntry(_);
+            return deleteEntry(((TreeMapEntry<K, V>)(((TreeMapEntry)(_)))));
         } else {
             return null;
         }
@@ -131,7 +131,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
         if(replacement != null) {
             replacement.parent = p.parent;
             if(p.parent == null) {
-                this._root = ((TreeMapEntry<K, V>)(replacement));
+                this._root = ((TreeMapEntry<K, V>)(((TreeMapEntry)(replacement))));
             } else {
                 final TreeMapEntry<K, V> __tmp_4t_1fcbln = p.parent;
                 if(__tmp_4t_1fcbln == null) {
@@ -143,20 +143,20 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
                     if(__tmp_4t_1ftln == null) {
                         throw new NullPointerException();
                     }
-                    __tmp_4t_1ftln.left = ((TreeMapEntry<K, V>)(replacement));
+                    __tmp_4t_1ftln.left = ((TreeMapEntry<K, V>)(((TreeMapEntry)(replacement))));
                 } else {
                     final TreeMapEntry<K, V> __tmp_4t_1ffln = p.parent;
                     if(__tmp_4t_1ffln == null) {
                         throw new NullPointerException();
                     }
-                    __tmp_4t_1ffln.right = ((TreeMapEntry<K, V>)(replacement));
+                    __tmp_4t_1ffln.right = ((TreeMapEntry<K, V>)(((TreeMapEntry)(replacement))));
                 }
             }
             p.left = null;
             p.right = null;
             p.parent = null;
             if(p.color == MTreeMap.BLACK) {
-                fixAfterDeletionEntry(replacement);
+                fixAfterDeletionEntry(((TreeMapEntry<K, V>)(((TreeMapEntry)(replacement)))));
             }
         } else {
             if(p.parent == null) {
@@ -214,7 +214,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
                     final TreeMapEntry<K, V> __tmp_2_1t_1f_0c = p.right;
                     if(__tmp_2_1t_1f_0c != null && __tmp_2_1t_1f_0c.equals(x)) {
                         x = p;
-                        rotateLeftP(((TreeMapEntry<K, V>)(x)));
+                        rotateLeftP(((TreeMapEntry<K, V>)(((TreeMapEntry)(x)))));
                     }
                     final TreeMapEntry<K, V> pp = x.parent;
                     if(pp != null) {
@@ -245,7 +245,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
                     final TreeMapEntry<K, V> __tmp_2_1f_1f_0c = p.left;
                     if(__tmp_2_1f_1f_0c != null && __tmp_2_1f_1f_0c.equals(x)) {
                         x = p;
-                        rotateRightP(((TreeMapEntry<K, V>)(x)));
+                        rotateRightP(((TreeMapEntry<K, V>)(((TreeMapEntry)(x)))));
                     }
                     final TreeMapEntry<K, V> pp = x.parent;
                     if(pp != null) {
@@ -401,7 +401,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
             {
                 final TreeMapEntry<K, V> __tmp_0t_2 = r.left;
                 if(__tmp_0t_2 != null) {
-                    __tmp_0t_2.parent = ((TreeMapEntry<K, V>)(p));
+                    __tmp_0t_2.parent = ((TreeMapEntry<K, V>)(((TreeMapEntry)(p))));
                 }
             }
             r.parent = p.parent;
@@ -427,7 +427,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
                     __tmp_0t_4ffln.right = r;
                 }
             }
-            r.left = ((TreeMapEntry<K, V>)(p));
+            r.left = ((TreeMapEntry<K, V>)(((TreeMapEntry)(p))));
             p.parent = r;
         }
     }
@@ -442,7 +442,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
             {
                 final TreeMapEntry<K, V> __tmp_0t_2 = l.right;
                 if(__tmp_0t_2 != null) {
-                    __tmp_0t_2.parent = ((TreeMapEntry<K, V>)(p));
+                    __tmp_0t_2.parent = ((TreeMapEntry<K, V>)(((TreeMapEntry)(p))));
                 }
             }
             l.parent = p.parent;
@@ -468,14 +468,14 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
                     __tmp_0t_4ffln.left = l;
                 }
             }
-            l.right = ((TreeMapEntry<K, V>)(p));
+            l.right = ((TreeMapEntry<K, V>)(((TreeMapEntry)(p))));
             p.parent = l;
         }
     }
     public Tuple<K, V> pollFirst() {
         final TreeMapEntry<K, V> entry = this.firstEntry();
         if(entry != null) {
-            deleteEntry(entry);
+            deleteEntry(((TreeMapEntry<K, V>)(((TreeMapEntry)(entry)))));
             return new Tuple<K, V>(entry.key, entry.value);
         } else {
             return null;

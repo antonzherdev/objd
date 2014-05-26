@@ -8,11 +8,11 @@ public final class Tuple3<A, B, C> implements Comparable<Tuple3<A, B, C>> {
     public final C c;
     @Override
     public int compareTo(final Tuple3<A, B, C> to) {
-        int r = ((Comparable<A>)(to.a)).compareTo(this.a);
+        int r = ((Comparable<A>)(((Comparable)(to.a)))).compareTo(this.a);
         if(r == 0) {
-            r = ((Comparable<B>)(to.b)).compareTo(this.b);
+            r = ((Comparable<B>)(((Comparable)(to.b)))).compareTo(this.b);
             if(r == 0) {
-                return -(((Comparable<C>)(to.c)).compareTo(this.c));
+                return -(((Comparable<C>)(((Comparable)(to.c)))).compareTo(this.c));
             } else {
                 return -(r);
             }

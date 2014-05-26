@@ -3,6 +3,7 @@ package objd.chain;
 import objd.lang.*;
 import objd.collection.MHashMap;
 import objd.collection.Go;
+import objd.collection.Traversable;
 
 public class ImGroupByLink<T, K, V> extends ChainLink_impl<T, Tuple<K, V>> {
     public final double factor;
@@ -31,7 +32,7 @@ public class ImGroupByLink<T, K, V> extends ChainLink_impl<T, Tuple<K, V>> {
                 if(result == Go.Break) {
                     return yield.endYieldWithResult(result);
                 } else {
-                    return yield.yieldAllItems(m);
+                    return yield.yieldAllItems(((Traversable<Tuple<K, V>>)(((Traversable)(m)))));
                 }
             }
         });

@@ -386,10 +386,10 @@ static CNClassType* _CNChain_type;
     __block id<CNBuilder> __il_b;
     __block id<CNSeq> __il_r;
     [self applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
-        __il_b = ((id<CNBuilder>)(({
+        __il_b = ({
             NSInteger _ = ((NSInteger)(size));
             [CNArrayBuilder arrayBuilderWithCapacity:((NSUInteger)(_))];
-        })));
+        });
         return CNGo_Continue;
     } yield:^CNGoR(id item) {
         [((id<CNBuilder>)(nonnil(__il_b))) appendItem:item];
@@ -436,10 +436,10 @@ static CNClassType* _CNChain_type;
     __block id<CNBuilder> __il_b;
     __block CNImList* __il_r;
     [self applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
-        __il_b = ((id<CNBuilder>)(({
+        __il_b = ({
             NSInteger _ = ((NSInteger)(size));
             [CNImListBuilder imListBuilder];
-        })));
+        });
         return CNGo_Continue;
     } yield:^CNGoR(id item) {
         [((id<CNBuilder>)(nonnil(__il_b))) appendItem:item];
@@ -460,10 +460,10 @@ static CNClassType* _CNChain_type;
     __block id<CNBuilder> __il_b;
     __block id<CNSet> __il_r;
     [self applyYield:[CNYield makeBegin:^CNGoR(NSUInteger size) {
-        __il_b = ((id<CNBuilder>)(({
+        __il_b = ({
             NSInteger _ = ((NSInteger)(size));
             [CNHashSetBuilder hashSetBuilderWithCapacity:((NSUInteger)(_))];
-        })));
+        });
         return CNGo_Continue;
     } yield:^CNGoR(id item) {
         [((id<CNBuilder>)(nonnil(__il_b))) appendItem:item];
@@ -574,7 +574,7 @@ static CNClassType* _CNChain_type;
     CNChain* ch = self;
     CNYield* y = yield;
     while(ch != nil) {
-        y = [((CNChain*)(ch)).link buildYield:((CNYield*)(y))];
+        y = [((CNChain*)(ch)).link buildYield:y];
         ch = ((CNChain*)(ch)).previous;
     }
     return y;

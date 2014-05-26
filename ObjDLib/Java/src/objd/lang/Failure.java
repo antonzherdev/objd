@@ -22,7 +22,7 @@ public final class Failure<T> extends Try<T> {
     }
     @Override
     public <R> Try<R> mapF(final F<T, R> f) {
-        return ((Try<R>)(this));
+        return ((Try<R>)(((Try)(this))));
     }
     public Failure(final Object reason) {
         this.reason = reason;

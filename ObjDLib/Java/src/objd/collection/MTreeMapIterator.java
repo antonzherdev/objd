@@ -31,7 +31,7 @@ public class MTreeMapIterator<K, V> extends MIterator_impl<Tuple<K, V>> {
         {
             final TreeMapEntry<K, V> _ = this.prev;
             if(_ != null) {
-                this.map.deleteEntry(_);
+                this.map.deleteEntry(((TreeMapEntry<K, V>)(((TreeMapEntry)(_)))));
             }
         }
     }
@@ -43,7 +43,7 @@ public class MTreeMapIterator<K, V> extends MIterator_impl<Tuple<K, V>> {
                 if(p.key.equals(value.a)) {
                     p.value = value.b;
                 } else {
-                    this.map.deleteEntry(p);
+                    this.map.deleteEntry(((TreeMapEntry<K, V>)(((TreeMapEntry)(p)))));
                     this.map.setKeyValue(value.a, value.b);
                 }
             }
