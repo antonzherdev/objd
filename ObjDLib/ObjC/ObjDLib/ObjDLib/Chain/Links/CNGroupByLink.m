@@ -46,6 +46,10 @@ static CNClassType* _CNImGroupByLink_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"ImGroupByLink(%f)", _factor];
+}
+
 - (CNClassType*)type {
     return [CNImGroupByLink type];
 }
@@ -56,13 +60,6 @@ static CNClassType* _CNImGroupByLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"factor=%f", self.factor];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -114,6 +111,10 @@ static CNClassType* _CNMGroupByLink_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"MGroupByLink(%f)", _factor];
+}
+
 - (CNClassType*)type {
     return [CNMGroupByLink type];
 }
@@ -124,13 +125,6 @@ static CNClassType* _CNMGroupByLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"factor=%f", self.factor];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -169,6 +163,10 @@ static CNClassType* _CNDistinctLink_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"DistinctLink(%f)", _factor];
+}
+
 - (CNClassType*)type {
     return [CNDistinctLink type];
 }
@@ -179,13 +177,6 @@ static CNClassType* _CNDistinctLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"factor=%f", self.factor];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

@@ -20,4 +20,7 @@ public class ListIterator<T> extends Iterator_impl<T> {
     public ListIterator() {
         this.list = ((ImList<T>)(((ImList)(EmptyList.instance))));
     }
+    public String toString() {
+        return "ListIterator";
+    }
 }

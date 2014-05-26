@@ -487,6 +487,9 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
         this._size = ((int)(0));
         this.keys = new MTreeMapKeySet<K, V>(this);
     }
+    public String toString() {
+        return "MTreeMap";
+    }
     public V applyKeyOrUpdateWith(final K key, final F0<V> orUpdateWith) {
         final V __tmp = applyKey(key);
         if(__tmp != null) {

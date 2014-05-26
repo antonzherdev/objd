@@ -28,4 +28,7 @@ public class FlatLink<T> extends ChainLink_impl<Traversable<T>, T> {
     public FlatLink(final double factor) {
         this.factor = factor;
     }
+    public String toString() {
+        return String.format("FlatLink(%f)", this.factor);
+    }
 }

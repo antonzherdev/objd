@@ -35,4 +35,7 @@ public class TreeSet<T> extends Set_impl<T> {
     public TreeSet(final TreeMap<T, Object> map) {
         this.map = map;
     }
+    public String toString() {
+        return String.format("TreeSet(%s)", this.map);
+    }
 }

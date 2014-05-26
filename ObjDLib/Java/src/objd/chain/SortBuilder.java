@@ -47,4 +47,7 @@ public class SortBuilder<A> {
         this.chain = chain;
         this.functions = new MArray<F2<A, A, Integer>>();
     }
+    public String toString() {
+        return String.format("SortBuilder(%s)", this.chain);
+    }
 }

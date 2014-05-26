@@ -27,4 +27,7 @@ public class TreeMapValuesIterator<V> extends Iterator_impl<V> {
     }
     public TreeMapValuesIterator(final TreeMap<?, V> map) {
     }
+    public String toString() {
+        return "TreeMapValuesIterator";
+    }
 }

@@ -9,12 +9,6 @@
     return self;
 }
 
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
-}
-
 @end
 
 @implementation CNImQueue
@@ -84,6 +78,10 @@ static CNClassType* _CNImQueue_type;
     }
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"ImQueue(%@, %@)", _in, _out];
+}
+
 - (CNClassType*)type {
     return [CNImQueue type];
 }
@@ -94,14 +92,6 @@ static CNClassType* _CNImQueue_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"in=%@", self.in];
-    [description appendFormat:@", out=%@", self.out];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -152,6 +142,10 @@ static CNClassType* _CNQueueIterator_type;
     return [_i next];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"QueueIterator(%@)", _out];
+}
+
 - (CNClassType*)type {
     return [CNQueueIterator type];
 }
@@ -162,13 +156,6 @@ static CNClassType* _CNQueueIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"out=%@", self.out];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -206,6 +193,10 @@ static CNClassType* _CNMQueue_type;
     return [__queue count];
 }
 
+- (NSString*)description {
+    return @"MQueue";
+}
+
 - (CNClassType*)type {
     return [CNMQueue type];
 }
@@ -216,12 +207,6 @@ static CNClassType* _CNMQueue_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

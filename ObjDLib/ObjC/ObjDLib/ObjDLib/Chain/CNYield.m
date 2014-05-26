@@ -13,12 +13,6 @@
     return self;
 }
 
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
-}
-
 @end
 
 @implementation CNYield
@@ -310,6 +304,10 @@ static CNClassType* _CNYield_type;
     return [CNYield yieldWithBegin:nil yield:nil end:nil all:nil];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"Yield(%@, %@, %@, %@)", _begin, _yield, _end, _all];
+}
+
 - (CNClassType*)type {
     return [CNYield type];
 }
@@ -320,16 +318,6 @@ static CNClassType* _CNYield_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"begin=%@", self.begin];
-    [description appendFormat:@", yield=%@", self.yield];
-    [description appendFormat:@", end=%@", self.end];
-    [description appendFormat:@", all=%@", self.all];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

@@ -34,4 +34,7 @@ public class AppendLink<T> extends ChainLink_impl<T, T> {
     public AppendLink(final Traversable<T> collection) {
         this.collection = collection;
     }
+    public String toString() {
+        return String.format("AppendLink(%s)", this.collection);
+    }
 }

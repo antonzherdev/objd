@@ -12,4 +12,6 @@ public interface Seq<T> extends Iterable<T> {
     T head();
     T last();
     ImSeq<T> tail();
+    String toString();
+    boolean equals(final Object to);
 }

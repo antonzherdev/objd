@@ -2,6 +2,7 @@
 #import "CNCollection.h"
 @class CNClassType;
 @class CNDispatchQueue;
+@class CNObject;
 @class CNChain;
 @class CNMHashSet;
 @class CNImHashSet;
@@ -15,6 +16,7 @@
 @protocol CNMSet;
 
 @protocol CNSet<CNIterable>
+- (NSString*)description;
 @end
 
 
@@ -24,6 +26,7 @@
 
 @protocol CNImSet<CNSet, CNImIterable>
 - (id<CNMSet>)mCopy;
+- (NSString*)description;
 @end
 
 
@@ -35,6 +38,7 @@
 @protocol CNMSet<CNSet, CNMIterable>
 - (id<CNImSet>)im;
 - (id<CNImSet>)imCopy;
+- (NSString*)description;
 @end
 
 
@@ -56,6 +60,7 @@
 - (void)appendItem:(id)item;
 - (CNImHashSet*)build;
 + (CNHashSetBuilder*)apply;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

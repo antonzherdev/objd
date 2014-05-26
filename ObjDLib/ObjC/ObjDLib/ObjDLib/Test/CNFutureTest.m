@@ -104,6 +104,10 @@ static CNClassType* _CNFutureTest_type;
     assertEquals(numi4([n intValue]), numi4(((int)(result))));
 }
 
+- (NSString*)description {
+    return @"FutureTest";
+}
+
 - (CNClassType*)type {
     return [CNFutureTest type];
 }
@@ -114,12 +118,6 @@ static CNClassType* _CNFutureTest_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

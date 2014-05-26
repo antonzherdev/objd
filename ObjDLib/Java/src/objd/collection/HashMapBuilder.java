@@ -15,4 +15,7 @@ public class HashMapBuilder<K, V> extends Builder_impl<Tuple<K, V>, ImHashMap<K,
     public HashMapBuilder() {
         this.map = new MHashMap<K, V>();
     }
+    public String toString() {
+        return "HashMapBuilder";
+    }
 }

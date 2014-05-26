@@ -29,4 +29,7 @@ public class DistinctLink<T> extends ChainLink_impl<T, T> {
     public DistinctLink(final double factor) {
         this.factor = factor;
     }
+    public String toString() {
+        return String.format("DistinctLink(%f)", this.factor);
+    }
 }

@@ -28,6 +28,10 @@ static CNClassType* _CNMapLink_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@")"];
+}
+
 - (CNClassType*)type {
     return [CNMapLink type];
 }
@@ -38,12 +42,6 @@ static CNClassType* _CNMapLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -81,6 +79,10 @@ static CNClassType* _CNMapOptLink_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@")"];
+}
+
 - (CNClassType*)type {
     return [CNMapOptLink type];
 }
@@ -91,12 +93,6 @@ static CNClassType* _CNMapOptLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -131,6 +127,10 @@ static CNClassType* _CNFlatLink_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"FlatLink(%f)", _factor];
+}
+
 - (CNClassType*)type {
     return [CNFlatLink type];
 }
@@ -141,13 +141,6 @@ static CNClassType* _CNFlatLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"factor=%f", self.factor];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -186,6 +179,10 @@ static CNClassType* _CNFlatMapLink_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"FlatMapLink(%f)", _factor];
+}
+
 - (CNClassType*)type {
     return [CNFlatMapLink type];
 }
@@ -196,13 +193,6 @@ static CNClassType* _CNFlatMapLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"factor=%f", self.factor];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

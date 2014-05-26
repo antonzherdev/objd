@@ -15,6 +15,7 @@
 - (BOOL)isSuccess;
 - (BOOL)isFailure;
 - (CNTry*)mapF:(id(^)(id))f;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -32,6 +33,7 @@
 - (BOOL)isFailure;
 - (id)reason;
 - (CNTry*)mapF:(id(^)(id))f;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -49,6 +51,7 @@
 - (BOOL)isSuccess;
 - (BOOL)isFailure;
 - (CNTry*)mapF:(id(^)(id))f;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

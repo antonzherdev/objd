@@ -32,4 +32,7 @@ public class TreeMapIterator<K, V> extends Iterator_impl<Tuple<K, V>> {
     public TreeMapIterator(final TreeMap<K, V> map) {
         this.map = map;
     }
+    public String toString() {
+        return String.format("TreeMapIterator(%s)", this.map);
+    }
 }

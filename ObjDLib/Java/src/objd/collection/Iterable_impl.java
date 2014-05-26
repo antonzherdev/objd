@@ -79,4 +79,30 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
     public boolean isEmpty() {
         return !(this.iterator().hasNext());
     }
+    public boolean isEqualIterable(final Iterable<T> iterable) {
+        if(this.count() == iterable.count()) {
+            return true;
+        } else {
+            final Iterator<T> ai = this.iterator();
+            final Iterator<T> bi = iterable.iterator();
+            while(ai.hasNext() && bi.hasNext()) {
+                if(!(ai.next().equals(bi.next()))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+    public boolean equals(final Object to) {
+        if(this == to) {
+            return true;
+        }
+        if(to == null) {
+            return false;
+        }
+        if(to instanceof Iterable) {
+            return isEqualIterable(((Iterable<T>)(((Iterable)(to)))));
+        }
+        return false;
+    }
 }

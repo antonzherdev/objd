@@ -27,4 +27,7 @@ public final class Success<T> extends Try<T> {
     public Success(final T get) {
         this.get = get;
     }
+    public String toString() {
+        return String.format("Success(%s)", this.get);
+    }
 }

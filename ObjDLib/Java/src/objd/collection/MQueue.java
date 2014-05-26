@@ -18,4 +18,7 @@ public class MQueue<T> extends Queue_impl<T> {
     public MQueue() {
         this._queue = ImQueue.<T>apply();
     }
+    public String toString() {
+        return "MQueue";
+    }
 }

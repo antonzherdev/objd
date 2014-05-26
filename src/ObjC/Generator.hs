@@ -155,6 +155,8 @@ intefaceFuns :: [D.Def] -> [C.Fun]
 intefaceFuns = map stm2Fun . filter (\v -> D.DefModPrivate `notElem` D.defMods v && D.isDef v)
 
 stm2Fun :: D.Def -> C.Fun
+stm2Fun D.Def{D.defName = "isEqual", D.defPars = [D.Def{D.defName = "to"}]} =
+	C.Fun {C.funType = C.InstanceFun, C.funReturnType = C.TPSimple "BOOL" [], C.funName = "isEqual", C.funPars = [C.FunPar "" idTp "to"]}
 stm2Fun d@D.Def{D.defPars = pars, D.defType = tp, D.defMods = mods} =
 	C.Fun {
 		C.funType = if D.DefModStatic `elem` mods then C.ObjectFun else C.InstanceFun, 
@@ -187,8 +189,7 @@ stmToImpl cl =
 		C.implFields = [],
 		C.implSynthesizes = (map (synthesize env) . filter needProperty) implFields,
 		C.implFuns = nub $ constrFuns ++ maybeToList (implInitialize env) ++ dealoc env 
-			++ implFuns env defs ++ [instanceType | D.ClassModTraitImpl `notElem` D.classMods cl] ++ staticGetters ++ copyImpls 
-			++ [equal | D.needIsEqualForClass cl] ++ [hash | D.needHashForClass cl] ++ [description],
+			++ implFuns env defs ++ [instanceType | D.ClassModTraitImpl `notElem` D.classMods cl] ++ staticGetters ++ copyImpls,
 		C.implStaticFields = map (implField env) staticFields
 	}
 	where
@@ -204,35 +205,6 @@ stmToImpl cl =
 		staticFields = filter isStaticField defs
 		staticGetters = (map staticGetter . filter((D.DefModPrivate `notElem`) . D.defMods)) staticFields
 		staticGetter f = C.ImplFun (staticGetterFun f) [C.Return $ C.Ref $ fieldName env f]
-
-		reloadedEquals = filter ( ("isEqual" == ). D.defName) defs
-		equal :: C.ImplFun
-		equal 
-			| null reloadedEquals = C.ImplFun equalFun (equalPrelude clsName (not (null equalFields)) ++ equalsFun C.Self (C.Ref "o") equalFields)
-			| otherwise = C.ImplFun equalFun $ [
-				C.If (C.BoolOp Eq C.Self (C.Ref "other")) [C.Return $ C.BoolConst True] [],
-				C.If (C.Not $ C.Ref "other") [C.Return $ C.BoolConst False] []]
-				++ map reloadedEqualCall reloadedEquals
-				++ [C.Return $ C.BoolConst False]
-		reloadedEqualCall :: D.Def -> C.Stm
-		reloadedEqualCall D.Def{D.defPars = [D.Def{D.defType = tp, D.defName = parName}]} = case tp of
-			D.TPClass D.TPMTrait _ _ ->
-				C.If (C.Call (C.Ref "other") "conformsTo" [("protocol", C.ProtocolRef (C.Ref $ D.dataTypeClassNameWithPrefix tp))] []) [
-					C.Return $ C.Call C.Self "isEqual" [(parName, C.Cast (C.TPSimple "id" [D.dataTypeClassNameWithPrefix tp]) (C.Ref "other") )] []
-				] []
-			_ ->
-				C.If (C.Call (C.Ref "other") "isKindOf" [("class", C.Call (C.Ref $ D.dataTypeClassNameWithPrefix tp) "class" [] [])] []) [
-					C.Return $ C.Call C.Self "isEqual" [(parName, C.Cast (C.TPSimple (D.dataTypeClassNameWithPrefix tp ++ "*") []) (C.Ref "other") )] []
-				] []
-		reloadedEqualCall d = C.Stm $ C.Error $ "Incorrect equal def " ++ show d
-
-		equalFields = D.classFieldsForEquals cl
-		
- 		hash = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSUInteger" []) "hash" []) (hashFun equalFields)
- 		description = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSString*" []) "description" []) 
- 			(descriptionFun descStart equalFields)
- 		descStart = C.Call (C.Ref "NSMutableString") "stringWith" [("format", C.StringConst "<%@: ")] 
-			[C.CCall (C.Ref "NSStringFromClass") [C.Call C.Self "class" [] []]]
 		instanceType = C.ImplFun typeInstanceFun [C.Return $ C.Call (C.Ref clsName) "type" [] []]
 
 fieldName :: Env -> D.Def -> String
@@ -243,19 +215,6 @@ fieldName env def
 staticName :: Env -> String -> String
 staticName env name = '_' : D.classNameWithPrefix (envClass env) ++ "_" ++ name
 
-
-equalPrelude :: String -> Bool -> [C.Stm]
-equalPrelude clsName o = [
-			C.If (C.BoolOp Eq C.Self (C.Ref "other")) [C.Return $ C.BoolConst True] [],
-			C.If (C.BoolOp Or (C.Not $ C.Ref "other") (C.Not equalClass)) [C.Return $ C.BoolConst False] []
-			] ++ [C.Var selfTp "o" (C.Cast selfTp (C.Ref "other")) [] | o]
-	where
-		selfTp = C.TPSimple (clsName ++ "*") []
-		equalClass = C.Call (C.Call C.Self "class" [] []) "isEqual" [("", C.Call (C.Ref "other") "class" [] [])] []
-
-
-equalFun :: C.Fun
-equalFun = C.Fun C.InstanceFun (C.TPSimple "BOOL" []) "isEqual" [C.FunPar "" (C.TPSimple "id" []) "other"]
 
 copyImpls :: [C.ImplFun]
 copyImpls = [C.ImplFun (C.Fun C.InstanceFun idTp "copyWith" [C.FunPar "zone" (C.TPSimple "NSZone*" []) "zone"]) [C.Return C.Self]]
@@ -364,8 +323,8 @@ implFuns env = map stm2ImplFun . filter D.isDef
 {- Struct -}
 genStruct :: D.Class -> ([C.FileStm], [C.FileStm])
 genStruct cl = 
-	([C.Struct name fields', con, eq, hash, descriptionDecl] ++ map def' defs ++  map def' staticFields ++ [wrapClass, C.EmptyLine], 
-		[description] ++ map defImpl' defs ++ map staticFieldImpl' staticFields ++ [wrapImpl, C.EmptyLine])
+	([C.Struct name fields', con] ++ map def' defs ++  map def' staticFields ++ [wrapClass, C.EmptyLine], 
+		map defImpl' defs ++ map staticFieldImpl' staticFields ++ [wrapImpl, C.EmptyLine])
 	where
 		name = D.classNameWithPrefix cl
 		clDefs = D.classDefs cl
@@ -380,19 +339,6 @@ genStruct cl =
 			C.cfunName = name ++ "Make", C.cfunPars = map toPar fields, C.cfunExps = 
 				[C.Return $ C.ShortCast selfTp $ C.EArr $ map toEArr fields]
 		}
-		eq = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple "BOOL" [], C.cfunName = name ++ "Eq", 
-			C.cfunPars = [C.CFunPar (C.TPSimple name []) "s1", C.CFunPar (C.TPSimple name []) "s2"], 
-			C.cfunExps = equalsFun (C.Ref "s1") (C.Ref "s2") fields
-		}
-		hash = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple "NSUInteger" [], C.cfunName = name ++ "Hash", 
-			C.cfunPars = [C.CFunPar (C.TPSimple name []) "self"], 
-			C.cfunExps = hashFun fields
-		}
-		descriptionDecl = C.CFunDecl{C.cfunMods = [], C.cfunReturnType = C.TPSimple "NSString*" [], C.cfunName = name ++ "Description", 
-			C.cfunPars = [C.CFunPar (C.TPSimple name []) "self"]
-		}
-		description = C.cfun descriptionDecl $ descriptionFun descStart fields
-		descStart = C.Call (C.Ref "NSMutableString") "stringWith" [("string", C.StringConst $ "<" ++ name ++ ": ")] []
 		toPar D.Def{D.defName = n, D.defType = tp}= C.CFunPar (showDataType tp) n
 		
 		def' d@D.Def{D.defType = tp, D.defPars = pars, D.defMods = mods} = C.CFunDecl{C.cfunMods = [], 
@@ -448,7 +394,7 @@ genStruct cl =
 			C.implName = wrapName,
 			C.implFields = [C.ImplField "_value" selfTp [] C.Nop],
 			C.implSynthesizes = [C.ImplSynthesize "value" "_value"],
-			C.implFuns = [wrapFunImpl, initWrapFunImpl, descriptionImpl, equalsImpl, hashImpl] ++ maybeToList compareImpl ++ copyImpls,
+			C.implFuns = [wrapFunImpl, initWrapFunImpl] ++ maybeToList compareImpl ++ copyImpls,
 			C.implStaticFields = []
 		}	
 		wrapName = name ++ "Wrap"
@@ -459,16 +405,6 @@ genStruct cl =
 			C.If C.Self [C.Set Nothing (C.Ref "_value") (C.Ref "value")] [],
 			C.Return C.Self
 			]
-		descriptionImpl = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSString*" []) "description" []) [
-			C.Return $ C.CCall (C.Ref $ name ++ "Description") [C.Ref "_value"]
-			]
-		equalsImpl = C.ImplFun equalFun $ equalPrelude wrapName True ++ [
-			C.Return $ C.CCall (C.Ref $ name ++ "Eq") [
-				C.Ref "_value", C.Dot (C.Ref "o") (C.Ref "value")]
-			]
-		hashImpl = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSUInteger" []) "hash" []) [
-			C.Return $ C.CCall (C.Ref $ name ++ "Hash") [C.Ref "_value"]
-			]
 		compareFun = find (("compare" == ). D.defName) defs
 		compareImpl = fmap (\d -> C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSInteger" []) "compare" [C.FunPar "to" selfWrapTp "to"]) [
 			C.Return $ C.CCall (C.Ref $ structDefName name d) [C.Ref "_value", C.Dot (C.Ref "to") (C.Ref "value")]
@@ -477,46 +413,6 @@ genStruct cl =
 			| n > 0 = C.EArr $ map ( C.Index (C.Ref nm) . C.IntConst) [0 .. n - 1]
 		toEArr d = C.Ref . D.defName  $ d
 
-
-equalsFun :: C.Exp -> C.Exp -> [D.Def] -> [C.Stm]
-equalsFun _ _ [] = [C.Return $ C.BoolConst True]
-equalsFun s1 s2 fields = [C.Return $ foldl foldEq C.Nop fields]
-	where
-		foldEq :: C.Exp -> D.Def -> C.Exp
-		foldEq C.Nop d = eqd d
-		foldEq p d = C.BoolOp And p (eqd d)
-		eqd :: D.Def -> C.Exp
-		eqd D.Def{D.defName = n, D.defType = tp} = equals True (tp, C.Dot s1 (C.Ref n)) (tp, C.Dot s2 (C.Ref n))
-
-hashFun :: [D.Def] -> [C.Stm]
-hashFun [] = [C.Return $ C.IntConst 0]
-hashFun fields = 
-	[C.Var (C.TPSimple "NSUInteger" []) "hash" (C.IntConst 0) []] ++
-	map hashSet fields ++
-	[C.Return $ C.Ref "hash"]
-	where
-		hashSet D.Def{D.defName = nm, D.defType = tp} = C.Set Nothing (C.Ref "hash") $
-			C.MathOp Plus (C.MathOp Mul (C.Ref "hash") (C.IntConst 31)) $ hashCall tp (C.Dot C.Self (C.Ref nm))
-		
-
-hashCall :: D.DataType -> C.Exp -> C.Exp
-hashCall tp ref = 
-	case tp of
-		D.TPClass D.TPMEnum _ _ -> C.Call ref "ordinal" [] []
-		D.TPClass D.TPMStruct _ scl -> C.CCall (C.Ref $ D.classNameWithPrefix scl ++ "Hash") [ref]
-		D.TPFloatNumber{} -> C.CCall (C.Ref $ show tp ++ "Hash") [ref]
-		D.TPNumber{} -> ref
-		D.TPBool -> ref
-		D.TPChar -> ref
-		D.TPEArr n atp -> arrHash atp n 0 C.Nop
-		_ -> C.Call ref "hash" [] []
-	where	
-		arrElemHash atp i = hashCall atp $ C.Index ref (C.IntConst i)
-		arrHash _ 0 _ _ = C.IntConst 0
-		arrHash atp n i op 
-			| i >= n = op
-			| i == 0 = arrHash atp n 1 (arrElemHash atp i)
-			| otherwise = arrHash atp n (i + 1) $ C.MathOp Plus (C.MathOp Mul (C.IntConst 13) op) (arrElemHash atp i)
 
 
 stringFormatForType :: D.DataType -> String
@@ -540,25 +436,7 @@ stringExpressionsForTp rtp ref = case rtp of
 			D.TPNumber False 0 -> [C.ShortCast (C.TPSimple "long" []) ref]
 			D.TPNumber True 0 -> [C.ShortCast (C.TPSimple "unsigned long" []) ref]
 			_ -> [ref]
-			
-
-descriptionFun :: C.Exp -> [D.Def] -> [C.Stm]
-descriptionFun start fields = 
-	[C.Var (C.TPSimple "NSMutableString*" []) "description" start []] ++
-	snd (mapAccumL append 0 $ filter pos fields)++
-	[C.Stm end, C.Return $ C.Ref "description"]
-	where
-		pos D.Def{D.defType = D.TPFun{}} = False
-		pos _ = True
-		end = C.Call (C.Ref "description") "append" [("string", C.StringConst ">")] []
-		append :: Int -> D.Def -> (Int, C.Stm)
-		append i D.Def{D.defName = nm, D.defType = tp} = (i + 1, C.Stm $ C.Call (C.Ref "description") "append" 
-			[("format", C.StringConst $ (if i > 0 then ", " else "") ++ nm ++ "="  ++ stringFormatForType tp)]
-			(stringExpressionsForTp tp $ C.Dot C.Self (C.Ref nm)) )
-			where
-				
-		
-		
+							
 
 structDefName :: String -> D.Def -> String
 structDefName sn D.Def{D.defName = dn, D.defPars = pars} = lowFirst sn ++ cap dn ++ (strs "" . map (cap . D.defName)) pars

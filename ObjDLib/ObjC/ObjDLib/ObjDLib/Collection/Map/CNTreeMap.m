@@ -155,6 +155,10 @@ static CNClassType* _CNTreeMap_type;
     return p;
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@")"];
+}
+
 - (CNClassType*)type {
     return [CNTreeMap type];
 }
@@ -173,12 +177,6 @@ static CNClassType* _CNTreeMap_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -219,6 +217,10 @@ static CNClassType* _CNImTreeMap_type;
     return m;
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"ImTreeMap(%@, %lu)", _root, (unsigned long)_count];
+}
+
 - (CNClassType*)type {
     return [CNImTreeMap type];
 }
@@ -229,14 +231,6 @@ static CNClassType* _CNImTreeMap_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"root=%@", self.root];
-    [description appendFormat:@", count=%lu", (unsigned long)self.count];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -278,6 +272,10 @@ static CNClassType* _CNTreeMapBuilder_type;
     return _map;
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@")"];
+}
+
 - (CNClassType*)type {
     return [CNTreeMapBuilder type];
 }
@@ -288,12 +286,6 @@ static CNClassType* _CNTreeMapBuilder_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -693,6 +685,10 @@ static CNClassType* _CNMTreeMap_type;
     }
 }
 
+- (NSString*)description {
+    return @"MTreeMap";
+}
+
 - (id)applyKey:(id)key orUpdateWith:(id(^)())orUpdateWith {
     id __tmp = [self applyKey:key];
     if(__tmp != nil) {
@@ -732,12 +728,6 @@ static CNClassType* _CNMTreeMap_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -803,6 +793,10 @@ static CNClassType* _CNTreeMapEntry_type;
     return c;
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"TreeMapEntry(%@, %@, %@)", _key, _value, _parent];
+}
+
 - (CNClassType*)type {
     return [CNTreeMapEntry type];
 }
@@ -815,15 +809,6 @@ static CNClassType* _CNTreeMapEntry_type;
     return self;
 }
 
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"key=%@", self.key];
-    [description appendFormat:@", value=%@", self.value];
-    [description appendFormat:@", parent=%@", self.parent];
-    [description appendString:@">"];
-    return description;
-}
-
 @end
 
 @implementation CNTreeMapKeySet_impl
@@ -834,12 +819,6 @@ static CNClassType* _CNTreeMapEntry_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -876,6 +855,10 @@ static CNClassType* _CNImTreeMapKeySet_type;
     return [CNTreeMapKeyIterator applyMap:_map entry:[_map higherEntryThanKey:key]];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"ImTreeMapKeySet(%@)", _map];
+}
+
 - (CNClassType*)type {
     return [CNImTreeMapKeySet type];
 }
@@ -886,13 +869,6 @@ static CNClassType* _CNImTreeMapKeySet_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"map=%@", self.map];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -935,6 +911,10 @@ static CNClassType* _CNTreeMapKeyIterator_type;
     return ret;
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"TreeMapKeyIterator(%@)", _map];
+}
+
 - (CNClassType*)type {
     return [CNTreeMapKeyIterator type];
 }
@@ -945,13 +925,6 @@ static CNClassType* _CNTreeMapKeyIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"map=%@", self.map];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -992,6 +965,10 @@ static CNClassType* _CNMTreeMapKeySet_type;
     return [CNMTreeMapKeyIterator applyMap:_map entry:[_map higherEntryThanKey:key]];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"MTreeMapKeySet(%@)", _map];
+}
+
 - (CNClassType*)type {
     return [CNMTreeMapKeySet type];
 }
@@ -1002,13 +979,6 @@ static CNClassType* _CNMTreeMapKeySet_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"map=%@", self.map];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -1067,6 +1037,10 @@ static CNClassType* _CNMTreeMapKeyIterator_type;
     }
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"MTreeMapKeyIterator(%@)", _map];
+}
+
 - (CNClassType*)type {
     return [CNMTreeMapKeyIterator type];
 }
@@ -1077,13 +1051,6 @@ static CNClassType* _CNMTreeMapKeyIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"map=%@", self.map];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -1116,6 +1083,10 @@ static CNClassType* _CNTreeMapValues_type;
     return [CNTreeMapValuesIterator applyMap:_map entry:[_map firstEntry]];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"TreeMapValues(%@)", _map];
+}
+
 - (CNClassType*)type {
     return [CNTreeMapValues type];
 }
@@ -1126,13 +1097,6 @@ static CNClassType* _CNTreeMapValues_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"map=%@", self.map];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -1172,6 +1136,10 @@ static CNClassType* _CNTreeMapValuesIterator_type;
     return ret;
 }
 
+- (NSString*)description {
+    return @"TreeMapValuesIterator";
+}
+
 - (CNClassType*)type {
     return [CNTreeMapValuesIterator type];
 }
@@ -1182,12 +1150,6 @@ static CNClassType* _CNTreeMapValuesIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -1229,6 +1191,10 @@ static CNClassType* _CNTreeMapIterator_type;
     return ret;
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"TreeMapIterator(%@)", _map];
+}
+
 - (CNClassType*)type {
     return [CNTreeMapIterator type];
 }
@@ -1239,13 +1205,6 @@ static CNClassType* _CNTreeMapIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"map=%@", self.map];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -1306,6 +1265,10 @@ static CNClassType* _CNMTreeMapIterator_type;
     }
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"MTreeMapIterator(%@)", _map];
+}
+
 - (CNClassType*)type {
     return [CNMTreeMapIterator type];
 }
@@ -1316,13 +1279,6 @@ static CNClassType* _CNMTreeMapIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"map=%@", self.map];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

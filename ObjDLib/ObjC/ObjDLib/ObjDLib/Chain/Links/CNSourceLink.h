@@ -17,6 +17,7 @@
 - (instancetype)initWithCollection:(id<CNTraversable>)collection;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -31,6 +32,7 @@
 - (instancetype)initWithCollection:(id<CNTraversable>)collection;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -45,6 +47,7 @@
 - (instancetype)initWithCollection:(id<CNTraversable>)collection;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

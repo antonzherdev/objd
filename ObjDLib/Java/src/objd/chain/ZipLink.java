@@ -26,4 +26,7 @@ public class ZipLink<T, A, R> extends ChainLink_impl<T, R> {
         this.a = a;
         this.f = f;
     }
+    public String toString() {
+        return String.format("ZipLink(%s)", this.a);
+    }
 }

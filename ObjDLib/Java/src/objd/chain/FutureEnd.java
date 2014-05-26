@@ -97,4 +97,7 @@ public class FutureEnd<T> {
         this._ended = false;
         this._yielded = new AtomicBool();
     }
+    public String toString() {
+        return "FutureEnd";
+    }
 }

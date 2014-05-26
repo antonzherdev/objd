@@ -37,6 +37,21 @@ public final class EmptyList<T> extends ImList<T> {
     }
     public EmptyList() {
     }
+    public String toString() {
+        return "EmptyList";
+    }
+    public boolean equals(final Object to) {
+        if(this == to) {
+            return true;
+        }
+        if(to == null || !(to instanceof EmptyList)) {
+            return false;
+        }
+        return true;
+    }
+    public int hashCode() {
+        return 0;
+    }
     static {
         instance = new EmptyList<Object>();
     }

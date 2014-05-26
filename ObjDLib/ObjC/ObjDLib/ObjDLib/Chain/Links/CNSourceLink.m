@@ -34,6 +34,10 @@ static CNClassType* _CNSourceLink_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"SourceLink(%@)", _collection];
+}
+
 - (CNClassType*)type {
     return [CNSourceLink type];
 }
@@ -44,13 +48,6 @@ static CNClassType* _CNSourceLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"collection=%@", self.collection];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -89,6 +86,10 @@ static CNClassType* _CNAppendLink_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"AppendLink(%@)", _collection];
+}
+
 - (CNClassType*)type {
     return [CNAppendLink type];
 }
@@ -99,13 +100,6 @@ static CNClassType* _CNAppendLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"collection=%@", self.collection];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -148,6 +142,10 @@ static CNClassType* _CNPrependLink_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"PrependLink(%@)", _collection];
+}
+
 - (CNClassType*)type {
     return [CNPrependLink type];
 }
@@ -158,13 +156,6 @@ static CNClassType* _CNPrependLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"collection=%@", self.collection];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

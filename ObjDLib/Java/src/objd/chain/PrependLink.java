@@ -38,4 +38,7 @@ public class PrependLink<T> extends ChainLink_impl<T, T> {
     public PrependLink(final Traversable<T> collection) {
         this.collection = collection;
     }
+    public String toString() {
+        return String.format("PrependLink(%s)", this.collection);
+    }
 }

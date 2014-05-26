@@ -2,6 +2,7 @@
 #import "CNSet.h"
 #import "CNCollection.h"
 @class CNClassType;
+@class CNObject;
 
 @class CNPair;
 @class CNPairIterator;
@@ -21,6 +22,9 @@
 - (id<CNIterator>)iterator;
 - (id)head;
 - (BOOL)isEqualPair:(CNPair*)pair;
+- (NSString*)description;
+- (BOOL)isEqual:(id)to;
+- (NSUInteger)hash;
 + (CNClassType*)type;
 @end
 
@@ -37,6 +41,7 @@
 - (CNClassType*)type;
 - (BOOL)hasNext;
 - (id)next;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

@@ -18,6 +18,7 @@
 - (instancetype)initWithA:(id<CNIterable>)a f:(id(^)(id, id))f;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -36,6 +37,7 @@
 - (instancetype)initWithA:(id<CNIterable>)a b:(id<CNIterable>)b f:(id(^)(id, id, id))f;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

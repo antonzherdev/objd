@@ -23,4 +23,7 @@ public class RangeIterator extends Iterator_impl<Integer> {
         this.step = step;
         this.i = start;
     }
+    public String toString() {
+        return String.format("RangeIterator(%ld, %ld, %ld)", this.start, this.end, this.step);
+    }
 }

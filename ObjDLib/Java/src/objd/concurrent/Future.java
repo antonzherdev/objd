@@ -446,4 +446,7 @@ public abstract class Future<T> {
     }
     public Future() {
     }
+    public String toString() {
+        return "Future";
+    }
 }

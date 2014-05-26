@@ -10,4 +10,7 @@ public class Weak<T> {
     public Weak(final T value) {
         this.value = value;
     }
+    public String toString() {
+        return String.format("Weak(%s)", this.value);
+    }
 }

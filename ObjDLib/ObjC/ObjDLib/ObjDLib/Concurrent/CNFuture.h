@@ -45,6 +45,7 @@
 - (CNTry*)waitResult;
 - (id)getResultAwait:(CGFloat)await;
 - (CNFuture*)joinAnother:(CNFuture*)another;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -57,6 +58,7 @@
 - (BOOL)completeValue:(CNTry*)value;
 - (BOOL)successValue:(id)value;
 - (BOOL)failureReason:(id)reason;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -73,6 +75,7 @@
 - (BOOL)successValue:(id)value;
 - (BOOL)failureReason:(id)reason;
 - (void)onCompleteF:(void(^)(CNTry*))f;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -93,6 +96,7 @@
 - (BOOL)completeValue:(CNTry*)value;
 - (BOOL)successValue:(id)value;
 - (BOOL)failureReason:(id)reason;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

@@ -8,4 +8,5 @@ public interface Map<K, V> extends Iterable<Tuple<K, V>> {
     Iterable<V> values();
     boolean containsKey(final K key);
     boolean isValueEqualKeyValue(final K key, final V value);
+    String toString();
 }

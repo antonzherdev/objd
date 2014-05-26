@@ -2,6 +2,7 @@
 #import "CNPair.h"
 
 #import "CNType.h"
+#import "CNObject.h"
 @implementation CNPair
 static CNClassType* _CNPair_type;
 @synthesize a = _a;
@@ -52,6 +53,24 @@ static CNClassType* _CNPair_type;
     });
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"Pair(%@, %@)", _a, _b];
+}
+
+- (BOOL)isEqual:(id)to {
+    if(self == to) return YES;
+    if(to == nil) return NO;
+    if([to isKindOfClass:[CNPair class]]) return [self isEqualPair:((CNPair*)(to))];
+    return NO;
+}
+
+- (NSUInteger)hash {
+    NSUInteger hash = 0;
+    hash = hash * 31 + [_a hash];
+    hash = hash * 31 + [_b hash];
+    return hash;
+}
+
 - (CNClassType*)type {
     return [CNPair type];
 }
@@ -62,28 +81,6 @@ static CNClassType* _CNPair_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other)) return NO;
-    if([other isKindOfClass:[CNPair class]]) return [self isEqualPair:((CNPair*)(other))];
-    return NO;
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + [self.a hash];
-    hash = hash * 31 + [self.b hash];
-    return hash;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"a=%@", self.a];
-    [description appendFormat:@", b=%@", self.b];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -121,6 +118,10 @@ static CNClassType* _CNPairIterator_type;
     else return _pair.b;
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"PairIterator(%@)", _pair];
+}
+
 - (CNClassType*)type {
     return [CNPairIterator type];
 }
@@ -131,13 +132,6 @@ static CNClassType* _CNPairIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"pair=%@", self.pair];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

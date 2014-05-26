@@ -48,4 +48,22 @@ public class ImMapDefault<K, V> extends ImIterable_impl<Tuple<K, V>> {
         this.map = map;
         this.defaultFunc = defaultFunc;
     }
+    public String toString() {
+        return String.format("ImMapDefault(%s)", this.map);
+    }
+    public boolean equals(final Object to) {
+        if(this == to) {
+            return true;
+        }
+        if(to == null) {
+            return false;
+        }
+        if(to instanceof Map) {
+            return isEqualMap(((Map<K, V>)(((Map)(to)))));
+        }
+        if(to instanceof ImMapDefault) {
+            return isEqualMapDefault(((ImMapDefault<K, V>)(((ImMapDefault)(to)))));
+        }
+        return false;
+    }
 }

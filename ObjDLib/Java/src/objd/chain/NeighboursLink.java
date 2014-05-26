@@ -47,4 +47,7 @@ public class NeighboursLink<T> extends ChainLink_impl<T, Tuple<T, T>> {
     public NeighboursLink(final boolean ring) {
         this.ring = ring;
     }
+    public String toString() {
+        return String.format("NeighboursLink(%d)", this.ring);
+    }
 }

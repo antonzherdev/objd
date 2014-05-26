@@ -50,4 +50,7 @@ public class MTreeMapKeyIterator<K, V> extends MIterator_impl<K> {
     public MTreeMapKeyIterator(final MTreeMap<K, V> map) {
         this.map = map;
     }
+    public String toString() {
+        return String.format("MTreeMapKeyIterator(%s)", this.map);
+    }
 }

@@ -52,4 +52,7 @@ public class TreeMapTest extends TestCase {
     }
     public TreeMapTest() {
     }
+    public String toString() {
+        return "TreeMapTest";
+    }
 }

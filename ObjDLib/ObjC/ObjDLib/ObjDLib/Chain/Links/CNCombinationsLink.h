@@ -14,6 +14,7 @@
 - (instancetype)init;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -23,6 +24,7 @@
 - (instancetype)init;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -37,6 +39,7 @@
 - (instancetype)initWithRing:(BOOL)ring;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

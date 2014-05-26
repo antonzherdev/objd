@@ -19,6 +19,7 @@
 - (void)testPromiseOnComplete;
 - (void)testMap;
 - (void)testFlatMap;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

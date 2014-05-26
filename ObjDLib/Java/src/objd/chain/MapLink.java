@@ -17,4 +17,7 @@ public class MapLink<A, B> extends ChainLink_impl<A, B> {
     public MapLink(final F<A, B> f) {
         this.f = f;
     }
+    public String toString() {
+        return String.format(")");
+    }
 }

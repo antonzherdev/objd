@@ -11,6 +11,7 @@
 @protocol CNQueue;
 
 @protocol CNQueue<NSObject>
+- (NSString*)description;
 @end
 
 
@@ -36,6 +37,7 @@
 - (CNImQueue*)addItem:(id)item;
 - (CNImQueue*)enqueueItem:(id)item;
 - (CNTuple*)dequeue;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -53,6 +55,7 @@
 - (CNClassType*)type;
 - (BOOL)hasNext;
 - (id)next;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -67,6 +70,7 @@
 - (void)enqueueItem:(id)item;
 - (id)dequeue;
 - (NSUInteger)count;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

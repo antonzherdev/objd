@@ -2,6 +2,7 @@
 #import "CNList.h"
 
 #import "CNType.h"
+#import "CNObject.h"
 @implementation CNImList
 static CNClassType* _CNImList_type;
 
@@ -54,6 +55,10 @@ static CNClassType* _CNImList_type;
     @throw @"Method insert is abstract";
 }
 
+- (NSString*)description {
+    return @"ImList";
+}
+
 - (CNClassType*)type {
     return [CNImList type];
 }
@@ -64,12 +69,6 @@ static CNClassType* _CNImList_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -149,6 +148,24 @@ static CNClassType* _CNFilledList_type;
     }
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"FilledList(%@, %@)", __head, _tail];
+}
+
+- (BOOL)isEqual:(id)to {
+    if(self == to) return YES;
+    if(to == nil || !([to isKindOfClass:[CNFilledList class]])) return NO;
+    CNFilledList* o = ((CNFilledList*)(to));
+    return [__head isEqual:o._head] && [_tail isEqual:o.tail];
+}
+
+- (NSUInteger)hash {
+    NSUInteger hash = 0;
+    hash = hash * 31 + [__head hash];
+    hash = hash * 31 + [_tail hash];
+    return hash;
+}
+
 - (CNClassType*)type {
     return [CNFilledList type];
 }
@@ -159,28 +176,6 @@ static CNClassType* _CNFilledList_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNFilledList* o = ((CNFilledList*)(other));
-    return [self._head isEqual:o._head] && [self.tail isEqual:o.tail];
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + [self._head hash];
-    hash = hash * 31 + [self.tail hash];
-    return hash;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"_head=%@", self._head];
-    [description appendFormat:@", tail=%@", self.tail];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -238,6 +233,20 @@ static CNClassType* _CNEmptyList_type;
     return [CNImList applyItem:item];
 }
 
+- (NSString*)description {
+    return @"EmptyList";
+}
+
+- (BOOL)isEqual:(id)to {
+    if(self == to) return YES;
+    if(to == nil || !([to isKindOfClass:[CNEmptyList class]])) return NO;
+    return YES;
+}
+
+- (NSUInteger)hash {
+    return 0;
+}
+
 - (CNClassType*)type {
     return [CNEmptyList type];
 }
@@ -252,22 +261,6 @@ static CNClassType* _CNEmptyList_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    return YES;
-}
-
-- (NSUInteger)hash {
-    return 0;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -302,6 +295,10 @@ static CNClassType* _CNListIterator_type;
     return ((id)(ret));
 }
 
+- (NSString*)description {
+    return @"ListIterator";
+}
+
 - (CNClassType*)type {
     return [CNListIterator type];
 }
@@ -312,12 +309,6 @@ static CNClassType* _CNListIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -349,6 +340,10 @@ static CNClassType* _CNImListBuilder_type;
     return [_list reverse];
 }
 
+- (NSString*)description {
+    return @"ImListBuilder";
+}
+
 - (CNClassType*)type {
     return [CNImListBuilder type];
 }
@@ -359,12 +354,6 @@ static CNClassType* _CNImListBuilder_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

@@ -3,6 +3,7 @@
 @protocol CNSet;
 @class CNHashSetBuilder;
 @class CNClassType;
+@class CNObject;
 @class CNDispatchQueue;
 @class CNChain;
 @class CNMArray;
@@ -26,6 +27,8 @@
 - (id)head;
 - (id)last;
 - (id<CNImSeq>)tail;
+- (NSString*)description;
+- (BOOL)isEqual:(id)to;
 @end
 
 
@@ -40,6 +43,7 @@
 - (id<CNImSeq>)addSeq:(id<CNSeq>)seq;
 - (id<CNImSeq>)subItem:(id)item;
 - (id<CNMSeq>)mCopy;
+- (NSString*)description;
 @end
 
 
@@ -55,6 +59,7 @@
 - (void)setIndex:(NSUInteger)index item:(id)item;
 - (id<CNImSeq>)im;
 - (id<CNImSeq>)imCopy;
+- (NSString*)description;
 @end
 
 
@@ -74,6 +79,7 @@
 - (void)appendItem:(id)item;
 - (CNImArray*)build;
 + (CNArrayBuilder*)apply;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -91,6 +97,9 @@
 - (CNClassType*)type;
 - (id)applyIndex:(NSUInteger)index;
 - (id<CNIterator>)iterator;
+- (NSString*)description;
+- (BOOL)isEqual:(id)to;
+- (NSUInteger)hash;
 + (CNClassType*)type;
 @end
 
@@ -109,6 +118,7 @@
 - (CNClassType*)type;
 - (BOOL)hasNext;
 - (id)next;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

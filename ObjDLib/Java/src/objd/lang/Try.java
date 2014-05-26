@@ -12,4 +12,7 @@ public abstract class Try<T> {
     }
     public Try() {
     }
+    public String toString() {
+        return "Try";
+    }
 }

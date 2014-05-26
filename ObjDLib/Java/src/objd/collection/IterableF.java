@@ -11,4 +11,7 @@ public class IterableF<T> extends ImIterable_impl<T> {
     public IterableF(final F0<Iterator<T>> iteratorF) {
         this.iteratorF = iteratorF;
     }
+    public String toString() {
+        return String.format(")");
+    }
 }

@@ -29,6 +29,7 @@
 - (id<CNIterator>)iterator;
 - (void)dealloc;
 - (id)applyIndex:(NSUInteger)index;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -45,6 +46,7 @@
 - (CNClassType*)type;
 - (BOOL)hasNext;
 - (id)next;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

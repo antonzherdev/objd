@@ -3,6 +3,7 @@
 
 #import "CNSet.h"
 #import "CNType.h"
+#import "CNObject.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
 #import "CNPlat.h"
@@ -62,12 +63,6 @@
     return self;
 }
 
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
-}
-
 @end
 
 @implementation CNImSeq_impl
@@ -106,12 +101,6 @@
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -208,12 +197,6 @@
     return self;
 }
 
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
-}
-
 @end
 
 @implementation CNArrayBuilder
@@ -247,6 +230,10 @@ static CNClassType* _CNArrayBuilder_type;
     return [CNArrayBuilder arrayBuilderWithCapacity:0];
 }
 
+- (NSString*)description {
+    return @"ArrayBuilder";
+}
+
 - (CNClassType*)type {
     return [CNArrayBuilder type];
 }
@@ -257,12 +244,6 @@ static CNClassType* _CNArrayBuilder_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -300,6 +281,24 @@ static CNClassType* _CNIndexFunSeq_type;
     return [CNIndexFunSeqIterator indexFunSeqIteratorWithCount:_count f:_f];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"IndexFunSeq(%lu)", (unsigned long)_count];
+}
+
+- (BOOL)isEqual:(id)to {
+    if(self == to) return YES;
+    if(to == nil || !([to isKindOfClass:[CNIndexFunSeq class]])) return NO;
+    CNIndexFunSeq* o = ((CNIndexFunSeq*)(to));
+    return _count == o.count && [_f isEqual:o.f];
+}
+
+- (NSUInteger)hash {
+    NSUInteger hash = 0;
+    hash = hash * 31 + _count;
+    hash = hash * 31 + [_f hash];
+    return hash;
+}
+
 - (CNClassType*)type {
     return [CNIndexFunSeq type];
 }
@@ -310,27 +309,6 @@ static CNClassType* _CNIndexFunSeq_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNIndexFunSeq* o = ((CNIndexFunSeq*)(other));
-    return self.count == o.count && [self.f isEqual:o.f];
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + self.count;
-    hash = hash * 31 + [self.f hash];
-    return hash;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"count=%lu", (unsigned long)self.count];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -370,6 +348,10 @@ static CNClassType* _CNIndexFunSeqIterator_type;
     return ret;
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"IndexFunSeqIterator(%lu)", (unsigned long)_count];
+}
+
 - (CNClassType*)type {
     return [CNIndexFunSeqIterator type];
 }
@@ -380,13 +362,6 @@ static CNClassType* _CNIndexFunSeqIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"count=%lu", (unsigned long)self.count];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

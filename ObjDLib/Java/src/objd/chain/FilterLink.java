@@ -28,4 +28,7 @@ public class FilterLink<T> extends ChainLink_impl<T, T> {
         this.factor = factor;
         this.predicate = predicate;
     }
+    public String toString() {
+        return String.format("FilterLink(%f)", this.factor);
+    }
 }

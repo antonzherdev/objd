@@ -14,6 +14,9 @@ public class EmptyIterator<T> extends Iterator_impl<T> {
     }
     public EmptyIterator() {
     }
+    public String toString() {
+        return "EmptyIterator";
+    }
     static {
         instance = new EmptyIterator<Object>();
     }

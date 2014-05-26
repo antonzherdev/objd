@@ -184,6 +184,10 @@ static CNClassType* _CNMList_type;
     return ((CNMListItem*)(_headItem)).data;
 }
 
+- (NSString*)description {
+    return @"MList";
+}
+
 - (CNClassType*)type {
     return [CNMList type];
 }
@@ -194,12 +198,6 @@ static CNClassType* _CNMList_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -226,6 +224,10 @@ static CNClassType* _CNMListItem_type;
     if(self == [CNMListItem class]) _CNMListItem_type = [CNClassType classTypeWithCls:[CNMListItem class]];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"MListItem(%@)", _data];
+}
+
 - (CNClassType*)type {
     return [CNMListItem type];
 }
@@ -236,13 +238,6 @@ static CNClassType* _CNMListItem_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"data=%@", self.data];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -287,6 +282,10 @@ static CNClassType* _CNMListIterator_type;
     ((CNMListItem*)(nonnil(_prev))).data = value;
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"MListIterator(%@)", _list];
+}
+
 - (CNClassType*)type {
     return [CNMListIterator type];
 }
@@ -297,13 +296,6 @@ static CNClassType* _CNMListIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"list=%@", self.list];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -337,6 +329,10 @@ static CNClassType* _CNMListImmutableIterator_type;
     return r.data;
 }
 
+- (NSString*)description {
+    return @"MListImmutableIterator";
+}
+
 - (CNClassType*)type {
     return [CNMListImmutableIterator type];
 }
@@ -347,12 +343,6 @@ static CNClassType* _CNMListImmutableIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

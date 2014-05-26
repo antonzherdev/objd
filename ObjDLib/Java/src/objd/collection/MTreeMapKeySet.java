@@ -22,4 +22,7 @@ public class MTreeMapKeySet<K, V> extends TreeMapKeySet_impl<K> {
     public MTreeMapKeySet(final MTreeMap<K, V> map) {
         this.map = map;
     }
+    public String toString() {
+        return String.format("MTreeMapKeySet(%s)", this.map);
+    }
 }

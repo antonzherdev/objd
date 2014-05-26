@@ -19,12 +19,6 @@
     return self;
 }
 
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
-}
-
 @end
 
 @implementation CNMIterator_impl
@@ -39,12 +33,6 @@
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -75,12 +63,6 @@
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -209,12 +191,6 @@
     return self;
 }
 
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
-}
-
 @end
 
 @implementation CNImTraversable_impl
@@ -229,12 +205,6 @@
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -267,12 +237,6 @@
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -352,6 +316,26 @@
     return !([[self iterator] hasNext]);
 }
 
+- (BOOL)isEqualIterable:(id<CNIterable>)iterable {
+    if([self count] == [iterable count]) {
+        return YES;
+    } else {
+        id<CNIterator> ai = [self iterator];
+        id<CNIterator> bi = [iterable iterator];
+        while([ai hasNext] && [bi hasNext]) {
+            if(!([[ai next] isEqual:[bi next]])) return NO;
+        }
+        return YES;
+    }
+}
+
+- (BOOL)isEqual:(id)to {
+    if(self == to) return YES;
+    if(to == nil) return NO;
+    if([to conformsToProtocol:@protocol(CNIterable)]) return [self isEqualIterable:((id<CNIterable>)(to))];
+    return NO;
+}
+
 - (id)copyWithZone:(NSZone*)zone {
     return self;
 }
@@ -374,12 +358,6 @@
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -437,12 +415,6 @@
     return self;
 }
 
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
-}
-
 @end
 
 @implementation CNIterableF
@@ -469,6 +441,10 @@ static CNClassType* _CNIterableF_type;
     return _iteratorF();
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@")"];
+}
+
 - (CNClassType*)type {
     return [CNIterableF type];
 }
@@ -479,12 +455,6 @@ static CNClassType* _CNIterableF_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -519,6 +489,10 @@ static CNClassType* _CNEmptyIterator_type;
     @throw @"Iterator is empty";
 }
 
+- (NSString*)description {
+    return @"EmptyIterator";
+}
+
 - (CNClassType*)type {
     return [CNEmptyIterator type];
 }
@@ -533,12 +507,6 @@ static CNClassType* _CNEmptyIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

@@ -62,6 +62,10 @@ static CNClassType* _CNPArray_type;
     }
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"PArray(%lu, %lu, %lu, %p, %d)", (unsigned long)_stride, (unsigned long)_count, (unsigned long)_length, _bytes, _copied];
+}
+
 - (CNClassType*)type {
     return [CNPArray type];
 }
@@ -72,17 +76,6 @@ static CNClassType* _CNPArray_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"stride=%lu", (unsigned long)self.stride];
-    [description appendFormat:@", count=%lu", (unsigned long)self.count];
-    [description appendFormat:@", length=%lu", (unsigned long)self.length];
-    [description appendFormat:@", bytes=%p", self.bytes];
-    [description appendFormat:@", copied=%d", self.copied];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -120,6 +113,10 @@ static CNClassType* _CNPArrayIterator_type;
     return ret;
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"PArrayIterator(%@)", _array];
+}
+
 - (CNClassType*)type {
     return [CNPArrayIterator type];
 }
@@ -130,13 +127,6 @@ static CNClassType* _CNPArrayIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"array=%@", self.array];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

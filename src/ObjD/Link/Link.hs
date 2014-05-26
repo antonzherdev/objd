@@ -131,8 +131,8 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 				genClassName = clsGenName,
 				_classExtends = if D.className cl == "Object" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
 				_classDefs = 
-					if isObject then fields ++ defs ++ [typeField]
-					else fields ++ defs ++ constr constrPars ++ [typeField] 
+					if isObject then fields ++ defs ++ [typeField] 
+					else fields ++ defs ++ constr constrPars ++ [typeField] ++ [description | needDescription]  ++ [equal | needEquals] ++ [hash | needHash]
 				{-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
 				_classGenerics = generics,
 				_classImports = clImports,
@@ -248,6 +248,95 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 			defGenerics = Nothing, defPars = [], defAnnotations = []}
 			where 
 				typeName = if selfIsStruct then "PType" else "ClassType"
+
+		needDescription = case cl of
+			D.Class{} -> (not $ any ( ("description" == ). defName) defs)
+		needHash = case cl of
+			D.Class{} -> D.ClassModCase `elem` D.classMods cl && (not $ any ( ("hash" == ). defName) defs)
+		needEquals = case cl of
+			D.Class{} -> D.ClassModCase `elem` D.classMods cl || any ( ("isEqual" == ). defName) defs
+			_ -> False
+		reloadedEquals = filter ( ("isEqual" == ). defName) defs
+		equalFields = 
+			let dds = map (defName . fst) constrPars
+			in filter (\d -> DefModField `elem` defMods d && defName d `elem` dds) fields
+		equal :: Def
+		equal = let 
+			p = localVal "to" (baseDataType env)
+			a = Self selfType
+			b = callRef p
+			o = localValE "o" selfType (Cast selfType b)
+			equalPrelude = If (BoolOp ExactEq a b) (Return True $ BoolConst True) Nop
+			defEqual = 
+				[equalPrelude,
+				If (BoolOp Or (BoolOp ExactEq b (None (baseDataType env) )) (Not $ Dot b $ Is selfType)) (Return True $ BoolConst False) Nop]
+				++ if null equalFields then [Return True $ BoolConst True] else equalsFun
+			
+			equalsFun = [Val False o, Return True $ foldl foldEq Nop equalFields]
+				where
+					foldEq Nop d = eqd d
+					foldEq pp d = BoolOp And pp (eqd d)
+					eqd d = BoolOp Eq (Dot a $ callRef d) (Dot (callRef o) $ callRef d)
+		
+			reloadedEqualCall d@Def{defPars = [pp@Def{defType = tp}]} = 
+					If (Dot b $ Is tp) 
+						(Return True $ Dot a (Call d TPBool [(pp, Cast tp b)] []))
+					 	Nop
+			reloadedEqualCall d = ExpError $ "Incorrect equal def " ++ show d
+			body = if null reloadedEquals then defEqual
+				else 
+					[equalPrelude,
+					If (BoolOp ExactEq b (None (baseDataType env) )) (Return True $ BoolConst False) Nop]
+					++ map reloadedEqualCall reloadedEquals
+					++ [Return True $ BoolConst False]
+			in
+				Def{defName = "isEqual", defMods = [DefModDef, DefModPublic] ++ [DefModStruct | selfIsStruct], defBody = Braces body,
+					defPars = [p], defType = TPBool, defGenerics = Nothing, defAnnotations = []}
+				
+		
+		hash :: Def
+ 		hash = let
+ 			r = localVarE "hash" uint (IntConst 0)
+			hashFun [] = Return True $ IntConst 0
+			hashFun fs = Braces (
+				Val False r :
+				map hashSet fs ++
+				[Return True $ callRef r])
+			hashSet d@Def{defType = tp} = Set Nothing (callRef r) $
+				MathOp Plus (MathOp Mul (callRef r) (IntConst 31)) $ hashCall tp (Dot (Self selfType) (callRef d))
+			hashCall :: DataType -> Exp -> Exp
+			hashCall tp ref = 
+				case tp of
+					TPNumber{} -> ref
+					TPBool -> ref
+					TPChar -> ref
+					TPEArr n atp -> arrHash atp n 0 Nop
+					_ -> dotCall env ref "hash" [] []
+				where	
+					arrElemHash atp i = hashCall atp $ Index ref (IntConst i)
+					arrHash _ 0 _ _ = IntConst 0
+					arrHash atp n i op 
+						| i >= n = op
+						| i == 0 = arrHash atp n 1 (arrElemHash atp i)
+						| otherwise = arrHash atp n (i + 1) $ MathOp Plus (MathOp Mul (IntConst 13) op) (arrElemHash atp i)
+
+ 			in Def{defName = "hash", defMods = [DefModDef, DefModPublic] ++ [DefModStruct | selfIsStruct], defBody = hashFun equalFields,
+					defPars = [], defType = uint, defGenerics = Nothing, defAnnotations = []}
+
+ 		description = let
+		 	descriptionFun = case equalFields of
+		 		[] -> Return True $ StringConst $ D.className cl
+		 		_ -> Return True $ foldl append (StringBuild [] ")") $ filter pos equalFields
+			pos Def{defType = TPFun{}} = False
+			pos _ = True
+			append :: Exp -> Def -> Exp
+			append (StringBuild [] e) d = StringBuild [(D.className cl ++ "(", Dot (Self selfType) (callRef d))] e
+			append (StringBuild xs e) d = StringBuild (xs ++ [(", ", Dot (Self selfType) (callRef d))]) e
+		
+ 			in Def{defName = "description", defMods = [DefModDef, DefModPublic] ++ [DefModStruct | selfIsStruct], defBody = descriptionFun,
+					defPars = [], defType = TPString, defGenerics = Nothing, defAnnotations = []}
+		
+
 
 
 traitImplClass :: Env -> Class -> Class
@@ -1052,7 +1141,7 @@ linkFuncOp env ex@(D.FuncOp tp l r)  =
 				bind = do
 					ff <- f $ callRef $ localVal "_" li
 					let 		
-						dotCall = do
+						dotCl = do
 							c <- g ff
 							return $ lambda ro c
 						optClass = dataTypeClass env lo 
@@ -1067,9 +1156,9 @@ linkFuncOp env ex@(D.FuncOp tp l r)  =
 								(wrapGeneric ro)]
 							return $ lambda (if ro == TPVoid then TPVoid else TPOption False $ wrapGeneric ro) c
 					case (lo, ri) of
-						(TPOption _ _, TPOption _ _) -> dotCall
+						(TPOption _ _, TPOption _ _) -> dotCl
 						(TPOption _ _, _) -> optCall
-						_ -> dotCall
+						_ -> dotCl
 				clone :: Either String Exp
 				clone = do
 					ff <- f $ callRef $ localVal "_" li
@@ -1269,6 +1358,17 @@ linkCase env (D.Case mainExpr items) =
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Calling 
  ------------------------------------------------------------------------------------------------------------------------------}
+
+dotCall :: Env -> Exp -> String -> [DataType] -> [Exp] -> Exp
+dotCall env l nm gens pars = let 
+		tp = exprDataType l 
+		cl = dataTypeClass env tp
+	in  
+		fromMaybe (ExpError $ "Could not find \"" ++ nm ++ "\" in " ++ show tp ++ " for " ++ show l)
+		$ fmap (\d -> Dot l $ Call d (defType d) (zip (defPars d) (pars)) gens) 
+		$ find (\d -> defName d == nm && length (defPars d) == length pars) 
+		$ allDefsInClass (cl, M.empty)
+
 
 classTypeClass :: DataType -> DataType
 classTypeClass (TPClass TPMClass [g] Class{className = "ClassType"}) = g

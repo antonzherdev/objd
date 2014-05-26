@@ -138,6 +138,9 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
         this.comparator = comparator;
         this.values = new TreeMapValues<V>(this);
     }
+    public String toString() {
+        return String.format(")");
+    }
     static {
         BLACK = 0;
         RED = 1;

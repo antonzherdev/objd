@@ -76,4 +76,23 @@ public final class FilledList<T> extends ImList<T> {
         this.tail = tail;
         this.count = tail.count() + 1;
     }
+    public String toString() {
+        return String.format("FilledList(%s, %s)", this._head, this.tail);
+    }
+    public boolean equals(final Object to) {
+        if(this == to) {
+            return true;
+        }
+        if(to == null || !(to instanceof FilledList)) {
+            return false;
+        }
+        final FilledList<T> o = ((FilledList<T>)(((FilledList)(to))));
+        return this._head.equals(o._head) && this.tail.equals(o.tail);
+    }
+    public int hashCode() {
+        int hash = 0;
+        hash = hash * 31 + this._head.hashCode();
+        hash = hash * 31 + this.tail.hashCode();
+        return hash;
+    }
 }

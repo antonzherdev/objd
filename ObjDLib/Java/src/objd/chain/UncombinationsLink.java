@@ -28,4 +28,7 @@ public class UncombinationsLink<T> extends ChainLink_impl<Tuple<T, T>, T> {
     }
     public UncombinationsLink() {
     }
+    public String toString() {
+        return "UncombinationsLink";
+    }
 }

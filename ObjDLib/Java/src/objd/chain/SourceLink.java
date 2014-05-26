@@ -29,4 +29,7 @@ public class SourceLink<T> extends ChainLink_impl<Void, T> {
     public SourceLink(final Traversable<T> collection) {
         this.collection = collection;
     }
+    public String toString() {
+        return String.format("SourceLink(%s)", this.collection);
+    }
 }

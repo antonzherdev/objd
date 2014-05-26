@@ -87,15 +87,19 @@ className cl = D.genClassName cl
 
 
 defName :: D.Def -> String
-defName d = let 
-	def = fromMaybe (D.defName d ++ concatMap (cap . D.defName) (D.defPars d)) $ D.genName (D.defAnnotations d)
-	in case D.defPars d of
-		[] -> case D.defName d of
-			"hash" -> "hashCode"
-			"description" -> "toString"
-			"isEqual" -> "equals"
+defName d 
+	| D.DefModDef `elem` D.defMods d = let 
+		def = fromMaybe (D.defName d ++ concatMap (cap . D.defName) (D.defPars d)) $ D.genName (D.defAnnotations d)
+		in case D.defPars d of
+			[] -> case D.defName d of
+				"hash" -> "hashCode"
+				"description" -> "toString"
+				_ -> def
+			[p] -> case (D.defName d, D.defName p) of
+				("isEqual", "to") -> "equals"
+				_ -> def
 			_ -> def
-		_ -> def
+	| otherwise = D.defName d
 
 overrideAnnotation :: J.DefAnnotation
 overrideAnnotation = J.DefAnnotation "Override" []

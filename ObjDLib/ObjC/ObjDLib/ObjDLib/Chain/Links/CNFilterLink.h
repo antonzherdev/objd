@@ -18,6 +18,7 @@
 - (instancetype)initWithFactor:(CGFloat)factor predicate:(BOOL(^)(id))predicate;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -32,6 +33,7 @@
 - (instancetype)initWithNumber:(NSUInteger)number;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

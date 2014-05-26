@@ -33,4 +33,7 @@ public class QueueIterator<T> extends Iterator_impl<T> {
         this.i = in.iterator();
         this.isIn = true;
     }
+    public String toString() {
+        return String.format("QueueIterator(%s)", this.out);
+    }
 }

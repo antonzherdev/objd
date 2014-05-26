@@ -46,4 +46,7 @@ public class TreeMapEntry<K, V> {
         this.right = null;
         this.color = 0;
     }
+    public String toString() {
+        return String.format("TreeMapEntry(%s, %s, %s)", this.key, this.value, this.parent);
+    }
 }

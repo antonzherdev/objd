@@ -45,4 +45,7 @@ public class QueueTest extends TestCase {
     }
     public QueueTest() {
     }
+    public String toString() {
+        return "QueueTest";
+    }
 }

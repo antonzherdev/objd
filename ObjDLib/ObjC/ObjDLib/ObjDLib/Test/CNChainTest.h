@@ -48,6 +48,7 @@
 - (void)testMin;
 - (void)testMax;
 - (void)testToString;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

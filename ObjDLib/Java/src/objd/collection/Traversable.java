@@ -14,4 +14,5 @@ public interface Traversable<T> {
     boolean allConfirm(final F<T, Boolean> confirm);
     T head();
     <C extends Traversable<T>> C convertWithBuilder(final Builder<T, C> builder);
+    String toString();
 }

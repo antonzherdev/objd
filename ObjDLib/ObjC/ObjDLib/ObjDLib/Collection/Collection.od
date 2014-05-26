@@ -192,6 +192,17 @@ trait Iterable<T> extends Traversable<T> {
         }
         ret
     }
+
+    def isEqual(iterable : Iterable<T>) : bool =
+        if(count == iterable.count) true
+        else {
+            val ai = iterator
+            val bi = iterable.iterator
+            while(ai.hasNext && bi.hasNext) {
+                if(ai.next != bi.next) return false
+            }
+            true
+        }
 }
 
 trait ImIterable<T> extends Iterable<T> with ImTraversable<T> {

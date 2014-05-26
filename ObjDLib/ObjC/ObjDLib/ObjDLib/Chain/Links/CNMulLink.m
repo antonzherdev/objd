@@ -36,6 +36,10 @@ static CNClassType* _CNMulLink_type;
     }];
 }
 
+- (NSString*)description {
+    return @"MulLink";
+}
+
 - (CNClassType*)type {
     return [CNMulLink type];
 }
@@ -46,12 +50,6 @@ static CNClassType* _CNMulLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

@@ -77,6 +77,10 @@ static CNClassType* _CNFutureEnd_type;
     }];
 }
 
+- (NSString*)description {
+    return @"FutureEnd";
+}
+
 - (CNClassType*)type {
     return [CNFutureEnd type];
 }
@@ -87,12 +91,6 @@ static CNClassType* _CNFutureEnd_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -160,6 +158,10 @@ static CNClassType* _CNFutureVoidEnd_type;
     }];
 }
 
+- (NSString*)description {
+    return @"FutureVoidEnd";
+}
+
 - (CNClassType*)type {
     return [CNFutureVoidEnd type];
 }
@@ -170,12 +172,6 @@ static CNClassType* _CNFutureVoidEnd_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

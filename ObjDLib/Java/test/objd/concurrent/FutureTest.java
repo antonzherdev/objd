@@ -117,4 +117,7 @@ public class FutureTest extends TestCase {
     }
     public FutureTest() {
     }
+    public String toString() {
+        return "FutureTest";
+    }
 }

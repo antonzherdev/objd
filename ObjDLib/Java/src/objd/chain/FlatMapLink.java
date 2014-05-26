@@ -30,4 +30,7 @@ public class FlatMapLink<A, B> extends ChainLink_impl<A, B> {
         this.factor = factor;
         this.f = f;
     }
+    public String toString() {
+        return String.format("FlatMapLink(%f)", this.factor);
+    }
 }

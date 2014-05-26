@@ -10,6 +10,7 @@
 - (instancetype)init;
 - (CNClassType*)type;
 - (void)testDeque;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

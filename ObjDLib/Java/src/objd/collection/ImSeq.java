@@ -8,4 +8,5 @@ public interface ImSeq<T> extends Seq<T>, ImIterable<T> {
     ImSeq<T> subItem(final T item);
     @Override
     MSeq<T> mCopy();
+    String toString();
 }

@@ -21,6 +21,7 @@
 - (instancetype)initWithComparator:(NSInteger(^)(id, id))comparator;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -30,6 +31,7 @@
 - (instancetype)init;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -42,6 +44,7 @@
 - (instancetype)init;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

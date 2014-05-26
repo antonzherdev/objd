@@ -349,6 +349,10 @@ static CNClassType* _CNFuture_type;
     return p;
 }
 
+- (NSString*)description {
+    return @"Future";
+}
+
 - (CNClassType*)type {
     return [CNFuture type];
 }
@@ -359,12 +363,6 @@ static CNClassType* _CNFuture_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -403,6 +401,10 @@ static CNClassType* _CNPromise_type;
     @throw @"Method failure is abstract";
 }
 
+- (NSString*)description {
+    return @"Promise";
+}
+
 - (CNClassType*)type {
     return [CNPromise type];
 }
@@ -413,12 +415,6 @@ static CNClassType* _CNPromise_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -485,6 +481,10 @@ static CNClassType* _CNDefaultPromise_type;
     }
 }
 
+- (NSString*)description {
+    return @"DefaultPromise";
+}
+
 - (CNClassType*)type {
     return [CNDefaultPromise type];
 }
@@ -495,12 +495,6 @@ static CNClassType* _CNDefaultPromise_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -553,6 +547,10 @@ static CNClassType* _CNKeptPromise_type;
     return NO;
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"KeptPromise(%@)", _value];
+}
+
 - (CNClassType*)type {
     return [CNKeptPromise type];
 }
@@ -563,13 +561,6 @@ static CNClassType* _CNKeptPromise_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"value=%@", self.value];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

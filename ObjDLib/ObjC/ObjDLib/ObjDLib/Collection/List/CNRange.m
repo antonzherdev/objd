@@ -2,6 +2,7 @@
 #import "CNRange.h"
 
 #import "CNType.h"
+#import "CNObject.h"
 @implementation CNRange
 static CNClassType* _CNRange_type;
 @synthesize start = _start;
@@ -56,6 +57,25 @@ static CNClassType* _CNRange_type;
     return [CNRange rangeWithStart:i end:i step:1];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"Range(%ld, %ld, %ld)", (long)_start, (long)_end, (long)_step];
+}
+
+- (BOOL)isEqual:(id)to {
+    if(self == to) return YES;
+    if(to == nil || !([to isKindOfClass:[CNRange class]])) return NO;
+    CNRange* o = ((CNRange*)(to));
+    return _start == o.start && _end == o.end && _step == o.step;
+}
+
+- (NSUInteger)hash {
+    NSUInteger hash = 0;
+    hash = hash * 31 + _start;
+    hash = hash * 31 + _end;
+    hash = hash * 31 + _step;
+    return hash;
+}
+
 - (CNClassType*)type {
     return [CNRange type];
 }
@@ -66,30 +86,6 @@ static CNClassType* _CNRange_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNRange* o = ((CNRange*)(other));
-    return self.start == o.start && self.end == o.end && self.step == o.step;
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + self.start;
-    hash = hash * 31 + self.end;
-    hash = hash * 31 + self.step;
-    return hash;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"start=%ld", (long)self.start];
-    [description appendFormat:@", end=%ld", (long)self.end];
-    [description appendFormat:@", step=%ld", (long)self.step];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -131,6 +127,10 @@ static CNClassType* _CNRangeIterator_type;
     return numi(ret);
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"RangeIterator(%ld, %ld, %ld)", (long)_start, (long)_end, (long)_step];
+}
+
 - (CNClassType*)type {
     return [CNRangeIterator type];
 }
@@ -141,15 +141,6 @@ static CNClassType* _CNRangeIterator_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"start=%ld", (long)self.start];
-    [description appendFormat:@", end=%ld", (long)self.end];
-    [description appendFormat:@", step=%ld", (long)self.step];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

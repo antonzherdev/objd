@@ -31,6 +31,7 @@
 - (id)head;
 - (id)last;
 - (BOOL)containsItem:(id)item;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -45,6 +46,7 @@
 - (instancetype)initWithImmap:(CNImTreeMap*)immap;
 - (CNClassType*)type;
 - (CNMTreeSet*)mCopy;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -62,6 +64,7 @@
 + (CNTreeSetBuilder*)apply;
 - (void)appendItem:(id)item;
 - (CNImTreeSet*)build;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -85,6 +88,7 @@
 - (CNMTreeSet*)reorder;
 - (CNImTreeSet*)im;
 - (CNImTreeSet*)imCopy;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

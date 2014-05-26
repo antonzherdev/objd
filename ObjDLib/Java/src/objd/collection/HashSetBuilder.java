@@ -18,4 +18,7 @@ public class HashSetBuilder<T> extends Builder_impl<T, ImHashSet<T>> {
     static public <T> HashSetBuilder<T> apply() {
         return new HashSetBuilder<T>(((int)(0)));
     }
+    public String toString() {
+        return "HashSetBuilder";
+    }
 }

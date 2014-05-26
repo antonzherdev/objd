@@ -32,4 +32,7 @@ public class ReverseLink<T> extends ChainLink_impl<T, T> {
     }
     public ReverseLink() {
     }
+    public String toString() {
+        return "ReverseLink";
+    }
 }

@@ -37,4 +37,7 @@ public class MListIterator<T> extends MIterator_impl<T> {
     public MListIterator(final MList<T> list) {
         this.list = list;
     }
+    public String toString() {
+        return String.format("MListIterator(%s)", this.list);
+    }
 }

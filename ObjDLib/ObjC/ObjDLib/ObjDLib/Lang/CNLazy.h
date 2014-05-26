@@ -19,6 +19,7 @@
 - (CNClassType*)type;
 - (BOOL)isCalculated;
 - (id)get;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -35,6 +36,7 @@
 - (instancetype)initWithF:(id(^)(id))f;
 - (CNClassType*)type;
 - (id)applyX:(id)x;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -49,6 +51,7 @@
 - (instancetype)initWithValue:(id)value;
 - (CNClassType*)type;
 - (BOOL)isEmpty;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

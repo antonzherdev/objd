@@ -40,6 +40,20 @@ static CNClassType* _CNTuple_type;
     return tuple;
 }
 
+- (BOOL)isEqual:(id)to {
+    if(self == to) return YES;
+    if(to == nil || !([to isKindOfClass:[CNTuple class]])) return NO;
+    CNTuple* o = ((CNTuple*)(to));
+    return [_a isEqual:o.a] && [_b isEqual:o.b];
+}
+
+- (NSUInteger)hash {
+    NSUInteger hash = 0;
+    hash = hash * 31 + [_a hash];
+    hash = hash * 31 + [_b hash];
+    return hash;
+}
+
 - (CNClassType*)type {
     return [CNTuple type];
 }
@@ -50,20 +64,6 @@ static CNClassType* _CNTuple_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNTuple* o = ((CNTuple*)(other));
-    return [self.a isEqual:o.a] && [self.b isEqual:o.b];
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + [self.a hash];
-    hash = hash * 31 + [self.b hash];
-    return hash;
 }
 
 @end
@@ -113,6 +113,21 @@ static CNClassType* _CNTuple3_type;
     return tuple;
 }
 
+- (BOOL)isEqual:(id)to {
+    if(self == to) return YES;
+    if(to == nil || !([to isKindOfClass:[CNTuple3 class]])) return NO;
+    CNTuple3* o = ((CNTuple3*)(to));
+    return [_a isEqual:o.a] && [_b isEqual:o.b] && [_c isEqual:o.c];
+}
+
+- (NSUInteger)hash {
+    NSUInteger hash = 0;
+    hash = hash * 31 + [_a hash];
+    hash = hash * 31 + [_b hash];
+    hash = hash * 31 + [_c hash];
+    return hash;
+}
+
 - (CNClassType*)type {
     return [CNTuple3 type];
 }
@@ -123,21 +138,6 @@ static CNClassType* _CNTuple3_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNTuple3* o = ((CNTuple3*)(other));
-    return [self.a isEqual:o.a] && [self.b isEqual:o.b] && [self.c isEqual:o.c];
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + [self.a hash];
-    hash = hash * 31 + [self.b hash];
-    hash = hash * 31 + [self.c hash];
-    return hash;
 }
 
 @end
@@ -194,6 +194,22 @@ static CNClassType* _CNTuple4_type;
     return tuple;
 }
 
+- (BOOL)isEqual:(id)to {
+    if(self == to) return YES;
+    if(to == nil || !([to isKindOfClass:[CNTuple4 class]])) return NO;
+    CNTuple4* o = ((CNTuple4*)(to));
+    return [_a isEqual:o.a] && [_b isEqual:o.b] && [_c isEqual:o.c] && [_d isEqual:o.d];
+}
+
+- (NSUInteger)hash {
+    NSUInteger hash = 0;
+    hash = hash * 31 + [_a hash];
+    hash = hash * 31 + [_b hash];
+    hash = hash * 31 + [_c hash];
+    hash = hash * 31 + [_d hash];
+    return hash;
+}
+
 - (CNClassType*)type {
     return [CNTuple4 type];
 }
@@ -204,22 +220,6 @@ static CNClassType* _CNTuple4_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNTuple4* o = ((CNTuple4*)(other));
-    return [self.a isEqual:o.a] && [self.b isEqual:o.b] && [self.c isEqual:o.c] && [self.d isEqual:o.d];
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + [self.a hash];
-    hash = hash * 31 + [self.b hash];
-    hash = hash * 31 + [self.c hash];
-    hash = hash * 31 + [self.d hash];
-    return hash;
 }
 
 @end
@@ -283,6 +283,23 @@ static CNClassType* _CNTuple5_type;
     return tuple;
 }
 
+- (BOOL)isEqual:(id)to {
+    if(self == to) return YES;
+    if(to == nil || !([to isKindOfClass:[CNTuple5 class]])) return NO;
+    CNTuple5* o = ((CNTuple5*)(to));
+    return [_a isEqual:o.a] && [_b isEqual:o.b] && [_c isEqual:o.c] && [_d isEqual:o.d] && [_e isEqual:o.e];
+}
+
+- (NSUInteger)hash {
+    NSUInteger hash = 0;
+    hash = hash * 31 + [_a hash];
+    hash = hash * 31 + [_b hash];
+    hash = hash * 31 + [_c hash];
+    hash = hash * 31 + [_d hash];
+    hash = hash * 31 + [_e hash];
+    return hash;
+}
+
 - (CNClassType*)type {
     return [CNTuple5 type];
 }
@@ -293,23 +310,6 @@ static CNClassType* _CNTuple5_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other) || !([[self class] isEqual:[other class]])) return NO;
-    CNTuple5* o = ((CNTuple5*)(other));
-    return [self.a isEqual:o.a] && [self.b isEqual:o.b] && [self.c isEqual:o.c] && [self.d isEqual:o.d] && [self.e isEqual:o.e];
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + [self.a hash];
-    hash = hash * 31 + [self.b hash];
-    hash = hash * 31 + [self.c hash];
-    hash = hash * 31 + [self.d hash];
-    hash = hash * 31 + [self.e hash];
-    return hash;
 }
 
 @end

@@ -11,4 +11,5 @@ public interface MIterable<T> extends Iterable<T>, MTraversable<T> {
     ImIterable<T> im();
     @Override
     ImIterable<T> imCopy();
+    String toString();
 }

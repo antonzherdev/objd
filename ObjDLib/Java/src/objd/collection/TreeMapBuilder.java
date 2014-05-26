@@ -25,4 +25,7 @@ public class TreeMapBuilder<K, V> extends Builder_impl<Tuple<K, V>, TreeMap<K, V
         this.comparator = comparator;
         this.map = new MTreeMap<K, V>(comparator);
     }
+    public String toString() {
+        return String.format(")");
+    }
 }

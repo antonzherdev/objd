@@ -56,6 +56,10 @@ static CNClassType* _CNTreeSet_type;
     return [_map containsKey:item];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"TreeSet(%@)", _map];
+}
+
 - (CNClassType*)type {
     return [CNTreeSet type];
 }
@@ -66,13 +70,6 @@ static CNClassType* _CNTreeSet_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"map=%@", self.map];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -101,6 +98,10 @@ static CNClassType* _CNImTreeSet_type;
     return [CNMTreeSet treeSetWithMmap:[_immap mCopy]];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"ImTreeSet(%@)", _immap];
+}
+
 - (CNClassType*)type {
     return [CNImTreeSet type];
 }
@@ -111,13 +112,6 @@ static CNClassType* _CNImTreeSet_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"immap=%@", self.immap];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -159,6 +153,10 @@ static CNClassType* _CNTreeSetBuilder_type;
     return [_set im];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@")"];
+}
+
 - (CNClassType*)type {
     return [CNTreeSetBuilder type];
 }
@@ -169,12 +167,6 @@ static CNClassType* _CNTreeSetBuilder_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -247,6 +239,10 @@ static CNClassType* _CNMTreeSet_type;
     return [CNImTreeSet imTreeSetWithImmap:[_mmap imCopy]];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"MTreeSet(%@)", _mmap];
+}
+
 - (void)mutableFilterBy:(BOOL(^)(id))by {
     id<CNMIterator> i = [self mutableIterator];
     while([i hasNext]) {
@@ -264,13 +260,6 @@ static CNClassType* _CNMTreeSet_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"mmap=%@", self.mmap];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

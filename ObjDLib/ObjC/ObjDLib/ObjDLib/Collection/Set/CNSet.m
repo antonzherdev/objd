@@ -3,18 +3,13 @@
 
 #import "CNType.h"
 #import "CNDispatchQueue.h"
+#import "CNObject.h"
 #import "CNChain.h"
 #import "CNPlat.h"
 @implementation CNSet_impl
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -35,12 +30,6 @@
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -98,12 +87,6 @@
     return self;
 }
 
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
-}
-
 @end
 
 @implementation CNHashSetBuilder
@@ -138,6 +121,10 @@ static CNClassType* _CNHashSetBuilder_type;
     return [CNHashSetBuilder hashSetBuilderWithCapacity:0];
 }
 
+- (NSString*)description {
+    return @"HashSetBuilder";
+}
+
 - (CNClassType*)type {
     return [CNHashSetBuilder type];
 }
@@ -148,12 +135,6 @@ static CNClassType* _CNHashSetBuilder_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

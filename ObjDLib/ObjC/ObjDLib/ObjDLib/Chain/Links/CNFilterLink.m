@@ -35,6 +35,10 @@ static CNClassType* _CNFilterLink_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"FilterLink(%f)", _factor];
+}
+
 - (CNClassType*)type {
     return [CNFilterLink type];
 }
@@ -45,13 +49,6 @@ static CNClassType* _CNFilterLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"factor=%f", self.factor];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -95,6 +92,10 @@ static CNClassType* _CNTopLink_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"TopLink(%lu)", (unsigned long)_number];
+}
+
 - (CNClassType*)type {
     return [CNTopLink type];
 }
@@ -105,13 +106,6 @@ static CNClassType* _CNTopLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"number=%lu", (unsigned long)self.number];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

@@ -10,6 +10,7 @@
 
 @protocol CNChainLink<NSObject>
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 @end
 
 
@@ -84,6 +85,7 @@
 + (CNYield*)applyEnd:(CNGoR(^)(CNGoR))end;
 + (CNYield*)applyAll:(CNGoR(^)(CNYield*, id<CNTraversable>))all;
 + (CNYield*)apply;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

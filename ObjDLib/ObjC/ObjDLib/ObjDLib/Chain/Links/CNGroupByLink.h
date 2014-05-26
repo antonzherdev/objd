@@ -25,6 +25,7 @@
 - (instancetype)initWithFactor:(CGFloat)factor by:(id(^)(id))by start:(id(^)())start fold:(id(^)(id, id))fold;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -47,6 +48,7 @@
 - (instancetype)initWithFactor:(CGFloat)factor by:(id(^)(id))by start:(id(^)())start append:(void(^)(id, id))append finish:(id(^)(id))finish;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -61,6 +63,7 @@
 - (instancetype)initWithFactor:(CGFloat)factor;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

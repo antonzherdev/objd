@@ -27,4 +27,7 @@ public final class Failure<T> extends Try<T> {
     public Failure(final Object reason) {
         this.reason = reason;
     }
+    public String toString() {
+        return String.format("Failure(%s)", this.reason);
+    }
 }

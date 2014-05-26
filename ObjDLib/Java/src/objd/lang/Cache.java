@@ -24,4 +24,7 @@ public class Cache<X, R> {
     public Cache(final F<X, R> f) {
         this.f = f;
     }
+    public String toString() {
+        return String.format(")");
+    }
 }

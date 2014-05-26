@@ -34,4 +34,7 @@ public class ImTreeMap<K, V> extends TreeMap<K, V> {
         this.count = count;
         this.keys = new ImTreeMapKeySet<K>(this);
     }
+    public String toString() {
+        return String.format("ImTreeMap(%s, %lu)", this.root, this.count);
+    }
 }

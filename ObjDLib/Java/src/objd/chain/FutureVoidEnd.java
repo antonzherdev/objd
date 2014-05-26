@@ -75,4 +75,7 @@ public class FutureVoidEnd {
         this._ended = false;
         this._yielded = new AtomicBool();
     }
+    public String toString() {
+        return "FutureVoidEnd";
+    }
 }

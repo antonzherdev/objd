@@ -34,6 +34,10 @@ static CNClassType* _CNZipLink_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"ZipLink(%@)", _a];
+}
+
 - (CNClassType*)type {
     return [CNZipLink type];
 }
@@ -44,13 +48,6 @@ static CNClassType* _CNZipLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"a=%@", self.a];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -90,6 +87,10 @@ static CNClassType* _CNZip3Link_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"Zip3Link(%@, %@)", _a, _b];
+}
+
 - (CNClassType*)type {
     return [CNZip3Link type];
 }
@@ -100,14 +101,6 @@ static CNClassType* _CNZip3Link_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"a=%@", self.a];
-    [description appendFormat:@", b=%@", self.b];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

@@ -15,4 +15,7 @@ public class ImListBuilder<T> extends Builder_impl<T, ImList<T>> {
     public ImListBuilder() {
         this.list = ImList.<T>apply();
     }
+    public String toString() {
+        return "ImListBuilder";
+    }
 }

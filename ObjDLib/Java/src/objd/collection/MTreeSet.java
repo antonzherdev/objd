@@ -52,6 +52,9 @@ public class MTreeSet<T> extends TreeSet<T> implements MSet<T> {
         super(mmap);
         this.mmap = mmap;
     }
+    public String toString() {
+        return String.format("MTreeSet(%s)", this.mmap);
+    }
     public void mutableFilterBy(final F<T, Boolean> by) {
         final MIterator<T> i = this.mutableIterator();
         while(i.hasNext()) {

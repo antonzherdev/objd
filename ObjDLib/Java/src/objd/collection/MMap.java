@@ -16,4 +16,5 @@ public interface MMap<K, V> extends Map<K, V>, MIterable<Tuple<K, V>> {
     @Override
     ImMap<K, V> imCopy();
     void assignImMap(final ImMap<K, V> imMap);
+    String toString();
 }

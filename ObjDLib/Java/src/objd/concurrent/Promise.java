@@ -11,4 +11,7 @@ public abstract class Promise<T> extends Future<T> {
     }
     public Promise() {
     }
+    public String toString() {
+        return "Promise";
+    }
 }

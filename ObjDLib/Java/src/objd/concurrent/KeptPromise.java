@@ -35,4 +35,7 @@ public final class KeptPromise<T> extends Promise<T> {
     public KeptPromise(final Try<T> value) {
         this.value = value;
     }
+    public String toString() {
+        return String.format("KeptPromise(%s)", this.value);
+    }
 }

@@ -45,4 +45,7 @@ public class CombinationsLink<T> extends ChainLink_impl<T, Tuple<T, T>> {
     }
     public CombinationsLink() {
     }
+    public String toString() {
+        return "CombinationsLink";
+    }
 }

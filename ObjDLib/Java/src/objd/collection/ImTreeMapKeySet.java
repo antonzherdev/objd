@@ -19,4 +19,7 @@ public class ImTreeMapKeySet<K> extends TreeMapKeySet_impl<K> {
     public ImTreeMapKeySet(final TreeMap<K, ?> map) {
         this.map = map;
     }
+    public String toString() {
+        return String.format("ImTreeMapKeySet(%s)", this.map);
+    }
 }

@@ -18,4 +18,7 @@ public class ArrayBuilder<T> extends Builder_impl<T, ImArray<T>> {
     static public <T> ArrayBuilder<T> apply() {
         return new ArrayBuilder<T>(((int)(0)));
     }
+    public String toString() {
+        return "ArrayBuilder";
+    }
 }

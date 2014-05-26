@@ -28,4 +28,7 @@ public class Lazy<T> {
         this.f = f;
         this._calculated = false;
     }
+    public String toString() {
+        return String.format(")");
+    }
 }

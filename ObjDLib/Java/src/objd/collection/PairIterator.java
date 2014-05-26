@@ -22,4 +22,7 @@ public class PairIterator<T> extends Iterator_impl<T> {
         this.pair = pair;
         this.state = 0;
     }
+    public String toString() {
+        return String.format("PairIterator(%s)", this.pair);
+    }
 }

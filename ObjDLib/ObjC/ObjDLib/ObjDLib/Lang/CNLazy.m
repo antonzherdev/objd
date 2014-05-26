@@ -39,6 +39,10 @@ static CNClassType* _CNLazy_type;
     }
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@")"];
+}
+
 - (CNClassType*)type {
     return [CNLazy type];
 }
@@ -49,12 +53,6 @@ static CNClassType* _CNLazy_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -89,6 +87,10 @@ static CNClassType* _CNCache_type;
     }
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@")"];
+}
+
 - (CNClassType*)type {
     return [CNCache type];
 }
@@ -99,12 +101,6 @@ static CNClassType* _CNCache_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -133,6 +129,10 @@ static CNClassType* _CNWeak_type;
     return _value == nil;
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"Weak(%@)", _value];
+}
+
 - (CNClassType*)type {
     return [CNWeak type];
 }
@@ -143,13 +143,6 @@ static CNClassType* _CNWeak_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"value=%@", self.value];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

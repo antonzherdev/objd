@@ -30,4 +30,7 @@ public class MulLink<A, B> extends ChainLink_impl<A, Tuple<A, B>> {
     public MulLink(final Traversable<B> collection) {
         this._collection = ((collection instanceof Chain) ? (((Traversable<B>)(((Traversable)(((Chain<B>)(((Chain)(collection)))).toArray()))))) : (collection));
     }
+    public String toString() {
+        return "MulLink";
+    }
 }

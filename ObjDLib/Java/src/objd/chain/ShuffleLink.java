@@ -42,4 +42,7 @@ public class ShuffleLink<T> extends ChainLink_impl<T, T> {
     }
     public ShuffleLink() {
     }
+    public String toString() {
+        return "ShuffleLink";
+    }
 }

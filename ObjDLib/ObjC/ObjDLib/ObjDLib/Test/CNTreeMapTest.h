@@ -12,6 +12,7 @@
 - (instancetype)init;
 - (CNClassType*)type;
 - (void)testMain;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

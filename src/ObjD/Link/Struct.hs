@@ -12,12 +12,12 @@ module ObjD.Link.Struct (
 	classFile, classPackage, coreFakeFile, localVal, localValE, byte, ubyte, int, int4, int8, float, float4, float8,
 	forExp, mapExp, literalDefName, isElementaryExpression, isSimpleExpression, unoption, unoptionHard, unoptionIfChecked,
 	isTpOption, showDef, allDefsInClass, classStaticDefs, dataTypePars, isTpFun, forDataType, fileNameWithPrefix, isRealClass,
-	isStruct, isEnum, isCoreFile, classNameWithPrefix, isInline, isField, isStatic, isDef, needIsEqualForClass, needHashForClass,
-	dataTypeClassNameWithPrefix, dataTypeClassName, classFieldsForEquals, isConst, classFields, isAbstract, classContainsInit,
+	isStruct, isEnum, isCoreFile, classNameWithPrefix, isInline, isField, isStatic, isDef,
+	dataTypeClassNameWithPrefix, dataTypeClassName, isConst, classFields, isAbstract, classContainsInit,
 	isFinal, isTpClass, isTpEnum, isTpTrait, isNop, enumItems, isType, isGeneric, isGenericWrap, tpGeneric, resolveTypeAlias,
 	containsAnnotationWithClassName, isSpecial, isConstructor, mainExtendsRef, isBaseClass, traitExtendsRefs, findAnnotationWithClassName, 
 	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError, isDefAbstract, isEnumItem, isTpGeneric, isPrivate,
-	genName, dataTypeGenClassName
+	genName, dataTypeGenClassName, localVarE, localVar
 	) where
 
 import 			 Ex.String
@@ -83,14 +83,6 @@ classImports Class{_classImports = r} = r
 classImports _ = []
 classNameWithPrefix :: Class -> String
 classNameWithPrefix cl = packagePrefix (classPackage cl) ++ cap (className cl)
-classFieldsForEquals :: Class -> [Def]
-classFieldsForEquals cl = 
-	let defs = map defName $ maybe [] defPars $ classConstructor cl
-	in filter (\d -> DefModField `elem` defMods d && defName d `elem` defs) $ classDefs cl
-needIsEqualForClass :: Class -> Bool
-needIsEqualForClass cl = ClassModCase `elem` classMods cl || any ( ("isEqual" == ). defName) (classDefs cl)
-needHashForClass :: Class -> Bool
-needHashForClass cl = ClassModCase `elem` classMods cl && (not $ any ( ("hash" == ). defName) (classDefs cl))
 fullClassName :: Class -> String
 fullClassName cl = strs "." (packageName $ classPackage cl) ++ case className cl of
 	"" -> ""
@@ -292,8 +284,12 @@ unknownDef :: Def
 unknownDef = Def "???" [] TPVoid Nop [] Nothing []
 localVal :: String -> DataType -> Def
 localVal name tp = Def name [] tp Nop [DefModLocal] Nothing []
+localVar :: String -> DataType -> Def
+localVar name tp = Def name [] tp Nop [DefModLocal, DefModMutable] Nothing []
 localValE :: String -> DataType -> Exp -> Def
 localValE name tp e = Def name [] tp e [DefModLocal] Nothing []
+localVarE :: String -> DataType -> Exp -> Def
+localVarE name tp e = Def name [] tp e [DefModLocal, DefModMutable] Nothing []
 isStatic :: Def -> Bool
 isStatic = (DefModStatic `elem` ). defMods
 isDef :: Def -> Bool

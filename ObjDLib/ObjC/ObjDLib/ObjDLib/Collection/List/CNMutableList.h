@@ -33,6 +33,7 @@
 - (id)takeLast;
 - (void)mutableFilterBy:(BOOL(^)(id))by;
 - (id)head;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -50,6 +51,7 @@
 + (instancetype)listItemWithData:(id)data;
 - (instancetype)initWithData:(id)data;
 - (CNClassType*)type;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -70,6 +72,7 @@
 - (id)next;
 - (void)remove;
 - (void)setValue:(id)value;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -85,6 +88,7 @@
 - (CNClassType*)type;
 - (BOOL)hasNext;
 - (id)next;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

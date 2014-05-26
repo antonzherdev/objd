@@ -45,6 +45,10 @@ static CNClassType* _CNTreeMapTest_type;
     assertEquals(@0, numi(((NSInteger)([map count]))));
 }
 
+- (NSString*)description {
+    return @"TreeMapTest";
+}
+
 - (CNClassType*)type {
     return [CNTreeMapTest type];
 }
@@ -55,12 +59,6 @@ static CNClassType* _CNTreeMapTest_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

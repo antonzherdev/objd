@@ -27,4 +27,7 @@ public class TreeMapKeyIterator<K> extends Iterator_impl<K> {
     public TreeMapKeyIterator(final TreeMap<K, ?> map) {
         this.map = map;
     }
+    public String toString() {
+        return String.format("TreeMapKeyIterator(%s)", this.map);
+    }
 }

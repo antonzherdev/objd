@@ -43,4 +43,7 @@ public class ImGroupByLink<T, K, V> extends ChainLink_impl<T, Tuple<K, V>> {
         this.start = start;
         this.fold = fold;
     }
+    public String toString() {
+        return String.format("ImGroupByLink(%f)", this.factor);
+    }
 }

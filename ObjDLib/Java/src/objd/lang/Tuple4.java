@@ -39,4 +39,22 @@ public final class Tuple4<A, B, C, D> implements Comparable<Tuple4<A, B, C, D>> 
         this.c = c;
         this.d = d;
     }
+    public boolean equals(final Object to) {
+        if(this == to) {
+            return true;
+        }
+        if(to == null || !(to instanceof Tuple4)) {
+            return false;
+        }
+        final Tuple4<A, B, C, D> o = ((Tuple4<A, B, C, D>)(((Tuple4)(to))));
+        return this.a.equals(o.a) && this.b.equals(o.b) && this.c.equals(o.c) && this.d.equals(o.d);
+    }
+    public int hashCode() {
+        int hash = 0;
+        hash = hash * 31 + this.a.hashCode();
+        hash = hash * 31 + this.b.hashCode();
+        hash = hash * 31 + this.c.hashCode();
+        hash = hash * 31 + this.d.hashCode();
+        return hash;
+    }
 }

@@ -40,6 +40,10 @@ static CNClassType* _CNTry_type;
     @throw @"Method map is abstract";
 }
 
+- (NSString*)description {
+    return @"Try";
+}
+
 - (CNClassType*)type {
     return [CNTry type];
 }
@@ -50,12 +54,6 @@ static CNClassType* _CNTry_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -96,6 +94,10 @@ static CNClassType* _CNSuccess_type;
     return [CNSuccess successWithGet:f(_get)];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"Success(%@)", _get];
+}
+
 - (CNClassType*)type {
     return [CNSuccess type];
 }
@@ -106,13 +108,6 @@ static CNClassType* _CNSuccess_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"get=%@", self.get];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -153,6 +148,10 @@ static CNClassType* _CNFailure_type;
     return ((CNTry*)(self));
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"Failure(%@)", _reason];
+}
+
 - (CNClassType*)type {
     return [CNFailure type];
 }
@@ -163,13 +162,6 @@ static CNClassType* _CNFailure_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"reason=%@", self.reason];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

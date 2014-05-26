@@ -8,4 +8,5 @@ public interface MTraversable<T> extends Traversable<T> {
     void clear();
     ImTraversable<T> im();
     ImTraversable<T> imCopy();
+    String toString();
 }

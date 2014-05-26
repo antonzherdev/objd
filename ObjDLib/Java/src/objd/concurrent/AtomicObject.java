@@ -10,4 +10,7 @@ public class AtomicObject<T> extends AtomicReference<T> {
     public AtomicObject(final T value) {
         super(value);
     }
+    public String toString() {
+        return "AtomicObject";
+    }
 }

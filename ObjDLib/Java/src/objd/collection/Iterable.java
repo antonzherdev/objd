@@ -20,4 +20,6 @@ public interface Iterable<T> extends Traversable<T> {
     String toString();
     @Override
     int hashCode();
+    boolean isEqualIterable(final Iterable<T> iterable);
+    boolean equals(final Object to);
 }

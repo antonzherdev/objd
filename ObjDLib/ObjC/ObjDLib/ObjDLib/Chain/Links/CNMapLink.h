@@ -18,6 +18,7 @@
 - (instancetype)initWithF:(id(^)(id))f;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -32,6 +33,7 @@
 - (instancetype)initWithF:(id(^)(id))f;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -46,6 +48,7 @@
 - (instancetype)initWithFactor:(CGFloat)factor;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -62,6 +65,7 @@
 - (instancetype)initWithFactor:(CGFloat)factor f:(id<CNTraversable>(^)(id))f;
 - (CNClassType*)type;
 - (CNYield*)buildYield:(CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

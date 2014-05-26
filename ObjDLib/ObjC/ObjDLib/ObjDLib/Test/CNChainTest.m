@@ -231,6 +231,10 @@ static CNClassType* _CNChainTest_type;
     assertEquals((@"[2, 0, 1]"), ([[(@[@2, @0, @1]) chain] toStringStart:@"[" delimiter:@", " end:@"]"]));
 }
 
+- (NSString*)description {
+    return @"ChainTest";
+}
+
 - (CNClassType*)type {
     return [CNChainTest type];
 }
@@ -241,12 +245,6 @@ static CNClassType* _CNChainTest_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

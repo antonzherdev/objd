@@ -2,6 +2,7 @@
 #import "CNCollection.h"
 @class CNClassType;
 @class CNDispatchQueue;
+@class CNObject;
 @class CNChain;
 @class CNMHashMap;
 @class CNImHashMap;
@@ -22,6 +23,7 @@
 - (id<CNIterable>)values;
 - (BOOL)containsKey:(id)key;
 - (BOOL)isValueEqualKey:(id)key value:(id)value;
+- (NSString*)description;
 @end
 
 
@@ -32,6 +34,7 @@
 @protocol CNImMap<CNMap, CNImIterable>
 - (id<CNImMap>)addItem:(CNTuple*)item;
 - (id<CNMMap>)mCopy;
+- (NSString*)description;
 @end
 
 
@@ -50,6 +53,7 @@
 - (id<CNImMap>)im;
 - (id<CNImMap>)imCopy;
 - (void)assignImMap:(id<CNImMap>)imMap;
+- (NSString*)description;
 @end
 
 
@@ -82,6 +86,8 @@
 - (BOOL)isEqualMapDefault:(CNImMapDefault*)mapDefault;
 - (NSUInteger)hash;
 - (CNMMapDefault*)mCopy;
+- (NSString*)description;
+- (BOOL)isEqual:(id)to;
 + (CNClassType*)type;
 @end
 
@@ -112,6 +118,7 @@
 - (void)clear;
 - (CNImMapDefault*)im;
 - (CNImMapDefault*)imCopy;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -125,6 +132,7 @@
 - (CNClassType*)type;
 - (void)appendItem:(CNTuple*)item;
 - (CNImHashMap*)build;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

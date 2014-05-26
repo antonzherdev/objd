@@ -34,4 +34,7 @@ public class SortLink<T> extends ChainLink_impl<T, T> {
     public SortLink(final F2<T, T, Integer> comparator) {
         this.comparator = comparator;
     }
+    public String toString() {
+        return String.format(")");
+    }
 }

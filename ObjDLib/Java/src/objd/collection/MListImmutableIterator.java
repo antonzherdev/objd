@@ -19,4 +19,7 @@ public class MListImmutableIterator<T> extends Iterator_impl<T> {
     }
     public MListImmutableIterator() {
     }
+    public String toString() {
+        return "MListImmutableIterator";
+    }
 }

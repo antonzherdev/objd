@@ -2,6 +2,7 @@
 #import "CNSeq.h"
 #import "CNCollection.h"
 @class CNClassType;
+@class CNObject;
 
 @class CNRange;
 @class CNRangeIterator;
@@ -26,6 +27,9 @@
 - (CNRange*)setStep:(NSInteger)step;
 - (BOOL)isEmpty;
 + (CNRange*)applyI:(NSInteger)i;
+- (NSString*)description;
+- (BOOL)isEqual:(id)to;
+- (NSUInteger)hash;
 + (CNClassType*)type;
 @end
 
@@ -46,6 +50,7 @@
 - (CNClassType*)type;
 - (BOOL)hasNext;
 - (id)next;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

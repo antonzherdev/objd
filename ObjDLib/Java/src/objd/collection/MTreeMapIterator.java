@@ -52,4 +52,7 @@ public class MTreeMapIterator<K, V> extends MIterator_impl<Tuple<K, V>> {
     public MTreeMapIterator(final MTreeMap<K, V> map) {
         this.map = map;
     }
+    public String toString() {
+        return String.format("MTreeMapIterator(%s)", this.map);
+    }
 }

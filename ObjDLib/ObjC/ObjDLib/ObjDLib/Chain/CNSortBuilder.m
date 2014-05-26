@@ -59,6 +59,10 @@ static CNClassType* _CNSortBuilder_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"SortBuilder(%@)", _chain];
+}
+
 - (CNClassType*)type {
     return [CNSortBuilder type];
 }
@@ -69,13 +73,6 @@ static CNClassType* _CNSortBuilder_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"chain=%@", self.chain];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

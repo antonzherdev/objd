@@ -319,4 +319,7 @@ public class ChainTest extends TestCase {
     }
     public ChainTest() {
     }
+    public String toString() {
+        return "ChainTest";
+    }
 }

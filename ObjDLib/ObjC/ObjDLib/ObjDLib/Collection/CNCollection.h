@@ -33,6 +33,7 @@
 @protocol CNIterator<NSObject>
 - (BOOL)hasNext;
 - (id)next;
+- (NSString*)description;
 @end
 
 
@@ -43,6 +44,7 @@
 @protocol CNMIterator<CNIterator>
 - (void)remove;
 - (void)setValue:(id)value;
+- (NSString*)description;
 @end
 
 
@@ -54,6 +56,7 @@
 - (void)appendItem:(id)item;
 - (id)build;
 - (void)appendAllItems:(id<CNTraversable>)items;
+- (NSString*)description;
 @end
 
 
@@ -85,6 +88,7 @@ static CNGo* CNGo_Break_Desc;
 - (BOOL)allConfirm:(BOOL(^)(id))confirm;
 - (id)head;
 - (id)convertWithBuilder:(id<CNBuilder>)builder;
+- (NSString*)description;
 @end
 
 
@@ -94,6 +98,7 @@ static CNGo* CNGo_Break_Desc;
 
 @protocol CNImTraversable<CNTraversable>
 - (id<CNMTraversable>)mCopy;
+- (NSString*)description;
 @end
 
 
@@ -107,6 +112,7 @@ static CNGo* CNGo_Break_Desc;
 - (void)clear;
 - (id<CNImTraversable>)im;
 - (id<CNImTraversable>)imCopy;
+- (NSString*)description;
 @end
 
 
@@ -125,6 +131,8 @@ static CNGo* CNGo_Break_Desc;
 - (BOOL)containsItem:(id)item;
 - (NSString*)description;
 - (NSUInteger)hash;
+- (BOOL)isEqualIterable:(id<CNIterable>)iterable;
+- (BOOL)isEqual:(id)to;
 @end
 
 
@@ -138,6 +146,7 @@ static CNGo* CNGo_Break_Desc;
 
 @protocol CNImIterable<CNIterable, CNImTraversable>
 - (id<CNMIterable>)mCopy;
+- (NSString*)description;
 @end
 
 
@@ -152,6 +161,7 @@ static CNGo* CNGo_Break_Desc;
 - (void)mutableFilterBy:(BOOL(^)(id))by;
 - (id<CNImIterable>)im;
 - (id<CNImIterable>)imCopy;
+- (NSString*)description;
 @end
 
 
@@ -172,6 +182,7 @@ static CNGo* CNGo_Break_Desc;
 - (instancetype)initWithIteratorF:(id<CNIterator>(^)())iteratorF;
 - (CNClassType*)type;
 - (id<CNIterator>)iterator;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -182,6 +193,7 @@ static CNGo* CNGo_Break_Desc;
 - (CNClassType*)type;
 - (BOOL)hasNext;
 - (id)next;
+- (NSString*)description;
 + (CNEmptyIterator*)instance;
 + (CNClassType*)type;
 @end

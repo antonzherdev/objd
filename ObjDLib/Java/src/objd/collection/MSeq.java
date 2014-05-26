@@ -11,4 +11,5 @@ public interface MSeq<T> extends Seq<T>, MIterable<T> {
     ImSeq<T> im();
     @Override
     ImSeq<T> imCopy();
+    String toString();
 }

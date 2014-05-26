@@ -30,4 +30,7 @@ public class MapOptLink<A, B> extends ChainLink_impl<A, B> {
     public MapOptLink(final F<A, B> f) {
         this.f = f;
     }
+    public String toString() {
+        return String.format(")");
+    }
 }

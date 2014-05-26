@@ -38,6 +38,10 @@ static CNClassType* _CNSortLink_type;
     }];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@")"];
+}
+
 - (CNClassType*)type {
     return [CNSortLink type];
 }
@@ -48,12 +52,6 @@ static CNClassType* _CNSortLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -89,6 +87,10 @@ static CNClassType* _CNReverseLink_type;
     }];
 }
 
+- (NSString*)description {
+    return @"ReverseLink";
+}
+
 - (CNClassType*)type {
     return [CNReverseLink type];
 }
@@ -99,12 +101,6 @@ static CNClassType* _CNReverseLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -140,6 +136,10 @@ static CNClassType* _CNShuffleLink_type;
     }];
 }
 
+- (NSString*)description {
+    return @"ShuffleLink";
+}
+
 - (CNClassType*)type {
     return [CNShuffleLink type];
 }
@@ -150,12 +150,6 @@ static CNClassType* _CNShuffleLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

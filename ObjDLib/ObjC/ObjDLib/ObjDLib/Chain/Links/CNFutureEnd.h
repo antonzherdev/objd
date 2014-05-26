@@ -27,6 +27,7 @@
 - (CNClassType*)type;
 - (CNFuture*)future;
 - (CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -44,6 +45,7 @@
 - (CNClassType*)type;
 - (CNFuture*)future;
 - (CNYield*)yield;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

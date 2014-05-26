@@ -731,4 +731,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
         this.link = link;
         this.previous = previous;
     }
+    public String toString() {
+        return String.format("Chain(%s, %s)", this.link, this.previous);
+    }
 }

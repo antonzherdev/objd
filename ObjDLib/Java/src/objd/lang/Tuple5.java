@@ -46,4 +46,23 @@ public final class Tuple5<A, B, C, D, E> implements Comparable<Tuple5<A, B, C, D
         this.d = d;
         this.e = e;
     }
+    public boolean equals(final Object to) {
+        if(this == to) {
+            return true;
+        }
+        if(to == null || !(to instanceof Tuple5)) {
+            return false;
+        }
+        final Tuple5<A, B, C, D, E> o = ((Tuple5<A, B, C, D, E>)(((Tuple5)(to))));
+        return this.a.equals(o.a) && this.b.equals(o.b) && this.c.equals(o.c) && this.d.equals(o.d) && this.e.equals(o.e);
+    }
+    public int hashCode() {
+        int hash = 0;
+        hash = hash * 31 + this.a.hashCode();
+        hash = hash * 31 + this.b.hashCode();
+        hash = hash * 31 + this.c.hashCode();
+        hash = hash * 31 + this.d.hashCode();
+        hash = hash * 31 + this.e.hashCode();
+        return hash;
+    }
 }

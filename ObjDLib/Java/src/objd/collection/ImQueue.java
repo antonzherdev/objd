@@ -48,6 +48,9 @@ public class ImQueue<T> extends Queue_impl<T> {
         this.in = in;
         this.out = out;
     }
+    public String toString() {
+        return String.format("ImQueue(%s, %s)", this.in, this.out);
+    }
     static {
         empty = new ImQueue<Object>(ImList.<Object>apply(), ImList.<Object>apply());
     }

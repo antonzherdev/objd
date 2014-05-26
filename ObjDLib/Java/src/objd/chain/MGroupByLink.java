@@ -54,4 +54,7 @@ public class MGroupByLink<T, K, V, W> extends ChainLink_impl<T, Tuple<K, W>> {
         this.append = append;
         this.finish = finish;
     }
+    public String toString() {
+        return String.format("MGroupByLink(%f)", this.factor);
+    }
 }

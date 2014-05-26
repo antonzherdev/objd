@@ -32,4 +32,21 @@ public final class Tuple3<A, B, C> implements Comparable<Tuple3<A, B, C>> {
         this.b = b;
         this.c = c;
     }
+    public boolean equals(final Object to) {
+        if(this == to) {
+            return true;
+        }
+        if(to == null || !(to instanceof Tuple3)) {
+            return false;
+        }
+        final Tuple3<A, B, C> o = ((Tuple3<A, B, C>)(((Tuple3)(to))));
+        return this.a.equals(o.a) && this.b.equals(o.b) && this.c.equals(o.c);
+    }
+    public int hashCode() {
+        int hash = 0;
+        hash = hash * 31 + this.a.hashCode();
+        hash = hash * 31 + this.b.hashCode();
+        hash = hash * 31 + this.c.hashCode();
+        return hash;
+    }
 }

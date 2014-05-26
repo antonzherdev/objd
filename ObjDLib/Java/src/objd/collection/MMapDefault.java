@@ -69,4 +69,7 @@ public class MMapDefault<K, V> extends MIterable_impl<Tuple<K, V>> {
         this.map = map;
         this.defaultFunc = defaultFunc;
     }
+    public String toString() {
+        return String.format("MMapDefault(%s)", this.map);
+    }
 }

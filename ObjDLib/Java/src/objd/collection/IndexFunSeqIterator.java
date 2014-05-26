@@ -21,4 +21,7 @@ public class IndexFunSeqIterator<T> extends Iterator_impl<T> {
         this.f = f;
         this.i = ((int)(0));
     }
+    public String toString() {
+        return String.format("IndexFunSeqIterator(%lu)", this.count);
+    }
 }

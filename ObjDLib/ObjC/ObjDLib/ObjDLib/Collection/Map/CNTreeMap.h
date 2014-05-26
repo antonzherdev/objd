@@ -47,6 +47,7 @@
 - (id)lowerKeyThanKey:(id)key;
 - (id)higherKeyThanKey:(id)key;
 - (CNTreeMapEntry*)higherEntryThanKey:(id)key;
+- (NSString*)description;
 + (NSInteger)BLACK;
 + (NSInteger)RED;
 + (CNClassType*)type;
@@ -68,6 +69,7 @@
 - (CNClassType*)type;
 - (BOOL)isEmpty;
 - (CNMTreeMap*)mCopy;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -85,6 +87,7 @@
 + (CNTreeMapBuilder*)apply;
 - (void)appendItem:(CNTuple*)item;
 - (CNTreeMap*)build;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -113,6 +116,7 @@
 - (BOOL)removeItem:(CNTuple*)item;
 - (id)deleteEntry:(CNTreeMapEntry*)entry;
 - (CNTuple*)pollFirst;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -138,12 +142,14 @@
 - (CNClassType*)type;
 - (CNTreeMapEntry*)next;
 - (CNTreeMapEntry*)copyParent:(CNTreeMapEntry*)parent;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
 
 @protocol CNTreeMapKeySet<CNImIterable>
 - (id<CNIterator>)iteratorHigherThanKey:(id)key;
+- (NSString*)description;
 @end
 
 
@@ -163,6 +169,7 @@
 - (NSUInteger)count;
 - (id<CNIterator>)iterator;
 - (id<CNIterator>)iteratorHigherThanKey:(id)key;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -181,6 +188,7 @@
 + (CNTreeMapKeyIterator*)applyMap:(CNTreeMap*)map entry:(CNTreeMapEntry*)entry;
 - (BOOL)hasNext;
 - (id)next;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -198,6 +206,7 @@
 - (id<CNIterator>)iterator;
 - (id<CNMIterator>)mutableIterator;
 - (id<CNIterator>)iteratorHigherThanKey:(id)key;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -219,6 +228,7 @@
 - (id)next;
 - (void)remove;
 - (void)setValue:(id)value;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -234,6 +244,7 @@
 - (CNClassType*)type;
 - (NSUInteger)count;
 - (id<CNIterator>)iterator;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -250,6 +261,7 @@
 + (CNTreeMapValuesIterator*)applyMap:(CNTreeMap*)map entry:(CNTreeMapEntry*)entry;
 - (BOOL)hasNext;
 - (id)next;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -268,6 +280,7 @@
 + (CNTreeMapIterator*)applyMap:(CNTreeMap*)map entry:(CNTreeMapEntry*)entry;
 - (BOOL)hasNext;
 - (CNTuple*)next;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -289,6 +302,7 @@
 - (CNTuple*)next;
 - (void)remove;
 - (void)setValue:(CNTuple*)value;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

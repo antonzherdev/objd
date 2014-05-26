@@ -12,4 +12,7 @@ public class ImTreeSet<T> extends TreeSet<T> implements ImSet<T> {
         super(immap);
         this.immap = immap;
     }
+    public String toString() {
+        return String.format("ImTreeSet(%s)", this.immap);
+    }
 }

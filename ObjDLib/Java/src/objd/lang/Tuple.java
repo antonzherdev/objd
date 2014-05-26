@@ -1,7 +1,5 @@
 package objd.lang;
 
-import objd.lang.*;
-
 public final class Tuple<A, B> implements Comparable<Tuple<A, B>> {
     public final A a;
     public final B b;
@@ -24,5 +22,21 @@ public final class Tuple<A, B> implements Comparable<Tuple<A, B>> {
     public Tuple(final A a, final B b) {
         this.a = a;
         this.b = b;
+    }
+    public boolean equals(final Object to) {
+        if(this == to) {
+            return true;
+        }
+        if(to == null || !(to instanceof Tuple)) {
+            return false;
+        }
+        final Tuple<A, B> o = ((Tuple<A, B>)(((Tuple)(to))));
+        return this.a.equals(o.a) && this.b.equals(o.b);
+    }
+    public int hashCode() {
+        int hash = 0;
+        hash = hash * 31 + this.a.hashCode();
+        hash = hash * 31 + this.b.hashCode();
+        return hash;
     }
 }

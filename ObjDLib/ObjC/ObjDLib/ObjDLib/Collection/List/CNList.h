@@ -2,6 +2,7 @@
 #import "CNSeq.h"
 #import "CNCollection.h"
 @class CNClassType;
+@class CNObject;
 
 @class CNImList;
 @class CNFilledList;
@@ -21,6 +22,7 @@
 - (CNImList*)filterF:(BOOL(^)(id))f;
 - (CNImList*)reverse;
 - (CNImList*)insertItem:(id)item;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -44,6 +46,9 @@
 - (CNImList*)reverse;
 - (void)forEach:(void(^)(id))each;
 - (CNImList*)insertItem:(id)item;
+- (NSString*)description;
+- (BOOL)isEqual:(id)to;
+- (NSUInteger)hash;
 + (CNClassType*)type;
 @end
 
@@ -60,6 +65,9 @@
 - (CNImList*)reverse;
 - (void)forEach:(void(^)(id))each;
 - (CNImList*)insertItem:(id)item;
+- (NSString*)description;
+- (BOOL)isEqual:(id)to;
+- (NSUInteger)hash;
 + (CNEmptyList*)instance;
 + (CNClassType*)type;
 @end
@@ -76,6 +84,7 @@
 - (CNClassType*)type;
 - (BOOL)hasNext;
 - (id)next;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
@@ -89,6 +98,7 @@
 - (CNClassType*)type;
 - (void)appendItem:(id)item;
 - (CNImList*)build;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 

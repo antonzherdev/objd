@@ -30,4 +30,25 @@ public final class Pair<T> extends ImSet_impl<T> {
         this.a = a;
         this.b = b;
     }
+    public String toString() {
+        return String.format("Pair(%s, %s)", this.a, this.b);
+    }
+    public boolean equals(final Object to) {
+        if(this == to) {
+            return true;
+        }
+        if(to == null) {
+            return false;
+        }
+        if(to instanceof Pair) {
+            return isEqualPair(((Pair<T>)(((Pair)(to)))));
+        }
+        return false;
+    }
+    public int hashCode() {
+        int hash = 0;
+        hash = hash * 31 + this.a.hashCode();
+        hash = hash * 31 + this.b.hashCode();
+        return hash;
+    }
 }

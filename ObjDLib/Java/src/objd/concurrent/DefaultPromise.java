@@ -59,4 +59,7 @@ public class DefaultPromise<T> extends Promise<T> {
     public DefaultPromise() {
         this._state = new AtomicObject<Object>(ImArray.fromObjects());
     }
+    public String toString() {
+        return "DefaultPromise";
+    }
 }

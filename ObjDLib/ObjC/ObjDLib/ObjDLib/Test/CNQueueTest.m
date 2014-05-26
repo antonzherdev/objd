@@ -46,6 +46,10 @@ static CNClassType* _CNQueueTest_type;
     assertEquals(@0, numi(((NSInteger)([q count]))));
 }
 
+- (NSString*)description {
+    return @"QueueTest";
+}
+
 - (CNClassType*)type {
     return [CNQueueTest type];
 }
@@ -56,12 +60,6 @@ static CNClassType* _CNQueueTest_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

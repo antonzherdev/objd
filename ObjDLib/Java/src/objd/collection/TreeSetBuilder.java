@@ -25,4 +25,7 @@ public class TreeSetBuilder<T> extends Builder_impl<T, ImTreeSet<T>> {
         this.comparator = comparator;
         this.set = MTreeSet.<T>applyComparator(comparator);
     }
+    public String toString() {
+        return String.format(")");
+    }
 }

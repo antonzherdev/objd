@@ -45,6 +45,10 @@ static CNClassType* _CNCombinationsLink_type;
     }];
 }
 
+- (NSString*)description {
+    return @"CombinationsLink";
+}
+
 - (CNClassType*)type {
     return [CNCombinationsLink type];
 }
@@ -55,12 +59,6 @@ static CNClassType* _CNCombinationsLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -101,6 +99,10 @@ static CNClassType* _CNUncombinationsLink_type;
     }];
 }
 
+- (NSString*)description {
+    return @"UncombinationsLink";
+}
+
 - (CNClassType*)type {
     return [CNUncombinationsLink type];
 }
@@ -111,12 +113,6 @@ static CNClassType* _CNUncombinationsLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -162,6 +158,10 @@ static CNClassType* _CNNeighboursLink_type;
     } : nil)];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"NeighboursLink(%d)", _ring];
+}
+
 - (CNClassType*)type {
     return [CNNeighboursLink type];
 }
@@ -172,13 +172,6 @@ static CNClassType* _CNNeighboursLink_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"ring=%d", self.ring];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

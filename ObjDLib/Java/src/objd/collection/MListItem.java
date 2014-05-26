@@ -9,4 +9,7 @@ public class MListItem<T> {
     public MListItem(final T data) {
         this.data = data;
     }
+    public String toString() {
+        return String.format("MListItem(%s)", this.data);
+    }
 }

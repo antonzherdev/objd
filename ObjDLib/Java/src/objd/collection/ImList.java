@@ -25,4 +25,7 @@ public abstract class ImList<T> extends ImSeq_impl<T> {
     }
     public ImList() {
     }
+    public String toString() {
+        return "ImList";
+    }
 }

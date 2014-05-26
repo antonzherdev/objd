@@ -594,6 +594,10 @@ static CNClassType* _CNChain_type;
     else return collection;
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"Chain(%@, %@)", _link, _previous];
+}
+
 - (CNClassType*)type {
     return [CNChain type];
 }
@@ -604,14 +608,6 @@ static CNClassType* _CNChain_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"link=%@", self.link];
-    [description appendFormat:@", previous=%@", self.previous];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

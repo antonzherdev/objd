@@ -29,4 +29,7 @@ public class Zip3Link<T, A, B, R> extends ChainLink_impl<T, R> {
         this.b = b;
         this.f = f;
     }
+    public String toString() {
+        return String.format("Zip3Link(%s, %s)", this.a, this.b);
+    }
 }

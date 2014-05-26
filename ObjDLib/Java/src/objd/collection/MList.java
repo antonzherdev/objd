@@ -185,4 +185,7 @@ public class MList<T> extends MSeq_impl<T> {
     public MList() {
         this._count = ((int)(0));
     }
+    public String toString() {
+        return "MList";
+    }
 }

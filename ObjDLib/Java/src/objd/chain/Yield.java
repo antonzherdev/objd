@@ -259,4 +259,7 @@ public class Yield<T> {
     static public <T> Yield<T> apply() {
         return new Yield<T>(null, null, null, null);
     }
+    public String toString() {
+        return String.format("Yield(%s, %s, %s, %s)", this.begin, this.yield, this.end, this.all);
+    }
 }

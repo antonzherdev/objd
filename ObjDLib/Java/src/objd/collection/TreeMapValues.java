@@ -15,4 +15,7 @@ public class TreeMapValues<V> extends ImIterable_impl<V> {
     public TreeMapValues(final TreeMap<?, V> map) {
         this.map = map;
     }
+    public String toString() {
+        return String.format("TreeMapValues(%s)", this.map);
+    }
 }

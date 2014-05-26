@@ -3,6 +3,7 @@
 
 #import "CNType.h"
 #import "CNDispatchQueue.h"
+#import "CNObject.h"
 #import "CNChain.h"
 #import "CNPlat.h"
 @implementation CNMap_impl
@@ -38,12 +39,6 @@
     return self;
 }
 
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
-}
-
 @end
 
 @implementation CNImMap_impl
@@ -63,12 +58,6 @@
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -155,12 +144,6 @@
     return self;
 }
 
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
-}
-
 @end
 
 @implementation CNImMapDefault
@@ -229,6 +212,18 @@ static CNClassType* _CNImMapDefault_type;
     return [CNMMapDefault mapDefaultWithMap:[_map mCopy] defaultFunc:_defaultFunc];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"ImMapDefault(%@)", _map];
+}
+
+- (BOOL)isEqual:(id)to {
+    if(self == to) return YES;
+    if(to == nil) return NO;
+    if([to conformsToProtocol:@protocol(CNMap)]) return [self isEqualMap:((id<CNMap>)(to))];
+    if([to isKindOfClass:[CNImMapDefault class]]) return [self isEqualMapDefault:((CNImMapDefault*)(to))];
+    return NO;
+}
+
 - (CNClassType*)type {
     return [CNImMapDefault type];
 }
@@ -239,21 +234,6 @@ static CNClassType* _CNImMapDefault_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (BOOL)isEqual:(id)other {
-    if(self == other) return YES;
-    if(!(other)) return NO;
-    if([other conformsToProtocol:@protocol(CNMap)]) return [self isEqualMap:((id<CNMap>)(other))];
-    if([other isKindOfClass:[CNImMapDefault class]]) return [self isEqualMapDefault:((CNImMapDefault*)(other))];
-    return NO;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"map=%@", self.map];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -346,6 +326,10 @@ static CNClassType* _CNMMapDefault_type;
     return [CNImMapDefault imMapDefaultWithMap:[_map imCopy] defaultFunc:_defaultFunc];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"MMapDefault(%@)", _map];
+}
+
 - (CNClassType*)type {
     return [CNMMapDefault type];
 }
@@ -356,13 +340,6 @@ static CNClassType* _CNMMapDefault_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendFormat:@"map=%@", self.map];
-    [description appendString:@">"];
-    return description;
 }
 
 @end
@@ -394,6 +371,10 @@ static CNClassType* _CNHashMapBuilder_type;
     return [_map im];
 }
 
+- (NSString*)description {
+    return @"HashMapBuilder";
+}
+
 - (CNClassType*)type {
     return [CNHashMapBuilder type];
 }
@@ -404,12 +385,6 @@ static CNClassType* _CNHashMapBuilder_type;
 
 - (id)copyWithZone:(NSZone*)zone {
     return self;
-}
-
-- (NSString*)description {
-    NSMutableString* description = [NSMutableString stringWithFormat:@"<%@: ", NSStringFromClass([self class])];
-    [description appendString:@">"];
-    return description;
 }
 
 @end

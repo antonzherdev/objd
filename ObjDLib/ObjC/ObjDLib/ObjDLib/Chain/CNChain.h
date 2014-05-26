@@ -130,6 +130,7 @@
 - (CNFuture*)voidFuture;
 - (CNGoR)applyYield:(CNYield*)yield;
 - (CNChain*)addLink:(id<CNChainLink>)link;
+- (NSString*)description;
 + (CNClassType*)type;
 @end
 
