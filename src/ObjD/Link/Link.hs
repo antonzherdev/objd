@@ -85,7 +85,7 @@ linkFile lang files (D.File name package stms) = fl
 		allFiles = filter (/= fl) $ files
 		
 		kernelFiles :: [File]
-		kernelFiles = filter ((== "objd") . head . packageName . filePackage ) files 
+		kernelFiles = filter ((\n -> n == ["objd", "lang"] || n == ["objd", "collection"]) . packageName . filePackage ) files 
 		
 		clImports :: D.FileStm -> [Import]
 		clImports cl = concatMap (\(D.ClassImport inn) -> linkImport files inn) . filter D.isClassImport $ classBody cl

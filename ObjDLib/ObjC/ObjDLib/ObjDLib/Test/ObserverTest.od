@@ -1,6 +1,6 @@
 package objd.react
 
-import test._
+import objd.test._
 
 @Test
 class ObserverTest extends TestCase {

@@ -1,4 +1,4 @@
-package test;
+package objd.test;
 
 import objd.lang.P0;
 

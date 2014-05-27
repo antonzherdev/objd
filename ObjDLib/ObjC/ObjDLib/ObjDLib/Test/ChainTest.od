@@ -1,6 +1,6 @@
 package objd.chain
 
-import test._
+import objd.test._
 
 @Test
 class ChainTest extends TestCase {

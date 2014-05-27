@@ -2,6 +2,8 @@ package objd.react
 
 stub package object {
     val prefix = "CN"
+
+    import objd.concurrent._
 }
 
 abstract class React<T> extends Observable<T> {

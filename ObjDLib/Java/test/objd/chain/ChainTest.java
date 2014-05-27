@@ -1,7 +1,7 @@
 package objd.chain;
 
 import objd.lang.*;
-import test.PackageObjectTest;
+import objd.test.PackageObjectTest;
 import objd.collection.ImArray;
 import org.junit.Test;
 import objd.concurrent.Promise;
@@ -11,7 +11,7 @@ import objd.concurrent.Future;
 import objd.concurrent.AtomicInt;
 import objd.collection.Traversable;
 import objd.collection.Set;
-import test.TestCase;
+import objd.test.TestCase;
 
 public class ChainTest extends TestCase {
     @Test

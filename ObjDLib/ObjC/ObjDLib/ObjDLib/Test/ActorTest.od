@@ -1,6 +1,6 @@
 package objd.actor
 
-import test._
+import objd.test._
 
 @Test
 class TestedActor extends Actor {

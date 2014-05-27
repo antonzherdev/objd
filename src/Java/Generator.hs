@@ -17,7 +17,7 @@ toJava file@D.File{D.fileClasses = classes} =
 genFile :: D.File -> D.Class -> J.File
 genFile D.File{D.filePackage = D.Package{D.packageName = package}} cls =
 	let 
-		isTest = D.containsAnnotationWithClassName "test.Test" $ D.classAnnotations cls
+		isTest = D.containsAnnotationWithClassName "objd.test.Test" $ D.classAnnotations cls
 		(cls', Wrt{wrtImports = clImps}) = runWriter $ genClass isTest cls
 	in J.File {
 		J.fileIsTest = isTest,
@@ -172,7 +172,7 @@ genDef isClTest cl d =
  				stms' <- getStms defaultEnv body
  				gens' <- mapM genGeneric $ maybe [] D.defGenericsClasses $ D.defGenerics d
  				pars' <- mapM genPar $ D.defPars d
- 				let isTest = isClTest && (D.containsAnnotationWithClassName "test.Test" $ D.defAnnotations d)
+ 				let isTest = isClTest && (D.containsAnnotationWithClassName "objd.test.Test" $ D.defAnnotations d)
  				when(isTest) $ tellImport ["org", "junit", "Test"]
  				return [J.Def {
 	 				J.defAnnotations = [overrideAnnotation| D.DefModOverride `elem` D.defMods d] ++ [testAnnotation | isTest],

@@ -4,11 +4,11 @@ import objd.lang.*;
 import objd.collection.ImArray;
 import objd.collection.Iterator;
 import objd.concurrent.Future;
-import test.PackageObjectTest;
+import objd.test.PackageObjectTest;
 import objd.collection.Set;
 import org.junit.Test;
 import objd.concurrent.Promise;
-import test.TestCase;
+import objd.test.TestCase;
 
 public class ActorTest extends TestCase {
     @Test

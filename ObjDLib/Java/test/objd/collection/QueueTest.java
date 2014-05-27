@@ -1,9 +1,9 @@
 package objd.collection;
 
 import objd.lang.*;
-import test.PackageObjectTest;
+import objd.test.PackageObjectTest;
 import org.junit.Test;
-import test.TestCase;
+import objd.test.TestCase;
 
 public class QueueTest extends TestCase {
     @Test

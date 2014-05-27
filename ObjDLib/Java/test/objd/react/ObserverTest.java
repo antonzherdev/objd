@@ -1,9 +1,9 @@
 package objd.react;
 
 import objd.lang.*;
-import test.PackageObjectTest;
+import objd.test.PackageObjectTest;
 import org.junit.Test;
-import test.TestCase;
+import objd.test.TestCase;
 
 public class ObserverTest extends TestCase {
     @Test

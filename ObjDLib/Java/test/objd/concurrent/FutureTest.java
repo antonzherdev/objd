@@ -2,9 +2,9 @@ package objd.concurrent;
 
 import objd.lang.*;
 import objd.collection.Iterator;
-import test.PackageObjectTest;
+import objd.test.PackageObjectTest;
 import org.junit.Test;
-import test.TestCase;
+import objd.test.TestCase;
 
 public class FutureTest extends TestCase {
     @Test

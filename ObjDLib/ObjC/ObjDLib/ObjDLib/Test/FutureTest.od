@@ -1,6 +1,6 @@
 package objd.concurrent
 
-import test._
+import objd.test._
 
 @Test
 class FutureTest extends TestCase {

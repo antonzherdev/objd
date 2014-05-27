@@ -1,6 +1,6 @@
 package objd.collection
 
-import test._
+import objd.test._
 
 @Test
 class QueueTest extends TestCase {

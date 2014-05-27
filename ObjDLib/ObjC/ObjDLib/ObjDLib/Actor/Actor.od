@@ -2,6 +2,8 @@ package objd.actor
 
 stub package object {
     val prefix = "CN"
+
+    import objd.concurrent._
 }
 
 class Actor {

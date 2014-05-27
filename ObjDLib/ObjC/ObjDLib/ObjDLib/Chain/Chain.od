@@ -2,6 +2,8 @@ package objd.chain
 
 stub package object {
     val prefix = "CN"
+
+    import objd.concurrent._
 }
 
 class Chain<A>(val link : ChainLink<_, A>, val previous : Chain<_>?) extends ImTraversable<A> {

@@ -1,4 +1,4 @@
-package test
+package objd.test
 
 stub package object {
     val prefix = "TS"

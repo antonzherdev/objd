@@ -210,7 +210,7 @@ instance Show Annotation where
 
 
 genName :: [Annotation] -> Maybe String
-genName anns = findAnnotationWithClassName "objd.gen.GenName" anns >>= (\a -> case a of
+genName anns = findAnnotationWithClassName "objd.lang.GenName" anns >>= (\a -> case a of
 			Annotation _ [(_, StringConst s)] -> Just s
 			_ -> Nothing)
 
