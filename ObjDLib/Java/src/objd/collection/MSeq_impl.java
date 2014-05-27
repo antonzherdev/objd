@@ -3,6 +3,8 @@ package objd.collection;
 import objd.lang.*;
 
 public abstract class MSeq_impl<T> extends Seq_impl<T> implements MSeq<T> {
+    public MSeq_impl() {
+    }
     @Override
     public ImSeq<T> im() {
         return this.imCopy();

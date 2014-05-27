@@ -1,0 +1,76 @@
+package objd.actor
+
+stub package object {
+    val prefix = "CN"
+}
+
+class Actor {
+    val mailbox = Mailbox()
+
+    def future<T>(f : void -> T) : Future<T> = {
+        val fut = ActorFuture(self, prompt = false, f)
+        mailbox.send(fut)
+        fut
+    }
+
+    def prompt<T>(f : void -> T) : Future<T> = {
+        val fut = ActorFuture(self, prompt = true, f)
+        mailbox.send(fut)
+        fut
+    }
+
+    def futureJoin<T>(f : void -> Future<T>) : Future<T> = {
+        var ret = Promise<T>()
+        val fut = ActorFuture(self, prompt = false) {
+            val nf = f()
+            nf.onComplete(ret.complete(_))
+        }
+        mailbox.send(fut)
+        ret
+    }
+
+    def promptJoin<T>(f : void -> Future<T>) : Future<T> = {
+        var ret = Promise<T>()
+        val fut = ActorFuture(self, prompt = true) {
+            val nf = f()
+            nf.onComplete(ret.complete(_))
+        }
+        mailbox.send(fut)
+        ret
+    }
+
+
+    def onSuccess<T, R>(future : Future<T>, f : T -> R) : Future<R> = {
+        var res : T?
+        val fut = ActorFuture(self, prompt = false) {
+            f(res.get)
+        }
+        future.onComplete { tr ->
+            if(tr.isFailure) fut.complete(tr)
+            else {
+                res = tr.get
+                mailbox.send(fut)
+            }
+        }
+        fut
+    }
+
+    def lockAndOnSuccess<T, R>(future : Future<T>, f : T -> R) : Future<R> = {
+        var res : T?
+        val fut = ActorFuture(self, prompt = false) {
+            f(res.get)
+        }
+        fut.lock
+        future.onComplete { tr ->
+            if(tr.isFailure) fut.complete(tr)
+            else {
+                res = tr.get
+                fut.unlock
+            }
+        }
+        mailbox.send(fut)
+        fut
+    }
+
+    def dummy : Future<void> = future(nil)
+}

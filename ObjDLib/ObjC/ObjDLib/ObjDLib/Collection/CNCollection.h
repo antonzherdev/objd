@@ -38,6 +38,8 @@
 
 
 @interface CNIterator_impl : NSObject<CNIterator>
++ (instancetype)iterator_impl;
+- (instancetype)init;
 @end
 
 
@@ -49,6 +51,8 @@
 
 
 @interface CNMIterator_impl : CNIterator_impl<CNMIterator>
++ (instancetype)iterator_impl;
+- (instancetype)init;
 @end
 
 
@@ -61,6 +65,8 @@
 
 
 @interface CNBuilder_impl : NSObject<CNBuilder>
++ (instancetype)builder_impl;
+- (instancetype)init;
 @end
 
 
@@ -93,6 +99,8 @@ static CNGo* CNGo_Break_Desc;
 
 
 @interface CNTraversable_impl : NSObject<CNTraversable>
++ (instancetype)traversable_impl;
+- (instancetype)init;
 @end
 
 
@@ -103,6 +111,8 @@ static CNGo* CNGo_Break_Desc;
 
 
 @interface CNImTraversable_impl : CNTraversable_impl<CNImTraversable>
++ (instancetype)imTraversable_impl;
+- (instancetype)init;
 @end
 
 
@@ -117,6 +127,8 @@ static CNGo* CNGo_Break_Desc;
 
 
 @interface CNMTraversable_impl : CNTraversable_impl<CNMTraversable>
++ (instancetype)traversable_impl;
+- (instancetype)init;
 @end
 
 
@@ -137,6 +149,8 @@ static CNGo* CNGo_Break_Desc;
 
 
 @interface CNIterable_impl : CNTraversable_impl<CNIterable>
++ (instancetype)iterable_impl;
+- (instancetype)init;
 - (id)head;
 - (BOOL)containsItem:(id)item;
 - (NSString*)description;
@@ -151,6 +165,8 @@ static CNGo* CNGo_Break_Desc;
 
 
 @interface CNImIterable_impl : CNIterable_impl<CNImIterable>
++ (instancetype)imIterable_impl;
+- (instancetype)init;
 - (id<CNMIterable>)mCopy;
 @end
 
@@ -166,6 +182,8 @@ static CNGo* CNGo_Break_Desc;
 
 
 @interface CNMIterable_impl : CNIterable_impl<CNMIterable>
++ (instancetype)iterable_impl;
+- (instancetype)init;
 - (BOOL)removeItem:(id)item;
 - (id<CNImIterable>)im;
 - (id<CNImIterable>)imCopy;

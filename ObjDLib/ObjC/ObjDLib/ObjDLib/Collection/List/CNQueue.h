@@ -17,6 +17,8 @@
 
 
 @interface CNQueue_impl : NSObject<CNQueue>
++ (instancetype)queue_impl;
+- (instancetype)init;
 @end
 
 

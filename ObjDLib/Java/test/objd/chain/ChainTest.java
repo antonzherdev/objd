@@ -5,6 +5,7 @@ import test.PackageObjectTest;
 import org.junit.Test;
 import objd.collection.ImArray;
 import objd.concurrent.Promise;
+import objd.collection.Iterator;
 import objd.concurrent.DispatchQueue;
 import objd.concurrent.Future;
 import objd.concurrent.AtomicInt;
@@ -38,9 +39,10 @@ public class ChainTest extends TestCase {
                         return new Tuple<Integer, Promise<Integer>>(i, Promise.<Integer>apply());
                     }
                 }).toArray()))));
-                arr.forEach(new P<Tuple<Integer, Promise<Integer>>>() {
-                    @Override
-                    public void apply(final Tuple<Integer, Promise<Integer>> t) {
+                {
+                    final Iterator<Tuple<Integer, Promise<Integer>>> __il__0p1_1i = arr.iterator();
+                    while(__il__0p1_1i.hasNext()) {
+                        final Tuple<Integer, Promise<Integer>> t = __il__0p1_1i.next();
                         DispatchQueue.aDefault.asyncF(new P0() {
                             @Override
                             public void apply() {
@@ -48,7 +50,7 @@ public class ChainTest extends TestCase {
                             }
                         });
                     }
-                });
+                }
                 final Future<ImArray<Integer>> fut = ((Future<ImArray<Integer>>)(((Future)(arr.chain().<Promise<Integer>>mapF(new F<Tuple<Integer, Promise<Integer>>, Promise<Integer>>() {
                     @Override
                     public Promise<Integer> apply(final Tuple<Integer, Promise<Integer>> _) {
@@ -85,9 +87,10 @@ public class ChainTest extends TestCase {
         }).toArray();
         final Future<Void> fut = arr.chain().voidFuture();
         final AtomicInt count = new AtomicInt();
-        arr.forEach(new P<Promise<Void>>() {
-            @Override
-            public void apply(final Promise<Void> p) {
+        {
+            final Iterator<Promise<Void>> __il__3i = arr.iterator();
+            while(__il__3i.hasNext()) {
+                final Promise<Void> p = __il__3i.next();
                 DispatchQueue.aDefault.asyncF(new P0() {
                     @Override
                     public void apply() {
@@ -96,7 +99,7 @@ public class ChainTest extends TestCase {
                     }
                 });
             }
-        });
+        }
         PackageObjectTest.assertTrueValue(fut.waitResultPeriod(((double)(5))) != null);
         PackageObjectTest.<Integer>assertEqualsAB(count.get(), ((int)(arr.count())));
     }

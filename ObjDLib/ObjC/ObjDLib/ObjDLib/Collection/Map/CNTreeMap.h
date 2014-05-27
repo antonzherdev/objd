@@ -155,6 +155,8 @@
 
 
 @interface CNTreeMapKeySet_impl : CNImIterable_impl<CNTreeMapKeySet>
++ (instancetype)treeMapKeySet_impl;
+- (instancetype)init;
 @end
 
 

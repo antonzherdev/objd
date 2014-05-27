@@ -24,7 +24,7 @@ static CNClassType* _CNSourceLink_type;
     return [CNYield makeBegin:({
         id<CNIterable> c = [CNObject asKindOfProtocol:@protocol(CNIterable) object:_collection];
         ((c != nil) ? ^CNGoR(NSUInteger size) {
-            return [yield beginYieldWithSize:[c count]];
+            return [yield beginYieldWithSize:[((id<CNIterable>)(c)) count]];
         } : nil);
     }) end:^CNGoR(CNGoR result) {
         if(result == CNGo_Break) return [yield endYieldWithResult:result];
@@ -74,7 +74,7 @@ static CNClassType* _CNAppendLink_type;
     return [CNYield decorateBase:yield begin:({
         id<CNIterable> c = [CNObject asKindOfProtocol:@protocol(CNIterable) object:_collection];
         ((c != nil) ? ^CNGoR(NSUInteger size) {
-            return [yield beginYieldWithSize:size + [c count]];
+            return [yield beginYieldWithSize:size + [((id<CNIterable>)(c)) count]];
         } : nil);
     }) end:^CNGoR(CNGoR result) {
         if(result == CNGo_Continue) return [yield endYieldWithResult:[_collection goOn:^CNGoR(id item) {
@@ -128,7 +128,7 @@ static CNClassType* _CNPrependLink_type;
             id __tmprp1_0rp0b;
             {
                 id<CNIterable> _ = [CNObject asKindOfProtocol:@protocol(CNIterable) object:_collection];
-                if(_ != nil) __tmprp1_0rp0b = numui([_ count]);
+                if(_ != nil) __tmprp1_0rp0b = numui([((id<CNIterable>)(_)) count]);
                 else __tmprp1_0rp0b = nil;
             }
             ((__tmprp1_0rp0b != nil) ? unumui(__tmprp1_0rp0b) : 0);

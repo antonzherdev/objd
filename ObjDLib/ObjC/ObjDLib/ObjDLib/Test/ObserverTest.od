@@ -1,0 +1,22 @@
+package objd.react
+
+import test._
+
+@Test
+class ObserverTest extends TestCase {
+    @Test
+    def testSignal {
+        val sig = Signal<int>()
+        var v = 0
+        val o = sig.observe{i -> v = i}
+        assertEquals(v, 0)
+        sig.post(1)
+        assertEquals(v, 1)
+        sig.post(2)
+        assertEquals(v, 2)
+
+        o.detach
+        sig.post(3)
+        assertEquals(v, 2)
+    }
+}

@@ -29,6 +29,8 @@
 
 
 @interface CNMap_impl : CNIterable_impl<CNMap>
++ (instancetype)map_impl;
+- (instancetype)init;
 @end
 
 
@@ -40,6 +42,8 @@
 
 
 @interface CNImMap_impl : CNMap_impl<CNImMap>
++ (instancetype)imMap_impl;
+- (instancetype)init;
 - (id<CNMMap>)mCopy;
 @end
 
@@ -59,6 +63,8 @@
 
 
 @interface CNMMap_impl : CNMap_impl<CNMMap>
++ (instancetype)map_impl;
+- (instancetype)init;
 - (void)appendItem:(CNTuple*)item;
 - (BOOL)removeItem:(CNTuple*)item;
 - (id<CNImMap>)im;

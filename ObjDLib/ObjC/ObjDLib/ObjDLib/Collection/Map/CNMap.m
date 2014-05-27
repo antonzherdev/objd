@@ -9,6 +9,16 @@
 #import "CNPlat.h"
 @implementation CNMap_impl
 
++ (instancetype)map_impl {
+    return [[CNMap_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
+
 - (id)applyKey:(id)key {
     @throw @"Method apply is abstract";
 }
@@ -36,6 +46,10 @@
     else return NO;
 }
 
+- (id<CNIterator>)iterator {
+    @throw @"Method iterator is abstract";
+}
+
 - (id)copyWithZone:(NSZone*)zone {
     return self;
 }
@@ -43,6 +57,16 @@
 @end
 
 @implementation CNImMap_impl
+
++ (instancetype)imMap_impl {
+    return [[CNImMap_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
 
 - (id<CNMMap>)mCopy {
     CNMHashMap* m = [CNMHashMap hashMap];
@@ -57,6 +81,22 @@
     return [builder build];
 }
 
+- (id)applyKey:(id)key {
+    @throw @"Method apply is abstract";
+}
+
+- (id<CNIterable>)keys {
+    @throw @"Method keys is abstract";
+}
+
+- (id<CNIterable>)values {
+    @throw @"Method values is abstract";
+}
+
+- (id<CNIterator>)iterator {
+    @throw @"Method iterator is abstract";
+}
+
 - (id)copyWithZone:(NSZone*)zone {
     return self;
 }
@@ -64,6 +104,16 @@
 @end
 
 @implementation CNMMap_impl
+
++ (instancetype)map_impl {
+    return [[CNMMap_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
 
 - (void)appendItem:(CNTuple*)item {
     [self setKey:((CNTuple*)(item)).a value:((CNTuple*)(item)).b];
@@ -124,6 +174,22 @@
             [self appendItem:_];
         }
     }
+}
+
+- (id)applyKey:(id)key {
+    @throw @"Method apply is abstract";
+}
+
+- (id<CNIterable>)keys {
+    @throw @"Method keys is abstract";
+}
+
+- (id<CNIterable>)values {
+    @throw @"Method values is abstract";
+}
+
+- (id<CNIterator>)iterator {
+    @throw @"Method iterator is abstract";
 }
 
 - (id<CNMIterator>)mutableIterator {

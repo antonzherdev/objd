@@ -8,6 +8,20 @@
 #import "CNPlat.h"
 @implementation CNSet_impl
 
++ (instancetype)set_impl {
+    return [[CNSet_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
+
+- (id<CNIterator>)iterator {
+    @throw @"Method iterator is abstract";
+}
+
 - (id)copyWithZone:(NSZone*)zone {
     return self;
 }
@@ -15,6 +29,16 @@
 @end
 
 @implementation CNImSet_impl
+
++ (instancetype)imSet_impl {
+    return [[CNImSet_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
 
 - (id<CNMSet>)mCopy {
     CNMHashSet* arr = [CNMHashSet hashSet];
@@ -28,6 +52,10 @@
     return arr;
 }
 
+- (id<CNIterator>)iterator {
+    @throw @"Method iterator is abstract";
+}
+
 - (id)copyWithZone:(NSZone*)zone {
     return self;
 }
@@ -35,6 +63,16 @@
 @end
 
 @implementation CNMSet_impl
+
++ (instancetype)set_impl {
+    return [[CNMSet_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
 
 - (id<CNImSet>)im {
     return [self imCopy];
@@ -50,6 +88,10 @@
         }
     }
     return [arr im];
+}
+
+- (id<CNIterator>)iterator {
+    @throw @"Method iterator is abstract";
 }
 
 - (id<CNMIterator>)mutableIterator {

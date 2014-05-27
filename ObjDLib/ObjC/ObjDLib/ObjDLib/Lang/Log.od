@@ -1,6 +1,6 @@
-package obj.lang
+package objd.lang
 
-stub struct log {
-    static def apply(text : string) : void
-    static def par(text : string) : void
+stub struct Log {
+    static def info(text : string) : void
+    static def parInfo(text : string) : void
 }

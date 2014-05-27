@@ -5,6 +5,8 @@ import objd.concurrent.DispatchQueue;
 import objd.chain.Chain;
 
 public abstract class Traversable_impl<T> implements Traversable<T> {
+    public Traversable_impl() {
+    }
     public void forEach(final P<T> each) {
         goOn(new F<T, Go>() {
             @Override

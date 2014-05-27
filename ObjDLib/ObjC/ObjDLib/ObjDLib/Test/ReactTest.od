@@ -1,0 +1,49 @@
+package objd.react
+
+import test._
+
+@Test
+class ReactTest extends TestCase {
+    @Test
+    def testMap {
+        val v = Var<int>(2)
+        val m = v.map(_*_)
+        val m2 = m.map(_*_)
+        assertEquals(m.value, 4)
+        assertEquals(m2.value, 16)
+        v.set(4)
+        assertEquals(m.value, 16)
+        assertEquals(m2.value, 16*16)
+    }
+
+    @Test
+    def testReactFlag {
+        val a1 = Var(1)
+        val a2 = Var(2)
+
+        val f = ReactFlag(initial = true, [a1, a2])
+        assertTrue(f.value)
+        f.clear
+        assertFalse(f.value)
+        f.set
+        assertTrue(f.value)
+        f.clear
+        assertFalse(f.value)
+
+        a1.set(1)
+        assertFalse(f.value)
+        a1.set(2)
+        assertTrue(f.value)
+        f.clear
+        assertFalse(f.value)
+
+        a2.set(1)
+        assertTrue(f.value)
+        f.clear
+        assertFalse(f.value)
+
+        a1.set(3)
+        a2.set(3)
+        assertTrue(f.value)
+    }
+}

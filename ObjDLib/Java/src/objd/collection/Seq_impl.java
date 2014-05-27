@@ -3,6 +3,8 @@ package objd.collection;
 import objd.lang.*;
 
 public abstract class Seq_impl<T> extends Iterable_impl<T> implements Seq<T> {
+    public Seq_impl() {
+    }
     @Override
     public boolean isEmpty() {
         return this.count() == 0;

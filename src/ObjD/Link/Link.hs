@@ -341,6 +341,8 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 
 traitImplClass :: Env -> Class -> Class
 traitImplClass env cl = let 
+	con = Def{defName = "apply", defMods = [DefModStatic, DefModConstructor, DefModPublic], defBody = Nop,
+				defPars = [], defType = envSelf env, defGenerics = Just $ DefGenerics (classGenerics cl) (envSelf env), defAnnotations = []}
 	base = baseClassExtends $ envIndex env 
 	ext = Extends {
 		extendsClass = Just $ case extendsRefs $ classExtends cl of
@@ -353,7 +355,7 @@ traitImplClass env cl = let
 		genClassName = genClassName cl ++ "_impl",
 		_classExtends = ext, 
 		_classMods = ClassModTraitImpl : ClassModAbstract : delete ClassModTrait (classMods cl), 
-		_classDefs = filter( (DefModOverride `elem`) .defMods) $ classDefs cl,
+		_classDefs = con : (filter( (DefModOverride `elem`) .defMods) $ classDefs cl),
 		_classImports = [],
 		classDefsWithTraits = defsWithTraits env cl'
 	}
@@ -367,12 +369,12 @@ defsWithTraits :: Env -> Class -> [Def]
 defsWithTraits env cl = classDefs cl ++ notOverloadedTraitDefs
 	where	
 		
-		notOverloadedTraitDefs = map updef $ filter (\(def, _) -> not $ any ((== def) . fst) notAbstractClassDefs) notAbstractTraitDefs
+		notOverloadedTraitDefs = map updef $ filter (\(def, _) -> not $ any ((== def) . fst) notAbstractClassDefs) traitDefs
 		--notOverloadedTraitDefs = notAbstractTraitDefs
-		notAbstractTraitDefs = notAbstractDefs True
-		notAbstractClassDefs = notAbstractDefs False
-		notAbstractDefs :: Bool ->[(Def, Class)]
-		notAbstractDefs trait = ( map (\(a, _, c) -> (a, c)) . filter (\(_, t, _) -> trait == t)) allDefsWithLine
+		traitDefs = defs True
+		notAbstractClassDefs = filter ((DefModAbstract `notElem`) . defMods .  fst) $ defs False
+		defs :: Bool ->[(Def, Class)]
+		defs trait = ( map (\(a, _, c) -> (a, c)) . filter (\(_, t, _) -> trait == t)) allDefsWithLine
 		allDefsWithLine :: [(Def, Bool, Class)]
 		allDefsWithLine = allDefsWithLine' False True cl
 		allDefsWithLine' :: Bool -> Bool -> Class -> [(Def, Bool, Class)] -- (Def, traitLine - True/classLine - False)
@@ -894,11 +896,10 @@ declareVal env d
 	where
 		mappedDef = d{defBody =  multilineSet env Nothing (callRef mappedDef) (defBody d)}
 multilineSet :: Env -> Maybe MathTp -> Exp -> Exp -> Exp
-multilineSet env tp l r = mapExp replaceReturn $ addReturn env True (exprDataType r) r
+multilineSet env tp l r = addReturnBy s True r
 	where
-		replaceReturn (Return _ e) = Just $ Set tp l e
-		replaceReturn _ = Nothing
-
+		s _ e = Set tp l $ implicitConvertsion env (exprDataType r) e
+		
 
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Options

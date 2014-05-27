@@ -3,6 +3,8 @@ package objd.collection;
 import objd.lang.*;
 
 public abstract class ImIterable_impl<T> extends Iterable_impl<T> implements ImIterable<T> {
+    public ImIterable_impl() {
+    }
     @Override
     public MIterable<T> mCopy() {
         final MArray<T> arr = new MArray<T>();

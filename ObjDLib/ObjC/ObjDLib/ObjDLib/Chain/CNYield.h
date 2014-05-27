@@ -11,6 +11,8 @@
 
 
 @interface CNChainLink_impl : NSObject<CNChainLink>
++ (instancetype)chainLink_impl;
+- (instancetype)init;
 @end
 
 

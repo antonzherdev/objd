@@ -77,7 +77,7 @@ stmToInterface cl =
 		env = Env cl 0 D.TPVoid False
 		name = D.classNameWithPrefix cl
 		defs = filter (not . D.isInline) $ D.classDefs cl
-		implFields = filter needField (D.classDefs cl)
+		implFields = filter needField (D.classDefsWithTraits cl)
 		needField f = D.isField f && not (D.isStatic f)
 		constrFuns = maybe [] (\constr -> [createFun name constr, initFun constr]) (D.classConstructor cl)
 		staticGetters = (map staticGetterFun .filter (\f -> 
@@ -287,7 +287,7 @@ implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFu
 
 		superInit Nothing = C.Call C.Super "init" [] []
 		superInit (Just (D.ExtendsClass _ [])) = C.Call C.Super "init" [] []
-		superInit (Just (D.ExtendsClass _ pars)) = C.Call C.Super "initWith" (map (D.defName *** tExp env) pars) []
+		superInit (Just (D.ExtendsClass _ pars)) = C.Call C.Super "initWith" (map (\(d, e) -> (D.defName d, tExpTo env (D.defType d) e)) pars) []
 
 
 		selfClass = C.Call (C.Ref $ D.classNameWithPrefix cl) "class" [] []
@@ -635,6 +635,7 @@ tExpTo env tp e = maybeVal (D.exprDataType e, tp) (tExp env e)
 castGeneric :: D.Exp -> C.Exp -> C.Exp
 castGeneric dexp e = let 
 	cst (D.TPOption _ tp) = cst (D.wrapGeneric tp)
+	cst (D.TPGenericWrap _ (D.TPOption _ tp)) = cst (D.wrapGeneric tp)
 	cst (D.TPGenericWrap _ c@(D.TPClass D.TPMClass _ _)) = C.Cast (showDataType c) e
 	cst (D.TPGenericWrap _ c@(D.TPClass D.TPMTrait _ _)) = C.Cast (showDataType c) e
 	cst (D.TPGenericWrap _ c@(D.TPClass D.TPMEnum _ _)) = C.Cast (showDataType c) e
@@ -726,7 +727,7 @@ tExp env (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars _) _)
 		let 
 			tp = D.exprDataType l
 		in C.ExpBraces [
-			C.Var (showDataType tp) "__nd" (tExp env l) [],
+			C.Var (showDataType tp) "__nd" (castGeneric l $ tExp env l) [],
 			C.Stm $ C.InlineIf (C.BoolOp Eq (C.Ref "__nd") C.Nil) C.Nil (C.CCall (C.Ref "__nd") ((map snd . tPars env dd) pars))
 		]
 tExp env (D.NullDot l r _) = tExpToType env (D.wrapGeneric $ D.exprDataType r) (D.Dot l r)
@@ -926,6 +927,14 @@ translate env e = case tStm env e of
 	[C.Braces r] -> r
 	r -> r
 
+processGo :: D.Exp -> D.Exp -> D.Exp -> D.Exp
+processGo cn brk e = D.mapExp procGo e 
+	where
+		procGo (D.Return _ (D.Dot (D.Call D.Def{D.defName = "Go"} _ [] _) (D.Call D.Def{D.defName = "Continue"} _ [] _))) = Just cn
+		procGo (D.Return _ (D.Dot (D.Call D.Def{D.defName = "Go"} _ [] _) (D.Call D.Def{D.defName = "Break"} _ [] _))) = Just brk 
+		procGo (D.Return _ ee) = Just $ D.If (D.BoolOp Eq ee D.Continue) cn brk
+		procGo _ = Nothing
+
 tStm :: Env -> D.Exp -> [C.Stm]
 tStm _ (D.Nop) = []
 
@@ -938,6 +947,31 @@ tStm v (D.If cond t f) = [C.If (tExpTo v D.TPBool cond) (translate v t) (transla
 tStm v (D.While cond t) = [C.While (tExpTo v D.TPBool cond) (translate v t)]
 tStm v (D.Synchronized ref b) = [C.Synchronized (tExp v ref) (translate v b)]
 tStm v (D.Do cond t) = [C.Do (tExpTo v D.TPBool cond) (translate v t)]
+
+tStm env (D.Set Nothing sl x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar, cycleTp)] cycleBody _)] _))) 
+	| dn == "go" =
+		case D.exprDataType l of
+			D.TPArr _ _ -> forin
+			D.TPClass _ _ D.Class{D.className = "MArray"} -> forin 
+			D.TPClass _ _ D.Class{D.className = "Array"} -> forin 
+			D.TPClass _ _ D.Class{D.className = "ImArray"} -> forin 
+			_ -> [C.Stm $ tExp env x]
+	where
+		sl' = tExp env sl
+		forin = [C.Set Nothing sl' (C.Ref "CNGo_Continue"),
+			C.ForIn (showDataType cycleTp) cycleVar (tExp env l) (translate env ( processGo D.Continue (D.Braces [D.Set Nothing sl D.Break, D.Break]) cycleBody) )]
+		
+tStm env x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar, cycleTp)] cycleBody _)] _)) 
+	| dn == "for" || dn == "go" =
+		case D.exprDataType l of
+			D.TPArr _ _ -> forin
+			D.TPClass _ _ D.Class{D.className = "MArray"} -> forin 
+			D.TPClass _ _ D.Class{D.className = "Array"} -> forin 
+			D.TPClass _ _ D.Class{D.className = "ImArray"} -> forin 
+			_ -> [C.Stm $ tExp env x]
+	where
+		forin = [C.ForIn (showDataType cycleTp) cycleVar (tExp env l) (translate env ((if dn == "go" then processGo D.Continue D.Break else id) cycleBody) )]
+tStm env (D.Set Nothing l D.Break) = [C.Set Nothing (tExp env l) (C.Ref "CNGo_Break")]
 
 tStm env (D.Set tp l r) = let 
 	l' = tExp env l
@@ -956,22 +990,6 @@ tStm env (D.Throw e) = [C.Throw $ tExp env e]
 tStm _ D.Break = [C.Break]
 tStm _ D.Continue = [C.Continue]
 tStm env (D.Weak expr) = tStm env{envWeakSelf = True} expr
-tStm env x@(D.Dot l (D.Call (D.Def{D.defName = dn}) _ [(_, D.Lambda [(cycleVar, cycleTp)] cycleBody _)] _)) 
-	| dn == "for" || dn == "go" =
-		case D.exprDataType l of
-			D.TPArr _ _ -> forin
-			D.TPClass _ _ D.Class{D.className = "MArray"} -> forin 
-			D.TPClass _ _ D.Class{D.className = "Array"} -> forin 
-			D.TPClass _ _ D.Class{D.className = "ImArray"} -> forin 
-			_ -> [C.Stm $ tExp env x]
-	where
-		forin = [C.ForIn (showDataType cycleTp) cycleVar (tExp env l) (translate env ((if dn == "go" then processGo else id) cycleBody) )]
-		processGo :: D.Exp -> D.Exp
-		processGo e = D.mapExp procGo e 
-		procGo (D.Return _ (D.Dot (D.Call D.Def{D.defName = "Go"} _ [] _) (D.Call D.Def{D.defName = "Continue"} _ [] _))) = Just D.Continue
-		procGo (D.Return _ (D.Dot (D.Call D.Def{D.defName = "Go"} _ [] _) (D.Call D.Def{D.defName = "Break"} _ [] _))) = Just D.Break
-		procGo (D.Return _ e) = Just $ D.If (D.BoolOp Eq e D.Continue) D.Continue D.Break
-		procGo _ = Nothing
 tStm env (D.Try e f) = [C.Try (translate env e) (translate env f)]
 tStm env (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars _) _) 
 	| not (null pars) && D.DefModApplyLambda `elem` mods =

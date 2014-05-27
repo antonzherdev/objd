@@ -33,6 +33,8 @@
 
 
 @interface CNSeq_impl : CNIterable_impl<CNSeq>
++ (instancetype)seq_impl;
+- (instancetype)init;
 - (BOOL)isEmpty;
 - (id)head;
 @end
@@ -48,6 +50,8 @@
 
 
 @interface CNImSeq_impl : CNSeq_impl<CNImSeq>
++ (instancetype)imSeq_impl;
+- (instancetype)init;
 - (id<CNMSeq>)mCopy;
 @end
 
@@ -64,6 +68,8 @@
 
 
 @interface CNMSeq_impl : CNSeq_impl<CNMSeq>
++ (instancetype)seq_impl;
+- (instancetype)init;
 - (id<CNImSeq>)im;
 - (id<CNImSeq>)imCopy;
 @end

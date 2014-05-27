@@ -3,6 +3,8 @@ package objd.collection;
 import objd.lang.*;
 
 public abstract class ImMap_impl<K, V> extends Map_impl<K, V> implements ImMap<K, V> {
+    public ImMap_impl() {
+    }
     @Override
     public MMap<K, V> mCopy() {
         final MHashMap<K, V> m = new MHashMap<K, V>();

@@ -4,6 +4,8 @@ import objd.lang.*;
 import objd.concurrent.DispatchQueue;
 
 public abstract class Iterable_impl<T> extends Traversable_impl<T> implements Iterable<T> {
+    public Iterable_impl() {
+    }
     @Override
     public T head() {
         if(this.isEmpty()) {

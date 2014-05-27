@@ -680,7 +680,7 @@ static CNClassType* _CNMTreeMap_type;
     CNTreeMapEntry* entry = [self firstEntry];
     if(entry != nil) {
         [self deleteEntry:entry];
-        return tuple(entry.key, entry.value);
+        return tuple(((CNTreeMapEntry*)(entry)).key, ((CNTreeMapEntry*)(entry)).value);
     } else {
         return nil;
     }
@@ -811,8 +811,22 @@ static CNClassType* _CNTreeMapEntry_type;
 
 @implementation CNTreeMapKeySet_impl
 
++ (instancetype)treeMapKeySet_impl {
+    return [[CNTreeMapKeySet_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
+
 - (id<CNIterator>)iteratorHigherThanKey:(id)key {
     @throw @"Method iteratorHigherThan is abstract";
+}
+
+- (id<CNIterator>)iterator {
+    @throw @"Method iterator is abstract";
 }
 
 - (id)copyWithZone:(NSZone*)zone {
@@ -1028,9 +1042,9 @@ static CNClassType* _CNMTreeMapKeyIterator_type;
 - (void)setValue:(id)value {
     CNTreeMapEntry* p = _prev;
     if(p != nil) {
-        if(!([p.key isEqual:value])) {
+        if(!([((CNTreeMapEntry*)(p)).key isEqual:value])) {
             [_map deleteEntry:p];
-            [_map setKey:value value:p.value];
+            [_map setKey:value value:((CNTreeMapEntry*)(p)).value];
         }
     }
 }
@@ -1254,8 +1268,8 @@ static CNClassType* _CNMTreeMapIterator_type;
 - (void)setValue:(CNTuple*)value {
     CNTreeMapEntry* p = _prev;
     if(p != nil) {
-        if([p.key isEqual:((CNTuple*)(value)).a]) {
-            p.value = ((CNTuple*)(value)).b;
+        if([((CNTreeMapEntry*)(p)).key isEqual:((CNTuple*)(value)).a]) {
+            ((CNTreeMapEntry*)(p)).value = ((CNTuple*)(value)).b;
         } else {
             [_map deleteEntry:p];
             [_map setKey:((CNTuple*)(value)).a value:((CNTuple*)(value)).b];

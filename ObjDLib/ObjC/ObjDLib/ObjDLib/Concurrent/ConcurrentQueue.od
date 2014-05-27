@@ -1,0 +1,85 @@
+package objd.concurrent
+
+class ConcurrentQueueNode<T> {
+    static def apply<T>(item : T) : ConcurrentQueueNode<T> = {
+        val ret = ConcurrentQueueNode<T>()
+        ret.item = item
+        ret
+    }
+
+    var item : T?
+    var next : ConcurrentQueueNode<T>?
+}
+
+
+class ConcurrentQueue<T> extends Queue<T> {
+    private var _head : ConcurrentQueueNode<T> = ConcurrentQueueNode<T>()
+    private var _tail : ConcurrentQueueNode<T> = _head
+    private val hLock : Lock = Lock()
+    private val tLock : Lock = Lock()
+    private val _count = AtomicInt()
+
+    def count = _count.intValue
+
+    def enqueue(item : T) {
+        val node = ConcurrentQueueNode<T>(item)
+        tLock.lock
+        _tail.next = node
+        _tail = node
+        _count.incrementAndGet
+        tLock.unlock
+    }
+
+    def dequeue : T? = {
+        hLock.lock
+        val ret = _head.next.map{ newHead ->
+            val item = newHead.item
+            newHead.item = nil
+            _head = newHead
+            _count.decrementAndGet
+            item
+        }
+        hLock.unlock
+        ret
+    }
+
+    def dequeue(when : T -> bool) : T? = {
+        hLock.lock
+        val ret = _head.next.flatMap{ newHead ->
+            val item = newHead.item
+            if(when(item.get)) {
+                newHead.item = nil
+                _head = newHead
+                _count.decrementAndGet
+                item
+            } else nil
+        }
+        hLock.unlock
+        ret
+    }
+
+    def clear {
+        hLock.lock
+        _head = _tail
+        _head.item = nil
+        _count.set(0)
+        hLock.unlock
+    }
+
+    def peek : T? = {
+        hLock.lock
+        val node = _head
+        val newHead = node.next
+        if(newHead == nil) {
+            hLock.unlock
+            return nil
+        }
+        val item = newHead?.item
+        hLock.unlock
+        item
+    }
+
+    def isEmpty : bool = {
+        return _count.intValue == 0
+    }
+}

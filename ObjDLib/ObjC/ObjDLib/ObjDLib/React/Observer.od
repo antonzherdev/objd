@@ -1,0 +1,69 @@
+package objd.react
+
+
+trait Observable<T> {
+    def attach(observer : Observer<T>)
+    def detach(observer : Observer<T>?)
+
+    def observe(weak f : T -> void) : Observer<T> = {
+        val obs = Observer<T>(observable = self, f)
+        attach(obs)
+        obs
+    }
+}
+
+trait ObservableBase<T> extends Observable<T> {
+    private val _observers = AtomicObject<[Weak<Observer<T>>]>([])
+    override def attach(observer : Observer<T>) {
+        while(true) {
+            val v = _observers.value
+            if(_observers.compareAndSet(v, v + Weak(observer))) {
+                return nil
+            }
+        }
+    }
+
+    override def detach(observer : Observer<T>?) {
+        val p : Weak<Observer<T>> -> bool =
+            if(observer == nil) l : Weak<Observer<T>> -> !l.isEmpty
+            else l : Weak<Observer<T>> -> {
+                val lv = l.value
+                lv !== observer && lv !== nil
+            }
+        while(true) {
+            val v = _observers.value
+            val nv = v.chain.filter(p).toArray
+            if(_observers.compareAndSet(v, nv)) {
+                return nil
+            }
+        }
+    }
+
+    protected def notify(value : T) {
+        _observers.value.for((o : Weak<Observer<T>>) -> {
+            val v = o.value
+            v?.f(value)
+        })
+    }
+
+    protected def hasObservers : bool = !_observers.value.isEmpty
+}
+
+class Observer<T>(val observable : Observable<T>, val f : T -> void) {
+    def detach {
+        observable.detach(observer = self)
+    }
+
+    override def dealloc {
+        observable.detach(observer = nil)
+    }
+}
+
+class Signal<T> extends ObservableBase<T> {
+    def post(data : T) {
+        notify(data)
+    }
+    def post(self : Signal<void>) {
+        notify(nil)
+    }
+}

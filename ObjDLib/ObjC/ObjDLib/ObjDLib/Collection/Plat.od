@@ -10,10 +10,14 @@ stub class MHashSet<T> extends MSet<T> {
     override def imCopy : ImHashSet<T>
 }
 
+@ObjC
 stub class Array<T> extends Seq<T> {
     override def for(each : T -> void)
     override def go(on : T -> Go) : Go
 }
+
+@Java
+stub class Array<T> extends Seq<T>
 
 stub class ImArray<T> extends Array<T> with ImSeq<T>  {
     static def apply<T>(mArray : MArray) : [T]

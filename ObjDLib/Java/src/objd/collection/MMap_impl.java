@@ -3,6 +3,8 @@ package objd.collection;
 import objd.lang.*;
 
 public abstract class MMap_impl<K, V> extends Map_impl<K, V> implements MMap<K, V> {
+    public MMap_impl() {
+    }
     @Override
     public void appendItem(final Tuple<K, V> item) {
         setKeyValue(item.a, item.b);

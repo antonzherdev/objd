@@ -1,6 +1,7 @@
 package objd.concurrent;
 
 import objd.lang.*;
+import objd.collection.Iterator;
 import objd.collection.ImArray;
 
 public class DefaultPromise<T> extends Promise<T> {
@@ -22,12 +23,13 @@ public class DefaultPromise<T> extends Promise<T> {
                 return false;
             } else {
                 if(this._state.compareAndSet(v, value)) {
-                    ((ImArray<P<Try<T>>>)(((ImArray)(v)))).forEach(new P<P<Try<T>>>() {
-                        @Override
-                        public void apply(final P<Try<T>> f) {
+                    {
+                        final Iterator<P<Try<T>>> __il__0_1f_0t_0i = ((ImArray<P<Try<T>>>)(((ImArray)(v)))).iterator();
+                        while(__il__0_1f_0t_0i.hasNext()) {
+                            final P<Try<T>> f = __il__0_1f_0t_0i.next();
                             f.apply(value);
                         }
-                    });
+                    }
                     return true;
                 }
             }

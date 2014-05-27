@@ -132,7 +132,7 @@ static CNClassType* _CNMList_type;
 - (id)takeHead {
     CNMListItem* h = _headItem;
     if(h != nil) {
-        id r = h.data;
+        id r = ((CNMListItem*)(h)).data;
         [self removeListItem:h];
         return r;
     } else {
@@ -147,7 +147,7 @@ static CNClassType* _CNMList_type;
 - (id)takeLast {
     CNMListItem* h = _lastItem;
     if(h != nil) {
-        id r = h.data;
+        id r = ((CNMListItem*)(h)).data;
         [self removeListItem:h];
         return r;
     } else {

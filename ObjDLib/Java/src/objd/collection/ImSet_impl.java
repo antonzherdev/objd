@@ -3,6 +3,8 @@ package objd.collection;
 import objd.lang.*;
 
 public abstract class ImSet_impl<T> extends Set_impl<T> implements ImSet<T> {
+    public ImSet_impl() {
+    }
     @Override
     public MSet<T> mCopy() {
         final MHashSet<T> arr = new MHashSet<T>();

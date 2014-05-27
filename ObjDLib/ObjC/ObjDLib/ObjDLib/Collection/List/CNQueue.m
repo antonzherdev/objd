@@ -6,6 +6,16 @@
 #import "CNTuple.h"
 @implementation CNQueue_impl
 
++ (instancetype)queue_impl {
+    return [[CNQueue_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
+
 - (id)copyWithZone:(NSZone*)zone {
     return self;
 }

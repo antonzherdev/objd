@@ -7,6 +7,16 @@
 #import "CNPlat.h"
 @implementation CNIterator_impl
 
++ (instancetype)iterator_impl {
+    return [[CNIterator_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
+
 - (BOOL)hasNext {
     @throw @"Method hasNext is abstract";
 }
@@ -23,12 +33,30 @@
 
 @implementation CNMIterator_impl
 
++ (instancetype)iterator_impl {
+    return [[CNMIterator_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
+
 - (void)remove {
     @throw @"Method remove is abstract";
 }
 
 - (void)setValue:(id)value {
     @throw @"Method set is abstract";
+}
+
+- (BOOL)hasNext {
+    @throw @"Method hasNext is abstract";
+}
+
+- (id)next {
+    @throw @"Method next is abstract";
 }
 
 - (id)copyWithZone:(NSZone*)zone {
@@ -38,6 +66,16 @@
 @end
 
 @implementation CNBuilder_impl
+
++ (instancetype)builder_impl {
+    return [[CNBuilder_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
 
 - (void)appendItem:(id)item {
     @throw @"Method append is abstract";
@@ -94,6 +132,16 @@
 @end
 
 @implementation CNTraversable_impl
+
++ (instancetype)traversable_impl {
+    return [[CNTraversable_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
 
 - (void)forEach:(void(^)(id))each {
     [self goOn:^CNGoR(id item) {
@@ -195,12 +243,26 @@
 
 @implementation CNImTraversable_impl
 
++ (instancetype)imTraversable_impl {
+    return [[CNImTraversable_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
+
 - (id<CNMTraversable>)mCopy {
     CNMArray* arr = [CNMArray array];
     [self forEach:^void(id item) {
         [arr appendItem:item];
     }];
     return arr;
+}
+
+- (CNGoR)goOn:(CNGoR(^)(id))on {
+    @throw @"Method go is abstract";
 }
 
 - (id)copyWithZone:(NSZone*)zone {
@@ -210,6 +272,16 @@
 @end
 
 @implementation CNMTraversable_impl
+
++ (instancetype)traversable_impl {
+    return [[CNMTraversable_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
 
 - (void)appendItem:(id)item {
     @throw @"Method append is abstract";
@@ -235,6 +307,10 @@
     return arr;
 }
 
+- (CNGoR)goOn:(CNGoR(^)(id))on {
+    @throw @"Method go is abstract";
+}
+
 - (id)copyWithZone:(NSZone*)zone {
     return self;
 }
@@ -242,6 +318,16 @@
 @end
 
 @implementation CNIterable_impl
+
++ (instancetype)iterable_impl {
+    return [[CNIterable_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
 
 - (id)head {
     if([self isEmpty]) return nil;
@@ -344,6 +430,16 @@
 
 @implementation CNImIterable_impl
 
++ (instancetype)imIterable_impl {
+    return [[CNImIterable_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
+
 - (id<CNMIterable>)mCopy {
     CNMArray* arr = [CNMArray array];
     {
@@ -356,6 +452,10 @@
     return arr;
 }
 
+- (id<CNIterator>)iterator {
+    @throw @"Method iterator is abstract";
+}
+
 - (id)copyWithZone:(NSZone*)zone {
     return self;
 }
@@ -363,6 +463,16 @@
 @end
 
 @implementation CNMIterable_impl
+
++ (instancetype)iterable_impl {
+    return [[CNMIterable_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
 
 - (BOOL)removeItem:(id)item {
     id<CNMIterator> i = [self mutableIterator];
@@ -401,6 +511,10 @@
     while([i hasNext]) {
         if(by([i next])) [i remove];
     }
+}
+
+- (id<CNIterator>)iterator {
+    @throw @"Method iterator is abstract";
 }
 
 - (void)appendItem:(id)item {

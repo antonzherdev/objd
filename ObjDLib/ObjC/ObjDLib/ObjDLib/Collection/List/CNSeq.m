@@ -9,6 +9,16 @@
 #import "CNPlat.h"
 @implementation CNSeq_impl
 
++ (instancetype)seq_impl {
+    return [[CNSeq_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
+
 - (BOOL)isEmpty {
     return [self count] == 0;
 }
@@ -59,6 +69,10 @@
     return [builder build];
 }
 
+- (id<CNIterator>)iterator {
+    @throw @"Method iterator is abstract";
+}
+
 - (id)copyWithZone:(NSZone*)zone {
     return self;
 }
@@ -66,6 +80,16 @@
 @end
 
 @implementation CNImSeq_impl
+
++ (instancetype)imSeq_impl {
+    return [[CNImSeq_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
 
 - (id<CNMSeq>)mCopy {
     CNMArray* arr = [CNMArray array];
@@ -99,6 +123,10 @@
     }] toArray];
 }
 
+- (id<CNIterator>)iterator {
+    @throw @"Method iterator is abstract";
+}
+
 - (id)copyWithZone:(NSZone*)zone {
     return self;
 }
@@ -106,6 +134,16 @@
 @end
 
 @implementation CNMSeq_impl
+
++ (instancetype)seq_impl {
+    return [[CNMSeq_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
 
 - (id<CNImSeq>)im {
     return [self imCopy];
@@ -160,6 +198,10 @@
         n--;
     }
     @throw @"Incorrect index";
+}
+
+- (id<CNIterator>)iterator {
+    @throw @"Method iterator is abstract";
 }
 
 - (id<CNMIterator>)mutableIterator {

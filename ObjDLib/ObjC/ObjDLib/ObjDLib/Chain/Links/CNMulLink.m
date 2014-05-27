@@ -24,7 +24,7 @@ static CNClassType* _CNMulLink_type;
     return [CNYield decorateBase:yield begin:({
         id<CNIterable> c = [CNObject asKindOfProtocol:@protocol(CNIterable) object:__collection];
         ((c != nil) ? ^CNGoR(NSUInteger size) {
-            return [yield beginYieldWithSize:size * [c count]];
+            return [yield beginYieldWithSize:size * [((id<CNIterable>)(c)) count]];
         } : nil);
     }) yield:^CNGoR(id a) {
         return [__collection goOn:^CNGoR(id b) {

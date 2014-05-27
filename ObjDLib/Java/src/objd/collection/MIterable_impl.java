@@ -3,6 +3,8 @@ package objd.collection;
 import objd.lang.*;
 
 public abstract class MIterable_impl<T> extends Iterable_impl<T> implements MIterable<T> {
+    public MIterable_impl() {
+    }
     @Override
     public boolean removeItem(final T item) {
         final MIterator<T> i = this.mutableIterator();

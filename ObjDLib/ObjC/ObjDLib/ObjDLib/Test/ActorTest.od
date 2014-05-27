@@ -1,0 +1,98 @@
+package objd.actor
+
+import test._
+
+@Test
+class TestedActor extends Actor {
+    var items : [string] = []
+
+    def add(number : string) = future {
+        items += number
+    }
+
+    def getItems = prompt {
+        items
+    }
+
+    def getItemsF = future {
+        items
+    }
+
+    def lock(future : Future<string>) = lockAndOnSuccess(future) { s ->
+        items += "w$s"
+        s
+    }
+}
+
+@Test
+class ActorTest extends TestCase {
+    @Test
+    def testTypedActor {
+        val a = TestedActor()
+        var items : [string] = []
+        var en = 0
+        Log.info("!!ADD")
+        val count = 10000
+        1.to(count).for {i ->
+            items += "$i"
+        }
+        1.to(count).chain.map{ i ->
+            Future{
+                Memory.autoreleasePoolStart
+                a.add("$i")
+                Memory.autoreleasePoolEnd
+            }
+        }.voidFuture.getResult(5)
+        Log.info("!!END_ADD")
+        val result = a.getItems.getResult(5)
+        val result2 = a.getItemsF.getResult(5)
+        Log.info("!!GOT")
+        assertEquals(items.chain.toSet, result.chain.toSet)
+        assertEquals(items.chain.toSet, result2.chain.toSet)
+        assertTrue(en != count)
+    }
+
+    @Test
+    def testTypedActor2 {
+        repeat(100) {
+            val a = TestedActor()
+            var items : [string] = []
+            var en = 0
+            Log.info("!!ADD")
+            val count = 1000
+            1.to(count).for {i ->
+                items += "$i"
+            }
+            1.to(count).chain.map{ i ->
+                a.add("$i")
+            }.voidFuture.getResult(5)
+            Log.info("!!END_ADD")
+            val result = a.getItems.getResult(5)
+            val result2 = a.getItemsF.getResult(5)
+            Log.info("!!GOT")
+            assertEquals(items.chain.toSet, result.chain.toSet)
+            assertEquals(items.chain.toSet, result2.chain.toSet)
+            assertTrue(en != count)
+        }
+    }
+
+    @Test
+    def testLock {
+        repeat(100) {
+            val a = TestedActor()
+            val count = 100
+
+            val arr = 1.to(count).chain.map((_, Promise<string>())).toArray
+            arr.for {t ->
+                a.lock(t.b)
+            }
+            val f = a.getItems
+            arr.chain.shuffle.for{t ->
+                t.b.success("$(t.a)")
+            }
+            val exp = arr.chain.map("w$(_.a)").toArray
+            val items = f.getResult(5)
+            assertEquals(items, exp)
+        }
+    }
+}

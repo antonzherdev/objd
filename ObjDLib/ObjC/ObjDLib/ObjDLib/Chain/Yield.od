@@ -33,27 +33,15 @@ class Yield<T>(val begin : (uint -> Go)? = nil, val yield : (T -> Go)? = nil, va
         var result : Go = Go.Continue
         if(items.is<Array<T>>) {
             val _items = items.cast<Array<T>>
-            if(beginYieldWith(size = _items.count) == Go.Continue) _items.go{item ->
-                result = yield(item)
-                result
-            }
+            if(beginYieldWith(size = _items.count) == Go.Continue) result = _items.go{item -> yield(item)}
         } else if(items.is<HashMap<T>>) {
             val _items = items.cast<Iterable<T>>
-            if(beginYieldWith(size = _items.count) == Go.Continue) items.go{item ->
-                result = yield(item)
-                result
-            }
+            if(beginYieldWith(size = _items.count) == Go.Continue) result = items.go{item -> yield(item)}
         } else if(items.is<Iterable<T>>) {
             val _items = items.cast<Iterable<T>>
-            if(beginYieldWith(size = _items.count) == Go.Continue) _items.go{item ->
-                result = yield(item)
-                result
-            }
+            if(beginYieldWith(size = _items.count) == Go.Continue) result = _items.go{item -> yield(item)}
         } else {
-            if(beginYieldWith(size = 0) == Go.Continue) items.go{item ->
-                result = yield(item)
-                result
-            }
+            if(beginYieldWith(size = 0) == Go.Continue) result = items.go{item -> yield(item)}
         }
         endYieldWith(result)
     }

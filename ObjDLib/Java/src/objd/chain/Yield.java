@@ -4,8 +4,8 @@ import objd.lang.*;
 import objd.collection.Go;
 import objd.collection.Traversable;
 import objd.collection.Array;
-import objd.collection.Iterable;
 import objd.collection.Iterator;
+import objd.collection.Iterable;
 import objd.collection.HashMap;
 
 public class Yield<T> {
@@ -153,27 +153,29 @@ public class Yield<T> {
         }
     }
     public Go stdYieldAllItems(final Traversable<T> items) {
-        final Mut<Go> result = new Mut<Go>(Go.Continue);
+        Go result = Go.Continue;
         if(items instanceof Array) {
             final Array<T> _items = ((Array<T>)(((Array)(items))));
             if(beginYieldWithSize(_items.count()) == Go.Continue) {
-                _items.goOn(new F<T, Go>() {
-                    @Override
-                    public Go apply(final T item) {
-                        result.value = yieldItem(item);
-                        return result.value;
+                Go __il__1t_1tret = Go.Continue;
+                final Iterator<T> __il__1t_1ti = _items.iterator();
+                while(__il__1t_1ti.hasNext()) {
+                    final T item = __il__1t_1ti.next();
+                    if(yieldItem(item) == Go.Break) {
+                        __il__1t_1tret = Go.Break;
+                        break;
                     }
-                });
+                }
+                result = __il__1t_1tret;
             }
         } else {
             if(items instanceof HashMap) {
                 final Iterable<T> _items = ((Iterable<T>)(((Iterable)(items))));
                 if(beginYieldWithSize(_items.count()) == Go.Continue) {
-                    items.goOn(new F<T, Go>() {
+                    result = items.goOn(new F<T, Go>() {
                         @Override
                         public Go apply(final T item) {
-                            result.value = yieldItem(item);
-                            return result.value;
+                            return yieldItem(item);
                         }
                     });
                 }
@@ -185,28 +187,26 @@ public class Yield<T> {
                         final Iterator<T> __il__1fft_1ti = _items.iterator();
                         while(__il__1fft_1ti.hasNext()) {
                             final T item = __il__1fft_1ti.next();
-                            result.value = yieldItem(item);
-                            if(result.value == Go.Break) {
+                            if(yieldItem(item) == Go.Break) {
                                 __il__1fft_1tret = Go.Break;
                                 break;
                             }
                         }
-                        return __il__1fft_1tret;
+                        result = __il__1fft_1tret;
                     }
                 } else {
                     if(beginYieldWithSize(((int)(0))) == Go.Continue) {
-                        items.goOn(new F<T, Go>() {
+                        result = items.goOn(new F<T, Go>() {
                             @Override
                             public Go apply(final T item) {
-                                result.value = yieldItem(item);
-                                return result.value;
+                                return yieldItem(item);
                             }
                         });
                     }
                 }
             }
         }
-        return endYieldWithResult(result.value);
+        return endYieldWithResult(result);
     }
     public Yield(final F<Integer, Go> begin, final F<T, Go> yield, final F<Go, Go> end, final F2<Yield<T>, Traversable<T>, Go> all) {
         this.begin = begin;

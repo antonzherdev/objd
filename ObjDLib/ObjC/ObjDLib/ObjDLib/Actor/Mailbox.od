@@ -1,0 +1,135 @@
+package objd.actor
+
+class Mailbox {
+    private volatile var _stopped = false
+    private val _scheduled = AtomicBool()
+
+    private val _queue = ConcurrentQueue<ActorMessage>()
+    def send(message : ActorMessage) {
+        if(_stopped) return nil
+
+        if(message.prompt) {
+            if(!_scheduled.getAndSet(true)) {
+                if(_queue.isEmpty) {
+                    message.process
+//                    Memory.memoryBarrier
+                    if(_queue.isEmpty) {
+                        _scheduled.set(false)
+//                        Memory.memoryBarrier
+                        if(!_queue.isEmpty) {
+                            trySchedule
+                        }
+                    } else {
+                        schedule
+                    }
+                } else {
+                    _queue.enqueue(message)
+                    schedule
+                }
+            } else {
+                _queue.enqueue(message)
+                trySchedule
+            }
+        } else {
+            _queue.enqueue(message)
+            trySchedule
+        }
+    }
+
+    private def trySchedule {
+        if(!_scheduled.getAndSet(true)) {
+            schedule
+        }
+    }
+
+    private def schedule {
+        if(!_stopped) {
+            DispatchQueue.default.async{
+                Memory.autoreleasePoolStart
+                processQueue
+                Memory.autoreleasePoolEnd
+            }
+        }
+    }
+
+    private volatile var _locked = false
+    private def processQueue {
+        var left = 5
+        _locked = false
+        while(left > 0) {
+            val msg = _queue.dequeue(when = message ->
+                if(message.process) true
+                else {
+                    _locked = true
+                    false
+                }
+            )
+            if(msg == nil) break
+            left--
+        }
+        if(_locked) {
+
+        } else if(_queue.isEmpty) {
+            _scheduled.set(false)
+//            Memory.memoryBarrier
+            if(!_queue.isEmpty) {
+                trySchedule
+            }
+        } else {
+            schedule
+        }
+    }
+
+    def unlock {
+        if(_locked) {
+            _locked = false
+//            Memory.memoryBarrier
+            schedule
+        }
+    }
+
+    def stop {
+        _stopped = true
+//        Memory.memoryBarrier
+        _queue.clear
+    }
+
+    def isEmpty : bool = _queue.isEmpty
+}
+
+
+trait ActorMessage{
+    def receiver : Actor
+    def prompt : bool
+    def process : bool
+}
+
+
+final class ActorFuture<T>(override val receiver : Actor, override val prompt : bool, val f : void -> T) extends DefaultPromise<T> with ActorMessage {
+    private volatile var _completed = false
+    override def process : bool =
+        if(_completed) true
+        else if(_locked) false
+        else success(f())
+
+    private volatile var _locked = false
+    def lock {
+        _locked = true
+    }
+    def unlock {
+        if(_locked) {
+            _locked = false
+//            Memory.memoryBarrier
+            receiver.mailbox.unlock
+        }
+    }
+    def isLocked = _locked
+    override def complete(value : Try<T>) : bool = {
+        val ret = super.complete(value)
+        if(ret) {
+            _completed = true
+            _locked = false
+        }
+        ret
+    }
+}

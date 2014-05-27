@@ -21,6 +21,8 @@
 
 
 @interface CNSet_impl : CNIterable_impl<CNSet>
++ (instancetype)set_impl;
+- (instancetype)init;
 @end
 
 
@@ -31,6 +33,8 @@
 
 
 @interface CNImSet_impl : CNSet_impl<CNImSet>
++ (instancetype)imSet_impl;
+- (instancetype)init;
 - (id<CNMSet>)mCopy;
 @end
 
@@ -43,6 +47,8 @@
 
 
 @interface CNMSet_impl : CNSet_impl<CNMSet>
++ (instancetype)set_impl;
+- (instancetype)init;
 - (id<CNImSet>)im;
 - (id<CNImSet>)imCopy;
 @end

@@ -2,6 +2,16 @@
 
 @implementation CNChainLink_impl
 
++ (instancetype)chainLink_impl {
+    return [[CNChainLink_impl alloc] init];
+}
+
+- (instancetype)init {
+    self = [super init];
+    
+    return self;
+}
+
 - (CNYield*)buildYield:(CNYield*)yield {
     @throw @"Method build is abstract";
 }
@@ -195,20 +205,25 @@ static CNClassType* _CNYield_type;
 }
 
 - (CNGoR)stdYieldAllItems:(id<CNTraversable>)items {
-    __block CNGoR result = CNGo_Continue;
+    CNGoR result = CNGo_Continue;
     if([items isKindOfClass:[CNArray class]]) {
         CNArray* _items = ((CNArray*)(items));
-        if([self beginYieldWithSize:[_items count]] == CNGo_Continue) for(id item in _items) {
-            result = [self yieldItem:item];
-            if(result == CNGo_Continue) continue;
-            else break;
+        if([self beginYieldWithSize:[_items count]] == CNGo_Continue) {
+            result = CNGo_Continue;
+            for(id item in _items) {
+                if([self yieldItem:item] == CNGo_Continue) {
+                    continue;
+                } else {
+                    result = CNGo_Break;
+                    break;
+                }
+            }
         }
     } else {
         if([items conformsToProtocol:@protocol(CNHashMap)]) {
             id<CNIterable> _items = ((id<CNIterable>)(items));
             if([self beginYieldWithSize:[_items count]] == CNGo_Continue) [items goOn:^CNGoR(id item) {
-                result = [self yieldItem:item];
-                return result;
+                return [self yieldItem:item];
             }];
         } else {
             if([items conformsToProtocol:@protocol(CNIterable)]) {
@@ -219,21 +234,17 @@ static CNClassType* _CNYield_type;
                     while([__il__1fft_1ti hasNext]) {
                         if(({
                             id item = [__il__1fft_1ti next];
-                            ({
-                                result = [self yieldItem:item];
-                                result;
-                            });
+                            [self yieldItem:item];
                         }) == CNGo_Break) {
                             __il__1fft_1tret = CNGo_Break;
                             break;
                         }
                     }
-                    return __il__1fft_1tret;
+                    result = __il__1fft_1tret;
                 }
             } else {
                 if([self beginYieldWithSize:0] == CNGo_Continue) [items goOn:^CNGoR(id item) {
-                    result = [self yieldItem:item];
-                    return result;
+                    return [self yieldItem:item];
                 }];
             }
         }
