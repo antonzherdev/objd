@@ -2,8 +2,8 @@ package objd.chain;
 
 import objd.lang.*;
 import test.PackageObjectTest;
-import org.junit.Test;
 import objd.collection.ImArray;
+import org.junit.Test;
 import objd.concurrent.Promise;
 import objd.collection.Iterator;
 import objd.concurrent.DispatchQueue;

@@ -38,15 +38,18 @@ maybeAddReturn :: Env -> DataType -> Exp -> Exp
 --maybeAddReturn _ tp _ | trace ("r " ++ show tp) False = undefined
 maybeAddReturn _ TPVoid e = e
 maybeAddReturn env tp e  = let
-	mbNil = case unwrapGeneric $ exprDataType e of
+	mbNil ee = case unwrapGeneric $ exprDataType e of
 		TPVoid -> case e of
-			Braces es -> Braces (es ++ [Return False Nil]) 
-			_ -> Braces (e : [Return False Nil]) 
+			Braces es -> Braces (es ++ [Return False ee]) 
+			_ -> Braces (e : [Return False ee]) 
 		_ -> addReturn env True tp e
-	in case unwrapGeneric tp of
-		TPClass TPMGeneric _ _ -> mbNil 
-		TPVoid -> mbNil 
-		TPUnknown{} -> mbNil 
+	in case tp of
+		TPGenericWrap _ t@(TPClass TPMGeneric _ _) -> mbNil (None t)
+		TPClass TPMGeneric _ _ -> mbNil (None tp)
+		TPVoid -> mbNil Nil
+		TPGenericWrap _ TPVoid -> mbNil (None TPVoid)
+		TPGenericWrap _ t@TPUnknown{} -> mbNil (None t)
+		TPUnknown{} -> mbNil (None tp)
 		_ -> addReturn env True tp e
 
 addReturn :: Env -> Bool -> DataType -> Exp -> Exp 
@@ -77,6 +80,8 @@ maybeCast _ e@(Braces []) = e
 maybeCast tp (If c t f) = If c (maybeCast tp t) (maybeCast tp f) 
 maybeCast tp (Braces x) = Braces $ (init x) ++ [maybeCast tp $ last x]
 maybeCast TPNil e = e
+maybeCast (TPGenericWrap _ TPNil) Nil = None TPNil
+maybeCast (TPGenericWrap _ TPVoid) Nil = None TPNil
 maybeCast (TPGenericWrap _ TPNil) e = e
 maybeCast _ Nil = Nil
 maybeCast (TPOption ch t) e = 
@@ -90,6 +95,7 @@ maybeCast tp e
 
 implicitConvertsion :: Env -> DataType -> Exp -> Exp
 implicitConvertsion _ _ Nop = Nop
+implicitConvertsion _ (TPGenericWrap _ TPVoid) Nil = None TPNil
 implicitConvertsion _ TPVoid expression = expression
 implicitConvertsion env destinationType expression = if isInstanceOfCheck env (exprDataType theResult) destinationType then theResult 
 		else ExpLError ("Could not convert " ++ show (exprDataType theResult) ++ " to " ++ show destinationType) theResult

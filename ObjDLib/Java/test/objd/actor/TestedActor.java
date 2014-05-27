@@ -11,7 +11,7 @@ public class TestedActor extends Actor {
             @Override
             public Void apply() {
                 TestedActor.this.items = TestedActor.this.items.addItem(number);
-                return ;
+                return null;
             }
         });
     }

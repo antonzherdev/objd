@@ -49,9 +49,7 @@ public class Mailbox {
             DispatchQueue.aDefault.asyncF(new P0() {
                 @Override
                 public void apply() {
-                    Memory.autoreleasePoolStart();
                     Mailbox.this.processQueue();
-                    Memory.autoreleasePoolEnd();
                 }
             });
         }

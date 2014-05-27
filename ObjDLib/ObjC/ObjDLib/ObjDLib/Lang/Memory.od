@@ -1,8 +1,21 @@
 package objd.lang
 
+@ObjC
 stub object Memory {
     def autoreleasePoolStart
     def autoreleasePoolEnd
+    inline def autorelease<T>(f : () -> T) {
+        autoreleasePoolStart
+        val r = f()
+        autoreleasePoolEnd
+        r
+    }
+}
+
+@Java
+stub object Memory {
+    inline def autoreleasePoolStart {}
+    inline def autoreleasePoolEnd {}
     inline def autorelease<T>(f : () -> T) {
         autoreleasePoolStart
         val r = f()

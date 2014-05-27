@@ -31,10 +31,8 @@ public class ActorTest extends TestCase {
                 return Future.<Void>applyF(new F0<Void>() {
                     @Override
                     public Void apply() {
-                        Memory.autoreleasePoolStart();
                         a.addNumber(String.format("%s", i));
-                        Memory.autoreleasePoolEnd();
-                        return ;
+                        return null;
                     }
                 });
             }

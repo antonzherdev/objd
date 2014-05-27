@@ -30,7 +30,7 @@ class Actor {
     }
 
     def promptJoin<T>(f : void -> Future<T>) : Future<T> = {
-        var ret = Promise<T>()
+        val ret = Promise<T>()
         val fut = ActorFuture(self, prompt = true) {
             val nf = f()
             nf.onComplete(ret.complete(_))
@@ -72,5 +72,5 @@ class Actor {
         fut
     }
 
-    def dummy : Future<void> = future(nil)
+    def dummy : Future<void> = future<void>{nil}
 }

@@ -3,6 +3,7 @@ package objd.react;
 import objd.lang.*;
 import test.PackageObjectTest;
 import org.junit.Test;
+import objd.collection.ImArray;
 import test.TestCase;
 
 public class ReactTest extends TestCase {

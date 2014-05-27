@@ -30,14 +30,14 @@ public class Actor {
                         }
                     });
                 }
-                return ;
+                return null;
             }
         });
         this.mailbox.sendMessage(((ActorMessage)(fut)));
         return ret;
     }
     public <T> Future<T> promptJoinF(final F0<Future<T>> f) {
-        Promise<T> ret = Promise.<T>apply();
+        final Promise<T> ret = Promise.<T>apply();
         final ActorFuture<Void> fut = new ActorFuture<Void>(this, true, new F0<Void>() {
             @Override
             public Void apply() {
@@ -50,7 +50,7 @@ public class Actor {
                         }
                     });
                 }
-                return ;
+                return null;
             }
         });
         this.mailbox.sendMessage(((ActorMessage)(fut)));
@@ -107,12 +107,12 @@ public class Actor {
         return fut;
     }
     public Future<Void> dummy() {
-        return ((Future<Void>)(((Future)(this.<Object>futureF(new F0<Object>() {
+        return this.<Void>futureF(new F0<Void>() {
             @Override
-            public Object apply() {
-                return ;
+            public Void apply() {
+                return null;
             }
-        })))));
+        });
     }
     public Actor() {
         this.mailbox = new Mailbox();

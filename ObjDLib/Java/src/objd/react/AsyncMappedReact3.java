@@ -14,7 +14,7 @@ public final class AsyncMappedReact3<A, B, C, R> extends ReactExpression<R> {
     private final Observer<C> obsC;
     @Override
     public R calc() {
-        return this.f.apply(this.a.value(), this.b.value(), this.b.value());
+        return this.f.apply(this.a.value(), this.b.value(), this.c.value());
     }
     public AsyncMappedReact3(final DispatchQueue queue, final React<A> a, final React<B> b, final React<C> c, final F3<A, B, C, R> f) {
         super(f.apply(a.value(), b.value(), c.value()));

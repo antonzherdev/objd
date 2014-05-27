@@ -988,7 +988,7 @@ static CNClassType* _CNAsyncMappedReact3_type;
 }
 
 - (id)calc {
-    return _f([_a value], [_b value], [_b value]);
+    return _f([_a value], [_b value], [_c value]);
 }
 
 - (NSString*)description {

@@ -182,7 +182,7 @@ final class AsyncMappedReact3<A, B, C, R>(val queue : DispatchQueue, val a : Rea
     private val obsA = a.observe{_ -> queue.async{recalc}}
     private val obsB = b.observe{_ -> queue.async{recalc}}
     private val obsC = c.observe{_ -> queue.async{recalc}}
-    override def calc : R = f(a.value, b.value, b.value)
+    override def calc : R = f(a.value, b.value, c.value)
 }
 
 final class ReactFlag(initial : bool = true, val reacts : [Observable<_>] = []) extends MReact<bool>(initial) {

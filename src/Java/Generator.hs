@@ -445,9 +445,11 @@ genExp env (D.Some _ e) = genExp env e
 genExp env (D.Return _ e) = genExp env e
 genExp _ (D.Cast (D.TPArr _ tp) (D.Arr [])) = do
 	tp' <- genTp tp
+	tellImport ["objd", "collection", "ImArray"]
 	return $ J.Dot (J.Ref "ImArray") (J.Call "empty" [tp'] [])
 genExp env (D.Arr exps) = do
 	exps' <- mapM (genExp env) exps
+	tellImport ["objd", "collection", "ImArray"]
 	return $ J.Dot (J.Ref "ImArray") (J.Call "fromObjects" [] exps')
 genExp env (D.StringBuild pars lastString) = do
 	pars' <- mapM (par' . snd) pars
