@@ -2,6 +2,7 @@
 #import "CNQueueTest.h"
 
 #import "CNQueue.h"
+#import "CNTuple.h"
 #import "CNType.h"
 @implementation CNQueueTest
 static CNClassType* _CNQueueTest_type;

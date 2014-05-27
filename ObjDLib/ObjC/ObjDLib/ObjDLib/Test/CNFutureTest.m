@@ -1,13 +1,8 @@
-#import "objd.h"
 #import "CNFutureTest.h"
 
 #import "CNAtomic.h"
-#import "CNRange.h"
-#import "CNCollection.h"
 #import "CNFuture.h"
 #import "CNDispatchQueue.h"
-#import "CNTry.h"
-#import "CNType.h"
 @implementation CNFutureTest
 static CNClassType* _CNFutureTest_type;
 
@@ -72,7 +67,7 @@ static CNClassType* _CNFutureTest_type;
         }
     }
     [CNThread sleepPeriod:3.0];
-    assertEquals(n, result);
+    assertEquals(numi4([n intValue]), numi4([result intValue]));
 }
 
 - (void)testFlatMap {

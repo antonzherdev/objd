@@ -98,7 +98,6 @@
 		6F3DFB5C057AE98B11878137 /* FutureTest.od in Resources */ = {isa = PBXBuildFile; fileRef = 6F3DF3FAE08F79F26047841C /* FutureTest.od */; };
 		6F3DFB737CA574C25F293C21 /* CNList.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFC43B78866C2CE279FD1 /* CNList.m */; };
 		6F3DFB8F7985F6CEF4377C1F /* CNSourceLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF03A4E6D52F4B9DD80B8 /* CNSourceLink.m */; };
-		6F3DFBA3E56D0969F633A7BF /* CNThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFEA04ADDF2E7A371676C /* CNThread.m */; };
 		6F3DFBBBD123E80F5957EDB9 /* CNZipLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF8DB569678D8AE016211 /* CNZipLink.m */; };
 		6F3DFC1CE34A056F4253A318 /* CNTuple.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFF370F14EE8227B8E04A /* CNTuple.m */; };
 		6F3DFC65C22DC3E91D39C235 /* CNTreeSet.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF346787D5DC482CB895A /* CNTreeSet.m */; };
@@ -106,7 +105,6 @@
 		6F3DFCD47EEFBCB89CBBB184 /* CNFuture.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF35AF87DC4C66D7D8D48 /* CNFuture.m */; };
 		6F3DFCE8EE37B2CF7A3CBCC1 /* TSTestCase.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF083C850404A7CA14C58 /* TSTestCase.m */; };
 		6F3DFD02681A43ACD80AFB9C /* CNMap.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFAB61311B0D08C87EF3B /* CNMap.m */; };
-		6F3DFD0FF4B4E83F551C84CC /* CNThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFEA04ADDF2E7A371676C /* CNThread.m */; };
 		6F3DFD205675677A603F6674 /* CNSeed.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF3A99EB8F6E07F61C664 /* CNSeed.m */; };
 		6F3DFD5535AE9B9873D7963B /* CNFutureEnd.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF3E00F6AC3DD235BDF3F /* CNFutureEnd.m */; };
 		6F3DFD8E6D7F09774DD078D6 /* CNChainTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF6B03C9AB6933D025F36 /* CNChainTest.m */; };
@@ -222,7 +220,6 @@
 		6F3DF696A3E4C085F569A75F /* CNPArray.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNPArray.m; sourceTree = "<group>"; };
 		6F3DF6B03C9AB6933D025F36 /* CNChainTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNChainTest.m; sourceTree = "<group>"; };
 		6F3DF6B9B3EE38B3E97BD6C2 /* NSString+CNChain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+CNChain.m"; sourceTree = "<group>"; };
-		6F3DF6BBB0B72CD86202D573 /* CNThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNThread.h; sourceTree = "<group>"; };
 		6F3DF70DD4038CEEFE521E0C /* FutureEnd.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = FutureEnd.od; sourceTree = "<group>"; };
 		6F3DF7BB9E7BD8BAA3833E2E /* MulLink.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = MulLink.od; sourceTree = "<group>"; };
 		6F3DF7CDD24E788464E51784 /* CNAtomic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNAtomic.h; sourceTree = "<group>"; };
@@ -299,7 +296,6 @@
 		6F3DFE603C9DBE10F9FB446B /* CNTreeMapTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNTreeMapTest.h; sourceTree = "<group>"; };
 		6F3DFE88028AB28EDA3D77D9 /* Chain.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Chain.od; sourceTree = "<group>"; };
 		6F3DFE99D304A8B99E84ACF0 /* ObjDLibOSXTests-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.info; path = "ObjDLibOSXTests-Info.plist"; sourceTree = "<group>"; };
-		6F3DFEA04ADDF2E7A371676C /* CNThread.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNThread.m; sourceTree = "<group>"; };
 		6F3DFEA3AB46160B4862BDB2 /* CNSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNSet.h; sourceTree = "<group>"; };
 		6F3DFEBA255AFF07EEC0D079 /* Enum.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Enum.od; sourceTree = "<group>"; };
 		6F3DFED62991A317D5247197 /* CNFutureTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNFutureTest.m; sourceTree = "<group>"; };
@@ -490,8 +486,6 @@
 				6F3DF6535FDF17939560758B /* CNPointer.h */,
 				6F3DFE08D0FC51FF57A85A93 /* CNSeed.h */,
 				6F3DF3A99EB8F6E07F61C664 /* CNSeed.m */,
-				6F3DF6BBB0B72CD86202D573 /* CNThread.h */,
-				6F3DFEA04ADDF2E7A371676C /* CNThread.m */,
 				6F3DF81955268DF52E956EF0 /* CNPlat.h */,
 				6F3DF9B4F9887C9CFF57BE60 /* CNString.h */,
 				6F3DFF2E673B76CEE3A3B635 /* CNLock.h */,
@@ -831,7 +825,6 @@
 				6F3DF78C5CC553777B2A8B03 /* CNAtomic.m in Sources */,
 				6F3DFF7657F21851B9B5629C /* CNDispatchQueue.m in Sources */,
 				6F3DFD205675677A603F6674 /* CNSeed.m in Sources */,
-				6F3DFBA3E56D0969F633A7BF /* CNThread.m in Sources */,
 				6F3DFAA0EAB9F93765EFA0E4 /* NSConditionLock+CNChain.m in Sources */,
 				6F3DF00104130E0116680169 /* NSLock+CNChain.m in Sources */,
 				6F3DF1AA2FFA452175561CCC /* NSString+CNChain.m in Sources */,
@@ -892,7 +885,6 @@
 				6F3DF3FF8AFF46F861FAE4CF /* CNAtomic.m in Sources */,
 				6F3DF802C0DF25238F0CDF46 /* CNDispatchQueue.m in Sources */,
 				6F3DF2C181B7B59C11934331 /* CNSeed.m in Sources */,
-				6F3DFD0FF4B4E83F551C84CC /* CNThread.m in Sources */,
 				6F3DFE3572F13004B215C3BC /* NSConditionLock+CNChain.m in Sources */,
 				6F3DFF5C92E14A8705D6380F /* NSLock+CNChain.m in Sources */,
 				6F3DF952B1F5748D5462FD63 /* NSString+CNChain.m in Sources */,

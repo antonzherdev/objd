@@ -1,12 +1,8 @@
-#import "objd.h"
 #import "CNFutureEnd.h"
 
 #import "CNFuture.h"
 #import "CNAtomic.h"
-#import "CNPlat.h"
 #import "CNYield.h"
-#import "CNTry.h"
-#import "CNType.h"
 @implementation CNFutureEnd
 static CNClassType* _CNFutureEnd_type;
 

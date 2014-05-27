@@ -1,14 +1,9 @@
-#import "objdcore.h"
-#import "CNObject.h"
-#import "CNCollection.h"
+#import "objd.h"
 @class CNPromise;
 @class CNAtomicInt;
 @class CNAtomicBool;
-@class CNMArray;
 @class CNFuture;
 @class CNYield;
-@class CNTry;
-@class CNClassType;
 
 @class CNFutureEnd;
 @class CNFutureVoidEnd;

@@ -1,10 +1,5 @@
-#import "objd.h"
 #import "CNSortLink.h"
 
-#import "CNTreeSet.h"
-#import "CNType.h"
-#import "CNMutableList.h"
-#import "CNPlat.h"
 @implementation CNSortLink
 static CNClassType* _CNSortLink_type;
 @synthesize comparator = _comparator;

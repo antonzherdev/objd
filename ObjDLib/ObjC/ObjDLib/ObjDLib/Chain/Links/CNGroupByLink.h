@@ -1,9 +1,5 @@
-#import "objdcore.h"
+#import "objd.h"
 #import "CNYield.h"
-#import "CNCollection.h"
-@class CNMHashMap;
-@class CNClassType;
-@class CNMHashSet;
 
 @class CNImGroupByLink;
 @class CNMGroupByLink;

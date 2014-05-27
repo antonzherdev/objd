@@ -18,3 +18,6 @@
 @end
 
 
+@interface CNThread : NSObject
++ (void)sleepPeriod:(CGFloat)d;
+@end

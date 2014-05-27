@@ -1,8 +1,5 @@
-#import "objd.h"
 #import "CNYield.h"
 
-#import "CNType.h"
-#import "CNPlat.h"
 @implementation CNChainLink_impl
 
 - (CNYield*)buildYield:(CNYield*)yield {

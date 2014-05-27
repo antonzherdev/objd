@@ -16,8 +16,8 @@ import qualified ObjD.Link.Struct   as D
 arc :: Bool
 arc = True
 
-toObjC :: D.File -> ((String, [C.FileStm]), (String, [C.FileStm]))
-toObjC f@D.File{D.fileClasses = classes} = 
+toObjC :: D.Core -> D.File -> ((String, [C.FileStm]), (String, [C.FileStm]))
+toObjC core f@D.File{D.fileClasses = classes} = 
 	let 
 		name = D.fileNameWithPrefix f
 		isClass c = D.isRealClass c && not (D.isStruct c) && not (D.isTrait c) && not (D.isEnum c)
@@ -27,7 +27,7 @@ toObjC f@D.File{D.fileClasses = classes} =
 		enums = filter D.isEnum classes
 		isTrait c = D.isRealClass c && D.isTrait c
 
-		dImports' = procImports f
+		dImports' = procImports core f
 		
 		
 		h = [C.Import $ if D.isCoreFile f then "objdcore.h" else "objd.h"] 
@@ -513,8 +513,8 @@ nilForType _ = C.Nil
 -----------------------------------------------------------------------------------------------------------------------------------------
 -- Imports 
 -----------------------------------------------------------------------------------------------------------------------------------------
-procImports :: D.File -> ([C.FileStm], [C.FileStm])
-procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
+procImports :: D.Core -> D.File -> ([C.FileStm], [C.FileStm])
+procImports core thisFile@D.File{D.fileClasses = classes} = (h, m)
 	where 
 		procClasses :: [(D.Class, Bool)]
 		procClasses = concatMap procClass classes
@@ -535,7 +535,9 @@ procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
 		procDataType (D.TPClass _ _ cl) = retCl cl
 		procDataType (D.TPObject _ cl) = retCl cl
 		procDataType (D.TPOption _ cl) = procDataType cl
-		procDataType _ = []
+		procDataType tp 
+			| isCore = retCl $ D.coreDataTypeClass core tp
+			| otherwise = []
 		procExp :: D.Exp -> [(D.Class, Bool)] 
 		procExp = D.forExp f
 			where
@@ -543,6 +545,7 @@ procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
 				f (D.BoolOp _ l _) = procDataType $ D.exprDataType l
 				f _ = []
 		retCl :: D.Class -> [(D.Class, Bool)] 
+		retCl D.ClassError{} = []
 		retCl cl
 			| needRetCl cl = [(cl, D.isStruct cl || D.isEnum cl)]
 			| otherwise = []
@@ -556,8 +559,9 @@ procImports thisFile@D.File{D.fileClasses = classes} = (h, m)
 		weekImportClasses = (nub . filter ((\f -> f `notElem` hardImportFiles && filterFile f). D._classFile) . map fst . filter (not . snd)) procClasses
 		weekImportFiles :: [D.File]
 		weekImportFiles = (filter filterFile . nub . mapMaybe D.classFile) weekImportClasses
+		isCore = D.isCoreFile thisFile
 		filterFile :: D.File -> Bool
-		filterFile f = f /= thisFile && (not (D.isCoreFile f) || D.isCoreFile thisFile)
+		filterFile f = f /= thisFile && (isCore || not (D.isCoreFile f))
 		h = map cImport hardImportFiles ++ mapMaybe decl weekImportClasses
 		m = map cImport weekImportFiles
 

@@ -1,8 +1,4 @@
-#import "objdcore.h"
-#import "CNObject.h"
-#import "CNCollection.h"
-@class CNClassType;
-@class CNArray;
+#import "objd.h"
 
 @class CNChainLink_impl;
 @class CNYield;

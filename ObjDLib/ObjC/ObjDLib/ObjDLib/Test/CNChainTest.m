@@ -1,13 +1,9 @@
-#import "objd.h"
 #import "CNChainTest.h"
 
 #import "CNChain.h"
-#import "CNRange.h"
 #import "CNFuture.h"
 #import "CNDispatchQueue.h"
 #import "CNAtomic.h"
-#import "CNTry.h"
-#import "CNType.h"
 @implementation CNChainTest
 static CNClassType* _CNChainTest_type;
 

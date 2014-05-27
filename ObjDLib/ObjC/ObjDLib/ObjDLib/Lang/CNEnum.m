@@ -1,7 +1,5 @@
 #import "objd.h"
-#import "CNEnum.h"
 
-#import "CNType.h"
 @implementation CNEnum
 static CNClassType* _CNEnum_type;
 @synthesize ordinal = _ordinal;

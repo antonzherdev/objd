@@ -1,9 +1,6 @@
-#import "objd.h"
 #import "CNMulLink.h"
 
-#import "CNCollection.h"
 #import "CNChain.h"
-#import "CNType.h"
 @implementation CNMulLink
 static CNClassType* _CNMulLink_type;
 

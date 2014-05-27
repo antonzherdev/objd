@@ -1,13 +1,8 @@
-#import "objd.h"
 #import "CNFuture.h"
 
-#import "CNType.h"
 #import "CNDispatchQueue.h"
 #import "CNAtomic.h"
-#import "CNTry.h"
 #import "CNLock.h"
-#import "CNCollection.h"
-#import "CNTuple.h"
 @implementation CNFuture
 static CNClassType* _CNFuture_type;
 

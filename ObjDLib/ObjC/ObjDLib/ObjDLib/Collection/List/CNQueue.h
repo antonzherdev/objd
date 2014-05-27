@@ -3,6 +3,7 @@
 #import "CNCollection.h"
 @class CNClassType;
 @class CNImList;
+@class CNTuple;
 
 @class CNQueue_impl;
 @class CNImQueue;

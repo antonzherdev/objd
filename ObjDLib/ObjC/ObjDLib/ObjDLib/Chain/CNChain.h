@@ -1,7 +1,4 @@
-#import "objdcore.h"
-#import "CNObject.h"
-#import "CNCollection.h"
-@class CNClassType;
+#import "objd.h"
 @protocol CNChainLink;
 @class CNSourceLink;
 @class CNFilterLink;
@@ -14,7 +11,6 @@
 @class CNUncombinationsLink;
 @class CNNeighboursLink;
 @class CNMulLink;
-@class CNArrayBuilder;
 @class CNMGroupByLink;
 @class CNImGroupByLink;
 @class CNDistinctLink;
@@ -27,20 +23,6 @@
 @class CNSortLink;
 @class CNSortBuilder;
 @class CNShuffleLink;
-@protocol CNSeq;
-@class CNSeed;
-@class CNType;
-@class CNMArray;
-@class CNImList;
-@class CNImListBuilder;
-@protocol CNSet;
-@class CNHashSetBuilder;
-@class CNTreeSet;
-@class CNTreeSetBuilder;
-@class CNHashMapBuilder;
-@class CNMHashMap;
-@class CNImHashMap;
-@class CNStringBuilder;
 @class CNFuture;
 @class CNFutureEnd;
 @class CNFutureVoidEnd;

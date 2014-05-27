@@ -373,7 +373,7 @@ class TreeMapEntry<K, V>(var key : K, var value : V, weak var parent : TreeMapEn
         } else {
             var p = parent
             var ch = self
-            while (p != nil && ch == p.right) {
+            while (p != nil && ch === p.right) {
                 ch = p
                 p = p.parent
             }

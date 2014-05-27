@@ -1,8 +1,5 @@
-#import "objd.h"
 #import "CNCombinationsLink.h"
 
-#import "CNPlat.h"
-#import "CNType.h"
 @implementation CNCombinationsLink
 static CNClassType* _CNCombinationsLink_type;
 

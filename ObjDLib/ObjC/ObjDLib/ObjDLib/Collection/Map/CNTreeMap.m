@@ -2,6 +2,7 @@
 #import "CNTreeMap.h"
 
 #import "CNType.h"
+#import "CNTuple.h"
 #import "CNPlat.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
@@ -774,10 +775,7 @@ static CNClassType* _CNTreeMapEntry_type;
     } else {
         CNTreeMapEntry* p = _parent;
         CNTreeMapEntry* ch = self;
-        while(p != nil && ({
-    CNTreeMapEntry* __tmp_0f_2b = ((CNTreeMapEntry*)(p)).right;
-    __tmp_0f_2b != nil && [__tmp_0f_2b isEqual:ch];
-})) {
+        while(p != nil && ch == ((CNTreeMapEntry*)(p)).right) {
             ch = p;
             p = ((CNTreeMapEntry*)(p)).parent;
         }

@@ -3,6 +3,7 @@
 
 #import "CNType.h"
 #import "CNList.h"
+#import "CNTuple.h"
 @implementation CNQueue_impl
 
 - (id)copyWithZone:(NSZone*)zone {

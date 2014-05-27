@@ -1,13 +1,10 @@
-#import "objdcore.h"
+#import "objd.h"
 #import "TSTestCase.h"
 @class CNChain;
-@class CNRange;
 @class CNPromise;
 @class CNDispatchQueue;
 @class CNFuture;
 @class CNAtomicInt;
-@class CNTry;
-@class CNClassType;
 
 @class CNChainTest;
 

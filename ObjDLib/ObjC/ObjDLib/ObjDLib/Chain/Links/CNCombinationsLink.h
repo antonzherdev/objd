@@ -1,9 +1,5 @@
-#import "objdcore.h"
+#import "objd.h"
 #import "CNYield.h"
-#import "CNCollection.h"
-@class CNMArray;
-@class CNClassType;
-@class CNMHashSet;
 
 @class CNCombinationsLink;
 @class CNUncombinationsLink;

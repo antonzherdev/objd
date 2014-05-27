@@ -1,9 +1,5 @@
-#import "objdcore.h"
-#import "CNObject.h"
+#import "objd.h"
 @class CNChain;
-@class CNMArray;
-@protocol CNIterator;
-@class CNClassType;
 
 @class CNSortBuilder;
 

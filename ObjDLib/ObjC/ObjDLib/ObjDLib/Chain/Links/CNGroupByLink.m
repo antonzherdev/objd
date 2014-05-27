@@ -1,8 +1,5 @@
-#import "objd.h"
 #import "CNGroupByLink.h"
 
-#import "CNPlat.h"
-#import "CNType.h"
 @implementation CNImGroupByLink
 static CNClassType* _CNImGroupByLink_type;
 @synthesize factor = _factor;

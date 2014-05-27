@@ -1,7 +1,5 @@
-#import "objd.h"
 #import "CNMapLink.h"
 
-#import "CNType.h"
 @implementation CNMapLink
 static CNClassType* _CNMapLink_type;
 @synthesize f = _f;

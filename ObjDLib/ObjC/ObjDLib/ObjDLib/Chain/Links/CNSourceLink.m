@@ -1,7 +1,5 @@
-#import "objd.h"
 #import "CNSourceLink.h"
 
-#import "CNType.h"
 @implementation CNSourceLink
 static CNClassType* _CNSourceLink_type;
 @synthesize collection = _collection;

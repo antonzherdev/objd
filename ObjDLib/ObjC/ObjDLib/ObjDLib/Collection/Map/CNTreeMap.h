@@ -3,6 +3,7 @@
 #import "CNCollection.h"
 #import "CNObject.h"
 @class CNClassType;
+@class CNTuple;
 @class CNMArray;
 @class CNDispatchQueue;
 @class CNChain;

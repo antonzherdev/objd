@@ -1,6 +1,7 @@
 #import "objdcore.h"
 #import "CNCollection.h"
 @class CNClassType;
+@class CNTuple;
 @class CNDispatchQueue;
 @class CNObject;
 @class CNChain;

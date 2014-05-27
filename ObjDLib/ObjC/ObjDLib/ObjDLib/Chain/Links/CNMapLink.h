@@ -1,7 +1,5 @@
-#import "objdcore.h"
+#import "objd.h"
 #import "CNYield.h"
-#import "CNCollection.h"
-@class CNClassType;
 
 @class CNMapLink;
 @class CNMapOptLink;

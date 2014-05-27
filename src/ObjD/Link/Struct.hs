@@ -1,7 +1,7 @@
 module ObjD.Link.Struct (
 	Lang(..), Sources, File(..), Class(..), Package(..), DataType(..), ExtendsRef, Extends(..), ClassMod(..), Generics, ClassRef, 
 	DataTypeMod(..), WrapReason(..), Def(..), DefMod(..), Exp(..), ExtendsClass(..), Import(..), DefGenerics(..),
-	Annotation(..), CallPar,
+	Annotation(..), CallPar, Core(..),
 
 	refDataTypeMod, superGenericsList, buildGenerics, extendsRefs, classExtends, refDataType, superType, option,
 	wrapGeneric, mapDataTypeGenerics, classDefs, isTrait, classGenerics, upGenericsToClass, replaceGenerics,
@@ -9,7 +9,7 @@ module ObjD.Link.Struct (
 	callLocalVal, uint, uint4, uint8, buildGenericsForSelf, superGenerics, extendsClassRef, classConstructor,
 	extendsClassClass, replaceGenericsInDef, objectType, unknownDef, unwrapGeneric, findDefWithName, objectDef,
 	allDefsInParentClass, isStub, unblockGenerics, classInitDef, superClass, call, exprDataType, allDefsInObject,
-	classFile, classPackage, coreFakeFile, localVal, localValE, byte, ubyte, int, int4, int8, float, float4, float8,
+	classFile, classPackage, localVal, localValE, byte, ubyte, int, int4, int8, float, float4, float8,
 	forExp, mapExp, literalDefName, isElementaryExpression, isSimpleExpression, unoption, unoptionHard, unoptionIfChecked,
 	isTpOption, showDef, allDefsInClass, classStaticDefs, dataTypePars, isTpFun, forDataType, fileNameWithPrefix, isRealClass,
 	isStruct, isEnum, isCoreFile, classNameWithPrefix, isInline, isField, isStatic, isDef,
@@ -17,7 +17,7 @@ module ObjD.Link.Struct (
 	isFinal, isTpClass, isTpEnum, isTpTrait, isNop, enumItems, isType, isGeneric, isGenericWrap, tpGeneric, resolveTypeAlias,
 	containsAnnotationWithClassName, isSpecial, isConstructor, mainExtendsRef, isBaseClass, traitExtendsRefs, findAnnotationWithClassName, 
 	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError, isDefAbstract, isEnumItem, isTpGeneric, isPrivate,
-	genName, dataTypeGenClassName, localVarE, localVar
+	genName, dataTypeGenClassName, localVarE, localVar, coreDataTypeClass, coreClass, buildCore
 	) where
 
 import 			 Ex.String
@@ -35,6 +35,7 @@ data Lang = ObjC | Java deriving (Eq)
 
 
 type Sources = [File]
+data Core = Core {coreClasses :: M.Map String Class}
 data Package = Package {packageName :: [String], packageObject :: Maybe Class, packagePrefix :: String}
 instance Eq Package where
 	a == b = packageName a == packageName b
@@ -44,8 +45,6 @@ data Import = ImportClass {importClass :: Class} | ImportObjectDefs {importClass
 instance Eq File where
 	File {fileName = a, filePackage = p} == File {fileName = b, filePackage = bp} = a == b && p == bp
 
-coreFakeFile :: File
-coreFakeFile = File "fake.od" (Package ["objd"] Nothing "") [] []
 fileNameWithPrefix :: File -> String
 fileNameWithPrefix f = packagePrefix (filePackage f) ++ fileName f
 
@@ -155,7 +154,7 @@ instance Eq Class where
 	a == b = className a == className b
 
 isCoreFile :: File -> Bool
-isCoreFile File{filePackage = Package (x : _) _ _} = x == "objd"
+isCoreFile File{filePackage = Package (x : y : _) _ _} = x == "objd" && (y == "lang" || y == "collection")
 isCoreFile _ = False
 classConstructor :: Class -> Maybe Def 
 classConstructor Generic{} = Nothing
@@ -584,8 +583,9 @@ dataTypeClassName :: DataType -> String
 dataTypeClassName (TPClass _ _ c ) = className c
 dataTypeClassName (TPObject _ c) = className c
 dataTypeClassName (TPGenericWrap _ c) = dataTypeClassName c
-dataTypeClassName (TPArr _ _) = "Array"
-dataTypeClassName (TPMap _ _) = "Map"
+dataTypeClassName (TPArr _ _) = "ImArray"
+dataTypeClassName (TPEArr _ _) = "PArray"
+dataTypeClassName (TPMap _ _) = "ImHashMap"
 dataTypeClassName TPAny = "Any"
 dataTypeClassName (TPPointer _) = "Pointer"
 dataTypeClassName (TPTuple [_, _]) = "Tuple"
@@ -605,7 +605,19 @@ dataTypeClassName TPChar = "Char"
 dataTypeClassName TPString = "String"
 dataTypeClassName TPBool = "Bool"
 dataTypeClassName TPFun{} = "F"
-dataTypeClassName x = error ("No dataTypeClassName for " ++ show x)
+dataTypeClassName _ = ""
+
+coreClass :: Core -> String -> Class
+coreClass c nm = fromMaybe (ClassError nm nm ("Core class " ++ nm ++ " not found") ) $ M.lookup nm (coreClasses c)
+coreDataTypeClass :: Core -> DataType -> Class
+coreDataTypeClass _ (TPClass _ _ c ) = c
+coreDataTypeClass _ (TPObject _ c) = c
+coreDataTypeClass core (TPGenericWrap _ c) = coreDataTypeClass core c
+coreDataTypeClass _ (TPSelf c) = c
+coreDataTypeClass core tp = coreClass core (dataTypeClassName tp)
+buildCore :: Sources -> Core
+buildCore = Core . M.fromList . map (\cl -> (className cl, cl)) . concatMap fileClasses . filter isCoreFile
+
 
 dataTypeGenClassName :: DataType -> String
 dataTypeGenClassName (TPGenericWrap _ c) = dataTypeGenClassName c

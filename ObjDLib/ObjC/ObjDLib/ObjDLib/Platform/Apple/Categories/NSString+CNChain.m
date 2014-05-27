@@ -283,5 +283,19 @@
 - (id)substrBegin:(NSUInteger)begin end:(NSUInteger)end {
     return [self substringWithRange:NSMakeRange(begin, end - begin)];
 }
+
+- (BOOL)isEqualIterable:(id<CNIterable>)iterable {
+    if([self count] == [iterable count]) {
+        return YES;
+    } else {
+        id<CNIterator> ai = [self iterator];
+        id<CNIterator> bi = [iterable iterator];
+        while([ai hasNext] && [bi hasNext]) {
+            if(!([[ai next] isEqual:[bi next]])) return NO;
+        }
+        return YES;
+    }
+}
+
 @end
 

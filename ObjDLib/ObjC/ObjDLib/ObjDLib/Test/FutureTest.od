@@ -38,7 +38,7 @@ class FutureTest extends TestCase {
             m.onComplete(n.addAndGet(_.get))
         }
         Thread.sleep(3)
-        assertEquals(n, result)
+        assertEquals(n.intValue, result.intValue)
     }
 
     @Test

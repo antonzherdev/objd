@@ -1,7 +1,5 @@
-#import "objd.h"
 #import "CNFilterLink.h"
 
-#import "CNType.h"
 @implementation CNFilterLink
 static CNClassType* _CNFilterLink_type;
 @synthesize factor = _factor;

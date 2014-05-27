@@ -2,6 +2,7 @@
 #import "CNMap.h"
 
 #import "CNType.h"
+#import "CNTuple.h"
 #import "CNDispatchQueue.h"
 #import "CNObject.h"
 #import "CNChain.h"

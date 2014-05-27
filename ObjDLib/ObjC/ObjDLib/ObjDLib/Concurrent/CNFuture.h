@@ -1,15 +1,8 @@
-#import "objdcore.h"
-#import "CNObject.h"
-@class CNClassType;
+#import "objd.h"
 @class CNDispatchQueue;
 @class CNAtomicInt;
-@class CNTry;
-@class CNSuccess;
 @class NSConditionLock;
-@protocol CNTraversable;
-@class CNTuple;
 @class CNAtomicObject;
-@class CNFailure;
 
 @class CNFuture;
 @class CNPromise;

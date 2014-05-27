@@ -1,7 +1,5 @@
-#import "objd.h"
 #import "CNZipLink.h"
 
-#import "CNType.h"
 @implementation CNZipLink
 static CNClassType* _CNZipLink_type;
 @synthesize a = _a;

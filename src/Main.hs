@@ -61,7 +61,12 @@ main =
 			linkedFilesWithRealStatements lang = liftM (filter (containsRealStatement . snd)) $ linkedFiles lang
 				where containsRealStatement L.File{L.fileClasses = clss} = any (not . L.isStub) clss
 			ocCompiledFiles :: IO [(FilePath, ((String, [C.FileStm]), (String, [C.FileStm])))]
-			ocCompiledFiles = liftM (map (second toObjC)) $ linkedFilesWithRealStatements L.ObjC
+			ocCompiledFiles = do
+				lfs <- linkedFilesWithRealStatements L.ObjC
+				let 
+					core = L.buildCore $ map snd lfs
+					ret = map (second (toObjC core)) lfs
+				return ret
 			ocTextFiles :: IO [(FilePath, ((String, String), (String, String)))]
 			ocTextFiles = liftM (map (second (toText *** toText))) ocCompiledFiles
 				where toText = second (unlines . map show)

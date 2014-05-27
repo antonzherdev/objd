@@ -1,9 +1,6 @@
-#import "objdcore.h"
+#import "objd.h"
 #import "CNYield.h"
-@protocol CNTraversable;
 @class CNChain;
-@protocol CNIterable;
-@class CNClassType;
 
 @class CNMulLink;
 

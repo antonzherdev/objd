@@ -77,3 +77,10 @@ static CNClassType * _CNDispatchQueue_type;
 @end
 
 
+@implementation CNThread {
+
+}
++ (void)sleepPeriod:(CGFloat)d {
+    [NSThread sleepForTimeInterval:d];
+}
+@end

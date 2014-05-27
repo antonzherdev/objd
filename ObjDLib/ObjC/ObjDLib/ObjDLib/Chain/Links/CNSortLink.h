@@ -1,11 +1,5 @@
-#import "objdcore.h"
+#import "objd.h"
 #import "CNYield.h"
-#import "CNCollection.h"
-#import "CNObject.h"
-@class CNMTreeSet;
-@class CNClassType;
-@class CNMList;
-@class CNMArray;
 
 @class CNSortLink;
 @class CNReverseLink;

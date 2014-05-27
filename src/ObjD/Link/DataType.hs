@@ -22,33 +22,14 @@ dataTypeClass env (TPObject _ c) = Class { _classMods = [ClassModObject], classN
 	_classPackage = classPackage c, classAnnotations = [], classDefsWithTraits = []}
 dataTypeClass env (TPGenericWrap _ c) = dataTypeClass env c
 dataTypeClass _ (TPSelf c) = c
-dataTypeClass env (TPArr _ _) = classFind (envIndex env) "ImArray"
-dataTypeClass env (TPEArr _ _) = classFind (envIndex env) "PArray"
-dataTypeClass env (TPMap _ _) = classFind(envIndex env) "ImMap"
-dataTypeClass env (TPTuple [_, _]) = classFind (envIndex env) "Tuple"
-dataTypeClass env (TPNumber False 1) = classFind (envIndex env) "Byte"
-dataTypeClass env (TPNumber True 1) = classFind (envIndex env) "UByte"
-dataTypeClass env (TPNumber False 0) = classFind (envIndex env) "Int"
-dataTypeClass env (TPNumber True 0) = classFind (envIndex env) "UInt"
-dataTypeClass env (TPNumber False 4) = classFind (envIndex env) "Int4"
-dataTypeClass env (TPNumber True 4) = classFind (envIndex env) "UInt4"
-dataTypeClass env (TPNumber False 8) = classFind (envIndex env) "Int8"
-dataTypeClass env (TPNumber True 8) = classFind (envIndex env) "UInt8"
-dataTypeClass env (TPFloatNumber 4) = classFind (envIndex env) "Float4"
-dataTypeClass env (TPFloatNumber 8) = classFind (envIndex env) "Float8"
-dataTypeClass env (TPFloatNumber 0) = classFind (envIndex env) "Float"
-dataTypeClass env TPChar = classFind (envIndex env) "Char"
-dataTypeClass env TPString = classFind (envIndex env) "String"
-dataTypeClass env TPAny = classFind (envIndex env) "Any"
-dataTypeClass env TPBool = classFind (envIndex env) "Bool"
-dataTypeClass env (TPPointer _) = classFind (envIndex env) "Pointer"
-dataTypeClass env (TPTuple a) = classFind (envIndex env) ("Tuple" ++ show (length a))
 dataTypeClass env f@TPFun{} = Class { _classMods = [], className = "", genClassName = "", _classExtends =  Extends (Just $ baseClassExtends (envIndex env)) [],
 	_classPackage = Package ["objd", "lang"] Nothing "", _classFile = coreFakeFile, 
 	_classDefs = [applyLambdaDef f], _classGenerics = [], _classImports = [], classAnnotations = [], classDefsWithTraits = []}
-	where
-		
-dataTypeClass _ x = ClassError (show x) (show x) ("No dataTypeClass for " ++ show x)
+dataTypeClass env tp = classFind (envIndex env) (dataTypeClassName tp)
+
+coreFakeFile :: File
+coreFakeFile = File "fake.od" (Package ["objd", "lang"] Nothing "") [] []
+
 
 applyLambdaDef :: DataType -> Def
 applyLambdaDef (TPGenericWrap _ tp) = applyLambdaDef tp
