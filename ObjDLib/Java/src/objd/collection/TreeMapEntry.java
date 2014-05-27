@@ -1,7 +1,5 @@
 package objd.collection;
 
-import objd.lang.*;
-
 public class TreeMapEntry<K, V> {
     public K key;
     public V value;
@@ -23,8 +21,7 @@ public class TreeMapEntry<K, V> {
         } else {
             TreeMapEntry<K, V> p = this.parent;
             TreeMapEntry<K, V> ch = this;
-            final TreeMapEntry<K, V> __tmp_0f_2b = p.right;
-            while(p != null && __tmp_0f_2b != null && __tmp_0f_2b.equals(ch)) {
+            while(p != null && ch == p.right) {
                 ch = ((TreeMapEntry<K, V>)(((TreeMapEntry)(p))));
                 p = p.parent;
             }

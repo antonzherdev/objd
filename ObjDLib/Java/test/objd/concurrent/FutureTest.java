@@ -72,7 +72,7 @@ public class FutureTest extends TestCase {
             }
         }
         ThreadUtil.sleepPeriod(((double)(3)));
-        PackageObjectTest.<AtomicInt>assertEqualsAB(n, result);
+        PackageObjectTest.<Integer>assertEqualsAB(n.get(), result.get());
     }
     @Test
     public void testFlatMap() {
