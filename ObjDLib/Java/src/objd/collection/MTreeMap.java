@@ -20,7 +20,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
     }
     @Override
     public ImTreeMap<K, V> imCopy() {
-        return new ImTreeMap<K, V>(this.comparator, ((this._root == null) ? (null) : (this._root.copyParent(null))), this._size);
+        return new ImTreeMap<K, V>(this.comparator, ((this._root != null) ? (this._root.copyParent(null)) : (null)), this._size);
     }
     @Override
     public ImTreeMap<K, V> im() {
@@ -31,7 +31,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
         if(imMap instanceof ImTreeMap) {
             final ImTreeMap<K, V> m = ((ImTreeMap<K, V>)(((ImTreeMap)(imMap))));
             final TreeMapEntry<K, V> __tmp_0t_1u = m.root;
-            this._root = ((__tmp_0t_1u == null) ? (null) : (__tmp_0t_1u.copyParent(null)));
+            this._root = ((__tmp_0t_1u != null) ? (__tmp_0t_1u.copyParent(null)) : (null));
             this._size = m.count;
         } else {
             this.clear();
@@ -196,10 +196,10 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
             }
             final TreeMapEntry<K, V> p = __tmp_2_0n;
             final TreeMapEntry<K, V> __tmp_2_1cbu = p.parent;
-            final TreeMapEntry<K, V> __tmp_2_1c = ((__tmp_2_1cbu == null) ? (null) : (__tmp_2_1cbu.left));
+            final TreeMapEntry<K, V> __tmp_2_1c = ((__tmp_2_1cbu != null) ? (__tmp_2_1cbu.left) : (null));
             if(__tmp_2_1c != null && __tmp_2_1c.equals(p)) {
                 final TreeMapEntry<K, V> __tmp_2_1t_0u = p.parent;
-                final TreeMapEntry<K, V> y = ((__tmp_2_1t_0u == null) ? (null) : (__tmp_2_1t_0u.right));
+                final TreeMapEntry<K, V> y = ((__tmp_2_1t_0u != null) ? (__tmp_2_1t_0u.right) : (null));
                 if(y != null && y.color == MTreeMap.RED) {
                     p.color = MTreeMap.BLACK;
                     y.color = MTreeMap.BLACK;
@@ -230,7 +230,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
                 }
             } else {
                 final TreeMapEntry<K, V> __tmp_2_1f_0u = p.parent;
-                final TreeMapEntry<K, V> y = ((__tmp_2_1f_0u == null) ? (null) : (__tmp_2_1f_0u.left));
+                final TreeMapEntry<K, V> y = ((__tmp_2_1f_0u != null) ? (__tmp_2_1f_0u.left) : (null));
                 if(y != null && y.color == MTreeMap.RED) {
                     p.color = MTreeMap.BLACK;
                     y.color = MTreeMap.BLACK;
@@ -269,10 +269,10 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
         TreeMapEntry<K, V> x = entry;
         while(x != null && (this._root == null || !(this._root.equals(x))) && x.color == MTreeMap.BLACK) {
             final TreeMapEntry<K, V> __tmp_1_0cbu = x.parent;
-            final TreeMapEntry<K, V> __tmp_1_0c = ((__tmp_1_0cbu == null) ? (null) : (__tmp_1_0cbu.left));
+            final TreeMapEntry<K, V> __tmp_1_0c = ((__tmp_1_0cbu != null) ? (__tmp_1_0cbu.left) : (null));
             if(__tmp_1_0c != null && __tmp_1_0c.equals(x)) {
                 final TreeMapEntry<K, V> __tmp_1_0t_0u = x.parent;
-                TreeMapEntry<K, V> sib = ((__tmp_1_0t_0u == null) ? (null) : (__tmp_1_0t_0u.right));
+                TreeMapEntry<K, V> sib = ((__tmp_1_0t_0u != null) ? (__tmp_1_0t_0u.right) : (null));
                 if(sib != null && sib.color == MTreeMap.RED) {
                     sib.color = MTreeMap.BLACK;
                     {
@@ -283,20 +283,20 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
                     }
                     rotateLeftP(x.parent);
                     final TreeMapEntry<K, V> __tmp_1_0t_1t_3u = x.parent;
-                    sib = ((__tmp_1_0t_1t_3u == null) ? (null) : (__tmp_1_0t_1t_3u.right));
+                    sib = ((__tmp_1_0t_1t_3u != null) ? (__tmp_1_0t_1t_3u.right) : (null));
                 }
-                final TreeMapEntry<K, V> __tmp_1_0t_2caa = ((sib == null) ? (null) : (sib.left));
-                final TreeMapEntry<K, V> __tmp_1_0t_2cba = ((sib == null) ? (null) : (sib.right));
-                if(((__tmp_1_0t_2caa != null) ? (((sib == null) ? (null) : (sib.left)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK && ((__tmp_1_0t_2cba != null) ? (((sib == null) ? (null) : (sib.right)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK) {
+                final TreeMapEntry<K, V> __tmp_1_0t_2caa = ((sib != null) ? (sib.left) : (null));
+                final TreeMapEntry<K, V> __tmp_1_0t_2cba = ((sib != null) ? (sib.right) : (null));
+                if(((__tmp_1_0t_2caa != null) ? (((sib != null) ? (sib.left) : (null)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK && ((__tmp_1_0t_2cba != null) ? (((sib != null) ? (sib.right) : (null)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK) {
                     if(sib != null) {
                         sib.color = MTreeMap.RED;
                     }
                     x = x.parent;
                 } else {
-                    final TreeMapEntry<K, V> __tmp_1_0t_2f_0ca = ((sib == null) ? (null) : (sib.right));
-                    if(((__tmp_1_0t_2f_0ca != null) ? (((sib == null) ? (null) : (sib.right)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK) {
+                    final TreeMapEntry<K, V> __tmp_1_0t_2f_0ca = ((sib != null) ? (sib.right) : (null));
+                    if(((__tmp_1_0t_2f_0ca != null) ? (((sib != null) ? (sib.right) : (null)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK) {
                         {
-                            final TreeMapEntry<K, V> __tmp_1_0t_2f_0t_0 = ((sib == null) ? (null) : (sib.left));
+                            final TreeMapEntry<K, V> __tmp_1_0t_2f_0t_0 = ((sib != null) ? (sib.left) : (null));
                             if(__tmp_1_0t_2f_0t_0 != null) {
                                 __tmp_1_0t_2f_0t_0.color = MTreeMap.BLACK;
                             }
@@ -306,7 +306,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
                         }
                         rotateRightP(sib);
                         final TreeMapEntry<K, V> __tmp_1_0t_2f_0t_3u = x.parent;
-                        sib = ((__tmp_1_0t_2f_0t_3u == null) ? (null) : (__tmp_1_0t_2f_0t_3u.right));
+                        sib = ((__tmp_1_0t_2f_0t_3u != null) ? (__tmp_1_0t_2f_0t_3u.right) : (null));
                     }
                     if(sib != null) {
                         final TreeMapEntry<K, V> __tmp_1_0t_2f_1 = x.parent;
@@ -319,7 +319,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
                         }
                     }
                     {
-                        final TreeMapEntry<K, V> __tmp_1_0t_2f_3 = ((sib == null) ? (null) : (sib.right));
+                        final TreeMapEntry<K, V> __tmp_1_0t_2f_3 = ((sib != null) ? (sib.right) : (null));
                         if(__tmp_1_0t_2f_3 != null) {
                             __tmp_1_0t_2f_3.color = MTreeMap.BLACK;
                         }
@@ -329,7 +329,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
                 }
             } else {
                 final TreeMapEntry<K, V> __tmp_1_0f_0u = x.parent;
-                TreeMapEntry<K, V> sib = ((__tmp_1_0f_0u == null) ? (null) : (__tmp_1_0f_0u.left));
+                TreeMapEntry<K, V> sib = ((__tmp_1_0f_0u != null) ? (__tmp_1_0f_0u.left) : (null));
                 if(sib != null && sib.color == MTreeMap.RED) {
                     sib.color = MTreeMap.BLACK;
                     {
@@ -340,20 +340,20 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
                     }
                     rotateRightP(x.parent);
                     final TreeMapEntry<K, V> __tmp_1_0f_1t_3u = x.parent;
-                    sib = ((__tmp_1_0f_1t_3u == null) ? (null) : (__tmp_1_0f_1t_3u.left));
+                    sib = ((__tmp_1_0f_1t_3u != null) ? (__tmp_1_0f_1t_3u.left) : (null));
                 }
-                final TreeMapEntry<K, V> __tmp_1_0f_2caa = ((sib == null) ? (null) : (sib.right));
-                final TreeMapEntry<K, V> __tmp_1_0f_2cba = ((sib == null) ? (null) : (sib.left));
-                if(((__tmp_1_0f_2caa != null) ? (((sib == null) ? (null) : (sib.right)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK && ((__tmp_1_0f_2cba != null) ? (((sib == null) ? (null) : (sib.left)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK) {
+                final TreeMapEntry<K, V> __tmp_1_0f_2caa = ((sib != null) ? (sib.right) : (null));
+                final TreeMapEntry<K, V> __tmp_1_0f_2cba = ((sib != null) ? (sib.left) : (null));
+                if(((__tmp_1_0f_2caa != null) ? (((sib != null) ? (sib.right) : (null)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK && ((__tmp_1_0f_2cba != null) ? (((sib != null) ? (sib.left) : (null)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK) {
                     if(sib != null) {
                         sib.color = MTreeMap.RED;
                     }
                     x = x.parent;
                 } else {
-                    final TreeMapEntry<K, V> __tmp_1_0f_2f_0ca = ((sib == null) ? (null) : (sib.left));
-                    if(((__tmp_1_0f_2f_0ca != null) ? (((sib == null) ? (null) : (sib.left)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK) {
+                    final TreeMapEntry<K, V> __tmp_1_0f_2f_0ca = ((sib != null) ? (sib.left) : (null));
+                    if(((__tmp_1_0f_2f_0ca != null) ? (((sib != null) ? (sib.left) : (null)).color) : (MTreeMap.BLACK)) == MTreeMap.BLACK) {
                         {
-                            final TreeMapEntry<K, V> __tmp_1_0f_2f_0t_0 = ((sib == null) ? (null) : (sib.right));
+                            final TreeMapEntry<K, V> __tmp_1_0f_2f_0t_0 = ((sib != null) ? (sib.right) : (null));
                             if(__tmp_1_0f_2f_0t_0 != null) {
                                 __tmp_1_0f_2f_0t_0.color = MTreeMap.BLACK;
                             }
@@ -363,7 +363,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
                         }
                         rotateLeftP(sib);
                         final TreeMapEntry<K, V> __tmp_1_0f_2f_0t_3u = x.parent;
-                        sib = ((__tmp_1_0f_2f_0t_3u == null) ? (null) : (__tmp_1_0f_2f_0t_3u.left));
+                        sib = ((__tmp_1_0f_2f_0t_3u != null) ? (__tmp_1_0f_2f_0t_3u.left) : (null));
                     }
                     if(sib != null) {
                         final TreeMapEntry<K, V> __tmp_1_0f_2f_1 = x.parent;
@@ -376,7 +376,7 @@ public class MTreeMap<K, V> extends TreeMap<K, V> implements MMap<K, V> {
                         }
                     }
                     {
-                        final TreeMapEntry<K, V> __tmp_1_0f_2f_3 = ((sib == null) ? (null) : (sib.left));
+                        final TreeMapEntry<K, V> __tmp_1_0f_2f_3 = ((sib != null) ? (sib.left) : (null));
                         if(__tmp_1_0f_2f_3 != null) {
                             __tmp_1_0f_2f_3.color = MTreeMap.BLACK;
                         }

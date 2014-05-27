@@ -17,7 +17,7 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
     @Override
     public V applyKey(final K key) {
         final TreeMapEntry<K, V> __tmpu = entryForKey(key);
-        return ((__tmpu == null) ? (null) : (__tmpu.value));
+        return ((__tmpu != null) ? (__tmpu.value) : (null));
     }
     @Override
     public boolean isEmpty() {
@@ -57,19 +57,19 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
     }
     public K firstKey() {
         final TreeMapEntry<K, V> __tmpu = this.firstEntry();
-        return ((__tmpu == null) ? (null) : (__tmpu.key));
+        return ((__tmpu != null) ? (__tmpu.key) : (null));
     }
     public K lastKey() {
         final TreeMapEntry<K, V> __tmpu = this.lastEntry();
-        return ((__tmpu == null) ? (null) : (__tmpu.key));
+        return ((__tmpu != null) ? (__tmpu.key) : (null));
     }
     public K lowerKeyThanKey(final K key) {
         final TreeMapEntry<K, V> __tmpu = lowerEntryThanKey(key);
-        return ((__tmpu == null) ? (null) : (__tmpu.key));
+        return ((__tmpu != null) ? (__tmpu.key) : (null));
     }
     public K higherKeyThanKey(final K key) {
         final TreeMapEntry<K, V> __tmpu = higherEntryThanKey(key);
-        return ((__tmpu == null) ? (null) : (__tmpu.key));
+        return ((__tmpu != null) ? (__tmpu.key) : (null));
     }
     private TreeMapEntry<K, V> lowerEntryThanKey(final K key) {
         TreeMapEntry<K, V> p = this.root();
@@ -136,7 +136,7 @@ public abstract class TreeMap<K, V> extends ImMap_impl<K, V> {
     }
     public TreeMap(final F2<K, K, Integer> comparator) {
         this.comparator = comparator;
-        this.values = new TreeMapValues<V>(this);
+        this.values = new TreeMapValues<V>(((TreeMap<Object, V>)(((TreeMap)(this)))));
     }
     public String toString() {
         return String.format(")");

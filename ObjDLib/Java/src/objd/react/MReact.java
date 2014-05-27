@@ -25,6 +25,7 @@ public abstract class MReact<T> extends React<T> implements ObservableBase<T> {
     }
     public MReact(final T initial) {
         this._value = new AtomicObject<T>(initial);
+        this._observers = new AtomicObject<ImArray<Weak<Observer<T>>>>(ImArray.<Weak<Observer<T>>>empty());
     }
     public String toString() {
         return "MReact";
@@ -68,8 +69,12 @@ public abstract class MReact<T> extends React<T> implements ObservableBase<T> {
                 final Weak<Observer<T>> o = __il__0i.next();
                 {
                     final Observer<T> v = o.value;
-                    final P<T> __tmp_0rp0_1u = ((v == null) ? (null) : (v.f));
-                    ((__tmp_0rp0_1u == null) ? (null) : (__tmp_0rp0_1u.apply(value)));
+                    {
+                        final P<T> __tmp_0rp0_1u = ((v != null) ? (v.f) : (null));
+                        if(__tmp_0rp0_1u != null) {
+                            __tmp_0rp0_1u.apply(value);
+                        }
+                    }
                 }
             }
         }

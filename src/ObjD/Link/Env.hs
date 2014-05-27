@@ -1,10 +1,12 @@
 module ObjD.Link.Env (
 	Env(..), ClassIndex, ObjectIndex,
-	envChangeDefTp, envAddVals, envAddClasses, idxFind, classFind, envAddSuffix, tmpVal, baseClassExtends
+	envChangeDefTp, envAddVals, envAddClasses, idxFind, classFind, envAddSuffix, tmpVal, baseClassExtends, envExprCompile,
+	self
 	) where
 
 import 			 ObjD.Link.Struct
 import qualified Data.Map            as M
+import qualified ObjD.Struct         as D
 import           Data.Maybe
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Env 
@@ -12,8 +14,11 @@ import           Data.Maybe
 
 type ClassIndex = M.Map String Class
 type ObjectIndex = [Class]
-data Env = Env{envLang :: Lang, envSelf :: DataType, envSelfCast :: Bool, envIndex :: ClassIndex
+data Env = Env{envExprCompiler :: Env -> D.Exp -> Exp, envLang :: Lang, envSelf :: DataType, envSelfCast :: Bool, envIndex :: ClassIndex
 	, envObjectIndex :: ObjectIndex, envVals :: [Def], envInit :: Bool, envTp :: DataType, envVarSuffix :: String}
+
+self :: Env -> Exp
+self env = (if envSelfCast env then Cast (envSelf env) else id) (Self $ envSelf env)
 
 envChangeDefTp :: Env -> Def -> DataType -> Env
 envChangeDefTp env@Env{envVals = vals} d tp = env{envVals = d{defType = tp} : filter (/= d) vals}
@@ -34,3 +39,8 @@ tmpVal env sf tp e = Def ("__tmp" ++ envVarSuffix env ++ sf) [] tp e [DefModLoca
 
 baseClassExtends :: ClassIndex -> ExtendsClass
 baseClassExtends cidx = ExtendsClass (classFind cidx "Object", []) []
+
+envExprCompile :: Env -> D.Exp -> Exp
+envExprCompile env e = (envExprCompiler env) env e
+
+

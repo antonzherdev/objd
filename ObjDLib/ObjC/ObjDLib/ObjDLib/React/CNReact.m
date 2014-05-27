@@ -779,7 +779,7 @@ static CNClassType* _CNFlatMappedReact_type;
 }
 
 - (instancetype)initWithA:(CNReact*)a f:(CNReact*(^)(id))f {
-    self = [super initWithInitial:f(a)];
+    self = [super initWithInitial:[f([a value]) value]];
     __weak CNFlatMappedReact* _weakSelf = self;
     if(self) {
         _a = a;

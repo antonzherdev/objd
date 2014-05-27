@@ -151,7 +151,7 @@ showEnumItem (EnumItem name pars) = [name ++ "("] `glue` (glueAll ", " . map sho
 showStmsInBrackets :: [Stm] -> [String]
 showStmsInBrackets stms = ["{"] ++ (map ind . concatMap showStm) stms ++ ["}"]
 
-data Stm = Stm Exp | Braces [Stm] | Return Exp | If Exp [Stm] [Stm] | While Exp [Stm] | Do Exp [Stm]
+data Stm = Stm Exp | Braces [Stm] | Return Exp | If Exp [Stm] [Stm] | While Exp [Stm] | Do Exp [Stm] | Synchronized Exp [Stm]
 	| Throw Exp | Set (Maybe MathTp) Exp Exp | Val [DefMod] TP String Exp | Break deriving (Eq)
 
 showStm :: Stm -> [String]
@@ -163,6 +163,7 @@ showStm (Set tp l r) = showExp l `appp` maybe " = " (\t -> " " ++ show t ++ "= "
 showStm (Throw e) = ["throw "] `glue` showExp e `appp` ";"
 showStm (If cond t []) = (["if("] `glue` showExp cond `appp` ") ") `glue` showStmsInBrackets t
 showStm (While cond w) = (["while("] `glue` showExp cond `appp` ") ") `glue` showStmsInBrackets w
+showStm (Synchronized cond w) = (["synchronized("] `glue` showExp cond `appp` ") ") `glue` showStmsInBrackets w
 showStm (Do cond w) = (["do "] `glue` showStmsInBrackets w) `glue` ([" while("] `glue` showExp cond `appp` ");")
 showStm (If cond t f) = (showStm (If cond t []) `appp` " else ") `glue` showStmsInBrackets f 
 showStm (Braces stms) = showStmsInBrackets stms
@@ -171,7 +172,7 @@ showStm (Val mods tp nm e) = [pstrs' "" " " " " mods ++ show tp ++ " " ++ kw nm 
 
 
 data Exp = Nop | IntConst Int | FloatConst Decimal | ExpError String 
-	| Call String [TP] [Exp] | New [Def] String [TP] [Exp] | Dot Exp Exp | Ref String | InlineIf Exp Exp Exp | This
+	| Call String [TP] [Exp] | New [Def] String [TP] [Exp] | Dot Exp Exp | Ref String | InlineIf Exp Exp Exp | This | Super 
 	| BoolOp BoolTp Exp Exp | MathOp MathTp Exp Exp | Null | BoolConst Bool | InstanceOf Exp TP | Cast TP Exp
 	| StringConst String | Index Exp Exp | Not Exp | Negative Exp | MinusMinus Exp | PlusPlus Exp  deriving (Eq)
 
@@ -179,6 +180,7 @@ showExp :: Exp -> [String]
 showExp Nop = []
 showExp Null = ["null"]
 showExp This = ["this"]
+showExp Super = ["super"]
 showExp (BoolConst True) = ["true"]
 showExp (BoolConst False) = ["false"]
 showExp (IntConst i) = [show i]

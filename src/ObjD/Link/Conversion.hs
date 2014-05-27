@@ -1,6 +1,7 @@
 module ObjD.Link.Conversion (
 	implicitConvertsion, lambdaImplicitParameters, 
-	maybeAddReturn, addReturn, addReturnBy, maybeCast
+	maybeAddReturn, addReturn, addReturnBy, maybeCast, declareVal, multilineSet,
+	envExprCompileTo, envExprCompileToSome
 )where
 
 import 			 ObjD.Link.Struct
@@ -8,8 +9,30 @@ import 			 ObjD.Link.Env
 import 			 ObjD.Link.DataType
 import 			 ObjD.Link.Extends
 import           Data.List
+import qualified ObjD.Struct         as D
 import           Ex.String
 --import Debug.Trace
+
+envExprCompileTo :: Env -> DataType -> D.Exp -> Exp
+envExprCompileTo env tp e = implicitConvertsion env tp $ envExprCompile env{envTp = tp} e
+
+envExprCompileToSome :: Env -> D.Exp -> Exp
+envExprCompileToSome env e =  envExprCompile env{envTp = baseDataType env} e
+
+
+declareVal :: Env -> Def -> Exp
+declareVal env d 
+	| isSimpleExpression (defBody d) = Val False d
+	| otherwise = Val True mappedDef
+	where
+		mappedDef = d{defBody =  multilineSet env Nothing (callRef mappedDef) (defBody d)}
+
+multilineSet :: Env -> Maybe MathTp -> Exp -> Exp -> Exp
+multilineSet env tp l r = addReturnBy s True r
+	where
+		s _ e = Set tp l $ implicitConvertsion env (exprDataType r) e
+		
+
 
 maybeAddReturn :: Env -> DataType -> Exp -> Exp
 --maybeAddReturn _ tp _ | trace ("r " ++ show tp) False = undefined
@@ -158,7 +181,7 @@ implicitConvertsion env destinationType expression = if isInstanceOfCheck env (e
 				eqTp (TPOption True s) d = eqTp s d
 				eqTp (TPClass _ sgs s) (TPClass _ dgs d) = s == d && eqTps sgs dgs
 				eqTp TPAnyGeneric _ = False
-				eqTp _ TPAnyGeneric = True
+				eqTp _ TPAnyGeneric = False
 				eqTp s d = s == d
 
 lambdaImplicitParameters :: DataType -> [(String, DataType)]

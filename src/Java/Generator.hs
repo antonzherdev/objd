@@ -93,6 +93,7 @@ defName d
 		in case D.defPars d of
 			[] -> case D.defName d of
 				"hash" -> "hashCode"
+				"dealloc" -> "finalize"
 				"description" -> "toString"
 				_ -> def
 			[p] -> case (D.defName d, D.defName p) of
@@ -117,9 +118,10 @@ genDef isClTest cl d =
  		genMod D.DefModAbstract = Just J.DefModAbstract
  		genMod _ = Nothing
  		constrSet dd = let nm = defName dd in J.Set Nothing (J.Dot J.This (J.Ref nm)) (J.Ref nm)
- 		body = if D.isTrait cl then D.Nop else D.defBody d	
+ 		body = if isTrait then D.Nop else D.defBody d	
  		mods = mapMaybe genMod (D.defMods d)
  		name = defName d
+ 		isTrait = D.isTrait cl
  		genSet dd = do
 			e' <- genExp defaultEnv (D.defBody dd)
  			return $ J.Set Nothing (J.Dot J.This $ J.Ref (D.defName dd)) e'
@@ -132,7 +134,7 @@ genDef isClTest cl d =
 		 				J.defName = name,
 		 				J.defTp = tp,
 		 				J.defExp = J.Nop
-			 		}] ++ [J.Def {
+			 		} | not isTrait] ++ [J.Def {
 		 				J.defAnnotations = [overrideAnnotation],
 		 				J.defMods = mods,
 		 				J.defGenerics = [],
@@ -155,7 +157,7 @@ genDef isClTest cl d =
  				let 
  					fields = filter (\ f -> 
 	 					D.isField f && D.defBody f /= D.Nop && D.DefModConstructorField `notElem` D.defMods f && D.DefModStatic `notElem` D.defMods f) 
-	 					(D.classDefs cl)
+	 					(D.classDefsWithTraits cl)
  				sets <- mapM genSet fields
  				pars' <- mapM genPar $ if isEnum then (tail $ tail $ D.defPars d) else D.defPars d
  				return [J.Constructor {
@@ -180,7 +182,7 @@ genDef isClTest cl d =
 	 				J.defTp = tp,
 	 				J.defPars = pars',
 	 				J.defStms = stms'
-	 			}]
+	 			} | not isTrait || (D.DefModPublic `elem` D.defMods d)]
 
 genPar :: D.Def -> Writer Wrt J.DefPar
 genPar D.Def{D.defName = nm, D.defType = tp} = do
@@ -253,7 +255,7 @@ genTp (D.TPMap key value) = do
 	value' <- genTp value
 	return $ J.TPRef [key', value'] "ImHashMap"
 genTp (D.TPOption _ tp) = genTp tp
-genTp D.TPAnyGeneric = return $ J.TPAnyGeneric []
+genTp D.TPAnyGeneric = return $ J.tpRef "Object"
 genTp (D.TPPointer _) = return $ J.tpRef "Pointer"
 genTp (D.TPNil) = return $ J.tpRef "Object"
 genTp (D.TPUnknown e) = return $ J.TPUnknown e
@@ -376,6 +378,7 @@ genExp env (D.Lambda pars e dtp) = do
 	return $ J.New [def] clNm (map (\(_, t, _) -> t) pars' ++ [dtp' | dtp /= D.TPVoid]) []
 genExp Env{envInnerClass = False} (D.Self _) = return J.This
 genExp Env{envInnerClass = True} (D.Self tp) = return  $ J.Dot (J.Ref $ D.dataTypeGenClassName tp) J.This
+genExp _ (D.Super _) = return J.Super
 genExp env (D.MathOp tp l r) = do
 	l' <- genExp env l
 	r' <- genExp env r
@@ -527,12 +530,14 @@ getStms env e = case e of
 
 genStm :: Env -> D.Exp -> Writer Wrt [J.Stm]
 genStm _ D.Nop = return []
+genStm _ (D.None _) = return []
 genStm _ D.Break = return [J.Break]
 genStm env (D.Braces bs) = do
 	bs' <- mapM (genStm env) bs
 	return [J.Braces $ join bs']
 genStm _ (D.Return _ D.Nil) = return $ [J.Return J.Nop]
 genStm env (D.Return _ e) = genExpStm env e J.Return 
+genStm env (D.NullDot _ _ c) = genStm env c
 genStm env (D.If cond t f) = do
 	t' <- getStms env t
 	f' <- getStms env f
@@ -540,6 +545,9 @@ genStm env (D.If cond t f) = do
 genStm env (D.While cond w) = do
 	w' <- getStms env w
 	genExpStm env cond (\cond' -> J.While cond' w')
+genStm env (D.Synchronized cond w) = do
+	w' <- getStms env w
+	genExpStm env cond (\cond' -> J.Synchronized cond' w')
 genStm env (D.Do cond w) = do
 	w' <- getStms env w
 	genExpStm env cond (\cond' -> J.Do cond' w')

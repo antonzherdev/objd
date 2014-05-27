@@ -32,8 +32,8 @@ public class TreeMapEntry<K, V> {
     }
     public TreeMapEntry<K, V> copyParent(final TreeMapEntry<K, V> parent) {
         final TreeMapEntry<K, V> c = new TreeMapEntry<K, V>(this.key, this.value, parent);
-        c.left = ((this.left == null) ? (null) : (this.left.copyParent(c)));
-        c.right = ((this.right == null) ? (null) : (this.right.copyParent(c)));
+        c.left = ((this.left != null) ? (this.left.copyParent(c)) : (null));
+        c.right = ((this.right != null) ? (this.right.copyParent(c)) : (null));
         c.color = this.color;
         return c;
     }

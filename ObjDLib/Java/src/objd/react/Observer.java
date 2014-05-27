@@ -9,7 +9,7 @@ public class Observer<T> {
         this.observable.detachObserver(this);
     }
     @Override
-    public void dealloc() {
+    public void finalize() {
         this.observable.detachObserver(null);
     }
     public Observer(final Observable<T> observable, final P<T> f) {

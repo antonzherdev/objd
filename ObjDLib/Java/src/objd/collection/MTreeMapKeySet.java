@@ -10,7 +10,7 @@ public class MTreeMapKeySet<K, V> extends TreeMapKeySet_impl<K> {
     }
     @Override
     public Iterator<K> iterator() {
-        return TreeMapKeyIterator.<K>applyMapEntry(this.map, this.map.firstEntry());
+        return TreeMapKeyIterator.<K>applyMapEntry(((TreeMap<K, Object>)(((TreeMap)(this.map)))), ((TreeMapEntry<K, Object>)(((TreeMapEntry)(this.map.firstEntry())))));
     }
     public MIterator<K> mutableIterator() {
         return ((MIterator<K>)(((MIterator)(MTreeMapKeyIterator.<K, V>applyMapEntry(this.map, this.map.firstEntry())))));

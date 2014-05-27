@@ -1,12 +1,13 @@
 package objd.react;
 
 import objd.lang.*;
-import objd.collection.ImArray;
 import objd.concurrent.AtomicObject;
+import objd.collection.ImArray;
 import objd.collection.Iterator;
 
 public abstract class ObservableBase_impl<T> extends Observable_impl<T> implements ObservableBase<T> {
     public ObservableBase_impl() {
+        this._observers = new AtomicObject<ImArray<Weak<Observer<T>>>>(ImArray.<Weak<Observer<T>>>empty());
     }
     @Override
     public void attachObserver(final Observer<T> observer) {
@@ -47,8 +48,12 @@ public abstract class ObservableBase_impl<T> extends Observable_impl<T> implemen
                 final Weak<Observer<T>> o = __il__0i.next();
                 {
                     final Observer<T> v = o.value;
-                    final P<T> __tmp_0rp0_1u = ((v == null) ? (null) : (v.f));
-                    ((__tmp_0rp0_1u == null) ? (null) : (__tmp_0rp0_1u.apply(value)));
+                    {
+                        final P<T> __tmp_0rp0_1u = ((v != null) ? (v.f) : (null));
+                        if(__tmp_0rp0_1u != null) {
+                            __tmp_0rp0_1u.apply(value);
+                        }
+                    }
                 }
             }
         }

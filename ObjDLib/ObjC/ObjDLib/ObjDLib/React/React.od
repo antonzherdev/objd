@@ -24,7 +24,7 @@ abstract class React<T> extends Observable<T> {
 }
 
 abstract class ImReact<T> extends React<T> {
-    override protected def attach(observer : Observer<T>) {}
+    override def attach(observer : Observer<T>) {}
     override def detach(observer : Observer<T>?) {}
 }
 
@@ -160,7 +160,7 @@ final class MappedReact3<A, B, C, R>(val a : React<A>, val b : React<B>, val c :
     override def calc : R = f(a.value, b.value, c.value)
 }
 
-final class FlatMappedReact<A, R>(val a : React<A>, val f : A -> React<R>) extends ReactExpression<R>(f(a)) {
+final class FlatMappedReact<A, R>(val a : React<A>, val f : A -> React<R>) extends ReactExpression<R>(f(a.value).value) {
     private val obsA = a.observe{newValue -> _set(value = f(newValue).value)}
 
     override def calc : R = f(a.value).value

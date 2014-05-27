@@ -43,7 +43,7 @@ public final class ActorFuture<T> extends DefaultPromise<T> implements ActorMess
     }
     @Override
     public boolean completeValue(final Try<T> value) {
-        final boolean ret = ERROR: Unknown <DefaultPromise#C<§T#G§>>super.completeValue(value);
+        final boolean ret = super.completeValue(value);
         if(ret) {
             this._completed = true;
             this._locked = false;

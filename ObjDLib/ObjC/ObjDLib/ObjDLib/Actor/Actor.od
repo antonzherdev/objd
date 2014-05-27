@@ -20,7 +20,7 @@ class Actor {
     }
 
     def futureJoin<T>(f : void -> Future<T>) : Future<T> = {
-        var ret = Promise<T>()
+        val ret = Promise<T>()
         val fut = ActorFuture(self, prompt = false) {
             val nf = f()
             nf.onComplete(ret.complete(_))

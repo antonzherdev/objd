@@ -78,7 +78,7 @@ public class ConcurrentQueue<T> extends Queue_impl<T> {
             this.hLock.unlock();
             return null;
         }
-        final T item = ((newHead == null) ? (null) : (newHead.item));
+        final T item = ((newHead != null) ? (newHead.item) : (null));
         this.hLock.unlock();
         return item;
     }

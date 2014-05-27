@@ -17,7 +17,7 @@ public class Actor {
         return fut;
     }
     public <T> Future<T> futureJoinF(final F0<Future<T>> f) {
-        Promise<T> ret = Promise.<T>apply();
+        final Promise<T> ret = Promise.<T>apply();
         final ActorFuture<Void> fut = new ActorFuture<Void>(this, false, new F0<Void>() {
             @Override
             public Void apply() {

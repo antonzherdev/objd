@@ -3,16 +3,16 @@ package objd.collection;
 import objd.lang.*;
 
 public class TreeMapValues<V> extends ImIterable_impl<V> {
-    public final TreeMap<?, V> map;
+    public final TreeMap<Object, V> map;
     @Override
     public int count() {
         return this.map.count();
     }
     @Override
     public Iterator<V> iterator() {
-        return TreeMapValuesIterator.<V>applyMapEntry(((TreeMap)(this.map)), ((TreeMapEntry)(this.map.firstEntry())));
+        return TreeMapValuesIterator.<V>applyMapEntry(((TreeMap<Object, V>)(((TreeMap)(this.map)))), ((TreeMapEntry<Object, V>)(((TreeMapEntry)(this.map.firstEntry())))));
     }
-    public TreeMapValues(final TreeMap<?, V> map) {
+    public TreeMapValues(final TreeMap<Object, V> map) {
         this.map = map;
     }
     public String toString() {

@@ -31,7 +31,7 @@ public class ReactTest extends TestCase {
     public void testReactFlag() {
         final Var<Integer> a1 = new Var<Integer>(1);
         final Var<Integer> a2 = new Var<Integer>(2);
-        final ReactFlag f = new ReactFlag(true, ImArray.fromObjects(a1, a2));
+        final ReactFlag f = new ReactFlag(true, ImArray.fromObjects(((Observable<Object>)(((Observable)(a1)))), ((Observable<Object>)(((Observable)(a2))))));
         PackageObjectTest.assertTrueValue(f.value());
         f.clear();
         PackageObjectTest.assertFalseValue(f.value());

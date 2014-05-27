@@ -25,10 +25,10 @@ import objd.concurrent.Future;
 import objd.collection.ImTraversable_impl;
 
 public class Chain<A> extends ImTraversable_impl<A> {
-    public final ChainLink<?, A> link;
-    public final Chain<?> previous;
+    public final ChainLink<Object, A> link;
+    public final Chain<Object> previous;
     public static <T> Chain<T> applyCollection(final Traversable<T> collection) {
-        return new Chain<T>(((ChainLink)(new SourceLink<T>(collection))), null);
+        return new Chain<T>(((ChainLink<Object, T>)(((ChainLink)(new SourceLink<T>(collection))))), null);
     }
     public Chain<A> filterFactorWhen(final double factor, final F<A, Boolean> when) {
         return this.<A>addLink(((ChainLink<A, A>)(((ChainLink)(new FilterLink<A>(factor, when))))));
@@ -697,21 +697,21 @@ public class Chain<A> extends ImTraversable_impl<A> {
         return lnk.future();
     }
     public Go applyYield(final Yield<A> yield) {
-        final Yield<?> y = buildYield(yield);
+        final Yield<Object> y = buildYield(yield);
         final Go r = y.beginYieldWithSize(((int)(0)));
         return y.endYieldWithResult(r);
     }
-    private Yield<?> buildYield(final Yield<A> yield) {
-        Chain<?> ch = this;
-        Yield<?> y = yield;
+    private Yield<Object> buildYield(final Yield<A> yield) {
+        Chain<Object> ch = ((Chain<Object>)(((Chain)(this))));
+        Yield<Object> y = ((Yield<Object>)(((Yield)(yield))));
         while(ch != null) {
-            y = ((Yield)(ch.link.buildYield(((Yield)(y)))));
-            ch = ((Chain)(ch.previous));
+            y = ((Yield<Object>)(((Yield)(ch.link.buildYield(((Yield<Object>)(((Yield)(y)))))))));
+            ch = ((Chain<Object>)(((Chain)(ch.previous))));
         }
-        return ((Yield)(y));
+        return ((Yield<Object>)(((Yield)(y))));
     }
     public <B> Chain<B> addLink(final ChainLink<A, B> link) {
-        return new Chain<B>(link, this);
+        return new Chain<B>(((ChainLink<Object, B>)(((ChainLink)(link)))), ((Chain<Object>)(((Chain)(this)))));
     }
     public static <T> Traversable<T> resolveCollection(final Traversable<T> collection) {
         if(collection instanceof Chain) {
@@ -727,7 +727,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             return collection;
         }
     }
-    public Chain(final ChainLink<?, A> link, final Chain<?> previous) {
+    public Chain(final ChainLink<Object, A> link, final Chain<Object> previous) {
         this.link = link;
         this.previous = previous;
     }

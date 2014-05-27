@@ -137,7 +137,7 @@ public class MList<T> extends MSeq_impl<T> {
     }
     @Override
     public T last() {
-        return ((this.lastItem == null) ? (null) : (this.lastItem.data));
+        return ((this.lastItem != null) ? (this.lastItem.data) : (null));
     }
     public T takeLast() {
         final MListItem<T> h = this.lastItem;
@@ -180,7 +180,7 @@ public class MList<T> extends MSeq_impl<T> {
     }
     @Override
     public T head() {
-        return ((this.headItem == null) ? (null) : (this.headItem.data));
+        return ((this.headItem != null) ? (this.headItem.data) : (null));
     }
     public MList() {
         this._count = ((int)(0));
