@@ -28,6 +28,10 @@ static CNClassType* _CNTry_type;
     @throw @"Method reason is abstract";
 }
 
+- (id)value {
+    @throw @"Method value is abstract";
+}
+
 - (BOOL)isSuccess {
     @throw @"Method isSuccess is abstract";
 }
@@ -76,6 +80,10 @@ static CNClassType* _CNSuccess_type;
 + (void)initialize {
     [super initialize];
     if(self == [CNSuccess class]) _CNSuccess_type = [CNClassType classTypeWithCls:[CNSuccess class]];
+}
+
+- (id)value {
+    return _get;
 }
 
 - (BOOL)isSuccess {
@@ -130,6 +138,10 @@ static CNClassType* _CNFailure_type;
 + (void)initialize {
     [super initialize];
     if(self == [CNFailure class]) _CNFailure_type = [CNClassType classTypeWithCls:[CNFailure class]];
+}
+
+- (id)value {
+    return nil;
 }
 
 - (id)get {

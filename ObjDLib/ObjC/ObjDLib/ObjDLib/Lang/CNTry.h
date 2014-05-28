@@ -12,6 +12,7 @@
 - (CNClassType*)type;
 - (id)get;
 - (id)reason;
+- (id)value;
 - (BOOL)isSuccess;
 - (BOOL)isFailure;
 - (CNTry*)mapF:(id(^)(id))f;
@@ -29,6 +30,7 @@
 + (instancetype)successWithGet:(id)get;
 - (instancetype)initWithGet:(id)get;
 - (CNClassType*)type;
+- (id)value;
 - (BOOL)isSuccess;
 - (BOOL)isFailure;
 - (id)reason;
@@ -47,6 +49,7 @@
 + (instancetype)failureWithReason:(id)reason;
 - (instancetype)initWithReason:(id)reason;
 - (CNClassType*)type;
+- (id)value;
 - (id)get;
 - (BOOL)isSuccess;
 - (BOOL)isFailure;

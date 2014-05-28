@@ -9,6 +9,10 @@ public final class Failure<T> extends Try<T> {
         return reason;
     }
     @Override
+    public T value() {
+        return null;
+    }
+    @Override
     public T get() {
         throw new RuntimeException(String.format("Getting failure try: %s", this.reason));
     }

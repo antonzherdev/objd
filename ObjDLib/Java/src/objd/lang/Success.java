@@ -9,6 +9,10 @@ public final class Success<T> extends Try<T> {
         return get;
     }
     @Override
+    public T value() {
+        return this.get;
+    }
+    @Override
     public boolean isSuccess() {
         return true;
     }
