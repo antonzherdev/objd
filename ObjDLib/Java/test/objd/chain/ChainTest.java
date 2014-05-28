@@ -319,6 +319,7 @@ public class ChainTest extends TestCase {
     public void testToString() {
         PackageObjectTest.<String>assertEqualsAB("2, 0, 1", ImArray.fromObjects(2, 0, 1).chain().toStringDelimiter(", "));
         PackageObjectTest.<String>assertEqualsAB("[2, 0, 1]", ImArray.fromObjects(2, 0, 1).chain().toStringStartDelimiterEnd("[", ", ", "]"));
+        PackageObjectTest.<String>assertEqualsAB("201", new StringEx("201").chain()._toString());
     }
     public ChainTest() {
     }

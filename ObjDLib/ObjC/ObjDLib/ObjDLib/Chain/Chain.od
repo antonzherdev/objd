@@ -274,6 +274,13 @@ class Chain<A>(val link : ChainLink<_, A>, val previous : Chain<_>?) extends ImT
         b.build
     }
     def toString(delimiter : string) : string = toString(start = "", delimiter, end = "")
+    def toString(self : Chain<char>) : string = {
+        val b = StringBuilder()
+        _for{item : Char ->
+            b.append(ch = item)
+        }
+        b.build
+    }
 
     def future<V, R>(self : Chain<Future<V>>, f : Chain<V> -> R) : Future<R> = {
         val lnk = FutureEnd<V>()

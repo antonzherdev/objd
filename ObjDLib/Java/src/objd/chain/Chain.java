@@ -676,6 +676,16 @@ public class Chain<A> extends ImTraversable_impl<A> {
     public String toStringDelimiter(final String delimiter) {
         return toStringStartDelimiterEnd("", delimiter, "");
     }
+    public String _toString() {
+        final StringBuilder b = new StringBuilder();
+        ((Chain<Character>)(((Chain)(this))))._forEach(new P<Character>() {
+            @Override
+            public void apply(final Character item) {
+                b.appendCh(item);
+            }
+        });
+        return b.toString();
+    }
     public <V, R> Future<R> futureF(final F<Chain<V>, R> f) {
         final FutureEnd<V> lnk = new FutureEnd<V>();
         ((Chain<Future<V>>)(((Chain)(this)))).applyYield(lnk.yield());

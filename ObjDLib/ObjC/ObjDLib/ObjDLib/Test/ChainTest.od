@@ -209,5 +209,6 @@ class ChainTest extends TestCase {
     def testToString {
         assertEquals("2, 0, 1", [2, 0, 1].chain.toString(", "))
         assertEquals("[2, 0, 1]", [2, 0, 1].chain.toString("[", ", ", "]"))
+        assertEquals("201", "201".chain.toString)
     }
 }

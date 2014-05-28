@@ -535,6 +535,14 @@ static CNClassType* _CNChain_type;
     return [self toStringStart:@"" delimiter:delimiter end:@""];
 }
 
+- (NSString*)toString {
+    CNStringBuilder* b = [CNStringBuilder stringBuilder];
+    [((CNChain*)(self)) _forEach:^void(id item) {
+        [b appendCh:unums(item)];
+    }];
+    return [b build];
+}
+
 - (CNFuture*)futureF:(id(^)(CNChain*))f {
     CNFutureEnd* lnk = [CNFutureEnd futureEnd];
     [((CNChain*)(self)) applyYield:[lnk yield]];

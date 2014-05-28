@@ -107,6 +107,7 @@
 - (NSDictionary*)toMap;
 - (NSString*)toStringStart:(NSString*)start delimiter:(NSString*)delimiter end:(NSString*)end;
 - (NSString*)toStringDelimiter:(NSString*)delimiter;
+- (NSString*)toString;
 - (CNFuture*)futureF:(id(^)(CNChain*))f;
 - (CNFuture*)future;
 - (CNFuture*)voidFuture;

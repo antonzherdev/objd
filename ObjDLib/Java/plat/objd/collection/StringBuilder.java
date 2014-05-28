@@ -37,4 +37,8 @@ public class StringBuilder implements Builder<Character, StringAdapter> {
             }
         });
     }
+
+    public void appendCh(char item) {
+        builder.append(item);
+    }
 }

@@ -11,4 +11,6 @@
 - (void)appendStr:(NSString*)str;
 - (void)appendObj:(NSObject*)str;
 - (NSString*)build;
+
+- (void)appendCh:(unichar)item;
 @end

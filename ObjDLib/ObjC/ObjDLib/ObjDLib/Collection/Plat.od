@@ -76,6 +76,7 @@ stub class MHashMap<K, V> extends MMap<K, V> with HashMap<K, V> {
 
 @ObjC
 stub class StringBuilder extends Builder<char, String> {
+    def append(ch : char)
     override def append(item : char)
     def append(str : string)
     def append(obj : Object)
@@ -84,6 +85,7 @@ stub class StringBuilder extends Builder<char, String> {
 
 @Java
 stub class StringBuilder extends Builder<char, String> {
+    def append(ch : char)
     override def append(item : char)
     def append(str : string)
     def append(obj : Object)

@@ -95,6 +95,7 @@ defName d
 				"hash" -> "hashCode"
 				"dealloc" -> "finalize"
 				"description" -> "toString"
+				"toString" -> "_toString"
 				_ -> def
 			[p] -> case (D.defName d, D.defName p) of
 				("isEqual", "to") -> "equals"
@@ -335,9 +336,11 @@ genExp env (D.Dot l r@(D.Call d _ _ _))
 					(J.Call cnm cgens (if D.DefModStatic `elem` D.defMods d then cpars else l':cpars))
 			_ -> J.Dot l' r'
 genExp env (D.Dot l r) = do
-	l' <- genExp env l
-	r' <- genExp env r
-	return $ J.Dot l' r'
+		l' <- genExp env l
+		r' <- genExp env r
+		return $ case D.unwrapGeneric (D.exprDataType l) of
+			D.TPString -> J.Dot (J.New [] "StringEx" [] [l']) r'
+			_ -> J.Dot l' r'
 genExp env (D.Index l r) = do
 	l' <- genExp env l
 	r' <- genExp env r

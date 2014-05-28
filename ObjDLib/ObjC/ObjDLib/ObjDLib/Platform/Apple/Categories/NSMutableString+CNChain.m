@@ -37,4 +37,7 @@
     return self;
 }
 
+- (void)appendCh:(unichar)item {
+    [self appendFormat:@"%c", item];
+}
 @end

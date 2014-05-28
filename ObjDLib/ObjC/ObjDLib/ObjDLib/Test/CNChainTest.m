@@ -225,6 +225,7 @@ static CNClassType* _CNChainTest_type;
 - (void)testToString {
     assertEquals((@"2, 0, 1"), ([[(@[@2, @0, @1]) chain] toStringDelimiter:@", "]));
     assertEquals((@"[2, 0, 1]"), ([[(@[@2, @0, @1]) chain] toStringStart:@"[" delimiter:@", " end:@"]"]));
+    assertEquals(@"201", [[@"201" chain] toString]);
 }
 
 - (NSString*)description {
