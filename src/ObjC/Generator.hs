@@ -37,8 +37,11 @@ toObjC core f@D.File{D.fileClasses = classes} =
 			++ map (C.ProtocolDecl . D.classNameWithPrefix) (filter D.isTrait classes) 
 			++ map structDecl structs
 			++ [C.EmptyLine] 
-			++ concatMap ((++ [C.EmptyLine, C.EmptyLine]) . fst . gen) classes
+			++ genClasses D.isEnum classes
+			++ genClasses (not . D.isEnum) classes
 		
+		genClasses b = concatMap ((++ [C.EmptyLine, C.EmptyLine]) . fst . gen) . (filter b)
+
 		structDecl c = C.TypeDefStruct (D.classNameWithPrefix c) (D.classNameWithPrefix c)
 		classDecl c = C.ClassDecl $ D.classNameWithPrefix c
 
@@ -334,7 +337,7 @@ genStruct cl =
 		staticFields = filter (\d -> D.isStatic d && D.isField d) clDefs
 		fields' = map toField fields
 		toField D.Def{D.defName = n, D.defType = tp, D.defMods = mods} = C.ImplField n (showDataType tp) 
-				(["__weak" | D.DefModWeak `elem` mods] ++ ["__unsafe_unretained" | D.isTpClass tp || D.isTpEnum tp || D.isTpTrait tp] ) C.Nop
+				(["__weak" | D.DefModWeak `elem` mods] ++ ["__unsafe_unretained" | D.isTpClass tp || D.isTpTrait tp] ) C.Nop
 		con = C.CFun{C.cfunMods = [C.CFunStatic, C.CFunInline], C.cfunReturnType = C.TPSimple name [], 
 			C.cfunName = name ++ "Make", C.cfunPars = map toPar fields, C.cfunExps = 
 				[C.Return $ C.ShortCast selfTp $ C.EArr $ map toEArr fields]

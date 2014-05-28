@@ -28,6 +28,19 @@
 @protocol CNImIterable;
 @protocol CNMIterable;
 
+typedef enum CNGoR {
+    CNGo_Nil = 0,
+    CNGo_Continue = 1,
+    CNGo_Break = 2
+} CNGoR;
+@interface CNGo : CNEnum
++ (NSArray*)values;
+@end
+static CNGo* CNGo_Values[2];
+static CNGo* CNGo_Continue_Desc;
+static CNGo* CNGo_Break_Desc;
+
+
 
 
 @protocol CNIterator<NSObject>
@@ -68,19 +81,6 @@
 + (instancetype)builder_impl;
 - (instancetype)init;
 @end
-
-
-typedef enum CNGoR {
-    CNGo_Nil = 0,
-    CNGo_Continue = 1,
-    CNGo_Break = 2
-} CNGoR;
-@interface CNGo : CNEnum
-+ (NSArray*)values;
-@end
-static CNGo* CNGo_Values[2];
-static CNGo* CNGo_Continue_Desc;
-static CNGo* CNGo_Break_Desc;
 
 
 @protocol CNTraversable<NSObject>
