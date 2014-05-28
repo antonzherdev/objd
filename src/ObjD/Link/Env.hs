@@ -37,8 +37,8 @@ envAddSuffix env s = env{envVarSuffix = envVarSuffix env ++ s}
 tmpVal :: Env -> String -> DataType -> Exp -> Def
 tmpVal env sf tp e = Def ("__tmp" ++ envVarSuffix env ++ sf) [] tp e [DefModLocal] Nothing []
 
-baseClassExtends :: ClassIndex -> ExtendsClass
-baseClassExtends cidx = ExtendsClass (classFind cidx "Object", []) []
+baseClassExtends :: Bool -> ClassIndex -> ExtendsClass
+baseClassExtends p cidx = ExtendsClass (classFind cidx (if p then "PObject" else "Object"), []) []
 
 envExprCompile :: Env -> D.Exp -> Exp
 envExprCompile env e = (envExprCompiler env) env e

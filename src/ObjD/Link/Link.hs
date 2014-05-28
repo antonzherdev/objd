@@ -130,7 +130,8 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 				_classMods =  nub $ concatMap clsMod (D.classMods cl), 
 				className = clsName, 
 				genClassName = clsGenName,
-				_classExtends = if D.className cl == "Object" then extendsNothing else fromMaybe (Extends (Just $ baseClassExtends cidx) []) extends, 
+				_classExtends = if D.className cl == "Object" || D.className cl == "PObject" then extendsNothing 
+					else fromMaybe (Extends (Just $ baseClassExtends selfIsStruct cidx) []) extends, 
 				_classDefs = 
 					if isObject then fields ++ defs ++ [typeField] 
 					else fields ++ defs ++ constr constrPars ++ [typeField] ++ [description | needDescription]  ++ [equal | needEquals] ++ [hash | needHash]
@@ -192,7 +193,7 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 		clsMod D.ClassModPackageObject = [ClassModPackageObject]
 		clsMod D.ClassModCase = [ClassModFinal, ClassModCase]
 		-- clsMod _ = []
-		extends = fmap (linkExtends env isSeltTrait (map fst constrPars)) (D.classExtends cl) 
+		extends = fmap (linkExtends env (isSeltTrait, selfIsStruct) (map fst constrPars)) (D.classExtends cl) 
 		selfIsStruct = case cl of
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
 			_ -> False
@@ -346,7 +347,7 @@ traitImplClass :: Env -> Class -> Class
 traitImplClass env cl = let 
 	con = Def{defName = "apply", defMods = [DefModStatic, DefModConstructor, DefModPublic], defBody = Nop,
 				defPars = [], defType = envSelf env, defGenerics = Just $ DefGenerics (classGenerics cl) (envSelf env), defAnnotations = []}
-	base = baseClassExtends $ envIndex env 
+	base = baseClassExtends False $ envIndex env 
 	ext = Extends {
 		extendsClass = Just $ case extendsRefs $ classExtends cl of
 			[] -> base
@@ -404,8 +405,8 @@ defsWithTraits env cl = classDefs cl ++ notOverloadedTraitDefs
 				[] -> d
 				_ -> d{defType = tp', defPars = map snd pars', defBody = body'}
 
-linkExtends :: Env -> Bool -> [Def] -> D.Extends -> Extends
-linkExtends env isSeltTrait constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
+linkExtends :: Env -> (Bool, Bool) -> [Def] -> D.Extends -> Extends
+linkExtends env (isSeltTrait, isSelfStruct) constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
 	let 
 		env' = env {envVals = constrPars, envSelf = objectType $ envSelf env}
 		superCall = D.Dot D.Super $ D.Call "apply" (Just $ pars) gens
@@ -422,7 +423,7 @@ linkExtends env isSeltTrait constrPars (D.Extends (D.ExtendsClass eref@(_, gens)
 			if isMainTrait then 
 				case getTraitImplClass env (fst mainExt) of
 					Just me -> Extends (Just $ ExtendsClass (me, snd mainExt) []) withs'
-					Nothing -> Extends (Just $ baseClassExtends $ envIndex env) (mainExt:withs')
+					Nothing -> Extends (Just $ baseClassExtends isSelfStruct $ envIndex env) (mainExt:withs')
 			else Extends (Just $ ExtendsClass mainExt superCallPars) withs'
 
 linkAnnotation :: Env -> D.Annotation -> Annotation

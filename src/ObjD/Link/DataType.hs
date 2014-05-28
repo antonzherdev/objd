@@ -16,13 +16,13 @@ dataTypeClassRef env tp = let
 dataTypeClass :: Env -> DataType -> Class
 dataTypeClass _ (TPClass _ _ c ) = c
 dataTypeClass env (TPObject _ c) = Class { _classMods = [ClassModObject], className = className c, genClassName = genClassName c, 
-	_classExtends = Extends (if className c == "Object" then Nothing else Just $ baseClassExtends (envIndex env)) [], 
+	_classExtends = Extends (if className c == "Object" then Nothing else Just $ baseClassExtends False (envIndex env)) [], 
 	_classDefs = allDefsInObject (c, M.empty), _classGenerics = [], _classImports = [],
 	_classFile = fromMaybe (error $ "No class file for class " ++ className c) $ classFile c,
 	_classPackage = classPackage c, classAnnotations = [], classDefsWithTraits = []}
 dataTypeClass env (TPGenericWrap _ c) = dataTypeClass env c
 dataTypeClass _ (TPSelf c) = c
-dataTypeClass env f@TPFun{} = Class { _classMods = [], className = "", genClassName = "", _classExtends =  Extends (Just $ baseClassExtends (envIndex env)) [],
+dataTypeClass env f@TPFun{} = Class { _classMods = [], className = "", genClassName = "", _classExtends =  Extends (Just $ baseClassExtends False (envIndex env)) [],
 	_classPackage = Package ["objd", "lang"] Nothing "", _classFile = coreFakeFile, 
 	_classDefs = [applyLambdaDef f], _classGenerics = [], _classImports = [], classAnnotations = [], classDefsWithTraits = []}
 dataTypeClass env tp = classFind (envIndex env) (dataTypeClassName tp)

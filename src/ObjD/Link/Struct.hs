@@ -181,6 +181,7 @@ isAbstract :: Class -> Bool
 isAbstract = (ClassModAbstract `elem` ) . classMods
 isBaseClass :: Class -> Bool
 isBaseClass Class{className = "Object"} = True
+isBaseClass Class{className = "PObject"} = True
 isBaseClass _ = False
 
 isRealClass :: Class -> Bool
@@ -500,6 +501,7 @@ isTpStruct (TPClass TPMStruct _ _) = True
 isTpStruct _ = False
 isTpBaseClass :: DataType -> Bool
 isTpBaseClass (TPClass TPMClass _ Class{className = "Object"}) = True
+isTpBaseClass (TPClass TPMClass _ Class{className = "PObject"}) = True
 isTpBaseClass _ = False
 
 unoptionIfChecked :: DataType -> DataType

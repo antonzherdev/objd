@@ -15,6 +15,16 @@ stub class Object {
     def dealloc
 }
 
+stub struct PObject {
+    def is<T> : bool
+    def as<T> : T?
+    def cast<T> : T
+    def description : string
+    def hash : uint
+    static def type : PType<self>
+    def dealloc
+}
+
 stub trait Number {
 }
 
