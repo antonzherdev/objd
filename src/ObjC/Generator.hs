@@ -452,16 +452,15 @@ enumValuesFun = C.Fun C.ObjectFun (C.TPSimple "NSArray*" []) "values" []
 
 genEnumInterface :: D.Class -> [C.FileStm]
 genEnumInterface cl = [
-	C.Interface {
+	C.Enum{
+		C.enumName = name ++ "R",
+		C.enumItems = C.EnumItem (name ++ "_" ++ "Nil") (Just 0) : genEnumItems 1 (D.enumItems cl)
+	}, C.Interface {
 		C.interfaceName = name ,
 		C.interfaceExtends = classExtends cl,
 		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs',
 		C.interfaceFuns = intefaceFuns defs' ++ [enumValuesFun],
 		C.interfaceFields = []
-	},
-	C.Enum{
-		C.enumName = name ++ "R",
-		C.enumItems = C.EnumItem (name ++ "_" ++ "Nil") (Just 0) : genEnumItems 1 (D.enumItems cl)
 	}, 
 	C.CVar [C.CFunStatic] (C.TPArr (length $ D.enumItems cl) (name ++ "*")) (name ++ "_Values")
 	] ++ map enumItemGetterFun (D.enumItems cl)
