@@ -751,6 +751,8 @@ tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars _)
 		if D.DefModField `elem` mods then C.Ref name
 		else C.CCall (C.Ref $ name) ((map snd . tPars env dd) pars)
 	| D.DefModApplyLambda `elem` mods = C.CCall (castGeneric l $ tExp env l) ((map snd . tPars env dd) pars) 
+	| D.DefModEnum `elem` mods && D.DefModField `elem` mods = C.Dot enumLeft (C.Ref name)
+	| D.DefModEnum `elem` mods = stdCall enumLeft 
 	| D.DefModField `elem` mods && null pars && 
 		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
 			C.Dot (castGeneric l $ tExpTo env ltp l) (C.Ref name)
@@ -763,11 +765,14 @@ tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars _)
 		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) dd) ((map snd . tPars env dd) pars)
 		D.TPPointer{} -> structCall "cnPointer" (castGeneric l $ tExpTo env ltp l)
 		tp -> structCall (show tp) (castGeneric l $ tExpTo env ltp l)
-	| otherwise = C.Call (castGeneric l $ tExp env l) (funName dd) (tPars env dd pars) []
+	| otherwise = stdCall (castGeneric l $ tExp env l)
 	where
-		 structCall c self = C.CCall (C.Ref $ structDefName c dd) (self : (map snd . tPars env dd) pars)
-		 ltp = D.unwrapGeneric $ D.exprDataType l
-		 isStubObject = case ltp of
+		enumLeft = (C.Index (enumValue) (tExpTo env ltp l))
+		stdCall ll = C.Call ll (funName dd) (tPars env dd pars) []
+		enumValue = C.Ref $ (D.dataTypeClassNameWithPrefix $ D.exprDataType l) ++ "_Values"
+		structCall c self = C.CCall (C.Ref $ structDefName c dd) (self : (map snd . tPars env dd) pars)
+		ltp = D.unwrapGeneric $ D.exprDataType l
+		isStubObject = case ltp of
 		 	D.TPObject _  cl -> D.ClassModStub `elem` D.classMods cl && D.ClassModObject `elem` D.classMods cl
 		 	_ -> False
 tExp env (D.Dot l (D.Is dtp)) = case D.unwrapGeneric dtp of

@@ -327,7 +327,7 @@ data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | De
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
 	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper | DefModInline 
 	| DefModPure | DefModFinal | DefModOverride | DefModError String | DefModConstructorField | DefModVolatile
-	| DefModChangedInLambda
+	| DefModChangedInLambda | DefModEnum
 	deriving (Eq, Ord)
 instance Show DefMod where
 	show DefModStatic = "static"
@@ -343,7 +343,8 @@ instance Show DefMod where
 	show DefModField = "val"
 	show DefModLocal = "local"
 	show DefModObject = "object"
-	show DefModEnumItem = "enum"
+	show DefModEnum = "enum"
+	show DefModEnumItem = "enum_item"
 	show DefModDef = "def"
 	show DefModSpecial = "special"
 	show DefModStruct = "struct"
@@ -404,7 +405,8 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModField = 'f'
 		ch DefModLocal = 'l'
 		ch DefModObject = 'o'
-		ch DefModEnumItem = 'e'
+		ch DefModEnumItem = 'E'
+		ch DefModEnum = 'e'
 		ch DefModDef = 'd'
 		ch DefModSpecial = 'i'
 		ch DefModStruct = 's'
@@ -413,7 +415,7 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModInline = 'i'
 		ch DefModVolatile = 'v'
 		ch DefModConstructorField = 'U'
-		ch (DefModError _) = 'E'
+		ch (DefModError _) = '!'
 		ch DefModChangedInLambda = 'k'
 		
 

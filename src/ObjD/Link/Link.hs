@@ -116,6 +116,9 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 		isObject = case cl of
 			D.Class{} -> D.ClassModObject `elem` D.classMods cl
 			_ -> False
+		_isEnum = case cl of
+			D.Enum{} -> True
+			_ -> False
 		clsName = case cl of
 			D.Class{} -> if D.ClassModPackageObject `elem` D.classMods cl then "PackageObject" ++ (cap $ last $ packageName package) else D.className cl
 			_ -> D.className cl
@@ -194,13 +197,15 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
 			_ -> False
 		isStaticDecl d = isObject || D.isStatic d
+		additionalMods = [DefModStruct | selfIsStruct] ++ [DefModStatic | isObject] 
+			++ [DefModStub | D.ClassModStub `elem` D.classMods cl] ++ [DefModEnum | _isEnum]
 		fields :: [Def]
-		fields =  concatMap (linkField staticEnv (isObject, selfIsStruct)) (filter (isStaticDecl) decls)  ++
-			concatMap (linkField (envAddVals (map fst constrPars) env) (isObject, selfIsStruct)) (filter (not . isStaticDecl) decls)
+		fields =  concatMap (linkField staticEnv additionalMods) (filter (isStaticDecl) decls)  ++
+			concatMap (linkField (envAddVals (map fst constrPars) env) additionalMods) (filter (not . isStaticDecl) decls)
 		decls = (map (\d -> d{D.defBody = D.Nop}) . filter (\f -> D.isDecl f)) (D.classFields cl) 
 			++ filter D.isDecl (D.classBody cl)
 		defs = concatMap (\ def -> 
-			linkDef (envForDef def) def ([DefModStruct | selfIsStruct] ++ [DefModStatic | isObject] ++ [DefModStub | D.ClassModStub `elem` D.classMods cl])) 
+			linkDef (envForDef def) additionalMods def) 
 			. filter D.isDef $ D.classBody cl
 		envForDef def = if isStaticDecl def then staticEnv else env
 		enumConstr = constr (enumAdditionalDefs ++ constrPars)
@@ -442,21 +447,21 @@ linkGenerics env gens = cls
 		env' = envAddClasses cls env
 		
 
-linkField :: Env -> (Bool, Bool) -> D.ClassStm -> [Def]
+linkField :: Env -> [DefMod] -> D.ClassStm -> [Def]
 --linkField _ _ D.Def{D.defName = nm} | trace ("Field " ++ nm) False = undefined
-linkField env (obj, _isStruct) dd@D.Def{D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = 
+linkField env additionalMods dd@D.Def{D.defMods = mods, D.defName = name, D.defRetType = tp, D.defBody = e} = 
 	let 
 		i = exprToSome env e
 		i' = implicitConvertsion env tp'' i
 		tp' = unwrapGeneric $ getDataType env tp i
-		tp'' = if _isStruct then case tp' of
+		tp'' = if DefModStruct `elem` additionalMods then case tp' of
 				TPArr n atp -> TPEArr n $ unwrapGeneric atp 
 				_ -> tp' 
 			else tp'
 		ans = map (linkAnnotation env) (D.defAnnotations dd)
 		gtp = wrapGeneric tp''
 		def = Def{defMods = 
-			DefModField : translateMods mods ++ [DefModStruct | _isStruct] ++ [DefModStatic | obj] ++ checkOverrideMods mods (findOverridenDef env dd), 
+			DefModField : translateMods mods ++ additionalMods ++ checkOverrideMods mods (findOverridenDef env dd), 
 			defName = name, defType = tp'', 
 			defBody = i', defGenerics = Nothing, defPars = [], defAnnotations = ans}
 		isLazy = D.DefModLazy `elem` mods
@@ -464,11 +469,11 @@ linkField env (obj, _isStruct) dd@D.Def{D.defMods = mods, D.defName = name, D.de
 		lazyGet = fromJust $ findDefWithName "get" lazyClass
 		lazyConstr = fromJust $ classConstructor lazyClass
 		lazyTp = TPClass TPMClass [gtp] lazyClass
-		defLazy = Def{defMods = [DefModField, DefModPrivate] ++ [DefModStatic | D.DefModStatic `elem` mods || obj], defName = "_lazy_" ++ name, 
+		defLazy = Def{defMods = [DefModField, DefModPrivate] ++ [DefModStatic | D.DefModStatic `elem` mods ] ++ additionalMods, defName = "_lazy_" ++ name, 
 			defType = lazyTp, 
 			defBody = Dot (callRef (objectDef lazyClass)) $ Call lazyConstr lazyTp [(head $ defPars lazyConstr, Lambda [] (Return True (Weak i')) gtp)] [], 
 			defGenerics = Nothing, defPars = [], defAnnotations = []}
-		defLazyGet = Def{defMods = DefModDef : translateMods mods ++ [DefModStatic | obj], defName = name, 
+		defLazyGet = Def{defMods = DefModDef : translateMods mods ++ additionalMods, defName = name, 
 			defType = tp'', 
 			defBody = Return True $ Dot (callRef defLazy) (Call lazyGet gtp [] []), defGenerics = Nothing, defPars = [], defAnnotations = ans}
 		in if isLazy then [defLazyGet, defLazy] else [def]
@@ -506,9 +511,9 @@ translateMods = fx . mapMaybe m
 		m D.DefModVolatile = Just DefModVolatile
 		m _ = Nothing
 		
-linkDef :: Env -> D.ClassStm -> [DefMod] -> [Def]
+linkDef :: Env -> [DefMod] -> D.ClassStm  -> [Def]
 -- linkDef env D.Def{D.defName = name} _ | trace ("Def " ++ show (envSelf env) ++ "." ++ name) False = undefined
-linkDef env dd@D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body, D.defGenerics = generics} additionalMods = 
+linkDef env additionalMods dd@D.Def{D.defMods = mods, D.defName = name, D.defPars = opars, D.defRetType = tp, D.defBody = body, D.defGenerics = generics} = 
 	resolveDefPar env' mainDef pars''
 	where 
 		env' = addEnvInit $ envAddClasses generics' env
