@@ -40,6 +40,17 @@ public class TestedActor extends Actor {
             }
         });
     }
+    public Future<Void> lockVoidFuture(final Future<String> future) {
+        return this.<String, Void>lockAndOnSuccessFutureF(future, new F<String, Void>() {
+            @Override
+            public Void apply(final String s) {
+                TestedActor.this.test();
+                return null;
+            }
+        });
+    }
+    private void test() {
+    }
     public TestedActor() {
         this.items = ImArray.<String>empty();
     }

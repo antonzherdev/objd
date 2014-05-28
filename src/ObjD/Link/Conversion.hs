@@ -48,7 +48,7 @@ maybeAddReturn env tp e  = let
 		TPClass TPMGeneric _ _ -> mbNil (None tp)
 		TPVoid -> mbNil Nil
 		TPGenericWrap _ TPVoid -> mbNil (None TPVoid)
-		TPGenericWrap _ t@TPUnknown{} -> mbNil (None t)
+		TPGenericWrap _ TPUnknown{} -> mbNil (None TPVoid)
 		TPUnknown{} -> mbNil (None tp)
 		_ -> addReturn env True tp e
 

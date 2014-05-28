@@ -22,6 +22,12 @@ class TestedActor extends Actor {
         items += "w$s"
         s
     }
+
+    def lockVoid(future : Future<string>) = lockAndOnSuccess(future) { s ->
+        test
+    }
+
+    private def test{}
 }
 
 @Test

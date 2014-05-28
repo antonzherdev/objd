@@ -1,0 +1,15 @@
+package objd.date
+
+
+@ObjC
+@GenName("NSDate")
+stub class DateTime {
+    def beforeNow : float8 //seconds
+    def sinceNow : float8 //seconds
+}
+
+@Java
+stub class DateTime {
+    def beforeNow : float8 //seconds
+    def sinceNow : float8 //seconds
+}

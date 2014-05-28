@@ -48,6 +48,16 @@ static CNClassType* _CNTestedActor_type;
     }];
 }
 
+- (CNFuture*)lockVoidFuture:(CNFuture*)future {
+    return [self lockAndOnSuccessFuture:future f:^id(NSString* s) {
+        [self test];
+        return nil;
+    }];
+}
+
+- (void)test {
+}
+
 - (NSString*)description {
     return @"TestedActor";
 }
