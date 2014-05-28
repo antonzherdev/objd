@@ -6,6 +6,7 @@ case class Pair<T>(val a : T, val b : T) extends ImSet<T> {
     override def iterator : Iterator<T> = PairIterator<T>(self)
     override def head : T? = a
     def isEqual(pair : Pair<T>) : bool = contains(pair.a) && contains(pair.b)
+    override def hash : uint = (a.hash + b.hash)*7 + 13
 }
 
 class PairIterator<T>(val pair : Pair<T>) extends Iterator<T> {

@@ -53,6 +53,10 @@ static CNClassType* _CNPair_type;
     });
 }
 
+- (NSUInteger)hash {
+    return ([_a hash] + [_b hash]) * 7 + 13;
+}
+
 - (NSString*)description {
     return [NSString stringWithFormat:@"Pair(%@, %@)", _a, _b];
 }
@@ -62,13 +66,6 @@ static CNClassType* _CNPair_type;
     if(to == nil) return NO;
     if([to isKindOfClass:[CNPair class]]) return [self isEqualPair:((CNPair*)(to))];
     return NO;
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + [_a hash];
-    hash = hash * 31 + [_b hash];
-    return hash;
 }
 
 - (CNClassType*)type {

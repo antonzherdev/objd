@@ -22,9 +22,9 @@
 - (id<CNIterator>)iterator;
 - (id)head;
 - (BOOL)isEqualPair:(CNPair*)pair;
+- (NSUInteger)hash;
 - (NSString*)description;
 - (BOOL)isEqual:(id)to;
-- (NSUInteger)hash;
 + (CNClassType*)type;
 @end
 

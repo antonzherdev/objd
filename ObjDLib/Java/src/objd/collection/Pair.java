@@ -26,6 +26,10 @@ public final class Pair<T> extends ImSet_impl<T> {
         final T __tmp__il_bitem = pair.b;
         return (this.a.equals(__tmp__il_aitem) || this.b.equals(__tmp__il_aitem)) && (this.a.equals(__tmp__il_bitem) || this.b.equals(__tmp__il_bitem));
     }
+    @Override
+    public int hashCode() {
+        return (this.a.hashCode() + this.b.hashCode()) * 7 + 13;
+    }
     public Pair(final T a, final T b) {
         this.a = a;
         this.b = b;
@@ -44,11 +48,5 @@ public final class Pair<T> extends ImSet_impl<T> {
             return isEqualPair(((Pair<T>)(((Pair)(to)))));
         }
         return false;
-    }
-    public int hashCode() {
-        int hash = 0;
-        hash = hash * 31 + this.a.hashCode();
-        hash = hash * 31 + this.b.hashCode();
-        return hash;
     }
 }
