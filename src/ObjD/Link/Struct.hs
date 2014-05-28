@@ -17,7 +17,7 @@ module ObjD.Link.Struct (
 	isFinal, isTpClass, isTpEnum, isTpTrait, isNop, enumItems, isType, isGeneric, isGenericWrap, tpGeneric, resolveTypeAlias,
 	containsAnnotationWithClassName, isSpecial, isConstructor, mainExtendsRef, isBaseClass, traitExtendsRefs, findAnnotationWithClassName, 
 	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError, isDefAbstract, isEnumItem, isTpGeneric, isPrivate,
-	genName, dataTypeGenClassName, localVarE, localVar, coreDataTypeClass, coreClass, buildCore
+	genName, dataTypeGenClassName, localVarE, localVar, coreDataTypeClass, coreClass, buildCore, classFullName
 	) where
 
 import 			 Ex.String
@@ -192,6 +192,10 @@ classFields = filter isField . classDefs
 
 classPackageName :: Class -> [String]
 classPackageName = packageName . classPackage
+classFullName :: Class -> [String]
+classFullName cl
+	| ClassModPackageObject `elem` classMods cl = classPackageName cl
+	| otherwise = classPackageName cl ++ [className cl] 
 
 
 data Annotation = Annotation Def [CallPar]

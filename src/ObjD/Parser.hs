@@ -159,7 +159,7 @@ pClass a = do
 	sps
 	body <- pClassBody
 	sps
-	return Class {classMods = mods ++ struct, className = name, classFields = fields, classExtends = extends, classBody = body, classGenerics = generics, stmAnnotations = a}
+	return Class {_classMods = mods ++ struct, className = name, classFields = fields, classExtends = extends, classBody = body, classGenerics = generics, stmAnnotations = a}
 
 pEnum :: [Annotation] -> Parser FileStm
 pEnum a = do

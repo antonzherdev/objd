@@ -2,7 +2,7 @@ module ObjD.Struct (
 	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, EnumItem(..), CallPar, DefMod(..), 
 	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), ExtendsRef, ExtendsClass(..), CaseCondition(..), CaseItem, FuncOpTp(..), ParMod(..),
 	Annotation(..),
-	isClass, isImport, isDef, isDecl, isStub, isEnum, isStatic, isType, isClassImport
+	isClass, isImport, isDef, isDecl, isStub, isEnum, isStatic, isType, isClassImport, classMods
 ) where
 import           Ex.String
 import 			 Data.Decimal
@@ -15,11 +15,14 @@ instance Show File where
 
 data FileStm =
 	Import {importPath :: [String], stmAnnotations :: [Annotation]}
-	| Class {classMods :: [ClassMod], className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, classBody :: [ClassStm]
+	| Class {_classMods :: [ClassMod], className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, classBody :: [ClassStm]
 		, classGenerics :: [Generic], stmAnnotations :: [Annotation]}
 	| Enum {className :: String, classFields :: [ClassStm], classExtends :: Maybe Extends, enumItems :: [EnumItem], classBody :: [ClassStm]
 		, classGenerics :: [Generic], stmAnnotations :: [Annotation]}
 	| Type {className :: String, classGenerics :: [Generic], typeDef :: ExtendsRef, stmAnnotations :: [Annotation]}
+classMods :: FileStm -> [ClassMod]
+classMods Class{_classMods = r} = r
+classMods _ = []
 isClass :: FileStm -> Bool
 isClass (Class {}) = True
 isClass _ = False
@@ -27,7 +30,7 @@ isEnum :: FileStm -> Bool
 isEnum (Enum {}) = True
 isEnum _ = False
 isStub :: FileStm -> Bool
-isStub (Class {classMods = mods}) = ClassModStub `elem` mods
+isStub (Class {_classMods = mods}) = ClassModStub `elem` mods
 isStub _ = False
 isImport :: FileStm -> Bool
 isImport Import{} = True
@@ -122,7 +125,7 @@ data DataType = DataType String [DataType]
 
 
 instance Show FileStm where
-	show (Class{className = name, classFields = fields, classMods = mods, classBody = body}) = 
+	show (Class{className = name, classFields = fields, _classMods = mods, classBody = body}) = 
 		tp ++ " " ++ name ++  "(" ++ strs' ", " fields ++ ")" ++ showClassBody body
 		where 
 			tp = (if ClassModStub `elem` mods then "stub " else "") ++ (if ClassModStruct `elem` mods then "struct" else "class")

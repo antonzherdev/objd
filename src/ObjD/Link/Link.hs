@@ -103,7 +103,7 @@ linkImport files name
 	| otherwise = map ImportClass $ classesWithName name
 	where
 		allClasses = concatMap fileClasses files
-		packObject imp = filter (\c -> ClassModPackageObject `elem` classMods c && classPackageName c == imp) allClasses
+		packObject imp = filter (\c -> classFullName c == imp) allClasses
 		classesWithName imp = filter (\c -> className c == last imp && classPackageName c == init imp) allClasses
 
 linkClass :: (Lang, ClassIndex, ObjectIndex, File, Package, [Import]) -> D.FileStm -> [Class]
