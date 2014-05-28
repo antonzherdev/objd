@@ -609,6 +609,7 @@ dataTypeClassName TPChar = "Char"
 dataTypeClassName TPString = "String"
 dataTypeClassName TPBool = "Bool"
 dataTypeClassName TPFun{} = "F"
+dataTypeClassName TPOption{} = "Option"
 dataTypeClassName _ = ""
 
 coreClass :: Core -> String -> Class

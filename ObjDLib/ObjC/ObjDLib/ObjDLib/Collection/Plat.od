@@ -46,11 +46,13 @@ stub trait HashMap<K, V> extends Map<K, V> {
 
 @Java
 stub class ImHashMap<K, V> extends ImMap<K, V> with HashMap<K, V> {
+    override def add(item : (K, V)) : ImHashMap<K, V>
     override def mCopy : MHashMap<K, V>
 }
 
 @ObjC
 stub class ImHashMap<K, V> extends ImMap<K, V> with HashMap<K, V> {
+    override def add(item : (K, V)) : ImHashMap<K, V>
     override def mCopy : MHashMap<K, V>
     override def for(each : ((K, V)) -> void)
     override def go(on : ((K, V)) -> Go) : Go
