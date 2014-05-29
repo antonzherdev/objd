@@ -121,8 +121,9 @@
     [super load];
     CNGo_Continue_Desc = [CNGo goWithOrdinal:0 name:@"Continue"];
     CNGo_Break_Desc = [CNGo goWithOrdinal:1 name:@"Break"];
-    CNGo_Values[0] = CNGo_Continue_Desc;
-    CNGo_Values[1] = CNGo_Break_Desc;
+    CNGo_Values[0] = nil;
+    CNGo_Values[1] = CNGo_Continue_Desc;
+    CNGo_Values[2] = CNGo_Break_Desc;
 }
 
 + (NSArray*)values {

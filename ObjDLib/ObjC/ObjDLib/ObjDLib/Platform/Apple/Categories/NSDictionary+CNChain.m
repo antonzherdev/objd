@@ -30,9 +30,7 @@
 }
 
 - (id)applyKey:(id)key {
-    id ret = self[key];
-    if(ret == nil) @throw [NSString stringWithFormat:@"No value for key %@", key];
-    return uwrapNil(ret);
+    return uwrapNil(self[key]);
 }
 
 - (BOOL)existsWhere:(BOOL(^)(id))where {

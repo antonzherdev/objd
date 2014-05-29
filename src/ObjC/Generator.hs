@@ -490,7 +490,7 @@ genEnumInterface cl = [
 		C.interfaceFuns = intefaceFuns defs' ++ [enumValuesFun],
 		C.interfaceFields = []
 	}, 
-	C.CVar [C.CFunStatic] (C.TPArr (length $ D.enumItems cl) (name ++ "*")) (name ++ "_Values")
+	C.CVar [C.CFunStatic] (C.TPArr (length (D.enumItems cl) + 1) (name ++ "*")) (name ++ "_Values")
 	] ++ map enumItemGetterFun (D.enumItems cl)
 	where 
 		name = D.classNameWithPrefix cl
@@ -518,9 +518,11 @@ genEnumImpl cl@D.Class {} = [
 		defs = filter ((/= "values") . D.defName) $ D.classDefs cl
 		constr = fromMaybe (error "No class constructor") (D.classConstructor cl)
 		initialize = C.ImplFun (C.Fun C.ObjectFun voidTp "load" []) (
-			((C.Stm $ C.Call C.Super "load" [] []) : map initItem items) ++ initArr 0 items)
+			((C.Stm $ C.Call C.Super "load" [] []) : map initItem items) ++ 
+			[C.Set Nothing (C.Index (C.Ref $ valuesVarName) (C.IntConst 0)) C.Nil] ++
+			initArr 0 items)
 		initArr _ [] = []
-		initArr n (d:xs) =  C.Set Nothing (C.Index (C.Ref $ valuesVarName) (C.IntConst n)) (C.Ref $ enumItemDesc env d):initArr (n + 1) xs
+		initArr n (d:xs) =  C.Set Nothing (C.Index (C.Ref $ valuesVarName) (C.IntConst $ n + 1)) (C.Ref $ enumItemDesc env d):initArr (n + 1) xs
 		initItem :: D.Def -> C.Stm
 		initItem d@D.Def{D.defBody = body} = C.Set Nothing (C.Ref $ enumItemDesc env d) $ retain $ tExp env body
 		valuesFun = C.ImplFun enumValuesFun [C.Return $ (C.Arr $ map (C.Ref . (enumItemDesc env)) items)]
