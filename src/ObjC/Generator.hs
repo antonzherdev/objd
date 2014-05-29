@@ -917,17 +917,17 @@ tExp env ee@(D.NonOpt ch e _) = let
 			D.TPClass D.TPMGeneric _ _ -> False
 			_ -> True
 	in 
-		if isElementary tp then 
-			if check then maybeVal (D.exprDataType e, otp) $ C.CCall (C.Ref "nonnil") [tExp env e]
-			else tExpTo env tp e
-		else if D.isTpEnum tp then 
-			if check then case otp of
+		if D.isTpEnum tp then 
+			if check then case D.exprDataType e of
 				D.TPGenericWrap _ _ -> C.Cast (showDataType tp) $ C.Call (C.CCall (C.Ref "nonnil") [tExp env e]) "ordinal" [] []
 				_ -> C.Cast (showDataType tp) $ C.CCall (C.Ref "nonnil") [tExp env e]
 			else C.Cast (showDataType tp) $ tExpTo env tp e
+		else if isElementary tp then 
+			if check then maybeVal (D.exprDataType e, tp) $ C.CCall (C.Ref "nonnil") [tExp env e]
+			else tExpTo env tp e
 		else
 			if check then C.Cast (showDataType tp) $ C.CCall (C.Ref "nonnil") [tExp env e]
-			else tExpTo env tp e
+			else castGeneric e $ tExpTo env tp e
 tExp env (D.Return _ e) = tExp env e
 tExp env (D.Throw e) = C.ExpBraces [C.Throw $ tExp env e]
 tExp _ D.NPE = C.ExpBraces [C.Throw $ C.StringConst "Not null"]
@@ -1120,5 +1120,5 @@ maybeVal (stp, dtp) e = let
 		(TPEnum, TPGen D.TPOption{}) -> e
 		(TPGen D.TPOption{}, TPEnum) -> e
 		(TPEnum, TPGen _) -> enumValue stp e
-		(TPGen _, TPEnum) -> C.Cast (showDataType $ D.unwrapGeneric stp) $ C.Call e "ordinal" [] []
+		(TPGen _, TPEnum) -> C.Cast (showDataType $ D.unwrapGeneric dtp) $ C.Call e "ordinal" [] []
 		_ -> e

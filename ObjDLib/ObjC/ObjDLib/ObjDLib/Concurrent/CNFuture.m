@@ -217,13 +217,13 @@ static CNClassType* _CNFuture_type;
 
 - (BOOL)isSucceeded {
     CNTry* __tmp = [self result];
-    if(__tmp != nil) return [[self result] isSuccess];
+    if(__tmp != nil) return [((CNTry*)([self result])) isSuccess];
     else return NO;
 }
 
 - (BOOL)isFailed {
     CNTry* __tmp = [self result];
-    if(__tmp != nil) return [[self result] isFailure];
+    if(__tmp != nil) return [((CNTry*)([self result])) isFailure];
     else return YES;
 }
 

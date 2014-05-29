@@ -103,7 +103,9 @@ dataType env (D.DataTypeFun (D.DataType "void" _) d) = TPFun [] (dataType env d)
 dataType env (D.DataTypeFun s d) = TPFun [dataType env s] (dataType env d)
 dataType env (D.DataTypeTuple [tp]) = dataType env tp
 dataType env (D.DataTypeTuple tps) = TPTuple $ map (wrapGeneric . dataType env) tps
-dataType env (D.DataTypeOption t) = TPOption False $ (wrapGeneric . dataType env) t
+dataType env (D.DataTypeOption t) = case unwrapGeneric $ dataType env t of
+	tp@(TPClass TPMGeneric _ _) -> wrapGeneric $ TPOption False $ wrapGeneric tp
+	tp -> TPOption False $ wrapGeneric tp 
 	
 getDataType :: Env -> Maybe D.DataType -> Exp -> DataType
 getDataType env tp e = maybe (exprDataType e) (dataType env) tp

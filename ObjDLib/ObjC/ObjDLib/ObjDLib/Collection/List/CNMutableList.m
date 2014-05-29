@@ -54,7 +54,7 @@ static CNClassType* _CNMList_type;
                 CNMListItem* li = [CNMListItem listItemWithData:item];
                 {
                     CNMListItem* __tmp_0ff_3t_1 = ((CNMListItem*)(c)).next;
-                    if(__tmp_0ff_3t_1 != nil) __tmp_0ff_3t_1.prev = li;
+                    if(__tmp_0ff_3t_1 != nil) ((CNMListItem*)(__tmp_0ff_3t_1)).prev = li;
                 }
                 ((CNMListItem*)(c)).next = li;
             } else {
@@ -103,11 +103,11 @@ static CNClassType* _CNMList_type;
         } else {
             {
                 CNMListItem* __tmp_0ff_0 = listItem.prev;
-                if(__tmp_0ff_0 != nil) __tmp_0ff_0.next = listItem.next;
+                if(__tmp_0ff_0 != nil) ((CNMListItem*)(__tmp_0ff_0)).next = listItem.next;
             }
             {
                 CNMListItem* __tmp_0ff_1 = listItem.next;
-                if(__tmp_0ff_1 != nil) __tmp_0ff_1.prev = listItem.prev;
+                if(__tmp_0ff_1 != nil) ((CNMListItem*)(__tmp_0ff_1)).prev = listItem.prev;
             }
         }
     }

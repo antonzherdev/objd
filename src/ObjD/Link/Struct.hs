@@ -488,6 +488,7 @@ isTpClass :: DataType -> Bool
 isTpClass (TPClass TPMClass _ _) = True
 isTpClass _ = False
 isTpEnum :: DataType -> Bool
+isTpEnum (TPGenericWrap _ (TPClass TPMEnum _ _)) = True
 isTpEnum (TPClass TPMEnum _ _) = True
 isTpEnum _ = False
 isTpGeneric :: DataType -> Bool
@@ -525,7 +526,7 @@ option _ TPVoid = TPVoid
 option ch o@(TPOption och tp)
 	| ch == och = o
 	| otherwise = TPOption (och && ch) tp
-option ch (TPGenericWrap w tp) = TPGenericWrap w $ option ch tp
+option ch (TPGenericWrap w tp) = TPGenericWrap w $ unwrapGeneric $ option ch tp
 option ch tp@(TPClass TPMGeneric _ _) = wrapGeneric $ TPOption ch $ wrapGeneric tp
 option ch tp = TPOption ch $ wrapGeneric tp
 
@@ -1062,8 +1063,7 @@ exprDataType (Nop) = TPVoid
 exprDataType (IntConst _ ) = int
 exprDataType (StringConst _ ) = TPString
 exprDataType Nil = TPNil
-exprDataType (NonOpt _ e _) = unoptionHard $ exprDataType e
---exprDataType (NonOpt _ e _) = unwrapGeneric $ unoptionHard $ exprDataType e
+exprDataType (NonOpt _ e _) = unwrapGeneric $ unoptionHard $ exprDataType e
 exprDataType (BoolConst _ ) = TPBool
 exprDataType (FloatConst _) = float
 exprDataType (BoolOp {}) = TPBool

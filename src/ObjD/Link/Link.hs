@@ -584,7 +584,7 @@ linkDef env additionalMods dd@D.Def{D.defMods = mods, D.defName = name, D.defPar
 					b = case tp of
 						Just (D.DataType "void" []) -> expr env''' body
 						_ -> exprToSome env''' body
-					tp' = unblockGenerics $ unwrapGeneric $ getDataType env' tp b
+					tp' = unblockGenerics $ getDataType env' tp b
 					tp'' = mapOverrideType tp'
 					superInitDef :: Maybe Def
 					superInitDef = join $ fmap classInitDef $ superClass (envSelfClass env)
