@@ -435,6 +435,7 @@ stringFormatForType _ = "%@"
 stringExpressionsForTp :: D.DataType -> C.Exp -> [C.Exp]
 stringExpressionsForTp rtp ref = case rtp of
 			D.TPClass D.TPMStruct _ scl -> [C.CCall (C.Ref $ structNameForCalling (D.classNameWithPrefix scl) ++ "Description") [ref]]
+			D.TPClass D.TPMEnum _ _ -> [enumValue rtp ref]
 			D.TPEArr n etp -> concatMap (\j -> stringExpressionsForTp etp $ C.Index ref (C.IntConst j)) [0..n - 1]
 			D.TPNumber False 0 -> [C.ShortCast (C.TPSimple "long" []) ref]
 			D.TPNumber True 0 -> [C.ShortCast (C.TPSimple "unsigned long" []) ref]
@@ -507,6 +508,13 @@ enumItemDesc env D.Def{D.defName = name} = D.classNameWithPrefix (envClass env) 
 
 enumNil :: D.Class -> C.Exp
 enumNil cl = C.Ref $ D.classNameWithPrefix cl ++ "_Nil"
+
+enumValue :: D.DataType -> C.Exp -> C.Exp
+enumValue tp e = C.Index (enumValues tp) e
+		
+enumValues :: D.DataType -> C.Exp
+enumValues tp = C.Ref $ (D.dataTypeClassNameWithPrefix tp) ++ "_Values"
+
 
 nilForType :: D.DataType -> C.Exp
 nilForType (D.TPGenericWrap _ tp) = nilForType tp
@@ -754,7 +762,7 @@ tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars _)
 	| D.DefModApplyLambda `elem` mods = C.CCall (castGeneric l $ tExp env l) ((map snd . tPars env dd) pars) 
 	| D.DefModEnum `elem` mods && name == "ordinal" = tExpTo env ltp l
 	| D.DefModEnum `elem` mods && D.DefModField `elem` mods = C.Dot enumLeft (C.Ref name)
-	| D.DefModEnum `elem` mods = stdCall enumLeft 
+	| D.DefModEnum `elem` mods = stdCall enumLeft
 	| D.DefModField `elem` mods && null pars && 
 		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
 			C.Dot (castGeneric l $ tExpTo env ltp l) (C.Ref name)
@@ -769,9 +777,8 @@ tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars _)
 		tp -> structCall (show tp) (castGeneric l $ tExpTo env ltp l)
 	| otherwise = stdCall (castGeneric l $ tExp env l)
 	where
-		enumLeft = (C.Index (enumValue) (tExpTo env ltp l))
+		enumLeft = enumValue ltp (tExpTo env ltp l)
 		stdCall ll = C.Call ll (funName dd) (tPars env dd pars) []
-		enumValue = C.Ref $ (D.dataTypeClassNameWithPrefix $ D.exprDataType l) ++ "_Values"
 		structCall c self = C.CCall (C.Ref $ structDefName c dd) (self : (map snd . tPars env dd) pars)
 		ltp = D.unwrapGeneric $ D.exprDataType l
 		isStubObject = case ltp of
