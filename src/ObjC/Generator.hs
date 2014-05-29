@@ -398,7 +398,7 @@ genStruct cl =
 			C.implName = wrapName,
 			C.implFields = [C.ImplField "_value" selfTp [] C.Nop],
 			C.implSynthesizes = [C.ImplSynthesize "value" "_value"],
-			C.implFuns = [wrapFunImpl, initWrapFunImpl] ++ maybeToList compareImpl ++ copyImpls,
+			C.implFuns = [wrapFunImpl, initWrapFunImpl, descriptionImpl, equalsImpl, hashImpl] ++ maybeToList compareImpl ++ copyImpls,
 			C.implStaticFields = []
 		}	
 		wrapName = name ++ "Wrap"
@@ -416,7 +416,29 @@ genStruct cl =
 		toEArr D.Def{D.defType = D.TPEArr n _, D.defName = nm}
 			| n > 0 = C.EArr $ map ( C.Index (C.Ref nm) . C.IntConst) [0 .. n - 1]
 		toEArr d = C.Ref . D.defName  $ d
+		callName = structNameForCalling name
+		descriptionImpl = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSString*" []) "description" []) [
+			C.Return $ C.CCall (C.Ref $ callName ++ "Description") [C.Ref "_value"]
+			]
+		equalsImpl = C.ImplFun equalFun $ equalPrelude wrapName True ++ [
+			C.Return $ C.CCall (C.Ref $ callName ++ "IsEqualTo") $ [
+				C.Ref "_value", C.Dot (C.Ref "o") (C.Ref "value")]
+			]
+		hashImpl = C.ImplFun (C.Fun C.InstanceFun (C.TPSimple "NSUInteger" []) "hash" []) [
+			C.Return $ C.CCall (C.Ref $ callName ++ "Hash") [C.Ref "_value"]
+			]
 
+equalFun :: C.Fun
+equalFun = C.Fun C.InstanceFun (C.TPSimple "BOOL" []) "isEqual" [(C.FunPar "" (C.TPSimple "id" []) "other")]
+
+equalPrelude :: String -> Bool -> [C.Stm]
+equalPrelude clsName o = [
+			C.If (C.BoolOp Eq C.Self (C.Ref "other")) [C.Return $ C.BoolConst True] [],
+			C.If (C.BoolOp Or (C.Not $ C.Ref "other") (C.Not equalClass)) [C.Return $ C.BoolConst False] []
+			] ++ [C.Var selfTp "o" (C.Cast selfTp (C.Ref "other")) [] | o]
+	where
+		selfTp = (C.TPSimple (clsName ++ "*") []) 
+		equalClass = C.Call (C.Call C.Self "class" [] []) "isEqual" [("", C.Call (C.Ref "other") "class" [] [])] []
 
 
 stringFormatForType :: D.DataType -> String
