@@ -19,6 +19,10 @@
     return [NSDictionary type];
 }
 
++ (id <CNImMap>)imHashMap {
+    return [NSDictionary dictionary];
+}
+
 - (NSDictionary *)dictionaryByAddingValue:(id)value forKey:(id)key {
     NSMutableDictionary * ret = [NSMutableDictionary dictionaryWithDictionary:self];
     [ret setObject:wrapNil(value) forKey:wrapNil(key)];

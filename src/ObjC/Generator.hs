@@ -212,6 +212,7 @@ stmToImpl cl =
 
 fieldName :: Env -> D.Def -> String
 fieldName env def 
+	| D.DefModEnumItem `elem` D.defMods def =  D.classNameWithPrefix (envClass env) ++ "_" ++ D.defName def
 	| D.DefModStatic `elem` D.defMods def =  staticName env $ D.defName def
 	| otherwise = '_' : D.defName def
 
@@ -818,7 +819,7 @@ tExp env (D.Call d@D.Def{D.defName = name, D.defMods = mods, D.defType = tp} _ p
 	| otherwise = C.CCall (C.Ref name) (map snd . tPars env d $ pars)
 tExp env (D.If cond t f) = C.InlineIf (tExpTo env D.TPBool cond) (tExp env t) (tExp env f)
 tExp env (D.Index e i) = case D.exprDataType e of
-	D.TPObject D.TPMEnum _ -> C.Index (C.Call (tExp env e)  "values" [] []) (tExp env i)
+	D.TPObject D.TPMEnum cl -> C.Cast (showDataType (D.TPClass D.TPMEnum [] cl)) $ C.MathOp Plus (tExp env i) (C.IntConst 1)
 	D.TPMap k _ -> C.Call (tExp env e) "apply" [("key", tExpTo env k i)] []
 	D.TPArr _ _ -> C.Call (tExp env e) "apply" [("index", tExpTo env D.uint i)] []
 	_ -> C.Index (tExp env e) (tExp env i)

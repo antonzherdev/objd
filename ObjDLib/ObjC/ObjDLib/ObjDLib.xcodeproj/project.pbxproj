@@ -124,6 +124,7 @@
 		6F3DFD74A459D67FCA0514AD /* CNConcurrentQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFD821169CC5261983566 /* CNConcurrentQueue.m */; };
 		6F3DFD8E6D7F09774DD078D6 /* CNChainTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF6B03C9AB6933D025F36 /* CNChainTest.m */; };
 		6F3DFDB32A576BCFA0F600F3 /* CNFilterLink.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFB309E8E89278511D174 /* CNFilterLink.m */; };
+		6F3DFDC329FE106651D9AEE3 /* version.txt in Resources */ = {isa = PBXBuildFile; fileRef = 6F3DFA607089B234AC68E06C /* version.txt */; };
 		6F3DFDC46B6C0E247CEE66D2 /* CNQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF1365A6FB6414192DC83 /* CNQueue.m */; };
 		6F3DFDEA1E173E7849E63F13 /* CNObserverTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF99C0D43E4F76F4AD3A6 /* CNObserverTest.m */; };
 		6F3DFDF2115629FA51333B77 /* CNFutureEnd.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF3E00F6AC3DD235BDF3F /* CNFutureEnd.m */; };
@@ -277,6 +278,7 @@
 		6F3DFA1FE290AF9334F102A1 /* CNCombinationsLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNCombinationsLink.h; sourceTree = "<group>"; };
 		6F3DFA204F95F3F86FCB54CF /* NSArray+CNChain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSArray+CNChain.h"; sourceTree = "<group>"; };
 		6F3DFA326F9189CF6D21F863 /* CNObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNObject.h; sourceTree = "<group>"; };
+		6F3DFA607089B234AC68E06C /* version.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = version.txt; sourceTree = "<group>"; };
 		6F3DFA74B9C39BAC30D18FC4 /* CNDispatchQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNDispatchQueue.m; sourceTree = "<group>"; };
 		6F3DFA763BE3593AE407B2B3 /* TreeMap.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = TreeMap.od; sourceTree = "<group>"; };
 		6F3DFA8762D6C6F882EFAC02 /* TestCase.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = TestCase.od; sourceTree = "<group>"; };
@@ -426,6 +428,7 @@
 				6F3DF543F45A5E187B081B5C /* Actor */,
 				6F3DF62975282E2CFE6B0949 /* React */,
 				6F3DFA9A9AD352C901EC0014 /* Date */,
+				6F3DFA607089B234AC68E06C /* version.txt */,
 			);
 			path = ObjDLib;
 			sourceTree = "<group>";
@@ -840,6 +843,7 @@
 				6F3DFB5C057AE98B11878137 /* FutureTest.od in Resources */,
 				6F3DF48CEA483A5D35C6FE26 /* Lazy.od in Resources */,
 				6F3DF25A2ECCA9C4D060F750 /* SourceLink.od in Resources */,
+				6F3DFDC329FE106651D9AEE3 /* version.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
