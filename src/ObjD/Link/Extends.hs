@@ -109,8 +109,14 @@ commonSuperDataType env a b
 			removeCommonCommons (x:xs)
 				| any (\xx -> isInstanceOfTp env xx x) xs = removeCommonCommons xs
 				| otherwise = x:removeCommonCommons xs
-		in removeCommonCommons commons
+		in map (isolateTraitImpl env) $ removeCommonCommons commons
 
+isolateTraitImpl :: Env -> DataType -> DataType
+isolateTraitImpl env tp@(TPClass _ _ cl)
+	| ClassModTraitImpl `elem` classMods cl = case classExtends cl of
+		Extends _ [r] -> superDataType env tp r
+		_ -> tp
+isolateTraitImpl _ tp = tp	
 
 firstCommonSuperDataType :: Env -> DataType -> DataType -> DataType
 firstCommonSuperDataType env a b = case commonSuperDataType env a b of
