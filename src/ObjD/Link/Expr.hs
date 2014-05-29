@@ -76,6 +76,8 @@ expr env (D.Braces es) = Braces $ bracesRec env 0 es
 						isSet ee@(MinusMinus (Call dd _ _ _)) = if d == dd then Just ee else Nothing
 						isSet _ = Nothing
 						d' = d{defMods = DefModChangedInLambda :defMods d}
+						ch (Dot l r@(Call _ _ [] [])) = Just $ Dot (mapExp ch l) r
+						ch (Arrow l r@(Call _ _ [] [])) = Just $ Arrow (mapExp ch l) r
 						ch (Call dd t [] [])
 							| dd == d = Just $ Call d' t [] []
 						ch _ = Nothing

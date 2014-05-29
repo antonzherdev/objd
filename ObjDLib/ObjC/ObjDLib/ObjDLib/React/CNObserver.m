@@ -70,7 +70,7 @@
 
 - (void)notifyValue:(id)value {
     [((NSArray*)([__observers value])) forEach:^void(CNWeak* o) {
-        CNObserver* v = [o value];
+        CNObserver* v = o.value;
         {
             void(^__nd)(id) = ((CNObserver*)(v)).f;
             if(__nd != nil) __nd(value);

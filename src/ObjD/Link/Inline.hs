@@ -56,26 +56,28 @@ inlineCall env e = let
 	
 	repgens = replaceGenerics False gens . unblockGenerics
 
-	replacedExp = mapExp rep $ defBody def
-	rep :: Exp -> Maybe Exp
-	rep (Dot (Call d tp [] _) (Call Def{defMods = mbLamdaMods} _ lambdaCallPars _)) 
-		| DefModApplyLambda `elem` mbLamdaMods = fmap (unwrapLambda (map (mapExp rep . snd) lambdaCallPars)) $ findRef d tp
-	rep (LambdaCall (Call d tp [] _)) = fmap (unwrapLambda []) $ findRef d tp
-	rep (Call d tp [] _) 
+	replacedExp = mapExp (rep True) $ defBody def
+	rep :: Bool -> Exp -> Maybe Exp
+	rep r (Dot (Call d tp [] _) (Call Def{defMods = mbLamdaMods} _ lambdaCallPars _)) 
+		| DefModApplyLambda `elem` mbLamdaMods = fmap (unwrapLambda (map (mapExp (rep r) . snd) lambdaCallPars)) $ findRef d tp
+	rep _ (LambdaCall (Call d tp [] _)) = fmap (unwrapLambda []) $ findRef d tp
+	rep True (Dot l r@(Call _ _ [] _)) = Just $ Dot (mapExp (rep True) l) (mapExp (rep False) r)
+	rep True (Arrow l r@(Call _ _ [] _)) = Just $ Arrow (mapExp (rep True) l) (mapExp (rep False) r)
+	rep True (Call d tp [] _) 
 		| DefModField `elem` defMods d || DefModLocal `elem` defMods d = findRef d tp
-	rep (Call d tp cpars cgens) =
+	rep r (Call d tp cpars cgens) =
 		Just $ Call d 
 			(repgens tp) 
-			(map (second $ mapExp rep) cpars)
+			(map (second $ mapExp (rep r)) cpars)
 			(map repgens cgens)
-	rep (Val b dd) = 
-		fmap (\d -> Val b $ d{defBody = mapExp rep (defBody d)} ) $ lookup dd mapDeclaredValsGenerics
-	rep (Self _) = lookup (fst selfPar) refs
-	rep (Is tp) = Just $ Is $ repgens tp
-	rep (As tp) = Just $ As $ repgens tp
-	rep (CastDot tp) = Just $ CastDot $ repgens tp
-	rep (Cast tp ee) = Just $ Cast (repgens tp) (mapExp rep ee)
-	rep _ = Nothing
+	rep r (Val b dd) = 
+		fmap (\d -> Val b $ d{defBody = mapExp (rep r) (defBody d)} ) $ lookup dd mapDeclaredValsGenerics
+	rep _ (Self _) = lookup (fst selfPar) refs
+	rep _ (Is tp) = Just $ Is $ repgens tp
+	rep _ (As tp) = Just $ As $ repgens tp
+	rep _ (CastDot tp) = Just $ CastDot $ repgens tp
+	rep r (Cast tp ee) = Just $ Cast (repgens tp) (mapExp (rep r) ee)
+	rep _ _ = Nothing
 
 	findRef :: Def -> DataType -> Maybe Exp
 	findRef d tp = fmap checkOpt $ lookup d refs
@@ -98,6 +100,8 @@ inlineCall env e = let
 		ee' = case elemPars of
 			[] -> ee
 			_ -> mapExp replaceOnEP ee
+		replaceOnEP (Dot l r@(Call _ _ [] [])) = Just $ Dot (mapExp replaceOnEP l) r
+		replaceOnEP (Arrow l r@(Call _ _ [] [])) = Just $ Arrow (mapExp replaceOnEP l) r
 		replaceOnEP (Call d _ [] _) = lookup (defName d) elemPars
 		replaceOnEP _ = Nothing
 		in case nonelemPars of

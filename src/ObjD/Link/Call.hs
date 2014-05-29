@@ -14,6 +14,7 @@ import           Control.Monad.State
 import 			 Control.Arrow
 import qualified ObjD.Struct         as D
 import qualified Data.Map            as M
+-- import Debug.Trace
 
 
 detailedReferenceError :: Bool
@@ -82,7 +83,8 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 					| otherwise = Dot (self env) c
 				resolveDef _ _ c = c
 
-
+		{-tr r | trace ("tr: " ++ maybe "_" (className . dataTypeClass env) strictClass ++ "." ++ show cll ++ " = " ++ show r) False = undefined
+		tr r = r-}
 		{-checkedCall = case call'' of
 			(Call d tp cpars) ->
 				Call d tp (map (checkPar d) cpars)
