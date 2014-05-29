@@ -22,6 +22,7 @@
 #import "CNLazy.h"
 #import "CNTry.h"
 #import "CNTuple.h"
+#import "CNPlatform.h"
 
 #import "NSArray+CNChain.h"
 #import "NSMutableDictionary+CNChain.h"

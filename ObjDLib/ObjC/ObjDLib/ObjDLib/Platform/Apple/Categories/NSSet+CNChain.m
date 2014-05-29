@@ -15,6 +15,9 @@
     return [NSSet type];
 }
 
++ (id <CNSet>)imHashSet {
+    return [NSSet set];
+}
 
 - (id <CNIterator>)iterator {
     return [CNEnumerator enumeratorWithEnumerator:[self objectEnumerator]];
