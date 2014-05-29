@@ -2,7 +2,7 @@ package objd.collection;
 
 import objd.lang.*;
 
-public final class IndexFunSeq<T> extends ImSeq_impl<T> {
+public class IndexFunSeq<T> extends ImSeq_impl<T> {
     public final int count;
     @Override
     public int count() {
@@ -27,21 +27,5 @@ public final class IndexFunSeq<T> extends ImSeq_impl<T> {
     }
     public String toString() {
         return String.format("IndexFunSeq(%d)", this.count);
-    }
-    public boolean equals(final Object to) {
-        if(this == to) {
-            return true;
-        }
-        if(to == null || !(to instanceof IndexFunSeq)) {
-            return false;
-        }
-        final IndexFunSeq<T> o = ((IndexFunSeq<T>)(((IndexFunSeq)(to))));
-        return this.count == o.count && this.f.equals(o.f);
-    }
-    public int hashCode() {
-        int hash = 0;
-        hash = hash * 31 + this.count;
-        hash = hash * 31 + this.f.hashCode();
-        return hash;
     }
 }
