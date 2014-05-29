@@ -104,8 +104,6 @@
 - (id)applyIndex:(NSUInteger)index;
 - (id<CNIterator>)iterator;
 - (NSString*)description;
-- (BOOL)isEqual:(id)to;
-- (NSUInteger)hash;
 + (CNClassType*)type;
 @end
 

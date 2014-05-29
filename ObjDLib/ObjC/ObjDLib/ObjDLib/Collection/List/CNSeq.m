@@ -327,20 +327,6 @@ static CNClassType* _CNIndexFunSeq_type;
     return [NSString stringWithFormat:@"IndexFunSeq(%lu)", (unsigned long)_count];
 }
 
-- (BOOL)isEqual:(id)to {
-    if(self == to) return YES;
-    if(to == nil || !([to isKindOfClass:[CNIndexFunSeq class]])) return NO;
-    CNIndexFunSeq* o = ((CNIndexFunSeq*)(to));
-    return _count == o.count && [_f isEqual:o.f];
-}
-
-- (NSUInteger)hash {
-    NSUInteger hash = 0;
-    hash = hash * 31 + _count;
-    hash = hash * 31 + [_f hash];
-    return hash;
-}
-
 - (CNClassType*)type {
     return [CNIndexFunSeq type];
 }
