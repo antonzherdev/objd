@@ -11,7 +11,7 @@ public abstract class Iterable_impl<T> extends Traversable_impl<T> implements It
         if(this.isEmpty()) {
             return null;
         } else {
-            return this.iterator().next();
+            return ((T)(this.iterator().next()));
         }
     }
     @Override

@@ -14,7 +14,7 @@ public final class IndexFunSeq<T> extends ImSeq_impl<T> {
         if(index >= this.count) {
             return null;
         } else {
-            return this.f.apply(index);
+            return ((T)(this.f.apply(index)));
         }
     }
     @Override
@@ -26,7 +26,7 @@ public final class IndexFunSeq<T> extends ImSeq_impl<T> {
         this.f = f;
     }
     public String toString() {
-        return String.format("IndexFunSeq(%lu)", this.count);
+        return String.format("IndexFunSeq(%d)", this.count);
     }
     public boolean equals(final Object to) {
         if(this == to) {

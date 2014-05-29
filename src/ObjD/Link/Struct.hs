@@ -505,14 +505,14 @@ isTpBaseClass (TPClass TPMClass _ Class{className = "PObject"}) = True
 isTpBaseClass _ = False
 
 unoptionIfChecked :: DataType -> DataType
-unoptionIfChecked (TPGenericWrap _ (TPOption True d)) = d
-unoptionIfChecked (TPOption True d) = d
+unoptionIfChecked (TPGenericWrap w (TPOption True d)) = TPGenericWrap w (unwrapGeneric d)
+unoptionIfChecked (TPOption True d) = unwrapGeneric d
 unoptionIfChecked d = d
 
 unoptionHard :: DataType -> DataType
 unoptionHard TPVoid = TPVoid
-unoptionHard (TPOption _ o) = o
-unoptionHard (TPGenericWrap _ (TPOption _ o)) = o
+unoptionHard (TPOption _ o) = unwrapGeneric o
+unoptionHard (TPGenericWrap w (TPOption _ o)) = TPGenericWrap w (unwrapGeneric o)
 unoptionHard tp = TPUnknown $ show tp ++ " is not option"
 
 unoption :: DataType -> DataType
@@ -526,6 +526,7 @@ option ch o@(TPOption och tp)
 	| ch == och = o
 	| otherwise = TPOption (och && ch) tp
 option ch (TPGenericWrap w tp) = TPGenericWrap w $ option ch tp
+option ch tp@(TPClass TPMGeneric _ _) = wrapGeneric $ TPOption ch $ wrapGeneric tp
 option ch tp = TPOption ch $ wrapGeneric tp
 
 forDataType :: MonadPlus m => (DataType -> m a) -> DataType -> m a
@@ -1061,7 +1062,8 @@ exprDataType (Nop) = TPVoid
 exprDataType (IntConst _ ) = int
 exprDataType (StringConst _ ) = TPString
 exprDataType Nil = TPNil
-exprDataType (NonOpt _ e _) = unwrapGeneric $ unoptionHard $ exprDataType e
+exprDataType (NonOpt _ e _) = unoptionHard $ exprDataType e
+--exprDataType (NonOpt _ e _) = unwrapGeneric $ unoptionHard $ exprDataType e
 exprDataType (BoolConst _ ) = TPBool
 exprDataType (FloatConst _) = float
 exprDataType (BoolOp {}) = TPBool

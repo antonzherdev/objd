@@ -49,7 +49,7 @@ static CNClassType* _CNPArray_type;
 
 - (id)applyIndex:(NSUInteger)index {
     if(index >= _count) return nil;
-    else return _wrap(_bytes, index);
+    else return ((id)(_wrap(_bytes, index)));
 }
 
 - (void)forRefEach:(void(^)(void*))each {
@@ -108,7 +108,7 @@ static CNClassType* _CNPArrayIterator_type;
 }
 
 - (id)next {
-    id ret = ((id)([_array applyIndex:((NSUInteger)(_i))]));
+    id ret = [_array applyIndex:((NSUInteger)(_i))];
     _i++;
     return ret;
 }

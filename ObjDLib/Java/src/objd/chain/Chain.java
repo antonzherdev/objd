@@ -448,7 +448,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             if(__il_b.value == null) {
                 throw new NullPointerException();
             }
-            return ((Seq<A>)(((Seq)(__il_b.value.build()))));
+            return ((Seq<A>)(((Seq)(((Seq<A>)(((Seq)(__il_b.value.build()))))))));
         } else {
             return ((Seq<A>)(((Seq)(__il_r.value))));
         }
@@ -530,7 +530,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             if(__il_b.value == null) {
                 throw new NullPointerException();
             }
-            return ((ImList<A>)(((ImList)(__il_b.value.build()))));
+            return ((ImList<A>)(((ImList)(((ImList<A>)(((ImList)(__il_b.value.build()))))))));
         } else {
             return ((ImList<A>)(((ImList)(__il_r.value))));
         }
@@ -569,7 +569,7 @@ public class Chain<A> extends ImTraversable_impl<A> {
             if(__il_b.value == null) {
                 throw new NullPointerException();
             }
-            return ((Set<A>)(((Set)(__il_b.value.build()))));
+            return ((Set<A>)(((Set)(((Set<A>)(((Set)(__il_b.value.build()))))))));
         } else {
             return ((Set<A>)(((Set)(__il_r.value))));
         }

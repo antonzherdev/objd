@@ -910,18 +910,24 @@ tExp _ (D.Braces []) = C.Nop
 tExp env (D.Braces [x]) = tExp env x
 tExp env (D.Braces stms) = C.ExpBraces (concatMap (translate env) (init stms) ++ [C.Stm (tExp env $ last stms)])
 tExp env ee@(D.NonOpt ch e _) = let 
-		tp = D.unwrapGeneric $ D.exprDataType ee
+		otp = D.exprDataType ee
+		tp = D.unwrapGeneric otp
 		check = ch && case tp of
 			D.TPVoid -> False
 			D.TPClass D.TPMGeneric _ _ -> False
 			_ -> True
 	in 
 		if isElementary tp then 
-			if check then maybeVal (D.exprDataType e, tp) $ C.CCall (C.Ref "nonnil") [tExp env e]
+			if check then maybeVal (D.exprDataType e, otp) $ C.CCall (C.Ref "nonnil") [tExp env e]
 			else tExpTo env tp e
+		else if D.isTpEnum tp then 
+			if check then case otp of
+				D.TPGenericWrap _ _ -> C.Cast (showDataType tp) $ C.Call (C.CCall (C.Ref "nonnil") [tExp env e]) "ordinal" [] []
+				_ -> C.Cast (showDataType tp) $ C.CCall (C.Ref "nonnil") [tExp env e]
+			else C.Cast (showDataType tp) $ tExpTo env tp e
 		else
 			if check then C.Cast (showDataType tp) $ C.CCall (C.Ref "nonnil") [tExp env e]
-			else C.Cast (showDataType tp) $ tExpTo env tp e
+			else tExpTo env tp e
 tExp env (D.Return _ e) = tExp env e
 tExp env (D.Throw e) = C.ExpBraces [C.Throw $ tExp env e]
 tExp _ D.NPE = C.ExpBraces [C.Throw $ C.StringConst "Not null"]
@@ -1086,7 +1092,6 @@ data MaybeValTP = TPGen D.DataType | TPNum | TPStruct | TPNoMatter | TPBool | TP
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp
 maybeVal (stp, dtp) e = let 
 	tp t@D.TPOption{} = TPGen t
-	tp (D.TPGenericWrap _ t@D.TPOption{}) = TPGen t
 	tp t@D.TPGenericWrap{} = TPGen t
 	tp t@(D.TPClass D.TPMGeneric _ _) = TPGen t
 	tp (D.TPClass D.TPMStruct _ _) = TPStruct

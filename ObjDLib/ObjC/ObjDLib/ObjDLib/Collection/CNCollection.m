@@ -331,7 +331,7 @@
 
 - (id)head {
     if([self isEmpty]) return nil;
-    else return [[self iterator] next];
+    else return ((id)([[self iterator] next]));
 }
 
 - (void)forEach:(void(^)(id))each {

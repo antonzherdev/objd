@@ -151,7 +151,7 @@ static CNClassType* _CNNeighboursLink_type;
         }
     } end:((_ring) ? ^CNGoR(CNGoR result) {
         if(result == CNGo_Break || first == nil) return [yield endYieldWithResult:result];
-        else return [yield endYieldWithResult:[yield yieldItem:tuple(((id)(prev)), ((id)(first)))]];
+        else return [yield endYieldWithResult:[yield yieldItem:tuple(prev, first)]];
     } : nil)];
 }
 

@@ -37,6 +37,6 @@ public class TopLink<T> extends ChainLink_impl<T, T> {
         this.number = number;
     }
     public String toString() {
-        return String.format("TopLink(%lu)", this.number);
+        return String.format("TopLink(%d)", this.number);
     }
 }

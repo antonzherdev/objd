@@ -292,7 +292,7 @@ static CNClassType* _CNListIterator_type;
 - (id)next {
     id ret = [_list head];
     _list = [_list tail];
-    return ((id)(ret));
+    return ret;
 }
 
 - (NSString*)description {

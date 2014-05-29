@@ -490,12 +490,12 @@ cast tp@(J.TPRef _ r) e
 cast tp e = J.Cast tp e
 
 stringFormatForType :: D.DataType -> String
-stringFormatForType (D.TPNumber False 8) = "%ld"
-stringFormatForType (D.TPNumber True 8) = "%lu"
-stringFormatForType (D.TPNumber False 0) = "%ld"
-stringFormatForType (D.TPNumber True 0) = "%lu"
+stringFormatForType (D.TPNumber False 8) = "%d"
+stringFormatForType (D.TPNumber True 8) = "%d"
+stringFormatForType (D.TPNumber False 0) = "%d"
+stringFormatForType (D.TPNumber True 0) = "%d"
 stringFormatForType (D.TPNumber False _)= "%d"
-stringFormatForType (D.TPNumber True _)= "%u"
+stringFormatForType (D.TPNumber True _)= "%d"
 stringFormatForType (D.TPChar)= "%d"
 stringFormatForType (D.TPFloatNumber _) = "%f"
 stringFormatForType D.TPBool = "%d"

@@ -31,11 +31,11 @@ static CNClassType* _CNLazy_type;
 
 - (id)get {
     if(__calculated) {
-        return ((id)(__value));
+        return __value;
     } else {
         __value = _f();
         __calculated = YES;
-        return ((id)(__value));
+        return __value;
     }
 }
 
@@ -79,11 +79,11 @@ static CNClassType* _CNCache_type;
 
 - (id)applyX:(id)x {
     if(__lastX != nil && [__lastX isEqual:x]) {
-        return ((id)(__lastF));
+        return __lastF;
     } else {
         __lastX = x;
         __lastF = _f(x);
-        return ((id)(__lastF));
+        return __lastF;
     }
 }
 

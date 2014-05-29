@@ -150,7 +150,7 @@
 - (id)applyKey:(id)key orUpdateWith:(id(^)())orUpdateWith {
     id __tmp = [self applyKey:key];
     if(__tmp != nil) {
-        return ((id)(__tmp));
+        return __tmp;
     } else {
         id init = orUpdateWith();
         [self setKey:key value:init];
@@ -247,7 +247,7 @@ static CNClassType* _CNImMapDefault_type;
 
 - (id)applyKey:(id)key {
     id __tmp = [_map applyKey:key];
-    if(__tmp != nil) return ((id)(__tmp));
+    if(__tmp != nil) return __tmp;
     else return _defaultFunc(key);
 }
 

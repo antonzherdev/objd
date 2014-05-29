@@ -67,7 +67,7 @@ static CNClassType* _CNActor_type;
 - (CNFuture*)onSuccessFuture:(CNFuture*)future f:(id(^)(id))f {
     __block id res;
     CNActorFuture* fut = [CNActorFuture actorFutureWithReceiver:self prompt:NO f:^id() {
-        return f(((id)(res)));
+        return f(res);
     }];
     [future onCompleteF:^void(CNTry* tr) {
         if([tr isFailure]) {
@@ -83,7 +83,7 @@ static CNClassType* _CNActor_type;
 - (CNFuture*)lockAndOnSuccessFuture:(CNFuture*)future f:(id(^)(id))f {
     __block id res;
     CNActorFuture* fut = [CNActorFuture actorFutureWithReceiver:self prompt:NO f:^id() {
-        return f(((id)(res)));
+        return f(res);
     }];
     [fut lock];
     [future onCompleteF:^void(CNTry* tr) {

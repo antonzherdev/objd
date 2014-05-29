@@ -316,7 +316,7 @@ static CNClassType* _CNIndexFunSeq_type;
 
 - (id)applyIndex:(NSUInteger)index {
     if(index >= _count) return nil;
-    else return _f(index);
+    else return ((id)(_f(index)));
 }
 
 - (id<CNIterator>)iterator {

@@ -328,7 +328,7 @@ static CNClassType* _CNChain_type;
         if(max == nil || [max compareTo:item] < 0) max = item;
     }];
     if(min == nil) return nil;
-    else return tuple(min, ((id)(max)));
+    else return tuple(min, max);
 }
 
 - (id)min {
@@ -393,7 +393,7 @@ static CNClassType* _CNChain_type;
             return [yield stdYieldAllItems:all];
         }
     }]];
-    if(__il_r == nil) return [((id<CNBuilder>)(nonnil(__il_b))) build];
+    if(__il_r == nil) return ((id<CNSeq>)([((id<CNBuilder>)(nonnil(__il_b))) build]));
     else return __il_r;
 }
 
@@ -443,7 +443,7 @@ static CNClassType* _CNChain_type;
             return [yield stdYieldAllItems:all];
         }
     }]];
-    if(__il_r == nil) return [((id<CNBuilder>)(nonnil(__il_b))) build];
+    if(__il_r == nil) return ((CNImList*)([((id<CNBuilder>)(nonnil(__il_b))) build]));
     else return __il_r;
 }
 
@@ -467,7 +467,7 @@ static CNClassType* _CNChain_type;
             return [yield stdYieldAllItems:all];
         }
     }]];
-    if(__il_r == nil) return [((id<CNBuilder>)(nonnil(__il_b))) build];
+    if(__il_r == nil) return ((id<CNSet>)([((id<CNBuilder>)(nonnil(__il_b))) build]));
     else return __il_r;
 }
 

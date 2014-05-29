@@ -115,11 +115,11 @@ static CNClassType* _CNYield_type;
 }
 
 + (CNYield*)decorateBase:(CNYield*)base begin:(CNGoR(^)(NSUInteger))begin yield:(CNGoR(^)(id))yield end:(CNGoR(^)(CNGoR))end all:(CNGoR(^)(CNYield*, id<CNTraversable>))all {
-    return [CNYield yieldWithBegin:((begin != nil) ? ((CNGoR(^)(NSUInteger))(begin)) : ^CNGoR(NSUInteger size) {
+    return [CNYield yieldWithBegin:((begin != nil) ? begin : ^CNGoR(NSUInteger size) {
         return [base beginYieldWithSize:size];
-    }) yield:((yield != nil) ? ((CNGoR(^)(id))(yield)) : ^CNGoR(id item) {
+    }) yield:((yield != nil) ? yield : ^CNGoR(id item) {
         return [base yieldItem:((id)(item))];
-    }) end:((end != nil) ? ((CNGoR(^)(CNGoR))(end)) : ^CNGoR(CNGoR result) {
+    }) end:((end != nil) ? end : ^CNGoR(CNGoR result) {
         return [base endYieldWithResult:result];
     }) all:all];
 }

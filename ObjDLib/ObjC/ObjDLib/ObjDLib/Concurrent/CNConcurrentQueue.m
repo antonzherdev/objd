@@ -110,7 +110,7 @@ static CNClassType* _CNConcurrentQueue_type;
         CNConcurrentQueueNode* newHead = __head.next;
         if(newHead != nil) {
             id item = ((CNConcurrentQueueNode*)(newHead)).item;
-            if(when(((id)(item)))) {
+            if(when(item)) {
                 ((CNConcurrentQueueNode*)(newHead)).item = nil;
                 __head = newHead;
                 [__count decrementAndGet];

@@ -48,7 +48,7 @@ public final class Range extends ImSeq_impl<Integer> {
         this.count = ((step > 0) ? (((start <= end) ? (((int)((end - start) / step + 1))) : (((int)(0))))) : (((step < 0) ? (((start >= end) ? (((int)((end - start) / step + 1))) : (((int)(0))))) : (((int)(1))))));
     }
     public String toString() {
-        return String.format("Range(%ld, %ld, %ld)", this.start, this.end, this.step);
+        return String.format("Range(%d, %d, %d)", this.start, this.end, this.step);
     }
     public boolean equals(final Object to) {
         if(this == to) {
