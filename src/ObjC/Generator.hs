@@ -434,7 +434,7 @@ stringFormatForType _ = "%@"
 
 stringExpressionsForTp :: D.DataType -> C.Exp -> [C.Exp]
 stringExpressionsForTp rtp ref = case rtp of
-			D.TPClass D.TPMStruct _ scl -> [C.CCall (C.Ref $ D.classNameWithPrefix scl ++ "Description") [ref]]
+			D.TPClass D.TPMStruct _ scl -> [C.CCall (C.Ref $ structNameForCalling (D.classNameWithPrefix scl) ++ "Description") [ref]]
 			D.TPEArr n etp -> concatMap (\j -> stringExpressionsForTp etp $ C.Index ref (C.IntConst j)) [0..n - 1]
 			D.TPNumber False 0 -> [C.ShortCast (C.TPSimple "long" []) ref]
 			D.TPNumber True 0 -> [C.ShortCast (C.TPSimple "unsigned long" []) ref]
@@ -442,12 +442,13 @@ stringExpressionsForTp rtp ref = case rtp of
 							
 
 structDefName :: String -> D.Def -> String
-structDefName sn D.Def{D.defName = dn, D.defPars = pars} = lowFirst sn ++ cap dn ++ (strs "" . map (cap . D.defName)) pars
-	where 
-		lowFirst (x1:x2:xs)
-			| isUpper x1 && isUpper x2 = toLower x1 : lowFirst (x2:xs)
-			| otherwise = x1:x2:xs
-		lowFirst x = x
+structDefName sn D.Def{D.defName = dn, D.defPars = pars} = structNameForCalling sn ++ cap dn ++ (strs "" . map (cap . D.defName)) pars
+
+structNameForCalling :: String -> String 
+structNameForCalling (x1:x2:xs)
+	| isUpper x1 && isUpper x2 = toLower x1 : structNameForCalling (x2:xs)
+	| otherwise = x1:x2:xs
+structNameForCalling x = x
 {- Enum -}
 
 enumValuesFun :: C.Fun
@@ -751,6 +752,7 @@ tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars _)
 		if D.DefModField `elem` mods then C.Ref name
 		else C.CCall (C.Ref $ name) ((map snd . tPars env dd) pars)
 	| D.DefModApplyLambda `elem` mods = C.CCall (castGeneric l $ tExp env l) ((map snd . tPars env dd) pars) 
+	| D.DefModEnum `elem` mods && name == "ordinal" = tExpTo env ltp l
 	| D.DefModEnum `elem` mods && D.DefModField `elem` mods = C.Dot enumLeft (C.Ref name)
 	| D.DefModEnum `elem` mods = stdCall enumLeft 
 	| D.DefModField `elem` mods && null pars && 

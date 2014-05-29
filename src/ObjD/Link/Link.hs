@@ -199,7 +199,7 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 			_ -> False
 		isStaticDecl d = isObject || D.isStatic d
 		additionalMods = [DefModStruct | selfIsStruct] ++ [DefModStatic | isObject] 
-			++ [DefModStub | D.ClassModStub `elem` D.classMods cl] ++ [DefModEnum | _isEnum]
+			++ [DefModStub | D.ClassModStub `elem` D.classMods cl] ++ [DefModEnum | _isEnum || D.className cl == "Enum"]
 		fields :: [Def]
 		fields =  concatMap (linkField staticEnv additionalMods) (filter (isStaticDecl) decls)  ++
 			concatMap (linkField (envAddVals (map fst constrPars) env) additionalMods) (filter (not . isStaticDecl) decls)
