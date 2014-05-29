@@ -9,16 +9,16 @@
 #import <Foundation/Foundation.h>
 
 
-@interface OSBundle : NSObject
+@interface CNBundle : NSObject
 + (NSString *)readToStringResource:(NSString *)resource;
 
 + (NSString *)fileNameForResource:(NSString *)resource;
 @end
 
-@interface OSDirectory : NSObject
+@interface CNDirectory : NSObject
 + (NSString*) sandbox;
 @end
 
-@interface OSLocale : NSObject
+@interface CNLocale : NSObject
 + (NSArray*) preferredLanguages;
 @end

@@ -9,11 +9,11 @@
 #import "CNPlatform.h"
 
 
-@implementation OSBundle {
+@implementation CNBundle {
 
 }
 + (NSString *)readToStringResource:(NSString *)resource {
-    NSString* file = [OSBundle fileNameForResource:resource];
+    NSString* file = [CNBundle fileNameForResource:resource];
     NSError* error;
     NSString *string = [NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:&error];
     if(!string) {
@@ -27,14 +27,14 @@
 }
 @end
 
-@implementation OSDirectory
+@implementation CNDirectory
 + (NSString *)sandbox {
     return NSHomeDirectory();
 }
 @end
 
 
-@implementation OSLocale
+@implementation CNLocale
 + (NSArray *)preferredLanguages {
     return [NSLocale preferredLanguages];
 }
