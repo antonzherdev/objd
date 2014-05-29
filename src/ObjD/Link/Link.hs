@@ -256,9 +256,13 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 		needDescription = case cl of
 			D.Class{} -> (not $ any ( ("description" == ). defName) defs)
 		needHash = case cl of
-			D.Class{} -> D.ClassModCase `elem` D.classMods cl && (not $ any ( ("hash" == ). defName) defs)
+			D.Class{} -> (D.ClassModCase `elem` D.classMods cl || D.ClassModStruct `elem` D.classMods cl)
+				 && (not $ any ( ("hash" == ). defName) defs)
 		needEquals = case cl of
-			D.Class{} -> D.ClassModCase `elem` D.classMods cl || any ( ("isEqual" == ). defName) defs
+			D.Class{} -> 
+				D.ClassModCase `elem` D.classMods cl 
+				|| (D.ClassModStruct `elem` D.classMods cl && not (any ( ("isEqual" == ). defName) defs))
+				|| (D.ClassModStruct `notElem` D.classMods cl && any ( ("isEqual" == ). defName) defs)
 			_ -> False
 		reloadedEquals = filter ( ("isEqual" == ). defName) defs
 		equalFields = 
@@ -266,7 +270,7 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 			in filter (\d -> DefModField `elem` defMods d && defName d `elem` dds) fields
 		equal :: Def
 		equal = let 
-			p = localVal "to" (baseDataType env)
+			p = localVal "to" (if selfIsStruct then selfType else baseDataType env)
 			a = Self selfType
 			b = callRef p
 			o = localValE "o" selfType (Cast selfType b)
@@ -274,21 +278,23 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 			defEqual = 
 				[equalPrelude,
 				If (BoolOp Or (BoolOp ExactEq b (None (baseDataType env) )) (Not $ Dot b $ Is selfType)) (Return True $ BoolConst False) Nop]
-				++ if null equalFields then [Return True $ BoolConst True] else equalsFun
+				++ if null equalFields then [Return True $ BoolConst True] else [Val False o, equalsFun (callRef o)]
 			
-			equalsFun = [Val False o, Return True $ foldl foldEq Nop equalFields]
+			equalsFun ref = Return True $ foldl foldEq Nop equalFields
 				where
 					foldEq Nop d = eqd d
 					foldEq pp d = BoolOp And pp (eqd d)
-					eqd d = BoolOp Eq (Dot a $ callRef d) (Dot (callRef o) $ callRef d)
+					eqd d = BoolOp Eq (Dot a $ callRef d) (Dot ref $ callRef d)
 		
 			reloadedEqualCall d@Def{defPars = [pp@Def{defType = tp}]} = 
 					If (Dot b $ Is tp) 
 						(Return True $ Dot a (Call d TPBool [(pp, Cast tp b)] []))
 					 	Nop
 			reloadedEqualCall d = ExpError $ "Incorrect equal def " ++ show d
-			body = if null reloadedEquals then defEqual
-				else 
+			body  
+				| selfIsStruct = [equalsFun $ callRef p]
+				| null reloadedEquals = defEqual
+				| otherwise =
 					[equalPrelude,
 					If (BoolOp ExactEq b (None (baseDataType env) )) (Return True $ BoolConst False) Nop]
 					++ map reloadedEqualCall reloadedEquals
