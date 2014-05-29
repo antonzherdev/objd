@@ -24,7 +24,7 @@ CNRange* uintTo(NSUInteger a, NSUInteger b) {
 }
 
 
-CNPType * odByteType() {
+CNPType * cnByteType() {
     static CNPType * type = nil;
     if(type == nil) {
         type = [CNPType typeWithCls:[NSNumber class] name:@"byte" size:1 wrap:^id(void *pVoid, NSUInteger i) {
@@ -34,7 +34,7 @@ CNPType * odByteType() {
     return type;
 }
 
-CNPType * odInt4Type() {
+CNPType * cnInt4Type() {
     static CNPType * type = nil;
     if(type == nil) {
         type = [CNPType typeWithCls:[NSNumber class] name:@"int4" size:4 wrap:^id(void *pVoid, NSUInteger i) {
@@ -43,7 +43,7 @@ CNPType * odInt4Type() {
     }
     return type;
 }
-CNPType * oduInt4Type() {
+CNPType * cnuInt4Type() {
     static CNPType * type = nil;
     if(type == nil) {
         type = [CNPType typeWithCls:[NSNumber class] name:@"uint4" size:4 wrap:^id(void *pVoid, NSUInteger i) {
@@ -53,7 +53,7 @@ CNPType * oduInt4Type() {
     return type;
 }
 
-CNPType * odFloat4Type() {
+CNPType * cnFloat4Type() {
     static CNPType * type = nil;
     if(type == nil) {
         type = [CNPType typeWithCls:[NSNumber class] name:@"float4" size:4 wrap:^id(void *pVoid, NSUInteger i) {

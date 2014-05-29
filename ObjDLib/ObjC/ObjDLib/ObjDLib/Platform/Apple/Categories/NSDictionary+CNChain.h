@@ -14,4 +14,5 @@
 
 - (CNChain *) chain;
 - (void) forEach:(cnP)p;
+- (NSDictionary*)addItem:(CNTuple*)item;
 @end

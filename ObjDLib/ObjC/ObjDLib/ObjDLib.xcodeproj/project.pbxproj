@@ -297,6 +297,7 @@
 		6F3DFB3D21ED02EF178EBC34 /* CNPlatform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNPlatform.h; sourceTree = "<group>"; };
 		6F3DFB48DD031BF7F089E6D3 /* SourceLink.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = SourceLink.od; sourceTree = "<group>"; };
 		6F3DFB5CEF10D8BC8E1C8C34 /* Log.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Log.od; sourceTree = "<group>"; };
+		6F3DFB7693679D032CA7FFA5 /* CNDate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNDate.h; sourceTree = "<group>"; };
 		6F3DFB89E4E538039BC4B837 /* Action.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Action.od; sourceTree = "<group>"; };
 		6F3DFB8D30A9CFDF10DB599E /* Date.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Date.od; sourceTree = "<group>"; };
 		6F3DFB8DBA912E53708C705A /* CNFutureEnd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNFutureEnd.h; sourceTree = "<group>"; };
@@ -562,6 +563,7 @@
 				6F3DF81955268DF52E956EF0 /* CNPlat.h */,
 				6F3DF9B4F9887C9CFF57BE60 /* CNString.h */,
 				6F3DFF2E673B76CEE3A3B635 /* CNLock.h */,
+				6F3DFB7693679D032CA7FFA5 /* CNDate.h */,
 			);
 			path = Apple;
 			sourceTree = "<group>";

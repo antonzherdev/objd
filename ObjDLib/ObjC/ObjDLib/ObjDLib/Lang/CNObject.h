@@ -20,9 +20,9 @@ static inline BOOL eqf8(double a, double b) {
 }
 
 static inline BOOL eqf(CGFloat a, CGFloat b) {
-    #if defined(__LP64__) && __LP64__
-        return fabs(a - b) <= DBL_EPSILON;
-    #else
+#if defined(__LP64__) && __LP64__
+    return fabs(a - b) <= DBL_EPSILON;
+#else
         return fabs(a - b) <= FLT_EPSILON;
     #endif
 }

@@ -154,7 +154,7 @@
     return self.count == 0;
 }
 
-- (id <CNImMap>)addItem:(CNTuple*)item {
+- (NSDictionary*)addItem:(CNTuple*)item {
     CNHashMapBuilder* builder = [CNHashMapBuilder hashMapBuilder];
     [builder appendAllItems:self];
     [builder appendItem:item];

@@ -742,7 +742,7 @@ tExp env (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars _) _)
 			C.Var (showDataType tp) "__nd" (castGeneric l $ tExp env l) [],
 			C.Stm $ C.InlineIf (C.BoolOp Eq (C.Ref "__nd") C.Nil) C.Nil (C.CCall (C.Ref "__nd") ((map snd . tPars env dd) pars))
 		]
-tExp env (D.NullDot l r _) = tExpToType env (D.wrapGeneric $ D.exprDataType r) (D.Dot l r)
+tExp env (D.NullDot l r _) = tExpToType env (D.option True $ D.exprDataType r) (D.Dot l r)
 tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call d@D.Def {D.defName = name, D.defMods = mods} _ pars _)) 
 	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
 	| otherwise = C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) d) (C.Ref "self" : (map snd . tPars env d) pars)
