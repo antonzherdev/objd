@@ -845,7 +845,7 @@ tExp env (D.Weak expr) = tExp env{envWeakSelf = True} expr
 tExp env (D.Arr exps) = C.Arr $ map (tExpToType env D.tpGeneric) exps
 tExp env (D.Map exps) = C.Map $ map (tExpToType env D.tpGeneric *** tExpToType env D.tpGeneric) exps
 tExp env (D.Tuple exps) = C.CCall (C.Ref $ "tuple" ++ if length exps == 2 then "" else show (length exps) ) $ map (tExpToType env D.tpGeneric) exps
-tExp env (D.Some _ e) = tExpTo env (D.wrapGeneric $ D.exprDataType e) e
+tExp env (D.Some _ e) = tExpTo env (D.option True $ D.exprDataType e) e
 tExp _ (D.None tp) = nilForType tp
 tExp env (D.Not e) = C.Not (tExpTo env D.TPBool e)
 tExp env (D.Negative e) = C.Negative (tExp env e)
@@ -1080,13 +1080,15 @@ dataTypeSuffix (D.TPFloatNumber 0) = "f"
 dataTypeSuffix (D.TPFloatNumber 4) = "f4"
 dataTypeSuffix (D.TPFloatNumber 8) = "f8"
 
-data MaybeValTP = TPGen | TPNum | TPStruct | TPNoMatter | TPBool | TPFloat
+data MaybeValTP = TPGen D.DataType | TPNum | TPStruct | TPNoMatter | TPBool | TPFloat | TPEnum
 maybeVal :: (D.DataType, D.DataType) -> C.Exp -> C.Exp
 maybeVal (stp, dtp) e = let 
-	tp D.TPOption{} = TPGen
-	tp D.TPGenericWrap{} = TPGen
-	tp (D.TPClass D.TPMGeneric _ _) = TPGen
+	tp t@D.TPOption{} = TPGen t
+	tp (D.TPGenericWrap _ t@D.TPOption{}) = TPGen t
+	tp t@D.TPGenericWrap{} = TPGen t
+	tp t@(D.TPClass D.TPMGeneric _ _) = TPGen t
 	tp (D.TPClass D.TPMStruct _ _) = TPStruct
+	tp (D.TPClass D.TPMEnum _ _) = TPEnum
 	tp D.TPNumber{} = TPNum
 	tp D.TPChar{} = TPNum
 	tp D.TPFloatNumber{} = TPFloat
@@ -1094,18 +1096,22 @@ maybeVal (stp, dtp) e = let
 	tp _ = TPNoMatter
 	fnm = ("num" ++ ) . dataTypeSuffix
 	in case (tp stp, tp dtp) of
-		(TPStruct, TPGen) -> C.CCall (C.Ref "wrap") [C.Ref $ D.classNameWithPrefix $ D.tpClass stp, e]
-		(TPGen, TPStruct) -> C.CCall (C.Ref "uwrap") [C.Ref $ D.classNameWithPrefix $ D.tpClass dtp, e]
-		(TPNum, TPGen) -> case e of
+		(TPStruct, TPGen _) -> C.CCall (C.Ref "wrap") [C.Ref $ D.classNameWithPrefix $ D.tpClass stp, e]
+		(TPGen _, TPStruct) -> C.CCall (C.Ref "uwrap") [C.Ref $ D.classNameWithPrefix $ D.tpClass dtp, e]
+		(TPNum, TPGen _) -> case e of
 			C.IntConst _ -> C.ObjCConst e
 			_ -> C.CCall (C.Ref $ fnm stp) [e]
-		(TPGen, TPNum) -> C.CCall (C.Ref $ "u" ++ fnm dtp) [e]
-		(TPFloat, TPGen) -> case e of
+		(TPGen _, TPNum) -> C.CCall (C.Ref $ "u" ++ fnm dtp) [e]
+		(TPFloat, TPGen _) -> case e of
 			C.FloatConst _ -> C.ObjCConst e
 			_ -> C.CCall (C.Ref $ fnm stp) [e]
-		(TPGen, TPFloat) -> C.CCall (C.Ref $ "u" ++ fnm dtp) [e]
-		(TPBool, TPGen) -> case e of
+		(TPGen _, TPFloat) -> C.CCall (C.Ref $ "u" ++ fnm dtp) [e]
+		(TPBool, TPGen _) -> case e of
 			C.BoolConst _ -> C.ObjCConst e
 			_ -> C.CCall (C.Ref $ fnm stp) [e]
-		(TPGen, TPBool) -> C.CCall (C.Ref $ "u" ++ fnm dtp) [e]
+		(TPGen _, TPBool) -> C.CCall (C.Ref $ "u" ++ fnm dtp) [e]
+		(TPEnum, TPGen D.TPOption{}) -> e
+		(TPGen D.TPOption{}, TPEnum) -> e
+		(TPEnum, TPGen _) -> enumValue stp e
+		(TPGen _, TPEnum) -> C.Cast (showDataType $ D.unwrapGeneric stp) $ C.Call e "ordinal" [] []
 		_ -> e
