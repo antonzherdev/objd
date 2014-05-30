@@ -13,6 +13,12 @@
     <content url="file://$MODULE_DIR$/ObjDLib/ObjDLib.xcodeproj">
       <sourceFolder url="file://$MODULE_DIR$/ObjDLib/ObjDLib.xcodeproj" isTestSource="false" />
     </content>
+    <content url="file://$MODULE_DIR$/Platform">
+      <sourceFolder url="file://$MODULE_DIR$/Platform" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../src">
+      <sourceFolder url="file://$MODULE_DIR$/../src" isTestSource="false" />
+    </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
