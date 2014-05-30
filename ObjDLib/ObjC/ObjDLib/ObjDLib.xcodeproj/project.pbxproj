@@ -862,7 +862,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0292ED3718869E5200DF540E /* Build configuration list for PBXNativeTarget "ObjDLibiOSTests" */;
 			buildPhases = (
-				0224A3F71886AC0F00E49BD2 /* ShellScript */,
 				0292ED1D18869E5200DF540E /* Sources */,
 				0292ED1E18869E5200DF540E /* Frameworks */,
 				0292ED1F18869E5200DF540E /* Resources */,
@@ -880,7 +879,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0292ED6218869FC400DF540E /* Build configuration list for PBXNativeTarget "ObjDLibOSXTests" */;
 			buildPhases = (
-				0224A3F81886AC2400E49BD2 /* Run Script */,
 				0292ED4B18869FC400DF540E /* Sources */,
 				0292ED4C18869FC400DF540E /* Frameworks */,
 				0292ED4D18869FC400DF540E /* Resources */,
@@ -941,36 +939,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		0224A3F71886AC0F00E49BD2 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "~/bin/ObjD";
-		};
-		0224A3F81886AC2400E49BD2 /* Run Script */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Run Script";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "~/bin/ObjD";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		0292ED1D18869E5200DF540E /* Sources */ = {
