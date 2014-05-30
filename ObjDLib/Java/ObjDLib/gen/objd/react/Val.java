@@ -1,5 +1,7 @@
 package objd.react;
 
+import objd.lang.*;
+
 public final class Val<T> extends ImReact<T> {
     public final T value;
     @Override

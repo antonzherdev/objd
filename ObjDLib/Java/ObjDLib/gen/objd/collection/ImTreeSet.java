@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class ImTreeSet<T> extends TreeSet<T> implements ImSet<T> {
     public final ImTreeMap<T, Object> immap;
     @Override

@@ -1,5 +1,7 @@
 package objd.react;
 
+import objd.lang.*;
+
 public class Signal<T> extends ObservableBase_impl<T> {
     public void postData(final T data) {
         notifyValue(data);

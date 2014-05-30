@@ -1,5 +1,7 @@
 package objd.concurrent;
 
+import objd.lang.*;
+
 public class ConcurrentQueueNode<T> {
     public T item;
     public ConcurrentQueueNode<T> next;

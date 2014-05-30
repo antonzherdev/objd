@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class TreeMapEntry<K, V> {
     public K key;
     public V value;

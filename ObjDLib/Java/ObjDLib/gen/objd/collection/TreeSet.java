@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class TreeSet<T> extends Set_impl<T> {
     public final TreeMap<T, Object> map;
     public T higherThanItem(final T item) {

@@ -1,5 +1,7 @@
 package objd.lang;
 
+import objd.lang.*;
+
 public class Lazy<T> {
     public final F0<T> f;
     private T _value;

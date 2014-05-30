@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class EmptyIterator<T> extends Iterator_impl<T> {
     public static final EmptyIterator<Object> instance;
     @Override

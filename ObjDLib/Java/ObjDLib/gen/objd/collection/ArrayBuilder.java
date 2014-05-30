@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class ArrayBuilder<T> extends Builder_impl<T, ImArray<T>> {
     private final MArray<T> array;
     @Override

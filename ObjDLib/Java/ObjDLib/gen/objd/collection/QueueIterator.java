@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class QueueIterator<T> extends Iterator_impl<T> {
     public final ImList<T> out;
     private Iterator<T> i;

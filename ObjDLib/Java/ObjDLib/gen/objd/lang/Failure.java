@@ -1,5 +1,7 @@
 package objd.lang;
 
+import objd.lang.*;
+
 public final class Failure<T> extends Try<T> {
     public final Object reason;
     @Override

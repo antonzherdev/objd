@@ -1,5 +1,7 @@
 package objd.lang;
 
+import objd.lang.*;
+
 public final class Tuple4<A, B, C, D> implements Comparable<Tuple4<A, B, C, D>> {
     public final A a;
     public final B b;

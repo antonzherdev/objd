@@ -1,5 +1,7 @@
 package objd.collection;
 
+import objd.lang.*;
+
 public class PairIterator<T> extends Iterator_impl<T> {
     public final Pair<T> pair;
     private int state;

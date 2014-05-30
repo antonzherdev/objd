@@ -94,12 +94,14 @@ main =
 			in do
 				args <- getArgs >>= return . processArgs
 				when (isJust $ objCPath args) $ do
-					putStrLn "Generate Objective-C"
+					let rootPath = fromJust $ objCPath args
+					putStrLn $ "Generate Objective-C at " ++ rootPath
 					txtFS <- ocTextFiles
 					forM_ txtFS (\(path, ((hnm, h), (mnm, m)) ) -> do
-						{-putStrLn ("File: " ++ path)-}
-						ocWrite hnm path h
-						ocWrite mnm path m)
+						--putStrLn ("File: " ++ path)
+						let path' = combine rootPath (drop 2 path)
+						ocWrite hnm path' h
+						ocWrite mnm path' m)
 				when (isJust $ javaPath args) $ do
 					let rootPath = fromJust $ javaPath args
 					let rootTestPath = fromMaybe rootPath $ javaTestPath args

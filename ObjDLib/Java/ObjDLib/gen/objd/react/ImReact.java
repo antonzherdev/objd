@@ -1,5 +1,7 @@
 package objd.react;
 
+import objd.lang.*;
+
 public abstract class ImReact<T> extends React<T> {
     @Override
     public void attachObserver(final Observer<T> observer) {
