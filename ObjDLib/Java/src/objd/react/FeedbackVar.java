@@ -2,7 +2,7 @@ package objd.react;
 
 import objd.lang.*;
 
-public final class FeedbackVar<T> extends BaseVar<T> {
+public final class FeedbackVar<T> extends Var<T> {
     public final P<T> feedback;
     @Override
     public void setValue(final T value) {

@@ -20,7 +20,7 @@ static CNClassType* _CNReactTest_type;
 }
 
 - (void)testMap {
-    CNVar* v = [CNVar varWithInitial:@2];
+    CNVar* v = [CNVar applyInitial:@2];
     CNReact* m = [v mapF:^id(id _) {
         return numi(unumi(_) * unumi(_));
     }];
@@ -35,8 +35,8 @@ static CNClassType* _CNReactTest_type;
 }
 
 - (void)testReactFlag {
-    CNVar* a1 = [CNVar varWithInitial:@1];
-    CNVar* a2 = [CNVar varWithInitial:@2];
+    CNVar* a1 = [CNVar applyInitial:@1];
+    CNVar* a2 = [CNVar applyInitial:@2];
     CNReactFlag* f = [CNReactFlag reactFlagWithInitial:YES reacts:(@[a1, a2])];
     assertTrue(unumb([f value]));
     [f clear];

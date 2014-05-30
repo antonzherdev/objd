@@ -80,7 +80,7 @@ public class ActorTest extends TestCase {
     }
     @Test
     public void testLock() {
-        repeatTimesF(((int)(100)), new P0() {
+        repeatTimesF(((int)(1000)), new P0() {
             @Override
             public void apply() {
                 final TestedActor a = new TestedActor();

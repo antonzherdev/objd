@@ -291,11 +291,11 @@ static CNClassType* _CNVal_type;
 
 @end
 
-@implementation CNBaseVar
-static CNClassType* _CNBaseVar_type;
+@implementation CNVar
+static CNClassType* _CNVar_type;
 
-+ (instancetype)baseVarWithInitial:(id)initial {
-    return [[CNBaseVar alloc] initWithInitial:initial];
++ (instancetype)varWithInitial:(id)initial {
+    return [[CNVar alloc] initWithInitial:initial];
 }
 
 - (instancetype)initWithInitial:(id)initial {
@@ -306,7 +306,19 @@ static CNClassType* _CNBaseVar_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNBaseVar class]) _CNBaseVar_type = [CNClassType classTypeWithCls:[CNBaseVar class]];
+    if(self == [CNVar class]) _CNVar_type = [CNClassType classTypeWithCls:[CNVar class]];
+}
+
++ (CNVar*)applyInitial:(id)initial {
+    return [CNSimpleVar simpleVarWithInitial:initial];
+}
+
++ (CNVar*)limitedInitial:(id)initial limits:(id(^)(id))limits {
+    return [CNLimitedVar limitedVarWithInitial:initial limits:limits];
+}
+
++ (CNVar*)feedbackInitial:(id)initial feedback:(void(^)(id))feedback {
+    return [CNFeedbackVar feedbackVarWithInitial:initial feedback:feedback];
 }
 
 - (void)setValue:(id)value {
@@ -326,15 +338,15 @@ static CNClassType* _CNBaseVar_type;
 }
 
 - (NSString*)description {
-    return @"BaseVar";
+    return @"Var";
 }
 
 - (CNClassType*)type {
-    return [CNBaseVar type];
+    return [CNVar type];
 }
 
 + (CNClassType*)type {
-    return _CNBaseVar_type;
+    return _CNVar_type;
 }
 
 - (id)copyWithZone:(NSZone*)zone {
@@ -343,11 +355,11 @@ static CNClassType* _CNBaseVar_type;
 
 @end
 
-@implementation CNVar
-static CNClassType* _CNVar_type;
+@implementation CNSimpleVar
+static CNClassType* _CNSimpleVar_type;
 
-+ (instancetype)varWithInitial:(id)initial {
-    return [[CNVar alloc] initWithInitial:initial];
++ (instancetype)simpleVarWithInitial:(id)initial {
+    return [[CNSimpleVar alloc] initWithInitial:initial];
 }
 
 - (instancetype)initWithInitial:(id)initial {
@@ -358,27 +370,19 @@ static CNClassType* _CNVar_type;
 
 + (void)initialize {
     [super initialize];
-    if(self == [CNVar class]) _CNVar_type = [CNClassType classTypeWithCls:[CNVar class]];
-}
-
-+ (CNVar*)limitedInitial:(id)initial limits:(id(^)(id))limits {
-    return [CNVar varWithInitial:[CNLimitedVar limitedVarWithInitial:initial limits:limits]];
-}
-
-+ (CNFeedbackVar*)feedbackInitial:(id)initial feedback:(void(^)(id))feedback {
-    return [CNFeedbackVar feedbackVarWithInitial:initial feedback:feedback];
+    if(self == [CNSimpleVar class]) _CNSimpleVar_type = [CNClassType classTypeWithCls:[CNSimpleVar class]];
 }
 
 - (NSString*)description {
-    return @"Var";
+    return @"SimpleVar";
 }
 
 - (CNClassType*)type {
-    return [CNVar type];
+    return [CNSimpleVar type];
 }
 
 + (CNClassType*)type {
-    return _CNVar_type;
+    return _CNSimpleVar_type;
 }
 
 - (id)copyWithZone:(NSZone*)zone {

@@ -8,8 +8,8 @@
 @class CNImReact;
 @class CNMReact;
 @class CNVal;
-@class CNBaseVar;
 @class CNVar;
+@class CNSimpleVar;
 @class CNFeedbackVar;
 @class CNLimitedVar;
 @class CNSlot;
@@ -95,10 +95,13 @@
 @end
 
 
-@interface CNBaseVar : CNMReact
-+ (instancetype)baseVarWithInitial:(id)initial;
+@interface CNVar : CNMReact
++ (instancetype)varWithInitial:(id)initial;
 - (instancetype)initWithInitial:(id)initial;
 - (CNClassType*)type;
++ (CNVar*)applyInitial:(id)initial;
++ (CNVar*)limitedInitial:(id)initial limits:(id(^)(id))limits;
++ (CNVar*)feedbackInitial:(id)initial feedback:(void(^)(id))feedback;
 - (void)setValue:(id)value;
 - (void)updateF:(id(^)(id))f;
 - (NSString*)description;
@@ -106,18 +109,16 @@
 @end
 
 
-@interface CNVar : CNBaseVar
-+ (instancetype)varWithInitial:(id)initial;
+@interface CNSimpleVar : CNVar
++ (instancetype)simpleVarWithInitial:(id)initial;
 - (instancetype)initWithInitial:(id)initial;
 - (CNClassType*)type;
-+ (CNVar*)limitedInitial:(id)initial limits:(id(^)(id))limits;
-+ (CNFeedbackVar*)feedbackInitial:(id)initial feedback:(void(^)(id))feedback;
 - (NSString*)description;
 + (CNClassType*)type;
 @end
 
 
-@interface CNFeedbackVar : CNBaseVar {
+@interface CNFeedbackVar : CNVar {
 @protected
     void(^_feedback)(id);
 }
@@ -134,7 +135,7 @@
 @end
 
 
-@interface CNLimitedVar : CNBaseVar {
+@interface CNLimitedVar : CNVar {
 @protected
     id(^_limits)(id);
 }

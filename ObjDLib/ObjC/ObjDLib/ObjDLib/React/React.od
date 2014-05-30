@@ -48,7 +48,11 @@ abstract class MReact<T>(initial : T) extends React<T> with ObservableBase<T> {
 
 case class Val<T>(override val value : T) extends ImReact<T>
 
-abstract class BaseVar<T>(initial : T)  extends MReact<T>(initial) {
+abstract class Var<T>(initial : T)  extends MReact<T>(initial) {
+    static def apply<T>(initial : T) : Var<T> = SimpleVar<T>(initial)
+    static def limited<T>(initial : T, weak limits : T -> T) : Var<T> = LimitedVar<T>(initial, limits)
+    static def feedback<T>(initial : T, weak feedback : T -> void) : Var<T> = FeedbackVar<T>(initial, feedback)
+
     def set(value : T) {
         _set(value)
     }
@@ -65,12 +69,9 @@ abstract class BaseVar<T>(initial : T)  extends MReact<T>(initial) {
     }
 }
 
-final class Var<T>(initial : T) extends BaseVar<T>(initial) {
-    static def limited<T>(initial : T, weak limits : T -> T) : Var<T> = LimitedVar<T>(initial, limits)
-    static def feedback<T>(initial : T, weak feedback : T -> void) : FeedbackVar<T> = FeedbackVar<T>(initial, feedback)
-}
+final class SimpleVar<T>(initial : T) extends Var<T>(initial)
 
-final class FeedbackVar<T>(initial : T, val feedback : T -> void) extends BaseVar<T>(initial) {
+final class FeedbackVar<T>(initial : T, val feedback : T -> void) extends Var<T>(initial) {
     override def set(value : T) {
         _set(value)
         feedback(value)
@@ -95,7 +96,7 @@ final class FeedbackVar<T>(initial : T, val feedback : T -> void) extends BaseVa
 }
 
 
-final class LimitedVar<T>(initial : T, val limits : T -> T) extends BaseVar<T>(limits(initial)) {
+final class LimitedVar<T>(initial : T, val limits : T -> T) extends Var<T>(limits(initial)) {
     override def set(value : T) {
         _set(limits(value))
     }

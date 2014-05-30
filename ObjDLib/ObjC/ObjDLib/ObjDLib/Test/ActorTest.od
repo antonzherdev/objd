@@ -84,7 +84,7 @@ class ActorTest extends TestCase {
 
     @Test
     def testLock {
-        repeat(100) {
+        repeat(1000) {
             val a = TestedActor()
             val count = 100
 

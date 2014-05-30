@@ -2,7 +2,7 @@ package objd.react;
 
 import objd.lang.*;
 
-public final class LimitedVar<T> extends BaseVar<T> {
+public final class LimitedVar<T> extends Var<T> {
     public final F<T, T> limits;
     @Override
     public void setValue(final T value) {

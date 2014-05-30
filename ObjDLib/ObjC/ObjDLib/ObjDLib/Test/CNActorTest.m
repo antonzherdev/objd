@@ -152,7 +152,7 @@ static CNClassType* _CNActorTest_type;
 }
 
 - (void)testLock {
-    [self repeatTimes:100 f:^void() {
+    [self repeatTimes:1000 f:^void() {
         CNTestedActor* a = [CNTestedActor testedActor];
         NSInteger count = 100;
         NSArray* arr = [[[intTo(1, count) chain] mapF:^CNTuple*(id _) {
