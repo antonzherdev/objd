@@ -478,6 +478,15 @@ structNameForCalling x = x
 enumValuesFun :: C.Fun
 enumValuesFun = C.Fun C.ObjectFun (C.TPSimple "NSArray*" []) "values" []
 
+declareEnumVar :: [C.CFunMod] -> D.Class -> [C.FileStm]
+declareEnumVar mods cl = 
+	C.CVar mods (C.TPArr (length (D.enumItems cl) + 1) (name ++ "*")) (name ++ "_Values") : 
+	map enumItemGetterFun (D.enumItems cl)
+	where
+		name = D.classNameWithPrefix cl
+		enumItemGetterFun D.Def{D.defName = itemName} = C.CVar mods (C.TPSimple (name ++ "*") []) (name ++ "_" ++ itemName ++ "_Desc")
+		
+
 genEnumInterface :: D.Class -> [C.FileStm]
 genEnumInterface cl = [
 	C.Enum{
@@ -489,19 +498,17 @@ genEnumInterface cl = [
 		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs',
 		C.interfaceFuns = intefaceFuns defs' ++ [enumValuesFun],
 		C.interfaceFields = []
-	}, 
-	C.CVar [C.CFunStatic] (C.TPArr (length (D.enumItems cl) + 1) (name ++ "*")) (name ++ "_Values")
-	] ++ map enumItemGetterFun (D.enumItems cl)
+	}] ++ declareEnumVar [C.CFunExtern] cl
 	where 
 		name = D.classNameWithPrefix cl
 		defs' = filter ((/= "values") . D.defName) $ D.classDefs cl
-		enumItemGetterFun D.Def{D.defName = itemName} = C.CVar [C.CFunStatic] (C.TPSimple (name ++ "*") []) (name ++ "_" ++ itemName ++ "_Desc")
 		genEnumItems :: Int -> [D.Def] -> [C.EnumItem]
 		genEnumItems _ [] = []
 		genEnumItems n (D.Def{D.defName = itemName}:xs) = (C.EnumItem (name ++ "_" ++ itemName) (Just n)):(genEnumItems (n + 1) xs)
+		
 
 genEnumImpl :: D.Class -> [C.FileStm]
-genEnumImpl cl@D.Class {} = [
+genEnumImpl cl@D.Class {} = declareEnumVar [] cl ++ [
 	C.Implementation {
 		C.implName = clsName,
 		C.implFields = (map (implField env) . filter needProperty) defs,
@@ -509,7 +516,7 @@ genEnumImpl cl@D.Class {} = [
 		C.implFuns = nub $ [implCreate cl constr, implInit env constr, initialize] ++ dealoc env 
 			++ implFuns env defs ++ [valuesFun],
 		C.implStaticFields = [] -- map stField items ++ [C.ImplField valuesVarName (C.TPSimple "NSArray*" []) [] C.Nop] 
-	}]
+	}] 
 	where
 		clsName = D.classNameWithPrefix cl
 		env = Env  cl 0 D.TPVoid False

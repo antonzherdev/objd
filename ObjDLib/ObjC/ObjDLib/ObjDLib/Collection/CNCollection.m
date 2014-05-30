@@ -105,6 +105,9 @@
 
 @end
 
+CNGo* CNGo_Values[3];
+CNGo* CNGo_Continue_Desc;
+CNGo* CNGo_Break_Desc;
 @implementation CNGo
 
 + (instancetype)goWithOrdinal:(NSUInteger)ordinal name:(NSString*)name {
