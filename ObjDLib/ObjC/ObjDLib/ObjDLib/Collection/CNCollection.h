@@ -35,10 +35,8 @@ typedef enum CNGoR {
 } CNGoR;
 @interface CNGo : CNEnum
 + (NSArray*)values;
++ (CNGo*)value:(CNGoR)r;
 @end
-extern CNGo* CNGo_Values[3];
-extern CNGo* CNGo_Continue_Desc;
-extern CNGo* CNGo_Break_Desc;
 
 
 

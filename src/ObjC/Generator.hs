@@ -478,6 +478,9 @@ structNameForCalling x = x
 enumValuesFun :: C.Fun
 enumValuesFun = C.Fun C.ObjectFun (C.TPSimple "NSArray*" []) "values" []
 
+enumValueFun :: String -> C.Fun
+enumValueFun name = C.Fun C.ObjectFun (C.TPSimple (name ++ "*") []) "value" [C.FunPar "" (C.TPSimple (name ++ "R") []) "r"]
+
 declareEnumVar :: [C.CFunMod] -> D.Class -> [C.FileStm]
 declareEnumVar mods cl = 
 	C.CVar mods (C.TPArr (length (D.enumItems cl) + 1) (name ++ "*")) (name ++ "_Values") : 
@@ -496,9 +499,9 @@ genEnumInterface cl = [
 		C.interfaceName = name ,
 		C.interfaceExtends = classExtends cl,
 		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs',
-		C.interfaceFuns = intefaceFuns defs' ++ [enumValuesFun],
+		C.interfaceFuns = intefaceFuns defs' ++ [enumValuesFun, enumValueFun name],
 		C.interfaceFields = []
-	}] ++ declareEnumVar [C.CFunExtern] cl
+	}] 
 	where 
 		name = D.classNameWithPrefix cl
 		defs' = filter ((/= "values") . D.defName) $ D.classDefs cl
@@ -514,7 +517,7 @@ genEnumImpl cl@D.Class {} = declareEnumVar [] cl ++ [
 		C.implFields = (map (implField env) . filter needProperty) defs,
 		C.implSynthesizes = (map (synthesize env) . filter needProperty) defs,
 		C.implFuns = nub $ [implCreate cl constr, implInit env constr, initialize] ++ dealoc env 
-			++ implFuns env defs ++ [valuesFun],
+			++ implFuns env defs ++ [valuesFun, valueFun],
 		C.implStaticFields = [] -- map stField items ++ [C.ImplField valuesVarName (C.TPSimple "NSArray*" []) [] C.Nop] 
 	}] 
 	where
@@ -524,8 +527,8 @@ genEnumImpl cl@D.Class {} = declareEnumVar [] cl ++ [
 		items = D.enumItems cl
 		defs = filter ((/= "values") . D.defName) $ D.classDefs cl
 		constr = fromMaybe (error "No class constructor") (D.classConstructor cl)
-		initialize = C.ImplFun (C.Fun C.ObjectFun voidTp "load" []) (
-			((C.Stm $ C.Call C.Super "load" [] []) : map initItem items) ++ 
+		initialize = C.ImplFun (C.Fun C.ObjectFun voidTp "initialize" []) (
+			((C.Stm $ C.Call C.Super "initialize" [] []) : map initItem items) ++ 
 			[C.Set Nothing (C.Index (C.Ref $ valuesVarName) (C.IntConst 0)) C.Nil] ++
 			initArr 0 items)
 		initArr _ [] = []
@@ -533,6 +536,7 @@ genEnumImpl cl@D.Class {} = declareEnumVar [] cl ++ [
 		initItem :: D.Def -> C.Stm
 		initItem d@D.Def{D.defBody = body} = C.Set Nothing (C.Ref $ enumItemDesc env d) $ retain $ tExp env body
 		valuesFun = C.ImplFun enumValuesFun [C.Return $ (C.Arr $ map (C.Ref . (enumItemDesc env)) items)]
+		valueFun = C.ImplFun (enumValueFun clsName) [C.Return $ C.Index (C.Ref $ clsName ++ "_Values") (C.Ref "r")]
 		
 
 enumItemDesc :: Env -> D.Def -> String
@@ -542,12 +546,8 @@ enumNil :: D.Class -> C.Exp
 enumNil cl = C.Ref $ D.classNameWithPrefix cl ++ "_Nil"
 
 enumValue :: D.DataType -> C.Exp -> C.Exp
-enumValue tp e = C.Index (enumValues tp) e
+enumValue tp e = C.Call (C.Ref $ D.dataTypeClassNameWithPrefix tp) "value" [("", e)] []
 		
-enumValues :: D.DataType -> C.Exp
-enumValues tp = C.Ref $ (D.dataTypeClassNameWithPrefix tp) ++ "_Values"
-
-
 nilForType :: D.DataType -> C.Exp
 nilForType (D.TPGenericWrap _ tp) = nilForType tp
 nilForType (D.TPClass D.TPMEnum _ cl) = enumNil cl

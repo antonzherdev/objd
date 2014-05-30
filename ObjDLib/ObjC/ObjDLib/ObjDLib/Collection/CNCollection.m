@@ -120,8 +120,8 @@ CNGo* CNGo_Break_Desc;
     return self;
 }
 
-+ (void)load {
-    [super load];
++ (void)initialize {
+    [super initialize];
     CNGo_Continue_Desc = [CNGo goWithOrdinal:0 name:@"Continue"];
     CNGo_Break_Desc = [CNGo goWithOrdinal:1 name:@"Break"];
     CNGo_Values[0] = nil;
@@ -131,6 +131,10 @@ CNGo* CNGo_Break_Desc;
 
 + (NSArray*)values {
     return (@[CNGo_Continue_Desc, CNGo_Break_Desc]);
+}
+
++ (CNGo*)value:(CNGoR)r {
+    return CNGo_Values[r];
 }
 
 @end
