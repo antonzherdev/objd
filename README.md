@@ -1,3 +1,3 @@
 # Objective-D
 
-[Objective-D – alternative or supplement to Objective-C](http://www.antonzherdev.com/post/73410788562/objective-d-alternative-or-supplement-to-objective-c)
+Objective-D is a modern language which can generate Objective-C and Java based on its code. It can allow you to use the same language for iOS and Android development. You can read [this article](http://www.antonzherdev.com/post/73410788562/objective-d-alternative-or-supplement-to-objective-c) that will show you a brief description of the language. You will find more information in [the wiki](https://github.com/antonzherdev/objd/wiki).
