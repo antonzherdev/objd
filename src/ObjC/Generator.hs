@@ -834,7 +834,7 @@ tExp env (D.Dot l (D.LambdaCall c)) = tExp env (D.LambdaCall $ D.Dot l c)
 tExp env (D.Arrow l (D.Call D.Def{D.defName = name} _ [] _)) = C.Arrow (tExp env l) (C.Ref name)
 tExp env (D.Arrow l r) = C.Arrow (tExp env l) (tExp env r)
 
-tExp _ (D.Self (D.TPClass D.TPMEnum _ _)) = C.Arrow C.Self (C.Ref "_ordinal")
+tExp _ (D.Self (D.TPClass D.TPMEnum _ _)) = C.MathOp Plus (C.Arrow C.Self (C.Ref "_ordinal")) (C.IntConst 1)
 tExp env (D.Self _) = selfCall env
 tExp _ (D.Super _) = C.Super
 tExp env (D.LambdaCall e) = let 
@@ -1151,5 +1151,5 @@ maybeVal (stp, dtp) e = let
 		(TPEnum, TPGen D.TPOption{}) -> e
 		(TPGen D.TPOption{}, TPEnum) -> e
 		(TPEnum, TPGen _) -> enumValue stp e
-		(TPGen _, TPEnum) -> C.Cast (showDataType $ D.unwrapGeneric dtp) $ C.Call e "ordinal" [] []
+		(TPGen _, TPEnum) -> C.MathOp Plus (C.Cast (showDataType $ D.unwrapGeneric dtp) $ C.Call e "ordinal" [] []) (C.IntConst 1)
 		_ -> e
