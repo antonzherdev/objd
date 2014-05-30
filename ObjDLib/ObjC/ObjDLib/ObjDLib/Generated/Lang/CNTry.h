@@ -1,6 +1,7 @@
 #import "objdcore.h"
 #import "CNObject.h"
 @class CNClassType;
+@class CNString;
 
 @class CNTry;
 @class CNSuccess;

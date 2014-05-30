@@ -1,6 +1,6 @@
 module Ex.String(mkString, strs, strs', MultiLineShow(..), ind, showOp, showOp', cap, MathTp(..), BoolTp(..), 
 	tryCon, zipWithIndex, startsWith, lines2, pstrs, pstrs', pmkString,
-	mapFirst, mapLast, appendLast, appp, glue, glueAll, mapNotFirst, wrapStr) where
+	mapFirst, mapLast, appendLast, appp, glue, glueAll, mapNotFirst, wrapStr, splitOn) where
 
 import           Data.Char
 
@@ -80,6 +80,14 @@ wrapStr :: String -> String -> String -> String
 wrapStr _ _ "" = ""
 wrapStr p s ss = p ++ ss ++ s
 
+splitOn :: (Eq a) =>  a -> [a] -> [[a]]
+splitOn d arr = recsl [] arr 
+	where
+		recsl [] [] = []
+		recsl a [] = [reverse a] 
+		recsl a (x:xs)
+			| x == d = reverse a : recsl [] xs
+			| otherwise = recsl (x:a) xs
 
 data MathTp = Plus | Minus | Mul | Div deriving (Eq)
 data BoolTp = Eq | NotEq | More | MoreEq | Less | LessEq | And | Or | ExactEq | ExactNotEq deriving (Eq)

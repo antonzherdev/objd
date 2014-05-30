@@ -27,9 +27,11 @@ idx f a = (f a, a)
  -----------------------------------------------------------------------------------------------------------------------------------------}
 
 link :: Lang -> D.Sources -> Sources
-link lang src = files
+link lang src = Sources files includes
 	where
-		files = map (linkFile lang files) src
+		allFiles = files ++ includes
+		files = map (linkFile lang allFiles) (D.sourcesFiles src)
+		includes = map (linkFile lang allFiles) (D.sourcesIncludes src)
 
 linkFile :: Lang -> [File] -> D.File -> File
 linkFile lang files (D.File name package stms) = fl

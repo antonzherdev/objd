@@ -1,5 +1,6 @@
 #import "objdcore.h"
 #import "CNObject.h"
+@class CNString;
 @class CNClassType;
 
 @class CNTuple;

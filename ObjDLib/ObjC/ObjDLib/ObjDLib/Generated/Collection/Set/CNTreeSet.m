@@ -3,7 +3,7 @@
 
 #import "CNTreeMap.h"
 #import "CNType.h"
-#import "CNObject.h"
+#import "CNString.h"
 @implementation CNTreeSet
 static CNClassType* _CNTreeSet_type;
 @synthesize map = _map;

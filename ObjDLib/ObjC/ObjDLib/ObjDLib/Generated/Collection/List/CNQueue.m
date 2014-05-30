@@ -2,6 +2,7 @@
 #import "CNQueue.h"
 
 #import "CNType.h"
+#import "CNString.h"
 #import "CNList.h"
 #import "CNTuple.h"
 @implementation CNQueue_impl

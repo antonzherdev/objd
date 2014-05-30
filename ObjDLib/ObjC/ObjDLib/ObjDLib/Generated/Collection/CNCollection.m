@@ -1,10 +1,11 @@
 #import "objd.h"
 #import "CNCollection.h"
 
+#import "CNString.h"
 #import "CNType.h"
+#import "CNPlat.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
-#import "CNPlat.h"
 @implementation CNIterator_impl
 
 + (instancetype)iterator_impl {

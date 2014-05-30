@@ -2,7 +2,7 @@
 #import "CNRange.h"
 
 #import "CNType.h"
-#import "CNObject.h"
+#import "CNString.h"
 @implementation CNRange
 static CNClassType* _CNRange_type;
 @synthesize start = _start;

@@ -1,7 +1,9 @@
 #import "objdcore.h"
 #import "CNObject.h"
 #import "CNEnum.h"
+@class CNString;
 @class CNClassType;
+@class CNImArray;
 @class CNDispatchQueue;
 @class CNChain;
 @class CNMArray;

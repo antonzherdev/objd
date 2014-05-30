@@ -22,13 +22,12 @@ debug :: [String]
 debug = []
 
 
-data Args = Args{objCPath :: Maybe String, javaPath :: Maybe String, javaTestPath :: Maybe String}
+data Args = Args{includes :: [String], objCPath :: Maybe String, javaPath :: Maybe String, javaTestPath :: Maybe String}
 
 main::IO()
 main = 
 	let
 		root = "./"
-		--root = "/Users/antonzherdev/dev/trains3d/Trains3D/"
 		
 		debugFile = Nothing 
 		-- debugFile = Just "/Users/antonzherdev/dev/debug.txt"
@@ -37,42 +36,47 @@ main =
 		debugLinkedText = True 
 		--debugLinkedText = False
 	in do 
-		putStrLn $ "Root: " ++ root
+		args <- getArgs >>= return . processArgs
+		-- putStrLn $ "Root: " ++ root
 		files <- readOdFiles root 
+		includeFiles <- fmap join $ mapM readOdFiles $ includes args
 		putStrLn $ "Found " ++ show (length files) ++ " files"
 		let 
 			parsedFiles :: IO [(FilePath, D.File)]
 			parsedFiles = parseFiles files
-			linkedFiles :: L.Lang -> IO [(FilePath, L.File)]
+			parsedIncludeFiles :: IO [(FilePath, D.File)]
+			parsedIncludeFiles = parseFiles includeFiles
+			linkedFiles :: L.Lang -> IO ([(FilePath, L.File)], L.Core)
 			linkedFiles lang = do
 				fs <- parsedFiles
+				is <- parsedIncludeFiles
 				let 
-					linked = (uncurry zip . second (L.link lang). unzip) fs
-					errors =  unlines $ map show $ checkErrors $ map snd linked 
+					linked = L.link lang $ D.Sources (map snd fs) (map snd is)
+					errors =  unlines $ map show $ checkErrors linked 
 					check = if null errors then return () else error errors
+					lf = zip (map fst fs) $ L.sourcesFiles linked
 				debugFileHandle <- if isJust debugFile then fmap Just $ openFile (fromJust debugFile) WriteMode else return Nothing
-				forM_ (filter ((\f -> f `elem` debug || fullDebug). L.fileName . snd) linked) (\(path, f) -> do
+				forM_ (filter ((\f -> f `elem` debug || fullDebug). L.fileName . snd) lf) (\(path, f) -> do
 					putStrLn $ "= Linked " ++ path
 					when(debugLinkedText) $ print f
 					when(isJust debugFileHandle) $ hPrint (fromJust debugFileHandle) f)
 				check
 				when(isJust debugFile) $ hClose $ fromJust debugFileHandle
-				return linked
-			linkedFilesWithRealStatements :: L.Lang -> IO [(FilePath, L.File)]
-			linkedFilesWithRealStatements lang = liftM (filter (containsRealStatement . snd)) $ linkedFiles lang
-				where containsRealStatement L.File{L.fileClasses = clss} = any (not . L.isStub) clss
+				return $ (lf, L.buildCore linked)
+			linkedFilesWithRealStatements :: L.Lang -> IO ([(FilePath, L.File)], L.Core)
+			linkedFilesWithRealStatements lang = do
+				lf <- linkedFiles lang
+				let containsRealStatement L.File{L.fileClasses = clss} = any (not . L.isStub) clss
+				return $ (filter (containsRealStatement . snd) $ fst lf, snd lf)
 			ocCompiledFiles :: IO [(FilePath, ((String, [C.FileStm]), (String, [C.FileStm])))]
 			ocCompiledFiles = do
 				lfs <- linkedFilesWithRealStatements L.ObjC
-				let 
-					core = L.buildCore $ map snd lfs
-					ret = map (second (toObjC core)) lfs
-				return ret
+				return $ map (second $ toObjC (snd lfs)) $ fst lfs
 			ocTextFiles :: IO [(FilePath, ((String, String), (String, String)))]
 			ocTextFiles = liftM (map (second (toText *** toText))) ocCompiledFiles
 				where toText = second (unlines . map show)
 			javaCompiledFiles :: IO [J.File]
-			javaCompiledFiles = liftM (concatMap (toJava . snd)) $ linkedFiles L.Java
+			javaCompiledFiles = liftM (concatMap (toJava . snd) . fst) $ linkedFiles L.Java
 			javaTextFiles :: IO [(Bool, FilePath, String)]
 			javaTextFiles = liftM (map (toText)) javaCompiledFiles
 				where toText f@(J.File _ pack _ J.Class{J.className = nm}) = 
@@ -92,7 +96,6 @@ main =
 			checkFile (x:xs) h = hIsEOF h >>= \eof -> if eof then return False else (hGetLine h >>= \l -> if l == x then checkFile xs h else return False)
 			checkFile _ h = hIsEOF h
 			in do
-				args <- getArgs >>= return . processArgs
 				when (isJust $ objCPath args) $ do
 					let rootPath = fromJust $ objCPath args
 					putStrLn $ "Generate Objective-C at " ++ rootPath
@@ -121,7 +124,7 @@ processArgs :: [String] -> Args
 processArgs args = let
 	pairs = zip ("":args) args
 	val f = lookup f pairs 
-	in Args (val "--obj-c") (val "--java") (val "--java-test")
+	in Args (maybe [] (splitOn ';') $ val "--include") (val "--obj-c") (val "--java") (val "--java-test")
 
 parseFiles :: [(FilePath, String)] -> IO [(FilePath, D.File)]
 parseFiles = mapM parse

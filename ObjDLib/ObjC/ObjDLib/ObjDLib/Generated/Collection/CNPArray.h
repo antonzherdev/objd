@@ -1,7 +1,10 @@
 #import "objdcore.h"
 #import "CNSeq.h"
+#import "CNObject.h"
+#import "CNPointer.h"
 #import "CNCollection.h"
 @class CNClassType;
+@class CNString;
 
 @class CNPArray;
 @class CNPArrayIterator;

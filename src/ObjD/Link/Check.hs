@@ -10,7 +10,7 @@ instance Show Error where
 	show (ErrorParent s e) = s ++ ": " ++ show e
 
 checkErrors :: Sources -> [Error]
-checkErrors = concatMap checkErrorsInFile
+checkErrors = concatMap checkErrorsInFile . sourcesAllFiles
 
 checkErrorsInFile :: File -> [Error]
 checkErrorsInFile File{fileName = name, fileClasses = classes} = 

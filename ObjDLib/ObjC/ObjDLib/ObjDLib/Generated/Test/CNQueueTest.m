@@ -4,6 +4,7 @@
 #import "CNQueue.h"
 #import "CNTuple.h"
 #import "CNType.h"
+#import "CNString.h"
 @implementation CNQueueTest
 static CNClassType* _CNQueueTest_type;
 

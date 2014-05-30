@@ -1,5 +1,5 @@
 module ObjD.Link.Struct (
-	Lang(..), Sources, File(..), Class(..), Package(..), DataType(..), ExtendsRef, Extends(..), ClassMod(..), Generics, ClassRef, 
+	Lang(..), Sources(..), File(..), Class(..), Package(..), DataType(..), ExtendsRef, Extends(..), ClassMod(..), Generics, ClassRef, 
 	DataTypeMod(..), WrapReason(..), Def(..), DefMod(..), Exp(..), ExtendsClass(..), Import(..), DefGenerics(..),
 	Annotation(..), CallPar, Core(..),
 
@@ -17,7 +17,7 @@ module ObjD.Link.Struct (
 	isFinal, isTpClass, isTpEnum, isTpTrait, isNop, enumItems, isType, isGeneric, isGenericWrap, tpGeneric, resolveTypeAlias,
 	containsAnnotationWithClassName, isSpecial, isConstructor, mainExtendsRef, isBaseClass, traitExtendsRefs, findAnnotationWithClassName, 
 	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError, isDefAbstract, isEnumItem, isTpGeneric, isPrivate,
-	genName, dataTypeGenClassName, localVarE, localVar, coreDataTypeClass, coreClass, buildCore, classFullName
+	genName, dataTypeGenClassName, localVarE, localVar, coreDataTypeClass, coreClass, buildCore, classFullName, sourcesAllFiles
 	) where
 
 import 			 Ex.String
@@ -34,7 +34,7 @@ import           Data.Decimal
 data Lang = ObjC | Java deriving (Eq)
 
 
-type Sources = [File]
+data Sources = Sources{sourcesFiles :: [File], sourcesIncludes :: [File]}
 data Core = Core {coreClasses :: M.Map String Class}
 data Package = Package {packageName :: [String], packageObject :: Maybe Class, packagePrefix :: String}
 instance Eq Package where
@@ -626,8 +626,10 @@ coreDataTypeClass _ (TPObject _ c) = c
 coreDataTypeClass core (TPGenericWrap _ c) = coreDataTypeClass core c
 coreDataTypeClass _ (TPSelf c) = c
 coreDataTypeClass core tp = coreClass core (dataTypeClassName tp)
+sourcesAllFiles :: Sources -> [File]
+sourcesAllFiles s = sourcesFiles s ++ sourcesIncludes s
 buildCore :: Sources -> Core
-buildCore = Core . M.fromList . map (\cl -> (className cl, cl)) . concatMap fileClasses . filter isCoreFile
+buildCore = Core . M.fromList . map (\cl -> (className cl, cl)) . concatMap fileClasses . filter isCoreFile . sourcesAllFiles
 
 
 dataTypeGenClassName :: DataType -> String

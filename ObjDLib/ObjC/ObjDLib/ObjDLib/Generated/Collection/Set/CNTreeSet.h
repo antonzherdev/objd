@@ -1,11 +1,12 @@
 #import "objdcore.h"
 #import "CNSet.h"
+#import "CNObject.h"
 #import "CNCollection.h"
 @class CNTreeMap;
 @protocol CNTreeMapKeySet;
 @class CNClassType;
+@class CNString;
 @class CNImTreeMap;
-@class CNObject;
 @class CNMTreeMap;
 @class CNMTreeMapKeySet;
 

@@ -2,6 +2,7 @@
 #import "CNPArray.h"
 
 #import "CNType.h"
+#import "CNString.h"
 @implementation CNPArray
 static CNClassType* _CNPArray_type;
 @synthesize stride = _stride;

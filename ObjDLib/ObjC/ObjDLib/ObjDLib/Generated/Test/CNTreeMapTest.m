@@ -2,6 +2,8 @@
 #import "CNTreeMapTest.h"
 
 #import "CNTreeMap.h"
+#import "CNString.h"
+#import "CNPlat.h"
 #import "CNChain.h"
 #import "CNType.h"
 @implementation CNTreeMapTest

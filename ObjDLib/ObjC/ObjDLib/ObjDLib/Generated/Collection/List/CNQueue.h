@@ -2,6 +2,7 @@
 #import "CNObject.h"
 #import "CNCollection.h"
 @class CNClassType;
+@class CNString;
 @class CNImList;
 @class CNTuple;
 

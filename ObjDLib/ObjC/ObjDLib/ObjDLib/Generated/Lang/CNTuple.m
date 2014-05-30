@@ -1,6 +1,7 @@
 #import "objd.h"
 #import "CNTuple.h"
 
+#import "CNString.h"
 #import "CNType.h"
 @implementation CNTuple
 static CNClassType* _CNTuple_type;

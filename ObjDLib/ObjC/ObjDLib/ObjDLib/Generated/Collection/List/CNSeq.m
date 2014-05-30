@@ -3,7 +3,7 @@
 
 #import "CNSet.h"
 #import "CNType.h"
-#import "CNObject.h"
+#import "CNString.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
 #import "CNPlat.h"

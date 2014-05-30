@@ -2,6 +2,7 @@
 #import "CNTry.h"
 
 #import "CNType.h"
+#import "CNString.h"
 @implementation CNTry
 static CNClassType* _CNTry_type;
 

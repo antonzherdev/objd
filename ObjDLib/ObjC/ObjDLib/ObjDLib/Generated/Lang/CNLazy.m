@@ -2,6 +2,7 @@
 #import "CNLazy.h"
 
 #import "CNType.h"
+#import "CNString.h"
 @implementation CNLazy
 static CNClassType* _CNLazy_type;
 @synthesize f = _f;

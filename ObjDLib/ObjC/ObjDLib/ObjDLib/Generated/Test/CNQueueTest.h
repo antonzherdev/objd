@@ -1,8 +1,10 @@
 #import "objdcore.h"
 #import "TSTestCase.h"
+#import "CNObject.h"
 @class CNImQueue;
 @class CNTuple;
 @class CNClassType;
+@class CNString;
 
 @class CNQueueTest;
 

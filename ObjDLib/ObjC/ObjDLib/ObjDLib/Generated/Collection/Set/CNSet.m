@@ -2,8 +2,8 @@
 #import "CNSet.h"
 
 #import "CNType.h"
+#import "CNString.h"
 #import "CNDispatchQueue.h"
-#import "CNObject.h"
 #import "CNChain.h"
 #import "CNPlat.h"
 @implementation CNSet_impl

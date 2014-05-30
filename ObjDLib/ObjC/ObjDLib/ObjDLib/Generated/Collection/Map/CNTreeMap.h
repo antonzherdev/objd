@@ -1,8 +1,9 @@
 #import "objdcore.h"
 #import "CNMap.h"
-#import "CNCollection.h"
 #import "CNObject.h"
+#import "CNCollection.h"
 @class CNClassType;
+@class CNString;
 @class CNTuple;
 @class CNMArray;
 @class CNDispatchQueue;

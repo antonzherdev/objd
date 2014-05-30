@@ -2,6 +2,7 @@
 #import "CNMutableList.h"
 
 #import "CNType.h"
+#import "CNString.h"
 @implementation CNMList
 static CNClassType* _CNMList_type;
 

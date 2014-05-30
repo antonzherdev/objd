@@ -1,12 +1,12 @@
 module ObjD.Struct (
-	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources, EnumItem(..), CallPar, DefMod(..), 
+	FileStm(..), Extends(..), ClassStm(..), Exp(..), Par(..), DataType(..), File(..), Sources(..), EnumItem(..), CallPar, DefMod(..), 
 	ClassMod(..), MathTp(..), BoolTp(..), Generic(..), ExtendsRef, ExtendsClass(..), CaseCondition(..), CaseItem, FuncOpTp(..), ParMod(..),
 	Annotation(..),
 	isClass, isImport, isDef, isDecl, isStub, isEnum, isStatic, isType, isClassImport, classMods
 ) where
 import           Ex.String
 import 			 Data.Decimal
-type Sources = [File]
+data Sources = Sources{sourcesFiles :: [File], sourcesIncludes :: [File]}
 
 data File = File {fileName :: String, filePackage :: [String], fileStms :: [FileStm]}
 

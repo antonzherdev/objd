@@ -2,9 +2,9 @@
 #import "CNMap.h"
 
 #import "CNType.h"
+#import "CNString.h"
 #import "CNTuple.h"
 #import "CNDispatchQueue.h"
-#import "CNObject.h"
 #import "CNChain.h"
 #import "CNPlat.h"
 @implementation CNMap_impl

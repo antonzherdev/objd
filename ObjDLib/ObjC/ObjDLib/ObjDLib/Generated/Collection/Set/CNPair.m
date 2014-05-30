@@ -2,7 +2,7 @@
 #import "CNPair.h"
 
 #import "CNType.h"
-#import "CNObject.h"
+#import "CNString.h"
 @implementation CNPair
 static CNClassType* _CNPair_type;
 @synthesize a = _a;

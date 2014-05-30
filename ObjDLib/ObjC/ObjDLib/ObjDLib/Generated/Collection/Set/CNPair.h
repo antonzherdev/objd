@@ -1,8 +1,9 @@
 #import "objdcore.h"
 #import "CNSet.h"
+#import "CNObject.h"
 #import "CNCollection.h"
 @class CNClassType;
-@class CNObject;
+@class CNString;
 
 @class CNPair;
 @class CNPairIterator;
