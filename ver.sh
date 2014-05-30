@@ -13,4 +13,6 @@ rm -rf ./dist/ObjD/Java/out
 
 cp -r ./ObjDLib/ObjC ./dist/ObjD/
 
-zip -r -q ./dist/ObjD.zip ./dist/ObjD
+cd ./dist/ObjD
+zip -r -q ./../ObjD.zip ./
+cd ../../
