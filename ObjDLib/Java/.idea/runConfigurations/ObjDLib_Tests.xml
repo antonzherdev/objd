@@ -16,7 +16,7 @@
       <value defaultName="moduleWithDependencies" />
     </option>
     <envs />
-    <dir value="$PROJECT_DIR$/ObjDLib/test" />
+    <dir value="$PROJECT_DIR$/ObjDLib/gen-test" />
     <patterns />
     <RunnerSettings RunnerId="Debug">
       <option name="DEBUG_PORT" value="" />

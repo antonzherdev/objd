@@ -1,2 +1,2 @@
-cabal install --prefix=$HOME --user 
+cabal install 
 ./genlib.sh
