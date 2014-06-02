@@ -153,10 +153,7 @@
 }
 
 - (NSDictionary*)addItem:(CNTuple*)item {
-    CNHashMapBuilder* builder = [CNHashMapBuilder hashMapBuilder];
-    [builder appendAllItems:self];
-    [builder appendItem:item];
-    return [builder build];
+    return [self dictionaryByAddingValue:item.b forKey:item.a];
 }
 
 - (id <CNMMap>)mCopy {
