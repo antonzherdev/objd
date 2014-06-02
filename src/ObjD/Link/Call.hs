@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module ObjD.Link.Call (
 	dotCall, exprCall, insertWeak
 )where
@@ -199,22 +201,22 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 			non f = map (\d -> (Nothing, d)) f
 			clRef = dataTypeClassRef env (fromJust strictClass)
 			allDefsInStrictClass _ = 
-				non (allDefsInClass clRef)
-				++ non (allDefsInObject clRef)
+				non (nub $ allDefsInClass clRef)
+				++ non (nub $ allDefsInObject clRef)
 			allDefsInEnv = non(envVals env)
-				++ non (allDefsInClass (dataTypeClassRef env $ envSelf env) )
-				++ non (allDefsInObject (dataTypeClassRef env $ envSelf env) )
+				++ non (nub $ allDefsInClass (dataTypeClassRef env $ envSelf env) )
+				++ non (nub $ allDefsInObject (dataTypeClassRef env $ envSelf env) )
 				++ concatMap (\cl -> map (\d -> (Just cl, d)) $ classStaticDefs cl) (envObjectIndex env)
 				++ non objects 
 			objects = if isNothing pars then (map (objectDef . snd) . M.toList) (envIndex env) else []
 		
 		findCall :: Bool -> [(Maybe Class, Exp)]
-		findCall hard = (mapMaybe fit . filter ((== name) . defName . snd)) allDefs
+		findCall hard = (map snd . sortBy (\a b -> fst a `compare` fst b) . mapMaybe fit . filter ((== name) . defName . snd)) allDefs
 			where
-				fit :: (Maybe Class, Def) -> Maybe (Maybe Class, Exp)
+				fit :: (Maybe Class, Def) -> Maybe (Int, (Maybe Class, Exp))
 				fit (cl, d)
 					| length pars' == length (defPars d) = 
-							if checkParameters pars' (defPars d) then Just $ (cl, def' d) else Nothing
+							fmap ((, (cl, def' d))) $ checkParameters pars' (defPars d)
 					| otherwise = Nothing
 
 				def' d = Call d (resolveTp d) (zipWith (\dp (_, e) -> (dp, e) ) (defPars' d) pars') []
@@ -226,12 +228,22 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 				defPars' :: Def -> [Def]
 				defPars' Def{defType = t, defPars = []} = dataTypePars t
 				defPars' Def{defPars = r} = r
-				checkParameters :: [(Maybe String, Exp)] -> [Def] -> Bool
-				checkParameters cp dp = all (checkParameter) $ zip cp dp
-				checkParameter :: ((Maybe String, Exp), Def) -> Bool
-				checkParameter ((Just cn, e), Def{defName = dn, defType = tp}) = cn == dn && checkDataType tp (exprDataType e)
+				checkParameters :: [(Maybe String, Exp)] -> [Def] -> Maybe Int
+				checkParameters cp dp = foldl fld (Just 0) $ map (checkParameter) $ zip cp dp
+					where
+						fld Nothing _ = Nothing
+						fld _ Nothing = Nothing
+						fld (Just a) (Just b) = Just $ a + b
+				checkParameter :: ((Maybe String, Exp), Def) -> Maybe Int
+				checkParameter ((Just cn, e), Def{defName = dn, defType = tp}) 
+					| cn == dn = checkDataType tp (exprDataType e)
+					| otherwise = Nothing
 				checkParameter ((_, e), Def{defType = tp}) = checkDataType tp (exprDataType e)
-				checkDataType dtp tp = if hard then isInstanceOfTp env tp dtp else True
+				checkDataType dtp tp 
+					| dtp == tp = Just 0 
+					| not hard = Just 0
+					| isInstanceOfTp env tp dtp = Just 1
+					| otherwise = Nothing
 
 		correctCallPar :: (DataType, Def, Exp) -> (Def, Exp)
 		correctCallPar (tp@(TPFun _ _), d, FirstTry _ e'@Lambda{}) = correctCallPar (tp, d, e')
