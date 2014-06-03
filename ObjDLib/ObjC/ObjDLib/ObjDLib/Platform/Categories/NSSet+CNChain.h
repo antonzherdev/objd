@@ -7,4 +7,5 @@
 
 
 @interface NSSet (CNChain) <CNImSet>
++ (id <CNSet>)imHashSet;
 @end

@@ -88,6 +88,7 @@ main =
 					e <- testFileEq fn txt
 					when(not e) $ do
 						print $ "Writing " ++ fn
+						createDirectoryIfMissing True $ dropFileName fn
 						writeFile fn txt
 			testFileEq :: String -> String -> IO Bool
 			testFileEq fn txt = doesFileExist fn >>= \e ->

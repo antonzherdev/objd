@@ -314,8 +314,9 @@ genExp env (D.Dot (D.Call objDef _ [] []) (D.Call constr _ pars gens))
 	| D.DefModConstructor `elem` D.defMods constr 
 		|| (D.defName constr == "apply" && D.DefModStub `elem` D.defMods constr && D.DefModStatic `elem` D.defMods constr) 
 		= do
-			let (D.TPObject _ cl) = D.defType objDef
-			tellImportClass cl 
+			case D.unwrapGeneric $ D.defType objDef of
+				D.TPObject _ cl -> tellImportClass cl 
+				_ -> return ()
 			pars' <- mapM (genParExp env) pars
 			gens' <- mapM genTp gens
 			return $ J.New [] (D.defName objDef) gens' pars'
