@@ -94,7 +94,7 @@ removeGenerics t = t
  -----------------------------------------------------------------------------------------------------------------------------------------------}
 data Def = 
 	  Def{defAnnotations :: [DefAnnotation], defMods :: [DefMod], defGenerics :: [Generic]
-	  , defTp :: TP, defName :: String, defPars :: [DefPar], defStms :: [Stm]}
+	  , defTp :: TP, defName :: String, defPars :: [DefPar], defThrows :: [String], defStms :: [Stm]}
 	| Constructor {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defPars :: [DefPar], defStms :: [Stm]}
 	| Field {defAnnotations :: [DefAnnotation], defMods :: [DefMod], defTp :: TP, defName :: String, defExp :: Exp}
 	| StaticConstructor{defStms :: [Stm]} deriving (Eq)
@@ -115,11 +115,14 @@ showDef _ d@Field{} = concatMap showAnnotation (defAnnotations d)
 			Nop -> [";"] 
 			e -> [" = "] `glue` mapNotFirst ind (showExp e) `appp` ";"
 showDef (clTp, _) d@Def{} = concatMap showAnnotation (defAnnotations d)
-	 ++ [wrapStr "" " " mods ++ pstrs' "<" ", " "> " (defGenerics d) ++ show (defTp d) ++ " " ++ kw (defName d) ++ showPars d] `glue` body
+	 ++ [wrapStr "" " " mods ++ pstrs' "<" ", " "> " (defGenerics d) ++ show (defTp d) ++ " " ++ kw (defName d) ++ showPars d ++ throws] `glue` body
 	where 
 		mods = strs' " " (if clTp == ClassTypeInterface then filter isValidModForInterface (defMods d) else defMods d)
 		isValidModForInterface _ = False
 		body = if clTp == ClassTypeInterface || DefModAbstract `elem` defMods d then [";"] else (mapFirst (" " ++ ) (showStmsInBrackets (defStms d)))
+		throws = case defThrows d of
+			[] -> ""
+			thrs -> " throws " ++ strs ", " thrs
 showDef (_, clNm) d@Constructor{} = concatMap showAnnotation (defAnnotations d) 
 	++ [wrapStr "" " " (strs' " " (delete DefModStatic (defMods d))) ++ 
 	clNm ++ showPars d ++ " "] `glue` showStmsInBrackets (defStms d)

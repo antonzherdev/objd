@@ -138,6 +138,7 @@ genDef isClTest cl d =
 		 				J.defName = name,
 		 				J.defTp = tp,
 		 				J.defPars = [],
+		 				J.defThrows = [],
 		 				J.defStms = [J.Return $ J.Ref name]
 		 			}| D.DefModOverride `elem` D.defMods d]
  		else if D.isConstructor d then
@@ -169,7 +170,9 @@ genDef isClTest cl d =
  				stms' <- getStms defaultEnv body
  				gens' <- mapM genGeneric $ maybe [] D.defGenericsClasses $ D.defGenerics d
  				pars' <- mapM genPar $ D.defPars d
- 				let isTest = isClTest && (D.containsAnnotationWithClassName "objd.test.Test" $ D.defAnnotations d)
+ 				let 
+ 					isTest = isClTest && (D.containsAnnotationWithClassName "objd.test.Test" $ D.defAnnotations d)
+ 					isFinalize = name == "finalize"
  				when(isTest) $ tellImport ["org", "junit", "Test"]
  				return [J.Def {
 	 				J.defAnnotations = [overrideAnnotation| D.DefModOverride `elem` D.defMods d] ++ [testAnnotation | isTest],
@@ -178,7 +181,8 @@ genDef isClTest cl d =
 	 				J.defName = name,
 	 				J.defTp = tp,
 	 				J.defPars = pars',
-	 				J.defStms = stms'
+	 				J.defThrows = if isFinalize then ["Throwable"] else [],
+	 				J.defStms = if isFinalize then (J.Stm $ J.Dot J.Super $ J.Call "finalize" [] []) : stms' else stms'
 	 			} | not isTrait || (D.DefModPublic `elem` D.defMods d)]
 
 genPar :: D.Def -> Writer Wrt J.DefPar
@@ -384,6 +388,7 @@ genExp env (D.Lambda pars e dtp) = do
 			J.defName = "apply",
 			J.defTp = dtp',
 			J.defPars = pars',
+			J.defThrows = [],
 			J.defStms = stms
 		}
 		clNm = (if dtp == D.TPVoid then "P" else "F") ++ if length pars == 1 then "" else show (length pars)

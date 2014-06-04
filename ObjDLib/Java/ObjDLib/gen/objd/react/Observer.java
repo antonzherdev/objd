@@ -9,7 +9,8 @@ public class Observer<T> {
         this.observable.detachObserver(this);
     }
     @Override
-    public void finalize() {
+    public void finalize() throws Throwable {
+        super.finalize();
         this.observable.detachObserver(null);
     }
     public Observer(final Observable<T> observable, final P<T> f) {
