@@ -92,6 +92,7 @@ defName d
 				"dealloc" -> "finalize"
 				"description" -> "toString"
 				"toString" -> "_toString"
+				"null" -> "nil"
 				_ -> def
 			[p] -> case (D.defName d, D.defName p) of
 				("isEqual", "to") -> "equals"
@@ -487,6 +488,7 @@ genExp env (D.Braces exps) = do
 	tellStms $ join stms
 	genExp env $ last exps
 genExp env (D.NullDot _ _ e) = genExp env e
+genExp _ (D.Null _) = return J.Null
 genExp env (D.Cast dtp l) = do 
 	l' <- genExp env l
 	dtp' <- genTp dtp

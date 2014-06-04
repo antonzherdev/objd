@@ -59,17 +59,22 @@ linkOptionCall env (_, l') (D.Call fname (Just [(_, e)]) [])
 			D.Lambda _ le -> le
 			_ -> e
 		mapExpr' = envExprCompile (envAddVals [tmp] env) mapExpr
+		mapExpr'' = case unwrapGeneric $ exprDataType mapExpr' of
+			TPFun{}-> case mapExpr' of
+				Lambda{} -> mapExpr'
+				_ -> dotCall env mapExpr' "apply" [] [callRef tmp] 
+			_ -> mapExpr'
 		bTp = case fname of
 			"for" -> TPVoid
-			"map" -> exprDataType mapExpr'
-			"flatMap" -> unoptionHard $ exprDataType mapExpr'
+			"map" -> exprDataType mapExpr''
+			"flatMap" -> unoptionHard $ exprDataType mapExpr''
 	in	Braces [
 			declareVal env tmp, 
 			(case unwrapGeneric $ envTp env of
 				TPVoid -> If (BoolOp NotEq (callRef tmp) (None aTp) ) 
-					mapExpr' Nop
+					mapExpr'' Nop
 				_ -> If (BoolOp NotEq (callRef tmp) (None aTp) ) 
-					(implicitConvertsion env (option False bTp) mapExpr')
+					(implicitConvertsion env (option False bTp) mapExpr'')
 					(None $ wrapGeneric $ bTp))
 		]			
 linkOptionCall _ _ e = ExpDError ("Unknown option operation: " ++ show e) e
