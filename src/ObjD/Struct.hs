@@ -39,7 +39,8 @@ isType :: FileStm -> Bool
 isType (Type {}) = True
 isType _ = False
 
-data ClassMod = ClassModStruct | ClassModStub | ClassModTrait | ClassModObject | ClassModAbstract | ClassModFinal | ClassModCase | ClassModPackageObject deriving (Eq)
+data ClassMod = ClassModStruct | ClassModStub | ClassModTrait | ClassModObject | ClassModAbstract | ClassModFinal 
+	| ClassModCase | ClassModPackageObject | ClassModInline deriving (Eq)
 
 data Generic = Generic String (Maybe Extends)
 

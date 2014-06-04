@@ -1,6 +1,7 @@
 #import "objd.h"
 #import "CNMutableList.h"
 
+#import "CNPlatform.h"
 #import "CNType.h"
 #import "CNString.h"
 @implementation CNMList

@@ -20,5 +20,5 @@ executable ObjD
   other-modules:       ObjC.Struct, ObjD.Struct, ObjC.Generator, ObjD.Parser, Java.Struct, Java.Generator, 
                        ObjD.Link.Check, ObjD.Link.Link, ObjD.Link.Struct, ObjD.Link.Env, ObjD.Link.Inline, ObjD.Link.DataType,
                        ObjD.Link.Extends, ObjD.Link.Conversion, ObjD.Link.Option, ObjD.Link.Call, ObjD.Link.Expr,
-                       ObjD.Link.Pointer, ObjD.Link.PatternMatching, ObjD.Link.String, ObjD.Link.Composition
+                       ObjD.Link.Pointer, ObjD.Link.PatternMatching, ObjD.Link.String, ObjD.Link.Composition, ObjD.Link.InlineClass
   build-depends:       base >=4.5, parsec, containers, mtl, filepath, directory, Decimal

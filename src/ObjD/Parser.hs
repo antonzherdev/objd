@@ -146,7 +146,9 @@ pTypeStm a = do
 
 pClass :: [Annotation] -> Parser FileStm
 pClass a = do
-	mods <- many $ (try (stringSps "stub") >> return ClassModStub) <|> (try (stringSps "abstract") >> return ClassModAbstract) <|> (try (stringSps "final") >> return ClassModFinal) <|> (try (stringSps "case") >> return ClassModCase) <|> (try (stringSps "package") >> return ClassModPackageObject)
+	mods <- many $ (try (stringSps "stub") >> return ClassModStub) <|> (try (stringSps "abstract") >> return ClassModAbstract) 
+		<|> (try (stringSps "final") >> return ClassModFinal) <|> (try (stringSps "case") >> return ClassModCase) 
+		<|> (try (stringSps "package") >> return ClassModPackageObject) <|> (try (stringSps "inline") >> return ClassModInline)
 	struct <- (string "class" >> return []) <|> (string "struct" >> return [ClassModStruct]) <|> (string "trait" >> return [ClassModTrait]) <|> (string "object" >> return [ClassModObject])
 	sps
 	name <- option "" ident

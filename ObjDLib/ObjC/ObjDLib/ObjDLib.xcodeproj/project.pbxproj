@@ -20,9 +20,11 @@
 		6F3DF08F18DA0B715297075E /* CNType.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFA2E0B9019BB04EAF48B /* CNType.m */; };
 		6F3DF0B47EC73EDCFC0252D7 /* ObjDLibOSXTests-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 6F3DF791A25A811BFB4A3886 /* ObjDLibOSXTests-Info.plist */; };
 		6F3DF0F982AEBBF849A7C136 /* ObjDLibTests-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 6F3DFAC7A2E76DC3DDCCC67A /* ObjDLibTests-Info.plist */; };
+		6F3DF0FC5B6302011C8736E2 /* CNBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF74D25206D02202F35CF /* CNBuffer.m */; };
 		6F3DF1316DAF2510CC1D1D6B /* CNReactTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF4219AE7619B57330B86 /* CNReactTest.m */; };
 		6F3DF141320269FCFF99A47A /* NSSet+CNChain.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFB84CD5F4CB304279C82 /* NSSet+CNChain.m */; };
 		6F3DF17ECF766B754BD6FF23 /* CNMap.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFDF8EDF55AB620620A0F /* CNMap.m */; };
+		6F3DF1AC686E97662731E6D7 /* Buffer.od in Resources */ = {isa = PBXBuildFile; fileRef = 6F3DFEF42F3707D7AE0E35D0 /* Buffer.od */; };
 		6F3DF1CE7A41B696CA3768C1 /* CNPlatform.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFB140757AE92CAE88CAC /* CNPlatform.m */; };
 		6F3DF1CEEF3A2795109528E4 /* CNLazy.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFCE387C62DEB1379F3F4 /* CNLazy.m */; };
 		6F3DF1E0FEA805ADCC34934B /* NSArray+CNChain.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF3A15B5441D127B5D65B /* NSArray+CNChain.m */; };
@@ -62,6 +64,7 @@
 		6F3DF5656A418F8B9F8685AE /* CNPair.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFC67D8B908C17FC605DD /* CNPair.m */; };
 		6F3DF56B5A767B755C830A02 /* NSDate+CNChain.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFDAA42EDB423391F5243 /* NSDate+CNChain.m */; };
 		6F3DF59E1F3C90A70A349DF5 /* CNPArray.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF73AB52B953B8736A4F9 /* CNPArray.m */; };
+		6F3DF5AB2B85C62607043B19 /* CNBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF74D25206D02202F35CF /* CNBuffer.m */; };
 		6F3DF5BAC0D1F5E9923154B5 /* CNFuture.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DF654CADAA8056447F8F2 /* CNFuture.m */; };
 		6F3DF635743BA234C1E00286 /* CNPlatform.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFD1D8953B55AE9F5E4D1 /* CNPlatform.m */; };
 		6F3DF655D4C7FB3EE1719712 /* TSTestCase.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F3DFB39752B7C6A087023B4 /* TSTestCase.m */; };
@@ -221,6 +224,7 @@
 		6F3DF58892B342A405E2087C /* CNObserver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNObserver.h; sourceTree = "<group>"; };
 		6F3DF594D3D0DC2DDAD5943F /* CNMailbox.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNMailbox.m; sourceTree = "<group>"; };
 		6F3DF59B90615C1AFB03FAF5 /* Queue.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Queue.od; sourceTree = "<group>"; };
+		6F3DF59D741245E89F027E7C /* CNBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNBuffer.h; sourceTree = "<group>"; };
 		6F3DF59D8C9F2A4272A6CFC8 /* CNTreeMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNTreeMap.h; sourceTree = "<group>"; };
 		6F3DF5E2DC8D3EA7748CD9E2 /* Pointer.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Pointer.od; sourceTree = "<group>"; };
 		6F3DF6000D06710EF5163771 /* CombinationsLink.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = CombinationsLink.od; sourceTree = "<group>"; };
@@ -239,6 +243,7 @@
 		6F3DF70E98AD69A7E8315C14 /* CNDate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNDate.h; sourceTree = "<group>"; };
 		6F3DF7220783F515C3C1785F /* CNActorTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNActorTest.h; sourceTree = "<group>"; };
 		6F3DF73AB52B953B8736A4F9 /* CNPArray.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNPArray.m; sourceTree = "<group>"; };
+		6F3DF74D25206D02202F35CF /* CNBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNBuffer.m; sourceTree = "<group>"; };
 		6F3DF75367372EDF77690BEA /* CNString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNString.h; sourceTree = "<group>"; };
 		6F3DF75910F0AD59CDC2DF55 /* TSTestCase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TSTestCase.h; sourceTree = "<group>"; };
 		6F3DF7615010C090BD7FEAEB /* CNTreeSet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNTreeSet.m; sourceTree = "<group>"; };
@@ -343,6 +348,7 @@
 		6F3DFEC7A080EB375C2E7F77 /* CNLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNLock.h; sourceTree = "<group>"; };
 		6F3DFECAADDD4A0870F1C137 /* CNSourceLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNSourceLink.h; sourceTree = "<group>"; };
 		6F3DFEEE125A3E75312AE435 /* CNActorTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNActorTest.m; sourceTree = "<group>"; };
+		6F3DFEF42F3707D7AE0E35D0 /* Buffer.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Buffer.od; sourceTree = "<group>"; };
 		6F3DFF1666EFED956B015A80 /* Option.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Option.od; sourceTree = "<group>"; };
 		6F3DFF2D258353859C97DFEF /* Type.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Type.od; sourceTree = "<group>"; };
 		6F3DFF3DD2375743B1796EDE /* CNChainTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CNChainTest.m; sourceTree = "<group>"; };
@@ -574,6 +580,7 @@
 				6F3DF219112BCB5DABD8E501 /* Plat.od */,
 				6F3DFE87FBB93D9AEBAA4775 /* PArray.od */,
 				6F3DF0660AAAF07C65E1A710 /* Collection.od */,
+				6F3DFEF42F3707D7AE0E35D0 /* Buffer.od */,
 			);
 			path = Collection;
 			sourceTree = "<group>";
@@ -718,6 +725,8 @@
 				6F3DF0438D04F73A704A9005 /* List */,
 				6F3DF01218033485CF54A65D /* Map */,
 				6F3DF31604797090B4868136 /* Set */,
+				6F3DF59D741245E89F027E7C /* CNBuffer.h */,
+				6F3DF74D25206D02202F35CF /* CNBuffer.m */,
 			);
 			path = Collection;
 			sourceTree = "<group>";
@@ -957,6 +966,7 @@
 			files = (
 				6F3DF0B47EC73EDCFC0252D7 /* ObjDLibOSXTests-Info.plist in Resources */,
 				6F3DFAC1D6C254D4B15B7260 /* ObjDLibTests-Info.plist in Resources */,
+				6F3DF1AC686E97662731E6D7 /* Buffer.od in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1037,6 +1047,7 @@
 				6F3DF7CC4BAB9AD6E43C9132 /* NSMutableDictionary+CNChain.m in Sources */,
 				6F3DFF842DCD63439510A7ED /* CNSeed.m in Sources */,
 				6F3DF4985907159C1F1B5201 /* ObjDLib.m in Sources */,
+				6F3DF5AB2B85C62607043B19 /* CNBuffer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1105,6 +1116,7 @@
 				6F3DF474924FC99D34EF2EC7 /* NSMutableDictionary+CNChain.m in Sources */,
 				6F3DF4031B059C47E449EE43 /* CNSeed.m in Sources */,
 				6F3DFCC1851E7CA0A7DEBAB3 /* ObjDLib.m in Sources */,
+				6F3DF0FC5B6302011C8736E2 /* CNBuffer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

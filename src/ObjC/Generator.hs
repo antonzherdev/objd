@@ -79,9 +79,9 @@ stmToInterface cl =
 	where 
 		env = Env cl 0 D.TPVoid False
 		name = D.classNameWithPrefix cl
-		defs = filter (not . D.isInline) $ D.classDefs cl
+		defs = filter (\f -> not (D.isInline f) && not (D.isDefChild f)) $ D.classDefs cl
 		implFields = filter needField (D.classDefsWithTraits cl)
-		needField f = D.isField f && not (D.isStatic f)
+		needField f = not (D.isDefChild f) && D.isField f && not (D.isStatic f)
 		constrFuns = maybe [] (\constr -> [createFun name constr, initFun constr]) (D.classConstructor cl)
 		staticGetters = (map staticGetterFun .filter (\f -> 
 			(D.DefModPrivate `notElem` D.defMods f) && D.isField f && D.isStatic f)) defs
@@ -105,7 +105,7 @@ staticGetterFun D.Def{D.defName = name, D.defType = tp} = C.Fun C.ObjectFun (sho
 
 		
 needProperty :: D.Def -> Bool
-needProperty v = D.DefModPrivate `notElem` D.defMods v && D.isField v && not (D.isStatic v)
+needProperty v = not (D.isDefChild v) &&  D.DefModPrivate `notElem` D.defMods v && D.isField v && not (D.isStatic v)
 
 
 fieldToProperty :: D.Def -> C.Property
@@ -199,7 +199,7 @@ stmToImpl cl =
 		clsName = D.classNameWithPrefix cl
 		env = Env cl 0 D.TPVoid False
 		defs :: [D.Def]
-		defs = filter (\f -> not (D.isInline f && D.isPrivate f)) $ D.classDefsWithTraits cl
+		defs = filter (\f -> (not (D.isInline f && D.isPrivate f)) && D.DefModChild `notElem` D.defMods f) $ D.classDefsWithTraits cl
 					
 		constrFuns = maybe [] (\constr -> [implCreate cl constr, implInit env constr]) (D.classConstructor cl)
 		implFields = filter needField defs
@@ -291,7 +291,9 @@ implInit env@Env{envClass = cl} constr@D.Def{D.defPars = constrPars}  = C.ImplFu
 
 		superInit Nothing = C.Call C.Super "init" [] []
 		superInit (Just (D.ExtendsClass _ [])) = C.Call C.Super "init" [] []
-		superInit (Just (D.ExtendsClass _ pars)) = C.Call C.Super "initWith" (map (\(d, e) -> (D.defName d, tExpTo env (D.defType d) e)) pars) []
+		superInit (Just (D.ExtendsClass c pars)) 
+			| D.ClassModInline `elem` D.classMods (fst c) = C.Call C.Super "init" [] []
+			| otherwise = C.Call C.Super "initWith" (map (\(d, e) -> (D.defName d, tExpTo env (D.defType d) e)) pars) []
 
 
 		selfClass = C.Call (C.Ref $ D.classNameWithPrefix cl) "class" [] []

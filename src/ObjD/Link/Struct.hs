@@ -17,7 +17,7 @@ module ObjD.Link.Struct (
 	isFinal, isTpClass, isTpEnum, isTpTrait, isNop, enumItems, isType, isGeneric, isGenericWrap, tpGeneric, resolveTypeAlias,
 	containsAnnotationWithClassName, isSpecial, isConstructor, mainExtendsRef, isBaseClass, traitExtendsRefs, findAnnotationWithClassName, 
 	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError, isDefAbstract, isEnumItem, isTpGeneric, isPrivate,
-	genName, dataTypeGenClassName, localVarE, localVar, coreDataTypeClass, coreClass, buildCore, classFullName, sourcesAllFiles
+	genName, dataTypeGenClassName, localVarE, localVar, coreDataTypeClass, coreClass, buildCore, classFullName, sourcesAllFiles, isDefChild
 	) where
 
 import 			 Ex.String
@@ -29,6 +29,7 @@ import           Data.Char
 import           Control.Monad.State
 import qualified ObjD.Struct         as D
 import           Data.Decimal
+--import Debug.Trace
 
 
 data Lang = ObjC | Java deriving (Eq)
@@ -75,6 +76,8 @@ classDefs _ = []
 classStaticDefs :: Class -> [Def]
 classStaticDefs = filter (isStatic) . classDefs
 classMods :: Class -> [ClassMod]
+-- classMods cl | trace ("classMods " ++ className cl) False = undefined
+-- classMods cl | trace ("classMods") False = undefined
 classMods Class{_classMods = r} = r
 classMods _ = []
 classImports :: Class -> [Import]
@@ -103,7 +106,7 @@ findValWithName name cl = find (\d -> name == defName d && DefModField `elem` de
 
 
 data ClassMod = ClassModStub | ClassModStruct | ClassModTrait | ClassModEnum | ClassModObject | ClassModType | 
-	ClassModAbstract | ClassModFinal | ClassModCase | ClassModPackageObject | ClassModTraitImpl deriving (Eq)
+	ClassModAbstract | ClassModFinal | ClassModCase | ClassModPackageObject | ClassModTraitImpl | ClassModInline | ClassModExtendsInline deriving (Eq)
 
 type ExtendsRef = (Class, [DataType])
 data Extends = Extends {extendsClass :: Maybe ExtendsClass, extendsTraits :: [ExtendsRef]}
@@ -138,6 +141,8 @@ instance Show ClassMod where
 	show ClassModFinal = "final"
 	show ClassModCase = "case"
 	show ClassModPackageObject = "package"
+	show ClassModInline = "inline"
+	show ClassModExtendsInline = "extends_inline"
 	show ClassModTraitImpl = "impl"
 			
 instance Show Extends where
@@ -158,7 +163,7 @@ isCoreFile File{filePackage = Package (x : y : _) _ _} = x == "objd" && (y == "l
 isCoreFile _ = False
 classConstructor :: Class -> Maybe Def 
 classConstructor Generic{} = Nothing
-classConstructor cl = (listToMaybe . filter isConstructor . classDefs) cl
+classConstructor cl = (listToMaybe . filter (\f -> isConstructor f && not (isDefChild f)) . classDefs) cl
 isClass :: Class -> Bool
 isClass (Class {}) = True
 isClass _ = False
@@ -194,9 +199,9 @@ classFields = filter isField . classDefs
 classPackageName :: Class -> [String]
 classPackageName = packageName . classPackage
 classFullName :: Class -> [String]
-classFullName cl
-	| ClassModPackageObject `elem` classMods cl = classPackageName cl
-	| otherwise = classPackageName cl ++ [className cl] 
+classFullName cl = case className cl of
+	"" -> classPackageName cl
+	nm -> classPackageName cl ++ [nm] 
 
 
 data Annotation = Annotation Def [CallPar]
@@ -260,6 +265,7 @@ extendsNothing :: Extends
 extendsNothing = Extends Nothing []
 
 extendsRefs :: Extends -> [ExtendsRef]
+-- extendsRefs _ | trace ("extendsRefs") False = undefined
 extendsRefs (Extends Nothing traits) = traits
 extendsRefs (Extends (Just (ExtendsClass cl _)) traits) = cl : traits
 
@@ -302,6 +308,8 @@ isDef :: Def -> Bool
 isDef = (DefModDef `elem` ) . defMods
 isField :: Def -> Bool
 isField = (DefModField `elem` ) . defMods
+isDefChild :: Def -> Bool
+isDefChild = (DefModChild `elem` ) . defMods
 isEnumItem :: Def -> Bool
 isEnumItem = (DefModEnumItem `elem` ) . defMods
 isConstructor :: Def -> Bool
@@ -326,7 +334,8 @@ eqPar (x, y) = defName x == defName y
 
 data DefMod = DefModStatic | DefModMutable | DefModAbstract | DefModPrivate | DefModPublic | DefModProtected | DefModGlobalVal | DefModWeak
 	| DefModConstructor | DefModStub | DefModLocal | DefModObject 
-	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper | DefModInline 
+	| DefModField | DefModEnumItem | DefModDef | DefModSpecial | DefModStruct | DefModApplyLambda | DefModSuper 
+	| DefModInline | DefModChild
 	| DefModPure | DefModFinal | DefModOverride | DefModError String | DefModConstructorField | DefModVolatile
 	| DefModChangedInLambda | DefModEnum
 	deriving (Eq, Ord)
@@ -358,6 +367,7 @@ instance Show DefMod where
 	show DefModFinal = "final"
 	show DefModOverride = "override"
 	show DefModChangedInLambda = "block"
+	show DefModChild = "child"
 	show (DefModError s) = "Error: " ++ s
 data DefGenerics = DefGenerics{defGenericsClasses :: [Class], defGenericsSelfType :: DataType}
 
@@ -418,6 +428,7 @@ defRefPrep Def{defMods = mods} = "<" ++  map ch mods ++ ">"
 		ch DefModConstructorField = 'U'
 		ch (DefModError _) = '!'
 		ch DefModChangedInLambda = 'k'
+		ch DefModChild = 'C'
 		
 
 dataTypePars :: DataType -> [Def]

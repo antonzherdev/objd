@@ -1,6 +1,7 @@
 #import "objd.h"
 #import "CNTreeMapTest.h"
 
+#import "CNPlatform.h"
 #import "CNTreeMap.h"
 #import "CNString.h"
 #import "CNPlat.h"

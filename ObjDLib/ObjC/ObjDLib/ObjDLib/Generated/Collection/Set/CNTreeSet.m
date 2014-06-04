@@ -4,6 +4,7 @@
 #import "CNTreeMap.h"
 #import "CNType.h"
 #import "CNString.h"
+#import "CNPlatform.h"
 @implementation CNTreeSet
 static CNClassType* _CNTreeSet_type;
 @synthesize map = _map;

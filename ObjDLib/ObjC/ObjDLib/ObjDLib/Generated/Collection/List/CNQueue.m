@@ -5,6 +5,7 @@
 #import "CNString.h"
 #import "CNList.h"
 #import "CNTuple.h"
+#import "CNPlatform.h"
 @implementation CNQueue_impl
 
 + (instancetype)queue_impl {

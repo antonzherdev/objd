@@ -4,6 +4,7 @@
 #import "CNType.h"
 #import "CNString.h"
 #import "CNTuple.h"
+#import "CNPlatform.h"
 #import "CNDispatchQueue.h"
 #import "CNChain.h"
 #import "CNPlat.h"

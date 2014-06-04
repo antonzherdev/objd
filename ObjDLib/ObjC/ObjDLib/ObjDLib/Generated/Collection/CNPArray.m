@@ -1,6 +1,7 @@
 #import "objd.h"
 #import "CNPArray.h"
 
+#import "CNPlatform.h"
 #import "CNType.h"
 #import "CNString.h"
 @implementation CNPArray

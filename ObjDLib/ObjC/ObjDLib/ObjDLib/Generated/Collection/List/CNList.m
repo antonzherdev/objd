@@ -3,6 +3,7 @@
 
 #import "CNType.h"
 #import "CNString.h"
+#import "CNPlatform.h"
 @implementation CNImList
 static CNClassType* _CNImList_type;
 

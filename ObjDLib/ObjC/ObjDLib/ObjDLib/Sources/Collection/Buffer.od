@@ -1,0 +1,50 @@
+package objd.collection
+
+
+@ObjC
+abstract inline class Buffer<T extends PObject>(val tp : PType<T>, val count : uint4) {
+    def stride : uint4 = tp.size
+    def length : uint = stride*count
+    val bytes = Pointer<T>(tp, count)
+
+    override def dealloc {
+       bytes.free
+    }
+
+    private var _pointer : Pointer<T> = bytes
+    private var _position : uint4 = 0
+
+    def get : T = {
+        if(_position >= count) throw "Out of bound"
+        val r = _pointer.get
+        _pointer++
+        _position++
+        r
+    }
+
+    def set(v: T) {
+        if(_position >= count) throw "Out of bound"
+        _pointer.set(v)
+        _pointer++
+        _position++
+    }
+
+    def reset {
+        _pointer = bytes
+        _position = 0
+    }
+}
+
+@Java
+stub abstract class Buffer<T> extends ImSeq<T> {
+    def get : T
+
+    def set(value: T)
+    def reset
+}
+
+@ObjC
+class Int4Buffer(count : uint4) extends Buffer<int4>(Int4.type, count)
+
+@ObjC
+class Float4Buffer(count : uint4) extends Buffer<float4>(Float4.type, count)

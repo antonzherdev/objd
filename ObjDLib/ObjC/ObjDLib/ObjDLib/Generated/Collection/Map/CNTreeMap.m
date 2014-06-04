@@ -3,6 +3,7 @@
 
 #import "CNType.h"
 #import "CNString.h"
+#import "CNPlatform.h"
 #import "CNTuple.h"
 #import "CNPlat.h"
 #import "CNDispatchQueue.h"

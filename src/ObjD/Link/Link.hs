@@ -10,6 +10,7 @@ import 			 ObjD.Link.Conversion
 import 			 ObjD.Link.Inline
 import 			 ObjD.Link.Call
 import 			 ObjD.Link.Expr
+import 		     ObjD.Link.InlineClass
 import 			 Control.Arrow
 import           Control.Monad.State
 import qualified Data.Map            as M
@@ -38,7 +39,7 @@ linkFile lang files (D.File name package stms) = fl
 	where
 		fl :: File
 		fl = File {fileName = name, fileImports = thisFileImports,
-			fileClasses = classes, filePackage = package'}
+			fileClasses = map snd classes, filePackage = package'}
 		stms' = filter (not . containsOtherLangAnnotation) stms
 		containsOtherLangAnnotation stm = any isOtherLangAnnotation $ D.stmAnnotations stm
 		otherLangs = ["ObjC" | lang /= ObjC] ++ ["Java" | lang /= Java]
@@ -46,9 +47,15 @@ linkFile lang files (D.File name package stms) = fl
 		isOtherLangAnnotation _ = False
 
 		classes = (concatMap linkCl . filter isCls) stms'
-		linkCl cl = linkClass (lang, cidx cl, glidx cl, fl, package', clImports cl) cl
+		linkCl cl = case linkClass (lang, kernelIdx, cidx cl, glidx cl, fl, package', clImports cl) cl of
+			[] -> []
+			[x] -> [(D.className cl, x)]
+			[x, y] -> [(D.className cl, x), (D.className cl ++ "_impl", y)]
 		isCls s = D.isClass s || D.isStub s || D.isEnum s || D.isType s
-		cidx cl =  M.fromList . map (idx className) $ classes ++ importClasses cl ++ (concatMap fileClasses $ kernelFiles ++ packageFiles)
+		kernelIdx = M.fromList $ map (idx className) $ concatMap fileClasses kernelFiles
+		cidx cl = M.delete (D.className cl) $ M.fromList $ classes ++ (map (idx className) 
+			$ importClasses cl ++ (concatMap fileClasses $ kernelFiles ++ packageFiles))
+
 		glidx cl = importObjectDefs cl
 		package' = case package of
 			[] -> error $ "Empty package for file " ++ name
@@ -108,13 +115,14 @@ linkImport files name
 		packObject imp = filter (\c -> classFullName c == imp) allClasses
 		classesWithName imp = filter (\c -> className c == last imp && classPackageName c == init imp) allClasses
 
-linkClass :: (Lang, ClassIndex, ObjectIndex, File, Package, [Import]) -> D.FileStm -> [Class]
--- linkClass (_, _, _, _, _) D.Class{D.className = cls} | trace ("Class " ++ cls) False = undefined
-linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not isSeltStub then [cl', traitImplClass env cl'] else [cl']
+linkClass :: (Lang, ClassIndex, ClassIndex, ObjectIndex, File, Package, [Import]) -> D.FileStm -> [Class]
+linkClass (lang, kernelIdx, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && not isSeltStub then [cl', traitImplClass env cl'] else [cl']
 	where
-		cidx = ocidx `M.union` M.fromList (map (\g -> (className g, g)) generics)
+		ocidx' = M.insert (D.className cl) cl' ocidx
+		cidx = ocidx' `M.union` M.fromList (map (\g -> (className g, g)) generics)
+		-- cidx = ocidx `M.union` (M.fromList $ (D.className cl, cl') : (map (\g -> (className g, g)) generics))
 		env = Env expr lang selfType False cidx glidx [] False TPVoid ""
-		staticEnv = Env expr lang (TPObject (refDataTypeMod cl') cl') False ocidx glidx [] False TPVoid ""
+		staticEnv = Env expr lang (TPObject (refDataTypeMod cl') cl') False ocidx' glidx [] False TPVoid ""
 		isObject = case cl of
 			D.Class{} -> D.ClassModObject `elem` D.classMods cl
 			_ -> False
@@ -124,19 +132,23 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 		clsName = case cl of
 			D.Class{} -> if D.ClassModPackageObject `elem` D.classMods cl then "PackageObject" ++ (cap $ last $ packageName package) else D.className cl
 			_ -> D.className cl
+		isBase = D.className cl == "Object" || D.className cl == "PObject"
 		clsGenName = fromMaybe clsName $ genName annotations
+		extends' = if isBase then extendsNothing 
+			else fromMaybe (Extends (Just $ baseClassExtends selfIsStruct kernelIdx) []) extends
 		cl' = case cl of
 			D.Class{} -> Class {
 				_classFile = file,
 				_classPackage = package,
-				_classMods =  nub $ concatMap clsMod (D.classMods cl), 
-				className = clsName, 
+				_classMods = nub $ concatMap clsMod (D.classMods cl), 
+				className = D.className cl, 
 				genClassName = clsGenName,
-				_classExtends = if D.className cl == "Object" || D.className cl == "PObject" then extendsNothing 
-					else fromMaybe (Extends (Just $ baseClassExtends selfIsStruct cidx) []) extends, 
+				_classExtends = extends', 
 				_classDefs = 
 					if isObject then fields ++ defs ++ [typeField] 
-					else fields ++ defs ++ constr constrPars ++ [typeField] ++ [description | needDescription]  ++ [equal | needEquals] ++ [hash | needHash]
+					else fields ++ defs ++ constr 
+						++ [typeField] ++ [description | needDescription]  ++ [equal | needEquals] ++ [hash | needHash]
+						++ inlineClassAdditionalDefs env extends'
 				{-++ [unapply | D.ClassModTrait `notElem` D.classMods cl && not hasUnapply]-}, 
 				_classGenerics = generics,
 				_classImports = clImports,
@@ -193,14 +205,20 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 		clsMod D.ClassModAbstract = [ClassModAbstract]
 		clsMod D.ClassModFinal = [ClassModFinal]
 		clsMod D.ClassModPackageObject = [ClassModPackageObject]
+		clsMod D.ClassModInline = [ClassModInline]
 		clsMod D.ClassModCase = [ClassModFinal, ClassModCase]
 		-- clsMod _ = []
-		extends = fmap (linkExtends env (isSeltTrait, selfIsStruct) (map fst constrPars)) (D.classExtends cl) 
+		extends = case D.classExtends cl of
+			Nothing -> Nothing
+			Just ex -> Just $ (linkExtends env (isSeltTrait, selfIsStruct) (map fst constrPars)) ex
 		selfIsStruct = case cl of
 			D.Class{} -> D.ClassModStruct `elem` D.classMods cl
 			_ -> False
+		isInlineClass = case cl of
+			D.Class{} -> D.ClassModInline `elem` D.classMods cl
+			_ -> False
 		isStaticDecl d = isObject || D.isStatic d
-		additionalMods = [DefModStruct | selfIsStruct] ++ [DefModStatic | isObject] 
+		additionalMods = [DefModStruct | selfIsStruct] ++ [DefModStatic | isObject] ++ [DefModChild | isInlineClass]
 			++ [DefModStub | D.ClassModStub `elem` D.classMods cl] ++ [DefModEnum | _isEnum || D.className cl == "Enum"]
 		fields :: [Def]
 		fields =  concatMap (linkField staticEnv additionalMods) (filter (isStaticDecl) decls)  ++
@@ -211,10 +229,13 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 			linkDef (envForDef def) additionalMods def) 
 			. filter D.isDef $ D.classBody cl
 		envForDef def = if isStaticDecl def then staticEnv else env
-		enumConstr = constr (enumAdditionalDefs ++ constrPars)
-		constr :: [(Def, Maybe Exp)] -> [Def]
-		constr pars = let
-			mainDef = Def{defName = "apply", defMods = [DefModStatic, DefModConstructor, DefModPublic] ++ [DefModStruct | selfIsStruct], defBody = Nop,
+		enumConstr = buildConstr (enumAdditionalDefs ++ constrPars)
+		constr = buildConstr constrPars
+		buildConstr :: [(Def, Maybe Exp)] -> [Def]
+		buildConstr pars = let
+			mainDef = Def{defName = "apply", 
+				defMods = [DefModStatic, DefModConstructor, DefModPublic] ++ [DefModStruct | selfIsStruct] ++ [DefModChild | isInlineClass],
+				defBody = Nop,
 				defPars = map fst pars, defType = selfType, defGenerics = Just $ DefGenerics generics selfType, defAnnotations = []}
 			in resolveDefPar env mainDef pars 
 		constrPars :: [(Def, Maybe Exp)]
@@ -302,7 +323,7 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 					++ map reloadedEqualCall reloadedEquals
 					++ [Return True $ BoolConst False]
 			in
-				Def{defName = "isEqual", defMods = [DefModDef, DefModPublic] ++ [DefModStruct | selfIsStruct], defBody = Braces body,
+				Def{defName = "isEqual", defMods = [DefModDef, DefModPublic] ++ [DefModStruct | selfIsStruct]++ [DefModChild | isInlineClass], defBody = Braces body,
 					defPars = [p], defType = TPBool, defGenerics = Nothing, defAnnotations = []}
 				
 		
@@ -332,7 +353,7 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 						| i == 0 = arrHash atp n 1 (arrElemHash atp i)
 						| otherwise = arrHash atp n (i + 1) $ MathOp Plus (MathOp Mul (IntConst 13) op) (arrElemHash atp i)
 
- 			in Def{defName = "hash", defMods = [DefModDef, DefModPublic] ++ [DefModStruct | selfIsStruct], defBody = hashFun equalFields,
+ 			in Def{defName = "hash", defMods = [DefModDef, DefModPublic] ++ [DefModStruct | selfIsStruct]++ [DefModChild | isInlineClass], defBody = hashFun equalFields,
 					defPars = [], defType = uint, defGenerics = Nothing, defAnnotations = []}
 
  		description = let
@@ -345,7 +366,7 @@ linkClass (lang, ocidx, glidx, file, package, clImports) cl = if isSeltTrait && 
 			append (StringBuild [] e) d = StringBuild [(D.className cl ++ "(", Dot (Self selfType) (callRef d))] e
 			append (StringBuild xs e) d = StringBuild (xs ++ [(", ", Dot (Self selfType) (callRef d))]) e
 		
- 			in Def{defName = "description", defMods = [DefModDef, DefModPublic] ++ [DefModStruct | selfIsStruct], defBody = descriptionFun,
+ 			in Def{defName = "description", defMods = [DefModDef, DefModPublic] ++ [DefModStruct | selfIsStruct]++ [DefModChild | isInlineClass], defBody = descriptionFun,
 					defPars = [], defType = TPString, defGenerics = Nothing, defAnnotations = []}
 		
 
@@ -414,6 +435,7 @@ defsWithTraits env cl = classDefs cl ++ notOverloadedTraitDefs
 				_ -> d{defType = tp', defPars = map snd pars', defBody = body'}
 
 linkExtends :: Env -> (Bool, Bool) -> [Def] -> D.Extends -> Extends
+--linkExtends _ _ _ _ | trace ("linkExtends") False = undefined
 linkExtends env (isSeltTrait, isSelfStruct) constrPars (D.Extends (D.ExtendsClass eref@(_, gens) pars) withs) = 
 	let 
 		env' = env {envVals = constrPars, envSelf = objectType $ envSelf env}
@@ -440,6 +462,7 @@ linkAnnotation env (D.Annotation nm pars tps) = case expr env (D.Call nm (Just p
 	Dot _ (Call d _ pars' _ ) -> Annotation d pars'
 
 linkExtendsRef :: Env -> D.ExtendsRef -> ExtendsRef
+--linkExtendsRef _ _ | trace ("linkExtendsRef") False = undefined
 linkExtendsRef env (ecls, gens) = (classFind (envIndex env) ecls, map (wrapGeneric . dataType env) gens) 
 
 linkGenerics :: Env -> [D.Generic] -> [Class]

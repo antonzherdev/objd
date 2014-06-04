@@ -1,6 +1,7 @@
 #import "objd.h"
 #import "CNQueueTest.h"
 
+#import "CNPlatform.h"
 #import "CNQueue.h"
 #import "CNTuple.h"
 #import "CNType.h"
