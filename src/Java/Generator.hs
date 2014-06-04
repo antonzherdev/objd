@@ -82,10 +82,6 @@ genExtendsRef (cl, gens) = do
  - Defs
  -----------------------------------------------------------------------------------------------------------------------------------------------}
 
-className :: D.Class -> String
-className cl = D.genClassName cl
-
-
 defName :: D.Def -> String
 defName d 
 	| D.DefModDef `elem` D.defMods d = let 
@@ -286,7 +282,19 @@ tellImport imp = tell Wrt{wrtStms = [], wrtImports = [imp]}
 tellImports :: [J.Import] -> Writer Wrt ()
 tellImports imps = tell Wrt{wrtStms = [], wrtImports = imps}
 tellImportClass :: D.Class -> Writer Wrt ()
-tellImportClass cl = tellImport $ D.packageName (D.classPackage cl) ++ [className cl]
+tellImportClass cl = case splitOn '.' $ D.genClassName cl of
+		[nm] -> tellImport $ D.packageName (D.classPackage cl) ++ [nm]
+		fullNm -> tellImport fullNm
+		
+className :: D.Class -> String
+className cl = let 
+	nm = D.genClassName cl
+	idxs = elemIndices '.' nm
+	in case idxs of
+		[] -> nm
+		_ -> drop (1 + last idxs) nm
+
+
 
 genExp :: Env -> D.Exp -> Writer Wrt J.Exp
 genExp _ D.Nop = return J.Nop
