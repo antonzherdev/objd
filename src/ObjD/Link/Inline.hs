@@ -32,6 +32,11 @@ inlineCall env e = let
 	selfTp = exprDataType selfExp
 	selfClass = dataTypeClass env selfTp
 	selfPar = (localVal "self" selfTp, selfExp)
+	needSelf = case selfExp of
+		Self _ -> False
+		Super _ -> False
+		_ -> True
+
 	declaredVals :: [Def]
 	declaredVals = forExp findVal $ defBody def
 		where 
@@ -72,7 +77,7 @@ inlineCall env e = let
 			(map repgens cgens)
 	rep r (Val b dd) = 
 		fmap (\d -> Val b $ d{defBody = mapExp (rep r) (defBody d)} ) $ lookup dd mapDeclaredValsGenerics
-	rep _ (Self _) = lookup (fst selfPar) refs
+	rep _ (Self _) = if needSelf then lookup (fst selfPar) refs else Nothing
 	rep _ (Is tp) = Just $ Is $ repgens tp
 	rep _ (As tp) = Just $ As $ repgens tp
 	rep _ (CastDot tp) = Just $ CastDot $ repgens tp
@@ -118,7 +123,7 @@ inlineCall env e = let
 			checkCountOfUsing d = (length $ filter (d ==) usingDefs) > 1
 			usingDefs = forExp findUsage (defBody def)
 			findUsage (Call d _ [] _) = [d]
-			findUsage (Self _) = [fst selfPar]
+			findUsage (Self _) = [fst selfPar | needSelf]
 			findUsage _ = []
 	in if null parsForDeclareVars then replacedExp
 		else Braces $ (map (Val False . snd) vals) ++ [replacedExp]

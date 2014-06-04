@@ -8,6 +8,7 @@ import 			 ObjD.Link.Struct
 import qualified Data.Map            as M
 import qualified ObjD.Struct         as D
 import           Data.Maybe
+--import Debug.Trace
 {------------------------------------------------------------------------------------------------------------------------------ 
  - Env 
  ------------------------------------------------------------------------------------------------------------------------------}
@@ -30,6 +31,7 @@ envAddClasses newClasses env@Env{envIndex = cidx} = env{
 idxFind :: M.Map String a -> String -> Maybe a
 idxFind idxx k = M.lookup k idxx
 classFind :: ClassIndex -> String -> Class
+--classFind _ name | trace ("classFind " ++ name) False = undefined
 classFind cidx name = fromMaybe (ClassError name name ("Class " ++ name ++ " not found") ) $ idxFind cidx name
 envAddSuffix :: Env -> String -> Env
 envAddSuffix env s = env{envVarSuffix = envVarSuffix env ++ s}
@@ -38,6 +40,7 @@ tmpVal :: Env -> String -> DataType -> Exp -> Def
 tmpVal env sf tp e = Def ("__tmp" ++ envVarSuffix env ++ sf) [] tp e [DefModLocal] Nothing []
 
 baseClassExtends :: Bool -> ClassIndex -> ExtendsClass
+--baseClassExtends _ _ | trace "baseClassExtends" False = undefined
 baseClassExtends p cidx = ExtendsClass (classFind cidx (if p then "PObject" else "Object"), []) []
 
 envExprCompile :: Env -> D.Exp -> Exp
