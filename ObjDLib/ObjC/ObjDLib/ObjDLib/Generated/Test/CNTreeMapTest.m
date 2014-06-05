@@ -39,7 +39,7 @@ static CNClassType* _CNTreeMapTest_type;
     [[[tests chain] distinct] forEach:^void(id i) {
         assertEquals(([@"test" stringByAppendingFormat:@"%ld", unumi(i)]), ((NSString*)(nonnil([map applyKey:i]))));
     }];
-    assertEquals(((@[@-30, @-20, @-18, @-15, @-10, @0, @10, @11, @13, @20])), [[map.keys chain] toArray]);
+    assertEquals(((@[@-30, @-20, @-18, @-15, @-10, @0, @10, @11, @13, @20])), [[map->_keys chain] toArray]);
     [[[tests chain] distinct] forEach:^void(id i) {
         assertEquals(([@"test" stringByAppendingFormat:@"%ld", unumi(i)]), ((NSString*)(nonnil([map applyKey:i]))));
         [map removeKey:i];

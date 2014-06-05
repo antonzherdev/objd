@@ -24,7 +24,7 @@ static CNClassType* _CNConcurrentQueueNode_type;
 
 + (CNConcurrentQueueNode*)applyItem:(id)item {
     CNConcurrentQueueNode* ret = [CNConcurrentQueueNode concurrentQueueNode];
-    ret.item = item;
+    ret->_item = item;
     return ret;
 }
 
@@ -78,7 +78,7 @@ static CNClassType* _CNConcurrentQueue_type;
 - (void)enqueueItem:(id)item {
     CNConcurrentQueueNode* node = [CNConcurrentQueueNode applyItem:item];
     [_tLock lock];
-    __tail.next = node;
+    __tail->_next = node;
     __tail = node;
     [__count incrementAndGet];
     [_tLock unlock];
@@ -88,10 +88,10 @@ static CNClassType* _CNConcurrentQueue_type;
     [_hLock lock];
     id ret;
     {
-        CNConcurrentQueueNode* newHead = __head.next;
+        CNConcurrentQueueNode* newHead = __head->_next;
         if(newHead != nil) {
-            id item = ((CNConcurrentQueueNode*)(newHead)).item;
-            ((CNConcurrentQueueNode*)(newHead)).item = nil;
+            id item = ((CNConcurrentQueueNode*)(newHead))->_item;
+            ((CNConcurrentQueueNode*)(newHead))->_item = nil;
             __head = newHead;
             [__count decrementAndGet];
             ret = item;
@@ -107,11 +107,11 @@ static CNClassType* _CNConcurrentQueue_type;
     [_hLock lock];
     id ret;
     {
-        CNConcurrentQueueNode* newHead = __head.next;
+        CNConcurrentQueueNode* newHead = __head->_next;
         if(newHead != nil) {
-            id item = ((CNConcurrentQueueNode*)(newHead)).item;
+            id item = ((CNConcurrentQueueNode*)(newHead))->_item;
             if(when(item)) {
-                ((CNConcurrentQueueNode*)(newHead)).item = nil;
+                ((CNConcurrentQueueNode*)(newHead))->_item = nil;
                 __head = newHead;
                 [__count decrementAndGet];
                 ret = item;
@@ -129,7 +129,7 @@ static CNClassType* _CNConcurrentQueue_type;
 - (void)clear {
     [_hLock lock];
     __head = __tail;
-    __head.item = nil;
+    __head->_item = nil;
     [__count setNewValue:0];
     [_hLock unlock];
 }
@@ -137,7 +137,7 @@ static CNClassType* _CNConcurrentQueue_type;
 - (id)peek {
     [_hLock lock];
     CNConcurrentQueueNode* node = __head;
-    CNConcurrentQueueNode* newHead = node.next;
+    CNConcurrentQueueNode* newHead = node->_next;
     if(newHead == nil) {
         [_hLock unlock];
         return nil;

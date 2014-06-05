@@ -6,7 +6,7 @@
 @class CNDistinctLink;
 
 @interface CNImGroupByLink : CNChainLink_impl {
-@protected
+@public
     CGFloat _factor;
     id(^_by)(id);
     id(^_start)();
@@ -27,7 +27,7 @@
 
 
 @interface CNMGroupByLink : CNChainLink_impl {
-@protected
+@public
     CGFloat _factor;
     id(^_by)(id);
     id(^_start)();
@@ -50,7 +50,7 @@
 
 
 @interface CNDistinctLink : CNChainLink_impl {
-@protected
+@public
     CGFloat _factor;
 }
 @property (nonatomic, readonly) CGFloat factor;

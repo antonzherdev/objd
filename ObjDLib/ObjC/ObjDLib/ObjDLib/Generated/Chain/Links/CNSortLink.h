@@ -6,7 +6,7 @@
 @class CNShuffleLink;
 
 @interface CNSortLink : CNChainLink_impl {
-@protected
+@public
     NSInteger(^_comparator)(id, id);
 }
 @property (nonatomic, readonly) NSInteger(^comparator)(id, id);
@@ -31,7 +31,7 @@
 
 
 @interface CNShuffleLink : CNChainLink_impl {
-@protected
+@public
     CNMArray* __array;
 }
 + (instancetype)shuffleLink;

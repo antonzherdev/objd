@@ -191,7 +191,7 @@ typedef enum CNGoR {
 
 
 @interface CNIterableF : CNImIterable_impl {
-@protected
+@public
     id<CNIterator>(^_iteratorF)();
 }
 @property (nonatomic, readonly) id<CNIterator>(^iteratorF)();

@@ -45,10 +45,10 @@ static CNClassType* _CNPair_type;
 
 - (BOOL)isEqualPair:(CNPair*)pair {
     return ({
-        id __tmp__il_aitem = pair.a;
+        id __tmp__il_aitem = pair->_a;
         [_a isEqual:__tmp__il_aitem] || [_b isEqual:__tmp__il_aitem];
     }) && ({
-        id __tmp__il_bitem = pair.b;
+        id __tmp__il_bitem = pair->_b;
         [_a isEqual:__tmp__il_bitem] || [_b isEqual:__tmp__il_bitem];
     });
 }
@@ -111,8 +111,8 @@ static CNClassType* _CNPairIterator_type;
 
 - (id)next {
     _state++;
-    if(_state == 1) return _pair.a;
-    else return _pair.b;
+    if(_state == 1) return _pair->_a;
+    else return _pair->_b;
 }
 
 - (NSString*)description {

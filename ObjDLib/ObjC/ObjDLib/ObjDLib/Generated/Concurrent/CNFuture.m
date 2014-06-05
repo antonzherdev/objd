@@ -23,7 +23,7 @@ static CNClassType* _CNFuture_type;
 
 + (CNFuture*)applyF:(id(^)())f {
     CNPromise* p = [CNPromise apply];
-    [CNDispatchQueue.aDefault asyncF:^void() {
+    [[CNDispatchQueue aDefault] asyncF:^void() {
         [p successValue:f()];
     }];
     return p;

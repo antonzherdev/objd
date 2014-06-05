@@ -5,7 +5,7 @@
 @class CNTopLink;
 
 @interface CNFilterLink : CNChainLink_impl {
-@protected
+@public
     CGFloat _factor;
     BOOL(^_predicate)(id);
 }
@@ -22,7 +22,7 @@
 
 
 @interface CNTopLink : CNChainLink_impl {
-@protected
+@public
     NSUInteger _number;
 }
 @property (nonatomic, readonly) NSUInteger number;

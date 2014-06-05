@@ -11,7 +11,7 @@
 @protocol CNActorMessage;
 
 @interface CNMailbox : NSObject {
-@protected
+@public
     volatile BOOL __stopped;
     CNAtomicBool* __scheduled;
     CNConcurrentQueue* __queue;
@@ -44,7 +44,7 @@
 
 
 @interface CNActorFuture : CNDefaultPromise<CNActorMessage> {
-@protected
+@public
     CNActor* _receiver;
     BOOL _prompt;
     id(^_f)();

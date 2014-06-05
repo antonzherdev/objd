@@ -59,7 +59,7 @@ static CNClassType* _CNMailbox_type;
 }
 
 - (void)schedule {
-    if(!(__stopped)) [CNDispatchQueue.aDefault asyncF:^void() {
+    if(!(__stopped)) [[CNDispatchQueue aDefault] asyncF:^void() {
         autoreleasePoolStart();
         [self processQueue];
         autoreleasePoolEnd();
@@ -200,7 +200,7 @@ static CNClassType* _CNActorFuture_type;
 - (void)unlock {
     if(__locked) {
         __locked = NO;
-        [_receiver.mailbox unlock];
+        [_receiver->_mailbox unlock];
     }
 }
 

@@ -77,7 +77,7 @@
 
 
 @interface CNArrayBuilder : CNBuilder_impl {
-@protected
+@public
     CNMArray* _array;
 }
 + (instancetype)arrayBuilderWithCapacity:(NSUInteger)capacity;
@@ -92,7 +92,7 @@
 
 
 @interface CNIndexFunSeq : CNImSeq_impl {
-@protected
+@public
     NSUInteger _count;
     id(^_f)(NSUInteger);
 }
@@ -110,7 +110,7 @@
 
 
 @interface CNIndexFunSeqIterator : CNIterator_impl {
-@protected
+@public
     NSUInteger _count;
     id(^_f)(NSUInteger);
     NSUInteger _i;

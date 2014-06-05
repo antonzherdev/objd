@@ -7,7 +7,7 @@
 @class CNFlatMapLink;
 
 @interface CNMapLink : CNChainLink_impl {
-@protected
+@public
     id(^_f)(id);
 }
 @property (nonatomic, readonly) id(^f)(id);
@@ -22,7 +22,7 @@
 
 
 @interface CNMapOptLink : CNChainLink_impl {
-@protected
+@public
     id(^_f)(id);
 }
 @property (nonatomic, readonly) id(^f)(id);
@@ -37,7 +37,7 @@
 
 
 @interface CNFlatLink : CNChainLink_impl {
-@protected
+@public
     CGFloat _factor;
 }
 @property (nonatomic, readonly) CGFloat factor;
@@ -52,7 +52,7 @@
 
 
 @interface CNFlatMapLink : CNChainLink_impl {
-@protected
+@public
     CGFloat _factor;
     id<CNTraversable>(^_f)(id);
 }

@@ -5,7 +5,7 @@
 @class CNZip3Link;
 
 @interface CNZipLink : CNChainLink_impl {
-@protected
+@public
     id<CNIterable> _a;
     id(^_f)(id, id);
 }
@@ -22,7 +22,7 @@
 
 
 @interface CNZip3Link : CNChainLink_impl {
-@protected
+@public
     id<CNIterable> _a;
     id<CNIterable> _b;
     id(^_f)(id, id, id);

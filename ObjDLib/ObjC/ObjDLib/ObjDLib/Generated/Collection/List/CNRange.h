@@ -9,7 +9,7 @@
 @class CNRangeIterator;
 
 @interface CNRange : CNImSeq_impl {
-@protected
+@public
     NSInteger _start;
     NSInteger _end;
     NSInteger _step;
@@ -36,7 +36,7 @@
 
 
 @interface CNRangeIterator : CNIterator_impl {
-@protected
+@public
     NSInteger _start;
     NSInteger _end;
     NSInteger _step;

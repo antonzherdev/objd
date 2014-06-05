@@ -36,16 +36,16 @@ static CNClassType* _CNQueueTest_type;
     q = [q enqueueItem:@3];
     assertEquals(@3, numi(((NSInteger)([q count]))));
     CNTuple* p = [q dequeue];
-    q = p.b;
-    assertEquals(@1, numi(unumi(nonnil(p.a))));
+    q = p->_b;
+    assertEquals(@1, numi(unumi(nonnil(p->_a))));
     assertEquals(@2, numi(((NSInteger)([q count]))));
     p = [q dequeue];
-    q = p.b;
-    assertEquals(@2, numi(unumi(nonnil(p.a))));
+    q = p->_b;
+    assertEquals(@2, numi(unumi(nonnil(p->_a))));
     assertEquals(@1, numi(((NSInteger)([q count]))));
     p = [q dequeue];
-    q = p.b;
-    assertEquals(@3, numi(unumi(nonnil(p.a))));
+    q = p->_b;
+    assertEquals(@3, numi(unumi(nonnil(p->_a))));
     assertEquals(@0, numi(((NSInteger)([q count]))));
 }
 

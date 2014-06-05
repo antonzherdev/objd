@@ -29,7 +29,7 @@
 
 
 @interface CNFilledList : CNImList {
-@protected
+@public
     id __head;
     CNImList* _tail;
     NSUInteger _count;
@@ -75,7 +75,7 @@
 
 
 @interface CNListIterator : CNIterator_impl {
-@protected
+@public
     CNImList* _list;
 }
 @property (nonatomic, retain) CNImList* list;
@@ -91,7 +91,7 @@
 
 
 @interface CNImListBuilder : CNBuilder_impl {
-@protected
+@public
     CNImList* _list;
 }
 + (instancetype)imListBuilder;

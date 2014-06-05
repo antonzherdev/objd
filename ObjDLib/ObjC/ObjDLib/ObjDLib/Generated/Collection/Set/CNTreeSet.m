@@ -205,7 +205,7 @@ static CNClassType* _CNMTreeSet_type;
 }
 
 - (id<CNMIterator>)mutableIterator {
-    return [_mmap.keys mutableIterator];
+    return [_mmap->_keys mutableIterator];
 }
 
 - (void)appendItem:(id)item {
@@ -227,7 +227,7 @@ static CNClassType* _CNMTreeSet_type;
 }
 
 - (CNMTreeSet*)reorder {
-    CNMTreeSet* ret = [CNMTreeSet treeSetWithMmap:[CNMTreeMap treeMapWithComparator:_mmap.comparator]];
+    CNMTreeSet* ret = [CNMTreeSet treeSetWithMmap:[CNMTreeMap treeMapWithComparator:_mmap->_comparator]];
     [ret addAllObjects:self];
     return ret;
 }

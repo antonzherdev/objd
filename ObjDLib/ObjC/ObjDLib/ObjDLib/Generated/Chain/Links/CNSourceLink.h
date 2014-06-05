@@ -6,7 +6,7 @@
 @class CNPrependLink;
 
 @interface CNSourceLink : CNChainLink_impl {
-@protected
+@public
     id<CNTraversable> _collection;
 }
 @property (nonatomic, readonly) id<CNTraversable> collection;
@@ -21,7 +21,7 @@
 
 
 @interface CNAppendLink : CNChainLink_impl {
-@protected
+@public
     id<CNTraversable> _collection;
 }
 @property (nonatomic, readonly) id<CNTraversable> collection;
@@ -36,7 +36,7 @@
 
 
 @interface CNPrependLink : CNChainLink_impl {
-@protected
+@public
     id<CNTraversable> _collection;
 }
 @property (nonatomic, readonly) id<CNTraversable> collection;

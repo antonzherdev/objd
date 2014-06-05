@@ -5,7 +5,7 @@
 @class CNMulLink;
 
 @interface CNMulLink : CNChainLink_impl {
-@protected
+@public
     id<CNTraversable> __collection;
 }
 + (instancetype)mulLinkWithCollection:(id<CNTraversable>)collection;

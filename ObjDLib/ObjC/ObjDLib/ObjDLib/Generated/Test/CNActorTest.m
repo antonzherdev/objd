@@ -159,14 +159,14 @@ static CNClassType* _CNActorTest_type;
             return tuple(_, [CNPromise apply]);
         }] toArray];
         for(CNTuple* t in arr) {
-            [a lockFuture:((CNTuple*)(t)).b];
+            [a lockFuture:((CNTuple*)(t))->_b];
         }
         CNFuture* f = [a getItems];
         [[[arr chain] shuffle] forEach:^void(CNTuple* t) {
-            [((CNPromise*)(((CNTuple*)(t)).b)) successValue:[NSString stringWithFormat:@"%@", ((CNTuple*)(t)).a]];
+            [((CNPromise*)(((CNTuple*)(t))->_b)) successValue:[NSString stringWithFormat:@"%@", ((CNTuple*)(t))->_a]];
         }];
         NSArray* exp = [[[arr chain] mapF:^NSString*(CNTuple* _) {
-            return [NSString stringWithFormat:@"w%@", ((CNTuple*)(_)).a];
+            return [NSString stringWithFormat:@"w%@", ((CNTuple*)(_))->_a];
         }] toArray];
         NSArray* items = [f getResultAwait:5.0];
         assertEquals(items, exp);

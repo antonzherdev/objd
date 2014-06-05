@@ -26,7 +26,7 @@
 @protocol CNTreeMapKeySet;
 
 @interface CNTreeMap : CNImMap_impl {
-@protected
+@public
     NSInteger(^_comparator)(id, id);
     CNTreeMapValues* _values;
 }
@@ -57,7 +57,7 @@
 
 
 @interface CNImTreeMap : CNTreeMap {
-@protected
+@public
     CNTreeMapEntry* _root;
     NSUInteger _count;
     id<CNTreeMapKeySet> _keys;
@@ -77,7 +77,7 @@
 
 
 @interface CNTreeMapBuilder : CNBuilder_impl {
-@protected
+@public
     NSInteger(^_comparator)(id, id);
     CNMTreeMap* _map;
 }
@@ -95,7 +95,7 @@
 
 
 @interface CNMTreeMap : CNTreeMap<CNMMap> {
-@protected
+@public
     CNTreeMapEntry* __root;
     NSUInteger __size;
     CNMTreeMapKeySet* _keys;
@@ -124,7 +124,7 @@
 
 
 @interface CNTreeMapEntry : NSObject {
-@protected
+@public
     id _key;
     id _value;
     __weak CNTreeMapEntry* _parent;
@@ -162,7 +162,7 @@
 
 
 @interface CNImTreeMapKeySet : CNTreeMapKeySet_impl {
-@protected
+@public
     __weak CNTreeMap* _map;
 }
 @property (nonatomic, readonly, weak) CNTreeMap* map;
@@ -179,7 +179,7 @@
 
 
 @interface CNTreeMapKeyIterator : CNIterator_impl {
-@protected
+@public
     CNTreeMap* _map;
     CNTreeMapEntry* _entry;
 }
@@ -198,7 +198,7 @@
 
 
 @interface CNMTreeMapKeySet : CNTreeMapKeySet_impl {
-@protected
+@public
     __weak CNMTreeMap* _map;
 }
 @property (nonatomic, readonly, weak) CNMTreeMap* map;
@@ -216,7 +216,7 @@
 
 
 @interface CNMTreeMapKeyIterator : CNMIterator_impl {
-@protected
+@public
     CNMTreeMap* _map;
     CNTreeMapEntry* _prev;
     CNTreeMapEntry* _entry;
@@ -238,7 +238,7 @@
 
 
 @interface CNTreeMapValues : CNImIterable_impl {
-@protected
+@public
     __weak CNTreeMap* _map;
 }
 @property (nonatomic, readonly, weak) CNTreeMap* map;
@@ -254,7 +254,7 @@
 
 
 @interface CNTreeMapValuesIterator : CNIterator_impl {
-@protected
+@public
     CNTreeMapEntry* _entry;
 }
 @property (nonatomic) CNTreeMapEntry* entry;
@@ -271,7 +271,7 @@
 
 
 @interface CNTreeMapIterator : CNIterator_impl {
-@protected
+@public
     CNTreeMap* _map;
     CNTreeMapEntry* _entry;
 }
@@ -290,7 +290,7 @@
 
 
 @interface CNMTreeMapIterator : CNMIterator_impl {
-@protected
+@public
     CNMTreeMap* _map;
     CNTreeMapEntry* _prev;
     CNTreeMapEntry* _entry;

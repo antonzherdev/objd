@@ -8,7 +8,7 @@
 @class CNWeak;
 
 @interface CNLazy : NSObject {
-@protected
+@public
     id(^_f)();
     id __value;
     BOOL __calculated;
@@ -26,7 +26,7 @@
 
 
 @interface CNCache : NSObject {
-@protected
+@public
     id(^_f)(id);
     id __lastX;
     id __lastF;
@@ -43,7 +43,7 @@
 
 
 @interface CNWeak : NSObject {
-@protected
+@public
     __weak id _value;
 }
 @property (nonatomic, readonly, weak) id value;

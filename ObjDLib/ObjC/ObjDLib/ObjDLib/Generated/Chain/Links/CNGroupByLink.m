@@ -103,7 +103,7 @@ static CNClassType* _CNMGroupByLink_type;
     } end:^CNGoR(CNGoR result) {
         if(result == CNGo_Break) return [yield endYieldWithResult:result];
         else return [yield endYieldWithResult:[m goOn:^CNGoR(CNTuple* t) {
-            return [yield yieldItem:tuple(t.a, _finish(t.b))];
+            return [yield yieldItem:tuple(t->_a, _finish(t->_b))];
         }]];
     }];
 }

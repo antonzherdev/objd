@@ -26,7 +26,7 @@
 
 
 @interface CNNeighboursLink : CNChainLink_impl {
-@protected
+@public
     BOOL _ring;
 }
 @property (nonatomic, readonly) BOOL ring;

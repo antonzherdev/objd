@@ -74,7 +74,7 @@
 
 
 @interface CNImMapDefault : CNImIterable_impl {
-@protected
+@public
     id<CNImMap> _map;
     id(^_defaultFunc)(id);
 }
@@ -101,7 +101,7 @@
 
 
 @interface CNMMapDefault : CNMIterable_impl {
-@protected
+@public
     id<CNMMap> _map;
     id(^_defaultFunc)(id);
 }
@@ -132,7 +132,7 @@
 
 
 @interface CNHashMapBuilder : CNBuilder_impl {
-@protected
+@public
     CNMHashMap* _map;
 }
 + (instancetype)hashMapBuilder;

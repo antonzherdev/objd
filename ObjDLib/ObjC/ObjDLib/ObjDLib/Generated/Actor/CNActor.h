@@ -9,7 +9,7 @@
 
 
 @interface CNActor : NSObject {
-@protected
+@public
     CNMailbox* _mailbox;
 }
 @property (nonatomic, readonly) CNMailbox* mailbox;

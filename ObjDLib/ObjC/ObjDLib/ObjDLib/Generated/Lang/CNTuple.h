@@ -9,7 +9,7 @@
 @class CNTuple5;
 
 @interface CNTuple : NSObject<CNComparable> {
-@protected
+@public
     id _a;
     id _b;
 }
@@ -29,7 +29,7 @@
 
 
 @interface CNTuple3 : NSObject<CNComparable> {
-@protected
+@public
     id _a;
     id _b;
     id _c;
@@ -51,7 +51,7 @@
 
 
 @interface CNTuple4 : NSObject<CNComparable> {
-@protected
+@public
     id _a;
     id _b;
     id _c;
@@ -75,7 +75,7 @@
 
 
 @interface CNTuple5 : NSObject<CNComparable> {
-@protected
+@public
     id _a;
     id _b;
     id _c;

@@ -32,7 +32,7 @@
 
 
 @interface CNChain : CNImTraversable_impl {
-@protected
+@public
     id<CNChainLink> _link;
     CNChain* _previous;
 }

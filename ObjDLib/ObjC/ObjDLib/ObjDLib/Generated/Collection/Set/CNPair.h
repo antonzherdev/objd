@@ -9,7 +9,7 @@
 @class CNPairIterator;
 
 @interface CNPair : CNImSet_impl {
-@protected
+@public
     id _a;
     id _b;
 }
@@ -31,7 +31,7 @@
 
 
 @interface CNPairIterator : CNIterator_impl {
-@protected
+@public
     CNPair* _pair;
     NSInteger _state;
 }

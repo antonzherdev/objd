@@ -42,17 +42,17 @@ static CNClassType* _CNChainTest_type;
             return tuple(i, [CNPromise apply]);
         }] toArray];
         for(CNTuple* t in arr) {
-            [CNDispatchQueue.aDefault asyncF:^void() {
-                [((CNPromise*)(((CNTuple*)(t)).b)) successValue:numi(unumi(((CNTuple*)(t)).a) * unumi(((CNTuple*)(t)).a))];
+            [[CNDispatchQueue aDefault] asyncF:^void() {
+                [((CNPromise*)(((CNTuple*)(t))->_b)) successValue:numi(unumi(((CNTuple*)(t))->_a) * unumi(((CNTuple*)(t))->_a))];
             }];
         }
         CNFuture* fut = [[[arr chain] mapF:^CNPromise*(CNTuple* _) {
-            return ((CNTuple*)(_)).b;
+            return ((CNTuple*)(_))->_b;
         }] futureF:^NSArray*(CNChain* chain) {
             return [chain toArray];
         }];
         NSArray* set = [[[[arr chain] mapF:^id(CNTuple* _) {
-            return ((CNTuple*)(_)).a;
+            return ((CNTuple*)(_))->_a;
         }] mapF:^id(id _) {
             return numi(unumi(_) * unumi(_));
         }] toArray];
@@ -67,7 +67,7 @@ static CNClassType* _CNChainTest_type;
     CNFuture* fut = [[arr chain] voidFuture];
     CNAtomicInt* count = [CNAtomicInt atomicInt];
     for(CNPromise* p in arr) {
-        [CNDispatchQueue.aDefault asyncF:^void() {
+        [[CNDispatchQueue aDefault] asyncF:^void() {
             [count incrementAndGet];
             [((CNPromise*)(p)) successValue:nil];
         }];
@@ -150,7 +150,7 @@ static CNClassType* _CNChainTest_type;
     assertEquals(([[(@[((NSArray*)((@[@1, @0]))), (@[@2])]) chain] toSet]), ([[[[(@[@1, @0, @2]) chain] groupBy:^id(id _) {
         return numb(unumi(_) <= 1);
     }] mapF:^NSArray*(CNTuple* _) {
-        return ((CNTuple*)(_)).b;
+        return ((CNTuple*)(_))->_b;
     }] toSet]));
     assertEquals(([[(@[@-1, @3]) chain] toSet]), ([[[[(@[@1, @-2, @3]) chain] groupBy:^id(id _) {
         return numb(unumi(_) <= 1);
@@ -159,7 +159,7 @@ static CNClassType* _CNChainTest_type;
     } fold:^id(id a, id b) {
         return numi(unumi(a) + unumi(b));
     }] mapF:^id(CNTuple* _) {
-        return ((CNTuple*)(_)).b;
+        return ((CNTuple*)(_))->_b;
     }] toSet]));
 }
 

@@ -63,7 +63,7 @@
 
 
 @interface CNMReact : CNReact<CNObservableBase> {
-@protected
+@public
     CNAtomicObject* __value;
     CNAtomicObject* __observers;
 }
@@ -80,7 +80,7 @@
 
 
 @interface CNVal : CNImReact {
-@protected
+@public
     id _value;
 }
 @property (nonatomic, readonly) id value;
@@ -119,7 +119,7 @@
 
 
 @interface CNFeedbackVar : CNVar {
-@protected
+@public
     void(^_feedback)(id);
 }
 @property (nonatomic, readonly) void(^feedback)(id);
@@ -136,7 +136,7 @@
 
 
 @interface CNLimitedVar : CNVar {
-@protected
+@public
     id(^_limits)(id);
 }
 @property (nonatomic, readonly) id(^limits)(id);
@@ -152,7 +152,7 @@
 
 
 @interface CNSlot : CNMReact {
-@protected
+@public
     CNReact* __base;
     CNObserver* __observer;
 }
@@ -178,7 +178,7 @@
 
 
 @interface CNMappedReact : CNReactExpression {
-@protected
+@public
     CNReact* _a;
     id(^_f)(id);
     CNObserver* _obsA;
@@ -196,7 +196,7 @@
 
 
 @interface CNMappedReact2 : CNReactExpression {
-@protected
+@public
     CNReact* _a;
     CNReact* _b;
     id(^_f)(id, id);
@@ -217,7 +217,7 @@
 
 
 @interface CNMappedReact3 : CNReactExpression {
-@protected
+@public
     CNReact* _a;
     CNReact* _b;
     CNReact* _c;
@@ -241,7 +241,7 @@
 
 
 @interface CNFlatMappedReact : CNReactExpression {
-@protected
+@public
     CNReact* _a;
     CNReact*(^_f)(id);
     CNObserver* _obsA;
@@ -259,7 +259,7 @@
 
 
 @interface CNAsyncMappedReact : CNReactExpression {
-@protected
+@public
     CNDispatchQueue* _queue;
     CNReact* _a;
     id(^_f)(id);
@@ -279,7 +279,7 @@
 
 
 @interface CNAsyncMappedReact2 : CNReactExpression {
-@protected
+@public
     CNDispatchQueue* _queue;
     CNReact* _a;
     CNReact* _b;
@@ -302,7 +302,7 @@
 
 
 @interface CNAsyncMappedReact3 : CNReactExpression {
-@protected
+@public
     CNDispatchQueue* _queue;
     CNReact* _a;
     CNReact* _b;
@@ -328,7 +328,7 @@
 
 
 @interface CNReactFlag : CNMReact {
-@protected
+@public
     NSArray* _reacts;
     NSArray* _observers;
 }

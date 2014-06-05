@@ -42,7 +42,7 @@ static CNClassType* _CNReact_type;
 }
 
 + (CNReact*)asyncA:(CNReact*)a f:(id(^)(id))f {
-    return [CNReact asyncQueue:CNDispatchQueue.aDefault a:a f:f];
+    return [CNReact asyncQueue:[CNDispatchQueue aDefault] a:a f:f];
 }
 
 + (CNReact*)asyncQueue:(CNDispatchQueue*)queue a:(CNReact*)a b:(CNReact*)b f:(id(^)(id, id))f {
@@ -50,7 +50,7 @@ static CNClassType* _CNReact_type;
 }
 
 + (CNReact*)asyncA:(CNReact*)a b:(CNReact*)b f:(id(^)(id, id))f {
-    return [CNReact asyncQueue:CNDispatchQueue.aDefault a:a b:b f:f];
+    return [CNReact asyncQueue:[CNDispatchQueue aDefault] a:a b:b f:f];
 }
 
 + (CNReact*)asyncQueue:(CNDispatchQueue*)queue a:(CNReact*)a b:(CNReact*)b c:(CNReact*)c f:(id(^)(id, id, id))f {
@@ -58,7 +58,7 @@ static CNClassType* _CNReact_type;
 }
 
 + (CNReact*)asyncA:(CNReact*)a b:(CNReact*)b c:(CNReact*)c f:(id(^)(id, id, id))f {
-    return [CNReact asyncQueue:CNDispatchQueue.aDefault a:a b:b c:c f:f];
+    return [CNReact asyncQueue:[CNDispatchQueue aDefault] a:a b:b c:c f:f];
 }
 
 - (void)attachObserver:(CNObserver*)observer {
@@ -86,7 +86,7 @@ static CNClassType* _CNReact_type;
 }
 
 - (CNReact*)asyncMapF:(id(^)(id))f {
-    return [self asyncMapQueue:CNDispatchQueue.aDefault f:f];
+    return [self asyncMapQueue:[CNDispatchQueue aDefault] f:f];
 }
 
 - (NSString*)description {
@@ -202,7 +202,7 @@ static CNClassType* _CNMReact_type;
     BOOL(^p)(CNWeak*) = ((observer == nil) ? ^BOOL(CNWeak* l) {
         return !([l isEmpty]);
     } : ^BOOL(CNWeak* l) {
-        CNObserver* lv = l.value;
+        CNObserver* lv = l->_value;
         return lv != observer && lv != nil;
     });
     while(YES) {
@@ -214,7 +214,7 @@ static CNClassType* _CNMReact_type;
 
 - (void)notifyValue:(id)value {
     [((NSArray*)([__observers value])) forEach:^void(CNWeak* o) {
-        CNObserver* v = o.value;
+        CNObserver* v = o->_value;
         {
             void(^__nd)(id) = ((CNObserver*)(v)).f;
             if(__nd != nil) __nd(value);
@@ -268,7 +268,7 @@ static CNClassType* _CNVal_type;
     if(self == to) return YES;
     if(to == nil || !([to isKindOfClass:[CNVal class]])) return NO;
     CNVal* o = ((CNVal*)(to));
-    return [_value isEqual:o.value];
+    return [_value isEqual:o->_value];
 }
 
 - (NSUInteger)hash {

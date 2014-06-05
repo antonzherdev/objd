@@ -10,7 +10,7 @@
 @class CNPArrayIterator;
 
 @interface CNPArray : CNImSeq_impl {
-@protected
+@public
     NSUInteger _stride;
     id(^_wrap)(void*, NSUInteger);
     NSUInteger _count;
@@ -38,7 +38,7 @@
 
 
 @interface CNPArrayIterator : CNIterator_impl {
-@protected
+@public
     CNPArray* _array;
     NSInteger _i;
 }

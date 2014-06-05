@@ -65,7 +65,7 @@ static CNClassType* _CNRange_type;
     if(self == to) return YES;
     if(to == nil || !([to isKindOfClass:[CNRange class]])) return NO;
     CNRange* o = ((CNRange*)(to));
-    return _start == o.start && _end == o.end && _step == o.step;
+    return _start == o->_start && _end == o->_end && _step == o->_step;
 }
 
 - (NSUInteger)hash {

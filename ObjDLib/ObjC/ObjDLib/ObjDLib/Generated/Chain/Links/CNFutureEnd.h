@@ -9,7 +9,7 @@
 @class CNFutureVoidEnd;
 
 @interface CNFutureEnd : NSObject {
-@protected
+@public
     CNPromise* __promise;
     BOOL __stopped;
     CNAtomicInt* __counter;
@@ -28,7 +28,7 @@
 
 
 @interface CNFutureVoidEnd : NSObject {
-@protected
+@public
     CNPromise* __promise;
     BOOL __stopped;
     CNAtomicInt* __counter;

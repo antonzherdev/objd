@@ -17,7 +17,7 @@
 
 
 @interface CNYield : NSObject {
-@protected
+@public
     CNGoR(^_begin)(NSUInteger);
     CNGoR(^_yield)(id);
     CNGoR(^_end)(CNGoR);

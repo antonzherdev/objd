@@ -106,7 +106,7 @@ static CNClassType* _CNPArrayIterator_type;
 }
 
 - (BOOL)hasNext {
-    return _i < _array.count;
+    return _i < _array->_count;
 }
 
 - (id)next {

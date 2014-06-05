@@ -28,8 +28,8 @@ static CNClassType* _CNTuple_type;
 }
 
 - (NSInteger)compareTo:(CNTuple*)to {
-    NSInteger r = [((id<CNComparable>)(((CNTuple*)(to)).a)) compareTo:_a];
-    if(r == 0) return -[((id<CNComparable>)(((CNTuple*)(to)).b)) compareTo:_b];
+    NSInteger r = [((id<CNComparable>)(((CNTuple*)(to))->_a)) compareTo:_a];
+    if(r == 0) return -[((id<CNComparable>)(((CNTuple*)(to))->_b)) compareTo:_b];
     else return -r;
 }
 
@@ -45,7 +45,7 @@ static CNClassType* _CNTuple_type;
     if(self == to) return YES;
     if(to == nil || !([to isKindOfClass:[CNTuple class]])) return NO;
     CNTuple* o = ((CNTuple*)(to));
-    return [_a isEqual:o.a] && [_b isEqual:o.b];
+    return [_a isEqual:o->_a] && [_b isEqual:o->_b];
 }
 
 - (NSUInteger)hash {
@@ -96,10 +96,10 @@ static CNClassType* _CNTuple3_type;
 }
 
 - (NSInteger)compareTo:(CNTuple3*)to {
-    NSInteger r = [((id<CNComparable>)(((CNTuple3*)(to)).a)) compareTo:_a];
+    NSInteger r = [((id<CNComparable>)(((CNTuple3*)(to))->_a)) compareTo:_a];
     if(r == 0) {
-        r = [((id<CNComparable>)(((CNTuple3*)(to)).b)) compareTo:_b];
-        if(r == 0) return -[((id<CNComparable>)(((CNTuple3*)(to)).c)) compareTo:_c];
+        r = [((id<CNComparable>)(((CNTuple3*)(to))->_b)) compareTo:_b];
+        if(r == 0) return -[((id<CNComparable>)(((CNTuple3*)(to))->_c)) compareTo:_c];
         else return -r;
     } else {
         return -r;
@@ -118,7 +118,7 @@ static CNClassType* _CNTuple3_type;
     if(self == to) return YES;
     if(to == nil || !([to isKindOfClass:[CNTuple3 class]])) return NO;
     CNTuple3* o = ((CNTuple3*)(to));
-    return [_a isEqual:o.a] && [_b isEqual:o.b] && [_c isEqual:o.c];
+    return [_a isEqual:o->_a] && [_b isEqual:o->_b] && [_c isEqual:o->_c];
 }
 
 - (NSUInteger)hash {
@@ -172,12 +172,12 @@ static CNClassType* _CNTuple4_type;
 }
 
 - (NSInteger)compareTo:(CNTuple4*)to {
-    NSInteger r = [((id<CNComparable>)(((CNTuple4*)(to)).a)) compareTo:_a];
+    NSInteger r = [((id<CNComparable>)(((CNTuple4*)(to))->_a)) compareTo:_a];
     if(r == 0) {
-        r = [((id<CNComparable>)(((CNTuple4*)(to)).b)) compareTo:_b];
+        r = [((id<CNComparable>)(((CNTuple4*)(to))->_b)) compareTo:_b];
         if(r == 0) {
-            r = [((id<CNComparable>)(((CNTuple4*)(to)).c)) compareTo:_c];
-            if(r == 0) return -[((id<CNComparable>)(((CNTuple4*)(to)).d)) compareTo:_d];
+            r = [((id<CNComparable>)(((CNTuple4*)(to))->_c)) compareTo:_c];
+            if(r == 0) return -[((id<CNComparable>)(((CNTuple4*)(to))->_d)) compareTo:_d];
             else return -r;
         } else {
             return -r;
@@ -199,7 +199,7 @@ static CNClassType* _CNTuple4_type;
     if(self == to) return YES;
     if(to == nil || !([to isKindOfClass:[CNTuple4 class]])) return NO;
     CNTuple4* o = ((CNTuple4*)(to));
-    return [_a isEqual:o.a] && [_b isEqual:o.b] && [_c isEqual:o.c] && [_d isEqual:o.d];
+    return [_a isEqual:o->_a] && [_b isEqual:o->_b] && [_c isEqual:o->_c] && [_d isEqual:o->_d];
 }
 
 - (NSUInteger)hash {
@@ -256,14 +256,14 @@ static CNClassType* _CNTuple5_type;
 }
 
 - (NSInteger)compareTo:(CNTuple5*)to {
-    NSInteger r = [((id<CNComparable>)(((CNTuple5*)(to)).a)) compareTo:_a];
+    NSInteger r = [((id<CNComparable>)(((CNTuple5*)(to))->_a)) compareTo:_a];
     if(r == 0) {
-        r = [((id<CNComparable>)(((CNTuple5*)(to)).b)) compareTo:_b];
+        r = [((id<CNComparable>)(((CNTuple5*)(to))->_b)) compareTo:_b];
         if(r == 0) {
-            r = [((id<CNComparable>)(((CNTuple5*)(to)).c)) compareTo:_c];
+            r = [((id<CNComparable>)(((CNTuple5*)(to))->_c)) compareTo:_c];
             if(r == 0) {
-                r = [((id<CNComparable>)(((CNTuple5*)(to)).d)) compareTo:_d];
-                if(r == 0) return -[((id<CNComparable>)(((CNTuple5*)(to)).e)) compareTo:_e];
+                r = [((id<CNComparable>)(((CNTuple5*)(to))->_d)) compareTo:_d];
+                if(r == 0) return -[((id<CNComparable>)(((CNTuple5*)(to))->_e)) compareTo:_e];
                 else return -r;
             } else {
                 return -r;
@@ -288,7 +288,7 @@ static CNClassType* _CNTuple5_type;
     if(self == to) return YES;
     if(to == nil || !([to isKindOfClass:[CNTuple5 class]])) return NO;
     CNTuple5* o = ((CNTuple5*)(to));
-    return [_a isEqual:o.a] && [_b isEqual:o.b] && [_c isEqual:o.c] && [_d isEqual:o.d] && [_e isEqual:o.e];
+    return [_a isEqual:o->_a] && [_b isEqual:o->_b] && [_c isEqual:o->_c] && [_d isEqual:o->_d] && [_e isEqual:o->_e];
 }
 
 - (NSUInteger)hash {

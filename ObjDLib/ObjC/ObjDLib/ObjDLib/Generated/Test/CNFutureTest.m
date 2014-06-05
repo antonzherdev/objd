@@ -30,7 +30,7 @@ static CNClassType* _CNFutureTest_type;
             id i = [__il__2i next];
             {
                 CNPromise* p = [CNPromise apply];
-                [CNDispatchQueue.aDefault asyncF:^void() {
+                [[CNDispatchQueue aDefault] asyncF:^void() {
                     [p successValue:i];
                 }];
                 [p onCompleteF:^void(CNTry* _) {
@@ -51,13 +51,13 @@ static CNClassType* _CNFutureTest_type;
         id<CNIterator> __il__3i = [intTo(1, count) iterator];
         while([__il__3i hasNext]) {
             NSInteger __il__3v = unumi([__il__3i next]);
-            [CNDispatchQueue.aDefault asyncF:^void() {
+            [[CNDispatchQueue aDefault] asyncF:^void() {
                 CNPromise* p = [CNPromise apply];
                 CNFuture* m = [p mapF:^id(id _) {
                     return numi(unumi(_) + 1);
                 }];
                 [result addAndGetValue:((int)(__il__3v + 1))];
-                [CNDispatchQueue.aDefault asyncF:^void() {
+                [[CNDispatchQueue aDefault] asyncF:^void() {
                     [p successValue:numi(__il__3v)];
                 }];
                 [m onCompleteF:^void(CNTry* _) {
@@ -86,7 +86,7 @@ static CNClassType* _CNFutureTest_type;
                     }];
                 }];
                 result += unumi(i) + 1;
-                [CNDispatchQueue.aDefault asyncF:^void() {
+                [[CNDispatchQueue aDefault] asyncF:^void() {
                     [p successValue:i];
                 }];
                 [m onCompleteF:^void(CNTry* _) {

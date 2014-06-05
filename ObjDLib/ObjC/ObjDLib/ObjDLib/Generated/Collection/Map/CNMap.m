@@ -117,11 +117,11 @@
 }
 
 - (void)appendItem:(CNTuple*)item {
-    [self setKey:((CNTuple*)(item)).a value:((CNTuple*)(item)).b];
+    [self setKey:((CNTuple*)(item))->_a value:((CNTuple*)(item))->_b];
 }
 
 - (BOOL)removeItem:(CNTuple*)item {
-    return [self removeKey:((CNTuple*)(item)).a] != nil;
+    return [self removeKey:((CNTuple*)(item))->_a] != nil;
 }
 
 - (id<CNImMap>)im {
@@ -134,7 +134,7 @@
         id<CNIterator> __il__1i = [self iterator];
         while([__il__1i hasNext]) {
             CNTuple* item = [__il__1i next];
-            [arr setKey:((CNTuple*)(item)).a value:((CNTuple*)(item)).b];
+            [arr setKey:((CNTuple*)(item))->_a value:((CNTuple*)(item))->_b];
         }
     }
     return [arr im];
@@ -269,7 +269,7 @@ static CNClassType* _CNImMapDefault_type;
 }
 
 - (BOOL)isEqualMapDefault:(CNImMapDefault*)mapDefault {
-    return [_map isEqual:mapDefault.map];
+    return [_map isEqual:mapDefault->_map];
 }
 
 - (NSUInteger)hash {
@@ -432,7 +432,7 @@ static CNClassType* _CNHashMapBuilder_type;
 }
 
 - (void)appendItem:(CNTuple*)item {
-    [_map setKey:((CNTuple*)(item)).a value:((CNTuple*)(item)).b];
+    [_map setKey:((CNTuple*)(item))->_a value:((CNTuple*)(item))->_b];
 }
 
 - (CNImHashMap*)build {

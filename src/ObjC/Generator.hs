@@ -74,7 +74,7 @@ stmToInterface cl =
 		C.interfaceProperties = (map fieldToProperty . filter needProperty) defs,
 		C.interfaceFuns = constrFuns ++ [typeInstanceFun | D.ClassModTraitImpl `notElem` D.classMods cl]
 			++ intefaceFuns defs ++ staticGetters,
-		C.interfaceFields = [(C.Protected, map (implField env) implFields)]
+		C.interfaceFields = [(C.Public, map (implField env) implFields)]
 	}
 	where 
 		env = Env cl 0 D.TPVoid False
@@ -775,6 +775,13 @@ tExp env (D.NullDot l (D.Call dd@D.Def{D.defMods = mods} _ pars _) _)
 			C.Var (showDataType tp) "__nd" (castGeneric l $ tExp env l) [],
 			C.Stm $ C.InlineIf (C.BoolOp Eq (C.Ref "__nd") C.Nil) C.Nil (C.CCall (C.Ref "__nd") ((map snd . tPars env dd) pars))
 		]
+tExp env (D.NullDot l r@(D.Call D.Def{D.defName = name, D.defMods = mods} _ pars _) _) 
+	| D.DefModField `elem` mods && null pars && 
+		not (D.DefModStruct `elem` mods || D.DefModStatic `elem` mods || D.DefModStub `elem` mods) = 
+			C.Dot (castGeneric l $ tExpTo env ltp l) (C.Ref name)
+	| otherwise = tExpToType env (D.option True $ D.exprDataType r) (D.Dot l r)
+	where
+		ltp = D.unwrapGeneric $ D.exprDataType l
 tExp env (D.NullDot l r _) = tExpToType env (D.option True $ D.exprDataType r) (D.Dot l r)
 tExp env (D.Dot (D.Self (D.TPClass D.TPMStruct _ c)) (D.Call d@D.Def {D.defName = name, D.defMods = mods} _ pars _)) 
 	| D.DefModField `elem` mods = C.Dot (C.Ref "self") (C.Ref name)
@@ -798,10 +805,10 @@ tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars _)
 	| D.DefModEnum `elem` mods && D.DefModField `elem` mods = C.Dot enumLeft (C.Ref name)
 	| D.DefModEnum `elem` mods = stdCall enumLeft
 	| D.DefModField `elem` mods && null pars && 
-		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
-			C.Dot (castGeneric l $ tExpTo env ltp l) (C.Ref name)
+		not (D.DefModStruct `elem` mods || D.DefModStatic `elem` mods || D.DefModStub `elem` mods) = 
+			C.Arrow (castGeneric l $ tExpTo env ltp l) (C.Ref $ fieldName env dd)
 	| D.DefModField `elem` mods && 
-		not (D.DefModStruct `elem` mods && D.DefModStatic `elem` mods) = 
+		not (D.DefModStruct `elem` mods || D.DefModStatic `elem` mods || D.DefModStub `elem` mods) = 
 			C.Dot (castGeneric l $ tExpTo env ltp l) $ C.CCall (C.Ref name) ((map snd . tPars env dd) pars)
 	| D.DefModConstructor `elem` mods = callConstructor env dd pars
 	| D.DefModStruct `elem` mods = case ltp of

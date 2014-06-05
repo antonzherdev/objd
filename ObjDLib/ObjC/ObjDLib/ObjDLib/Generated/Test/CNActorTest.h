@@ -9,7 +9,7 @@
 @class CNActorTest;
 
 @interface CNTestedActor : CNActor {
-@protected
+@public
     NSArray* _items;
 }
 @property (nonatomic) NSArray* items;

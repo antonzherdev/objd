@@ -23,11 +23,11 @@ static CNClassType* _CNImList_type;
 }
 
 + (CNImList*)apply {
-    return ((CNImList*)(CNEmptyList.instance));
+    return ((CNImList*)([CNEmptyList instance]));
 }
 
 + (CNImList*)applyItem:(id)item {
-    return [CNFilledList filledListWith_head:item tail:((CNImList*)(CNEmptyList.instance))];
+    return [CNFilledList filledListWith_head:item tail:((CNImList*)([CNEmptyList instance]))];
 }
 
 + (CNImList*)applyItem:(id)item tail:(CNImList*)tail {
@@ -36,7 +36,7 @@ static CNClassType* _CNImList_type;
 
 - (id<CNIterator>)iterator {
     CNListIterator* i = [CNListIterator listIterator];
-    i.list = self;
+    i->_list = self;
     return i;
 }
 
@@ -114,14 +114,14 @@ static CNClassType* _CNFilledList_type;
 }
 
 - (CNImList*)reverse {
-    return [self reverseAndAddList:((CNImList*)(CNEmptyList.instance))];
+    return [self reverseAndAddList:((CNImList*)([CNEmptyList instance]))];
 }
 
 - (CNImList*)reverseAndAddList:(CNImList*)list {
     CNFilledList* ret = [CNFilledList filledListWith_head:__head tail:list];
     CNImList* l = _tail;
     while(!([l isEmpty])) {
-        ret = [CNFilledList filledListWith_head:((CNFilledList*)(l))._head tail:ret];
+        ret = [CNFilledList filledListWith_head:((CNFilledList*)(l))->__head tail:ret];
         l = [l tail];
     }
     return ret;
@@ -130,8 +130,8 @@ static CNClassType* _CNFilledList_type;
 - (void)forEach:(void(^)(id))each {
     CNFilledList* list = self;
     while(YES) {
-        each(list._head);
-        CNImList* tail = list.tail;
+        each(list->__head);
+        CNImList* tail = list->_tail;
         if([tail isEmpty]) return ;
         list = ((CNFilledList*)(tail));
     }
@@ -141,11 +141,11 @@ static CNClassType* _CNFilledList_type;
     CNImList* before = [CNImList apply];
     CNFilledList* list = ((CNFilledList*)(self));
     while(YES) {
-        id h = list._head;
+        id h = list->__head;
         if([item compareTo:h] < 0) return [[CNFilledList filledListWith_head:item tail:before] reverseAndAddList:list];
         before = [CNImList applyItem:h tail:before];
-        if([list.tail isEmpty]) return [[CNFilledList filledListWith_head:item tail:before] reverse];
-        list = ((CNFilledList*)(list.tail));
+        if([list->_tail isEmpty]) return [[CNFilledList filledListWith_head:item tail:before] reverse];
+        list = ((CNFilledList*)(list->_tail));
     }
 }
 
@@ -157,7 +157,7 @@ static CNClassType* _CNFilledList_type;
     if(self == to) return YES;
     if(to == nil || !([to isKindOfClass:[CNFilledList class]])) return NO;
     CNFilledList* o = ((CNFilledList*)(to));
-    return [__head isEqual:o._head] && [_tail isEqual:o.tail];
+    return [__head isEqual:o->__head] && [_tail isEqual:o->_tail];
 }
 
 - (NSUInteger)hash {
@@ -276,7 +276,7 @@ static CNClassType* _CNListIterator_type;
 
 - (instancetype)init {
     self = [super init];
-    if(self) _list = ((CNImList*)(CNEmptyList.instance));
+    if(self) _list = ((CNImList*)([CNEmptyList instance]));
     
     return self;
 }

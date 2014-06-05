@@ -573,8 +573,8 @@ static CNClassType* _CNChain_type;
     CNChain* ch = self;
     CNYield* y = yield;
     while(ch != nil) {
-        y = [((CNChain*)(ch)).link buildYield:y];
-        ch = ((CNChain*)(ch)).previous;
+        y = [((CNChain*)(ch))->_link buildYield:y];
+        ch = ((CNChain*)(ch))->_previous;
     }
     return y;
 }

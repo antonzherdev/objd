@@ -33,7 +33,7 @@
 
 
 @interface CNObservableBase_impl : CNObservable_impl<CNObservableBase> {
-@protected
+@public
     CNAtomicObject* __observers;
 }
 + (instancetype)observableBase_impl;
@@ -44,7 +44,7 @@
 
 
 @interface CNObserver : NSObject {
-@protected
+@public
     id<CNObservable> _observable;
     void(^_f)(id);
 }

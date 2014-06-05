@@ -56,7 +56,7 @@
 
 
 @interface CNHashSetBuilder : CNBuilder_impl {
-@protected
+@public
     CNMHashSet* _set;
 }
 @property (nonatomic, readonly) CNMHashSet* set;

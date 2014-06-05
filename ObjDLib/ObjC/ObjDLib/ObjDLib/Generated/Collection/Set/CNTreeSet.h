@@ -16,7 +16,7 @@
 @class CNMTreeSet;
 
 @interface CNTreeSet : CNSet_impl {
-@protected
+@public
     CNTreeMap* _map;
 }
 @property (nonatomic, readonly) CNTreeMap* map;
@@ -38,7 +38,7 @@
 
 
 @interface CNImTreeSet : CNTreeSet<CNImSet> {
-@protected
+@public
     CNImTreeMap* _immap;
 }
 @property (nonatomic, readonly) CNImTreeMap* immap;
@@ -53,7 +53,7 @@
 
 
 @interface CNTreeSetBuilder : CNBuilder_impl {
-@protected
+@public
     NSInteger(^_comparator)(id, id);
     CNMTreeSet* _set;
 }
@@ -71,7 +71,7 @@
 
 
 @interface CNMTreeSet : CNTreeSet<CNMSet> {
-@protected
+@public
     CNMTreeMap* _mmap;
 }
 @property (nonatomic, readonly) CNMTreeMap* mmap;

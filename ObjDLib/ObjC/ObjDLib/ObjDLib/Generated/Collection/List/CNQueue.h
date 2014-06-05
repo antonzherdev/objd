@@ -24,7 +24,7 @@
 
 
 @interface CNImQueue : CNQueue_impl {
-@protected
+@public
     CNImList* _in;
     CNImList* _out;
 }
@@ -47,7 +47,7 @@
 
 
 @interface CNQueueIterator : CNIterator_impl {
-@protected
+@public
     CNImList* _out;
     id<CNIterator> _i;
     BOOL _isIn;
@@ -65,7 +65,7 @@
 
 
 @interface CNMQueue : CNQueue_impl {
-@protected
+@public
     CNImQueue* __queue;
 }
 + (instancetype)queue;

@@ -6,7 +6,7 @@
 @class CNConcurrentQueue;
 
 @interface CNConcurrentQueueNode : NSObject {
-@protected
+@public
     id _item;
     CNConcurrentQueueNode* _next;
 }
@@ -23,7 +23,7 @@
 
 
 @interface CNConcurrentQueue : CNQueue_impl {
-@protected
+@public
     CNConcurrentQueueNode* __head;
     CNConcurrentQueueNode* __tail;
     NSLock* _hLock;

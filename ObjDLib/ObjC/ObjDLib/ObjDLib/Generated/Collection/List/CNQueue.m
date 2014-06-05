@@ -198,8 +198,8 @@ static CNClassType* _CNMQueue_type;
 
 - (id)dequeue {
     CNTuple* p = [__queue dequeue];
-    __queue = p.b;
-    return p.a;
+    __queue = p->_b;
+    return p->_a;
 }
 
 - (NSUInteger)count {

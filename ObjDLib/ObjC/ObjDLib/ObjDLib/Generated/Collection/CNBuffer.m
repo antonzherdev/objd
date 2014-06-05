@@ -33,7 +33,7 @@ static CNClassType* _CNBuffer_type;
 }
 
 - (unsigned int)stride {
-    return ((unsigned int)(_tp.size));
+    return ((unsigned int)([_tp size]));
 }
 
 - (NSUInteger)length {

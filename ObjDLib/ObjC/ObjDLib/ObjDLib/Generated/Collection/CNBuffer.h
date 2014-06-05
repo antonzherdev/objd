@@ -10,7 +10,7 @@
 @class CNFloat4Buffer;
 
 @interface CNBuffer : NSObject {
-@protected
+@public
     CNPType* _tp;
     unsigned int _count;
     void* _bytes;

@@ -82,12 +82,12 @@ static CNClassType* _CNUncombinationsLink_type;
     CNMHashSet* set = [CNMHashSet hashSet];
     return [CNYield decorateBase:yield yield:^CNGoR(CNTuple* item) {
         CNGoR r = CNGo_Continue;
-        id a = ((CNTuple*)(item)).a;
+        id a = ((CNTuple*)(item))->_a;
         if(!([set containsItem:a])) {
             [set appendItem:a];
             r = [yield yieldItem:a];
         }
-        id b = ((CNTuple*)(item)).b;
+        id b = ((CNTuple*)(item))->_b;
         if(r == CNGo_Continue && !([set containsItem:b])) {
             [set appendItem:b];
             r = [yield yieldItem:b];
