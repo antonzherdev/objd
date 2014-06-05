@@ -199,7 +199,7 @@ stmToImpl cl =
 		clsName = D.classNameWithPrefix cl
 		env = Env cl 0 D.TPVoid False
 		defs :: [D.Def]
-		defs = filter (\f -> (not (D.isInline f && D.isPrivate f)) && D.DefModChild `notElem` D.defMods f) $ D.classDefsWithTraits cl
+		defs = filter (\f -> (not (D.isInline f && not (D.isPublic f))) && D.DefModChild `notElem` D.defMods f) $ D.classDefsWithTraits cl
 					
 		constrFuns = maybe [] (\constr -> [implCreate cl constr, implInit env constr]) (D.classConstructor cl)
 		implFields = filter needField defs

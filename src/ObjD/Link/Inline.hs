@@ -56,7 +56,7 @@ inlineCall env e = let
 			defGensMap = M.fromList $ zip (maybe [] (map className . defGenericsClasses) $ defGenerics def) callGens
 		
 	mapDeclaredValsGenerics = map repGens declaredVals
-		where repGens d = (d, d{defType = repgens $ defType d, 
+		where repGens d = (d, d{defType = unwrapGeneric $ repgens $ defType d, 
 			defName = envVarSuffix env ++ defName d})
 	
 	repgens = replaceGenerics False gens . unblockGenerics

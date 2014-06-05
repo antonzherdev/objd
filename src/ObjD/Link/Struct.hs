@@ -18,7 +18,7 @@ module ObjD.Link.Struct (
 	containsAnnotationWithClassName, isSpecial, isConstructor, mainExtendsRef, isBaseClass, traitExtendsRefs, findAnnotationWithClassName, 
 	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError, isDefAbstract, isEnumItem, isTpGeneric, isPrivate,
 	genName, dataTypeGenClassName, localVarE, localVar, coreDataTypeClass, coreClass, buildCore, classFullName, sourcesAllFiles, isDefChild,
-	fullGenClassName
+	fullGenClassName, isPublic
 	) where
 
 import 			 Ex.String
@@ -326,6 +326,8 @@ isPure :: Def -> Bool
 isPure = (DefModPure `elem` ) . defMods
 isPrivate :: Def -> Bool
 isPrivate = (DefModPrivate `elem` ) . defMods
+isPublic :: Def -> Bool
+isPublic = (DefModPublic `elem` ) . defMods
 isDefAbstract :: Def -> Bool
 isDefAbstract = (DefModAbstract `elem` ) . defMods
 enumItems :: Class -> [Def]

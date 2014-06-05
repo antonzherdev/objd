@@ -50,15 +50,15 @@ static CNClassType* _CNFutureTest_type;
     {
         id<CNIterator> __il__3i = [intTo(1, count) iterator];
         while([__il__3i hasNext]) {
-            id __il__3v = [__il__3i next];
+            NSInteger __il__3v = unumi([__il__3i next]);
             [CNDispatchQueue.aDefault asyncF:^void() {
                 CNPromise* p = [CNPromise apply];
                 CNFuture* m = [p mapF:^id(id _) {
                     return numi(unumi(_) + 1);
                 }];
-                [result addAndGetValue:((int)(unumi(__il__3v) + 1))];
+                [result addAndGetValue:((int)(__il__3v + 1))];
                 [CNDispatchQueue.aDefault asyncF:^void() {
-                    [p successValue:__il__3v];
+                    [p successValue:numi(__il__3v)];
                 }];
                 [m onCompleteF:^void(CNTry* _) {
                     [n addAndGetValue:((int)(unumi([_ get])))];

@@ -43,7 +43,7 @@ public class FutureTest extends TestCase {
         {
             final Iterator<Integer> __il__3i = Int.to(1, count).iterator();
             while(__il__3i.hasNext()) {
-                final Integer __il__3v = __il__3i.next();
+                final int __il__3v = __il__3i.next();
                 DispatchQueue.aDefault.asyncF(new P0() {
                     @Override
                     public void apply() {
