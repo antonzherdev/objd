@@ -9,6 +9,8 @@ static CNClassType* _CNBuffer_type;
 @synthesize tp = _tp;
 @synthesize count = _count;
 @synthesize bytes = _bytes;
+@synthesize _pointer = __pointer;
+@synthesize _position = __position;
 
 + (instancetype)bufferWithTp:(CNPType*)tp count:(unsigned int)count {
     return [[CNBuffer alloc] initWithTp:tp count:count];

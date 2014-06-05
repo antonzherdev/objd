@@ -20,6 +20,8 @@
 @property (nonatomic, readonly) CNPType* tp;
 @property (nonatomic, readonly) unsigned int count;
 @property (nonatomic, readonly) void* bytes;
+@property (nonatomic) void* _pointer;
+@property (nonatomic) unsigned int _position;
 
 + (instancetype)bufferWithTp:(CNPType*)tp count:(unsigned int)count;
 - (instancetype)initWithTp:(CNPType*)tp count:(unsigned int)count;

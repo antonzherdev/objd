@@ -13,8 +13,8 @@ abstract class Buffer<T extends PObject>(val tp : PType<T>, val count : uint4) {
         bytes.free
     }
 
-    private var _pointer : Pointer<T> = bytes
-    private var _position : uint4 = 0
+    var _pointer : Pointer<T> = bytes
+    var _position : uint4 = 0
 
     protected inline def _get : T = {
         if(_position >= count) throw "Out of bound"
@@ -22,6 +22,15 @@ abstract class Buffer<T extends PObject>(val tp : PType<T>, val count : uint4) {
         _pointer = _pointer.cast<Pointer<T>> + 1
         _position++
         r
+    }
+
+    protected inline def check {
+        if(_position >= count) throw "Out of bound"
+    }
+
+    protected inline def inc {
+        _pointer = _pointer.cast<Pointer<T>> + 1
+        _position++
     }
 
     protected inline def _set(v: T) {
