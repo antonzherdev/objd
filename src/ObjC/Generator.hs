@@ -805,12 +805,14 @@ tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars _)
 	| D.DefModEnum `elem` mods && D.DefModField `elem` mods = C.Dot enumLeft (C.Ref name)
 	| D.DefModEnum `elem` mods = stdCall enumLeft
 	| D.DefModField `elem` mods && null pars && 
-		not (D.DefModStruct `elem` mods || D.DefModStatic `elem` mods || D.DefModStub `elem` mods) = 
-			C.Arrow (castGeneric l $ tExpTo env ltp l) (C.Ref $ fieldName env dd)
+		not (D.DefModStruct `elem` mods || D.DefModStatic `elem` mods ) = 
+			if D.DefModStub `elem` mods then stdDot
+			else C.Arrow (castGeneric l $ tExpTo env ltp l) (C.Ref $ fieldName env dd)
 	| D.DefModField `elem` mods && 
 		not (D.DefModStruct `elem` mods || D.DefModStatic `elem` mods || D.DefModStub `elem` mods) = 
 			C.Dot (castGeneric l $ tExpTo env ltp l) $ C.CCall (C.Ref name) ((map snd . tPars env dd) pars)
 	| D.DefModConstructor `elem` mods = callConstructor env dd pars
+	| D.DefModField `elem` mods && null pars && D.DefModStruct `elem` mods && not (D.DefModStatic `elem` mods) = stdDot
 	| D.DefModStruct `elem` mods = case ltp of
 		(D.TPClass D.TPMStruct _ c) -> structCall (D.classNameWithPrefix c) (castGeneric l $ tExpTo env ltp l)
 		(D.TPObject D.TPMStruct c) -> C.CCall (C.Ref $ structDefName (D.classNameWithPrefix c) dd) ((map snd . tPars env dd) pars)
@@ -818,6 +820,7 @@ tExp env (D.Dot l (D.Call dd@D.Def{D.defName = name, D.defMods = mods} _ pars _)
 		tp -> structCall (show tp) (castGeneric l $ tExpTo env ltp l)
 	| otherwise = stdCall (castGeneric l $ tExp env l)
 	where
+		stdDot = C.Dot (castGeneric l $ tExpTo env ltp l) (C.Ref name)
 		enumLeft = enumValue ltp (tExpTo env ltp l)
 		stdCall ll = C.Call ll (funName dd) (tPars env dd pars) []
 		structCall c self = C.CCall (C.Ref $ structDefName c dd) (self : (map snd . tPars env dd) pars)
