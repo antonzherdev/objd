@@ -1,6 +1,8 @@
 package objd.collection
 
 
+import java.nio._
+
 @ObjC
 abstract inline class Buffer<T extends PObject>(val tp : PType<T>, val count : uint4) {
     def stride : uint4 = tp.size
@@ -35,16 +37,31 @@ abstract inline class Buffer<T extends PObject>(val tp : PType<T>, val count : u
     }
 }
 
-@Java
-stub abstract class Buffer<T> extends ImSeq<T> {
-    def get : T
-
-    def set(value: T)
-    def reset
-}
-
 @ObjC
 class Int4Buffer(count : uint4) extends Buffer<int4>(Int4.type, count)
 
 @ObjC
 class Float4Buffer(count : uint4) extends Buffer<float4>(Float4.type, count)
+
+@Java
+abstract class Buffer<T extends PObject>(val count : uint4) {
+    def buffer : JavaBuffer
+    def reset {
+        buffer.clear
+    }
+}
+
+@Java
+class Int4Buffer<T>(count : uint4) extends Buffer<int4>(count) {
+    override val buffer : JavaIntBuffer = JavaIntBuffer.allocate(count)
+    inline def get : int4 = buffer.get
+    inline def set(v: int4) = buffer.put(v)
+}
+
+@Java
+class Float4Buffer<T>(count : uint4) extends Buffer<float4>(count) {
+    override val buffer : JavaFloatBuffer = JavaFloatBuffer.allocate(count)
+    inline def get : int4 = buffer.get
+    inline def set(v: int4) = buffer.put(v)
+}
+

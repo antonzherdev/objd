@@ -1,0 +1,31 @@
+package java.nio
+
+@Java
+@GenName("Buffer")
+abstract stub class JavaBuffer {
+    def clear
+}
+
+@Java
+@GenName("IntBuffer")
+abstract stub class JavaIntBuffer extends JavaBuffer {
+    @GenName("allocate")
+    static def allocate(capacity : int4) : JavaIntBuffer
+
+    def get : int4
+
+    @GenName("put")
+    def put(value: int4)
+}
+
+@Java
+@GenName("FloatBuffer")
+abstract stub class JavaFloatBuffer extends JavaBuffer {
+    @GenName("allocate")
+    static def allocate(capacity : int4) : JavaFloatBuffer
+
+    def get : float4
+
+    @GenName("put")
+    def put(value: float4)
+}

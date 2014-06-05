@@ -251,6 +251,7 @@
 		6F3DF7B1FD5F934A8911089B /* Date.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = Date.od; sourceTree = "<group>"; };
 		6F3DF7DD263A1F8687E835E9 /* TestCase.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = TestCase.od; sourceTree = "<group>"; };
 		6F3DF7E19A2C5147FDC24DBA /* NSConditionLock+CNChain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSConditionLock+CNChain.m"; sourceTree = "<group>"; };
+		6F3DF7EDE676C44EE7A318D9 /* JavaBuffer.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = JavaBuffer.od; sourceTree = "<group>"; };
 		6F3DF82C59593401CF0A3F66 /* ObjDLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjDLib.h; sourceTree = "<group>"; };
 		6F3DF850E410FB2DDA3C8CDC /* CNPointer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNPointer.h; sourceTree = "<group>"; };
 		6F3DF855A67A257E735226DC /* ActorTest.od */ = {isa = PBXFileReference; lastKnownFileType = file.od; path = ActorTest.od; sourceTree = "<group>"; };
@@ -581,6 +582,7 @@
 				6F3DFE87FBB93D9AEBAA4775 /* PArray.od */,
 				6F3DF0660AAAF07C65E1A710 /* Collection.od */,
 				6F3DFEF42F3707D7AE0E35D0 /* Buffer.od */,
+				6F3DF7EDE676C44EE7A318D9 /* JavaBuffer.od */,
 			);
 			path = Collection;
 			sourceTree = "<group>";

@@ -17,7 +17,8 @@ module ObjD.Link.Struct (
 	isFinal, isTpClass, isTpEnum, isTpTrait, isNop, enumItems, isType, isGeneric, isGenericWrap, tpGeneric, resolveTypeAlias,
 	containsAnnotationWithClassName, isSpecial, isConstructor, mainExtendsRef, isBaseClass, traitExtendsRefs, findAnnotationWithClassName, 
 	eqPar, isClass, isCaseClass, isPure, isVoid, isTpStruct, isTpBaseClass, isError, isDefAbstract, isEnumItem, isTpGeneric, isPrivate,
-	genName, dataTypeGenClassName, localVarE, localVar, coreDataTypeClass, coreClass, buildCore, classFullName, sourcesAllFiles, isDefChild
+	genName, dataTypeGenClassName, localVarE, localVar, coreDataTypeClass, coreClass, buildCore, classFullName, sourcesAllFiles, isDefChild,
+	fullGenClassName
 	) where
 
 import 			 Ex.String
@@ -91,6 +92,9 @@ fullClassName :: Class -> String
 fullClassName cl = strs "." (packageName $ classPackage cl) ++ case className cl of
 	"" -> ""
 	nm -> "." ++ nm
+
+fullGenClassName :: Class -> String
+fullGenClassName cl = strs "." (packageName $ classPackage cl) ++ "." ++ genClassName cl
 
 classContainsInit :: Class -> Bool 
 classContainsInit cl = isJust (classInitDef cl) || any classContainsInit (superClasses cl) 
