@@ -10,6 +10,7 @@
 @interface NSDictionary (CNChain) <CNImMap, CNHashMap>
 - (NSDictionary *)dictionaryByAddingValue:(id)value forKey:(id)key;
 
++ (id <CNImMap>)imHashMap;
 + (CNType *)type;
 
 - (CNChain *) chain;

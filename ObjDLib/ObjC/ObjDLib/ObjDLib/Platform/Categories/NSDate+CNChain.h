@@ -8,5 +8,5 @@
 @interface NSDate (CNChain)
 - (NSTimeInterval)sinceNow;
 
-- (NSTimeInterval)beforeNow;
+- (NSTimeInterval)tillNow;
 @end

@@ -11,7 +11,7 @@
     return [self timeIntervalSinceNow];
 }
 
-- (NSTimeInterval)beforeNow {
+- (NSTimeInterval)tillNow {
     return -[self timeIntervalSinceNow];
 }
 @end

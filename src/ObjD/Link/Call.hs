@@ -253,7 +253,7 @@ tryExprCall env strictClass cll@(D.Call name pars gens) = maybeLambdaCall
 			| otherwise = correctCallPar (tp, d, ExpDError "" $ 
 				D.Lambda (map (\(n, _) -> (n, Nothing)) $ lambdaImplicitParameters tp) e)
 		correctCallPar (tp, d, FirstTry _ e) = correctCallPar (tp, d, e)
-		correctCallPar (TPFun _ TPVoid, d, Lambda lpars e dtp) = (d, Lambda lpars (mapExp removeReturn e) dtp)
+		correctCallPar (TPFun _ TPVoid, d, Lambda lpars e dtp) = checkCallParOnWeak (d, Lambda lpars (mapExp removeReturn e) dtp)
 			where
 				removeReturn ee@(Return _ Nil) = Just ee
 				removeReturn (Return _ ee) = Just ee
