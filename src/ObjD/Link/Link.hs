@@ -503,7 +503,7 @@ linkField env additionalMods dd@D.Def{D.defMods = mods, D.defName = name, D.defR
 		lazyTp = TPClass TPMClass [gtp] lazyClass
 		defLazy = Def{defMods = [DefModField, DefModPrivate] ++ [DefModStatic | D.DefModStatic `elem` mods ] ++ additionalMods, defName = "_lazy_" ++ name, 
 			defType = lazyTp, 
-			defBody = Dot (callRef (objectDef lazyClass)) $ Call lazyConstr lazyTp [(head $ defPars lazyConstr, Lambda [] (Return True (Weak i')) gtp)] [], 
+			defBody = Dot (callRef (objectDef lazyClass)) $ Call lazyConstr lazyTp [(head $ defPars lazyConstr, Lambda [] (Return True (Weak i')) gtp)] [gtp], 
 			defGenerics = Nothing, defPars = [], defAnnotations = []}
 		defLazyGet = Def{defMods = DefModDef : translateMods mods ++ additionalMods, defName = name, 
 			defType = tp'', 
