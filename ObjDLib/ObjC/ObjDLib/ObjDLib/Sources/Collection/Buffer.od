@@ -4,13 +4,15 @@ package objd.collection
 import java.nio._
 
 @ObjC
-abstract class Buffer<T extends PObject>(val tp : PType<T>, val count : uint4) {
+abstract class Buffer<T extends PObject>(val tp : PType<T>, val count : uint4,
+    val bytes : Pointer<T>, val needFree : bool)
+{
     def stride : uint4 = tp.size
     def length : uint = stride*count
-    val bytes : Pointer<T> = Pointer<T>(tp, count)
+
 
     override def dealloc {
-        bytes.free
+        if(needFree) bytes.free
     }
 
     var _pointer : Pointer<T> = bytes
@@ -40,6 +42,16 @@ abstract class Buffer<T extends PObject>(val tp : PType<T>, val count : uint4) {
         _position++
     }
 
+    protected inline def _for(f : T -> void) {
+        var p : Pointer<T> = bytes.cast<Pointer<T>>
+        var i = 0
+        while(i < count) {
+            f(p.get)
+            p++
+            i++
+        }
+    }
+
     def reset {
         _pointer = bytes
         _position = 0
@@ -47,7 +59,11 @@ abstract class Buffer<T extends PObject>(val tp : PType<T>, val count : uint4) {
 }
 
 @ObjC
-class Int4Buffer(count : uint4) extends Buffer<int4>(Int4.type, count) {
+abstract class UBuffer<T>(tp : PType<T>, count : uint4) extends Buffer<T>(tp, count,
+    bytes = Pointer<T>(tp, count), needFree = true)
+
+@ObjC
+class Int4Buffer(count : uint4) extends UBuffer<int4>(Int4.type, count) {
     def get : int4 = _get
     def set(v : int4) {
         _set(v)
@@ -55,7 +71,7 @@ class Int4Buffer(count : uint4) extends Buffer<int4>(Int4.type, count) {
 }
 
 @ObjC
-class Float4Buffer(count : uint4) extends Buffer<float4>(Float4.type, count) {
+class Float4Buffer(count : uint4) extends UBuffer<float4>(Float4.type, count) {
     def get : float4 = _get
     def set(v : float4) {
         _set(v)

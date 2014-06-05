@@ -9,20 +9,22 @@ static CNClassType* _CNBuffer_type;
 @synthesize tp = _tp;
 @synthesize count = _count;
 @synthesize bytes = _bytes;
+@synthesize needFree = _needFree;
 @synthesize _pointer = __pointer;
 @synthesize _position = __position;
 
-+ (instancetype)bufferWithTp:(CNPType*)tp count:(unsigned int)count {
-    return [[CNBuffer alloc] initWithTp:tp count:count];
++ (instancetype)bufferWithTp:(CNPType*)tp count:(unsigned int)count bytes:(void*)bytes needFree:(BOOL)needFree {
+    return [[CNBuffer alloc] initWithTp:tp count:count bytes:bytes needFree:needFree];
 }
 
-- (instancetype)initWithTp:(CNPType*)tp count:(unsigned int)count {
+- (instancetype)initWithTp:(CNPType*)tp count:(unsigned int)count bytes:(void*)bytes needFree:(BOOL)needFree {
     self = [super init];
     if(self) {
         _tp = tp;
         _count = count;
-        _bytes = cnPointerApplyTpCount(tp, ((NSUInteger)(count)));
-        __pointer = _bytes;
+        _bytes = bytes;
+        _needFree = needFree;
+        __pointer = bytes;
         __position = 0;
     }
     
@@ -43,7 +45,7 @@ static CNClassType* _CNBuffer_type;
 }
 
 - (void)dealloc {
-    cnPointerFree(_bytes);
+    if(_needFree) cnPointerFree(_bytes);
 }
 
 - (void)reset {
@@ -52,7 +54,7 @@ static CNClassType* _CNBuffer_type;
 }
 
 - (NSString*)description {
-    return [NSString stringWithFormat:@"Buffer(%@, %u)", _tp, _count];
+    return [NSString stringWithFormat:@"Buffer(%@, %u, %p, %d)", _tp, _count, _bytes, _needFree];
 }
 
 - (CNClassType*)type {
@@ -61,6 +63,42 @@ static CNClassType* _CNBuffer_type;
 
 + (CNClassType*)type {
     return _CNBuffer_type;
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    return self;
+}
+
+@end
+
+@implementation CNUBuffer
+static CNClassType* _CNUBuffer_type;
+
++ (instancetype)bufferWithTp:(CNPType*)tp count:(unsigned int)count {
+    return [[CNUBuffer alloc] initWithTp:tp count:count];
+}
+
+- (instancetype)initWithTp:(CNPType*)tp count:(unsigned int)count {
+    self = [super initWithTp:tp count:count bytes:cnPointerApplyTpCount(tp, ((NSUInteger)(count))) needFree:YES];
+    
+    return self;
+}
+
++ (void)initialize {
+    [super initialize];
+    if(self == [CNUBuffer class]) _CNUBuffer_type = [CNClassType classTypeWithCls:[CNUBuffer class]];
+}
+
+- (NSString*)description {
+    return @"UBuffer";
+}
+
+- (CNClassType*)type {
+    return [CNUBuffer type];
+}
+
++ (CNClassType*)type {
+    return _CNUBuffer_type;
 }
 
 - (id)copyWithZone:(NSZone*)zone {
