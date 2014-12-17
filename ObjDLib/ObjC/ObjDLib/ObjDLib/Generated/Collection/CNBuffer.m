@@ -140,6 +140,16 @@ static CNClassType* _CNInt4Buffer_type;
     __position++;
 }
 
+- (void)forF:(void(^)(int))f {
+    int* __il__0p = ((int*)(_bytes));
+    NSInteger __il__0i = 0;
+    while(__il__0i < _count) {
+        f(*(__il__0p));
+        __il__0p++;
+        __il__0i++;
+    }
+}
+
 - (NSString*)description {
     return @"Int4Buffer";
 }
@@ -189,6 +199,16 @@ static CNClassType* _CNFloat4Buffer_type;
     *(((float*)(__pointer))) = v;
     __pointer = ((float*)(__pointer)) + 1;
     __position++;
+}
+
+- (void)forF:(void(^)(float))f {
+    float* __il__0p = ((float*)(_bytes));
+    NSInteger __il__0i = 0;
+    while(__il__0i < _count) {
+        f(*(__il__0p));
+        __il__0p++;
+        __il__0i++;
+    }
 }
 
 - (NSString*)description {

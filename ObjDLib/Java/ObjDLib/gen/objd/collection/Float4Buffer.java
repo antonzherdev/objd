@@ -3,7 +3,7 @@ package objd.collection;
 import objd.lang.*;
 import java.nio.FloatBuffer;
 
-public class Float4Buffer<T> extends Buffer<Float> {
+public class Float4Buffer extends Buffer<Float> {
     public final FloatBuffer bytes;
     @Override
     public FloatBuffer bytes() {
@@ -14,6 +14,14 @@ public class Float4Buffer<T> extends Buffer<Float> {
     }
     public void setV(final int v) {
         this.bytes.put(((float)(v)));
+    }
+    public void forF(final P<Float> f) {
+        int i = 0;
+        this.bytes.clear();
+        while(i < this.count) {
+            f.apply(((float)(((int)(this.bytes.get())))));
+            i++;
+        }
     }
     public Float4Buffer(final int count) {
         super(count, ((int)(4)));

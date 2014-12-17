@@ -5,7 +5,7 @@ import java.nio._
 
 @ObjC
 abstract class Buffer<T extends PObject>(val tp : PType<T>, val count : uint4,
-    val bytes : Pointer<T>, val needFree : bool)
+val bytes : Pointer<T>, val needFree : bool)
 {
     def stride : uint4 = tp.size
     def length : uint = stride*count
@@ -60,13 +60,16 @@ abstract class Buffer<T extends PObject>(val tp : PType<T>, val count : uint4,
 
 @ObjC
 abstract class UBuffer<T>(tp : PType<T>, count : uint4) extends Buffer<T>(tp, count,
-    bytes = Pointer<T>(tp, count), needFree = true)
+bytes = Pointer<T>(tp, count), needFree = true)
 
 @ObjC
 class Int4Buffer(count : uint4) extends UBuffer<int4>(Int4.type, count) {
     def get : int4 = _get
     def set(v : int4) {
         _set(v)
+    }
+    inline def for(f : int4 -> void) {
+        _for(f)
     }
 }
 
@@ -75,6 +78,9 @@ class Float4Buffer(count : uint4) extends UBuffer<float4>(Float4.type, count) {
     def get : float4 = _get
     def set(v : float4) {
         _set(v)
+    }
+    inline def for(f : float4 -> void) {
+        _for(f)
     }
 }
 
@@ -88,16 +94,32 @@ abstract class Buffer<T extends PObject>(val count : uint4, val stride : uint4) 
 }
 
 @Java
-class Int4Buffer<T>(count : uint4) extends Buffer<int4>(count, 4) {
+class Int4Buffer(count : uint4) extends Buffer<int4>(count, 4) {
     override val bytes : JavaIntBuffer = JavaIntBuffer.allocate(count)
     inline def get : int4 = bytes.get
     inline def set(v: int4) = bytes.put(v)
+    inline def for(f : int4 -> void) {
+        var i = 0
+        bytes.clear
+        while(i < count) {
+            f(get)
+            i++
+        }
+    }
 }
 
 @Java
-class Float4Buffer<T>(count : uint4) extends Buffer<float4>(count, 4) {
+class Float4Buffer(count : uint4) extends Buffer<float4>(count, 4) {
     override val bytes : JavaFloatBuffer = JavaFloatBuffer.allocate(count)
     inline def get : int4 = bytes.get
     inline def set(v: int4) = bytes.put(v)
+    inline def for(f : float4 -> void) {
+        var i = 0
+        bytes.clear
+        while(i < count) {
+            f(get)
+            i++
+        }
+    }
 }
 

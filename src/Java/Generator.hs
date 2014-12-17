@@ -478,6 +478,14 @@ genExp env (D.Arr exps) = do
 	exps' <- mapM (genExp env) exps
 	tellImport ["objd", "collection", "ImArray"]
 	return $ J.Dot (J.Ref "ImArray") (J.Call "fromObjects" [] exps')
+genExp env (D.Map exps) = do
+	keys' <- mapM (genExp env . fst) exps
+	values' <- mapM (genExp env . snd) exps
+	let 
+		comp (x:xs) (y:ys) = x:y:comp xs ys
+		comp _ _ = []
+	tellImport ["objd", "collection", "ImHashMap"]
+	return $ J.Dot (J.Ref "ImHashMap") (J.Call "fromObjects" [] $ comp keys' values')
 genExp env (D.StringBuild pars lastString) = do
 	pars' <- mapM (par' . snd) pars
 	return $ J.Dot (J.Ref  "String") $ J.Call "format" [] (J.StringConst format : join pars')
